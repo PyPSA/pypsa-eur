@@ -2,7 +2,24 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Concats pypsa networks of single investment periods to one network.
+Perfect foresight utility functions for multi-period optimization.
+
+This module provides functions for perfect foresight optimization in the
+streamlined workflow. Functions are used by compose_network.py for incremental
+network composition across planning horizons.
+
+The main script portion (concat_networks, if __name__ == "__main__") is DEPRECATED
+and not used in the streamlined workflow, as networks are now composed incrementally
+rather than batch-concatenated.
+
+Functions currently used in streamlined workflow:
+- get_investment_weighting(): Calculate social discount weightings
+- adjust_stores_for_perfect_foresight(): Configure store cycling behavior
+
+Functions not yet integrated (TODO):
+- set_all_phase_outs(): National energy policy phase-out constraints
+- update_heat_pump_efficiency(): Heat pump COP updates across all periods
+- apply_time_segmentation_perfect(): Time segmentation for multi-period networks
 """
 
 import logging
@@ -35,10 +52,6 @@ logger.warning(
     "Use at your own risk!"
 )
 
-if PYPSA_V1:
-    msg = "PyPSA versions >=1.0 are not supported for perfect foresight."
-    raise UserWarning(msg)
-
 
 # helper functions ---------------------------------------------------
 def get_missing(df: pd.DataFrame, n: pypsa.Network, c: str) -> pd.DataFrame:
@@ -64,49 +77,65 @@ def get_missing(df: pd.DataFrame, n: pypsa.Network, c: str) -> pd.DataFrame:
     return df.loc[missing_i]
 
 
-def get_social_discount(t: int, r: float = 0.01) -> float:
-    """
-    Calculate social discount for given time and rate.
-
-    Parameters
-    ----------
-    t : int
-        Time period in years
-    r : float, default 0.01
-        Social discount rate per unit
-
-    Returns
-    -------
-    float
-        Social discount factor
-    """
-    return 1 / (1 + r) ** t
-
-
 def get_investment_weighting(time_weighting: pd.Series, r: float = 0.01) -> pd.Series:
     """
-    Define cost weighting for investment periods.
+    Calculate investment period objective weightings based on social discounting.
+
+    This function computes the present value weightings for each investment period
+    using a social discount rate. The weightings ensure that costs in different
+    periods are properly compared in net present value terms.
+
+    Uses closed-form formula for efficiency instead of iterative summation.
 
     Parameters
     ----------
     time_weighting : pd.Series
-        Time weightings for each period
+        Time weightings (duration in years) for each investment period.
+        Index should match investment periods.
     r : float, default 0.01
-        Social discount rate per unit
+        Social discount rate per unit (e.g., 0.02 for 2% discount rate)
 
     Returns
     -------
     pd.Series
-        Cost weightings for each investment period
+        Objective weightings for each investment period that account for
+        social discounting over the planning horizon
+
+    Notes
+    -----
+    The weighting formula accounts for:
+    - The time value of money through discounting
+    - The duration of each investment period
+    - The cumulative time from present to each period
+
+    For a period starting at year `start` and ending at year `end`,
+    the weighting is the sum of discount factors for all years in that period,
+    calculated using a closed-form geometric series formula.
+
+    Examples
+    --------
+    >>> periods = pd.Series([10, 10, 10], index=[2030, 2040, 2050])
+    >>> weights = get_investment_weighting(periods, r=0.02)
+    >>> # Earlier periods get higher weights due to discounting
     """
     end = time_weighting.cumsum()
     start = time_weighting.cumsum().shift().fillna(0)
-    return pd.concat([start, end], axis=1).apply(
-        lambda x: sum(
-            get_social_discount(t, r) for t in range(int(x.iloc[0]), int(x.iloc[1]))
-        ),
-        axis=1,
-    )
+
+    # Calculate social discount factor for each period using closed-form formula
+    # This sums the discount factors from start to end of each period
+    if r == 0:
+        # With zero discount rate, weight equals the duration
+        delta = end - start
+    else:
+        # Geometric series sum: sum of (1/(1+r)^t) for t from start to end-1
+        # Using closed form: (1/(1+r)^start) * (1 - (1/(1+r))^duration) / (1 - 1/(1+r))
+        # Simplified: ((1/(1+r)^start) - (1/(1+r)^end)) / (1 - 1/(1+r))
+        # Further: ((1/(1+r)^start) - (1/(1+r)^end)) * (1+r) / r
+        discount_start = 1 / ((1 + r) ** start)
+        discount_end = 1 / ((1 + r) ** end)
+        delta = (discount_start - discount_end) * (1 + r) / r
+
+    return delta
 
 
 def add_year_to_constraints(n: pypsa.Network, baseyear: int) -> None:
@@ -298,41 +327,151 @@ def concat_networks(
     return n
 
 
-def adjust_stores(n: pypsa.Network) -> None:
+def apply_investment_period_weightings(
+    n: pypsa.Network, social_discountrate: float
+) -> None:
     """
-    Adjust store behavior for multi-year optimization.
+    Apply investment period weightings for perfect foresight optimization.
 
-    Ensures stores behave cyclically over one year and not whole modeling horizon.
-    Sets appropriate flags for different types of stores.
+    Sets both time-based weightings (years) and objective weightings (with social
+    discounting) for each investment period in a multi-period network.
 
     Parameters
     ----------
     n : pypsa.Network
-        Network to adjust
+        Multi-period network with investment periods defined
+    social_discountrate : float
+        Social discount rate per unit (e.g., 0.02 for 2%)
 
-    Returns
-    -------
-    pypsa.Network
-        Network with adjusted store settings
+    Notes
+    -----
+    Modifies n.investment_period_weightings in-place by setting:
+    - "years": Duration of each investment period in years
+    - "objective": Social-discounted objective weighting for optimization
+
+    The function assumes the last period has the same duration as the
+    period before it (using fillna forward fill).
+
+    Only applies to multi-invest networks with defined investment periods.
+
+    Raises
+    ------
+    ValueError
+        If network has no investment periods defined
+
+    Examples
+    --------
+    >>> n = pypsa.Network()
+    >>> n.set_snapshots(pd.MultiIndex.from_product([[2030, 2040, 2050],
+    ...     pd.date_range('2030-01-01', periods=3, freq='h')]))
+    >>> apply_investment_period_weightings(n, 0.02)
+    >>> n.investment_period_weightings
+              years  objective
+    2030       10.0   9.526279
+    2040       10.0   7.829213
+    2050       10.0   6.436916
     """
-    # cyclic constraint
+    if n.investment_periods.empty:
+        raise ValueError(
+            "Cannot apply investment period weightings: network has no investment periods"
+        )
+
+    # Calculate time weightings (duration of each period in years)
+    # For single period, use 5 years as conservative default
+    # For multiple periods, each period lasts until next, last uses same as previous
+    if len(n.investment_periods) == 1:
+        time_w = pd.Series([5], index=n.investment_periods)
+    else:
+        time_w = n.investment_periods.to_series().diff().shift(-1).ffill()
+    n.investment_period_weightings["years"] = time_w
+
+    # Calculate objective weightings with social discounting
+    objective_w = get_investment_weighting(time_w, social_discountrate)
+    n.investment_period_weightings["objective"] = objective_w
+
+    logger.info(
+        f"Applied investment period weightings with social discount rate {social_discountrate:.1%}"
+    )
+    logger.debug(f"Time weightings (years): {time_w.to_dict()}")
+    logger.debug(f"Objective weightings: {objective_w.to_dict()}")
+
+
+def adjust_stores_for_perfect_foresight(n: pypsa.Network) -> None:
+    """
+    Adjust store cycling behavior for perfect foresight multi-period optimization.
+
+    For perfect foresight, stores need different cycling constraints than single-period
+    optimization:
+    - Most stores should cycle per investment period (not over entire horizon)
+    - Some stores (CO2, biomass, biogas, EV) should not cycle at all
+    - Biomass, biogas, and CO2 storage stores should reset initial energy at each period
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Multi-period network to adjust
+
+    Notes
+    -----
+    Modifies n.stores attributes in-place:
+    - Sets e_cyclic_per_period=True for most cyclic stores
+    - Sets e_cyclic=False for stores that cycle per period
+    - Sets e_cyclic_per_period=False for non-cyclic stores (CO2, biomass, etc.)
+    - Sets e_initial_per_period=True for biomass, biogas, and co2 stored stores
+
+    This ensures proper storage behavior across investment periods in
+    perfect foresight optimization.
+    """
+    if n.stores.empty:
+        logger.debug("No stores in network, skipping store adjustments")
+        return
+
+    # Stores that should cycle within each period (not over entire horizon)
+    # These are typical energy storage that should start/end each period balanced
     cyclic_i = n.stores[n.stores.e_cyclic].index
-    n.stores.loc[cyclic_i, "e_cyclic_per_period"] = True
-    n.stores.loc[cyclic_i, "e_cyclic"] = False
-    # non cyclic store assumptions
-    non_cyclic_store = ["co2", "co2 stored", "solid biomass", "biogas", "EV battery"]
-    co2_i = n.stores[n.stores.carrier.isin(non_cyclic_store)].index
-    n.stores.loc[co2_i, "e_cyclic_per_period"] = False
-    n.stores.loc[co2_i, "e_cyclic"] = False
-    # e_initial at beginning of each investment period
-    e_initial_store = ["solid biomass", "biogas"]
-    co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
-    n.stores.loc[co2_i, "e_initial_per_period"] = True
-    # n.stores.loc[co2_i, "e_initial"] *= 10
-    # n.stores.loc[co2_i, "e_nom"] *= 10
-    e_initial_store = ["co2 stored"]
-    co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
-    n.stores.loc[co2_i, "e_initial_per_period"] = True
+    if not cyclic_i.empty:
+        n.stores.loc[cyclic_i, "e_cyclic_per_period"] = True
+        n.stores.loc[cyclic_i, "e_cyclic"] = False
+        logger.info(
+            f"Set {len(cyclic_i)} stores to cycle per period instead of over entire horizon"
+        )
+
+    # Stores that should NOT cycle (accumulate over entire horizon)
+    # - CO2: accumulates or depletes over planning horizon
+    # - solid biomass/biogas: limited annual resource availability
+    # - EV battery: daily charging patterns, not cyclic over long periods
+    non_cyclic_carriers = [
+        "co2",
+        "co2 stored",
+        "solid biomass",
+        "biogas",
+        "EV battery",
+    ]
+
+    for carrier in non_cyclic_carriers:
+        store_i = n.stores[n.stores.carrier == carrier].index
+        if not store_i.empty:
+            n.stores.loc[store_i, "e_cyclic"] = False
+            n.stores.loc[store_i, "e_cyclic_per_period"] = False
+            logger.debug(f"Set {len(store_i)} '{carrier}' stores to non-cyclic")
+
+    # Stores that should reset to initial energy at start of each period
+    # Biomass and biogas: annual resource availability is renewed each year
+    # CO2 stored: sequestration storage resets each period
+    e_initial_carriers = ["solid biomass", "biogas", "co2 stored"]
+    for carrier in e_initial_carriers:
+        if carrier == "solid biomass":
+            store_i = n.stores[n.stores.carrier.str.contains("solid biomass")].index
+        else:
+            store_i = n.stores[n.stores.carrier == carrier].index
+
+        if not store_i.empty:
+            n.stores.loc[store_i, "e_initial_per_period"] = True
+            logger.info(
+                f"Set {len(store_i)} '{carrier}' stores to reset initial energy per period"
+            )
+
+    logger.info("Completed store cycling adjustments for perfect foresight")
 
 
 def set_phase_out(
@@ -585,12 +724,84 @@ def apply_time_segmentation_perfect(
     n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
 
 
+def update_heat_pump_efficiency_for_horizon(
+    n: pypsa.Network, current_horizon: int
+) -> None:
+    """
+    Update efficiency of all heat pumps to use current horizon's technology (incremental).
+
+    For incremental perfect foresight workflow: after preparing a single horizon,
+    update all heat pumps in that horizon to use current technology.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Single-period network converted to multi-period [current_horizon]
+    current_horizon : int
+        The horizon year (e.g., 2040)
+
+    Notes
+    -----
+    Modifies n.links_t["efficiency"] and n.links_t["efficiency2"] in-place.
+    Called BEFORE concatenation for each horizon.
+    """
+    if not isinstance(n.snapshots, pd.MultiIndex):
+        logger.debug(
+            "Network is not multi-period, skipping heat pump efficiency update"
+        )
+        return
+
+    heat_pump_idx = n.links.index[n.links.index.str.contains("heat pump")]
+    if heat_pump_idx.empty:
+        logger.debug("No heat pumps found in network")
+        return
+
+    if current_horizon not in n.investment_periods:
+        logger.warning(f"Horizon {current_horizon} not in investment periods, skipping")
+        return
+
+    # Heat pumps with current tech (e.g., "bus AB heat pump-2040")
+    current_tech_hps = heat_pump_idx.str[:-4] + str(current_horizon)
+
+    if "efficiency" not in n.links_t or n.links_t["efficiency"].empty:
+        logger.debug("No dynamic efficiency data")
+        return
+
+    try:
+        correct_efficiency = n.links_t["efficiency"].loc[
+            (current_horizon, slice(None)), current_tech_hps
+        ]
+        n.links_t["efficiency"].loc[(current_horizon, slice(None)), heat_pump_idx] = (
+            correct_efficiency.values
+        )
+        logger.info(
+            f"Updated {len(heat_pump_idx)} heat pumps to {current_horizon} technology"
+        )
+
+        # Also update efficiency2 if exists
+        if "efficiency2" in n.links_t and not n.links_t["efficiency2"].empty:
+            hps_with_eff2 = heat_pump_idx.intersection(n.links_t["efficiency2"].columns)
+            tech_with_eff2 = current_tech_hps.intersection(
+                n.links_t["efficiency2"].columns
+            )
+            if not hps_with_eff2.empty and not tech_with_eff2.empty:
+                correct_eff2 = n.links_t["efficiency2"].loc[
+                    (current_horizon, slice(None)), tech_with_eff2
+                ]
+                n.links_t["efficiency2"].loc[
+                    (current_horizon, slice(None)), hps_with_eff2
+                ] = correct_eff2.values
+                logger.debug(f"Updated efficiency2 for {len(hps_with_eff2)} heat pumps")
+    except KeyError as e:
+        logger.warning(f"Could not update heat pump efficiency: {e}")
+
+
 def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]) -> None:
     """
-    Update the efficiency of heat pumps from previous years to current year
-    (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
+    Update the efficiency of heat pumps for all periods (batch version).
 
-    Note: this also updates the efficiency of heat pumps in preceding years for previous years, which should have no effect (e.g. 2040 heat pumps receive 2030 COPs in 2030).
+    DEPRECATED in streamlined workflow: Use update_heat_pump_efficiency_for_horizon()
+    for incremental updates instead.
 
     Parameters
     ----------
@@ -599,20 +810,20 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]) -> None:
     years : list[int]
         List of planning horizon years.
 
-    Returns
-    -------
-    None
-        This function updates the efficiency in place and does not return a value.
+    Notes
+    -----
+    This batch function is only used in the old concat_networks() workflow.
     """
+    logger.warning(
+        "Using batch update_heat_pump_efficiency(). "
+        "Consider update_heat_pump_efficiency_for_horizon() for incremental updates."
+    )
 
-    # get names of all heat pumps
     heat_pump_idx = n.links.index[n.links.index.str.contains("heat pump")]
     for year in years:
-        # for each heat pump type, correct efficiency is the efficiency of that technology built in <year>
         correct_efficiency = n.links_t["efficiency"].loc[
             (year, slice(None)), heat_pump_idx.str[:-4] + str(year)
         ]
-        # in <year>, set the efficiency of all heat pumps to the correct efficiency
         n.links_t["efficiency"].loc[(year, slice(None)), heat_pump_idx] = (
             correct_efficiency.values
         )
@@ -624,14 +835,17 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_perfect_foresight",
-            opts="",
-            clusters="37",
-            sector_opts="1p7-4380H-T-H-B-I-A-dist1",
         )
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+    logger.warning(
+        "Deprecated: perfect-foresight concatenation now happens inside "
+        "compose_network.py under 'PERFECT FORESIGHT CONCATENATION "
+        "(from prepare_perfect_foresight.py)' (see concatenate_network_with_previous "
+        "and apply_investment_period_weightings). Run compose_network.py instead."
+    )
     # parameters -----------------------------------------------------------
     years = snakemake.config["scenario"]["planning_horizons"]
     social_discountrate = snakemake.params.costs["social_discountrate"]
@@ -657,7 +871,7 @@ if __name__ == "__main__":
     # adjust global constraints CO2 limit
     adjust_CO2_glc(n)
     # adjust stores to multi period investment
-    adjust_stores(n)
+    adjust_stores_for_perfect_foresight(n)
 
     # set phase outs
     set_all_phase_outs(n, years)

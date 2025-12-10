@@ -755,16 +755,18 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "add_existing_baseyear",
             configfiles="config/test/config.myopic.yaml",
-            clusters="5",
-            opts="",
-            sector_opts="",
-            planning_horizons=2030,
+            horizon=2030,
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+    logger.warning(
+        "Deprecated: existing-capacity injection now happens inside "
+        "compose_network.py under 'EXISTING CAPACITIES (from add_existing_baseyear.py)' "
+        "(see add_existing_capacities). Use compose_network.py instead."
+    )
 
     options = snakemake.params.sector
 

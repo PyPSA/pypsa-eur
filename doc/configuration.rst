@@ -41,11 +41,28 @@ using the ``--configfile`` option:
 
     $ snakemake -call --configfile my_config.yaml
 
-.. warning::
+.. note::
 
-    In a previous version of PyPSA-Eur (``<=2025.04.0``), a full copy of the created config
-    was stored in the ``config/config.yaml`` file. This is no longer the case. If the 
-    file exists, snakemake will use it, but no new copy will be created.
+    PyPSA-Eur versions ``<=2025.04.0`` wrote a fresh copy of the merged
+    configuration to ``config/config.yaml`` on every run. The file is no longer
+    auto-generated; Snakemake only reads it when you create it manually.
+
+Accessing configuration inside Snakemake
+----------------------------------------
+
+Rules should **not** index ``config`` directly because overrides from
+``run.scenarios`` and wildcards are only applied through the helpers in
+``rules/common.smk``:
+
+- ``config_provider("electricity", "extendable_carriers")`` returns a callable
+  that Snakemake evaluates per wildcard combination. This keeps caching fast and
+  ensures the right scenario is used.
+- ``get_config(w)`` materialises the fully merged dictionary for a specific set
+  of wildcards. Use this sparingly inside Python helper functions that need to
+  read several keys at once.
+
+Reusing these helpers guarantees that documentation examples, rule
+implementations, and custom extensions all observe the same precedence rules.
 
 
 .. _toplevel_cf:
@@ -104,49 +121,40 @@ Therefore the user can run different configurations within the same directory.
    :file: configtables/foresight.csv
 
 .. note::
-    If you use myopic or perfect foresight, the planning horizon in
-    :ref:`planning_horizons` in scenario has to be set.
+    If you use myopic or perfect foresight, define at least two values in the
+    top-level :ref:`planning_horizons` list so the warm-start logic can look up
+    previous horizons.
 
-.. _scenario:
+.. _planning-horizons:
 
-``scenario``
-============
+``planning_horizons``
+=====================
 
-The ``scenario`` section is an extraordinary section of the config file
-that is strongly connected to the :ref:`wildcards` and is designed to
-facilitate running multiple scenarios through a single command
+Configure planning horizons at the top level rather than through wildcards.
+Provide either a single year (for overnight studies) or a list of investment
+years that should be simulated sequentially:
 
-.. code:: console
+.. code:: yaml
 
-   # for electricity-only studies
-   $ snakemake -call solve_elec_networks
-
-   # for sector-coupling studies
-   $ snakemake -call solve_sector_networks
-
-For each wildcard, a **list of values** is provided. The rule
-``solve_all_elec_networks`` will trigger the rules for creating
-``results/networks/base_s_{clusters}_elec_{opts}.nc`` for **all
-combinations** of the provided wildcard values as defined by Python's
-`itertools.product(...)
-<https://docs.python.org/2/library/itertools.html#itertools.product>`__ function
-that snakemake's `expand(...) function
-<https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`__
-uses.
-
-An exemplary dependency graph (starting from the simplification rules) then looks like this:
-
-.. image:: img/scenarios.png
+   planning_horizons: [2030, 2040, 2050]
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at: scenario:
+   :start-at: planning_horizons:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/scenario.csv
+- Overnight runs require a single value.
+- Myopic runs expect strictly ascending values and warm-start each horizon from
+  ``RESULTS/networks/solved_{previous}.nc``.
+- Perfect foresight also iterates over the list but reuses
+  ``networks/composed_{previous}.nc`` as the brownfield seed.
+
+.. note::
+
+   Earlier releases derived planning horizons from ``scenario`` wildcard
+   entries. That block is ignored now; define ``planning_horizons`` at the top
+   level and keep scenario sweeps inside ``run.scenarios``. See
+   :doc:`migration` for detailed conversion steps.
 
 .. _countries:
 
@@ -202,6 +210,13 @@ Switches for some rules and optional features.
 ``co2 budget``
 ==============
 
+Carbon budgets share one schema for all foresight modes. The ``values`` key
+selects whether yearly entries inside ``upper``/``lower`` are interpreted as
+fractions of the 1990 baseline (``fraction``) or absolute GtCO₂/year
+(``absolute``). Enable ``upper`` and/or ``lower`` to enforce those caps only for
+the explicitly listed years. Optional ``total`` and ``distribution`` entries let
+you spread an aggregate budget across all :ref:`planning_horizons`.
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: co2_budget:
@@ -212,14 +227,23 @@ Switches for some rules and optional features.
    :widths: 22,7,22,33
    :file: configtables/co2_budget.csv
 
-.. note::
-    this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
-    sector_opts.
-
 .. _electricity_cf:
 
 ``electricity``
 ===============
+
+The ``transmission_limit`` key encodes both the metric (``v``olume or
+``c``ost) and an absolute cap (``opt`` for unconstrained optimisation or a
+multiplier such as ``1.25``). When combined with ``existing_capacities.enabled``
+the workflow automatically injects brownfield assets during
+``compose_network``—set ``existing_capacities.enabled`` to ``true`` only if you
+also provide the corresponding CSV inputs (see :ref:`existing_capacities_cf`).
+
+.. note::
+
+   Legacy configurations split transmission metrics and caps across several
+   keys. Update custom YAML files to the concise ``transmission_limit:
+   <metric><cap>`` notation when migrating existing studies.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
@@ -511,6 +535,11 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. note::
    Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect foresight scenarios.
+
+Activating ``enabled`` instructs :mod:`compose_network` to merge the historical
+assets stored in ``resources/powerplants_s.csv`` (and the heat/industry inputs)
+into ``networks/composed_{horizon}.nc``. Leave it ``false`` for greenfield
+studies.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml

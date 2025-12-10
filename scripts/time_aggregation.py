@@ -34,11 +34,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "time_aggregation",
-            configfiles="test/config.overnight.yaml",
-            opts="",
-            clusters="37",
-            sector_opts="Co2L0-24h-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            configfiles="config/test/config.overnight.yaml",
+            horizon=2030,
         )
 
     configure_logging(snakemake)
@@ -46,15 +43,7 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     n = pypsa.Network(snakemake.input.network)
-    resolution = snakemake.params.time_resolution
-
-    if resolution["resolution_elec"] not in (False, 1, "1h", "1H"):
-        raise ValueError(
-            f"Invalid configuration: expected 'resolution_elec' = False for the "
-            f"sector-coupled model, received {resolution['resolution_elec']!r}. "
-            "Use 'resolution_sector' to define temporal resolution instead."
-        )
-    resolution = resolution["resolution_sector"]
+    resolution = snakemake.params.time_resolution["resolution"]
 
     # Representative snapshots
     if not resolution or isinstance(resolution, str) and "sn" in resolution.lower():

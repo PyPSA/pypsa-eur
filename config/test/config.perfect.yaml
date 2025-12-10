@@ -11,16 +11,7 @@ run:
     policy: false
 
 foresight: perfect
-
-scenario:
-  clusters:
-  - 5
-  sector_opts:
-  - ''
-  planning_horizons:
-  - 2030
-  - 2040
-  - 2050
+planning_horizons: [2030, 2040, 2050]
 
 countries: ['BE']
 
@@ -28,41 +19,21 @@ snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
-electricity:
-
-  extendable_carriers:
-    Generator: [OCGT]
-    StorageUnit: [battery]
-    Store: [H2]
-    Link: [H2 pipeline]
-
-  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
-
 sector:
-  min_part_load_fischer_tropsch: 0
-  min_part_load_methanolisation: 0
+  enabled: true
+  heat_vent:
+    urban central: true
+    urban decentral: true
+    rural: true
   solid_biomass_import:
     enable: true
   district_heating:
+    ates:
+      enable: true
     ptes:
       supplemental_heating:
         enable: true
         booster_heat_pump: true
-    ates:
-      enable: true
-  heat_pump_sources:
-    urban central:
-    - air
-    - ptes
-    - river_water
-    - sea_water
-    - geothermal
-    urban decentral:
-    - air
-    rural:
-    - air
-    - ground
-  hydrogen_turbine: false
   regional_oil_demand: false
   regional_co2_sequestration_potential:
     enable: false
@@ -76,6 +47,35 @@ sector:
   biomass_spatial: false
   biomass_to_liquid: false
   electrobiofuels: false
+
+co2_budget:
+  emissions_scope: All greenhouse gases - (CO2 equivalent)
+  values: absolute  # Values are Gt CO2/year (testing absolute mode)
+
+  # Upper emissions constraints (testing selective year constraints)
+  upper:
+    enable: true
+    2030: 2.0  # Gt CO2 for 2030
+    # 2040 not specified - no upper constraint for 2040 (tests optional bounds)
+    2050: 0.0  # Gt CO2 for 2050 (climate neutral)
+
+  # Lower emissions constraints (floor) - also testing selective years
+  lower:
+    enable: true
+    2030: 0.5  # Gt CO2 minimum for 2030
+    # 2040 and 2050 not specified - no lower constraints (tests optional bounds)
+
+electricity:
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+  estimate_renewable_capacities:
+    enable: false
 
 
 atlite:
@@ -98,11 +98,16 @@ renewable:
 
 clustering:
   temporal:
-    resolution_sector: 8760h
+    resolution: 24h
+  cluster_network:
+    algorithm: kmeans
+    n_clusters: 5  # Small number for testing
+    hac_features:
+    - wnd100m
+    - influx_direct
 
 industry:
   St_primary_fraction:
-    2020: 0.8
     2030: 0.6
     2040: 0.5
     2050: 0.4
@@ -111,11 +116,7 @@ solving:
   solver:
     name: highs
     options: highs-simplex
-  mem: 4000
-
-  check_objective:
-    enable: false
-    expected_value: 1.3778753459e+10
+  mem_mb: 4000
 
 plotting:
   map:
@@ -123,8 +124,11 @@ plotting:
   eu_node_location:
     x: -5.5
     y: 46.
-  costs_max: 1000
-  costs_threshold: 0.0000001
-  energy_max:
-  energy_min:
-  energy_threshold: 0.000001
+  costs_max: auto
+  costs_threshold: 0.001
+  energy_max: auto
+  energy_min: auto
+  energy_threshold: 0.00001
+  interactive_bus_balance:
+    bus_name_pattern: "*central heat*"
+  enable_heat_source_maps: true

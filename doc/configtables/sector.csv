@@ -1,12 +1,21 @@
 ,Unit,Values,Description
-transport,--,"{true, false}",Flag to include transport sector.
-heating,--,"{true, false}",Flag to include heating sector.
-biomass,--,"{true, false}",Flag to include biomass sector.
-industry,--,"{true, false}",Flag to include industry sector.
-shipping,--,"{true, false}",Flag to include shipping sector.
-aviation,--,"{true, false}",Flag to include aviation sector.
-agriculture,--,"{true, false}",Flag to include agriculture sector.
-fossil_fuels,--,"{true, false}","Flag to include imports of fossil fuels."
+enabled,bool,"{true, false}","Master switch to enable or disable sector coupling. When enabled, the model includes multi-sector interactions (heat, transport, industry, etc.) beyond electricity-only optimization."
+transport,,,
+-- enable,bool,"{true, false}",Flag to include transport sector.
+heating,,,
+-- enable,bool,"{true, false}",Flag to include heating sector.
+biomass,,,
+-- enable,bool,"{true, false}",Flag to include biomass sector.
+industry,,,
+-- enable,bool,"{true, false}",Flag to include industry sector.
+shipping,,,
+-- enable,bool,"{true, false}",Flag to include shipping sector.
+aviation,,,
+-- enable,bool,"{true, false}",Flag to include aviation sector.
+agriculture,,,
+-- enable,bool,"{true, false}",Flag to include agriculture sector.
+fossil_fuels,,,
+-- enable,bool,"{true, false}","Flag to include imports of fossil fuels."
 district_heating,--,,
 -- potential,--,Dictionary with country codes as keys or float.,"Maximum fraction of urban demand which can be supplied by district heating. If given as dictionary, specify one value per country modeled or provide a default value with key `default` to fill values for all unspecified countries."
 -- progress,--,Dictionary with planning horizons as keys.,Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating

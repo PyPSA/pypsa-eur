@@ -19,7 +19,7 @@ from scripts._helpers import update_config_from_wildcards
 from snakemake.utils import update_config
 
 
-def get_config(config, keys, default=None):
+def navigate_config(config, keys, default=None):
     """Retrieve a nested value from a dictionary using a tuple of keys."""
     value = config
     for key in keys:
@@ -45,18 +45,86 @@ def scenario_config(scenario_name):
     return merge_configs(config, scenarios[scenario_name])
 
 
+@lru_cache(maxsize=128)
+def get_full_config(wildcards_tuple):
+    """
+    Get full scenario-aware config for given wildcards (internal cached version).
+
+    Parameters
+    ----------
+    wildcards_tuple : tuple
+        Wildcards as frozen tuple for caching
+
+    Returns
+    -------
+    dict
+        Fully resolved config with scenario and wildcard overrides applied
+    """
+    # Convert back to wildcards dict
+    wildcards = dict(wildcards_tuple)
+
+    # Start with base or scenario config
+    if config["run"].get("scenarios", {}).get("enable", False) and "run" in wildcards:
+        scenario_name = wildcards["run"]
+        if scenario_name not in scenarios:
+            raise ValueError(
+                f"Scenario {scenario_name} not found in {config['run']['scenarios']['file']}"
+            )
+        base = scenario_config(scenario_name)  # Already cached
+    else:
+        base = copy.deepcopy(config)
+
+    # Apply wildcard overrides
+    result = update_config_from_wildcards(base, wildcards, inplace=False)
+
+    return result
+
+
+def get_config(w):
+    """
+    Get full scenario-aware config for given wildcards.
+
+    This function returns the complete config dictionary with scenario overrides
+    (if enabled) and wildcard-based overrides applied.
+
+    Parameters
+    ----------
+    w : wildcards or dict
+        Snakemake wildcards object or dict containing wildcard values
+
+    Returns
+    -------
+    dict
+        Fully resolved config dictionary
+
+    Examples
+    --------
+    In a Snakemake rule:
+        params:
+            cfg=lambda w: get_config(w)
+
+    In a helper function:
+        def my_function(w):
+            cfg = get_config(w)
+            return cfg["electricity"]["renewable_carriers"]
+    """
+    # Convert wildcards to hashable tuple for caching
+    wildcards_tuple = tuple(sorted(w.items()))
+    return get_full_config(wildcards_tuple)
+
+
 def static_getter(wildcards, keys, default):
     """Getter function for static config values."""
     config_with_wildcards = update_config_from_wildcards(
         config, wildcards, inplace=False
     )
-    return get_config(config_with_wildcards, keys, default)
+    return navigate_config(config_with_wildcards, keys, default)
 
 
 def dynamic_getter(wildcards, keys, default):
     """Getter function for dynamic config values based on scenario."""
     if "run" not in wildcards.keys():
-        return get_config(config, keys, default)
+        return navigate_config(config, keys, default)
     scenario_name = wildcards.run
     if scenario_name not in scenarios:
         raise ValueError(
@@ -66,7 +134,7 @@ def dynamic_getter(wildcards, keys, default):
     config_with_wildcards = update_config_from_wildcards(
         config_with_scenario, wildcards, inplace=False
     )
-    return get_config(config_with_wildcards, keys, default)
+    return navigate_config(config_with_wildcards, keys, default)
 
 
 def config_provider(*keys, default=None):
@@ -160,24 +228,6 @@ def solver_threads(w):
     return threads
 
 
-def memory(w):
-    factor = 3.0
-    for o in w.opts.split("-"):
-        m = re.match(r"^(\d+)h$", o, re.IGNORECASE)
-        if m is not None:
-            factor /= int(m.group(1))
-            break
-    for o in w.opts.split("-"):
-        m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
-        if m is not None:
-            factor *= int(m.group(1)) / 8760
-            break
-    if w.clusters == "all" or w.clusters == "adm":
-        return int(factor * (18000 + 180 * 4000))
-    else:
-        return int(factor * (10000 + 195 * int(w.clusters)))
-
-
 def input_custom_extra_functionality(w):
     path = config_provider(
         "solving", "options", "custom_extra_functionality", default=False
@@ -188,16 +238,11 @@ def input_custom_extra_functionality(w):
 
 
 def solved_previous_horizon(w):
-    planning_horizons = config_provider("scenario", "planning_horizons")(w)
-    i = planning_horizons.index(int(w.planning_horizons))
-    planning_horizon_p = str(planning_horizons[i - 1])
+    horizons = config_provider("planning_horizons")(w)
+    i = horizons.index(int(w.horizon))
+    planning_horizon_p = str(horizons[i - 1])
 
-    return (
-        RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_"
-        + planning_horizon_p
-        + ".nc"
-    )
+    return RESULTS + "networks/solved_" + planning_horizon_p + ".nc"
 
 
 def input_cutout(wildcards, cutout_names="default"):

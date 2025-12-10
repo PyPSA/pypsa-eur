@@ -31,15 +31,15 @@ Inputs
 ------
 - `data/hera_{year}/river_discharge_{year}.nc`: River discharge data from HERA
 - `data/hera_{year}/ambient_temp_{year}.nc`: Ambient temperature data from HERA
-- `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Onshore regions
-- `resources/<run_name>/dh_areas_base_s_{clusters}.geojson`: District heating areas
+- `resources/{run}/regions_onshore.geojson`: Onshore regions
+- `resources/{run}/dh_areas.geojson`: District heating areas
 
 Outputs
 -------
-- `resources/<run_name>/heat_source_power_river_water_base_s_{clusters}.csv`: River heating power potentials by region
-- `resources/<run_name>/temp_river_water_base_s_{clusters}.nc`: River water temperature profiles by region
-- `resources/<run_name>/temp_river_water_base_s_{clusters}_temporal_aggregate.nc`: Temporal aggregated temperature data
-- `resources/<run_name>/heat_source_energy_river_water_base_s_{clusters}_temporal_aggregate.nc`: Temporal aggregated energy data
+- `resources/{run}/heat_source_power_river_water.csv`: River heating power potentials by region
+- `resources/{run}/temp_river_water.nc`: River water temperature profiles by region
+- `resources/{run}/temp_river_water_temporal_aggregate.nc`: Temporal aggregated temperature data
+- `resources/{run}/heat_source_energy_river_water_temporal_aggregate.nc`: Temporal aggregated energy data
 """
 
 import gc

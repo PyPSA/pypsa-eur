@@ -4,28 +4,22 @@
 
 
 """
-Creates networks clustered to ``{cluster}`` number of zones with aggregated
+Creates networks clustered to configured number of zones with aggregated
 buses and transmission corridors.
 
 Outputs
 -------
 
-- ``resources/regions_onshore_base_s_{clusters}.geojson``:
+- ``resources/{run}/networks/regions_onshore.geojson``:
+  Onshore regions for clustered network
 
-    .. image:: img/regions_onshore_base_s_X.png
-        :scale: 33 %
+- ``resources/{run}/networks/regions_offshore.geojson``:
+  Offshore regions for clustered network
 
-- ``resources/regions_offshore_base_s_{clusters}.geojson``:
-
-    .. image:: img/regions_offshore_base_s_X.png
-        :scale: 33 %
-
-- ``resources/busmap_base_s_{clusters}.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/base_s_{clusters}.nc``;
-- ``resources/linemap_base_s_{clusters}.csv``: Mapping of lines from ``networks/base.nc`` to ``networks/base_s_{clusters}.nc``;
-- ``networks/base_s_{clusters}.nc``:
-
-    .. image:: img/base_s_X.png
-        :scale: 40  %
+- ``resources/{run}/networks/busmap.csv``: Mapping of buses from ``networks/simplified.nc`` to ``networks/clustered.nc``;
+- ``resources/{run}/networks/linemap.csv``: Mapping of lines from ``networks/base.nc`` to ``networks/clustered.nc``;
+- ``resources/{run}/networks/clustered.nc``:
+  Clustered network with aggregated buses and corridors
 
 Description
 -----------
@@ -40,25 +34,25 @@ Description
 
 Exemplary unsolved network clustered to 512 nodes:
 
-.. image:: img/base_s_512.png
+.. image:: img/clustered_512.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 256 nodes:
 
-.. image:: img/base_s_256.png
+.. image:: img/clustered_256.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 128 nodes:
 
-.. image:: img/base_s_128.png
+.. image:: img/clustered_128.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 37 nodes:
 
-.. image:: img/base_s_37.png
+.. image:: img/clustered_37.png
     :scale: 40  %
     :align: center
 """
@@ -85,7 +79,7 @@ from scipy.sparse.csgraph import connected_components
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import MultiPolygon, Polygon
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, sanitize_busmap, set_scenario_config
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -187,7 +181,7 @@ def busmap_from_shapes(
                 dists = shapes_converted.distance(row.geometry)
                 busmap.at[i] = dists.idxmin()
 
-    return busmap
+    return sanitize_busmap(busmap)
 
 
 def copperplate_buses(n: pypsa.Network, copperplate_regions: list[list[str]]):
@@ -393,7 +387,7 @@ def busmap_for_n_clusters(
 
     compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
 
-    return (
+    return sanitize_busmap(
         n.buses.groupby(["country", "sub_network"], group_keys=False)
         .apply(busmap_for_country, **compat_kws)
         .squeeze()
@@ -518,7 +512,7 @@ def busmap_for_admin_regions(
             how="left",
         )["admin"]
 
-    return buses["busmap"]
+    return sanitize_busmap(buses["busmap"])
 
 
 def keep_largest_polygon(geometry: MultiPolygon) -> Polygon:
@@ -611,6 +605,19 @@ if __name__ == "__main__":
     mode = params.mode
     solver_name = snakemake.config["solving"]["solver"]["name"]
 
+    simplified_busmap = pd.read_csv(
+        snakemake.input.simplified_busmap, index_col=0
+    ).squeeze()
+    if isinstance(simplified_busmap, pd.DataFrame):
+        simplified_busmap = simplified_busmap.iloc[:, 0]
+    simplified_busmap = sanitize_busmap(simplified_busmap)
+
+    n_clusters_value = params.n_clusters
+    if isinstance(n_clusters_value, str) and n_clusters_value.lower() == "all":
+        n_clusters_value = "all"
+    else:
+        n_clusters_value = int(n_clusters_value)
+
     n = pypsa.Network(snakemake.input.network)
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
 
@@ -621,9 +628,9 @@ if __name__ == "__main__":
         .reindex(n.buses.index, fill_value=0.0)
     )
 
-    if snakemake.wildcards.clusters == "all":
+    if n_clusters_value == "all":
         # Fast-path if no clustering is necessary
-        busmap = n.buses.index.to_series()
+        busmap = sanitize_busmap(n.buses.index.to_series())
         linemap = n.lines.index.to_series()
         clustering = pypsa.clustering.spatial.Clustering(n, busmap, linemap)
     else:
@@ -652,16 +659,16 @@ if __name__ == "__main__":
                 f"Imported custom shapes from {snakemake.input.custom_busshapes}"
             )
 
-            busmap = custom_busmap
+            busmap = sanitize_busmap(custom_busmap)
         elif mode == "custom_busmap":
             custom_busmap = pd.read_csv(
                 snakemake.input.custom_busmap, index_col=0
             ).squeeze()
             custom_busmap.index = custom_busmap.index.astype(str)
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
-            busmap = custom_busmap
+            busmap = sanitize_busmap(custom_busmap)
         else:
-            n_clusters = int(snakemake.wildcards.clusters)
+            n_clusters = int(n_clusters_value)
             algorithm = params.cluster_network["algorithm"]
             features = None
             if algorithm == "hac":
@@ -693,6 +700,8 @@ if __name__ == "__main__":
         )
 
     nc = clustering.n
+    cluster_busmap = sanitize_busmap(clustering.busmap)
+    busmaps_for_regions = (simplified_busmap, cluster_busmap)
 
     if snakemake.params.copperplate_regions:
         copperplate_buses(nc, snakemake.params.copperplate_regions)
@@ -703,11 +712,14 @@ if __name__ == "__main__":
     # nc.shapes = n.shapes.copy()
     for which in ["regions_onshore", "regions_offshore"]:
         regions = gpd.read_file(snakemake.input[which])
-        clustered_regions = cluster_regions((clustering.busmap,), regions)
+        clustered_regions = cluster_regions(busmaps_for_regions, regions)
         clustered_regions.to_file(snakemake.output[which])
         # append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
 
-    nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    nc.meta = dict(
+        snakemake.config,
+        **dict(parameters=dict(n_clusters=n_clusters_value)),
+    )
     nc.export_to_netcdf(snakemake.output.network)
 
     logger.info(

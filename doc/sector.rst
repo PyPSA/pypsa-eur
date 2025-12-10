@@ -11,20 +11,12 @@ The preparation process of the sector-coupled version of the PyPSA-Eur energy sy
 Not all data dependencies are shipped with the git repository.
 Instead we provide separate data bundles which can be obtained
 using the ``retrieve*`` rules (:ref:`data`).
-Having downloaded the necessary data,
 
-- :mod:`add_brownfield` builds and stores the base network with all buses, HVAC lines and HVDC links, while
+The sector-specific preprocessing rules generate intermediate data files that are later consumed by :mod:`compose_network`, which orchestrates the final network assembly. This includes injecting existing capacities (via functions from :mod:`add_existing_baseyear`), applying brownfield constraints for myopic foresight (via :mod:`add_brownfield`), and integrating sectoral demand and supply (via :mod:`prepare_sector_network`).
 
+.. note::
 
-Rule ``add_brownfield``
-==============================================================================
-
-.. automodule:: add_brownfield
-
-Rule ``add_existing_baseyear``
-==============================================================================
-
-.. automodule:: add_existing_baseyear
+   The scripts :mod:`add_brownfield`, :mod:`add_existing_baseyear`, and :mod:`prepare_sector_network` are now library modules imported by :mod:`compose_network` rather than standalone Snakemake rules. See :doc:`preparation` for the updated workflow description.
 
 Rule ``build_existing_heating_distribution``
 ==============================================================================
@@ -261,8 +253,3 @@ Rule ``time_aggregation``
 ==============================================================================
 
 .. automodule:: time_aggregation
-
-Rule ``prepare_sector_network``
-==============================================================================
-
-.. automodule:: prepare_sector_network

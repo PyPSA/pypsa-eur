@@ -16,13 +16,13 @@ Preparing the cost data includes:
 Inputs
 ------
 
-- ``resources/costs_{planning_horizons}.csv``: Default cost data for specified planning horizon
+- ``resources/costs_{horizon}.csv``: Default cost data for specified planning horizon
 - (by default) ``data/custom_costs.csv``: Custom cost modifications (can be configured with `costs:custom_costs:file`
 
 Outputs
 -------
 
-- ``resources/costs_{planning_horizons}_processed.csv``: Prepared cost data with custom modifications applied
+- ``resources/costs_{horizon}_processed.csv``: Prepared cost data with custom modifications applied
 """
 
 import logging
@@ -232,7 +232,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     nyears = n.snapshot_weightings.generators.sum() / 8760.0
-    planning_horizon = str(snakemake.wildcards.planning_horizons)
+    planning_horizon = str(snakemake.wildcards.horizon)
 
     # Retrieve costs assumptions
     costs = pd.read_csv(snakemake.input.costs, index_col=["technology", "parameter"])

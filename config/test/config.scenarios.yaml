@@ -13,11 +13,7 @@ run:
     file: "config/test/scenarios.yaml"
   disable_progressbar: true
 
-scenario:
-  clusters:
-  - 5
-  opts:
-  - ''
+planning_horizons: [2030]
 
 countries: ['BE']
 

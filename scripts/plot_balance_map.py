@@ -10,12 +10,17 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 from packaging.version import Version, parse
-from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
+from pypsa.plot.maps.static import (
+    add_legend_lines,
+    add_legend_patches,
+    add_legend_semicircles,
+)
 from pypsa.statistics import get_transmission_carriers
 
 from scripts._helpers import (
     PYPSA_V1,
     configure_logging,
+    create_placeholder_plot,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -30,10 +35,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_balance_map",
-            clusters="10",
-            opts="",
-            sector_opts="",
-            planning_horizons="2050",
+            horizon=2050,
             carrier="H2",
         )
 
@@ -65,9 +67,18 @@ if __name__ == "__main__":
     conversion = config["unit_conversion"]
 
     if carrier not in n.buses.carrier.unique():
-        raise ValueError(
-            f"Carrier {carrier} is not in the network. Remove from configuration `plotting: balance_map: bus_carriers`."
+        import logging
+        import sys
+
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"Carrier {carrier} is not in the network. Skipping balance map plot. "
+            f"Consider removing from configuration `plotting: balance_map: bus_carriers` for this scenario."
         )
+        create_placeholder_plot(
+            snakemake.output[0], f"No {carrier} carrier\nin network", figsize=(1, 1)
+        )
+        sys.exit(0)
 
     # for plotting change bus to location
     n.buses["location"] = n.buses["location"].replace("", "EU").fillna("EU")

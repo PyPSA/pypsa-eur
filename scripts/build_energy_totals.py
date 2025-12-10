@@ -1639,7 +1639,7 @@ if __name__ == "__main__":
     district_heat_share.to_csv(snakemake.output.district_heat_share)
 
     base_year_emissions = params["base_emissions_year"]
-    emissions_scope = snakemake.params.energy["emissions"]
+    emissions_scope = snakemake.params.emissions_scope
     eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)
     eurostat_co2 = build_eurostat_co2(eurostat, base_year_emissions)
 

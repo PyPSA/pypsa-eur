@@ -21,7 +21,7 @@ Outputs
     .. image:: img/regions_offshore_base_s  .png
             :scale: 33 %
 
-- ``resources/busmap_base_s.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/base_s.nc``;
+- ``resources/busmap_simplified.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/simplified.nc``;
 - ``networks/base.nc``:
 
     .. image:: img/base_s.png
@@ -51,7 +51,11 @@ from pypsa.clustering.spatial import busmap_by_stubs, get_clustering_from_busmap
 from scipy.sparse.csgraph import connected_components, dijkstra
 
 from scripts._helpers import configure_logging, set_scenario_config
-from scripts.cluster_network import busmap_for_admin_regions, cluster_regions
+from scripts.cluster_network import (
+    busmap_for_admin_regions,
+    cluster_regions,
+    sanitize_busmap,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -487,6 +491,7 @@ if __name__ == "__main__":
         busmaps.append(busmap_hac)
 
     busmap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
+    busmap_s = sanitize_busmap(busmap_s)
     busmap_s.to_csv(snakemake.output.busmap)
 
     for which in ["regions_onshore", "regions_offshore"]:

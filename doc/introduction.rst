@@ -34,7 +34,7 @@ For instance, an invocation to
 
 .. code:: console
 
-    $ snakemake -call results/networks/base_s_128_elec_.nc
+    $ snakemake -call results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml
 
 follows this dependency graph
 
@@ -48,8 +48,8 @@ file referenced in the command above. The **arrows** indicate the outputs from
 preceding rules which another rule takes as input data.
 
 .. note::
-    The dependency graph was generated using
-    ``pixi run dot -c && snakemake --dag results/networks/base_s_128_elec_.nc -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png``
+    The dependency graph can be regenerated using
+    ``pixi run dot -c && snakemake --dag results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png``
 
 For the use of ``snakemake``, it makes sense to familiarize yourself quickly
 with the `basic tutorial

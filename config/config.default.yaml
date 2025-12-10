@@ -30,17 +30,8 @@ run:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
-# Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
-scenario:
-  clusters:
-  - 50
-  opts:
-  - ''
-  sector_opts:
-  - ''
-  planning_horizons:
-  - 2050
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#planning-horizons
+planning_horizons: 2050  # Single year or list [2030, 2040, 2050]
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
@@ -91,13 +82,28 @@ enable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
-  2020: 0.720 # average emissions of 2019 to 2021 relative to 1990, CO2 excl LULUCF, EEA data, European Environment Agency. (2023a). Annual European Union greenhouse gas inventory 1990–2021 and inventory report 2023 - CRF Table. https://unfccc.int/documents/627830
-  2025: 0.648 # With additional measures (WAM) projection, CO2 excl LULUCF, European Environment Agency. (2023e). Member States’ greenhouse gas (GHG) emission projections 2023. https://www.eea.europa.eu/en/datahub/datahubitem-view/4b8d94a4-aed7-4e67-a54c-0623a50f48e8
-  2030: 0.450 # 55% reduction by 2030 (Ff55)
-  2035: 0.250
-  2040: 0.100 # 90% by 2040
-  2045: 0.050
-  2050: 0.000 # climate-neutral by 2050
+  emissions_scope: All greenhouse gases - (CO2 equivalent)
+
+  # Interpretation mode for per-period values (applies to BOTH upper and lower bounds)
+  # "fraction": Values are fractions of 1990 baseline (e.g., 0.450 = 45% of 1990)
+  # "absolute": Values are Gt CO2/year (e.g., 2.04 Gt CO2/year)
+  # Note: When enable: true, only years explicitly specified are constrained.
+  # Omitted years have no constraint for that bound type.
+  values: fraction
+
+  upper:
+    enable: true
+    2020: 0.720 # average emissions of 2019 to 2021 relative to 1990, CO2 excl LULUCF, EEA data, European Environment Agency. (2023a). Annual European Union greenhouse gas inventory 1990–2021 and inventory report 2023 - CRF Table. https://unfccc.int/documents/627830
+    2025: 0.648 # With additional measures (WAM) projection, CO2 excl LULUCF, European Environment Agency. (2023e). Member States’ greenhouse gas (GHG) emission projections 2023. https://www.eea.europa.eu/en/datahub/datahubitem-view/4b8d94a4-aed7-4e67-a54c-0623a50f48e8
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2035: 0.250
+    2040: 0.100 # 90% by 2040
+    2045: 0.050
+    2050: 0.000 # climate-neutral by 2050
+
+  # Prevents unrealistic/too-fast decarbonization in early years
+  lower:
+    enable: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -105,9 +111,6 @@ electricity:
   base_network: osm
   gaslimit_enable: false
   gaslimit: false
-  co2limit_enable: false
-  co2limit: 7.75e+7
-  co2base: 1.487e+9
 
   operational_reserve:
     activate: false
@@ -145,6 +148,8 @@ electricity:
   autarky:
     enable: false
     by_country: false
+
+  exclude_carriers: []
 
   transmission_limit: vopt
 
@@ -331,9 +336,9 @@ lines:
     400.: Al/St 240/40 4-bundle 380.0
     500.: Al/St 240/40 4-bundle 380.0
     750.: Al/St 560/50 4-bundle 750.0
-  s_max_pu: 0.7
-  s_nom_max: .inf
-  max_extension: 20000 #MW
+  s_max_pu: 0.7  # N-1 security margin (max utilization)
+  s_nom_max: 10_000  # Absolute upper limit for line capacity [MW]
+  s_nom_max_extension: 8_000  # Maximum capacity extension per line [MW]
   length_factor: 1.25
   reconnect_crimea: true
   under_construction: keep # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
@@ -346,10 +351,10 @@ lines:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
 links:
-  p_max_pu: 1.0
+  p_max_pu: 1.0  # Maximum utilization for DC links
   p_min_pu: -1.0
-  p_nom_max: .inf
-  max_extension: 30000 #MW
+  p_nom_max: .inf  # Absolute upper limit for link capacity [MW]
+  p_nom_max_extension: .inf  # Maximum capacity extension per link [MW]
   length_factor: 1.25
   under_construction: keep # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
 
@@ -420,7 +425,6 @@ pypsa_eur:
 energy:
   energy_totals_year: 2019
   base_emissions_year: 1990
-  emissions: CO2
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#biomass
 biomass:
@@ -476,10 +480,12 @@ solar_thermal:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 existing_capacities:
+  enabled: false
   grouping_years_power: [1920, 1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025]
   grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # heat grouping years >= baseyear will be ignored
   threshold_capacity: 10
   default_heating_lifetime: 20
+  baseyear: 2020
   conventional_carriers:
   - lignite
   - coal
@@ -488,14 +494,23 @@ existing_capacities:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
-  transport: true
-  heating: true
-  biomass: true
-  industry: true
-  shipping: true
-  aviation: true
-  agriculture: true
-  fossil_fuels: true
+  enabled: true
+  transport:
+    enable: true
+  heating:
+    enable: true
+  biomass:
+    enable: true
+  industry:
+    enable: true
+  shipping:
+    enable: true
+  aviation:
+    enable: true
+  agriculture:
+    enable: true
+  fossil_fuels:
+    enable: true
   district_heating:
     potential: 0.6
     progress:
@@ -977,6 +992,7 @@ clustering:
     remove_stubs: true
     remove_stubs_across_borders: false
   cluster_network:
+    n_clusters: 50
     algorithm: kmeans
     hac_features:
     - wnd100m
@@ -989,8 +1005,11 @@ clustering:
       ramp_limit_up: max
       ramp_limit_down: max
   temporal:
-    resolution_elec: false
-    resolution_sector: false
+    resolution: false
+    time_segmentation:
+      enable: false
+      resolution:
+      segments: []
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:

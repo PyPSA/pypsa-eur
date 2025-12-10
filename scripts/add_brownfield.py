@@ -219,7 +219,7 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
         pd.Series(dr, index=dr).where(lambda x: x.isin(n.snapshots), pd.NA).ffill()
     )
 
-    for carrier in params["carriers"]:
+    for carrier in params["renewable_carriers"]:
         if carrier == "hydro":
             continue
 
@@ -282,15 +282,17 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
     )
 
     # Change efficiency2 for heat pumps that use an explicitly modelled heat source
-    previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
-        n_p.links_t["efficiency2"].columns
-    )
-    current_iteration_columns = corresponding_idx_this_iteration.intersection(
-        n.links_t["efficiency2"].columns
-    )
-    n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
-        n.links_t["efficiency2"].loc[:, current_iteration_columns].values
-    )
+    # Only update if efficiency2 exists (sector-coupled networks only)
+    if "efficiency2" in n_p.links_t and "efficiency2" in n.links_t:
+        previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
+            n_p.links_t["efficiency2"].columns
+        )
+        current_iteration_columns = corresponding_idx_this_iteration.intersection(
+            n.links_t["efficiency2"].columns
+        )
+        n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
+            n.links_t["efficiency2"].loc[:, current_iteration_columns].values
+        )
 
 
 def update_dynamic_ptes_capacity(
@@ -313,6 +315,13 @@ def update_dynamic_ptes_capacity(
     None
         Updates capacity in-place.
     """
+    # Check if e_max_pu exists in current network
+    if not n.stores_t.e_max_pu.empty:
+        logger.debug(
+            "No dynamic PTES e_max_pu profiles in current network, skipping update"
+        )
+        return
+
     # pit storages in previous iteration
     dynamic_ptes_idx_previous_iteration = n_p.stores.index[
         n_p.stores.index.str.contains("water pits")
@@ -333,20 +342,24 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            clusters="39",
-            opts="",
-            sector_opts="",
-            planning_horizons=2050,
+            horizon=2050,
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+    logger.warning(
+        "Deprecated: brownfield application is now coordinated by compose_network.py "
+        "under 'BROWNFIELD FOR MYOPIC (from add_brownfield.py)' where add_brownfield "
+        "is orchestrated. Call compose_network instead of running add_brownfield "
+        "directly."
+        "Call compose_network instead of running add_brownfield directly."
+    )
 
     logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
 
-    year = int(snakemake.wildcards.planning_horizons)
+    year = int(snakemake.wildcards.horizon)
 
     n = pypsa.Network(snakemake.input.network)
 

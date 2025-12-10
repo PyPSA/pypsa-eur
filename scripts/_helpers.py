@@ -11,7 +11,7 @@ import time
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 import atlite
 import fiona
@@ -29,6 +29,90 @@ logger = logging.getLogger(__name__)
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
 PYPSA_V1 = bool(re.match(r"^1\.\d", pypsa.__version__))
+
+
+def strip_if_str(value: Any) -> Any:
+    """Return stripped strings while leaving other values unchanged."""
+
+    return value.strip() if isinstance(value, str) else value
+
+
+def sanitize_busmap(busmap: pd.Series) -> pd.Series:
+    """Ensure busmap labels are stripped of surrounding whitespace."""
+
+    series = busmap.map(strip_if_str)
+    if series.name is None:
+        series.name = "busmap"
+    return series
+
+
+def rename_network_component(
+    network: pypsa.Network, component: str, rename_map: pd.Series
+) -> None:
+    """
+    Rename a PyPSA component across static and dynamic tables in-place.
+
+    Parameters
+    ----------
+    network : pypsa.Network
+        Network instance whose component entries should be renamed.
+    component : str
+        Component name as used by PyPSA (e.g. ``"Generator"``, ``"Link"``).
+    rename_map : pandas.Series
+        Series mapping existing component names (index) to their new names (values).
+
+    Raises
+    ------
+    KeyError
+        If the component is not present on the network or any of the keys to
+        rename are missing from the static table.
+    ValueError
+        If duplicate source or target names are detected, or if a target name
+        collides with an unrenamed entry.
+    """
+
+    if component not in network.component_attrs:
+        raise KeyError(f"Component '{component}' not found on network")
+
+    if rename_map.empty:
+        return
+
+    rename_map = rename_map.dropna()
+    if rename_map.empty:
+        return
+
+    if pd.Index(rename_map.index).has_duplicates:
+        raise ValueError("Duplicate component names in rename_map index")
+
+    if pd.Index(rename_map.values).has_duplicates:
+        raise ValueError("Duplicate target names in rename_map values")
+
+    static_table = network.static(component)
+
+    missing = pd.Index(rename_map.index).difference(static_table.index)
+    if not missing.empty:
+        missing_text = ", ".join(str(name) for name in missing)
+        raise KeyError(
+            f"Cannot rename {component} entries; missing keys: {missing_text}"
+        )
+
+    existing = static_table.index.difference(rename_map.index)
+    conflicts = existing.intersection(pd.Index(rename_map.values))
+    if not conflicts.empty:
+        conflict_text = ", ".join(str(name) for name in conflicts)
+        raise ValueError(
+            f"Renaming {component} entries would collide with existing names: {conflict_text}"
+        )
+
+    mapping = rename_map.to_dict()
+
+    static_table.rename(index=mapping, inplace=True)
+
+    for dynamic_table in network.dynamic(component).values():
+        if isinstance(dynamic_table, pd.DataFrame):
+            dynamic_table.rename(columns=mapping, inplace=True)
+        elif isinstance(dynamic_table, pd.Series):
+            dynamic_table.rename(index=mapping, inplace=True)
 
 
 def get_scenarios(run):
@@ -105,15 +189,15 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
         )
         is_shared = no_relevant_wildcards and not_shared_rule
         shared_files = (
-            "networks/base_s_{clusters}.nc",
-            "regions_onshore_base_s_{clusters}.geojson",
-            "regions_offshore_base_s_{clusters}.geojson",
-            "busmap_base_s_{clusters}.csv",
-            "linemap_base_s_{clusters}.csv",
-            "cluster_network_base_s_{clusters}",
-            "profile_{clusters}_",
-            "build_renewable_profile_{clusters}",
-            "regions_by_class_{clusters}",
+            "networks/clustered.nc",
+            "networks/simplified.nc",
+            "regions_onshore.geojson",
+            "regions_offshore.geojson",
+            "regions_onshore_simplified.geojson",
+            "regions_offshore_simplified.geojson",
+            "busmap_simplified.csv",
+            "busmap.csv",
+            "linemap.csv",
             "availability_matrix_",
             "determine_availability_matrix_",
             "solar_thermal",
@@ -660,15 +744,7 @@ def update_config_from_wildcards(config, w, inplace=True):
         opts = w.opts.split("-")
 
         if nhours := get_opt(opts, r"^\d+(h|seg)$"):
-            config["clustering"]["temporal"]["resolution_elec"] = nhours
-
-        co2l_enable, co2l_value = find_opt(opts, "Co2L")
-        if co2l_enable:
-            config["electricity"]["co2limit_enable"] = True
-            if co2l_value is not None:
-                config["electricity"]["co2limit"] = (
-                    co2l_value * config["electricity"]["co2base"]
-                )
+            config["clustering"]["temporal"]["resolution"] = nhours
 
         gasl_enable, gasl_value = find_opt(opts, "CH4L")
         if gasl_enable:
@@ -719,19 +795,19 @@ def update_config_from_wildcards(config, w, inplace=True):
         opts = w.sector_opts.split("-")
 
         if "T" in opts:
-            config["sector"]["transport"] = True
+            config["sector"]["transport"] = {"enable": True}
 
         if "H" in opts:
-            config["sector"]["heating"] = True
+            config["sector"]["heating"] = {"enable": True}
 
         if "B" in opts:
-            config["sector"]["biomass"] = True
+            config["sector"]["biomass"] = {"enable": True}
 
         if "I" in opts:
-            config["sector"]["industry"] = True
+            config["sector"]["industry"] = {"enable": True}
 
         if "A" in opts:
-            config["sector"]["agriculture"] = True
+            config["sector"]["agriculture"] = {"enable": True}
 
         if "CCL" in opts:
             config["solving"]["constraints"]["CCL"] = True
@@ -751,7 +827,7 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["solving"]["constraints"]["SAFE"] = True
 
         if nhours := get_opt(opts, r"^\d+(h|sn|seg)$"):
-            config["clustering"]["temporal"]["resolution_sector"] = nhours
+            config["clustering"]["temporal"]["resolution"] = nhours
 
         if "decentral" in opts:
             config["sector"]["electricity_transmission_grid"] = False
@@ -785,16 +861,6 @@ def update_config_from_wildcards(config, w, inplace=True):
         if maxext is not None:
             config["lines"]["max_extension"] = maxext * 1e3
             config["links"]["max_extension"] = maxext * 1e3
-
-        _, co2l_value = find_opt(opts, "Co2L")
-        if co2l_value is not None:
-            config["co2_budget"] = float(co2l_value)
-
-        if co2_distribution := get_opt(opts, r"^(cb)\d+(\.\d+)?(ex|be)$"):
-            config["co2_budget"] = co2_distribution
-
-        if co2_budget := get_opt(opts, r"^(cb)\d+(\.\d+)?$"):
-            config["co2_budget"] = float(co2_budget[2:])
 
         attr_lookup = {
             "p": "p_nom_max",
@@ -1019,6 +1085,60 @@ def load_cutout(
         cutout.data = cutout.data.sel(time=time)
 
     return cutout
+
+
+def create_placeholder_plot(
+    output_path: str, message: str, ylabel: str = "", figsize: tuple = (12, 8)
+) -> None:
+    """
+    Create a placeholder plot when data is missing or empty.
+
+    This is useful for plotting scripts that need to create output files
+    even when the underlying data is not available (e.g., carriers missing
+    in electricity-only models).
+
+    Parameters
+    ----------
+    output_path : str
+        Path where the placeholder plot should be saved.
+    message : str
+        Message to display in the center of the plot.
+    ylabel : str, optional
+        Y-axis label to display. Default is empty string.
+    figsize : tuple, optional
+        Figure size as (width, height). Default is (12, 8).
+
+    Returns
+    -------
+    None
+        Saves the plot to output_path and closes the figure.
+
+    Examples
+    --------
+    >>> create_placeholder_plot(
+    ...     "results/plot.svg",
+    ...     "No gas network in model",
+    ...     ylabel="Energy [TWh/a]"
+    ... )
+    """
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.text(
+        0.5,
+        0.5,
+        message,
+        ha="center",
+        va="center",
+        fontsize=14 if figsize[0] >= 10 else 10,
+        transform=ax.transAxes,
+    )
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    ax.grid(axis="x")
+    ax.axis("off") if not ylabel else None
+    fig.savefig(output_path, bbox_inches="tight")
+    plt.close(fig)
 
 
 def load_costs(cost_file: str) -> pd.DataFrame:
