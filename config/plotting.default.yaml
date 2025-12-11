@@ -466,6 +466,8 @@ plotting:
     geothermal heat pump: '#4f2144'
     geothermal heat utilisation: '#ba91b1'
     river_water heat: '#4bb9f2'
+    river_water heat preheater: '#4bb9f2'
+    river_water heat utilisation: '#4bb9f2'
     river_water heat pump: '#4bb9f2'
     sea_water heat: '#0b222e'
     sea_water heat pump: '#0b222e'
