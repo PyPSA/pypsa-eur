@@ -1502,12 +1502,19 @@ def input_heat_source_power(w):
     heat_sources = config_provider("sector", "heat_sources", "urban central")(w)
 
     for heat_source_name in heat_sources:
-        if HeatSource(heat_source_name) == HeatSource.GEOTHERMAL:
-            result[heat_source_name] = resources(
-                "heat_source_power_"
-                + heat_source_name
-                + "_base_s_{clusters}_{planning_horizons}.csv"
-            )
+        if HeatSource(heat_source_name).requires_generator:
+            if HeatSource(heat_source_name) == HeatSource.GEOTHERMAL:
+                result[heat_source_name] = resources(
+                    "heat_source_power_"
+                    + heat_source_name
+                    + "_base_s_{clusters}_{planning_horizons}.csv"
+                )
+            else:
+                result[heat_source_name] = resources(
+                    "heat_source_power_" + heat_source_name + "_base_s_{clusters}.csv"
+                )
+        else:
+            continue
 
     return result
 
