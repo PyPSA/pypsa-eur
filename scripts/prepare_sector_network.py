@@ -3404,6 +3404,7 @@ def add_heat(
 
             if (
                 heat_system == HeatSystem.URBAN_CENTRAL
+                and params.sector["ptes"]["enable"] == True
                 and params.sector["district_heating"]["ptes"][
                     "discharge_resistive_boosting"
                 ]
