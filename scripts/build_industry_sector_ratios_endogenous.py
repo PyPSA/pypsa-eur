@@ -18,6 +18,8 @@ To the end of endogenising this decision in the model, the heat-producing input 
 translated and split into the respective temperature bands, depending on industry sector and process.
 
 These splits are mostly taken from Fleiter et al. 2025.
+"Hydrogen Infrastructure in the Future CO2-Neutral European Energy System -
+How Does the Demand for Hydrogen Affect the Need for Infrastructure?"
 
 The script does not cover the steel sector. Its endogenisation is taken care of elsewhere.
 """
@@ -228,6 +230,33 @@ def build_industry_sector_ratios_endogenous():
     endogenous_sector_ratios.drop("heat", inplace=True)
 
     endogenous_sector_ratios.index.name = "MWh/t"
+
+    # Ensure all level 1 values are present for all level 0 entries
+    # Get all unique level 1 values across the entire dataframe
+    all_level1_values = endogenous_sector_ratios.columns.get_level_values(1).unique()
+
+    # For each level 0 entry, ensure all level 1 values exist
+    new_columns = []
+    for level0 in endogenous_sector_ratios.columns.get_level_values(0).unique():
+        existing_level1 = endogenous_sector_ratios[level0].columns
+        missing_level1 = all_level1_values.difference(existing_level1)
+
+        if len(missing_level1) > 0:
+            # Calculate average values for missing columns across level 0 entries where they exist
+            for level1 in missing_level1:
+                # Find all level 0 entries that have this level 1 value
+                mask = endogenous_sector_ratios.columns.get_level_values(1) == level1
+                if mask.any():
+                    # Calculate mean across all columns with this level 1 value
+                    avg_values = endogenous_sector_ratios.loc[:, mask].mean(axis=1)
+                    new_columns.append(((level0, level1), avg_values))
+
+    # Add the new columns to the dataframe
+    for (level0, level1), values in new_columns:
+        endogenous_sector_ratios[(level0, level1)] = values
+
+    # Sort columns for consistency
+    endogenous_sector_ratios = endogenous_sector_ratios.sort_index(axis=1)
 
     endogenous_sector_ratios.to_csv(snakemake.output.industry_sector_ratios_endogenous)
 
