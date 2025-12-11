@@ -557,6 +557,13 @@ sector:
       handle_missing_countries: fill
     geothermal:
       constant_temperature_celsius: 65
+    ptx_excess_heat_temperature:
+      electrolysis: 70
+      H2 Fuel Cell: 200
+      Fischer-Tropsch: 200
+      Haber-Bosch: 45
+      Sabatier: 200
+      methanolisation: 200
   heat_sources:
     urban central:
     - air
