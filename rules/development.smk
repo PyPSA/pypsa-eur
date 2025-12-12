@@ -12,10 +12,8 @@ if (
             line_types=config["lines"]["types"],
         input:
             base_network=resources("networks/base.nc"),
-            stations_polygon=resources(
-                "osm/upstream/build/geojson/stations_polygon.geojson"
-            ),
-            buses_polygon=resources("osm/upstream/build/geojson/buses_polygon.geojson"),
+            stations_polygon=resources("osm/geojson/stations_polygon.geojson"),
+            buses_polygon=resources("osm/geojson/buses_polygon.geojson"),
         output:
             buses=resources("osm/upstream/release/buses.csv"),
             converters=resources("osm/upstream/release/converters.csv"),

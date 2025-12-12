@@ -9,6 +9,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Fix building osm network using overpass API
+
+* Added configuration option to set overpass API URL and max retries. For a list of public overpass APIs see `here <https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances>`_.
+
 * Added existing biomass decentral/rural residential and services heating capacity.
 
 * Fix parsing in Swiss passenger cars data (https://github.com/PyPSA/pypsa-eur/pull/1934 and https://github.com/PyPSA/pypsa-eur/pull/1936).
