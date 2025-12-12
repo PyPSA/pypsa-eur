@@ -2873,12 +2873,19 @@ def add_heat(
     )
 
     cop = xr.open_dataarray(cop_profiles_file)
-    heat_source_direct_utilisation_profile = xr.open_dataarray(
-        heat_source_direct_utilisation_profile_file
+
+    heat_source_direct_utilisation_profile = (
+        xr.open_dataarray(heat_source_direct_utilisation_profile_file)
+        if len(heat_source_direct_utilisation_profile_file) > 0
+        else None
     )
-    heat_source_preheater_utilisation_profile = xr.open_dataarray(
-        heat_source_preheater_utilisation_profile_file
+
+    heat_source_preheater_utilisation_profile = (
+        xr.open_dataarray(heat_source_preheater_utilisation_profile_file)
+        if len(heat_source_preheater_utilisation_profile_file) > 0
+        else None
     )
+
     district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
@@ -3404,7 +3411,7 @@ def add_heat(
 
             if (
                 heat_system == HeatSystem.URBAN_CENTRAL
-                and params.sector["ptes"]["enable"] == True
+                and params.sector["district_heating"]["ptes"]["enable"] == True
                 and params.sector["district_heating"]["ptes"][
                     "discharge_resistive_boosting"
                 ]

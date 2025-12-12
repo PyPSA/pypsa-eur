@@ -289,6 +289,13 @@ if __name__ == "__main__":
     cop_all_system_types = []
     for heat_system_type, heat_sources in snakemake.params.heat_sources.items():
         cop_this_system_type = []
+        if not heat_sources:
+            cop_all_system_types.append(
+                central_heating_forward_temperature.expand_dims(
+                    heat_source=pd.Index([], name="heat_source")
+                ).isel(heat_source=slice(0, 0))
+            )
+            continue
         for heat_source_name in heat_sources:
             source_temperature_celsius = get_source_temperature(
                 snakemake_params=snakemake.params,
