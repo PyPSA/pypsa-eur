@@ -271,10 +271,10 @@ rule rulegraph:
     input:
         config_file=rules.dump_graph_config.output.config_file,
     output:
-        dot=resources("dag_rulegraph.dot"),
-        pdf=resources("dag_rulegraph.pdf"),
-        png=resources("dag_rulegraph.png"),
-        svg=resources("dag_rulegraph.svg"),
+        dot=resources("dag/dag_rulegraph.dot"),
+        pdf=resources("dag/dag_rulegraph.pdf"),
+        png=resources("dag/dag_rulegraph.png"),
+        svg=resources("dag/dag_rulegraph.svg"),
     shell:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
@@ -309,10 +309,10 @@ rule filegraph:
     input:
         config_file=rules.dump_graph_config.output.config_file,
     output:
-        dot=resources("dag_filegraph.dot"),
-        pdf=resources("dag_filegraph.pdf"),
-        png=resources("dag_filegraph.png"),
-        svg=resources("dag_filegraph.svg"),
+        dot=resources("dag/dag_filegraph.dot"),
+        pdf=resources("dag/dag_filegraph.pdf"),
+        png=resources("dag/dag_filegraph.png"),
+        svg=resources("dag/dag_filegraph.svg"),
     shell:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
