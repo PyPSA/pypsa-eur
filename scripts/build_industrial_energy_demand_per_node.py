@@ -43,9 +43,13 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    # import ratios
+    # import exogenous ratios
     fn = snakemake.input.industry_sector_ratios
-    sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0)
+    sector_ratios_exogenous = pd.read_csv(fn, header=[0, 1], index_col=0)
+
+    # import endogenous ratios
+    fn = snakemake.input.industry_sector_ratios_endogenous
+    sector_ratios_endogenous = pd.read_csv(fn, header=[0, 1], index_col=0)
 
     # material demand per node and industry (Mton/a)
     fn = snakemake.input.industrial_production_per_node
@@ -55,16 +59,28 @@ if __name__ == "__main__":
     fn = snakemake.input.industrial_energy_demand_per_node_today
     nodal_today = pd.read_csv(fn, index_col=0)
 
-    nodal_sector_ratios = pd.concat(
-        {node: sector_ratios[node[:2]] for node in nodal_production.index}, axis=1
+    nodal_sector_ratios_exogenous = pd.concat(
+        {node: sector_ratios_exogenous[node[:2]] for node in nodal_production.index},
+        axis=1,
+    )
+
+    nodal_sector_ratios_endogenous = pd.concat(
+        {node: sector_ratios_endogenous[node[:2]] for node in nodal_production.index},
+        axis=1,
     )
 
     nodal_production_stacked = nodal_production.stack()
     nodal_production_stacked.index.names = [None, None]
 
     # final energy consumption per node and industry (TWh/a)
-    nodal_df = (
-        (nodal_sector_ratios.multiply(nodal_production_stacked))
+    nodal_df_exogenous = (
+        (nodal_sector_ratios_exogenous.multiply(nodal_production_stacked))
+        .T.groupby(level=0)
+        .sum()
+    )
+
+    nodal_df_endogenous = (
+        (nodal_sector_ratios_endogenous.multiply(nodal_production_stacked))
         .T.groupby(level=0)
         .sum()
     )
@@ -73,10 +89,22 @@ if __name__ == "__main__":
         "elec": "electricity",
         "biomass": "solid biomass",
         "heat": "low-temperature heat",
+        "heat<100": "low-temperature heat",
     }
-    nodal_df.rename(columns=rename_sectors, inplace=True)
+    nodal_df_exogenous.rename(columns=rename_sectors, inplace=True)
+    nodal_df_endogenous.rename(columns=rename_sectors, inplace=True)
 
-    nodal_df["current electricity"] = nodal_today["electricity"]
+    logger.warning(
+        "what about methanol, process emissions from feedstock and current electricity?"
+    )
+    nodal_df_exogenous["current electricity"] = nodal_today["electricity"]
+    nodal_df_endogenous["current electricity"] = nodal_today["electricity"]
+
+    nodal_df = pd.concat(
+        [nodal_df_exogenous, nodal_df_endogenous],
+        axis=1,
+        keys=["exogenous", "endogenous"],
+    )
 
     nodal_df.index.name = "TWh/a (MtCO2/a)"
 
