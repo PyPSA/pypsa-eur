@@ -347,7 +347,14 @@ def attach_load(
 
     # apply clustering busmap
     busmap = pd.read_csv(busmap_fn, dtype=str)
-    index_col = "name" if PYPSA_V1 else "Bus"
+    if "name" in busmap.columns:
+        index_col = "name"
+    elif "Bus" in busmap.columns:
+        index_col = "Bus"
+    else:
+        raise KeyError(
+            f"Busmap file must contain a 'name' or 'Bus' column, got {list(busmap.columns)}."
+        )
     busmap = busmap.set_index(index_col).squeeze()
     busmap = sanitize_busmap(busmap)
 

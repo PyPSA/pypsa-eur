@@ -767,7 +767,11 @@ rule build_energy_totals:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         co2=rules.retrieve_ghg_emissions.output["csv"],
         swiss="data/switzerland-new_format-all_years.csv",
-        swiss_transport=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
+        swiss_transport=lambda w: (
+            f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv"
+            if "CH" in config_provider("countries")(w)
+            else []
+        ),
         idees=rules.retrieve_jrc_idees.output["directory"],
         district_heat_share="data/district_heat_share.csv",
         eurostat=rules.retrieve_eurostat_balances.output["directory"],
@@ -829,30 +833,6 @@ rule build_heat_totals:
         "../scripts/build_heat_totals.py"
 
 
-rule build_co2_budget_distribution:
-    params:
-        co2_budget=config_provider("co2_budget"),
-        countries=config_provider("countries"),
-        planning_horizons=config_provider("planning_horizons"),
-        sector=config_provider("sector"),
-    input:
-        co2="data/bundle/eea/UNFCCC_v23.csv",
-        eurostat="data/eurostat/Balances-April2023",
-    output:
-        co2_budget_distribution=resources("co2_budget_distribution.csv"),
-    threads: 1
-    resources:
-        mem_mb=1000,
-    log:
-        logs("build_co2_budget_distribution.log"),
-    benchmark:
-        benchmarks("build_co2_budget_distribution")
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_co2_budget_distribution.py"
-
-
 rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
@@ -862,8 +842,16 @@ rule build_biomass_potentials:
         nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore.geojson"),
         nuts3_population=ancient(rules.retrieve_nuts3_population.output["gz"]),
-        swiss_cantons=ancient("data/ch_cantons.csv"),
-        swiss_population=rules.retrieve_bfs_gdp_and_population.output["xlsx"],
+        swiss_cantons=lambda w: (
+            ancient("data/ch_cantons.csv")
+            if "CH" in config_provider("countries")(w)
+            else []
+        ),
+        swiss_population=lambda w: (
+            rules.retrieve_bfs_gdp_and_population.output["xlsx"]
+            if "CH" in config_provider("countries")(w)
+            else []
+        ),
         country_shapes=resources("country_shapes.geojson"),
     output:
         biomass_potentials_all=resources("biomass_potentials_all_{horizon}.csv"),

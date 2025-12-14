@@ -156,14 +156,13 @@ In the terminal, this will show up as a list of jobs to be run:
 
     Building DAG of jobs...
     Job stats:
-    job                                      count
-    -------------------------------------  -------
-    add_transmission_projects_and_dlr            1
-    base_network                                 1
-    build_co2_budget_distribution                1
-    build_electricity_demand                     1
-    build_electricity_demand_base                1
-    build_line_rating                            1
+	    job                                      count
+	    -------------------------------------  -------
+	    add_transmission_projects_and_dlr            1
+	    base_network                                 1
+	    build_electricity_demand                     1
+	    build_electricity_demand_base                1
+	    build_line_rating                            1
     build_monthly_prices                         1
     build_osm_boundaries                         4
     build_population_layouts                     1

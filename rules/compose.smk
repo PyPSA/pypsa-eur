@@ -21,6 +21,7 @@ def get_compose_inputs(w):
     foresight = cfg["foresight"]
     horizon = int(w.horizon)
     sector_enabled = cfg["sector"]["enabled"]
+    co2_budget_values = cfg["co2_budget"]["values"]
 
     # Handle both single value and list for planning_horizons
     planning_horizons = cfg["planning_horizons"]
@@ -51,11 +52,12 @@ def get_compose_inputs(w):
         "snapshot_weightings": resources("snapshot_weightings.csv"),
         "clustered": resources("networks/clustered.nc"),
         "network": resources("networks/clustered.nc"),
-        "co2_budget_distribution": resources("co2_budget_distribution.csv"),
         "costs": (
-            resources("costs_{}.csv".format(cfg["costs"]["year"]))
+            expand(
+                rules.retrieve_cost_data.output["costs"], horizon=[cfg["costs"]["year"]]
+            )[0]
             if foresight == "overnight"
-            else resources("costs_{horizon}.csv")
+            else rules.retrieve_cost_data.output["costs"]
         ),
         "busmap_simplified": resources("busmap_simplified.csv"),
         "busmap": resources("busmap.csv"),
@@ -165,6 +167,15 @@ def get_compose_inputs(w):
                     if cfg["sector"]["district_heating"]["ates"]["enable"]
                     else []
                 ),
+            }
+        )
+
+    # CO2 budget (fraction mode) requires baseline emissions data
+    if co2_budget_values == "fraction":
+        inputs.update(
+            {
+                "eurostat": rules.retrieve_eurostat_balances.output["directory"],
+                "co2": rules.retrieve_ghg_emissions.output["csv"],
             }
         )
 

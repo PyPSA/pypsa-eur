@@ -105,6 +105,7 @@ def add_co2limit(
     co2_min: float | None = None,
     nyears: float = 1.0,
     suffix: str = "",
+    investment_period: int | None = None,
 ) -> None:
     """
     Add global CO2 emissions constraint(s) to the network.
@@ -114,17 +115,17 @@ def add_co2limit(
     n : pypsa.Network
         Network to add constraints to
     co2_max : float
-        Maximum CO2 emissions in Gt CO2. For perfect foresight with investment_period:
-        yearly limit for that period. For perfect foresight without investment_period:
-        total budget over entire planning horizon. For overnight/myopic: annual limit per year.
+        Annual CO2 emissions limit in Gt CO2/a.
     co2_min : float or None, default None
-        Minimum CO2 emissions in Gt CO2. For perfect foresight with investment_period:
-        yearly limit for that period. For perfect foresight without investment_period:
-        total budget over entire planning horizon. For overnight/myopic: annual limit per year.
+        Annual minimum CO2 emissions limit in Gt CO2/a.
     nyears : float, default 1.0
-        Number of years for overnight/myopic optimization (ignored for perfect foresight)
+        Number of years represented by the modelled snapshots. The global constraint constant
+        is computed as the annual value times ``nyears`` (converted to tonnes).
     suffix : str, default ""
         Suffix to add to constraint names
+    investment_period : int | None, default None
+        Investment period for perfect foresight constraints. When set, the global
+        constraint applies only to that investment period.
 
     """
     # FAIL FAST: Validate inputs
@@ -144,6 +145,7 @@ def add_co2limit(
         "GlobalConstraint",
         "CO2Limit" + suffix,
         type="co2_limit",
+        investment_period=investment_period,
         carrier_attribute="co2_emissions",
         sense="<=",
         constant=co2_max * GT_TO_TONNES * nyears,
@@ -154,6 +156,7 @@ def add_co2limit(
             "GlobalConstraint",
             "CO2Min" + suffix,
             type="co2_limit",
+            investment_period=investment_period,
             carrier_attribute="co2_emissions",
             sense=">=",
             constant=co2_min * GT_TO_TONNES * nyears,

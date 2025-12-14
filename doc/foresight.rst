@@ -198,197 +198,69 @@ The carbon budget for the entire transition path can be specified in the
 structure that works consistently across all three foresight modes (overnight,
 myopic, perfect).
 
-**Unified Configuration Structure:**
+**Unified configuration structure:**
 
 .. code:: yaml
 
   co2_budget:
     emissions_scope: All greenhouse gases - (CO2 equivalent)
-    values: absolute  # How to interpret per-period values: "absolute" (Gt CO2/year) or "fraction" (% of 1990)
-    # Upper emissions constraints
-    upper:
-      enable: true
+    values: fraction  # "fraction" (% of 1990 baseline) or "absolute" (Gt CO2/year)
+    upper: null       # null | scalar | {year: value}
+    lower: null       # null | scalar | {year: value}
 
-      # Option 1: Per-period hard caps (Gt CO2/year)
-      2030: 2.04  # 55% reduction by 2030 (Fit for 55)
-      2040: 0.45  # 90% by 2040
-      2050: 0.00  # climate-neutral by 2050
+**Constraint semantics:**
 
-      # Option 2: Total cumulative budget with automatic distribution
-      total: 40.0  # Total budget in Gt CO2 over planning horizon
-      distribution: ex0  # Distribution mode (see below)
+- ``upper``/``lower`` as a **dict**: apply constraints only for explicitly listed years
+  (omitted years are unconstrained). In perfect foresight, these constraints are attached
+  to the corresponding investment period. Use ``<year>: null`` to explicitly clear an
+  inherited default bound for a specific year.
+- ``upper``/``lower`` as a **scalar**: add a single timeless CO₂ constraint (no investment
+  period reference).
 
-    # Lower emissions constraints (optional)
-    lower:
-      enable: true
-      2030: 0.5  # Minimum emissions floor for 2030 (Gt CO2/year)
+  - **overnight**: one CO₂ constraint for the solved model.
+  - **myopic**: one CO₂ constraint for each solved horizon.
+  - **perfect**: one joint CO₂ constraint across all horizons, added in the final horizon.
 
-**Configuration Options:**
-
-1. **Per-period caps**: Specify absolute emissions caps (Gt CO₂/year) for specific years.
-   When both a per-period cap and a distributed budget exist for the same horizon, the
-   minimum (more restrictive) value is used to ensure budget constraints aren't loosened.
-
-2. **Total budget with distribution**: Specify a cumulative total budget and how it should
-   be distributed across planning horizons.
-
-   - For **perfect foresight**: If ``distribution`` is null, ``total`` is applied as a single
-     cumulative constraint over all periods. If ``distribution`` is specified, the budget is
-     distributed across periods using the specified mode (same as myopic/overnight).
-
-   - For **myopic/overnight**: ``total`` is split across periods using the specified
-     ``distribution`` mode.
-
-**Distribution Modes:**
-
-- ``ex0``: Exponential decay with initial growth rate r=0 (commonly used)
-- ``ex1``: Exponential decay with initial growth rate r=1
-- ``be1``: Beta decay with parameter 1
-- ``be2``: Beta decay with parameter 2
-- ``linear``: Linear decrease from current emissions to zero
-- ``equal``: Equal distribution across all periods
-
-The exponential decay follows:
-
-.. math::
-  e(t) = e_0 (1+ (r+m)t) e^{-mt}
-
-where r is the initial linear growth rate, e_0 is the initial emission level (typically
-from 2019), and the decay parameter m is determined by imposing that the integral of
-the path equals the specified budget.
-
-**Example Configurations:**
-
-*Example 1: Per-period caps with fraction values (default)*
+**Example 1: Per-period caps with fraction values**
 
 .. code:: yaml
-
-  co2_budget:
-    values: fraction  # Values as % of 1990 baseline (default)
-    upper:
-      enable: true
-      2030: 0.450  # 45% of 1990 emissions (55% reduction)
-      2040: 0.100  # 10% of 1990 emissions (90% reduction)
-      2050: 0.000  # Climate neutral
-
-*Example 2: Per-period caps with absolute values*
-
-.. code:: yaml
-
-  co2_budget:
-    values: absolute  # Values in Gt CO2/year
-    upper:
-      enable: true
-      2030: 2.04  # Gt CO2/year
-      2040: 0.45
-      2050: 0.00
-
-*Example 3: Total budget for perfect foresight*
-
-.. code:: yaml
-
-  foresight: perfect
-  planning_horizons: [2030, 2040, 2050]
-
-  co2_budget:
-    upper:
-      enable: true
-      total: 40.0  # Cumulative constraint over all periods
-      distribution: null  # Ignored for perfect foresight
-
-    lower:
-      enable: true
-      2030: 0.5  # Prevent too-fast decarbonization
-
-*Example 4: Total budget for myopic/overnight with distribution*
-
-.. code:: yaml
-
-  foresight: myopic
-  planning_horizons: [2030, 2040, 2050]
-
-  co2_budget:
-    upper:
-      enable: true
-      total: 40.0
-      distribution: ex0  # Required for myopic/overnight
-
-*Example 5: Mixed approach (caps + total budget)*
-
-.. code:: yaml
-
-  co2_budget:
-    upper:
-      enable: true
-      2030: 2.04  # Per-period cap for 2030
-      total: 40.0  # Applied to other periods
-      distribution: ex0
-
-*Example 6: Selective year constraints*
-
-.. code:: yaml
-
-  planning_horizons: [2030, 2040, 2050]
 
   co2_budget:
     values: fraction
     upper:
-      enable: true
-      2030: 0.450  # Only constrain 2030
-      2050: 0.000  # And 2050
-      # 2040 not specified - no upper constraint for 2040
-    lower:
-      enable: true
-      2030: 0.200  # Prevent too-fast decarbonization in 2030 only
-      # 2040 and 2050 not specified - no lower constraints
+      2030: 0.450  # 45% of 1990 emissions
+      2040: 0.100
+      2050: 0.000
 
-**Constraint Application Logic:**
-
-The model applies CO₂ constraints for each planning horizon following this priority:
-
-1. **Per-period caps take precedence**: If a per-period cap is specified for a horizon, it's
-   always applied. When both a per-period cap and a distributed budget value exist for the
-   same year, the model uses the **minimum** (more restrictive) value.
-
-2. **Distributed budget as fallback**: If no per-period cap exists for a horizon, the model
-   uses the distributed budget value (if total budget with distribution is configured).
-
-3. **Perfect foresight cumulative constraint**: For perfect foresight only, if ``total``
-   is specified without ``distribution`` (null), an additional cumulative constraint is
-   applied over all periods at the final horizon.
-
-4. **Lower bounds**: When ``lower.enable: true``, lower bounds are applied only for planning
-   horizons where values are explicitly specified. Unspecified horizons have no lower constraint.
-   Note: Lower-only constraints (without upper) are not supported; at least one upper constraint
-   must be specified.
-
-**Relationship to Published Research:**
-
-The paper `Speed of technological transformations required in Europe to achieve
-different climate goals (2022) <https://doi.org/10.1016/j.joule.2022.04.016>`__
-defines CO₂ budgets corresponding to global temperature increases (1.5°C – 2°C).
-Global carbon budgets are converted to European budgets assuming equal per-capita
-distribution (6.43% share for Europe). These can be specified using the ``total``
-and ``distribution`` parameters. For example, a 1.5°C target corresponds to
-approximately 25.7 Gt CO₂ for Europe, which can be configured as:
+**Example 2: Scalar cap (absolute values)**
 
 .. code:: yaml
 
   co2_budget:
+    values: absolute
+    upper: 2.04  # Gt CO2/year, same semantics across foresight modes (see above)
+
+**Example 3: Selective year constraints**
+
+.. code:: yaml
+
+  planning_horizons: [2030, 2040, 2050]
+
+  co2_budget:
+    values: absolute
     upper:
-      enable: true
-      total: 25.7  # Gt CO2 for 1.5°C target
-      distribution: ex0
+      2030: 2.0
+      2050: 0.0
+      # 2040 not specified -> no upper constraint for 2040
+    lower:
+      2030: 0.5
 
-See Supplemental Note S1 of the paper for detailed derivations of the distribution
-functions.
-
-**Emissions Scope:**
+**Emissions scope:**
 
 The ``emissions_scope`` parameter determines which greenhouse gas(es) are accounted for
-when calculating historical baseline emissions (e.g., 1990 emissions) and applying budget
-constraints. This parameter corresponds to the ``Pollutant_name`` field in the EEA UNFCCC
-emissions database.
+when calculating the 1990 baseline for ``values: fraction`` and applying the corresponding
+budget constraints. This parameter corresponds to the ``Pollutant_name`` field in the EEA
+UNFCCC emissions database.
 
 Available options:
 
@@ -402,9 +274,7 @@ The choice of emissions scope affects:
 
 1. **Baseline calculations**: Historical emissions used to calculate budget fractions
    (e.g., "55% reduction from 1990" requires knowing 1990 emissions)
-2. **Budget conversion**: When using ``cbXX`` format, the total budget is scaled based
-   on the selected emissions scope
-3. **Constraint application**: The optimization constraints in the network model apply
+2. **Constraint application**: The optimization constraints in the network model apply
    to the selected emissions scope
 
 .. note::

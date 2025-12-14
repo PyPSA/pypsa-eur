@@ -10,6 +10,15 @@ run:
   shared_resources:
     policy: false
 
+# Avoid flaky primary-source downloads in CI/test workflows
+data:
+  bfs_road_vehicle_stock:
+    source: archive
+    version: latest
+  bfs_gdp_and_population:
+    source: archive
+    version: latest
+
 foresight: perfect
 planning_horizons: [2030, 2040, 2050]
 
@@ -54,14 +63,12 @@ co2_budget:
 
   # Upper emissions constraints (testing selective year constraints)
   upper:
-    enable: true
     2030: 2.0  # Gt CO2 for 2030
-    # 2040 not specified - no upper constraint for 2040 (tests optional bounds)
+    2040:       # Explicitly clear default 2040 bound from config.default.yaml
     2050: 0.0  # Gt CO2 for 2050 (climate neutral)
 
   # Lower emissions constraints (floor) - also testing selective years
   lower:
-    enable: true
     2030: 0.5  # Gt CO2 minimum for 2030
     # 2040 and 2050 not specified - no lower constraints (tests optional bounds)
 

@@ -26,13 +26,11 @@ co2_budget:
 
   # Upper emissions constraints
   upper:
-    enable: true
     2030: 0.450  # 45% of 1990 emissions (55% reduction by 2030)
     2040: 0.100  # 10% of 1990 emissions (90% reduction by 2040)
 
   # No lower bounds for electricity-only
   lower:
-    enable: false
 
 electricity:
   gaslimit_enable: false

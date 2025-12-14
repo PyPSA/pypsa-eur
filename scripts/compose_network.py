@@ -20,6 +20,7 @@ functions and calling them in sequence.
 
 import logging
 import os
+from collections.abc import Mapping
 
 import numpy as np
 import pandas as pd
@@ -66,6 +67,7 @@ from scripts.add_existing_baseyear import (
     add_heating_capacities_installed_before_baseyear,
     add_power_capacities_installed_before_baseyear,
 )
+from scripts.co2_budget import bound_value_for_horizon, co2_budget_for_horizon
 from scripts.prepare_network import (
     add_co2limit,
     add_dynamic_emission_prices,
@@ -101,6 +103,7 @@ from scripts.prepare_sector_network import (
     add_storage_and_grids,
     add_waste_heat,
     cluster_heat_buses,
+    co2_emissions_year,
     decentral,
     define_spatial,
     remove_h2_network,
@@ -1106,7 +1109,6 @@ def prepare_network_for_solving(
     params,
     costs,
     nyears: float,
-    current_horizon: int | None = None,
 ) -> None:
     """
     Apply final network preparations before solving.
@@ -1126,8 +1128,6 @@ def prepare_network_for_solving(
         Technology costs
     nyears : float
         Number of years represented in the snapshot weightings
-    current_horizon : int | None
-        Current planning horizon being prepared (for CO2 budget constraint application)
 
     Notes
     -----
@@ -1185,45 +1185,102 @@ def prepare_network_for_solving(
         link_max_pu=params.links["p_max_pu"],
     )
 
-    # Handle carbon budget constraints (unified system for all modes)
-    if current_horizon is None:
-        raise ValueError(
-            "current_horizon is required for CO2 budget constraint application"
-        )
-
-    co2_budget_distribution_file = inputs["co2_budget_distribution"]
-    co2_budget = pd.read_csv(co2_budget_distribution_file, index_col=0).loc[
-        current_horizon
-    ]
-    upper_enabled = params["co2_budget"]["upper"]["enable"]
-    lower_enabled = params["co2_budget"]["lower"]["enable"]
-    upper = co2_budget["upper_annual"]
-    lower = co2_budget["lower_annual"]
-
-    if upper_enabled and pd.isna(upper):
-        logger.info(
-            f"CO2 budget upper constraint enabled but not specified for horizon {current_horizon}. "
-            f"Skipping upper constraint for this horizon."
-        )
-    if lower_enabled and pd.isna(lower):
-        logger.info(
-            f"CO2 budget lower constraint enabled but not specified for horizon {current_horizon}. "
-            f"Skipping lower constraint for this horizon."
-        )
-
-    # Apply constraints if valid values exist
-    if pd.notna(upper):
-        # Upper constraint is valid - add it (with optional lower constraint)
-        lower_value = lower if pd.notna(lower) else None
-        add_co2limit(n, upper, lower_value, nyears)
-    elif pd.notna(lower):
-        raise ValueError(
-            f"Cannot apply only lower CO2 constraint for horizon {current_horizon}. "
-            f"The add_co2limit function requires an upper constraint. "
-            f"Please enable co2_budget.upper or disable co2_budget.lower."
-        )
-
     logger.info("Completed network preparation")
+
+
+def _is_scalar_bound(bound: object) -> bool:
+    return isinstance(bound, (int, float))
+
+
+def _is_mapping_bound(bound: object) -> bool:
+    return isinstance(bound, Mapping)
+
+
+def apply_co2_budget_constraints(
+    n: pypsa.Network,
+    *,
+    inputs,
+    params,
+    nyears: float,
+    foresight: str,
+    horizons: list[int],
+    current_horizon: int,
+    apply_perfect_scalar_now: bool,
+) -> None:
+    co2_budget = params["co2_budget"]
+    upper_cfg = co2_budget["upper"]
+    lower_cfg = co2_budget["lower"]
+
+    if upper_cfg is None:
+        logger.info(
+            f"CO2 budget upper constraint not specified for horizon {current_horizon}. "
+            "Skipping CO2 constraint for this horizon."
+        )
+        return
+
+    upper_is_scalar = _is_scalar_bound(upper_cfg)
+    upper_is_mapping = _is_mapping_bound(upper_cfg)
+
+    if not (upper_is_scalar or upper_is_mapping):
+        raise TypeError(
+            "co2_budget.upper must be null, a number, or a dict mapping year to value. "
+            f"Received {type(upper_cfg).__name__}."
+        )
+
+    if upper_is_scalar and _is_mapping_bound(lower_cfg):
+        raise ValueError(
+            "Invalid co2_budget configuration: when co2_budget.upper is a scalar, "
+            "co2_budget.lower must be null or a scalar (not a dict)."
+        )
+
+    baseline_1990 = None
+    if co2_budget["values"] == "fraction":
+        upper_raw = bound_value_for_horizon(upper_cfg, current_horizon)
+        lower_raw = bound_value_for_horizon(lower_cfg, current_horizon)
+        if upper_raw is not None or lower_raw is not None:
+            baseline_1990 = co2_emissions_year(
+                countries=params.countries,
+                input_eurostat=inputs["eurostat"],
+                options=params.sector,
+                emissions_scope=co2_budget["emissions_scope"],
+                input_co2=inputs["co2"],
+                year=1990,
+            )
+
+    upper, lower = co2_budget_for_horizon(
+        co2_budget,
+        current_horizon=current_horizon,
+        baseline_1990=baseline_1990,
+    )
+
+    if upper is None:
+        logger.info(
+            f"CO2 budget upper constraint not specified for horizon {current_horizon}. "
+            "Skipping CO2 constraint for this horizon."
+        )
+        return
+
+    if upper_is_scalar:
+        if foresight == "perfect" and not apply_perfect_scalar_now:
+            logger.info(
+                f"Deferring scalar CO2 constraint until final perfect-foresight horizon {horizons[-1]}."
+            )
+            return
+        add_co2limit(n, upper, lower, nyears)
+        return
+
+    # upper is mapping: apply per-horizon constraint if configured for this horizon
+    if foresight == "perfect":
+        add_co2limit(
+            n,
+            upper,
+            lower,
+            nyears,
+            suffix=f"-{current_horizon}",
+            investment_period=current_horizon,
+        )
+    else:
+        add_co2limit(n, upper, lower, nyears)
 
 
 if __name__ == "__main__":
@@ -1259,6 +1316,7 @@ if __name__ == "__main__":
 
     # Determine if this is the first horizon
     is_first_horizon = current_horizon == horizons[0]
+    is_last_horizon = current_horizon == horizons[-1]
 
     # Load appropriate base network based on foresight mode and horizon
     if is_first_horizon:
@@ -1441,7 +1499,22 @@ if __name__ == "__main__":
         params,
         costs,
         nyears,
+    )
+
+    # ========== CO2 BUDGET CONSTRAINTS ==========
+    # Dict-based upper/lower are applied per horizon.
+    # Scalar upper/lower are applied as a single timeless constraint:
+    # - overnight/myopic: applied for each composed single-period network
+    # - perfect foresight: applied only in the last horizon after concatenation
+    apply_co2_budget_constraints(
+        n,
+        inputs=inputs,
+        params=params,
+        nyears=nyears,
+        foresight=foresight,
+        horizons=horizons,
         current_horizon=current_horizon,
+        apply_perfect_scalar_now=not (foresight == "perfect"),
     )
 
     # Validate before finalization
@@ -1482,23 +1555,27 @@ if __name__ == "__main__":
                 f"Investment period weightings applied for {len(n.investment_periods)} periods"
             )
 
-        # Apply cumulative CO2 budget constraint for perfect foresight
-        if (
-            current_horizon == planning_horizons[-1]
-            and params["co2_budget"]["upper"]["enable"]
-        ):
-            co2_budget = pd.read_csv(inputs["co2_budget_distribution"], index_col=0)
-            total_cumulative = co2_budget.at[current_horizon, "total_cumulative"]
+        # Sanitize energy storages
+        n.stores.e_initial_per_period = ~n.stores.e_cyclic
+        n.stores.e_cyclic_per_period = n.stores.e_cyclic
 
-            if pd.notna(total_cumulative):
-                add_co2limit(n, total_cumulative, co2_min=None, suffix="-total")
-                logger.info(
-                    f"Applied cumulative CO2 budget: {total_cumulative:.3f} Gt CO2 total"
-                )
-
-            # Sanitize energy storages
-            n.stores.e_initial_per_period = ~n.stores.e_cyclic
-            n.stores.e_cyclic_per_period = n.stores.e_cyclic
+    # Perfect foresight scalar CO2 constraint: add only once, after concatenation.
+    if (
+        foresight == "perfect"
+        and is_last_horizon
+        and _is_scalar_bound(params["co2_budget"]["upper"])
+    ):
+        nyears_total = n.snapshot_weightings.objective.sum() / 8760.0
+        apply_co2_budget_constraints(
+            n,
+            inputs=inputs,
+            params=params,
+            nyears=nyears_total,
+            foresight=foresight,
+            horizons=horizons,
+            current_horizon=current_horizon,
+            apply_perfect_scalar_now=True,
+        )
     # ========== FINAL CLEANUP ==========
 
     # Sanitize carriers
