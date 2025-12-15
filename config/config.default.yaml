@@ -555,15 +555,15 @@ sector:
     dh_areas:
       buffer: 1000
       handle_missing_countries: fill
-    geothermal:
-      constant_temperature_celsius: 65
-    ptx_excess_heat_temperature:
-      electrolysis: 70
-      H2 Fuel Cell: 200
-      Fischer-Tropsch: 200
-      Haber-Bosch: 45
-      Sabatier: 200
-      methanolisation: 200
+    heat_source_temperatures:
+      geothermal: 65
+      electrolysis_excess: 70 # DEA catalogue expectation for 2024
+      fuel_cell_excess: 70 # guesstimate: DEA catalogue states 70C for PEMEC waste heat
+      fischer_tropsch_excess: 200 # DEA states that FT part of hydrogen-to-jet process produces steam
+      haber_bosch_excess: 200 # DEA states 11%/15% heat output at 350C
+      sabatier_excess: 200 # Agora report states at least 200C for catalytic methanisation
+      methanolisation_excess: 200
+    ptx_heat_losses: 0.05 # use 5% heat losses for those processes where no heat-efficiencies are available from DEA; e.g. fuel cell (https://www.iea.org/reports/technology-roadmap-hydrogen-and-fuel-cells)
   heat_sources:
     urban central:
     - air
