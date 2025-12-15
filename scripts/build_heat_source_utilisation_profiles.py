@@ -75,11 +75,12 @@ def get_source_temperature(
     Parameters
     ----------
     snakemake_params : dict
-        Snakemake parameters containing constant temperatures for applicable sources.
+        Snakemake parameters containing heat_source_temperatures dict for
+        constant-temperature sources.
     snakemake_input : dict
         Snakemake input files containing temperature profiles for variable sources.
     heat_source_name : str
-        Name of the heat source (e.g., 'geothermal', 'ptes', 'air').
+        Name of the heat source (e.g., 'geothermal', 'ptes', 'air', 'electrolysis_excess').
 
     Returns
     -------
@@ -95,12 +96,11 @@ def get_source_temperature(
     heat_source = HeatSource(heat_source_name)
     if heat_source.has_constant_temperature:
         try:
-            return snakemake_params[f"constant_temperature_{heat_source_name}"]
+            return snakemake_params["heat_source_temperatures"][heat_source_name]
         except KeyError:
             raise ValueError(
-                f"Constant temperature for heat source {heat_source_name} not specified in parameters."
+                f"Constant temperature for heat source '{heat_source_name}' not specified in heat_source_temperatures."
             )
-
     else:
         if f"temp_{heat_source_name}" not in snakemake_input.keys():
             raise ValueError(

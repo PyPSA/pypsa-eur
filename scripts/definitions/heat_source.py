@@ -53,6 +53,13 @@ class HeatSource(Enum):
     AIR = "air"
     GROUND = "ground"
     PTES = "ptes"
+    # PTX excess heat sources
+    ELECTROLYSIS_EXCESS = "electrolysis_excess"
+    FISCHER_TROPSCH_EXCESS = "fischer_tropsch_excess"
+    SABATIER_EXCESS = "sabatier_excess"
+    HABER_BOSCH_EXCESS = "haber_bosch_excess"
+    METHANOLISATION_EXCESS = "methanolisation_excess"
+    FUEL_CELL_EXCESS = "fuel_cell_excess"
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -81,7 +88,15 @@ class HeatSource(Enum):
         bool
             True for geothermal, False for all other sources.
         """
-        if self == HeatSource.GEOTHERMAL:
+        if self in [
+            HeatSource.GEOTHERMAL,
+            HeatSource.ELECTROLYSIS_EXCESS,
+            HeatSource.FISCHER_TROPSCH_EXCESS,
+            HeatSource.SABATIER_EXCESS,
+            HeatSource.HABER_BOSCH_EXCESS,
+            HeatSource.METHANOLISATION_EXCESS,
+            HeatSource.FUEL_CELL_EXCESS,
+        ]:
             return True
         else:
             return False
@@ -103,6 +118,12 @@ class HeatSource(Enum):
             HeatSource.GEOTHERMAL,
             HeatSource.RIVER_WATER,
             HeatSource.PTES,
+            HeatSource.ELECTROLYSIS_EXCESS,
+            HeatSource.FISCHER_TROPSCH_EXCESS,
+            HeatSource.SABATIER_EXCESS,
+            HeatSource.HABER_BOSCH_EXCESS,
+            HeatSource.METHANOLISATION_EXCESS,
+            HeatSource.FUEL_CELL_EXCESS,
         ]:
             return True
         else:
@@ -140,7 +161,16 @@ class HeatSource(Enum):
         bool
             True for PTES, False otherwise.
         """
-        if self in [HeatSource.PTES, HeatSource.GEOTHERMAL]:
+        if self in [
+            HeatSource.PTES,
+            HeatSource.GEOTHERMAL,
+            HeatSource.ELECTROLYSIS_EXCESS,
+            HeatSource.FISCHER_TROPSCH_EXCESS,
+            HeatSource.SABATIER_EXCESS,
+            HeatSource.HABER_BOSCH_EXCESS,
+            HeatSource.METHANOLISATION_EXCESS,
+            HeatSource.FUEL_CELL_EXCESS,
+        ]:
             return True
         else:
             return False
