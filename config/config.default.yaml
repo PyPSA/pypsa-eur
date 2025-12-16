@@ -567,6 +567,12 @@ sector:
   heat_sources:
     urban central:
     - air
+    - electrolysis_excess
+    - fuel_cell_excess
+    - fischer_tropsch_excess
+    - haber_bosch_excess
+    - sabatier_excess
+    - methanolisation_excess
     urban decentral:
     - air
     rural:
