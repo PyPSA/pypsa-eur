@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Update heat source handling in `prepare_sector_network` and introduce preheating of heat sources for more realistic system integrations (https://github.com/PyPSA/pypsa-eur/pull/1893).
+
 * Added existing biomass decentral/rural residential and services heating capacity.
 
 * Fix parsing in Swiss passenger cars data (https://github.com/PyPSA/pypsa-eur/pull/1934 and https://github.com/PyPSA/pypsa-eur/pull/1936).
