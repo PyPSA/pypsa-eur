@@ -151,19 +151,21 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("retrieve_osm_data_raw", country="BE")
-    default_url = "https://overpass-api.de/api/interpreter"
-
-    overpass_api = snakemake.params.get("overpass_api", {})
-    url = overpass_api.get("url", default_url) or default_url
-    max_tries = overpass_api.get("max_tries", 3)
-    timeout = overpass_api.get("timeout", 600)
+        snakemake = mock_snakemake(
+            "retrieve_osm_data_raw", 
+            country="BE",
+        )
+    
+    overpass_api = snakemake.params.overpass_api
+    url = overpass_api["url"] 
+    max_tries = overpass_api["max_tries"]
+    timeout = overpass_api["timeout"]
 
     # Build User-Agent header
-    ua_cfg = overpass_api.get("user_agent", {})
-    project = ua_cfg.get("project_name", "UnknownProject")
-    email = ua_cfg.get("email", "no-email")
-    website = ua_cfg.get("website", "no-website")
+    ua_cfg = overpass_api["user_agent"]
+    project = ua_cfg["project_name"]
+    email = ua_cfg["email"]
+    website = ua_cfg["website"]
 
     user_agent = f"{project} (Contact: {email}; Website: {website})"
 
