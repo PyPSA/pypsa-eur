@@ -86,9 +86,6 @@ class HeatSource(Enum):
     METHANOLISATION_EXCESS = "methanolisation_excess"
     FUEL_CELL_EXCESS = "fuel_cell_excess"
 
-    def __init__(self, *args):
-        super().__init__(*args)
-
     def __str__(self) -> str:
         """
         Returns the string representation of the heat source.
