@@ -1,4 +1,4 @@
-name: Test workflows
+name: Test
 
 on:
   push:
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   unit-tests:
-    name: Unit tests
+    name: Unit
     runs-on: ubuntu-latest
 
     defaults:
@@ -44,7 +44,7 @@ jobs:
         pixi run unit-tests
 
   integration-tests:
-    name: Integration tests
+    name: Integration
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
