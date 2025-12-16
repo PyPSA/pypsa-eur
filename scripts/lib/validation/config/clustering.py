@@ -18,9 +18,9 @@ from scripts.lib.validation.config._base import ConfigModel
 class _AdministrativeConfig(ConfigModel):
     """Configuration for `clustering.administrative` settings."""
 
-    level: Literal[0, 1, 2, 3] = Field(
+    level: Literal[0, 1, 2, 3, "bz"] = Field(
         1,
-        description="Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1.",
+        description="Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level, 'bz': Bidding zones. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1.",
     )
     countries: dict[str, int] = Field(
         default_factory=dict,
@@ -122,9 +122,9 @@ class ClusteringConfig(BaseModel):
         False,
         description="Optionally specify the focus weights for the clustering of countries. For instance: `DE: 0.8` will distribute 80% of all nodes to Germany and 20% to the rest of the countries. Only applies when mode is set to `busmap`.",
     )
-    copperplate_regions: list[str] = Field(
+    copperplate_regions: list[list[str]] = Field(
         default_factory=list,
-        description="Optionally specify the regions to copperplate as a list of regions (using the region indexes defined by the clustering mode).",
+        description="Optionally specify the regions to copperplate as a list of groups. Each group is a list of region codes that will be connected with infinite capacity lines.",
     )
     build_bidding_zones: _BuildBiddingZonesConfig = Field(
         default_factory=_BuildBiddingZonesConfig,

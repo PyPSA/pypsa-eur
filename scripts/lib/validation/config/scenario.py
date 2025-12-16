@@ -9,6 +9,8 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenar
 Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 """
 
+from typing import Literal
+
 from pydantic import Field
 
 from scripts.lib.validation.config._base import ConfigModel
@@ -17,9 +19,9 @@ from scripts.lib.validation.config._base import ConfigModel
 class ScenarioConfig(ConfigModel):
     """Configuration for top level `scenario` settings."""
 
-    clusters: list[int] = Field(
+    clusters: list[int | Literal["adm", "all"]] = Field(
         default_factory=lambda: [50],
-        description="List of ``{clusters}`` wildcards to run.",
+        description="List of ``{clusters}`` wildcards to run. Use 'adm' for administrative clustering mode, 'all' for all nodes.",
     )
     opts: list[str] = Field(
         default_factory=lambda: [""],

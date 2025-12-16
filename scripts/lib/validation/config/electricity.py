@@ -141,9 +141,9 @@ class ElectricityConfig(BaseModel):
         default_factory=lambda: [220.0, 300.0, 330.0, 380.0, 400.0, 500.0, 750.0],
         description="Voltage levels to consider.",
     )
-    base_network: Literal["entsoegridkit", "osm"] = Field(
+    base_network: Literal["entsoegridkit", "osm", "tyndp"] = Field(
         "osm",
-        description="Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract, OpenStreetMap (OSM) prebuilt or raw (built from raw OSM data), takes longer.",
+        description="Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
     )
     gaslimit_enable: bool = Field(
         False,

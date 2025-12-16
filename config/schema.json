@@ -198,8 +198,12 @@
                       "type": "string"
                     },
                     "type": "array"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
+                "default": null,
                 "description": "Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_)."
               },
               "x": {
@@ -367,10 +371,7 @@
                 "default": null,
                 "description": "Dictionary of keyword arguments passed to ``atlite.Cutout.prepare()`` when building the cutout."
               }
-            },
-            "required": [
-              "module"
-            ]
+            }
           },
           "description": "Named cutout configurations.",
           "type": "object"
@@ -470,14 +471,14 @@
           "properties": {
             "level": {
               "default": 1,
-              "description": "Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1.",
+              "description": "Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level, 'bz': Bidding zones. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1.",
               "enum": [
                 0,
                 1,
                 2,
-                3
-              ],
-              "type": "integer"
+                3,
+                "bz"
+              ]
             },
             "countries": {
               "additionalProperties": {
@@ -504,9 +505,12 @@
           "description": "Optionally specify the focus weights for the clustering of countries. For instance: `DE: 0.8` will distribute 80% of all nodes to Germany and 20% to the rest of the countries. Only applies when mode is set to `busmap`."
         },
         "copperplate_regions": {
-          "description": "Optionally specify the regions to copperplate as a list of regions (using the region indexes defined by the clustering mode).",
+          "description": "Optionally specify the regions to copperplate as a list of groups. Each group is a list of region codes that will be connected with infinite capacity lines.",
           "items": {
-            "type": "string"
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "type": "array"
         },
@@ -1783,10 +1787,11 @@
         },
         "base_network": {
           "default": "osm",
-          "description": "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract, OpenStreetMap (OSM) prebuilt or raw (built from raw OSM data), takes longer.",
+          "description": "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
           "enum": [
             "entsoegridkit",
-            "osm"
+            "osm",
+            "tyndp"
           ],
           "type": "string"
         },
@@ -3624,9 +3629,20 @@
       "description": "Configuration for top level `scenario` settings.",
       "properties": {
         "clusters": {
-          "description": "List of ``{clusters}`` wildcards to run.",
+          "description": "List of ``{clusters}`` wildcards to run. Use 'adm' for administrative clustering mode, 'all' for all nodes.",
           "items": {
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "enum": [
+                  "adm",
+                  "all"
+                ],
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -5236,14 +5252,14 @@
       "properties": {
         "level": {
           "default": 1,
-          "description": "Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1.",
+          "description": "Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level, 'bz': Bidding zones. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1.",
           "enum": [
             0,
             1,
             2,
-            3
-          ],
-          "type": "integer"
+            3,
+            "bz"
+          ]
         },
         "countries": {
           "additionalProperties": {
@@ -5525,8 +5541,12 @@
                 "type": "string"
               },
               "type": "array"
+            },
+            {
+              "type": "null"
             }
           ],
+          "default": null,
           "description": "Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_)."
         },
         "x": {
@@ -5694,10 +5714,7 @@
           "default": null,
           "description": "Dictionary of keyword arguments passed to ``atlite.Cutout.prepare()`` when building the cutout."
         }
-      },
-      "required": [
-        "module"
-      ]
+      }
     },
     "_DataSourceConfig": {
       "description": "Configuration for a single data source.",
@@ -7597,9 +7614,20 @@
       "description": "Configuration for top level `scenario` settings.",
       "properties": {
         "clusters": {
-          "description": "List of ``{clusters}`` wildcards to run.",
+          "description": "List of ``{clusters}`` wildcards to run. Use 'adm' for administrative clustering mode, 'all' for all nodes.",
           "items": {
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "enum": [
+                  "adm",
+                  "all"
+                ],
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -7750,10 +7778,11 @@
         },
         "base_network": {
           "default": "osm",
-          "description": "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract, OpenStreetMap (OSM) prebuilt or raw (built from raw OSM data), takes longer.",
+          "description": "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
           "enum": [
             "entsoegridkit",
-            "osm"
+            "osm",
+            "tyndp"
           ],
           "type": "string"
         },
@@ -8023,8 +8052,12 @@
                       "type": "string"
                     },
                     "type": "array"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
+                "default": null,
                 "description": "Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_)."
               },
               "x": {
@@ -8192,10 +8225,7 @@
                 "default": null,
                 "description": "Dictionary of keyword arguments passed to ``atlite.Cutout.prepare()`` when building the cutout."
               }
-            },
-            "required": [
-              "module"
-            ]
+            }
           },
           "description": "Named cutout configurations.",
           "type": "object"
@@ -11036,14 +11066,14 @@
           "properties": {
             "level": {
               "default": 1,
-              "description": "Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1.",
+              "description": "Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level, 'bz': Bidding zones. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1.",
               "enum": [
                 0,
                 1,
                 2,
-                3
-              ],
-              "type": "integer"
+                3,
+                "bz"
+              ]
             },
             "countries": {
               "additionalProperties": {
@@ -11070,9 +11100,12 @@
           "description": "Optionally specify the focus weights for the clustering of countries. For instance: `DE: 0.8` will distribute 80% of all nodes to Germany and 20% to the rest of the countries. Only applies when mode is set to `busmap`."
         },
         "copperplate_regions": {
-          "description": "Optionally specify the regions to copperplate as a list of regions (using the region indexes defined by the clustering mode).",
+          "description": "Optionally specify the regions to copperplate as a list of groups. Each group is a list of region codes that will be connected with infinite capacity lines.",
           "items": {
-            "type": "string"
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "type": "array"
         },

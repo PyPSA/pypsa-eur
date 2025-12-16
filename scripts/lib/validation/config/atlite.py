@@ -46,8 +46,8 @@ class _ChunksConfig(ConfigModel):
 class _CutoutConfig(ConfigModel):
     """Configuration for a single cutout in `atlite.cutouts`."""
 
-    module: str | list[str] = Field(
-        ...,
+    module: str | list[str] | None = Field(
+        None,
         description="Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_).",
     )
     x: list[float] | None = Field(
