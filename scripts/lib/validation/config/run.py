@@ -8,10 +8,7 @@ Run configuration block.
 See # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 """
 
-import re
-from typing import Union
-
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 class _ScenariosConfig(BaseModel):
@@ -31,7 +28,7 @@ class _ScenariosConfig(BaseModel):
 class _SharedResourcesConfig(BaseModel):
     """Configuration for `run.shared_resources` level."""
 
-    policy: Union[bool, str] = Field(
+    policy: bool | str = Field(
         False,
         description="Boolean switch to select whether resources should be shared across runs. If a string is passed, this is used as a subdirectory name for shared resources. If set to 'base', only resources before creating the elec.nc file are shared.",
         examples=[False, "base"],
@@ -49,7 +46,7 @@ class RunConfig(BaseModel):
         "",
         description="Prefix for the run name which is used as a top-layer directory name in the results and resources folders.",
     )
-    name: Union[str, list[str]] = Field(
+    name: str | list[str] = Field(
         "",
         description="Specify a name for your run. Results will be stored under this name. If ``scenario: enable:`` is set to ``true``, the name must contain a subset of scenario names defined in ``scenario: file:``. If the name is 'all', all defined scenarios will be run.",
         examples=["my-pypsa-eur-run"],
@@ -79,21 +76,3 @@ class RunConfig(BaseModel):
         description="Set to ``true`` (default) if snakemake shadow directories (``shallow``) should be used. Set to ``false`` if problems occur.",
         examples=[True],
     )
-
-    @field_validator("name")
-    @classmethod
-    def validate_name(cls, v: Union[str, list[str]]) -> Union[str, list[str]]:
-        """Validate name field: must start with 'cool_name' or be a date (YYYY-MM-DD)."""
-        if not v:  # Empty string is allowed as default
-            return v
-
-        names = [v] if isinstance(v, str) else v
-        for name in names:
-            if name.startswith("cool_name"):
-                continue
-            if re.match(r"^\d{4}-\d{2}-\d{2}$", name):
-                continue
-            raise ValueError(
-                f"Name '{name}' must start with 'cool_name' or be a date (YYYY-MM-DD)"
-            )
-        return v

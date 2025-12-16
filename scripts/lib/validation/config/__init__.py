@@ -4,12 +4,45 @@
 
 """
 Config validation for PyPSA-EUR.
+
+The schema is exported to both `config/config.default.yaml` and `config/schema.json`.
+The json schema is also contributed to the schemastore.org and matches
+`**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
 """
 
-from pydantic import Field, ValidationError
+import yaml
+from pydantic import ConfigDict, Field, ValidationError
 
+from scripts.lib.validation.config.adjustments import AdjustmentsConfig
+from scripts.lib.validation.config.atlite import AtliteConfig
+from scripts.lib.validation.config.biomass import BiomassConfig
+from scripts.lib.validation.config.clustering import ClusteringConfig
+from scripts.lib.validation.config.co2_budget import Co2BudgetConfig
+from scripts.lib.validation.config.conventional import ConventionalConfig
+from scripts.lib.validation.config.costs import CostsConfig
+from scripts.lib.validation.config.countries import CountriesConfig
+from scripts.lib.validation.config.electricity import ElectricityConfig
+from scripts.lib.validation.config.enable import EnableConfig
+from scripts.lib.validation.config.energy import EnergyConfig
+from scripts.lib.validation.config.existing_capacities import ExistingCapacitiesConfig
+from scripts.lib.validation.config.foresight import ForesightConfig
+from scripts.lib.validation.config.industry import IndustryConfig
+from scripts.lib.validation.config.lines import LinesConfig
+from scripts.lib.validation.config.links import LinksConfig
+from scripts.lib.validation.config.load import LoadConfig
+from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
+from scripts.lib.validation.config.renewable import RenewableConfig
 from scripts.lib.validation.config.run import RunConfig
+from scripts.lib.validation.config.scenario import ScenarioConfig
+from scripts.lib.validation.config.sector import SectorConfig
+from scripts.lib.validation.config.snapshots import SnapshotsConfig
+from scripts.lib.validation.config.solar_thermal import SolarThermalConfig
+from scripts.lib.validation.config.solving import SolvingConfig
 from scripts.lib.validation.config.top_level import TopLevelConfig
+from scripts.lib.validation.config.transformers import TransformersConfig
+from scripts.lib.validation.config.transmission_projects import (
+    TransmissionProjectsConfig,
+)
 
 
 class ConfigSchema(TopLevelConfig):
@@ -17,9 +50,118 @@ class ConfigSchema(TopLevelConfig):
     Combined configuration schema for PyPSA-EUR.
     """
 
+    # TODO Change to extra='forbid' once schema covers all config options
+    # For soft-forks it is recommended to either extend the schema for full config
+    # coverage or allow extra fields with extra='allow'
+    model_config = ConfigDict(extra="allow", title="PyPSA-Eur Configuration")
+
     run: RunConfig = Field(
         default_factory=RunConfig,
         description="Run configuration for PyPSA-EUR workflow execution.",
+    )
+    foresight: ForesightConfig = Field(
+        default_factory=ForesightConfig,
+        description="Foresight mode for the optimization. See Foresight Options for detailed explanations.",
+    )
+    scenario: ScenarioConfig = Field(
+        default_factory=ScenarioConfig,
+        description="Scenario configuration defining wildcards for the workflow.",
+    )
+    countries: CountriesConfig = Field(
+        default_factory=CountriesConfig,
+        description="European countries defined by their Two-letter country codes (ISO 3166-1) which should be included in the energy system model.",
+    )
+    snapshots: SnapshotsConfig = Field(
+        default_factory=SnapshotsConfig,
+        description="Configuration for the time period snapshots.",
+    )
+    enable: EnableConfig = Field(
+        default_factory=EnableConfig,
+        description="Flags to enable/disable workflow features.",
+    )
+    co2_budget: Co2BudgetConfig = Field(
+        default_factory=Co2BudgetConfig,
+        description="CO2 budget as fraction of 1990 emissions per planning horizon year.",
+    )
+    electricity: ElectricityConfig = Field(
+        default_factory=ElectricityConfig,
+        description="Electricity sector configuration.",
+    )
+    atlite: AtliteConfig = Field(
+        default_factory=AtliteConfig,
+        description="Atlite cutout configuration for weather data.",
+    )
+    renewable: RenewableConfig = Field(
+        default_factory=RenewableConfig,
+        description="Renewable energy technologies configuration.",
+    )
+    conventional: ConventionalConfig = Field(
+        default_factory=ConventionalConfig,
+        description="Conventional power plants configuration.",
+    )
+    lines: LinesConfig = Field(
+        default_factory=LinesConfig,
+        description="Transmission lines configuration.",
+    )
+    links: LinksConfig = Field(
+        default_factory=LinksConfig,
+        description="HVDC links configuration.",
+    )
+    transmission_projects: TransmissionProjectsConfig = Field(
+        default_factory=TransmissionProjectsConfig,
+        description="Transmission projects configuration.",
+    )
+    transformers: TransformersConfig = Field(
+        default_factory=TransformersConfig,
+        description="Transformers configuration.",
+    )
+    load: LoadConfig = Field(
+        default_factory=LoadConfig,
+        description="Electrical load configuration.",
+    )
+    pypsa_eur: PypsaEurConfig = Field(
+        default_factory=PypsaEurConfig,
+        description="PyPSA-Eur component filtering configuration.",
+    )
+    energy: EnergyConfig = Field(
+        default_factory=EnergyConfig,
+        description="Energy totals configuration.",
+    )
+    biomass: BiomassConfig = Field(
+        default_factory=BiomassConfig,
+        description="Biomass configuration.",
+    )
+    solar_thermal: SolarThermalConfig = Field(
+        default_factory=SolarThermalConfig,
+        description="Solar thermal configuration.",
+    )
+    existing_capacities: ExistingCapacitiesConfig = Field(
+        default_factory=ExistingCapacitiesConfig,
+        description="Existing capacities grouping configuration.",
+    )
+    sector: SectorConfig = Field(
+        default_factory=SectorConfig,
+        description="Sector coupling configuration.",
+    )
+    industry: IndustryConfig = Field(
+        default_factory=IndustryConfig,
+        description="Industry sector configuration.",
+    )
+    costs: CostsConfig = Field(
+        default_factory=CostsConfig,
+        description="Cost assumptions configuration.",
+    )
+    clustering: ClusteringConfig = Field(
+        default_factory=ClusteringConfig,
+        description="Network clustering configuration.",
+    )
+    adjustments: AdjustmentsConfig = Field(
+        default_factory=AdjustmentsConfig,
+        description="Network adjustments configuration.",
+    )
+    solving: SolvingConfig = Field(
+        default_factory=SolvingConfig,
+        description="Solver and optimization configuration.",
     )
 
 
@@ -28,20 +170,123 @@ def validate_config(config: dict) -> ConfigSchema:
     return ConfigSchema(**config)
 
 
-def export_defaults() -> dict:
-    """Export default config values as dict."""
-    return ConfigSchema().model_dump()
+def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
+    """Generate config defaults YAML file and return the defaults dict."""
+
+    class DoubleQuotedDumper(yaml.SafeDumper):
+        pass
+
+    def str_representer(dumper, data):
+        """Use block style for multiline, quotes for special chars, plain otherwise."""
+        TAG = "tag:yaml.org,2002:str"
+        if "\n" in data:
+            return dumper.represent_scalar(TAG, data, style="|")
+        if data == "" or any(c in data for c in ":{}[]&*#?|-<>=!%@"):
+            return dumper.represent_scalar(TAG, data, style='"')
+        return dumper.represent_scalar(TAG, data)
+
+    DoubleQuotedDumper.add_representer(str, str_representer)
+    # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
+    # the goal should be to use snake_case consistently
+    defaults = ConfigSchema().model_dump(by_alias=True)
+    with open(path, "w") as f:
+        f.write(
+            "# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>\n"
+        )
+        f.write("#\n")
+        f.write("# SPDX-License-Identifier: CC0-1.0\n\n")
+        for i, (key, value) in enumerate(defaults.items()):
+            if i > 0:
+                f.write("\n")
+            yaml.dump(
+                {key: value},
+                f,
+                Dumper=DoubleQuotedDumper,
+                sort_keys=False,
+                allow_unicode=True,
+            )
+    return defaults
 
 
-def export_json_schema() -> dict:
-    """Export JSON schema for ConfigSchema."""
-    return ConfigSchema.model_json_schema()
+def generate_config_schema(path: str = "config/schema.json") -> dict:
+    """Generate JSON schema file and return the schema dict."""
+    import json
+    import math
+
+    def resolve_refs(obj: dict, defs: dict) -> dict:
+        """Resolve nested schema references to show them nicely in the documentation."""
+        if isinstance(obj, dict):
+            if "$ref" in obj:
+                ref_path = obj["$ref"]  # "#/$defs/RunConfig
+                ref_name = ref_path.split("/")[-1]
+                if ref_name in defs:
+                    resolved = resolve_refs(defs[ref_name].copy(), defs)
+                    # Keep description from the reference
+                    if "description" in obj and "description" not in resolved:
+                        resolved["description"] = obj["description"]
+                    return resolved
+            return {k: resolve_refs(v, defs) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [resolve_refs(item, defs) for item in obj]
+        return obj
+
+    def sanitize_for_json(obj):
+        """Replace infinity values with None for valid JSON."""
+        if isinstance(obj, dict):
+            return {k: sanitize_for_json(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [sanitize_for_json(v) for v in obj]
+        elif isinstance(obj, float) and math.isinf(obj):
+            return None
+        return obj
+
+    def remove_nested_titles(obj, is_root=True):
+        """Remove nested titles (e.g. model class names)."""
+        if isinstance(obj, dict):
+            result = {}
+            for k, v in obj.items():
+                if k == "title" and not is_root:
+                    continue
+                result[k] = remove_nested_titles(v, is_root=False)
+            return result
+        elif isinstance(obj, list):
+            return [remove_nested_titles(item, is_root=False) for item in obj]
+        return obj
+
+    def remove_object_type(obj, is_root=True):
+        """Remove 'type: object' from nested objects (redundant when properties exist)."""
+        if isinstance(obj, dict):
+            result = {}
+            for k, v in obj.items():
+                if (
+                    k == "type"
+                    and v == "object"
+                    and not is_root
+                    and "properties" in obj
+                ):
+                    continue
+                result[k] = remove_object_type(v, is_root=False)
+            return result
+        elif isinstance(obj, list):
+            return [remove_object_type(item, is_root=False) for item in obj]
+        return obj
+
+    schema = ConfigSchema.model_json_schema()
+    defs = schema.get("$defs", {})
+    schema = resolve_refs(schema, defs)
+    schema = sanitize_for_json(schema)
+    schema = remove_nested_titles(schema)
+    schema = remove_object_type(schema)
+    with open(path, "w") as f:
+        json.dump(schema, f, indent=2)
+        f.write("\n")
+    return schema
 
 
 __all__ = [
     "ConfigSchema",
     "validate_config",
-    "export_json_schema",
-    "export_defaults",
+    "generate_config_defaults",
+    "generate_config_schema",
     "ValidationError",
 ]
