@@ -269,9 +269,8 @@ class HeatSource(Enum):
         mapping = {
             HeatSource.FISCHER_TROPSCH_EXCESS: "Fischer-Tropsch",
             HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
-            HeatSource.METHANOLISATION_EXCESS: "methanolisation",
             HeatSource.ELECTROLYSIS_EXCESS: "electrolysis",
-            # Sabatier and Fuel Cell use calculated efficiencies
+            # Sabatier, Fuel Cell, and Methanolisation use calculated efficiencies
         }
         return mapping.get(self)
 
@@ -365,6 +364,12 @@ class HeatSource(Enum):
 
         if self.technology_data_name:
             return costs.at[self.technology_data_name, "efficiency-heat"]
+        elif self == HeatSource.METHANOLISATION_EXCESS:
+            # Methanolisation uses heat-output / hydrogen-input (no efficiency-heat in technology-data)
+            return (
+                costs.at["methanolisation", "heat-output"]
+                / costs.at["methanolisation", "hydrogen-input"]
+            )
         elif self == HeatSource.SABATIER_EXCESS:
             # Calculated: 1 - losses - main efficiency
             return 1 - 0.05 - n.links.loc[nodes + " Sabatier", "efficiency"]
