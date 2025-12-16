@@ -9,6 +9,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Refactored `solve_network.py` and `solve_operations_network.py` to separate optimization problem preparation from solving, enabling inspection of optimization problems before solve execution. 
+
+* Added example configurations for rolling horizon and iterative optimization modes in `config/examples/`.
+
 * Added existing biomass decentral/rural residential and services heating capacity.
 
 * Fix parsing in Swiss passenger cars data (https://github.com/PyPSA/pypsa-eur/pull/1934 and https://github.com/PyPSA/pypsa-eur/pull/1936).
