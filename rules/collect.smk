@@ -97,7 +97,7 @@ def balance_map_paths(kind, w):
     return expand(
         RESULTS
         + f"maps/{kind}/base_s_{{clusters}}_{{opts}}_{{sector_opts}}_{{planning_horizons}}"
-        f"-balance_map_{{carrier}}.{'pdf' if kind == 'static' else 'html'}",
+        f"-balance_map_{{carrier}}.{'pdf'if kind== 'static' else 'html'}",
         **config["scenario"],
         run=config["run"]["name"],
         carrier=config_provider("plotting", cfg_key, "bus_carriers")(w),
