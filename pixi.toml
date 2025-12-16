@@ -34,6 +34,8 @@ update-dags = """
 	snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/workflow.png
 """
 
+generate-config = "python -c 'from scripts.lib.validation.config import generate_config_defaults, generate_config_schema; generate_config_defaults(); generate_config_schema()'"
+
 [dependencies]
 atlite = ">=0.3"
 bokeh = ">=3.8.0"
