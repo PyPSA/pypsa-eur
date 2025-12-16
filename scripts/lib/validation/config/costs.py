@@ -18,11 +18,11 @@ class _EmissionPricesConfig(ConfigModel):
 
     enable: bool = Field(
         False,
-        description="Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators (other emission types listed in `network.carriers` possible as well).",
+        description="Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. Config setting can also be enabled with the keyword `Ep` in the `{opts}` wildcard for electricity-only runs.",
     )
-    co2: float = Field(
+    co2: float | dict[str, float] = Field(
         0.0,
-        description="Exogenous price of carbon-dioxide added to the marginal costs of fossil-fuelled generators according to their carbon intensity. Added through the keyword `Ep` in the `{opts}` wildcard only in the rule `prepare_network`.",
+        description="Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere.",
     )
     co2_monthly_prices: bool = Field(
         False,
@@ -59,11 +59,7 @@ class CostsConfig(BaseModel):
 
     year: int = Field(
         2050,
-        description="Year for which to retrieve cost assumptions of `resources/costs.csv`.",
-    )
-    version: str = Field(
-        "v0.13.3",
-        description="Version of `technology-data` repository to use. If this string is of the form <user>/<repo>/<version> then costs are instead retrieved from `github.com/<user>/<repo>` at the <version> tag.",
+        description="Year for which to retrieve cost assumptions of `data/costs/primary/<version>/costs_<year>.csv`.",
     )
     social_discountrate: float = Field(
         0.02,

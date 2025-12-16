@@ -13,6 +13,36 @@ from pydantic import BaseModel, Field, field_validator
 from scripts.lib.validation.config._base import ConfigModel
 
 
+class _PrepareKwargsConfig(ConfigModel):
+    """Configuration for `atlite.cutouts.{name}.prepare_kwargs` settings."""
+
+    features: str | list[str] | None = Field(
+        None,
+        description="When freshly building a cutout, retrieve data only for those features. If not defined, it defaults to all available features.",
+    )
+    sarah_dir: str | None = Field(
+        None,
+        description="Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts.",
+    )
+    monthly_requests: bool | None = Field(
+        None,
+        description="Whether to use monthly requests for ERA5 data when building the cutout. Helpful to avoid running into request limits with large cutouts.",
+    )
+    tmpdir: str | None = Field(
+        None,
+        description="Path to a temporary directory where intermediate files are stored when building the cutout. Helpful when building large cutouts.",
+    )
+
+
+class _ChunksConfig(ConfigModel):
+    """Configuration for `atlite.cutouts.{name}.chunks` settings."""
+
+    time: int | None = Field(
+        None,
+        description="Chunk size for time dimension when preparing cutout.",
+    )
+
+
 class _CutoutConfig(ConfigModel):
     """Configuration for a single cutout in `atlite.cutouts`."""
 
@@ -42,13 +72,13 @@ class _CutoutConfig(ConfigModel):
         None,
         description="Time span to download weather data for. If not defined, it defaults to the time interval spanned by the snapshots.",
     )
-    features: str | list[str] | None = Field(
+    chunks: _ChunksConfig | None = Field(
         None,
-        description="When freshly building a cutout, retrieve data only for those features. If not defined, it defaults to all available features.",
+        description="Chunking configuration for cutout preparation.",
     )
-    sarah_dir: str | None = Field(
+    prepare_kwargs: _PrepareKwargsConfig | None = Field(
         None,
-        description="Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts.",
+        description="Dictionary of keyword arguments passed to ``atlite.Cutout.prepare()`` when building the cutout.",
     )
 
     @field_validator("x")
@@ -79,12 +109,8 @@ class _CutoutConfig(ConfigModel):
 class AtliteConfig(BaseModel):
     """Configuration for `atlite` settings."""
 
-    cutout_directory: str = Field(
-        "cutouts",
-        description="Directory to store cutouts.",
-    )
     default_cutout: str | list[str] = Field(
-        "europe-2013-sarah3-era5",
+        "europe-1940-2024-era5",
         description="Defines a default cutout. Can refer to a single cutout or a list of cutouts.",
     )
     nprocesses: int = Field(
@@ -97,14 +123,20 @@ class AtliteConfig(BaseModel):
     )
     cutouts: dict[str, _CutoutConfig] = Field(
         default_factory=lambda: {
-            "europe-2013-sarah3-era5": _CutoutConfig(
-                module=["sarah", "era5"],
+            "europe-1940-2024-era5": _CutoutConfig(
+                module="era5",
                 x=[-12.0, 42.0],
                 y=[33.0, 72.0],
                 dx=0.3,
                 dy=0.3,
-                time=["2013", "2013"],
-            )
+                time=["1940", "2024"],
+                chunks=_ChunksConfig(time=500),
+                prepare_kwargs=_PrepareKwargsConfig(
+                    features=["temperature", "height", "runoff"],
+                    monthly_requests=True,
+                    tmpdir="./cutouts_tmp/",
+                ),
+            ),
         },
         description="Named cutout configurations.",
     )

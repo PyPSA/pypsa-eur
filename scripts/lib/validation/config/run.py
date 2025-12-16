@@ -68,11 +68,6 @@ class RunConfig(ConfigModel):
         description="Shared resources configuration for parallel execution",
     )
 
-    shared_cutouts: bool = Field(
-        True,
-        description="Switch to select whether cutouts should be shared across runs.",
-    )
-
     use_shadow_directory: bool = Field(
         False,
         description="Set to ``true`` (default) if snakemake shadow directories (``shallow``) should be used. Set to ``false`` if problems occur.",

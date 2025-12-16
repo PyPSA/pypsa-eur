@@ -556,7 +556,7 @@ def _create_single_link(row):
     If the longest link is a MultiLineString, it extracts the longest
     linestring from it. The resulting single link is returned.
     """
-    valid_roles = ["line", "cable"]
+    valid_roles = ["line", "cable", "section"]
     df = pd.json_normalize(row["members"])
     df = df[df["role"].isin(valid_roles)]
     df.loc[:, "geometry"] = df.apply(_create_linestring, axis=1)

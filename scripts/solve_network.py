@@ -462,12 +462,10 @@ def prepare_network(
     if load_shedding := solve_opts.get("load_shedding"):
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
-        # TODO: retrieve color and nice name from config
-        n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
+        n.add("Carrier", "load")
         buses_i = n.buses.index
-        if not np.isscalar(load_shedding):
-            # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
-            load_shedding = 1e2  # Eur/kWh
+        if isinstance(load_shedding, bool):
+            load_shedding = 1e5  # Eur/MWh
 
         n.add(
             "Generator",
@@ -475,9 +473,8 @@ def prepare_network(
             " load",
             bus=buses_i,
             carrier="load",
-            sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
-            marginal_cost=load_shedding,  # Eur/kWh
-            p_nom=1e9,  # kW
+            marginal_cost=load_shedding,  # Eur/MWh
+            p_nom=np.inf,
         )
 
     if solve_opts.get("curtailment_mode"):

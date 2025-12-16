@@ -10,9 +10,12 @@ The json schema is also contributed to the schemastore.org and matches
 `**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
 """
 
-import yaml
-from pydantic import ConfigDict, Field, ValidationError
+from typing import Literal
 
+import yaml
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from scripts.lib.validation.config._base import ConfigModel
 from scripts.lib.validation.config.adjustments import AdjustmentsConfig
 from scripts.lib.validation.config.atlite import AtliteConfig
 from scripts.lib.validation.config.biomass import BiomassConfig
@@ -21,6 +24,7 @@ from scripts.lib.validation.config.co2_budget import Co2BudgetConfig
 from scripts.lib.validation.config.conventional import ConventionalConfig
 from scripts.lib.validation.config.costs import CostsConfig
 from scripts.lib.validation.config.countries import CountriesConfig
+from scripts.lib.validation.config.data import DataConfig
 from scripts.lib.validation.config.electricity import ElectricityConfig
 from scripts.lib.validation.config.enable import EnableConfig
 from scripts.lib.validation.config.energy import EnergyConfig
@@ -38,14 +42,48 @@ from scripts.lib.validation.config.sector import SectorConfig
 from scripts.lib.validation.config.snapshots import SnapshotsConfig
 from scripts.lib.validation.config.solar_thermal import SolarThermalConfig
 from scripts.lib.validation.config.solving import SolvingConfig
-from scripts.lib.validation.config.top_level import TopLevelConfig
 from scripts.lib.validation.config.transformers import TransformersConfig
 from scripts.lib.validation.config.transmission_projects import (
     TransmissionProjectsConfig,
 )
 
 
-class ConfigSchema(TopLevelConfig):
+class LoggingConfig(ConfigModel):
+    """Configuration for top level `logging` settings."""
+
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
+        "INFO",
+        description="Restrict console outputs to all infos, warning or errors only",
+    )
+    format: str = Field(
+        "%(levelname)s:%(name)s:%(message)s",
+        description="Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.",
+    )
+
+
+class RemoteConfig(ConfigModel):
+    """Configuration for top level `remote` settings."""
+
+    ssh: str = Field(
+        "",
+        description="Optionally specify the SSH of a remote cluster to be synchronized.",
+    )
+    path: str = Field(
+        "",
+        description="Optionally specify the file path within the remote cluster to be synchronized.",
+    )
+
+
+class SecretsConfig(ConfigModel):
+    """Configuration for top level `secrets` settings."""
+
+    corine: str = Field(
+        "",
+        description='API token for corine dataset retrieval. You can also pass the token by setting the environment variable "CORINE_API_TOKEN". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.',
+    )
+
+
+class ConfigSchema(BaseModel):
     """
     Combined configuration schema for PyPSA-EUR.
     """
@@ -54,6 +92,23 @@ class ConfigSchema(TopLevelConfig):
     # For soft-forks it is recommended to either extend the schema for full config
     # coverage or allow extra fields with extra='allow'
     model_config = ConfigDict(extra="allow", title="PyPSA-Eur Configuration")
+
+    # Top-level fields (from TopLevelConfig)
+    version: str = Field(
+        "v2025.07.0", description="Version of PyPSA-Eur. Descriptive only."
+    )
+    tutorial: bool = Field(
+        False,
+        description="Switch to retrieve the tutorial data set instead of the full data set.",
+    )
+    logging: LoggingConfig = Field(
+        default_factory=LoggingConfig,
+        description="Logging configuration for the workflow",
+    )
+    remote: RemoteConfig = Field(
+        default_factory=RemoteConfig,
+        description="Configuration for remote workflow execution",
+    )
 
     run: RunConfig = Field(
         default_factory=RunConfig,
@@ -162,6 +217,14 @@ class ConfigSchema(TopLevelConfig):
     solving: SolvingConfig = Field(
         default_factory=SolvingConfig,
         description="Solver and optimization configuration.",
+    )
+    data: DataConfig = Field(
+        default_factory=DataConfig,
+        description="Data source configuration.",
+    )
+    secrets: SecretsConfig = Field(
+        default_factory=SecretsConfig,
+        description="Secrets configuration for API tokens.",
     )
 
 

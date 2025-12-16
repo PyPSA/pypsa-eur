@@ -60,11 +60,11 @@ def retrieve_osm_data(
     overpass_url = "https://overpass-api.de/api/interpreter"
 
     features_dict = {
-        "cables_way": 'way["power"="cable"]',
-        "lines_way": 'way["power"="line"]',
-        "routes_relation": 'relation["route"="power"]',
-        "substations_way": 'way["power"="substation"]',
-        "substations_relation": 'relation["power"="substation"]',
+        "cables_way": ['way["power"="cable"]'],
+        "lines_way": ['way["power"="line"]'],
+        "routes_relation": ['relation["route"="power"]', 'relation["power"="circuit"]'],
+        "substations_way": ['way["power"="substation"]'],
+        "substations_relation": ['relation["power"="substation"]'],
     }
 
     wait_time = 5
@@ -90,7 +90,7 @@ def retrieve_osm_data(
                 [out:json];
                 {op_area}->.searchArea;
                 (
-                {features_dict[f]}(area.searchArea);
+                {" ".join(f"{i}(area.searchArea);" for i in features_dict[f])}
                 );
                 out body geom;
             """

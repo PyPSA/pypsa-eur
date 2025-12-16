@@ -61,7 +61,7 @@ class _DistrictHeatingConfig(ConfigModel):
     )
     ptes: dict[str, Any] = Field(
         default_factory=lambda: {
-            "dynamic_capacity": True,
+            "dynamic_capacity": False,
             "supplemental_heating": {"enable": False, "booster_heat_pump": False},
             "max_top_temperature": 90,
             "min_bottom_temperature": 35,
@@ -116,6 +116,44 @@ class _DistrictHeatingConfig(ConfigModel):
     dh_areas: dict[str, Any] = Field(
         default_factory=lambda: {"buffer": 1000, "handle_missing_countries": "fill"},
         description="District heating areas settings.",
+    )
+
+
+class _ResidentialHeatDsmConfig(BaseModel):
+    """Configuration for `sector.residential_heat.dsm` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Enable residential heat demand-side management that allows heating systems to provide flexibility by shifting demand within configurable time periods. Models building thermal mass as energy storage.",
+    )
+    direction: list[str] = Field(
+        default_factory=lambda: ["overheat", "undercool"],
+        description="'overheat-undercool' means both pre-heating and delayed heating are allowed. 'overheat' allows only pre-heating where buildings are heated up above target temperature and then allowed to cool down, while 'undercool' allows only delayed heating where buildings can cool below target temperature and then be heated up again.",
+    )
+    restriction_value: dict[int, float] = Field(
+        default_factory=lambda: {
+            2020: 0.06,
+            2025: 0.16,
+            2030: 0.27,
+            2035: 0.36,
+            2040: 0.38,
+            2045: 0.39,
+            2050: 0.4,
+        },
+        description="Maximum state of charge (as fraction) for heat flexibility storage representing available thermal buffer capacity in buildings. Set to 0 for no flexibility or to 1.0 to assume that the entire heating demand can contribute to flexibility.",
+    )
+    restriction_time: list[int] = Field(
+        default_factory=lambda: [10, 22],
+        description="Checkpoint hours (0-23) at which heat flexibility storage must return to baseline state of charge, i.e. the residence surplus or missing heat be balanced. Time is the local time for each country and bus. Default: [10, 22] creates 12-hour periods with checkpoints at 10am and 10pm.",
+    )
+
+
+class _ResidentialHeatConfig(BaseModel):
+    """Configuration for `sector.residential_heat` settings."""
+
+    dsm: _ResidentialHeatDsmConfig = Field(
+        default_factory=_ResidentialHeatDsmConfig,
+        description="Configuration options for residential heat demand-side management (DSM). See [smartEn DSM study](https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf) (Appendix A) for methodology.",
     )
 
 
@@ -352,6 +390,12 @@ class SectorConfig(BaseModel):
         },
         description="Heat pump sources by area.",
     )
+
+    residential_heat: _ResidentialHeatConfig = Field(
+        default_factory=_ResidentialHeatConfig,
+        description="Residential heat configuration.",
+    )
+
     cluster_heat_buses: bool = Field(
         True,
         description="Cluster residential and service heat buses in [prepare_sector_network.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py) to one to save memory.",
