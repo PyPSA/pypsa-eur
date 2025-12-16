@@ -110,7 +110,9 @@ if __name__ == "__main__":
     )
 
     # line and links widths according to optimal capacity
-    flow = n.statistics.transmission(groupby=False, bus_carrier=carrier).div(unit_conversion)
+    flow = n.statistics.transmission(groupby=False, bus_carrier=carrier).div(
+        unit_conversion
+    )
 
     if not flow.empty:
         flow_reversed_mask = flow.index.get_level_values(1).str.contains("reversed")
