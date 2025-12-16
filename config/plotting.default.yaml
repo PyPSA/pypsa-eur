@@ -114,9 +114,9 @@ plotting:
       vmin:
       vmax:
       region_unit: €/MWh
-      unit_conversion: 1_000_000
       branch_color: darkseagreen
       unit: TWh
+      unit_conversion: 1_000_000
       bus_factor: 0.002
       branch_factor: 0.01
       flow_factor: 100
@@ -131,9 +131,9 @@ plotting:
       vmin:
       vmax:
       region_unit: €/MWh
-      unit_conversion: 1_000_000
       branch_color: darkseagreen
       unit: TWh
+      unit_conversion: 1_000_000
       bus_factor: 0.1
       branch_factor: 0.1
       flow_factor: 100
@@ -146,9 +146,9 @@ plotting:
       vmin:
       vmax:
       region_unit: €/t_${CO_2}$
-      unit_conversion: 1_000_000
       branch_color: orange
       unit: Mt
+      unit_conversion: 1_000_000
       bus_factor: 0.015
       branch_factor: 0.4
       flow_factor: 120
@@ -163,9 +163,9 @@ plotting:
       vmin:
       vmax:
       region_unit: €/MWh
-      unit_conversion: 1_000_000
       branch_color: darkred
       unit: TWh
+      unit_conversion: 1_000_000
       bus_factor: 0.002
       branch_factor: 0.05
       flow_factor: 60
@@ -180,9 +180,9 @@ plotting:
       vmin:
       vmax:
       region_unit: €/MWh
-      unit_conversion: 1_000_000
       branch_color: pink
       unit: TWh
+      unit_conversion: 1_000_000
       bus_factor: 0.002
       branch_factor: 0.03
       flow_factor: 8
@@ -197,9 +197,9 @@ plotting:
       vmin:
       vmax:
       region_unit: €/MWh
-      unit_conversion: 1_000_000
       branch_color: yellow
       unit: TWh
+      unit_conversion: 1_000_000
       bus_factor: 0.005
       branch_factor: 0.1
       flow_factor: 100
@@ -212,9 +212,9 @@ plotting:
       region_unit: €/MWh
       vmin:
       vmax:
-      unit_conversion: 1_000_000
       branch_color: black
       unit: TWh
+      unit_conversion: 1_000_000
       bus_factor: 0.002
       branch_factor: 0.01
       flow_factor: 100
@@ -227,9 +227,9 @@ plotting:
       vmin:
       vmax:
       region_unit: €/MWh
-      unit_conversion: 1_000_000
       branch_color: darkseagreen
       unit: TWh
+      unit_conversion: 1_000_000
       bus_factor: 0.01
       branch_factor: 0.1
       flow_factor: 100
@@ -242,9 +242,9 @@ plotting:
       vmin:
       vmax:
       region_unit: €/MWh
-      unit_conversion: 1_000_000
       branch_color: darkred
       unit: TWh
+      unit_conversion: 1_000_000
       bus_factor: 0.005
       branch_factor: 0.1
       flow_factor: 100
