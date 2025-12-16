@@ -42,7 +42,7 @@ from scripts.build_energy_totals import (
 )
 from scripts.build_transport_demand import transport_degree_factor
 from scripts.definitions.heat_sector import HeatSector
-from scripts.definitions.heat_source import HeatSource
+from scripts.definitions.heat_source import HeatSource, HeatSourceType
 from scripts.definitions.heat_system import HeatSystem
 from scripts.prepare_network import maybe_adjust_costs_and_potentials
 
@@ -5444,7 +5444,6 @@ def add_waste_heat(
     n: pypsa.Network,
     costs: pd.DataFrame,
     options: dict,
-    cf_industry: dict,
 ) -> None:
     """
     Add industrial waste heat utilization capabilities to district heating systems.
@@ -5458,21 +5457,11 @@ def add_waste_heat(
     n : pypsa.Network
         The PyPSA network container object
     costs : pd.DataFrame
-        DataFrame containing technology cost and efficiency parameters,
-        particularly for methanolisation process
+        DataFrame containing technology cost and efficiency parameters
     options : dict
-        Configuration dictionary containing boolean flags for different waste heat sources:
-        - use_fischer_tropsch_waste_heat
-        - use_methanation_waste_heat
-        - use_haber_bosch_waste_heat
-        - use_methanolisation_waste_heat
-        - use_electrolysis_waste_heat
-        - use_fuel_cell_waste_heat
-    cf_industry : dict
-        Dictionary containing conversion factors for industrial processes, including:
-        - MWh_H2_per_tNH3_electrolysis
-        - MWh_elec_per_tNH3_electrolysis
-        - MWh_NH3_per_tNH3
+        Configuration dictionary containing:
+        - heat_sources: dict mapping heat systems to enabled heat source lists
+        - use_*_waste_heat: float utilisation factors for each waste heat source
 
     Returns
     -------
@@ -5482,8 +5471,6 @@ def add_waste_heat(
     Notes
     -----
     - Waste heat is only added to buses with carrier "urban central heat"
-    - Default efficiency values (like 0.95 for Fischer-Tropsch) might need
-      to be moved to configuration
     - The modification adds additional output buses (bus2, bus3, or bus4) to
       existing links representing industrial processes
     """
@@ -5491,93 +5478,42 @@ def add_waste_heat(
 
     # AC buses with district heating
     urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
-    if not urban_central.empty:
-        urban_central = urban_central.str[: -len(" urban central heat")]
+    if urban_central.empty:
+        return
 
-        link_carriers = n.links.carrier.unique()
-        heat_system = "urban central"
+    urban_central = urban_central.str[: -len(" urban central heat")]
+    link_carriers = n.links.carrier.unique()
+    heat_system = "urban central"
 
-        # Fischer-Tropsch excess heat
-        heat_source = HeatSource.FISCHER_TROPSCH_EXCESS
-        if (
-            heat_source.value in options["heat_sources"]["urban central"]
-            and "Fischer-Tropsch" in link_carriers
-        ):
-            n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = (
-                heat_source.resource_bus(urban_central, heat_system)
-            )
-            n.links.loc[urban_central + " Fischer-Tropsch", "efficiency3"] = (
-                costs.at["Fischer-Tropsch", "efficiency-heat"]
-                * options["use_fischer_tropsch_waste_heat"]
-            )
+    for heat_source in HeatSource:
+        # Only process waste heat sources
+        if heat_source.source_type != HeatSourceType.PROCESS_WASTE:
+            continue
 
-        # Sabatier process excess heat
-        heat_source = HeatSource.SABATIER_EXCESS
-        if (
-            heat_source.value in options["heat_sources"]["urban central"]
-            and "Sabatier" in link_carriers
-        ):
-            n.links.loc[urban_central + " Sabatier", "bus3"] = heat_source.resource_bus(
-                urban_central, heat_system
-            )
-            n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
-                1 - 0.05 - n.links.loc[urban_central + " Sabatier", "efficiency"]
-            ) * options["use_methanation_waste_heat"]
+        # Check if enabled in heat_sources config
+        if heat_source.value not in options["heat_sources"].get("urban central", []):
+            continue
 
-        # Haber-Bosch process excess heat
-        heat_source = HeatSource.HABER_BOSCH_EXCESS
-        if (
-            heat_source.value in options["heat_sources"]["urban central"]
-            and "Haber-Bosch" in link_carriers
-        ):
-            n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
-                heat_source.resource_bus(urban_central, heat_system)
-            )
-            n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
-                costs.at["Haber-Bosch", "efficiency-heat"]
-                * options["use_haber_bosch_waste_heat"]
-            )
+        # Check if the process exists in the network
+        if heat_source.process_carrier not in link_carriers:
+            continue
 
-        # Methanolisation excess heat
-        heat_source = HeatSource.METHANOLISATION_EXCESS
-        if (
-            heat_source.value in options["heat_sources"]["urban central"]
-            and "methanolisation" in link_carriers
-        ):
-            n.links.loc[urban_central + " methanolisation", "bus4"] = (
-                heat_source.resource_bus(urban_central, heat_system)
-            )
-            n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
-                costs.at["methanolisation", "efficiency-heat"]
-                * options["use_methanolisation_waste_heat"]
-            )
+        # Get utilisation factor from config
+        utilisation = options.get(heat_source.waste_heat_option_key, 0)
+        if not utilisation:
+            continue
 
-        # Electrolysis excess heat
-        heat_source = HeatSource.ELECTROLYSIS_EXCESS
-        if (
-            heat_source.value in options["heat_sources"]["urban central"]
-            and "H2 Electrolysis" in link_carriers
-        ):
-            n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
-                heat_source.resource_bus(urban_central, heat_system)
-            )
-            n.links.loc[urban_central + " H2 Electrolysis", "efficiency2"] = (
-                costs.at["electrolysis", "efficiency-heat"]
-                * options["use_electrolysis_waste_heat"]
-            )
+        # Get efficiency and bus/efficiency column names
+        efficiency = heat_source.get_waste_heat_efficiency(n, costs, urban_central)
+        bus_col = f"bus{heat_source.process_output_bus_index}"
+        eff_col = f"efficiency{heat_source.process_output_bus_index}"
+        link_names = urban_central + " " + heat_source.process_carrier
 
-        # Fuel cell excess heat
-        heat_source = HeatSource.FUEL_CELL_EXCESS
-        if (
-            heat_source.value in options["heat_sources"]["urban central"]
-            and "H2 Fuel Cell" in link_carriers
-        ):
-            n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
-                heat_source.resource_bus(urban_central, heat_system)
-            )
-            n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
-                1 - 0.05 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
-            ) * options["use_fuel_cell_waste_heat"]
+        # Wire up the process link to output waste heat
+        n.links.loc[link_names, bus_col] = heat_source.resource_bus(
+            urban_central, heat_system
+        )
+        n.links.loc[link_names, eff_col] = efficiency * utilisation
 
 
 def add_agriculture(
@@ -6530,7 +6466,7 @@ if __name__ == "__main__":
         )
 
     if options["heating"]:
-        add_waste_heat(n, costs, options, cf_industry)
+        add_waste_heat(n, costs, options)
 
     if options["agriculture"]:  # requires H and I
         add_agriculture(

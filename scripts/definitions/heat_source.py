@@ -8,6 +8,31 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 
+class HeatSourceType(Enum):
+    """
+    Categorization of heat sources by their fundamental characteristics.
+
+    Attributes
+    ----------
+    INEXHAUSTIBLE : str
+        Ambient sources (air, ground, sea water) that are always available
+        and don't require resource tracking.
+    SUPPLY_LIMITED : str
+        Sources with spatial/temporal constraints requiring resource buses
+        and generators (geothermal, river water).
+    STORAGE : str
+        Thermal storage discharge (PTES) with time-varying availability.
+    PROCESS_WASTE : str
+        Industrial process waste heat (PTX) that is a byproduct of other
+        network components.
+    """
+
+    INEXHAUSTIBLE = "inexhaustible"
+    SUPPLY_LIMITED = "supply_limited"
+    STORAGE = "storage"
+    PROCESS_WASTE = "process_waste"
+
+
 class HeatSource(Enum):
     """
     Enumeration representing different heat sources for heat pumps and direct utilisation.
@@ -76,58 +101,60 @@ class HeatSource(Enum):
         return self.value
 
     @property
+    def source_type(self) -> HeatSourceType:
+        """
+        Get the category of this heat source.
+
+        Returns
+        -------
+        HeatSourceType
+            The category: INEXHAUSTIBLE, SUPPLY_LIMITED, STORAGE, or PROCESS_WASTE.
+        """
+        if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
+            return HeatSourceType.INEXHAUSTIBLE
+        elif self in [HeatSource.GEOTHERMAL, HeatSource.RIVER_WATER]:
+            return HeatSourceType.SUPPLY_LIMITED
+        elif self == HeatSource.PTES:
+            return HeatSourceType.STORAGE
+        else:
+            return HeatSourceType.PROCESS_WASTE
+
+    @property
     def has_constant_temperature(self) -> bool:
         """
         Check if the heat source has a constant (time-invariant) temperature.
 
-        Constant-temperature sources (e.g., geothermal) have their temperature
-        specified in config rather than loaded from time series files.
+        Constant-temperature sources have their temperature specified in config
+        rather than loaded from time series files. This includes geothermal and
+        all PTX process waste heat sources.
 
         Returns
         -------
         bool
-            True for geothermal, False for all other sources.
+            True for SUPPLY_LIMITED and PROCESS_WASTE types (except river_water).
         """
-        if self in [
-            HeatSource.GEOTHERMAL,
-            HeatSource.ELECTROLYSIS_EXCESS,
-            HeatSource.FISCHER_TROPSCH_EXCESS,
-            HeatSource.SABATIER_EXCESS,
-            HeatSource.HABER_BOSCH_EXCESS,
-            HeatSource.METHANOLISATION_EXCESS,
-            HeatSource.FUEL_CELL_EXCESS,
-        ]:
-            return True
-        else:
+        if self == HeatSource.RIVER_WATER:
             return False
+        return self.source_type in [
+            HeatSourceType.SUPPLY_LIMITED,
+            HeatSourceType.PROCESS_WASTE,
+        ]
 
     @property
     def requires_bus(self) -> bool:
         """
-        Returns whether the heat source is limited (vs. inexhaustible).
+        Check whether the heat source requires a resource bus.
 
-        Limited heat sources require a resource bus and have spatial/temporal constraints.
-        Inexhaustible sources (air, ground) are always available.
+        Limited heat sources require a resource bus to track availability.
+        Inexhaustible sources (air, ground, sea water) are always available
+        and don't need resource tracking.
 
         Returns
         -------
         bool
-            True if the heat source is limited, False if inexhaustible.
+            True if not INEXHAUSTIBLE, False otherwise.
         """
-        if self in [
-            HeatSource.GEOTHERMAL,
-            HeatSource.RIVER_WATER,
-            HeatSource.PTES,
-            HeatSource.ELECTROLYSIS_EXCESS,
-            HeatSource.FISCHER_TROPSCH_EXCESS,
-            HeatSource.SABATIER_EXCESS,
-            HeatSource.HABER_BOSCH_EXCESS,
-            HeatSource.METHANOLISATION_EXCESS,
-            HeatSource.FUEL_CELL_EXCESS,
-        ]:
-            return True
-        else:
-            return False
+        return self.source_type != HeatSourceType.INEXHAUSTIBLE
 
     @property
     def requires_generator(self) -> bool:
@@ -140,12 +167,9 @@ class HeatSource(Enum):
         Returns
         -------
         bool
-            True for geothermal and river_water, False otherwise.
+            True for SUPPLY_LIMITED sources only.
         """
-        if self in [HeatSource.GEOTHERMAL, HeatSource.RIVER_WATER]:
-            return True
-        else:
-            return False
+        return self.source_type == HeatSourceType.SUPPLY_LIMITED
 
     @property
     def requires_preheater(self) -> bool:
@@ -159,21 +183,100 @@ class HeatSource(Enum):
         Returns
         -------
         bool
-            True for PTES, False otherwise.
+            True for STORAGE, PROCESS_WASTE, and GEOTHERMAL sources.
         """
-        if self in [
-            HeatSource.PTES,
-            HeatSource.GEOTHERMAL,
-            HeatSource.ELECTROLYSIS_EXCESS,
-            HeatSource.FISCHER_TROPSCH_EXCESS,
-            HeatSource.SABATIER_EXCESS,
-            HeatSource.HABER_BOSCH_EXCESS,
-            HeatSource.METHANOLISATION_EXCESS,
-            HeatSource.FUEL_CELL_EXCESS,
-        ]:
+        if self.source_type in [HeatSourceType.STORAGE, HeatSourceType.PROCESS_WASTE]:
             return True
-        else:
-            return False
+        # Geothermal also uses preheater
+        if self == HeatSource.GEOTHERMAL:
+            return True
+        return False
+
+    # -------------------------------------------------------------------------
+    # PTX Process Waste Heat Properties
+    # -------------------------------------------------------------------------
+
+    @property
+    def process_carrier(self) -> str | None:
+        """
+        Get the carrier name of the industrial process producing this waste heat.
+
+        Returns
+        -------
+        str or None
+            The carrier name (e.g., "Fischer-Tropsch"), or None if not a process waste source.
+        """
+        mapping = {
+            HeatSource.FISCHER_TROPSCH_EXCESS: "Fischer-Tropsch",
+            HeatSource.SABATIER_EXCESS: "Sabatier",
+            HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
+            HeatSource.METHANOLISATION_EXCESS: "methanolisation",
+            HeatSource.ELECTROLYSIS_EXCESS: "H2 Electrolysis",
+            HeatSource.FUEL_CELL_EXCESS: "H2 Fuel Cell",
+        }
+        return mapping.get(self)
+
+    @property
+    def process_output_bus_index(self) -> int | None:
+        """
+        Get which bus index (2, 3, or 4) the waste heat output uses on the process link.
+
+        Returns
+        -------
+        int or None
+            The bus index for efficiency/bus assignment, or None if not a process waste source.
+        """
+        mapping = {
+            HeatSource.FISCHER_TROPSCH_EXCESS: 3,
+            HeatSource.SABATIER_EXCESS: 3,
+            HeatSource.HABER_BOSCH_EXCESS: 3,
+            HeatSource.METHANOLISATION_EXCESS: 4,
+            HeatSource.ELECTROLYSIS_EXCESS: 2,
+            HeatSource.FUEL_CELL_EXCESS: 2,
+        }
+        return mapping.get(self)
+
+    @property
+    def waste_heat_option_key(self) -> str | None:
+        """
+        Get the config option key controlling this waste heat source utilisation.
+
+        Returns
+        -------
+        str or None
+            The option key (e.g., "use_fischer_tropsch_waste_heat"), or None if not applicable.
+        """
+        mapping = {
+            HeatSource.FISCHER_TROPSCH_EXCESS: "use_fischer_tropsch_waste_heat",
+            HeatSource.SABATIER_EXCESS: "use_methanation_waste_heat",
+            HeatSource.HABER_BOSCH_EXCESS: "use_haber_bosch_waste_heat",
+            HeatSource.METHANOLISATION_EXCESS: "use_methanolisation_waste_heat",
+            HeatSource.ELECTROLYSIS_EXCESS: "use_electrolysis_waste_heat",
+            HeatSource.FUEL_CELL_EXCESS: "use_fuel_cell_waste_heat",
+        }
+        return mapping.get(self)
+
+    @property
+    def technology_data_name(self) -> str | None:
+        """
+        Get the costs.csv technology name for efficiency-heat lookup.
+
+        Some processes (Sabatier, Fuel Cell) use calculated efficiencies based on
+        energy balance rather than a costs lookup.
+
+        Returns
+        -------
+        str or None
+            The technology name for costs lookup, or None if efficiency is calculated.
+        """
+        mapping = {
+            HeatSource.FISCHER_TROPSCH_EXCESS: "Fischer-Tropsch",
+            HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
+            HeatSource.METHANOLISATION_EXCESS: "methanolisation",
+            HeatSource.ELECTROLYSIS_EXCESS: "electrolysis",
+            # Sabatier and Fuel Cell use calculated efficiencies
+        }
+        return mapping.get(self)
 
     def get_capital_cost(self, costs, overdim_factor: float, heat_system) -> float:
         """
@@ -230,6 +333,48 @@ class HeatSource(Enum):
             return costs.at[heat_system.heat_source_costs_name(self), "lifetime"]
         else:
             return float("inf")
+
+    def get_waste_heat_efficiency(self, n, costs, nodes):
+        """
+        Get the waste heat efficiency for this PTX process.
+
+        For most processes, this looks up "efficiency-heat" from the costs data.
+        For Sabatier and Fuel Cell, efficiency is calculated from energy balance
+        as (1 - losses - main_efficiency).
+
+        Parameters
+        ----------
+        n : pypsa.Network
+            The network containing the process links.
+        costs : pd.DataFrame
+            DataFrame containing technology cost and efficiency parameters.
+        nodes : pd.Index
+            Node identifiers for looking up link efficiencies.
+
+        Returns
+        -------
+        float or pd.Series
+            The waste heat efficiency (heat output per unit of main input).
+
+        Raises
+        ------
+        ValueError
+            If called on a non-PROCESS_WASTE heat source.
+        """
+        if self.source_type != HeatSourceType.PROCESS_WASTE:
+            raise ValueError(
+                f"get_waste_heat_efficiency only applies to PROCESS_WASTE sources, not {self}"
+            )
+
+        if self.technology_data_name:
+            return costs.at[self.technology_data_name, "efficiency-heat"]
+        elif self == HeatSource.SABATIER_EXCESS:
+            # Calculated: 1 - losses - main efficiency
+            return 1 - 0.05 - n.links.loc[nodes + " Sabatier", "efficiency"]
+        elif self == HeatSource.FUEL_CELL_EXCESS:
+            return 1 - 0.05 - n.links.loc[nodes + " H2 Fuel Cell", "efficiency"]
+        else:
+            raise ValueError(f"No efficiency calculation defined for {self}")
 
     def get_heat_pump_bus2(self, nodes, heat_system: str) -> str:
         """
