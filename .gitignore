@@ -25,6 +25,7 @@ gurobi.log
 /cutouts
 /tmp
 doc/_build
+_build
 
 /scripts/old
 /scripts/create_scenarios.py

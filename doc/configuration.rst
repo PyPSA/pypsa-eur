@@ -60,10 +60,21 @@ Top-level configuration
    :start-at: version:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/toplevel.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/properties/version
+      :lift_description:
+
+   .. jsonschema:: ../config/schema.json#/properties/tutorial
+      :lift_description:
+
+   .. jsonschema:: ../config/schema.json#/$defs/LoggingConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
+
+   .. jsonschema:: ../config/schema.json#/$defs/RemoteConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _run_cf:
 
@@ -81,10 +92,11 @@ The ``run`` section is used for running and storing scenarios with different con
    :start-at: run:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/run.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/RunConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _foresight_cf:
 
@@ -96,10 +108,11 @@ The ``run`` section is used for running and storing scenarios with different con
    :start-at: foresight:
    :end-at: foresight:
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/foresight.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/ForesightConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
     If you use myopic or perfect foresight, the planning horizon in
@@ -141,10 +154,11 @@ An exemplary dependency graph (starting from the simplification rules) then look
    :start-at: scenario:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/scenario.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/ScenarioConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _countries:
 
@@ -156,10 +170,11 @@ An exemplary dependency graph (starting from the simplification rules) then look
    :start-at: countries:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/countries.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/CountriesConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _snapshots_cf:
 
@@ -173,10 +188,11 @@ Specifies the temporal range to build an energy system model for as arguments to
    :start-at: snapshots:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/snapshots.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/SnapshotsConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _enable_cf:
 
@@ -190,10 +206,11 @@ Switches for some rules and optional features.
    :start-after: #enable
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/enable.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/EnableConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _CO2_budget_cf:
 
@@ -205,10 +222,11 @@ Switches for some rules and optional features.
    :start-at: co2_budget:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/co2_budget.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/Co2BudgetConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
     this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
@@ -224,10 +242,11 @@ Switches for some rules and optional features.
    :start-at: electricity:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/electricity.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/ElectricityConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _atlite_cf:
 
@@ -241,10 +260,11 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at: atlite:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/atlite.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/AtliteConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _renewable_cf:
 
@@ -259,10 +279,11 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at: renewable:
    :end-before:   offwind-ac:
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/onwind.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/onwind
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
@@ -281,10 +302,19 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at:   offwind-ac:
    :end-before:   solar:
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/offwind.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-ac
+      :lift_description:
+      :hide_key: /**/additionalProperties
+
+   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-dc
+      :lift_description:
+      :hide_key: /**/additionalProperties
+
+   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-float
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
@@ -304,10 +334,11 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at:   solar:
    :end-before:   hydro:
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/solar.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/solar
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 170 MW/km^2 and assuming 1% of the area can be used for solar PV panels.
@@ -326,10 +357,11 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at:   hydro:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/hydro.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/hydro
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _lines_cf:
 
@@ -348,10 +380,11 @@ overwrite the existing values.
    :start-at:   conventional:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/conventional.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/ConventionalConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 ``lines``
 =============
@@ -361,10 +394,11 @@ overwrite the existing values.
    :start-at: lines:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/lines.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/LinesConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _links_cf:
 
@@ -376,10 +410,11 @@ overwrite the existing values.
    :start-at: links:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/links.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/LinksConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _transformers_cf:
 
@@ -393,10 +428,11 @@ Allows to define additional transmission projects that will be added to the base
    :start-at: transmission_projects:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/transmission_projects.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/TransmissionProjectsConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _transformers_cf:
 
@@ -408,10 +444,11 @@ Allows to define additional transmission projects that will be added to the base
    :start-at: transformers:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/transformers.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/TransformersConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _load_cf:
 
@@ -423,10 +460,11 @@ Allows to define additional transmission projects that will be added to the base
    :start-after: # docs-load
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/load.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/LoadConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _energy_cf:
 
@@ -441,10 +479,11 @@ Allows to define additional transmission projects that will be added to the base
    :start-at: energy:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/energy.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/EnergyConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _biomass_cf:
 
@@ -459,10 +498,11 @@ Allows to define additional transmission projects that will be added to the base
    :start-at: biomass:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/biomass.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/BiomassConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`__, namely:
 
@@ -497,10 +537,11 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :start-at: solar_thermal:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/solar-thermal.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/SolarThermalConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _existing_capacities_cf:
 
@@ -515,10 +556,11 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :start-at: existing_capacities:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/existing_capacities.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/ExistingCapacitiesConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _sector_cf:
 
@@ -533,10 +575,11 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :start-at: sector:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/sector.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/SectorConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _industry_cf:
 
@@ -551,10 +594,11 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :start-at: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/industry.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/IndustryConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _costs_cf:
 
@@ -566,10 +610,11 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :start-at: costs:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/costs.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/CostsConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 
 .. _clustering_cf:
@@ -582,10 +627,11 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :start-at: clustering:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/clustering.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/ClusteringConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. tip::
    use ``min`` in ``p_nom_max:`` for more conservative assumptions.
@@ -600,10 +646,11 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :start-at: adjustments:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/adjustments.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/AdjustmentsConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _solving_cf:
 
@@ -614,10 +661,11 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :language: yaml
    :start-at: solving:
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/solving.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/SolvingConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _plotting_cf:
 

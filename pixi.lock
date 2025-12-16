@@ -5,6 +5,8 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/bioconda/
     - url: https://conda.anaconda.org/gurobi/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -2118,6 +2120,8 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/bioconda/
     - url: https://conda.anaconda.org/gurobi/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -2266,6 +2270,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/jinja2-3.1.6-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/joblib-1.5.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/json-c-0.18-h6688a6e_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/jsonpointer-3.0.0-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/keyutils-1.6.3-hb9d3cd8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.9-py312h0a2e395_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/krb5-1.21.3-h659f571_0.conda
@@ -2476,6 +2481,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/soupsieve-2.8-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-8.2.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-book-theme-1.1.4-pyh29332c3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-design-0.6.1-pyhd8ed1ab_2.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-jsonschema-1.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-applehelp-2.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-bibtex-2.6.5-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-devhelp-2.0.0-pyhd8ed1ab_1.conda
@@ -2677,6 +2684,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/jinja2-3.1.6-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/joblib-1.5.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/json-c-0.18-hc62ec3d_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/jsonpointer-3.0.0-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/kiwisolver-1.4.9-py312h90e26e8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/krb5-1.21.3-h37d8d59_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/latexcodec-2.0.1-pyh9f0ad1d_0.tar.bz2
@@ -2855,6 +2863,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/soupsieve-2.8-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-8.2.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-book-theme-1.1.4-pyh29332c3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-design-0.6.1-pyhd8ed1ab_2.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-jsonschema-1.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-applehelp-2.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-bibtex-2.6.5-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-devhelp-2.0.0-pyhd8ed1ab_1.conda
@@ -3032,6 +3042,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/jinja2-3.1.6-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/joblib-1.5.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/json-c-0.18-he4178ee_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/jsonpointer-3.0.0-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/kiwisolver-1.4.9-py312hd8c8125_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/krb5-1.21.3-h237132a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/latexcodec-2.0.1-pyh9f0ad1d_0.tar.bz2
@@ -3210,6 +3221,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/soupsieve-2.8-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-8.2.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-book-theme-1.1.4-pyh29332c3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-design-0.6.1-pyhd8ed1ab_2.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-jsonschema-1.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-applehelp-2.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-bibtex-2.6.5-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-devhelp-2.0.0-pyhd8ed1ab_1.conda
@@ -3375,6 +3388,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/jasper-4.2.8-h8ad263b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/jinja2-3.1.6-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/joblib-1.5.2-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/jsonpointer-3.0.0-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/kiwisolver-1.4.9-py312h78d62e6_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/krb5-1.21.3-hdf4eb48_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/latexcodec-2.0.1-pyh9f0ad1d_0.tar.bz2
@@ -3547,6 +3561,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/soupsieve-2.8-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-8.2.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-book-theme-1.1.4-pyh29332c3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-design-0.6.1-pyhd8ed1ab_2.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-jsonschema-1.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-applehelp-2.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-bibtex-2.6.5-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-devhelp-2.0.0-pyhd8ed1ab_1.conda
@@ -3606,6 +3622,8 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/bioconda/
     - url: https://conda.anaconda.org/gurobi/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -12107,6 +12125,16 @@ packages:
   license_family: BSD
   size: 17957
   timestamp: 1756754245172
+- conda: https://conda.anaconda.org/conda-forge/noarch/jsonpointer-3.0.0-pyhcf101f3_3.conda
+  sha256: 1a1328476d14dfa8b84dbacb7f7cd7051c175498406dc513ca6c679dc44f3981
+  md5: cd2214824e36b0180141d422aba01938
+  depends:
+  - python >=3.10
+  - python
+  license: BSD-3-Clause
+  license_family: BSD
+  size: 13967
+  timestamp: 1765026384757
 - conda: https://conda.anaconda.org/conda-forge/osx-64/jsonpointer-3.0.0-py312hb401068_2.conda
   sha256: a945774394a13fb5f17a3f74038bd7788ffb46aff22aea9f56995e4719f57ee8
   md5: 7632694baab67c90efad51eb38e53fbd
@@ -23241,6 +23269,30 @@ packages:
   license_family: BSD
   size: 255445
   timestamp: 1740145414720
+- conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-design-0.6.1-pyhd8ed1ab_2.conda
+  sha256: eb335aef48e49107b55299cedc197f86d05651f1eeff83ed8acf89df7cdc9765
+  md5: 3e6c15d914b03f83fc96344f917e0838
+  depends:
+  - python >=3.9
+  - sphinx >=6,<9
+  license: MIT
+  license_family: MIT
+  size: 911336
+  timestamp: 1734614675610
+- conda: https://conda.anaconda.org/conda-forge/noarch/sphinx-jsonschema-1.19.2-pyhd8ed1ab_0.conda
+  sha256: 5f97f417c8434bc6ee9d6d9cd08cce352fc138a0ebb64c46442b7795755c978a
+  md5: be4647f771ba738721ce7175fb61ef37
+  depends:
+  - docutils
+  - jsonpointer
+  - python >=3.10
+  - pyyaml
+  - requests
+  - sphinx
+  license: GPL-3.0-only
+  license_family: GPL
+  size: 43579
+  timestamp: 1764592626926
 - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-applehelp-2.0.0-pyhd8ed1ab_1.conda
   sha256: d7433a344a9ad32a680b881c81b0034bc61618d12c39dd6e3309abeffa9577ba
   md5: 16e3f039c0aa6446513e94ab18a8784b
