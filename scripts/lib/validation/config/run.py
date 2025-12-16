@@ -8,10 +8,12 @@ Run configuration block.
 See # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 """
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class _ScenariosConfig(BaseModel):
+class _ScenariosConfig(ConfigModel):
     """Configuration for `run.scenarios` level."""
 
     enable: bool = Field(
@@ -25,7 +27,7 @@ class _ScenariosConfig(BaseModel):
     )
 
 
-class _SharedResourcesConfig(BaseModel):
+class _SharedResourcesConfig(ConfigModel):
     """Configuration for `run.shared_resources` level."""
 
     policy: bool | str = Field(
@@ -39,7 +41,7 @@ class _SharedResourcesConfig(BaseModel):
     )
 
 
-class RunConfig(BaseModel):
+class RunConfig(ConfigModel):
     """Configuration for top level `run` settings."""
 
     prefix: str = Field(

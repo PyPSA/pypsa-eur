@@ -10,8 +10,10 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 
 from pydantic import BaseModel, Field, field_validator
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _CutoutConfig(BaseModel):
+
+class _CutoutConfig(ConfigModel):
     """Configuration for a single cutout in `atlite.cutouts`."""
 
     module: str | list[str] = Field(

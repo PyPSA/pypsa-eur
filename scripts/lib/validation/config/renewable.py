@@ -10,8 +10,10 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewa
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _WindResourceConfig(BaseModel):
+
+class _WindResourceConfig(ConfigModel):
     """Configuration for wind resource settings."""
 
     method: str = Field("wind", description="A superordinate technology type.")

@@ -10,10 +10,12 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class LinksConfig(BaseModel):
+class LinksConfig(ConfigModel):
     """Configuration for `links` settings."""
 
     p_max_pu: float = Field(

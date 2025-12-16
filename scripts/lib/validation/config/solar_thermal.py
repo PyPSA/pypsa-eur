@@ -12,8 +12,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _OrientationConfig(BaseModel):
+
+class _OrientationConfig(ConfigModel):
     """Configuration for `solar_thermal.orientation` settings."""
 
     slope: float = Field(

@@ -8,10 +8,12 @@ Industry configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 """
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class IndustryConfig(BaseModel):
+class IndustryConfig(ConfigModel):
     """Configuration for `industry` settings."""
 
     St_primary_fraction: dict[int, float] = Field(

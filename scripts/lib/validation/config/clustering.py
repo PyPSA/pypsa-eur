@@ -12,8 +12,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _AdministrativeConfig(BaseModel):
+
+class _AdministrativeConfig(ConfigModel):
     """Configuration for `clustering.administrative` settings."""
 
     level: Literal[0, 1, 2, 3] = Field(

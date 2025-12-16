@@ -11,10 +11,12 @@ See https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-conf
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class LoggingConfig(BaseModel):
+class LoggingConfig(ConfigModel):
     """Configuration for top level `logging` settings."""
 
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
@@ -27,7 +29,7 @@ class LoggingConfig(BaseModel):
     )
 
 
-class RemoteConfig(BaseModel):
+class RemoteConfig(ConfigModel):
     """Configuration for top level `remote` settings."""
 
     ssh: str = Field(
@@ -40,7 +42,7 @@ class RemoteConfig(BaseModel):
     )
 
 
-class TopLevelConfig(BaseModel):
+class TopLevelConfig(ConfigModel):
     """Top level configuration."""
 
     version: str = Field(

@@ -12,8 +12,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _DynamicLineRatingConfig(BaseModel):
+
+class _DynamicLineRatingConfig(ConfigModel):
     """Configuration for `lines.dynamic_line_rating` settings."""
 
     activate: bool = Field(

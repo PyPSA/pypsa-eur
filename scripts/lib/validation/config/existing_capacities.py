@@ -8,10 +8,12 @@ Existing capacities configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 """
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class ExistingCapacitiesConfig(BaseModel):
+class ExistingCapacitiesConfig(ConfigModel):
     """Configuration for `existing_capacities` settings."""
 
     grouping_years_power: list[int] = Field(

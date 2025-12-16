@@ -12,8 +12,10 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _DistrictHeatingConfig(BaseModel):
+
+class _DistrictHeatingConfig(ConfigModel):
     """Configuration for `sector.district_heating` settings."""
 
     potential: float | dict[str, float] = Field(

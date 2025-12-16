@@ -10,10 +10,12 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class EnableConfig(BaseModel):
+class EnableConfig(ConfigModel):
     """Configuration for `enable` settings."""
 
     retrieve: bool | Literal["auto"] = Field(

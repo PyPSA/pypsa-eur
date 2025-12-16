@@ -12,8 +12,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _OperationalReserveConfig(BaseModel):
+
+class _OperationalReserveConfig(ConfigModel):
     """Configuration for `electricity.operational_reserve` settings."""
 
     activate: bool = Field(

@@ -10,8 +10,10 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _EmissionPricesConfig(BaseModel):
+
+class _EmissionPricesConfig(ConfigModel):
     """Configuration for `costs.emission_prices` settings."""
 
     enable: bool = Field(

@@ -12,8 +12,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _IncludeConfig(BaseModel):
+
+class _IncludeConfig(ConfigModel):
     """Configuration for `transmission_projects.include` settings."""
 
     tyndp2020: bool = Field(

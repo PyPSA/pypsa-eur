@@ -10,8 +10,10 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjust
 
 from pydantic import BaseModel, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _AdjustmentConfig(BaseModel):
+
+class _AdjustmentConfig(ConfigModel):
     """Configuration for adjustment settings (factor/absolute)"""
 
     factor: bool | dict[str, dict[str, dict[str, float | dict[int, float]]]] = Field(

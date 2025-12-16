@@ -8,10 +8,12 @@ Conventional generators configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 """
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class ConventionalConfig(BaseModel):
+class ConventionalConfig(ConfigModel):
     """Configuration for `conventional` settings."""
 
     model_config = ConfigDict(extra="allow")

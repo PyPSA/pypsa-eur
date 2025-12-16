@@ -12,8 +12,10 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _PostDiscretizationConfig(BaseModel):
+
+class _PostDiscretizationConfig(ConfigModel):
     """Configuration for `solving.options.post_discretization` settings."""
 
     enable: bool = Field(

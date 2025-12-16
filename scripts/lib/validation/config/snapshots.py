@@ -10,10 +10,12 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapsh
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class SnapshotsConfig(BaseModel):
+class SnapshotsConfig(ConfigModel):
     """Configuration for `snapshots` settings."""
 
     start: str | list[str] = Field(

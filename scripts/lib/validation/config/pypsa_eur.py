@@ -10,10 +10,12 @@ Some technologies are removed because they are implemented differently
 (e.g. battery or H2 storage) or have different year-dependent costs.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class PypsaEurConfig(BaseModel):
+class PypsaEurConfig(ConfigModel):
     """Configuration for `pypsa_eur` settings."""
 
     Bus: list[str] = Field(

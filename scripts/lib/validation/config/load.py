@@ -10,8 +10,10 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 
 from pydantic import BaseModel, Field
 
+from scripts.lib.validation.config._base import ConfigModel
 
-class _FillGapsConfig(BaseModel):
+
+class _FillGapsConfig(ConfigModel):
     """Configuration for `load.fill_gaps` settings."""
 
     enable: bool = Field(

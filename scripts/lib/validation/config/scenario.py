@@ -9,10 +9,12 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenar
 Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 """
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class ScenarioConfig(BaseModel):
+class ScenarioConfig(ConfigModel):
     """Configuration for top level `scenario` settings."""
 
     clusters: list[int] = Field(

@@ -8,10 +8,12 @@ Energy configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 """
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
 
 
-class EnergyConfig(BaseModel):
+class EnergyConfig(ConfigModel):
     """Configuration for `energy` settings."""
 
     energy_totals_year: int = Field(
