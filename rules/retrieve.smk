@@ -331,7 +331,7 @@ if (COUNTRY_RUNOFF_DATASET := dataset_version("country_runoff"))["source"] in [
         input:
             storage(COUNTRY_RUNOFF_DATASET["url"]),
         output:
-            era5_runoff=f"{COUNTRY_RUNOFF_DATASET["folder"]}/era5-runoff-per-country.csv",
+            era5_runoff=f"{COUNTRY_RUNOFF_DATASET['folder']}/era5-runoff-per-country.csv",
         run:
             copy2(input[0], output[0])
 
@@ -342,7 +342,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["archiv
         input:
             storage(COUNTRY_HDD_DATASET["url"]),
         output:
-            era5_runoff=f"{COUNTRY_HDD_DATASET["folder"]}/era5-HDD-per-country.csv",
+            era5_runoff=f"{COUNTRY_HDD_DATASET['folder']}/era5-HDD-per-country.csv",
         run:
             copy2(input[0], output[0])
 
@@ -903,7 +903,7 @@ if (NATURA_DATASET := dataset_version("natura"))["source"] in ["archive"]:
         input:
             storage(NATURA_DATASET["url"]),
         output:
-            f"{NATURA_DATASET["folder"]}/natura.tiff",
+            f"{NATURA_DATASET['folder']}/natura.tiff",
         log:
             "logs/retrieve_natura.log",
         run:
@@ -916,9 +916,9 @@ elif NATURA_DATASET["source"] == "build":
             online=storage(NATURA_DATASET["url"]),
             cutout=lambda w: input_cutout(w),
         output:
-            zip=f"{NATURA_DATASET["folder"]}/raw/natura.zip",
-            raw=directory(f"{NATURA_DATASET["folder"]}/raw"),
-            raster=f"{NATURA_DATASET["folder"]}/natura.tiff",
+            zip=f"{NATURA_DATASET['folder']}/raw/natura.zip",
+            raw=directory(f"{NATURA_DATASET['folder']}/raw"),
+            raster=f"{NATURA_DATASET['folder']}/natura.tiff",
         resources:
             mem_mb=5000,
         log:
@@ -933,7 +933,7 @@ if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in [
 
     rule retrieve_osm_boundaries:
         output:
-            json=f"{OSM_BOUNDARIES_DATASET["folder"]}/{country}_adm1.json",
+            json=f"{OSM_BOUNDARIES_DATASET['folder']}/{country}_adm1.json",
         log:
             "logs/retrieve_osm_boundaries_{country}_adm1.log",
         threads: 1
@@ -1146,8 +1146,8 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
             kfz=storage(MOBILITY_PROFILES_DATASET["url"] + "/kfz.csv"),
             pkw=storage(MOBILITY_PROFILES_DATASET["url"] + "/pkw.csv"),
         output:
-            kfz=f"{MOBILITY_PROFILES_DATASET["folder"]}/kfz.csv",
-            pkw=f"{MOBILITY_PROFILES_DATASET["folder"]}/pkw.csv",
+            kfz=f"{MOBILITY_PROFILES_DATASET['folder']}/kfz.csv",
+            pkw=f"{MOBILITY_PROFILES_DATASET['folder']}/pkw.csv",
         threads: 1
         resources:
             mem_mb=1000,

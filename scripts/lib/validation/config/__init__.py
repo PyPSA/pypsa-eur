@@ -253,11 +253,6 @@ def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
     # the goal should be to use snake_case consistently
     defaults = ConfigSchema().model_dump(by_alias=True)
     with open(path, "w") as f:
-        f.write(
-            "# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>\n"
-        )
-        f.write("#\n")
-        f.write("# SPDX-License-Identifier: CC0-1.0\n\n")
         for i, (key, value) in enumerate(defaults.items()):
             if i > 0:
                 f.write("\n")
