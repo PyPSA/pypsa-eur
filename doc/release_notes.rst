@@ -9,6 +9,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Fix building osm network using overpass API (https://github.com/PyPSA/pypsa-eur/pull/1940).
+
+* Added configuration option to set overpass API URL, maximum retries, timeout and user agent information (https://github.com/PyPSA/pypsa-eur/pull/1940 and https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api). For a list of public overpass APIs see `here <https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances>`_.
+
 * Refactored `solve_network.py` and `solve_operations_network.py` to separate optimization problem preparation from solving, enabling inspection of optimization problems before solve execution. 
 
 * Added example configurations for rolling horizon and iterative optimization modes in `config/examples/`.
