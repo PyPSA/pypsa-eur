@@ -29,7 +29,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_balance_map_static",
+            "plot_balance_map",
             clusters="50",
             opts="",
             sector_opts="",
@@ -65,12 +65,12 @@ if __name__ == "__main__":
 
     # get balance map plotting parameters
     boundaries = config["map"]["boundaries"]
-    conversion = settings["conversion"]
+    unit_conversion = settings["unit_conversion"]
     branch_color = settings.get("branch_color") or "darkseagreen"
 
     if carrier not in n.buses.carrier.unique():
         raise ValueError(
-            f"Carrier {carrier} is not in the network. Remove from configuration `plotting: balance_map_static: bus_carriers`."
+            f"Carrier {carrier} is not in the network. Remove from configuration `plotting: balance_map: bus_carriers`."
         )
 
     # for plotting change bus to location
@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     eb.loc[components] = eb.loc[components].drop(index=carriers_in_eb, level="carrier")
     eb = eb.dropna()
-    bus_sizes = eb.groupby(level=["bus", "carrier"]).sum().div(conversion)
+    bus_sizes = eb.groupby(level=["bus", "carrier"]).sum().div(unit_conversion)
     bus_sizes = bus_sizes.sort_values(ascending=False)
 
     # Get colors for carriers
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     )
 
     # line and links widths according to optimal capacity
-    flow = n.statistics.transmission(groupby=False, bus_carrier=carrier).div(conversion)
+    flow = n.statistics.transmission(groupby=False, bus_carrier=carrier).div(unit_conversion)
 
     if not flow.empty:
         flow_reversed_mask = flow.index.get_level_values(1).str.contains("reversed")
@@ -149,10 +149,10 @@ if __name__ == "__main__":
         shift = 0
 
     vmin, vmax = regions.price.min() - shift, regions.price.max() + shift
-    if settings["region_vmin"] is not None:
-        vmin = settings["region_vmin"]
-    if settings["region_vmax"] is not None:
-        vmax = settings["region_vmax"]
+    if settings["vmin"] is not None:
+        vmin = settings["vmin"]
+    if settings["vmax"] is not None:
+        vmax = settings["vmax"]
 
     crs = load_projection(snakemake.params.plotting)
 
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     regions.to_crs(crs.proj4_init).plot(
         ax=ax,
         column="price",
-        cmap=settings["region_cmap"],
+        cmap=settings["cmap"],
         vmin=vmin,
         vmax=vmax,
         edgecolor="None",
@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
     # Add colorbar
     norm = plt.Normalize(vmin=vmin, vmax=vmax)
-    sm = plt.cm.ScalarMappable(cmap=settings["region_cmap"], norm=norm)
+    sm = plt.cm.ScalarMappable(cmap=settings["cmap"], norm=norm)
     price_unit = settings["region_unit"]
     cbr = fig.colorbar(
         sm,
@@ -271,7 +271,7 @@ if __name__ == "__main__":
 
     # Add bus legend
     legend_bus_sizes = settings["bus_sizes"]
-    carrier_unit = settings["carrier_unit"]
+    unit = settings["unit"]
     if legend_bus_sizes is not None:
         add_legend_semicircles(
             ax,
@@ -279,7 +279,7 @@ if __name__ == "__main__":
                 s * bus_size_factor * SEMICIRCLE_CORRECTION_FACTOR
                 for s in legend_bus_sizes
             ],
-            [f"{s} {carrier_unit}" for s in legend_bus_sizes],
+            [f"{s} {unit}" for s in legend_bus_sizes],
             patch_kw={"color": "#666"},
             legend_kw={
                 "bbox_to_anchor": (0, 1),
@@ -293,7 +293,7 @@ if __name__ == "__main__":
         add_legend_lines(
             ax,
             [s * branch_width_factor for s in legend_branch_sizes],
-            [f"{s} {carrier_unit}" for s in legend_branch_sizes],
+            [f"{s} {unit}" for s in legend_branch_sizes],
             patch_kw={"color": "#666"},
             legend_kw={"bbox_to_anchor": (0.25, 1), **legend_kwargs},
         )

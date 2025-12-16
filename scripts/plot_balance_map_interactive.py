@@ -87,17 +87,17 @@ if __name__ == "__main__":
 
     # Interactive map settings
     settings = snakemake.params.settings
-    conversion = settings.get("conversion") or 1
-    region_cmap = settings.get("region_cmap") or "Reds"
-    region_alpha = settings.get("region_alpha") or 0.7
-    region_unit = settings.get("region_unit") or ""
-    branch_color = settings.get("branch_color") or "darkseagreen"
-    arrow_size_factor = settings.get("arrow_size_factor") or 1.5  # PyPSA default
-    bus_size_max = settings.get("bus_size_max") or 10000  # PyPSA default
-    branch_width_max = settings.get("branch_width_max") or 10  # PyPSA default
-    map_style = (str(settings.get("map_style")) or "road").lower()
+    unit_conversion = settings["unit_conversion"]
+    cmap = settings["cmap"]
+    region_alpha = settings["region_alpha"]
+    region_unit = settings["region_unit"]
+    branch_color = settings["branch_color"]
+    arrow_size_factor = settings["arrow_size_factor"]
+    bus_size_max = settings["bus_size_max"]
+    branch_width_max = settings["branch_width_max"]
+    map_style = settings.get("map_style")
     map_style = VALID_MAP_STYLES.get(map_style, "road")
-    tooltip = settings.get("tooltip") or True
+    tooltip = settings["tooltip"]
 
     # Import
     n = pypsa.Network(snakemake.input.network)
@@ -194,15 +194,15 @@ if __name__ == "__main__":
         regions["price"] = price.reindex(regions.index).fillna(0)
         shift = 0
 
-    region_vmin, region_vmax = regions.price.min() - shift, regions.price.max() + shift
-    if settings["region_vmin"] is not None:
-        region_vmin = settings["region_vmin"]
-    if settings["region_vmax"] is not None:
-        region_vmax = settings["region_vmax"]
+    vmin, vmax = regions.price.min() - shift, regions.price.max() + shift
+    if settings["vmin"] is not None:
+        vmin = settings["vmin"]
+    if settings["vmax"] is not None:
+        vmax = settings["vmax"]
 
     # Map colors
-    norm = mcolors.Normalize(vmin=region_vmin, vmax=region_vmax)
-    cmap = plt.get_cmap(region_cmap)
+    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
+    cmap = plt.get_cmap(cmap)
 
     regions["color"] = regions["price"].apply(
         scalar_to_rgba,
@@ -237,13 +237,13 @@ if __name__ == "__main__":
 
     map = n.explore(
         branch_components=branch_components,
-        bus_size=bus_size.div(conversion),
+        bus_size=bus_size.div(unit_conversion),
         bus_split_circle=True,
-        line_width=line_flow.div(conversion),
-        line_flow=line_flow.div(conversion),
+        line_width=line_flow.div(unit_conversion),
+        line_flow=line_flow.div(unit_conversion),
         line_color="rosybrown",
-        link_width=link_flow.div(conversion),
-        link_flow=link_flow.div(conversion),
+        link_width=link_flow.div(unit_conversion),
+        link_flow=link_flow.div(unit_conversion),
         link_color=branch_color,
         arrow_size_factor=arrow_size_factor,
         tooltip=tooltip,

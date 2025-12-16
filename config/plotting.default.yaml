@@ -100,7 +100,7 @@ plotting:
     - methanol
     - oil
     - urban central water tanks
-  balance_map_static:
+  balance_map:
     bus_carriers:
     - AC
     - co2_stored
@@ -110,13 +110,13 @@ plotting:
     - oil
     - urban_central_heat
     AC:
-      region_cmap: Greens
-      region_vmin:
-      region_vmax:
+      cmap: Greens
+      vmin:
+      vmax:
       region_unit: €/MWh
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: darkseagreen
-      carrier_unit: TWh
+      unit: TWh
       bus_factor: 0.002
       branch_factor: 0.01
       flow_factor: 100
@@ -127,13 +127,13 @@ plotting:
       - 100
       - 20
     biogas:
-      region_cmap: Greens
-      region_vmin:
-      region_vmax:
+      cmap: Greens
+      vmin:
+      vmax:
       region_unit: €/MWh
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: darkseagreen
-      carrier_unit: TWh
+      unit: TWh
       bus_factor: 0.1
       branch_factor: 0.1
       flow_factor: 100
@@ -142,13 +142,13 @@ plotting:
       - 50
       branch_sizes:
     co2_stored:
-      region_cmap: Purples
-      region_vmin:
-      region_vmax:
+      cmap: Purples
+      vmin:
+      vmax:
       region_unit: €/t_${CO_2}$
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: orange
-      carrier_unit: Mt
+      unit: Mt
       bus_factor: 0.015
       branch_factor: 0.4
       flow_factor: 120
@@ -159,13 +159,13 @@ plotting:
       - 5
       - 2
     gas:
-      region_cmap: Oranges
-      region_vmin:
-      region_vmax:
+      cmap: Oranges
+      vmin:
+      vmax:
       region_unit: €/MWh
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: darkred
-      carrier_unit: TWh
+      unit: TWh
       bus_factor: 0.002
       branch_factor: 0.05
       flow_factor: 60
@@ -176,13 +176,13 @@ plotting:
       - 100
       - 50
     H2:
-      region_cmap: Blues
-      region_vmin:
-      region_vmax:
+      cmap: Blues
+      vmin:
+      vmax:
       region_unit: €/MWh
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: pink
-      carrier_unit: TWh
+      unit: TWh
       bus_factor: 0.002
       branch_factor: 0.03
       flow_factor: 8
@@ -193,13 +193,13 @@ plotting:
       - 40
       - 20
     methanol:
-      region_cmap: Greens
-      region_vmin:
-      region_vmax:
+      cmap: Greens
+      vmin:
+      vmax:
       region_unit: €/MWh
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: yellow
-      carrier_unit: TWh
+      unit: TWh
       bus_factor: 0.005
       branch_factor: 0.1
       flow_factor: 100
@@ -208,13 +208,13 @@ plotting:
       - 10
       branch_sizes:
     oil:
-      region_cmap: Greys
+      cmap: Greys
       region_unit: €/MWh
-      region_vmin:
-      region_vmax:
-      conversion: 1_000_000
+      vmin:
+      vmax:
+      unit_conversion: 1_000_000
       branch_color: black
-      carrier_unit: TWh
+      unit: TWh
       bus_factor: 0.002
       branch_factor: 0.01
       flow_factor: 100
@@ -223,13 +223,13 @@ plotting:
       - 100
       branch_sizes:
     solid_biomass:
-      region_cmap: Greens
-      region_vmin:
-      region_vmax:
+      cmap: Greens
+      vmin:
+      vmax:
       region_unit: €/MWh
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: darkseagreen
-      carrier_unit: TWh
+      unit: TWh
       bus_factor: 0.01
       branch_factor: 0.1
       flow_factor: 100
@@ -238,13 +238,13 @@ plotting:
       - 50
       branch_sizes:
     urban_central_heat:
-      region_cmap: Oranges
-      region_vmin:
-      region_vmax:
+      cmap: Oranges
+      vmin:
+      vmax:
       region_unit: €/MWh
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: darkred
-      carrier_unit: TWh
+      unit: TWh
       bus_factor: 0.005
       branch_factor: 0.1
       flow_factor: 100
@@ -255,19 +255,19 @@ plotting:
   balance_map_interactive:
     bus_carriers:
     - AC
-    - co2_stored # underscore for slurm compatibility
+    - co2_stored
     - gas
     - H2
     - methanol
     - oil
     - urban_central_heat
     AC:
-      region_cmap: Greens
+      cmap: Greens
       region_unit: €/MWh
-      region_vmin:
-      region_vmax:
+      vmin:
+      vmax:
       region_alpha: 0.8
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: darkseagreen
       branch_width_max: 20
       bus_size_max: 15000
@@ -275,12 +275,12 @@ plotting:
       map_style: road
       tooltip: true
     co2_stored:
-      region_cmap: Purples
+      cmap: Purples
       region_unit: €/t CO2
-      region_vmin:
-      region_vmax:
+      vmin:
+      vmax:
       region_alpha: 0.8
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: orange
       branch_width_max: 20
       bus_size_max: 15000
@@ -288,12 +288,12 @@ plotting:
       map_style: road
       tooltip: true
     gas:
-      region_cmap: Oranges
+      cmap: Oranges
       region_unit: €/MWh
-      region_vmin:
-      region_vmax:
+      vmin:
+      vmax:
       region_alpha: 0.8
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: darkred
       branch_width_max: 20
       bus_size_max: 15000
@@ -301,12 +301,12 @@ plotting:
       map_style: road
       tooltip: true
     H2:
-      region_cmap: Blues
+      cmap: Blues
       region_unit: €/MWh
-      region_vmin:
-      region_vmax:
+      vmin:
+      vmax:
       region_alpha: 0.8
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: pink
       branch_width_max: 45
       bus_size_max: 20000
@@ -314,12 +314,12 @@ plotting:
       map_style: road
       tooltip: true
     methanol:
-      region_cmap: Greens
+      cmap: Greens
       region_unit: €/MWh
-      region_vmin:
-      region_vmax:
+      vmin:
+      vmax:
       region_alpha: 0.8
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: yellow
       branch_width_max: 45
       bus_size_max: 20000
@@ -327,12 +327,12 @@ plotting:
       map_style: road
       tooltip: true
     oil:
-      region_cmap: Greys
+      cmap: Greys
       region_unit: €/MWh
-      region_vmin:
-      region_vmax:
+      vmin:
+      vmax:
       region_alpha: 0.8
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: black
       branch_width_max: 45
       bus_size_max: 20000
@@ -340,12 +340,12 @@ plotting:
       map_style: road
       tooltip: true
     solid_biomass:
-      region_cmap: Greens
+      cmap: Greens
       region_unit: €/MWh
-      region_vmin:
-      region_vmax:
+      vmin:
+      vmax:
       region_alpha: 0.8
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: darkseagreen
       branch_width_max: 45
       bus_size_max: 20000
@@ -353,12 +353,12 @@ plotting:
       map_style: road
       tooltip: true
     urban_central_heat:
-      region_cmap: Oranges
+      cmap: Oranges
       region_unit: €/MWh
-      region_vmin:
-      region_vmax:
+      vmin:
+      vmax:
       region_alpha: 0.8
-      conversion: 1_000_000
+      unit_conversion: 1_000_000
       branch_color: darkred
       branch_width_max: 45
       bus_size_max: 20000

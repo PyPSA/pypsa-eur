@@ -111,11 +111,11 @@ if config["foresight"] != "perfect":
         script:
             "../scripts/plot_gas_network.py"
 
-    rule plot_balance_map_static:
+    rule plot_balance_map:
         params:
             plotting=config_provider("plotting"),
             settings=lambda w: config_provider(
-                "plotting", "balance_map_static", w.carrier
+                "plotting", "balance_map", w.carrier
             ),
         input:
             network=RESULTS
@@ -129,14 +129,14 @@ if config["foresight"] != "perfect":
             mem_mb=8000,
         log:
             RESULTS
-            + "logs/plot_balance_map_static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+            + "logs/plot_balance_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
         benchmark:
             (
                 RESULTS
-                + "benchmarks/plot_balance_map_static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
+                + "benchmarks/plot_balance_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
             )
         script:
-            "../scripts/plot_balance_map_static.py"
+            "../scripts/plot_balance_map.py"
 
     rule plot_balance_map_interactive:
         params:
