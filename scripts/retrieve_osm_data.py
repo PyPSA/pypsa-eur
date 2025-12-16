@@ -152,12 +152,12 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "retrieve_osm_data_raw", 
+            "retrieve_osm_data_raw",
             country="BE",
         )
-    
+
     overpass_api = snakemake.params.overpass_api
-    url = overpass_api["url"] 
+    url = overpass_api["url"]
     max_tries = overpass_api["max_tries"]
     timeout = overpass_api["timeout"]
 
