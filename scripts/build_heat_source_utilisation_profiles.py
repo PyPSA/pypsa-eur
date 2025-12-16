@@ -94,7 +94,7 @@ def get_source_temperature(
         If the required temperature data is not available in params or inputs.
     """
     heat_source = HeatSource(heat_source_name)
-    if heat_source.has_constant_temperature:
+    if heat_source.temperature_from_config:
         try:
             return snakemake_params["heat_source_temperatures"][heat_source_name]
         except KeyError:

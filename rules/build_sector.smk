@@ -533,8 +533,8 @@ def input_heat_source_temperature(
     file_names = {}
     for heat_source_name in heat_sources:
         heat_source = HeatSource(heat_source_name)
-        # Skip heat sources with constant temperatures (defined in config)
-        if heat_source.has_constant_temperature:
+        # Skip heat sources with temperatures defined in config (not from file)
+        if heat_source.temperature_from_config:
             continue
         if heat_source_name == "ptes":
             file_names[f"temp_{heat_source_name}"] = resources(

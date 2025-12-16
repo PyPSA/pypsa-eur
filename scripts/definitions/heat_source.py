@@ -120,18 +120,18 @@ class HeatSource(Enum):
             return HeatSourceType.PROCESS_WASTE
 
     @property
-    def has_constant_temperature(self) -> bool:
+    def temperature_from_config(self) -> bool:
         """
-        Check if the heat source has a constant (time-invariant) temperature.
+        Check if the heat source temperature is specified in config.
 
-        Constant-temperature sources have their temperature specified in config
-        rather than loaded from time series files. This includes geothermal and
-        all PTX process waste heat sources.
+        Returns True if the temperature is a scalar value from config
+        (heat_source_temperatures), False if it comes from a time-series file.
 
         Returns
         -------
         bool
-            True for SUPPLY_LIMITED and PROCESS_WASTE types (except river_water).
+            True for sources with config-defined temperatures (geothermal, PTX).
+            False for sources with file-based time-series (river_water, ptes).
         """
         if self == HeatSource.RIVER_WATER:
             return False
