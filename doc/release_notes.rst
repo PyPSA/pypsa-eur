@@ -15,6 +15,14 @@ Upcoming Release
 
 * With https://github.com/PyPSA/pypsa-eur/pull/1935, note that bus carriers for balance maps containing spaces need to be specified with underscores `_` in the configuration file, e.g., `co2_stored` instead of `co2 stored`. This is to ensure compatibility with queue managers like slurm. 
 
+* Fix building osm network using overpass API (https://github.com/PyPSA/pypsa-eur/pull/1940).
+
+* Added configuration option to set overpass API URL, maximum retries, timeout and user agent information (https://github.com/PyPSA/pypsa-eur/pull/1940 and https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api). For a list of public overpass APIs see `here <https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances>`_.
+
+* Refactored `solve_network.py` and `solve_operations_network.py` to separate optimization problem preparation from solving, enabling inspection of optimization problems before solve execution. 
+
+* Added example configurations for rolling horizon and iterative optimization modes in `config/examples/`.
+
 * Added existing biomass decentral/rural residential and services heating capacity.
 
 * Fix parsing in Swiss passenger cars data (https://github.com/PyPSA/pypsa-eur/pull/1934 and https://github.com/PyPSA/pypsa-eur/pull/1936).
