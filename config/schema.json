@@ -2516,6 +2516,46 @@
         }
       }
     },
+    "OverpassApiConfig": {
+      "description": "Configuration for `overpass_api` settings.",
+      "properties": {
+        "url": {
+          "default": "https://overpass-api.de/api/interpreter",
+          "description": "Overpass API endpoint URL. See `https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances`_ for available public instances.",
+          "type": "string"
+        },
+        "max_tries": {
+          "default": 5,
+          "description": "Maximum retry attempts for Overpass API requests. Please be respectful to the Overpass API fair use policy of the individual instances.",
+          "type": "integer"
+        },
+        "timeout": {
+          "default": 600,
+          "description": "Timeout in seconds for Overpass API requests.",
+          "type": "integer"
+        },
+        "user_agent": {
+          "description": "Configuration for `overpass_api.user_agent` settings.",
+          "properties": {
+            "project_name": {
+              "default": "PyPSA-Eur",
+              "description": "Project name used to identify the user agent of the Overpass API requests.",
+              "type": "string"
+            },
+            "email": {
+              "default": "contact@pypsa.org",
+              "description": "Contact email addres for the project using the Overpass API.",
+              "type": "string"
+            },
+            "website": {
+              "default": "https://github.com/PyPSA/pypsa-eur",
+              "description": "Website URL for the project using the Overpass API.",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "PypsaEurConfig": {
       "description": "Configuration for `pypsa_eur` settings.",
       "properties": {
@@ -7422,6 +7462,26 @@
           },
           "description": "Electricity distribution grid efficiency.",
           "type": "object"
+        }
+      }
+    },
+    "_UserAgentConfig": {
+      "description": "Configuration for `overpass_api.user_agent` settings.",
+      "properties": {
+        "project_name": {
+          "default": "PyPSA-Eur",
+          "description": "Project name used to identify the user agent of the Overpass API requests.",
+          "type": "string"
+        },
+        "email": {
+          "default": "contact@pypsa.org",
+          "description": "Contact email addres for the project using the Overpass API.",
+          "type": "string"
+        },
+        "website": {
+          "default": "https://github.com/PyPSA/pypsa-eur",
+          "description": "Website URL for the project using the Overpass API.",
+          "type": "string"
         }
       }
     },
@@ -12640,6 +12700,46 @@
             "version": {
               "default": "latest",
               "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "overpass_api": {
+      "description": "Configuration for `overpass_api` settings.",
+      "properties": {
+        "url": {
+          "default": "https://overpass-api.de/api/interpreter",
+          "description": "Overpass API endpoint URL. See `https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances`_ for available public instances.",
+          "type": "string"
+        },
+        "max_tries": {
+          "default": 5,
+          "description": "Maximum retry attempts for Overpass API requests. Please be respectful to the Overpass API fair use policy of the individual instances.",
+          "type": "integer"
+        },
+        "timeout": {
+          "default": 600,
+          "description": "Timeout in seconds for Overpass API requests.",
+          "type": "integer"
+        },
+        "user_agent": {
+          "description": "Configuration for `overpass_api.user_agent` settings.",
+          "properties": {
+            "project_name": {
+              "default": "PyPSA-Eur",
+              "description": "Project name used to identify the user agent of the Overpass API requests.",
+              "type": "string"
+            },
+            "email": {
+              "default": "contact@pypsa.org",
+              "description": "Contact email addres for the project using the Overpass API.",
+              "type": "string"
+            },
+            "website": {
+              "default": "https://github.com/PyPSA/pypsa-eur",
+              "description": "Website URL for the project using the Overpass API.",
               "type": "string"
             }
           }

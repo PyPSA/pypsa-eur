@@ -34,6 +34,7 @@ from scripts.lib.validation.config.industry import IndustryConfig
 from scripts.lib.validation.config.lines import LinesConfig
 from scripts.lib.validation.config.links import LinksConfig
 from scripts.lib.validation.config.load import LoadConfig
+from scripts.lib.validation.config.overpass_api import OverpassApiConfig
 from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
 from scripts.lib.validation.config.run import RunConfig
@@ -221,6 +222,10 @@ class ConfigSchema(BaseModel):
     data: DataConfig = Field(
         default_factory=DataConfig,
         description="Data source configuration.",
+    )
+    overpass_api: OverpassApiConfig = Field(
+        default_factory=OverpassApiConfig,
+        description="Overpass API configuration for OSM data retrieval.",
     )
     secrets: SecretsConfig = Field(
         default_factory=SecretsConfig,
