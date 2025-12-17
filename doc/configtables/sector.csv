@@ -57,6 +57,7 @@ district_heating,--,,
 -- -- handle_missing_countries,--,"{fill, error}",How to handle countries without district heating area data - 'fill' uses default values or 'error' raises an exception
 -- geothermal,,,
 -- -- constant_temperature_celsius,C,float,Constant temperature assumed for geothermal heat sources. Used for scaling heat potentials based on actual vs assumed temperature differences.
+-- fallback_ptx_heat_losses,--,float,"Non-recoverable heat loss factor for PTX processes without efficiency-heat data in technology-data.
 heat_sources,--,,
 -- urban central,--,"List of heat sources for heat pumps in urban central heating. Must be one of [air, geothermal, ptes, river_water, sea_water, electrolysis_excess, fuel_cell_excess, fischer_tropsch_excess, haber_bosch_excess, sabatier_excess, methanolisation_excess]",
 -- urban decentral,--,"List of heat sources for heat pumps in urban decentral heating. Must be one of [air]",
@@ -69,7 +70,6 @@ heat_source_temperatures,--,,Dictionary of temperatures (°C) for each heat sour
 -- haber_bosch_excess,°C,float,Default: 200C. DEA states 11% of 15% heat output at 350°C.
 -- sabatier_excess,°C,float,Default: 200C. Agora Energiewende states at least 200°C for catalytic methanisation A(https://www.agora-energiewende.de/en/publications/the-future-cost-of-electricity-based-synthetic-fuels-1/).
 -- methanolisation_excess,°C,float,Default: 200C. Assuming steam
-"ptx_heat_losses",--,float,"Non-recoverable heat loss factor for PTX processes without efficiency-heat data in technology-data.
 residential_heat,--,,Configuration options for residential heat demand-side management (DSM). See `smartEn DSM study <https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf>`_ (Appendix A) for methodology.
 -- dsm,--,,
 -- -- enable,--,"{true, false}",Enable residential heat demand-side management that allows heating systems to provide flexibility by shifting demand within configurable time periods. Models building thermal mass as energy storage.

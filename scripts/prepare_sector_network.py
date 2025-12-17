@@ -5504,7 +5504,14 @@ def add_waste_heat(
             continue
 
         # Get efficiency and bus/efficiency column names
-        efficiency = heat_source.get_waste_heat_efficiency(n, costs, urban_central)
+        efficiency = heat_source.get_waste_heat_efficiency(
+            n=n,
+            costs=costs,
+            nodes=urban_central,
+            fallback_ptx_heat_losses=options["district_heating"][
+                "fallback_ptx_heat_losses"
+            ],
+        )
         bus_col = f"bus{heat_source.process_output_bus_index}"
         eff_col = f"efficiency{heat_source.process_output_bus_index}"
         link_names = urban_central + " " + heat_source.process_carrier

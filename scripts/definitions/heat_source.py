@@ -270,6 +270,8 @@ class HeatSource(Enum):
             HeatSource.FISCHER_TROPSCH_EXCESS: "Fischer-Tropsch",
             HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
             HeatSource.ELECTROLYSIS_EXCESS: "electrolysis",
+            HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
+            HeatSource.METHANOLISATION_EXCESS: "methanolisation",
             # Sabatier, Fuel Cell, and Methanolisation use calculated efficiencies
         }
         return mapping.get(self)
@@ -330,7 +332,9 @@ class HeatSource(Enum):
         else:
             return float("inf")
 
-    def get_waste_heat_efficiency(self, n, costs, nodes):
+    def get_waste_heat_efficiency(
+        self, n, costs, nodes, fallback_ptx_heat_losses: float
+    ):
         """
         Get the waste heat efficiency for this PTX process.
 
@@ -362,19 +366,33 @@ class HeatSource(Enum):
                 f"get_waste_heat_efficiency only applies to PROCESS_WASTE sources, not {self}"
             )
 
-        if self.technology_data_name:
+        # Base branch formulas:
+        if self == HeatSource.FISCHER_TROPSCH_EXCESS:
             return costs.at[self.technology_data_name, "efficiency-heat"]
-        elif self == HeatSource.METHANOLISATION_EXCESS:
-            # Methanolisation uses heat-output / hydrogen-input (no efficiency-heat in technology-data)
+        elif self == HeatSource.ELECTROLYSIS_EXCESS:
+            return costs.at[self.technology_data_name, "efficiency-heat"]
+        elif self == HeatSource.HABER_BOSCH_EXCESS:
             return (
-                costs.at["methanolisation", "heat-output"]
-                / costs.at["methanolisation", "hydrogen-input"]
+                costs.at[self.technology_data_name, "efficiency-heat"]
+                / costs.at[self.technology_data_name, "electricity-input"]
+            )
+        elif self == HeatSource.METHANOLISATION_EXCESS:
+            return (
+                costs.at[self.technology_data_name, "heat-output"]
+                / costs.at[self.technology_data_name, "hydrogen-input"]
             )
         elif self == HeatSource.SABATIER_EXCESS:
-            # Calculated: 1 - losses - main efficiency
-            return 1 - 0.05 - n.links.loc[nodes + " Sabatier", "efficiency"]
+            return (
+                1
+                - fallback_ptx_heat_losses
+                - n.links.loc[nodes + " Sabatier", "efficiency"]
+            )
         elif self == HeatSource.FUEL_CELL_EXCESS:
-            return 1 - 0.05 - n.links.loc[nodes + " H2 Fuel Cell", "efficiency"]
+            return (
+                1
+                - fallback_ptx_heat_losses
+                - n.links.loc[nodes + " H2 Fuel Cell", "efficiency"]
+            )
         else:
             raise ValueError(f"No efficiency calculation defined for {self}")
 

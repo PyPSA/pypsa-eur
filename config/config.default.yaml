@@ -563,7 +563,7 @@ sector:
       haber_bosch_excess: 200
       sabatier_excess: 200
       methanolisation_excess: 200
-    ptx_heat_losses: 0.05
+    fallback_ptx_heat_losses: 0.05
   heat_sources:
     urban central:
     - air
