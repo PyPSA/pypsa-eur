@@ -1355,5 +1355,15 @@ data:
     source: archive
     version: latest
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
+overpass_api:
+  url: https://overpass-api.de/api/interpreter
+  max_tries: 5
+  timeout: 600
+  user_agent:
+    project_name: PyPSA-Eur
+    email: contact@pypsa.org
+    website: https://github.com/PyPSA/pypsa-eur
+
 secrets:
   corine: ""
