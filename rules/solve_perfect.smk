@@ -19,7 +19,7 @@ rule add_existing_baseyear:
         busmap=resources("busmap_base_s_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: resources(
-            f"costs_{config_provider("scenario", "planning_horizons",0)(w)}_processed.csv"
+            f"costs_{config_provider('scenario', 'planning_horizons',0)(w)}_processed.csv"
         ),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         existing_heating_distribution=resources(
