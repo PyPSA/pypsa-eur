@@ -31,6 +31,14 @@ from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
+sectors_copied_from_exogenous = [
+    # also mainly has a heat demand, but can be electrified by methods unavailable in other processes.
+    # Therefore, here exogenously electrified as long as individual sectors are not disaggregated.
+    "HVC (chemical recycling)",
+    "HVC (mechanical recycling)",
+    "DRI + Electric arc",
+]
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -50,6 +58,15 @@ if __name__ == "__main__":
     # import endogenous ratios
     fn = snakemake.input.industry_sector_ratios_endogenous
     sector_ratios_endogenous = pd.read_csv(fn, header=[0, 1], index_col=0)
+
+    cols = sector_ratios_exogenous.columns[
+        sector_ratios_exogenous.columns.get_level_values(1).isin(
+            sectors_copied_from_exogenous
+        )
+    ]
+    sector_ratios_endogenous = pd.concat(
+        [sector_ratios_endogenous, sector_ratios_exogenous.loc[:, cols]], axis=1
+    )
 
     # material demand per node and industry (Mton/a)
     fn = snakemake.input.industrial_production_per_node
