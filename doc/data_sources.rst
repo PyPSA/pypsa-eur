@@ -27,7 +27,7 @@ To ensure reproducibility, PyPSA-Eur uses a versioning system for data sources w
 
 .. note::
     For users, selection and control over which is managed through the configuration file.
-    See :ref:`_data_cf` for details.
+    See :ref:`data_cf` for details.
 
 ##########################################
 Creating a new version of the data sources
