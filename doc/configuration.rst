@@ -56,7 +56,7 @@ using the ``--configfile`` option:
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: version:
-   :end-before: tutorial:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -72,7 +72,7 @@ using the ``--configfile`` option:
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: tutorial:
-   :end-before: logging:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -88,7 +88,7 @@ using the ``--configfile`` option:
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: logging:
-   :end-before: remote:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -106,7 +106,7 @@ using the ``--configfile`` option:
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: remote:
-   :end-before: run:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -130,7 +130,7 @@ Therefore the user can run different configurations within the same directory.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: run:
-   :end-before: foresight:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -146,7 +146,7 @@ Therefore the user can run different configurations within the same directory.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: foresight:
-   :end-before: scenario:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -192,7 +192,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: scenario:
-   :end-before: countries:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -208,7 +208,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: countries:
-   :end-before: snapshots:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -226,7 +226,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: snapshots:
-   :end-before: enable:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -243,8 +243,8 @@ Switches for some rules and optional features.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: inclusive: left
-   :end-before: co2_budget:
+   :start-after: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -260,7 +260,7 @@ Switches for some rules and optional features.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: co2_budget:
-   :end-before: electricity:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -280,7 +280,7 @@ Switches for some rules and optional features.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: electricity:
-   :end-before: atlite:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -298,7 +298,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: atlite:
-   :end-before: renewable:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -317,7 +317,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: renewable:
-   :end-before:   offwind-ac:
+   :end-before: "offwind-ac":
 
 .. dropdown:: Details
 
@@ -339,8 +339,8 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at:   offwind-ac:
-   :end-before:   solar:
+   :start-at: "offwind-ac":
+   :end-before: solar:
 
 .. dropdown:: Details
 
@@ -395,7 +395,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   hydro:
-   :end-before: conventional:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -418,7 +418,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   conventional:
-   :end-before: lines:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -434,7 +434,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: lines:
-   :end-before: links:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -450,7 +450,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: links:
-   :end-before: transmission_projects:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -468,7 +468,7 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transmission_projects:
-   :end-before: transformers:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -484,7 +484,7 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transformers:
-   :end-before: load:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -499,8 +499,8 @@ Allows to define additional transmission projects that will be added to the base
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: type: ""
-   :end-before: pypsa_eur:
+   :start-at: load:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -519,7 +519,7 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: energy:
-   :end-before: biomass:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -538,7 +538,7 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: biomass:
-   :end-before: solar_thermal:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -577,7 +577,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solar_thermal:
-   :end-before: existing_capacities:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -596,7 +596,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: existing_capacities:
-   :end-before: sector:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -615,7 +615,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: sector:
-   :end-at: oil: 125
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -633,14 +633,12 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: oil: 125
-   :end-before: costs:
+   :start-after: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
+   :end-before: # docs
 
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/IndustryConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
+.. jsonschema:: ../config/schema.json#/$defs/IndustryConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
 
 .. _costs_cf:
 
@@ -650,7 +648,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: costs:
-   :end-before: clustering:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -667,7 +665,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: clustering:
-   :end-before: adjustments:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -685,8 +683,8 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: resolution_sector: false
-   :end-before: solving:
+   :start-after: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -702,7 +700,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solving:
-   :end-before: data:
+   :end-before: # docs
 
 .. dropdown:: Details
 
@@ -728,7 +726,7 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: data:
-   :end-before: overpass_api:
+   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -749,7 +747,7 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: overpass_api:
-   :end-before: secrets:
+   :end-before: # docs
 
 .. dropdown:: Details
 

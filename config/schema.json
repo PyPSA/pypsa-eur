@@ -204,7 +204,8 @@
                   }
                 ],
                 "default": null,
-                "description": "Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_)."
+                "description": "Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_).",
+                "markdownDescription": "Source of the reanalysis weather dataset (e.g. [ERA5 ](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5) or [SARAH-3 ](https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002))."
               },
               "x": {
                 "anyOf": [
@@ -384,6 +385,7 @@
         "year": {
           "default": 2030,
           "description": "Year for which to retrieve biomass potential according to the assumptions of the `JRC ENSPRESO <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_.",
+          "markdownDescription": "Year for which to retrieve biomass potential according to the assumptions of the [JRC ENSPRESO ](https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f).",
           "maximum": 2050,
           "minimum": 2010,
           "type": "integer"
@@ -391,6 +393,7 @@
         "scenario": {
           "default": "ENS_Med",
           "description": "Scenario for which to retrieve biomass potential. The scenario definition can be seen in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`_.",
+          "markdownDescription": "Scenario for which to retrieve biomass potential. The scenario definition can be seen in [ENSPRESO_BIOMASS ](https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx).",
           "enum": [
             "ENS_Low",
             "ENS_Med",
@@ -1852,12 +1855,14 @@
           "properties": {
             "battery": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             },
             "H2": {
               "default": 168,
-              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             }
           }
@@ -1950,7 +1955,8 @@
             },
             "from_gem": {
               "default": true,
-              "description": "Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
+              "description": "Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.",
+              "markdownDescription": "Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker ](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker ](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
               "type": "boolean"
             },
             "year": {
@@ -2034,7 +2040,8 @@
         },
         "base_emissions_year": {
           "default": 1990,
-          "description": "The base year for the sector emissions. See [European Environment Agency (EEA)](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
+          "description": "The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
+          "markdownDescription": "The base year for the sector emissions. See [European Environment Agency (EEA) ](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
           "type": "integer"
         },
         "emissions": {
@@ -2109,12 +2116,14 @@
         },
         "H2_DRI": {
           "default": 1.7,
-          "description": "The hydrogen consumption in Direct Reduced Iron (DRI) Mwh_H2 LHV/ton_Steel from 51kgH2/tSt in [Vogl et al (2018)](https://doi.org/10.1016/j.jclepro.2018.08.279).",
+          "description": "The hydrogen consumption in Direct Reduced Iron (DRI) Mwh_H2 LHV/ton_Steel from 51kgH2/tSt in `Vogl et al (2018) <https://doi.org/10.1016/j.jclepro.2018.08.279>`_.",
+          "markdownDescription": "The hydrogen consumption in Direct Reduced Iron (DRI) Mwh_H2 LHV/ton_Steel from 51kgH2/tSt in [Vogl et al (2018) ](https://doi.org/10.1016/j.jclepro.2018.08.279).",
           "type": "number"
         },
         "elec_DRI": {
           "default": 0.322,
-          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure](https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
+          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
+          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
           "type": "number"
         },
         "Al_primary_fraction": {
@@ -2131,7 +2140,8 @@
         },
         "MWh_CH4_per_tNH3_SMR": {
           "default": 10.8,
-          "description": "The energy amount of methane needed to produce a ton of ammonia using steam methane reforming (SMR). Value derived from 2012's demand from [Center for European Policy Studies (2008)](https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf).",
+          "description": "The energy amount of methane needed to produce a ton of ammonia using steam methane reforming (SMR). Value derived from 2012's demand from `Center for European Policy Studies (2008) <https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf>`_.",
+          "markdownDescription": "The energy amount of methane needed to produce a ton of ammonia using steam methane reforming (SMR). Value derived from 2012's demand from [Center for European Policy Studies (2008) ](https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf).",
           "type": "number"
         },
         "MWh_elec_per_tNH3_SMR": {
@@ -2141,12 +2151,14 @@
         },
         "MWh_H2_per_tNH3_electrolysis": {
           "default": 5.93,
-          "description": "The energy amount of hydrogen needed to produce a ton of ammonia using Haber\u2013Bosch process. From [Wang et al (2018)](https://doi.org/10.1016/j.joule.2018.04.017), Base value assumed around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy).",
+          "description": "The energy amount of hydrogen needed to produce a ton of ammonia using Haber\u2013Bosch process. From `Wang et al (2018) <https://doi.org/10.1016/j.joule.2018.04.017>`_, Base value assumed around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy).",
+          "markdownDescription": "The energy amount of hydrogen needed to produce a ton of ammonia using Haber\u2013Bosch process. From [Wang et al (2018) ](https://doi.org/10.1016/j.joule.2018.04.017), Base value assumed around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy).",
           "type": "number"
         },
         "MWh_elec_per_tNH3_electrolysis": {
           "default": 0.2473,
-          "description": "The energy amount of electricity needed to produce a ton of ammonia using Haber\u2013Bosch process. From [Wang et al (2018)](https://doi.org/10.1016/j.joule.2018.04.017), Table 13 (air separation and HB).",
+          "description": "The energy amount of electricity needed to produce a ton of ammonia using Haber\u2013Bosch process. From `Wang et al (2018) <https://doi.org/10.1016/j.joule.2018.04.017>`_, Table 13 (air separation and HB).",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of ammonia using Haber\u2013Bosch process. From [Wang et al (2018) ](https://doi.org/10.1016/j.joule.2018.04.017), Table 13 (air separation and HB).",
           "type": "number"
         },
         "MWh_NH3_per_MWh_H2_cracker": {
@@ -2214,52 +2226,62 @@
         },
         "HVC_production_today": {
           "default": 52.0,
-          "description": "The amount of high value chemicals (HVC) produced. This includes ethylene, propylene and BTX. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Figure 16, page 107.",
+          "description": "The amount of high value chemicals (HVC) produced. This includes ethylene, propylene and BTX. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Figure 16, page 107.",
+          "markdownDescription": "The amount of high value chemicals (HVC) produced. This includes ethylene, propylene and BTX. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Figure 16, page 107.",
           "type": "number"
         },
         "MWh_elec_per_tHVC_mechanical_recycling": {
           "default": 0.547,
-          "description": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling. From SI of [Meys et al (2020)](https://doi.org/10.1016/j.resconrec.2020.105010), Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756.",
+          "description": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling. From SI of `Meys et al (2020) <https://doi.org/10.1016/j.resconrec.2020.105010>`_, Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling. From SI of [Meys et al (2020) ](https://doi.org/10.1016/j.resconrec.2020.105010), Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756.",
           "type": "number"
         },
         "MWh_elec_per_tHVC_chemical_recycling": {
           "default": 6.9,
-          "description": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling. The default value is based on pyrolysis and electric steam cracking. From [Material Economics (2019)](https://materialeconomics.com/latest-updates/industrial-transformation-2050), page 125.",
+          "description": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling. The default value is based on pyrolysis and electric steam cracking. From `Material Economics (2019) <https://materialeconomics.com/latest-updates/industrial-transformation-2050>`_, page 125.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling. The default value is based on pyrolysis and electric steam cracking. From [Material Economics (2019) ](https://materialeconomics.com/latest-updates/industrial-transformation-2050), page 125.",
           "type": "number"
         },
         "chlorine_production_today": {
           "default": 9.58,
-          "description": "The amount of chlorine produced. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 7, page 43.",
+          "description": "The amount of chlorine produced. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 7, page 43.",
+          "markdownDescription": "The amount of chlorine produced. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 7, page 43.",
           "type": "number"
         },
         "MWh_elec_per_tCl": {
           "default": 3.6,
-          "description": "The energy amount of electricity needed to produce a ton of chlorine. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 6 page 43.",
+          "description": "The energy amount of electricity needed to produce a ton of chlorine. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 6 page 43.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of chlorine. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 6 page 43.",
           "type": "number"
         },
         "MWh_H2_per_tCl": {
           "default": -0.9372,
-          "description": "The energy amount of hydrogen needed to produce a ton of chlorine. The value is negative since hydrogen produced in chloralkali process. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 43.",
+          "description": "The energy amount of hydrogen needed to produce a ton of chlorine. The value is negative since hydrogen produced in chloralkali process. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 43.",
+          "markdownDescription": "The energy amount of hydrogen needed to produce a ton of chlorine. The value is negative since hydrogen produced in chloralkali process. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 43.",
           "type": "number"
         },
         "methanol_production_today": {
           "default": 1.5,
-          "description": "The amount of methanol produced. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 62.",
+          "description": "The amount of methanol produced. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 62.",
+          "markdownDescription": "The amount of methanol produced. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 62.",
           "type": "number"
         },
         "MWh_elec_per_tMeOH": {
           "default": 0.167,
-          "description": "The energy amount of electricity needed to produce a ton of methanol. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "description": "The energy amount of electricity needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of methanol. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
           "type": "number"
         },
         "MWh_CH4_per_tMeOH": {
           "default": 10.25,
-          "description": "The energy amount of methane needed to produce a ton of methanol. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "description": "The energy amount of methane needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+          "markdownDescription": "The energy amount of methane needed to produce a ton of methanol. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
           "type": "number"
         },
         "MWh_MeOH_per_tMeOH": {
           "default": 5.528,
-          "description": "The energy amount per ton of methanol (LHV). From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 74.",
+          "description": "The energy amount per ton of methanol (LHV). From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 74.",
+          "markdownDescription": "The energy amount per ton of methanol (LHV). From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 74.",
           "type": "number"
         },
         "hotmaps_locate_missing": {
@@ -2269,7 +2291,8 @@
         },
         "reference_year": {
           "default": 2019,
-          "description": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
+          "description": "The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_.",
+          "markdownDescription": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015 ](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
           "type": "integer"
         },
         "oil_refining_emissions": {
@@ -2507,6 +2530,7 @@
         "format": {
           "default": "%(levelname)s:%(name)s:%(message)s",
           "description": "Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.",
+          "markdownDescription": "Custom format for log messages. See [LogRecord ](https://docs.python.org/3/library/logging.html#logging.LogRecord) attributes.",
           "type": "string"
         }
       }
@@ -2721,7 +2745,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "excluder_resolution": {
@@ -2830,7 +2855,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "ship_threshold": {
@@ -3004,7 +3030,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "ship_threshold": {
@@ -3178,7 +3205,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "ship_threshold": {
@@ -3359,7 +3387,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "excluder_resolution": {
@@ -3475,7 +3504,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "excluder_resolution": {
@@ -3517,7 +3547,8 @@
             },
             "PHS_max_hours": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             },
             "hydro_max_hours": {
@@ -3530,7 +3561,8 @@
                 }
               ],
               "default": "energy_capacity_totals_by_country",
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
             },
             "flatten_dispatch": {
               "default": false,
@@ -3814,7 +3846,8 @@
             },
             "limited_heat_sources": {
               "additionalProperties": true,
-              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
+              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
+              "markdownDescription": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024 ](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
               "type": "object"
             },
             "direct_utilisation_heat_sources": {
@@ -3886,7 +3919,8 @@
         },
         "cluster_heat_buses": {
           "default": true,
-          "description": "Cluster residential and service heat buses in [prepare_sector_network.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py) to one to save memory.",
+          "description": "Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_ to one to save memory.",
+          "markdownDescription": "Cluster residential and service heat buses in [prepare_sector_network.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py) to one to save memory.",
           "type": "boolean"
         },
         "heat_demand_cutout": {
@@ -3896,7 +3930,8 @@
         },
         "bev_dsm_restriction_value": {
           "default": 0.8,
-          "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM.",
+          "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM.",
+          "markdownDescription": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM.",
           "type": "number"
         },
         "bev_dsm_restriction_time": {
@@ -4032,17 +4067,20 @@
         },
         "MWh_MeOH_per_MWh_H2": {
           "default": 0.8787,
-          "description": "The energy amount of the produced methanol per energy amount of hydrogen. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
+          "description": "The energy amount of the produced methanol per energy amount of hydrogen. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
+          "markdownDescription": "The energy amount of the produced methanol per energy amount of hydrogen. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
           "type": "number"
         },
         "MWh_MeOH_per_tCO2": {
           "default": 4.0321,
-          "description": "The energy amount of the produced methanol per ton of CO2. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 66.",
+          "description": "The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 66.",
+          "markdownDescription": "The energy amount of the produced methanol per ton of CO2. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 66.",
           "type": "number"
         },
         "MWh_MeOH_per_MWh_e": {
           "default": 3.6907,
-          "description": "The energy amount of the produced methanol per energy amount of electricity. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
+          "description": "The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
+          "markdownDescription": "The energy amount of the produced methanol per energy amount of electricity. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
           "type": "number"
         },
         "shipping_hydrogen_liquefaction": {
@@ -4073,7 +4111,8 @@
         },
         "shipping_methanol_efficiency": {
           "default": 0.46,
-          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
+          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
           "type": "number"
         },
         "shipping_oil_efficiency": {
@@ -4110,7 +4149,8 @@
           "additionalProperties": {
             "type": "number"
           },
-          "description": "A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the [Eurocalc Homes and buildings decarbonization scenario](http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221).",
+          "description": "A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the `Eurocalc Homes and buildings decarbonization scenario <http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221>`_.",
+          "markdownDescription": "A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the [Eurocalc Homes and buildings decarbonization scenario ](http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221).",
           "type": "object"
         },
         "retrofitting": {
@@ -4246,7 +4286,8 @@
         },
         "allam_cycle_gas": {
           "default": false,
-          "description": "Add option to include [Allam cycle gas power plants](https://en.wikipedia.org/wiki/Allam_power_cycle).",
+          "description": "Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_.",
+          "markdownDescription": "Add option to include [Allam cycle gas power plants ](https://en.wikipedia.org/wiki/Allam_power_cycle).",
           "type": "boolean"
         },
         "hydrogen_fuel_cell": {
@@ -4281,7 +4322,8 @@
         },
         "regional_co2_sequestration_potential": {
           "additionalProperties": true,
-          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP](https://setis.ec.europa.eu/european-co2-storage-database_en).",
+          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.",
+          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).",
           "type": "object"
         },
         "co2_sequestration_potential": {
@@ -4504,7 +4546,8 @@
         },
         "gas_network": {
           "default": true,
-          "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+          "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+          "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
           "type": "boolean"
         },
         "H2_retrofit": {
@@ -4514,12 +4557,14 @@
         },
         "H2_retrofit_capacity_per_CH4": {
           "default": 0.6,
-          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
           "type": "number"
         },
         "gas_network_connectivity_upgrade": {
           "default": 1,
-          "description": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
+          "description": "The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
+          "markdownDescription": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
           "type": "number"
         },
         "gas_distribution_grid": {
@@ -4653,7 +4698,8 @@
             },
             "sustainability_factor": {
               "default": 0.0025,
-              "description": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
+              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
               "type": "number"
             }
           }
@@ -5582,7 +5628,8 @@
             }
           ],
           "default": null,
-          "description": "Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_)."
+          "description": "Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_).",
+          "markdownDescription": "Source of the reanalysis weather dataset (e.g. [ERA5 ](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5) or [SARAH-3 ](https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002))."
         },
         "x": {
           "anyOf": [
@@ -5843,7 +5890,8 @@
         },
         "limited_heat_sources": {
           "additionalProperties": true,
-          "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
+          "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
+          "markdownDescription": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024 ](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
           "type": "object"
         },
         "direct_utilisation_heat_sources": {
@@ -5983,7 +6031,8 @@
         },
         "sustainability_factor": {
           "default": 0.0025,
-          "description": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+          "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
+          "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
           "type": "number"
         }
       }
@@ -5998,7 +6047,8 @@
         },
         "from_gem": {
           "default": true,
-          "description": "Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
+          "description": "Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.",
+          "markdownDescription": "Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker ](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker ](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
           "type": "boolean"
         },
         "year": {
@@ -6170,7 +6220,8 @@
         },
         "PHS_max_hours": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
           "type": "number"
         },
         "hydro_max_hours": {
@@ -6183,7 +6234,8 @@
             }
           ],
           "default": "energy_capacity_totals_by_country",
-          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
+          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
         },
         "flatten_dispatch": {
           "default": false,
@@ -6305,12 +6357,14 @@
       "properties": {
         "battery": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
           "type": "number"
         },
         "H2": {
           "default": 168,
-          "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
           "type": "number"
         }
       }
@@ -6496,7 +6550,8 @@
         },
         "natura": {
           "default": true,
-          "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+          "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+          "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
           "type": "boolean"
         },
         "ship_threshold": {
@@ -6688,7 +6743,8 @@
         },
         "natura": {
           "default": true,
-          "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+          "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+          "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
           "type": "boolean"
         },
         "excluder_resolution": {
@@ -7117,7 +7173,8 @@
         },
         "natura": {
           "default": true,
-          "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+          "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+          "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
           "type": "boolean"
         },
         "excluder_resolution": {
@@ -7549,6 +7606,7 @@
         "format": {
           "default": "%(levelname)s:%(name)s:%(message)s",
           "description": "Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.",
+          "markdownDescription": "Custom format for log messages. See [LogRecord ](https://docs.python.org/3/library/logging.html#logging.LogRecord) attributes.",
           "type": "string"
         }
       }
@@ -7903,12 +7961,14 @@
           "properties": {
             "battery": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             },
             "H2": {
               "default": 168,
-              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             }
           }
@@ -8001,7 +8061,8 @@
             },
             "from_gem": {
               "default": true,
-              "description": "Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
+              "description": "Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.",
+              "markdownDescription": "Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker ](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker ](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
               "type": "boolean"
             },
             "year": {
@@ -8113,7 +8174,8 @@
                   }
                 ],
                 "default": null,
-                "description": "Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_)."
+                "description": "Source of the reanalysis weather dataset (e.g. `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_ or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`_).",
+                "markdownDescription": "Source of the reanalysis weather dataset (e.g. [ERA5 ](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5) or [SARAH-3 ](https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002))."
               },
               "x": {
                 "anyOf": [
@@ -8402,7 +8464,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "excluder_resolution": {
@@ -8511,7 +8574,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "ship_threshold": {
@@ -8685,7 +8749,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "ship_threshold": {
@@ -8859,7 +8924,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "ship_threshold": {
@@ -9040,7 +9106,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "excluder_resolution": {
@@ -9156,7 +9223,8 @@
             },
             "natura": {
               "default": true,
-              "description": "Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
               "type": "boolean"
             },
             "excluder_resolution": {
@@ -9198,7 +9266,8 @@
             },
             "PHS_max_hours": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             },
             "hydro_max_hours": {
@@ -9211,7 +9280,8 @@
                 }
               ],
               "default": "energy_capacity_totals_by_country",
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
             },
             "flatten_dispatch": {
               "default": false,
@@ -9630,7 +9700,8 @@
         },
         "base_emissions_year": {
           "default": 1990,
-          "description": "The base year for the sector emissions. See [European Environment Agency (EEA)](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
+          "description": "The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
+          "markdownDescription": "The base year for the sector emissions. See [European Environment Agency (EEA) ](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
           "type": "integer"
         },
         "emissions": {
@@ -9646,6 +9717,7 @@
         "year": {
           "default": 2030,
           "description": "Year for which to retrieve biomass potential according to the assumptions of the `JRC ENSPRESO <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_.",
+          "markdownDescription": "Year for which to retrieve biomass potential according to the assumptions of the [JRC ENSPRESO ](https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f).",
           "maximum": 2050,
           "minimum": 2010,
           "type": "integer"
@@ -9653,6 +9725,7 @@
         "scenario": {
           "default": "ENS_Med",
           "description": "Scenario for which to retrieve biomass potential. The scenario definition can be seen in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`_.",
+          "markdownDescription": "Scenario for which to retrieve biomass potential. The scenario definition can be seen in [ENSPRESO_BIOMASS ](https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx).",
           "enum": [
             "ENS_Low",
             "ENS_Med",
@@ -9879,7 +9952,8 @@
             },
             "limited_heat_sources": {
               "additionalProperties": true,
-              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
+              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
+              "markdownDescription": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024 ](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
               "type": "object"
             },
             "direct_utilisation_heat_sources": {
@@ -9951,7 +10025,8 @@
         },
         "cluster_heat_buses": {
           "default": true,
-          "description": "Cluster residential and service heat buses in [prepare_sector_network.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py) to one to save memory.",
+          "description": "Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_ to one to save memory.",
+          "markdownDescription": "Cluster residential and service heat buses in [prepare_sector_network.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py) to one to save memory.",
           "type": "boolean"
         },
         "heat_demand_cutout": {
@@ -9961,7 +10036,8 @@
         },
         "bev_dsm_restriction_value": {
           "default": 0.8,
-          "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM.",
+          "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM.",
+          "markdownDescription": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM.",
           "type": "number"
         },
         "bev_dsm_restriction_time": {
@@ -10097,17 +10173,20 @@
         },
         "MWh_MeOH_per_MWh_H2": {
           "default": 0.8787,
-          "description": "The energy amount of the produced methanol per energy amount of hydrogen. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
+          "description": "The energy amount of the produced methanol per energy amount of hydrogen. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
+          "markdownDescription": "The energy amount of the produced methanol per energy amount of hydrogen. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
           "type": "number"
         },
         "MWh_MeOH_per_tCO2": {
           "default": 4.0321,
-          "description": "The energy amount of the produced methanol per ton of CO2. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 66.",
+          "description": "The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 66.",
+          "markdownDescription": "The energy amount of the produced methanol per ton of CO2. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 66.",
           "type": "number"
         },
         "MWh_MeOH_per_MWh_e": {
           "default": 3.6907,
-          "description": "The energy amount of the produced methanol per energy amount of electricity. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
+          "description": "The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
+          "markdownDescription": "The energy amount of the produced methanol per energy amount of electricity. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
           "type": "number"
         },
         "shipping_hydrogen_liquefaction": {
@@ -10138,7 +10217,8 @@
         },
         "shipping_methanol_efficiency": {
           "default": 0.46,
-          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
+          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
           "type": "number"
         },
         "shipping_oil_efficiency": {
@@ -10175,7 +10255,8 @@
           "additionalProperties": {
             "type": "number"
           },
-          "description": "A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the [Eurocalc Homes and buildings decarbonization scenario](http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221).",
+          "description": "A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the `Eurocalc Homes and buildings decarbonization scenario <http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221>`_.",
+          "markdownDescription": "A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the [Eurocalc Homes and buildings decarbonization scenario ](http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221).",
           "type": "object"
         },
         "retrofitting": {
@@ -10311,7 +10392,8 @@
         },
         "allam_cycle_gas": {
           "default": false,
-          "description": "Add option to include [Allam cycle gas power plants](https://en.wikipedia.org/wiki/Allam_power_cycle).",
+          "description": "Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_.",
+          "markdownDescription": "Add option to include [Allam cycle gas power plants ](https://en.wikipedia.org/wiki/Allam_power_cycle).",
           "type": "boolean"
         },
         "hydrogen_fuel_cell": {
@@ -10346,7 +10428,8 @@
         },
         "regional_co2_sequestration_potential": {
           "additionalProperties": true,
-          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP](https://setis.ec.europa.eu/european-co2-storage-database_en).",
+          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.",
+          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).",
           "type": "object"
         },
         "co2_sequestration_potential": {
@@ -10569,7 +10652,8 @@
         },
         "gas_network": {
           "default": true,
-          "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+          "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+          "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
           "type": "boolean"
         },
         "H2_retrofit": {
@@ -10579,12 +10663,14 @@
         },
         "H2_retrofit_capacity_per_CH4": {
           "default": 0.6,
-          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
           "type": "number"
         },
         "gas_network_connectivity_upgrade": {
           "default": 1,
-          "description": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
+          "description": "The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
+          "markdownDescription": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
           "type": "number"
         },
         "gas_distribution_grid": {
@@ -10718,7 +10804,8 @@
             },
             "sustainability_factor": {
               "default": 0.0025,
-              "description": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
+              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
               "type": "number"
             }
           }
@@ -10796,12 +10883,14 @@
         },
         "H2_DRI": {
           "default": 1.7,
-          "description": "The hydrogen consumption in Direct Reduced Iron (DRI) Mwh_H2 LHV/ton_Steel from 51kgH2/tSt in [Vogl et al (2018)](https://doi.org/10.1016/j.jclepro.2018.08.279).",
+          "description": "The hydrogen consumption in Direct Reduced Iron (DRI) Mwh_H2 LHV/ton_Steel from 51kgH2/tSt in `Vogl et al (2018) <https://doi.org/10.1016/j.jclepro.2018.08.279>`_.",
+          "markdownDescription": "The hydrogen consumption in Direct Reduced Iron (DRI) Mwh_H2 LHV/ton_Steel from 51kgH2/tSt in [Vogl et al (2018) ](https://doi.org/10.1016/j.jclepro.2018.08.279).",
           "type": "number"
         },
         "elec_DRI": {
           "default": 0.322,
-          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure](https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
+          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
+          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
           "type": "number"
         },
         "Al_primary_fraction": {
@@ -10818,7 +10907,8 @@
         },
         "MWh_CH4_per_tNH3_SMR": {
           "default": 10.8,
-          "description": "The energy amount of methane needed to produce a ton of ammonia using steam methane reforming (SMR). Value derived from 2012's demand from [Center for European Policy Studies (2008)](https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf).",
+          "description": "The energy amount of methane needed to produce a ton of ammonia using steam methane reforming (SMR). Value derived from 2012's demand from `Center for European Policy Studies (2008) <https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf>`_.",
+          "markdownDescription": "The energy amount of methane needed to produce a ton of ammonia using steam methane reforming (SMR). Value derived from 2012's demand from [Center for European Policy Studies (2008) ](https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf).",
           "type": "number"
         },
         "MWh_elec_per_tNH3_SMR": {
@@ -10828,12 +10918,14 @@
         },
         "MWh_H2_per_tNH3_electrolysis": {
           "default": 5.93,
-          "description": "The energy amount of hydrogen needed to produce a ton of ammonia using Haber\u2013Bosch process. From [Wang et al (2018)](https://doi.org/10.1016/j.joule.2018.04.017), Base value assumed around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy).",
+          "description": "The energy amount of hydrogen needed to produce a ton of ammonia using Haber\u2013Bosch process. From `Wang et al (2018) <https://doi.org/10.1016/j.joule.2018.04.017>`_, Base value assumed around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy).",
+          "markdownDescription": "The energy amount of hydrogen needed to produce a ton of ammonia using Haber\u2013Bosch process. From [Wang et al (2018) ](https://doi.org/10.1016/j.joule.2018.04.017), Base value assumed around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy).",
           "type": "number"
         },
         "MWh_elec_per_tNH3_electrolysis": {
           "default": 0.2473,
-          "description": "The energy amount of electricity needed to produce a ton of ammonia using Haber\u2013Bosch process. From [Wang et al (2018)](https://doi.org/10.1016/j.joule.2018.04.017), Table 13 (air separation and HB).",
+          "description": "The energy amount of electricity needed to produce a ton of ammonia using Haber\u2013Bosch process. From `Wang et al (2018) <https://doi.org/10.1016/j.joule.2018.04.017>`_, Table 13 (air separation and HB).",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of ammonia using Haber\u2013Bosch process. From [Wang et al (2018) ](https://doi.org/10.1016/j.joule.2018.04.017), Table 13 (air separation and HB).",
           "type": "number"
         },
         "MWh_NH3_per_MWh_H2_cracker": {
@@ -10901,52 +10993,62 @@
         },
         "HVC_production_today": {
           "default": 52.0,
-          "description": "The amount of high value chemicals (HVC) produced. This includes ethylene, propylene and BTX. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Figure 16, page 107.",
+          "description": "The amount of high value chemicals (HVC) produced. This includes ethylene, propylene and BTX. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Figure 16, page 107.",
+          "markdownDescription": "The amount of high value chemicals (HVC) produced. This includes ethylene, propylene and BTX. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Figure 16, page 107.",
           "type": "number"
         },
         "MWh_elec_per_tHVC_mechanical_recycling": {
           "default": 0.547,
-          "description": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling. From SI of [Meys et al (2020)](https://doi.org/10.1016/j.resconrec.2020.105010), Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756.",
+          "description": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling. From SI of `Meys et al (2020) <https://doi.org/10.1016/j.resconrec.2020.105010>`_, Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling. From SI of [Meys et al (2020) ](https://doi.org/10.1016/j.resconrec.2020.105010), Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756.",
           "type": "number"
         },
         "MWh_elec_per_tHVC_chemical_recycling": {
           "default": 6.9,
-          "description": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling. The default value is based on pyrolysis and electric steam cracking. From [Material Economics (2019)](https://materialeconomics.com/latest-updates/industrial-transformation-2050), page 125.",
+          "description": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling. The default value is based on pyrolysis and electric steam cracking. From `Material Economics (2019) <https://materialeconomics.com/latest-updates/industrial-transformation-2050>`_, page 125.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling. The default value is based on pyrolysis and electric steam cracking. From [Material Economics (2019) ](https://materialeconomics.com/latest-updates/industrial-transformation-2050), page 125.",
           "type": "number"
         },
         "chlorine_production_today": {
           "default": 9.58,
-          "description": "The amount of chlorine produced. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 7, page 43.",
+          "description": "The amount of chlorine produced. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 7, page 43.",
+          "markdownDescription": "The amount of chlorine produced. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 7, page 43.",
           "type": "number"
         },
         "MWh_elec_per_tCl": {
           "default": 3.6,
-          "description": "The energy amount of electricity needed to produce a ton of chlorine. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 6 page 43.",
+          "description": "The energy amount of electricity needed to produce a ton of chlorine. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 6 page 43.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of chlorine. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 6 page 43.",
           "type": "number"
         },
         "MWh_H2_per_tCl": {
           "default": -0.9372,
-          "description": "The energy amount of hydrogen needed to produce a ton of chlorine. The value is negative since hydrogen produced in chloralkali process. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 43.",
+          "description": "The energy amount of hydrogen needed to produce a ton of chlorine. The value is negative since hydrogen produced in chloralkali process. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 43.",
+          "markdownDescription": "The energy amount of hydrogen needed to produce a ton of chlorine. The value is negative since hydrogen produced in chloralkali process. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 43.",
           "type": "number"
         },
         "methanol_production_today": {
           "default": 1.5,
-          "description": "The amount of methanol produced. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 62.",
+          "description": "The amount of methanol produced. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 62.",
+          "markdownDescription": "The amount of methanol produced. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 62.",
           "type": "number"
         },
         "MWh_elec_per_tMeOH": {
           "default": 0.167,
-          "description": "The energy amount of electricity needed to produce a ton of methanol. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "description": "The energy amount of electricity needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of methanol. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
           "type": "number"
         },
         "MWh_CH4_per_tMeOH": {
           "default": 10.25,
-          "description": "The energy amount of methane needed to produce a ton of methanol. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "description": "The energy amount of methane needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+          "markdownDescription": "The energy amount of methane needed to produce a ton of methanol. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
           "type": "number"
         },
         "MWh_MeOH_per_tMeOH": {
           "default": 5.528,
-          "description": "The energy amount per ton of methanol (LHV). From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 74.",
+          "description": "The energy amount per ton of methanol (LHV). From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 74.",
+          "markdownDescription": "The energy amount per ton of methanol (LHV). From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 74.",
           "type": "number"
         },
         "hotmaps_locate_missing": {
@@ -10956,7 +11058,8 @@
         },
         "reference_year": {
           "default": 2019,
-          "description": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
+          "description": "The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_.",
+          "markdownDescription": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015 ](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
           "type": "integer"
         },
         "oil_refining_emissions": {
