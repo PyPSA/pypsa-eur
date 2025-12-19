@@ -82,23 +82,42 @@ rule solve_sector_networks_perfect:
     input:
         expand(
             RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"],
             run=config["run"]["name"],
         ),
+
+
+def balance_map_paths(kind, w):
+    """
+    kind = "static" or "interactive"
+    """
+    cfg_key = "balance_map" if kind == "static" else "balance_map_interactive"
+
+    return expand(
+        RESULTS
+        + f"maps/{kind}/base_s_{{clusters}}_{{opts}}_{{sector_opts}}_{{planning_horizons}}"
+        f"-balance_map_{{carrier}}.{'pdf'if kind== 'static' else 'html'}",
+        **config["scenario"],
+        run=config["run"]["name"],
+        carrier=config_provider("plotting", cfg_key, "bus_carriers")(w),
+    )
 
 
 rule plot_balance_maps:
     input:
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
-        ),
+        static=lambda w: balance_map_paths("static", w),
+        interactive=lambda w: balance_map_paths("interactive", w),
+
+
+rule plot_balance_maps_static:
+    input:
+        lambda w: balance_map_paths("static", w),
+
+
+rule plot_balance_maps_interactive:
+    input:
+        lambda w: balance_map_paths("interactive", w),
 
 
 rule plot_power_networks_clustered:
