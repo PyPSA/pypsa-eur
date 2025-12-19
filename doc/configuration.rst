@@ -15,17 +15,17 @@ PyPSA-Eur has several configuration options which are documented in this section
 Configuration Files
 ===================
 
-Any PyPSA-Eur configuration can be set in a ``.yaml`` file. The default configurations 
-``config/config.default.yaml`` and ``config/plotting.default.yaml`` are maintained in 
+Any PyPSA-Eur configuration can be set in a ``.yaml`` file. The default configurations
+``config/config.default.yaml`` and ``config/plotting.default.yaml`` are maintained in
 the repository and cover all the options that are used/ can be set.
 
-To pass your own configuration, you can create a new file, e.g. ``my_config.yaml``, 
-and specify the options you want to change. They will override the default settings and 
+To pass your own configuration, you can create a new file, e.g. ``my_config.yaml``,
+and specify the options you want to change. They will override the default settings and
 options which are not set, will be inherited from the defaults above.
 
-Another way is to use the ``config/config.yaml`` file, which does not exist in the 
-repository and is also not tracked by git. But snakemake will always use this file if 
-it exists. This way you can run snakemake with a custom config without having to 
+Another way is to use the ``config/config.yaml`` file, which does not exist in the
+repository and is also not tracked by git. But snakemake will always use this file if
+it exists. This way you can run snakemake with a custom config without having to
 specify the config file each time.
 
 Configuration order of precedence is as follows:
@@ -34,7 +34,7 @@ Configuration order of precedence is as follows:
 3. The ``config/config.yaml`` file (optional)
 4. The default configuration files ``config/config.default.yaml`` and ``config/plotting.default.yaml``
 
-To use your custom configuration file, you need to pass it to the ``snakemake`` command 
+To use your custom configuration file, you need to pass it to the ``snakemake`` command
 using the ``--configfile`` option:
 
 .. code:: console
@@ -44,37 +44,75 @@ using the ``--configfile`` option:
 .. warning::
 
     In a previous version of PyPSA-Eur (``<=2025.04.0``), a full copy of the created config
-    was stored in the ``config/config.yaml`` file. This is no longer the case. If the 
+    was stored in the ``config/config.yaml`` file. This is no longer the case. If the
     file exists, snakemake will use it, but no new copy will be created.
 
 
-.. _toplevel_cf:
+.. _version_cf:
 
-Top-level configuration
-=======================
-
-"Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
+``version``
+===========
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: version:
-   :end-before: # docs
+   :end-before: tutorial:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/properties/version
       :lift_description:
+      :hide_key: /**/additionalProperties, /**/default
+
+.. _tutorial_cf:
+
+``tutorial``
+============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: tutorial:
+   :end-before: logging:
+
+.. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/properties/tutorial
       :lift_description:
+      :hide_key: /**/additionalProperties, /**/default
+
+.. _logging_cf:
+
+``logging``
+===========
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: logging:
+   :end-before: remote:
+
+.. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/LoggingConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
+
+.. _remote_cf:
+
+``remote``
+==========
+
+"Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: remote:
+   :end-before: run:
+
+.. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/RemoteConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _run_cf:
 
@@ -92,13 +130,13 @@ Therefore the user can run different configurations within the same directory.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: run:
-   :end-before: # docs
+   :end-before: foresight:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/RunConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _foresight_cf:
 
@@ -108,13 +146,13 @@ Therefore the user can run different configurations within the same directory.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: foresight:
-   :end-at: foresight:
+   :end-before: scenario:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/ForesightConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. note::
     If you use myopic or perfect foresight, the planning horizon in
@@ -154,13 +192,13 @@ An exemplary dependency graph (starting from the simplification rules) then look
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: scenario:
-   :end-before: # docs
+   :end-before: countries:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/ScenarioConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _countries:
 
@@ -170,13 +208,13 @@ An exemplary dependency graph (starting from the simplification rules) then look
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: countries:
-   :end-before: # docs
+   :end-before: snapshots:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/CountriesConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _snapshots_cf:
 
@@ -188,13 +226,13 @@ Specifies the temporal range to build an energy system model for as arguments to
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: snapshots:
-   :end-before: # docs
+   :end-before: enable:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/SnapshotsConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _enable_cf:
 
@@ -205,14 +243,14 @@ Switches for some rules and optional features.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: #enable
-   :end-before: # docs
+   :start-after: inclusive: left
+   :end-before: co2_budget:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/EnableConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _CO2_budget_cf:
 
@@ -222,13 +260,13 @@ Switches for some rules and optional features.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: co2_budget:
-   :end-before: # docs
+   :end-before: electricity:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/Co2BudgetConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. note::
     this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
@@ -242,13 +280,13 @@ Switches for some rules and optional features.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: electricity:
-   :end-before: # docs
+   :end-before: atlite:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/ElectricityConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _atlite_cf:
 
@@ -260,13 +298,13 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: atlite:
-   :end-before: # docs
+   :end-before: renewable:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/AtliteConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _renewable_cf:
 
@@ -285,7 +323,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
    .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/onwind
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
@@ -308,15 +346,15 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
    .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-ac
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
    .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-dc
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
    .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-float
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
@@ -340,7 +378,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
    .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/solar
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 170 MW/km^2 and assuming 1% of the area can be used for solar PV panels.
@@ -357,15 +395,15 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   hydro:
-   :end-before: # docs
+   :end-before: conventional:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/hydro
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
-.. _lines_cf:
+.. _conventional_cf:
 
 ``conventional``
 ================
@@ -380,27 +418,29 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   conventional:
-   :end-before: # docs
+   :end-before: lines:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/ConventionalConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
+
+.. _lines_cf:
 
 ``lines``
-=============
+=========
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: lines:
-   :end-before: # docs
+   :end-before: links:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/LinesConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _links_cf:
 
@@ -410,17 +450,17 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: links:
-   :end-before: # docs
+   :end-before: transmission_projects:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/LinksConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
-.. _transformers_cf:
+.. _transmission_projects_cf:
 
-``transmission projects``
+``transmission_projects``
 =========================
 
 Allows to define additional transmission projects that will be added to the base network, e.g., from the TYNDP 2020 dataset. The projects are read in from the CSV files in the subfolder of ``data/transmission_projects/``. New transmission projects, e.g. from TYNDP 2024, can be added in a new subfolder of transmission projects, e.g. ``data/transmission_projects/tyndp2024`` while extending the list of ``transmission_projects`` in the ``config.yaml`` by ``tyndp2024``. The CSV files in the project folder should have the same columns as the CSV files in the template folder ``data/transmission_projects/template``.
@@ -428,13 +468,13 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transmission_projects:
-   :end-before: # docs
+   :end-before: transformers:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/TransmissionProjectsConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _transformers_cf:
 
@@ -444,13 +484,13 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transformers:
-   :end-before: # docs
+   :end-before: load:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/TransformersConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _load_cf:
 
@@ -459,14 +499,14 @@ Allows to define additional transmission projects that will be added to the base
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: # docs-load
-   :end-before: # docs
+   :start-after: type: ""
+   :end-before: pypsa_eur:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/LoadConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _energy_cf:
 
@@ -479,13 +519,13 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: energy:
-   :end-before: # docs
+   :end-before: biomass:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/EnergyConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _biomass_cf:
 
@@ -498,13 +538,13 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: biomass:
-   :end-before: # docs
+   :end-before: solar_thermal:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/BiomassConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`__, namely:
 
@@ -537,13 +577,13 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solar_thermal:
-   :end-before: # docs
+   :end-before: existing_capacities:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/SolarThermalConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _existing_capacities_cf:
 
@@ -556,13 +596,13 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: existing_capacities:
-   :end-before: # docs
+   :end-before: sector:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/ExistingCapacitiesConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _sector_cf:
 
@@ -575,13 +615,13 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: sector:
-   :end-before: # docs
+   :end-at: oil: 125
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/SectorConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _industry_cf:
 
@@ -593,14 +633,14 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
-   :end-before: # docs
+   :start-after: oil: 125
+   :end-before: costs:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/IndustryConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _costs_cf:
 
@@ -610,13 +650,13 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: costs:
-   :end-before: # docs
+   :end-before: clustering:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/CostsConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 
 .. _clustering_cf:
@@ -627,13 +667,13 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: clustering:
-   :end-before: # docs
+   :end-before: adjustments:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/ClusteringConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
 
 .. tip::
    use ``min`` in ``p_nom_max:`` for more conservative assumptions.
@@ -645,14 +685,30 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at: adjustments:
-   :end-before: # docs
+   :start-after: resolution_sector: false
+   :end-before: solving:
 
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/AdjustmentsConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
+
+.. _solving_cf:
+
+``solving``
+===========
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: solving:
+   :end-before: data:
+
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/SolvingConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _data_cf:
 
@@ -672,27 +728,49 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: data:
-   :end-before: # docs
+   :end-before: overpass_api:
 
 .. csv-table::
    :header-rows: 1
    :widths: 22,7,22,33
    :file: configtables/data.csv
 
-.. _solving_cf:
+.. dropdown:: Details
 
-``solving``
-=============
+   .. jsonschema:: ../config/schema.json#/$defs/DataConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties, /**/default
+
+.. _overpass_api_cf:
+
+``overpass_api``
+================
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at: solving:
+   :start-at: overpass_api:
+   :end-before: secrets:
 
 .. dropdown:: Details
 
-   .. jsonschema:: ../config/schema.json#/$defs/SolvingConfig
+   .. jsonschema:: ../config/schema.json#/$defs/OverpassApiConfig
       :lift_description:
-      :hide_key: /**/additionalProperties
+      :hide_key: /**/additionalProperties, /**/default
+
+.. _secrets_cf:
+
+``secrets``
+===========
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: secrets:
+
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/SecretsConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties, /**/default
 
 .. _plotting_cf:
 

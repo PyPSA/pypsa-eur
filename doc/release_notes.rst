@@ -9,6 +9,12 @@ Release Notes
 Upcoming Release
 ================
 
+* Important: PyPSA-Eur now uses a validation schema for configuration files. The schema 
+  also contains the default values for all known configuration options, which means 
+  `config/config.default.yaml` still exists and can be used, but will be automatically
+  exported from the schema. Changes to the default config, therefore now require the
+  schema to be updated. Find a detailed explanation in the contributors documentation.
+
 * Fix building osm network using overpass API (https://github.com/PyPSA/pypsa-eur/pull/1940).
 
 * Added configuration option to set overpass API URL, maximum retries, timeout and user agent information (https://github.com/PyPSA/pypsa-eur/pull/1940 and https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api). For a list of public overpass APIs see `here <https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances>`_.

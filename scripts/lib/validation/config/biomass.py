@@ -65,8 +65,10 @@ class _BiomassClassesConfig(ConfigModel):
 class BiomassConfig(BaseModel):
     """Configuration for `biomass` settings."""
 
-    year: Literal[2010, 2020, 2030, 2040, 2050] = Field(
+    year: int = Field(
         2030,
+        ge=2010,
+        le=2050,
         description="Year for which to retrieve biomass potential according to the assumptions of the `JRC ENSPRESO <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_.",
     )
     scenario: Literal["ENS_Low", "ENS_Med", "ENS_High"] = Field(

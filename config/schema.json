@@ -384,13 +384,8 @@
         "year": {
           "default": 2030,
           "description": "Year for which to retrieve biomass potential according to the assumptions of the `JRC ENSPRESO <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_.",
-          "enum": [
-            2010,
-            2020,
-            2030,
-            2040,
-            2050
-          ],
+          "maximum": 2050,
+          "minimum": 2010,
           "type": "integer"
         },
         "scenario": {
@@ -2544,7 +2539,7 @@
             },
             "email": {
               "default": "contact@pypsa.org",
-              "description": "Contact email addres for the project using the Overpass API.",
+              "description": "Contact email address for the project using the Overpass API.",
               "type": "string"
             },
             "website": {
@@ -7475,7 +7470,7 @@
         },
         "email": {
           "default": "contact@pypsa.org",
-          "description": "Contact email addres for the project using the Overpass API.",
+          "description": "Contact email address for the project using the Overpass API.",
           "type": "string"
         },
         "website": {
@@ -9651,13 +9646,8 @@
         "year": {
           "default": 2030,
           "description": "Year for which to retrieve biomass potential according to the assumptions of the `JRC ENSPRESO <https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f>`_.",
-          "enum": [
-            2010,
-            2020,
-            2030,
-            2040,
-            2050
-          ],
+          "maximum": 2050,
+          "minimum": 2010,
           "type": "integer"
         },
         "scenario": {
@@ -12734,7 +12724,7 @@
             },
             "email": {
               "default": "contact@pypsa.org",
-              "description": "Contact email addres for the project using the Overpass API.",
+              "description": "Contact email address for the project using the Overpass API.",
               "type": "string"
             },
             "website": {

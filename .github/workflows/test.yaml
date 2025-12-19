@@ -29,9 +29,6 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - name: Skip - no source changes
-      run: echo "Skipping tests because no source code changes detected"
-
     - name: Setup Pixi
       uses: prefix-dev/setup-pixi@v0.9.3
       with:
