@@ -10,6 +10,7 @@ The json schema is also contributed to the schemastore.org and matches
 `**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
 """
 
+import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -352,12 +353,37 @@ def generate_config_schema(path: str = "config/schema.json") -> dict:
             return [remove_object_type(item, is_root=False) for item in obj]
         return obj
 
+    def convert_rst_to_markdown(obj):
+        """Convert RST-style links in 'description' to Markdown in 'markdownDescription'."""
+
+        def rst_to_md(text):
+            """Convert RST link format `Link Text <URL>`_ to Markdown [Link Text](URL)."""
+            # Pattern matches: `Link Text <URL>`_
+            pattern = r"`([^<>`]+)\s*<([^>]+)>`_"
+            return re.sub(pattern, r"[\1](\2)", text)
+
+        if isinstance(obj, dict):
+            result = {}
+            for k, v in obj.items():
+                if k == "description" and isinstance(v, str) and "`" in v and "<" in v:
+                    result[k] = v
+                    md_text = rst_to_md(v)
+                    if md_text != v:
+                        result["markdownDescription"] = md_text
+                else:
+                    result[k] = convert_rst_to_markdown(v)
+            return result
+        elif isinstance(obj, list):
+            return [convert_rst_to_markdown(item) for item in obj]
+        return obj
+
     schema = ConfigSchema.model_json_schema()
     defs = schema.get("$defs", {})
     schema = resolve_refs(schema, defs)
     schema = sanitize_for_json(schema)
     schema = remove_nested_titles(schema)
     schema = remove_object_type(schema)
+    schema = convert_rst_to_markdown(schema)
     with open(path, "w") as f:
         json.dump(schema, f, indent=2)
         f.write("\n")
