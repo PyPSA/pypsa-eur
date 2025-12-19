@@ -1,18 +1,23 @@
 %YAML 1.1
 ---
 # yaml-language-server: $schema=./schema.json
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#version
 version: v2025.07.0
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#tutorial
 tutorial: false
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#logging
 logging:
   level: INFO
   format: "%(levelname)s:%(name)s:%(message)s"
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#remote
 remote:
   ssh: ""
   path: ""
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
@@ -25,8 +30,10 @@ run:
     policy: false
     exclude: []
   use_shadow_directory: false
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 scenario:
   clusters:
@@ -37,6 +44,7 @@ scenario:
   - ""
   planning_horizons:
   - 2050
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
 - AL
@@ -73,14 +81,17 @@ countries:
 - SI
 - SK
 - XK
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: left
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   drop_leap_day: true
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2_budget
 co2_budget:
   2020: 0.72
@@ -90,6 +101,7 @@ co2_budget:
   2040: 0.1
   2045: 0.05
   2050: 0.0
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages:
@@ -162,6 +174,7 @@ electricity:
     enable: false
     by_country: false
   transmission_limit: vopt
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: "europe-1940-2024-era5"
@@ -191,6 +204,7 @@ atlite:
         sarah_dir:
         monthly_requests: true
         tmpdir: ./cutouts_tmp/
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
   onwind:
@@ -400,12 +414,14 @@ renewable:
     eia_norm_year: false
     eia_correct_by_capacity: false
     eia_approximate_missing: false
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
   unit_commitment: false
   dynamic_fuel_price: false
   nuclear:
     p_max_pu: data/nuclear_p_max_pu.csv
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
@@ -434,6 +450,7 @@ lines:
     correction_factor: 0.95
     max_voltage_difference: false
     max_line_rating: false
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
 links:
   p_max_pu: 1.0
@@ -442,6 +459,7 @@ links:
   max_extension: 30000
   length_factor: 1.25
   under_construction: keep
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
 transmission_projects:
   enable: true
@@ -457,11 +475,13 @@ transmission_projects:
   - in_permitting
   - confirmed
   new_link_capacity: zero
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:
   x: 0.1
   s_nom: 2000.0
   type: ""
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
   fill_gaps:
@@ -475,6 +495,7 @@ load:
   distribution_key:
     gdp: 0.6
     population: 0.4
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#pypsa_eur
 pypsa_eur:
   Bus:
@@ -494,11 +515,13 @@ pypsa_eur:
   - PHS
   - hydro
   Store: []
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
   energy_totals_year: 2019
   base_emissions_year: 1990
   emissions: CO2
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#biomass
 biomass:
   year: 2030
@@ -541,6 +564,7 @@ biomass:
     2040: 1
     2045: 1
     2050: 1
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar_thermal
 solar_thermal:
   clearsky_model: simple
@@ -548,6 +572,7 @@ solar_thermal:
     slope: 45.0
     azimuth: 180.0
   cutout: default
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing_capacities
 existing_capacities:
   grouping_years_power:
@@ -585,6 +610,7 @@ existing_capacities:
   - coal
   - oil
   - uranium
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
   transport: true
@@ -947,6 +973,7 @@ sector:
       methanol: 121
       gas: 122
       oil: 125
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
   St_primary_fraction:
@@ -1032,6 +1059,7 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2019
   oil_refining_emissions: 0.013
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2050
@@ -1054,6 +1082,7 @@ costs:
     enable: false
     co2: 0.0
     co2_monthly_prices: false
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
   mode: busmap
@@ -1086,6 +1115,7 @@ clustering:
   temporal:
     resolution_elec: false
     resolution_sector: false
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
   electricity: false
@@ -1095,6 +1125,7 @@ adjustments:
         electricity distribution grid:
           capital_cost: 1.0
     absolute: false
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
   options:
@@ -1217,6 +1248,7 @@ solving:
   mem_mb: 128000
   memory_logging_frequency: 5
   runtime: 48h
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
 data:
   hotmaps_industrial_sites:
@@ -1357,6 +1389,7 @@ data:
   jrc_ardeco:
     source: archive
     version: latest
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
 overpass_api:
   url: "https://overpass-api.de/api/interpreter"
@@ -1366,6 +1399,7 @@ overpass_api:
     project_name: "PyPSA-Eur"
     email: "contact@pypsa.org"
     website: "https://github.com/PyPSA/pypsa-eur"
+
 # See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#secrets
 secrets:
   corine: ""

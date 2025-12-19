@@ -280,7 +280,7 @@ def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
 
         field_name = convert_to_field_name(key)
         docs_url = f"https://pypsa-eur.readthedocs.io/en/latest/configuration.html#{field_name}"
-        data.yaml_set_comment_before_after_key(key, before=f"See docs in {docs_url}")
+        data.yaml_set_comment_before_after_key(key, before=f"\nSee docs in {docs_url}")
 
     # Write to file
     with open(path, "w") as f:
