@@ -41,11 +41,11 @@ class _MaxHoursConfig(BaseModel):
 
     battery: float = Field(
         6,
-        description="Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+        description="Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
     )
     H2: float = Field(
         168,
-        description="Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+        description="Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
     )
 
 
@@ -105,7 +105,7 @@ class _EstimateRenewableCapacitiesConfig(BaseModel):
     )
     from_gem: bool = Field(
         True,
-        description="Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
+        description="Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.",
     )
     year: int = Field(
         2020,
@@ -167,7 +167,7 @@ class ElectricityConfig(BaseModel):
     )
     operational_reserve: _OperationalReserveConfig = Field(
         default_factory=_OperationalReserveConfig,
-        description="Settings for reserve requirements following [GenX](https://genxproject.github.io/GenX/dev/core/#Reserves).",
+        description="Settings for reserve requirements following `GenX <https://genxproject.github.io/GenX/dev/core/#Reserves>`_.",
     )
     max_hours: _MaxHoursConfig = Field(
         default_factory=_MaxHoursConfig,

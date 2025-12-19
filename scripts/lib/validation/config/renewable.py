@@ -117,7 +117,7 @@ class _OnwindConfig(BaseModel):
     luisa: bool | dict = Field(False, description="LUISA land cover configuration.")
     natura: bool = Field(
         True,
-        description="Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+        description="Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
     )
     excluder_resolution: float = Field(
         100,
@@ -160,7 +160,7 @@ class _OffwindConfig(BaseModel):
     )
     natura: bool = Field(
         True,
-        description="Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+        description="Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
     )
     ship_threshold: float = Field(
         400, description="Ship density threshold from which areas are excluded."
@@ -246,7 +246,7 @@ class _SolarConfig(BaseModel):
     )
     natura: bool = Field(
         True,
-        description="Switch to exclude [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+        description="Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
     )
     excluder_resolution: float = Field(
         100,
@@ -270,11 +270,11 @@ class _HydroConfig(BaseModel):
     )
     PHS_max_hours: float = Field(
         6,
-        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
     )
     hydro_max_hours: str | float = Field(
         "energy_capacity_totals_by_country",
-        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
     )
     flatten_dispatch: bool = Field(
         False,

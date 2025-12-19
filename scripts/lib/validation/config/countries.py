@@ -51,5 +51,5 @@ class CountriesConfig(RootModel[list[str]]):
             "SK",
             "XK",
         ],
-        description="European countries defined by their [Two-letter country codes (ISO 3166-1)](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) which should be included in the energy system model.",
+        description="European countries defined by their `Two-letter country codes (ISO 3166-1) <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_ which should be included in the energy system model.",
     )

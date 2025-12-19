@@ -103,7 +103,7 @@ class _DistrictHeatingConfig(ConfigModel):
             },
             "river_water": {"constant_temperature_celsius": False},
         },
-        description="Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
+        description="Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
     )
     direct_utilisation_heat_sources: list[str] = Field(
         default_factory=lambda: ["geothermal"],
@@ -153,7 +153,7 @@ class _ResidentialHeatConfig(BaseModel):
 
     dsm: _ResidentialHeatDsmConfig = Field(
         default_factory=_ResidentialHeatDsmConfig,
-        description="Configuration options for residential heat demand-side management (DSM). See [smartEn DSM study](https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf) (Appendix A) for methodology.",
+        description="Configuration options for residential heat demand-side management (DSM). See `smartEn DSM study <https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf>`_ (Appendix A) for methodology.",
     )
 
 
@@ -320,7 +320,7 @@ class _EnhancedGeothermalConfig(BaseModel):
     )
     sustainability_factor: float = Field(
         0.0025,
-        description="Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+        description="Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
     )
 
 
@@ -398,14 +398,14 @@ class SectorConfig(BaseModel):
 
     cluster_heat_buses: bool = Field(
         True,
-        description="Cluster residential and service heat buses in [prepare_sector_network.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py) to one to save memory.",
+        description="Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_ to one to save memory.",
     )
     heat_demand_cutout: str = Field("default", description="Heat demand cutout.")
 
     # Transport settings
     bev_dsm_restriction_value: float = Field(
         0.8,
-        description="Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM.",
+        description="Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM.",
     )
     bev_dsm_restriction_time: float = Field(
         7, description="Time at which SOC of BEV has to be dsm_restriction_value."
@@ -532,15 +532,15 @@ class SectorConfig(BaseModel):
 
     MWh_MeOH_per_MWh_H2: float = Field(
         0.8787,
-        description="The energy amount of the produced methanol per energy amount of hydrogen. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
+        description="The energy amount of the produced methanol per energy amount of hydrogen. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
     )
     MWh_MeOH_per_tCO2: float = Field(
         4.0321,
-        description="The energy amount of the produced methanol per ton of CO2. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 66.",
+        description="The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 66.",
     )
     MWh_MeOH_per_MWh_e: float = Field(
         3.6907,
-        description="The energy amount of the produced methanol per energy amount of electricity. From [DECHEMA (2017)](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
+        description="The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
     )
 
     shipping_hydrogen_liquefaction: bool = Field(
@@ -585,7 +585,7 @@ class SectorConfig(BaseModel):
     )
     shipping_methanol_efficiency: float = Field(
         0.46,
-        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
+        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
     )
     shipping_oil_efficiency: float = Field(
         0.40,
@@ -624,7 +624,7 @@ class SectorConfig(BaseModel):
             2045: 0.21,
             2050: 0.29,
         },
-        description="A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the [Eurocalc Homes and buildings decarbonization scenario](http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221).",
+        description="A positive factor can mean renovation or demolition of a building. If the factor is negative, it can mean an increase in floor area, increased thermal comfort, population growth. The default factors are determined by the `Eurocalc Homes and buildings decarbonization scenario <http://tool.european-calculator.eu/app/buildings/building-types-area/?levers=1ddd4444421213bdbbbddd44444ffffff11f411111221111211l212221>`_.",
     )
 
     retrofitting: _RetrofittingConfig = Field(
@@ -690,7 +690,7 @@ class SectorConfig(BaseModel):
 
     allam_cycle_gas: bool = Field(
         False,
-        description="Add option to include [Allam cycle gas power plants](https://en.wikipedia.org/wiki/Allam_power_cycle).",
+        description="Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_.",
     )
     hydrogen_fuel_cell: bool = Field(
         True,
@@ -729,7 +729,7 @@ class SectorConfig(BaseModel):
             "max_size": 25,
             "years_of_storage": 25,
         },
-        description="Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP](https://setis.ec.europa.eu/european-co2-storage-database_en).",
+        description="Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.",
     )
     co2_sequestration_potential: dict[int, float] = Field(
         default_factory=lambda: {
@@ -845,7 +845,7 @@ class SectorConfig(BaseModel):
     H2_network: bool = Field(True, description="Add option for new hydrogen pipelines.")
     gas_network: bool = Field(
         True,
-        description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+        description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
     )
     H2_retrofit: bool = Field(
         False,
@@ -853,11 +853,11 @@ class SectorConfig(BaseModel):
     )
     H2_retrofit_capacity_per_CH4: float = Field(
         0.6,
-        description="The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+        description="The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
     )
     gas_network_connectivity_upgrade: float = Field(
         1,
-        description="The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
+        description="The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
     )
     gas_distribution_grid: bool = Field(
         True, description="Add a gas distribution grid."
