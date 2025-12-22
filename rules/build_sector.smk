@@ -506,7 +506,7 @@ rule build_lake_heat_potential:
         enable_heat_source_maps=config_provider("plotting", "enable_heat_source_maps"),
     input:
         unpack(input_hera_data),
-        lake_data=rules.retrieve_lake_data_hera.output["lake_data"],
+        lake_data=rules.retrieve_lake_data.output["lake_data"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
     output:

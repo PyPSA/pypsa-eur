@@ -1170,17 +1170,8 @@ if (LAKE_DATA_DATASET := dataset_version("lake_data"))["source"] in [
             zip_file=storage(LAKE_DATA_DATASET["url"]),
         output:
             zip_file=f"{LAKE_DATA_DATASET['folder']}/HydroLAKES_polys_v10.gdb.zip",
-            lake_shapes=expand(
-                f"{LAKE_DATA_DATASET['folder']}/HydroLAKES_polys_v10.gdb.{{ext}}",
-                ext=[
-                    "shp",
-                    "shx",
-                    "dbf",
-                    "cpg",
-                    "prj",
-                    "sbn",
-                    "sbx",
-                ],
+            lake_data=directory(
+                f"{LAKE_DATA_DATASET['folder']}/HydroLAKES_polys_v10.gdb"
             ),
         run:
             copy2(input["zip_file"], output["zip_file"])

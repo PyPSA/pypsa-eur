@@ -8,8 +8,10 @@ import geopandas as gpd
 import shapely
 import xarray as xr
 
-from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
+from scripts.build_surface_water_heat_potentials.approximators.river_water_heat_approximator import (
     RiverWaterHeatApproximator,
+)
+from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
     SurfaceWaterHeatApproximator,
 )
 
@@ -35,6 +37,7 @@ class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
     ) -> None:
         self.ambient_temperature = ambient_temperature
         self.lake_shapes = lake_shapes
+        self.region = region  # Set early so _lake_parts_in_region can access it
 
         water_temperature = self._approximate_lake_temperature(
             ambient_temperature=ambient_temperature
@@ -53,30 +56,69 @@ class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
         )
 
     @staticmethod
-    def _round_coordinates(**kwargs) -> xr.DataArray:
-        return RiverWaterHeatApproximator._round_coordinates(**kwargs)
+    def _round_coordinates(
+        da: xr.DataArray, decimal_precision: int = 4
+    ) -> xr.DataArray:
+        return RiverWaterHeatApproximator._round_coordinates(da, decimal_precision)
 
     @staticmethod
     def _approximate_lake_temperature(**kwargs) -> xr.DataArray:
         return RiverWaterHeatApproximator._approximate_river_temperature(**kwargs)
 
     @cached_property
-    def _volume_flow(self):
-        raise NotImplementedError()
+    def _total_volume_flow_m3_per_s(self) -> float:
+        """
+        Calculate total volume flow in m³/s from lake volume.
+
+        Vol_total in HydroLAKES is in MCM (million cubic meters = 1e6 m³).
+        """
+        lake_volume_mcm = self._lake_parts_in_region["Vol_total"].sum()
+        lake_volume_m3 = lake_volume_mcm * 1e6  # MCM to m³
+        # Convert yearly turnover to per-second flow (m³/s)
+        volume_flow_m3_per_s = lake_volume_m3 / (8760 * 3600)
+        return volume_flow_m3_per_s
 
     @cached_property
-    def _volume_flow_in_region(self):
-        lake_volume_km3 = self._lake_parts_in_regions.groupby("name")["Vol_total"].sum()
-        lake_volume_m3 = lake_volume_km3 * 1e9
-        hourly_volume_m3 = lake_volume_m3 / 8760
-        return hourly_volume_m3
+    def _volume_flow_in_region(self) -> xr.DataArray:
+        """
+        Create a volume flow raster distributed uniformly over lake pixels.
+
+        The total flow is divided by the number of valid pixels so that
+        sum(flow_raster) = total_flow.
+        """
+        total_flow = self._total_volume_flow_m3_per_s
+
+        # Use water temperature raster as template for the shape (before averaging)
+        template = self._water_temperature_in_region_raster
+
+        # Count valid (non-NaN) pixels in the raster
+        # Use a 2D slice to count pixels (same count for all time steps)
+        template_2d = template.isel(time=0) if "time" in template.dims else template
+        n_valid_pixels = template_2d.notnull().sum().values
+
+        if n_valid_pixels == 0:
+            return xr.full_like(template, 0.0)
+
+        # Distribute flow uniformly so sum = total_flow
+        flow_per_pixel = total_flow / n_valid_pixels
+
+        # Create raster with flow_per_pixel where template is valid, 0 elsewhere
+        flow_raster = xr.where(template.notnull(), flow_per_pixel, 0.0)
+        return flow_raster
 
     @cached_property
     def _lake_parts_in_region(self) -> gpd.GeoDataFrame:
         """Get lake parts within the defined region."""
+        # Handle both GeoSeries and single geometry
+        if isinstance(self.region, gpd.GeoSeries):
+            region_gdf = gpd.GeoDataFrame(geometry=self.region, crs=self.region.crs)
+        else:
+            region_gdf = gpd.GeoDataFrame(
+                geometry=[self.region], crs=self.lake_shapes.crs
+            )
         lake_parts = gpd.overlay(
             self.lake_shapes,
-            gpd.GeoDataFrame(geometry=[self.region], crs=self.lake_shapes.crs),
+            region_gdf,
             how="intersection",
         )
         return lake_parts
@@ -91,24 +133,15 @@ class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
         )
 
     @cached_property
-    def _water_temperature_in_region_raster(self) -> gpd.GeoDataFrame:
+    def _water_temperature_in_region_raster(self) -> xr.DataArray:
         air_temperature_in_lakes = self._air_temperature_in_lakes(
             self._lake_parts_in_region
         )
-        return self._approximate_lake_temperature(air_temperature_in_lakes)
+        return self._approximate_lake_temperature(
+            ambient_temperature=air_temperature_in_lakes
+        )
 
     @cached_property
     def _water_temperature_in_region(self) -> xr.DataArray:
-        return self._water_temperature_in_region_raster.mean(dim=("lat", "lon"))
-
-    @cached_property
-    def _power_sum_spatial(self) -> None:
-        raise NotImplementedError("Lake power is not spatially resolved.")
-
-    @cached_property
-    def _power_sum_temporal(self) -> None:
-        raise NotImplementedError("Lake power is not spatially resolved.")
-
-    @cached_property
-    def _power_in_region(self):
-        raise NotImplementedError("Lake power is not spatially resolved.")
+        # Use x, y dims (EPSG:3035 projected) instead of lat, lon
+        return self._water_temperature_in_region_raster.mean(dim=("x", "y"))

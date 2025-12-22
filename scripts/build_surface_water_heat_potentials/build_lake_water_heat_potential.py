@@ -56,7 +56,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from approximators.river_water_heat_approximator import RiverWaterHeatApproximator
+from approximators.lake_water_heat_approximator import LakeWaterHeatApproximator
 
 logger = logging.getLogger(__name__)
 
@@ -112,12 +112,14 @@ def load_hera_data(
     ambient_temperature = ambient_temperature.sel(time=slice(start_time, end_time))
 
     # Process ambient temperature data
-    return (
+    ambient_temperature = (
         ambient_temperature.rename({"lat": "latitude", "lon": "longitude"})
         .rio.write_crs("EPSG:4326")
         .rio.clip_box(minx, miny, maxx, maxy)
         .rio.reproject("EPSG:3035")
     )
+
+    return {"ambient_temperature": ambient_temperature}
 
 
 def _create_empty_datasets(
@@ -185,6 +187,7 @@ def get_regional_result(
     hera_inputs: dict,
     region: gpd.GeoSeries,
     dh_areas: gpd.GeoDataFrame,
+    lake_shapes: gpd.GeoDataFrame,
     snapshots: pd.DatetimeIndex,
     enable_heat_source_maps: bool = False,
 ) -> dict[str, xr.Dataset]:
@@ -262,11 +265,12 @@ def get_regional_result(
 
     # Reproject region to match data CRS for spatial calculations
     region = region.to_crs("EPSG:3035")
+    lake_shapes = lake_shapes.to_crs("EPSG:3035")
 
-    lake_water_heat_approximator = RiverWaterHeatApproximator(
-        volume_flow=None,  # River discharge (volume flow)
+    lake_water_heat_approximator = LakeWaterHeatApproximator(
         ambient_temperature=ambient_temperature,  # Air temperature
         region=region,  # Geographic region of interest
+        lake_shapes=lake_shapes,  # Lake polygons with Vol_total
     )
 
     # Calculate spatial aggregate (time series data for the entire region)
@@ -377,6 +381,7 @@ if __name__ == "__main__":
             hera_inputs=dict(snakemake.input),
             region=region,
             dh_areas=dh_areas,
+            lake_shapes=lake_data,
             snapshots=snapshots,
             enable_heat_source_maps=snakemake.params.enable_heat_source_maps,
         )
@@ -402,6 +407,13 @@ if __name__ == "__main__":
     # Save power potentials in MW
     power.to_csv(snakemake.output.heat_source_power)
 
+    # Log computed power and temperature values
+    power_mean = power.mean()
+    logger.info("=== Lake heat potential summary ===")
+    logger.info("Mean power per region (MW):")
+    for region in power_mean.index:
+        logger.info(f"  {region}: {power_mean[region]:.2f} MW")
+
     # Concatenate average temperature for all regions into single dataset
     temperature = (
         xr.concat(
@@ -420,6 +432,13 @@ if __name__ == "__main__":
     # Save temperature profiles as NetCDF for heat pump COP calculations
     # Units: °C (degrees Celsius)
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
+
+    # Log temperature values
+    temp_mean = temperature.mean(dim="time").to_pandas()
+    logger.info("Mean temperature per region (°C):")
+    for region in temp_mean.index:
+        logger.info(f"  {region}: {temp_mean[region]:.2f} °C")
+    logger.info("=== END summary ===")
 
     # Save temporal aggregate results for analysis and visualization (if enabled)
     if snakemake.params.enable_heat_source_maps:

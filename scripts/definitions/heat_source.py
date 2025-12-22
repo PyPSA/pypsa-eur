@@ -42,7 +42,7 @@ class HeatSource(Enum):
     **Inexhaustible sources** (AIR, GROUND, SEA_WATER):
         Always available, no resource bus needed, heat pump draws from ambient.
 
-    **Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, PTES):
+    **Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, LAKE_WATER, PTES):
         Have spatial/temporal constraints, require resource tracking via buses.
         May support direct utilisation or preheating depending on temperature.
 
@@ -58,6 +58,8 @@ class HeatSource(Enum):
         River water heat source with time-varying temperature.
     SEA_WATER : str
         Sea water heat source (treated as inexhaustible).
+    LAKE_WATER : str
+        Lake water heat source (treated as inexhaustible).
     AIR : str
         Ambient air heat source (inexhaustible).
     GROUND : str
@@ -75,6 +77,7 @@ class HeatSource(Enum):
     GEOTHERMAL = "geothermal"
     RIVER_WATER = "river_water"
     SEA_WATER = "sea_water"
+    LAKE_WATER = "lake_water"
     AIR = "air"
     GROUND = "ground"
     PTES = "ptes"
@@ -130,7 +133,7 @@ class HeatSource(Enum):
             True for sources with config-defined temperatures (geothermal, PTX).
             False for sources with file-based time-series (river_water, ptes).
         """
-        if self == HeatSource.RIVER_WATER:
+        if self in [HeatSource.RIVER_WATER, HeatSource.LAKE_WATER]:
             return False
         return self.source_type in [
             HeatSourceType.SUPPLY_LIMITED,
