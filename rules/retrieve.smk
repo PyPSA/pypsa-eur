@@ -855,20 +855,10 @@ if config["enable"]["retrieve"]:
             mem_mb=1000,
         retries: 2
         run:
-            url = "https://api.opendata.ffe.de"
-            params = {"id_opendata": 59}
-
-            response = requests.get(url + "/health")
-            if response.status_code != 200:
-                raise ConnectionError(
-                    f"API not available. Status: {response.status_code}"
-                )
-
-            response = requests.get(url + "/opendata", params=params)
-            if response.status_code != 200:
-                raise ConnectionError(
-                    f"Request failed. Status: {response.status_code}"
-                )
-
+            data = requests.get(
+                "https://api.opendata.ffe.de/opendata",
+                params={"id_opendata": 59}
+            ).json()
+            
             with open(output[0], "w") as f:
-                json.dump(response.json(), f)
+                json.dump(data, f)
