@@ -42,7 +42,7 @@ class HeatSource(Enum):
     **Inexhaustible sources** (AIR, GROUND, SEA_WATER):
         Always available, no resource bus needed, heat pump draws from ambient.
 
-    **Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, PTES):
+    **Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, LAKE_WATER, PTES):
         Have spatial/temporal constraints, require resource tracking via buses.
         May support direct utilisation or preheating depending on temperature.
 
@@ -58,6 +58,8 @@ class HeatSource(Enum):
         River water heat source with time-varying temperature.
     SEA_WATER : str
         Sea water heat source (treated as inexhaustible).
+    LAKE_WATER : str
+        Lake water heat source (treated as inexhaustible).
     AIR : str
         Ambient air heat source (inexhaustible).
     GROUND : str
@@ -75,6 +77,7 @@ class HeatSource(Enum):
     GEOTHERMAL = "geothermal"
     RIVER_WATER = "river_water"
     SEA_WATER = "sea_water"
+    LAKE_WATER = "lake_water"
     AIR = "air"
     GROUND = "ground"
     PTES = "ptes"
@@ -109,7 +112,11 @@ class HeatSource(Enum):
         """
         if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
             return HeatSourceType.INEXHAUSTIBLE
-        elif self in [HeatSource.GEOTHERMAL, HeatSource.RIVER_WATER]:
+        elif self in [
+            HeatSource.GEOTHERMAL,
+            HeatSource.RIVER_WATER,
+            HeatSource.LAKE_WATER,
+        ]:
             return HeatSourceType.SUPPLY_LIMITED
         elif self == HeatSource.PTES:
             return HeatSourceType.STORAGE
@@ -130,7 +137,7 @@ class HeatSource(Enum):
             True for sources with config-defined temperatures (geothermal, PTX).
             False for sources with file-based time-series (river_water, ptes).
         """
-        if self == HeatSource.RIVER_WATER:
+        if self in [HeatSource.RIVER_WATER, HeatSource.LAKE_WATER]:
             return False
         return self.source_type in [
             HeatSourceType.SUPPLY_LIMITED,
@@ -270,6 +277,8 @@ class HeatSource(Enum):
             HeatSource.FISCHER_TROPSCH_EXCESS: "Fischer-Tropsch",
             HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
             HeatSource.ELECTROLYSIS_EXCESS: "electrolysis",
+            HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
+            HeatSource.METHANOLISATION_EXCESS: "methanolisation",
             # Sabatier, Fuel Cell, and Methanolisation use calculated efficiencies
         }
         return mapping.get(self)
@@ -330,7 +339,9 @@ class HeatSource(Enum):
         else:
             return float("inf")
 
-    def get_waste_heat_efficiency(self, n, costs, nodes):
+    def get_waste_heat_efficiency(
+        self, n, costs, nodes, fallback_ptx_heat_losses: float
+    ):
         """
         Get the waste heat efficiency for this PTX process.
 
@@ -362,19 +373,33 @@ class HeatSource(Enum):
                 f"get_waste_heat_efficiency only applies to PROCESS_WASTE sources, not {self}"
             )
 
-        if self.technology_data_name:
+        # Base branch formulas:
+        if self == HeatSource.FISCHER_TROPSCH_EXCESS:
             return costs.at[self.technology_data_name, "efficiency-heat"]
-        elif self == HeatSource.METHANOLISATION_EXCESS:
-            # Methanolisation uses heat-output / hydrogen-input (no efficiency-heat in technology-data)
+        elif self == HeatSource.ELECTROLYSIS_EXCESS:
+            return costs.at[self.technology_data_name, "efficiency-heat"]
+        elif self == HeatSource.HABER_BOSCH_EXCESS:
             return (
-                costs.at["methanolisation", "heat-output"]
-                / costs.at["methanolisation", "hydrogen-input"]
+                costs.at[self.technology_data_name, "efficiency-heat"]
+                / costs.at[self.technology_data_name, "electricity-input"]
+            )
+        elif self == HeatSource.METHANOLISATION_EXCESS:
+            return (
+                costs.at[self.technology_data_name, "heat-output"]
+                / costs.at[self.technology_data_name, "hydrogen-input"]
             )
         elif self == HeatSource.SABATIER_EXCESS:
-            # Calculated: 1 - losses - main efficiency
-            return 1 - 0.05 - n.links.loc[nodes + " Sabatier", "efficiency"]
+            return (
+                1
+                - fallback_ptx_heat_losses
+                - n.links.loc[nodes + " Sabatier", "efficiency"]
+            )
         elif self == HeatSource.FUEL_CELL_EXCESS:
-            return 1 - 0.05 - n.links.loc[nodes + " H2 Fuel Cell", "efficiency"]
+            return (
+                1
+                - fallback_ptx_heat_losses
+                - n.links.loc[nodes + " H2 Fuel Cell", "efficiency"]
+            )
         else:
             raise ValueError(f"No efficiency calculation defined for {self}")
 
