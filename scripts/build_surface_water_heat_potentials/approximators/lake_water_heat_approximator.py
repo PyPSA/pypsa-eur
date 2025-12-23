@@ -33,10 +33,17 @@ class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
         region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
         lake_shapes: gpd.GeoDataFrame,
         delta_t_max: float = 1,
-        min_outlet_temperature: float = 1,
+        min_outlet_temperature: float = -100,
     ) -> None:
         self.ambient_temperature = ambient_temperature
+
         self.lake_shapes = lake_shapes
+        lake_shapes.geometry = lake_shapes.geometry.map(
+            lambda g: type(g)([p.exterior for p in g.geoms])
+        ).simplify(  # drop holes
+            0.001, preserve_topology=True
+        )  # simplify (~100 m)
+
         self.region = region  # Set early so _lake_parts_in_region can access it
 
         water_temperature = self._approximate_lake_temperature(
@@ -48,63 +55,33 @@ class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
 
         super().__init__(
             volume_flow=self._volume_flow_in_region,
-            water_temperature=self._round_coordinates(water_temperature),
+            water_temperature=water_temperature,
             region=region,
             max_relative_volume_flow=1.0,
             delta_t_max=delta_t_max,
             min_outlet_temperature=min_outlet_temperature,
         )
 
-    @staticmethod
-    def _round_coordinates(
-        da: xr.DataArray, decimal_precision: int = 4
-    ) -> xr.DataArray:
-        return RiverWaterHeatApproximator._round_coordinates(da, decimal_precision)
+    @property
+    def _scaling_factor(self) -> float:
+        return 1.0  # No scaling needed for lakes
 
     @staticmethod
     def _approximate_lake_temperature(**kwargs) -> xr.DataArray:
         return RiverWaterHeatApproximator._approximate_river_temperature(**kwargs)
 
     @cached_property
-    def _total_volume_flow_m3_per_s(self) -> float:
+    def _volume_flow_in_region(self) -> float:
         """
         Calculate total volume flow in m³/s from lake volume.
 
         Vol_total in HydroLAKES is in MCM (million cubic meters = 1e6 m³).
         """
-        lake_volume_mcm = self._lake_parts_in_region["Vol_total"].sum()
-        lake_volume_m3 = lake_volume_mcm * 1e6  # MCM to m³
-        # Convert yearly turnover to per-second flow (m³/s)
-        volume_flow_m3_per_s = lake_volume_m3 / (8760 * 3600)
-        return volume_flow_m3_per_s
-
-    @cached_property
-    def _volume_flow_in_region(self) -> xr.DataArray:
-        """
-        Create a volume flow raster distributed uniformly over lake pixels.
-
-        The total flow is divided by the number of valid pixels so that
-        sum(flow_raster) = total_flow.
-        """
-        total_flow = self._total_volume_flow_m3_per_s
-
-        # Use water temperature raster as template for the shape (before averaging)
-        template = self._water_temperature_in_region_raster
-
-        # Count valid (non-NaN) pixels in the raster
-        # Use a 2D slice to count pixels (same count for all time steps)
-        template_2d = template.isel(time=0) if "time" in template.dims else template
-        n_valid_pixels = template_2d.notnull().sum().values
-
-        if n_valid_pixels == 0:
-            return xr.full_like(template, 0.0)
-
-        # Distribute flow uniformly so sum = total_flow
-        flow_per_pixel = total_flow / n_valid_pixels
-
-        # Create raster with flow_per_pixel where template is valid, 0 elsewhere
-        flow_raster = xr.where(template.notnull(), flow_per_pixel, 0.0)
-        return flow_raster
+        lake_volume_km3 = self._lake_parts_in_region["Vol_total"].sum()
+        lake_volume_m3 = lake_volume_km3 * 1e6  # MCM to m³
+        # Convert yearly turnover to per-hour flow (m³/h)
+        volume_flow_m3_per_h = lake_volume_m3 / 8760
+        return volume_flow_m3_per_h
 
     @cached_property
     def _lake_parts_in_region(self) -> gpd.GeoDataFrame:
@@ -143,5 +120,34 @@ class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
 
     @cached_property
     def _water_temperature_in_region(self) -> xr.DataArray:
-        # Use x, y dims (EPSG:3035 projected) instead of lat, lon
         return self._water_temperature_in_region_raster.mean(dim=("x", "y"))
+
+    @cached_property
+    def _power_sum_spatial(self) -> xr.DataArray:
+        """
+        Cache the expensive spatial sum of power.
+
+        Returns
+        -------
+        xr.DataArray
+            Spatial sum of power over x and y dimensions
+        """
+        return self._power_in_region
+
+    def get_spatial_aggregate(self) -> xr.Dataset:
+        """
+        Get the spatial aggregate of water temperature and power.
+
+        Returns
+        -------
+        xr.Dataset
+            Dataset containing total_power and average_temperature
+        """
+        # Data is already spatially aggregated
+        # Combine into a single dataset
+        return xr.Dataset(
+            data_vars={
+                "total_power": self._power_sum_spatial,
+                "average_temperature": self._water_temperature_in_region,
+            }
+        )

@@ -112,14 +112,12 @@ def load_hera_data(
     ambient_temperature = ambient_temperature.sel(time=slice(start_time, end_time))
 
     # Process ambient temperature data
-    ambient_temperature = (
+    return (
         ambient_temperature.rename({"lat": "latitude", "lon": "longitude"})
         .rio.write_crs("EPSG:4326")
         .rio.clip_box(minx, miny, maxx, maxy)
         .rio.reproject("EPSG:3035")
     )
-
-    return {"ambient_temperature": ambient_temperature}
 
 
 def _create_empty_datasets(
@@ -253,15 +251,8 @@ def get_regional_result(
     # Get bounding box for efficient data clipping
     minx, miny, maxx, maxy = region.total_bounds
 
-    # Data processing strategy:
-    # 1. Load HERA discharge and temperature data
-    # 2. Clip to region bounds for efficiency
-    # 3. Reproject to EPSG:3035 for accurate spatial calculations
-    # 4. Feed to approximator for heat potential calculation
-
     # Load and concatenate HERA data for all required years with preprocessing
-    hera_data = load_hera_data(hera_inputs, snapshots, minx, miny, maxx, maxy)
-    ambient_temperature = hera_data["ambient_temperature"]
+    ambient_temperature = load_hera_data(hera_inputs, snapshots, minx, miny, maxx, maxy)
 
     # Reproject region to match data CRS for spatial calculations
     region = region.to_crs("EPSG:3035")
@@ -280,9 +271,10 @@ def get_regional_result(
     # Calculate temporal aggregate only if needed (spatial distribution data for plotting, no time dimension)
     if enable_heat_source_maps:
         temporal_aggregate = (
-            lake_water_heat_approximator.get_temporal_aggregate()
-            .rio.reproject("EPSG:4326")  # Convert back to WGS84 for output consistency
-            .rename({"x": "longitude", "y": "latitude"})  # Standardize coordinate names
+            lake_water_heat_approximator.get_temporal_aggregate().rio.reproject(
+                "EPSG:4326"
+            )  # Convert back to WGS84 for output consistency
+            # .rename({"x": "longitude", "y": "latitude"})  # Standardize coordinate names
         )
         temporal_aggregate = temporal_aggregate.compute()
     else:
