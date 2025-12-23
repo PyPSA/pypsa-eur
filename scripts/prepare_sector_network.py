@@ -4959,16 +4959,18 @@ def add_industry(
             parse_dates=True,
         )
 
-        # Add temporal loads to the network for each node
-        for node in industrial_elec_profiles.columns:
-            # The profile is already in MW for each hour
-            n.add(
-                "Load",
-                f"{node} industry electricity",
-                bus=node,
-                carrier="industry electricity",
-                p_set=industrial_elec_profiles[node],  # MW per hour
-            )
+        industrial_loads = industrial_elec_profiles.rename(
+            columns=lambda x: f"{x} industry electricity"
+        )
+
+        n.add(
+            "Load",
+            industrial_loads.columns,
+            bus=industrial_elec_profiles.columns.tolist(), 
+            carrier="industry electricity",
+            p_set=industrial_loads, 
+        )
+
     else:
         logger.info("Using constant industrial electricity demand")
         n.add(
