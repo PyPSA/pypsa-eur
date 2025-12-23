@@ -87,7 +87,7 @@ def create_nodal_electricity_profiles(
     """Create hourly electricity demand profiles for each node."""
 
     # Industry category to FfE profile mapping (updated to match correct profile names)
-    industry_category_to_profile = {
+    INDUSTRY_CATEGORY_TO_PROFILE = {
         "Electric arc": "Iron & steel industry",
         "DRI + Electric arc": "Iron & steel industry",
         "Integrated steelworks": "Iron & steel industry",
