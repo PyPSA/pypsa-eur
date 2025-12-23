@@ -112,7 +112,11 @@ class HeatSource(Enum):
         """
         if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
             return HeatSourceType.INEXHAUSTIBLE
-        elif self in [HeatSource.GEOTHERMAL, HeatSource.RIVER_WATER]:
+        elif self in [
+            HeatSource.GEOTHERMAL,
+            HeatSource.RIVER_WATER,
+            HeatSource.LAKE_WATER,
+        ]:
             return HeatSourceType.SUPPLY_LIMITED
         elif self == HeatSource.PTES:
             return HeatSourceType.STORAGE
