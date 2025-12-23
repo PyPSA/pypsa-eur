@@ -187,10 +187,6 @@ class SurfaceWaterHeatApproximator(ABC):
                     f"{coord} coordinate '{coord}' not found in both datasets"
                 )
 
-        # For region geometry, we just check the type
-        # if not isinstance(self.region, shapely.geometry.multipolygon.MultiPolygon):
-        #     raise ValueError(f"region_geometry must be a shapely MultiPolygon, got {type(self.region)}")
-
     @cached_property
     def _volume_flow_in_region(self) -> xr.DataArray:
         """
