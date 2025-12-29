@@ -1143,6 +1143,15 @@ data:
   jrc_ardeco:
     source: archive
     version: latest
+  jrc_energy_atlas:
+    source: primary
+    version: latest
+  desnz_electricity_consumption:
+    source: primary
+    version: latest
+  ons_lad:
+    source: primary
+    version: latest
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
 overpass_api:

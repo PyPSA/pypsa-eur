@@ -99,3 +99,6 @@
 "geothermal_heat_utilisation_potentials","archive","341.5","['latest', 'supported']","https://zenodo.org/records/17207640/files/Results_DH_Matching_Cluster.xlsx",""
 "jrc_ardeco","primary","2021","['latest', 'supported']","https://territorial.ec.europa.eu/ardeco-api-v2/rest/export/",""
 "jrc_ardeco","archive","2021","['latest', 'supported']","https://zenodo.org/records/17249457/files",""
+"jrc_energy_atlas","primary","latest","['latest', 'supported']","https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EIGL-Data/RASTER/electricity_tot_demand_2019.tif",""
+"desnz_electricity_consumption","primary","unknown","['latest', 'supported']","http://assets.publishing.service.gov.uk/media/6762951abe7b2c675de30705/Subnational_electricity_consumption_statistics_2005-2024.xlsx",""
+"ons_lad","primary","unknown","['latest', 'supported']","https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Local_Authority_Districts_May_2024_Boundaries__UK_BSC/FeatureServer/0/query","API request used"

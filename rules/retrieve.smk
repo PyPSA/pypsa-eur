@@ -425,66 +425,53 @@ if (
             copy2(input["csv"], output["csv"])
 
 
-if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
-    "archive",
-    "primary",
-]:
+if ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas")["source"] in ["primary", "archive"]:
 
     rule retrieve_electricity_demand_energy_atlas:
         input:
-            storage(
-                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EIGL-Data/RASTER/electricity_tot_demand_2019.tif",
-            ),
+            tif=storage(ENERGY_ATLAS_DATASET["url"]),
         output:
-            "data/demand-distribution/electricity_tot_demand_2019.tif",
-        log:
-            "logs/retrieve_electricity_demand_energy_atlas.log",
-        resources:
-            mem_mb=5000,
+            tif=f"{ENERGY_ATLAS_DATASET['folder']}/electricity_tot_demand_2019.tif",
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input["tif"], output["tif"])
 
 
-if config["enable"]["retrieve"]:
+if DESNZ_ELECTRICITY_CONSUMPTION_DATASET := dataset_version("desnz_electricity_consumption")["source"] in ["primary", "archive"]:
 
     rule retrieve_electricity_demand_subnational_gb:
         input:
-            storage(
-                "https://assets.publishing.service.gov.uk/media/6762951abe7b2c675de30705/Subnational_electricity_consumption_statistics_2005-2023.xlsx",
-            ),
+            xlsx=storage(DESNZ_ELECTRICITY_CONSUMPTION_DATASET["url"]),
         output:
-            "data/demand-distribution/Subnational_electricity_consumption_statistics_2005-2023.xlsx",
-        log:
-            "logs/retrieve_electricity_demand_subnational_gb.log",
-        resources:
-            mem_mb=5000,
+            xlsx=f"{DESNZ_ELECTRICITY_CONSUMPTION_DATASET['folder']}/Subnational_electricity_consumption_statistics_2005-2024.xlsx",
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input["xlsx"], output["xlsx"])
 
 
-if config["enable"]["retrieve"]:
+if ONS_LAD_DATASET := dataset_version("ons_lad")["source"] in ["primary"]:
 
     rule retrieve_local_authorities_uk:
         output:
-            "data/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
+            geojson=f"{ONS_LAD_DATASET['folder']}/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
         run:
             import requests
 
-            url = "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Local_Authority_Districts_May_2024_Boundaries__UK_BSC/FeatureServer/0/query"
+            url = ONS_LAD_DATASET["url"]
             params = {
                 "outFields": "*",
                 "where": "1=1",
                 "f": "geojson",
             }
             response = requests.get(url, params=params)
-            with open(output[0], "wb") as f:
+            with open(output["geojson"], "wb") as f:
                 f.write(response.content)
 
 
-
-if config["enable"]["retrieve"]:
+if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
+    "archive",
+    "primary",
+]:
 
     rule retrieve_ship_raster:
         input:
