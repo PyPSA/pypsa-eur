@@ -8,51 +8,16 @@
 Retrieving Data
 ###############
 
-Not all data dependencies are shipped with the git repository,
-since git is not suited for handling large changing files.
-Instead we provide separate data bundles which can be obtained
-using the ``retrieve*`` rules.
+Not all data dependencies are shipped with the git repository, since git is not suited for handling large changing files.
+Instead we use separate steps in the workflow (``rules`` executed by ``snakemake``) to download external data using the ``retrieve_<dataset>`` rules.
 
-Rule ``retrieve_databundle``
-============================
+Data is generally retrieved in a version-controlled manner, enabling control over input data versions, reproducibility and consistency of modelling runs.
+The rules download data into subfolders in the `data/` directory, following the structure 
+``data/{dataset}/{source}/{version}``, e.g. ``data/jrc_idees/primary/March-2025-V1/``.
+Which specific data version is retrieve can be controlled in the `data configuration <https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data>`__ .
 
-.. automodule:: retrieve_databundle
-
-Rule ``retrieve_eurostat_data``
-===============================
-
-.. automodule:: retrieve_eurostat_data
-
-
-Rule ``retrieve_jrc_idees``
-===============================
-
-.. automodule:: retrieve_jrc_idees
-
-
-
-Rule ``retrieve_eurostat_household_data``
-=========================================
-
-.. automodule:: retrieve_eurostat_household_data
-
-
-Rule ``retrieve_co2stop``
-===============================
-
-.. automodule:: retrieve_co2stop
-
-
-Rule ``retrieve_gas_infrastructure_data``
-=========================================
-
-.. automodule:: retrieve_gas_infrastructure_data
-
-
-Rule ``retrieve_osm_data``
-=========================================
-
-.. automodule:: retrieve_osm_data
+Below some specific ``retrieve_<dataset>`` rules are documented.
+For more information on the datasets retrieved, see the `data sources <https://pypsa-eur.readthedocs.io/en/latest/data_sources.html>`__ and *Data inventory* section there in the documentation.
 
 Rule ``retrieve_bidding_zones``
 =========================================
@@ -123,11 +88,6 @@ Rule ``retrieve_local_authorities_uk``
 This rule downloads shapefiles of local authorities in the United Kingdom from the `Office for National Statistics <https://geoportal.statistics.gov.uk/datasets/ons::local-authority-districts-may-2024-boundaries-uk-bsc-2/about>`__ .
 
 
-Rule ``retrieve_tyndp_bundle``
-=========================================
-
-.. automodule:: retrieve_tyndp_bundle
-
 Rule ``retrieve_cost_data``
 ================================
 
@@ -137,12 +97,8 @@ This rule downloads techno-economic assumptions from the `technology-data reposi
 
 .. code:: yaml
 
-    enable:
-        retrieve_cost_data:
-
     costs:
         year:
-        version:
 
 .. seealso::
     Documentation of the configuration file ``config/config.yaml`` at
@@ -150,17 +106,4 @@ This rule downloads techno-economic assumptions from the `technology-data reposi
 
 **Outputs**
 
-- ``resources/costs.csv``
-
-Rule ``retrieve_ship_raster``
-================================
-
-This rule downloads data on global shipping traffic density from the `World Bank Data Catalogue <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`__.
-
-**Relevant Settings**
-
-None.
-
-**Outputs**
-
-- ``data/shipdensity_global.zip``
+- ``data/costs/primary/{version}/costs_{year}.csv``
