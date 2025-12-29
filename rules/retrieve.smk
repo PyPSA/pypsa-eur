@@ -425,7 +425,10 @@ if (
             copy2(input["csv"], output["csv"])
 
 
-if ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas")["source"] in ["primary", "archive"]:
+if ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas")["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_electricity_demand_energy_atlas:
         input:
@@ -437,7 +440,9 @@ if ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas")["source"] in ["pr
             copy2(input["tif"], output["tif"])
 
 
-if DESNZ_ELECTRICITY_CONSUMPTION_DATASET := dataset_version("desnz_electricity_consumption")["source"] in ["primary", "archive"]:
+if DESNZ_ELECTRICITY_CONSUMPTION_DATASET := dataset_version(
+    "desnz_electricity_consumption"
+)["source"] in ["primary", "archive"]:
 
     rule retrieve_electricity_demand_subnational_gb:
         input:
@@ -466,6 +471,7 @@ if ONS_LAD_DATASET := dataset_version("ons_lad")["source"] in ["primary"]:
             response = requests.get(url, params=params)
             with open(output["geojson"], "wb") as f:
                 f.write(response.content)
+
 
 
 if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [

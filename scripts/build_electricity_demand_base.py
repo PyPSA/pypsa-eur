@@ -157,8 +157,12 @@ def nuts3_distribution_keys(
     nuts3 = gpd.read_file(nuts3_fn).to_crs(epsg=3035)
     nuts3.rename(columns={"name": "nuts3_name"}, inplace=True)
 
-    regions["pop"] = redistribute_attribute(nuts3, regions.reset_index(drop=True), "pop")
-    regions["gdp"] = redistribute_attribute(nuts3, regions.reset_index(drop=True), "gdp")
+    regions["pop"] = redistribute_attribute(
+        nuts3, regions.reset_index(drop=True), "pop"
+    )
+    regions["gdp"] = redistribute_attribute(
+        nuts3, regions.reset_index(drop=True), "gdp"
+    )
 
     nuts3_keys = []
     for country, group in regions.groupby("country"):
