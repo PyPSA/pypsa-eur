@@ -392,7 +392,9 @@ if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
             unpack_archive(output["zip_file"], output_folder)
 
 
-if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in ["primary"]:
+if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in [
+    "primary"
+]:
 
     rule retrieve_electricity_demand_opsd:
         params:
@@ -408,7 +410,9 @@ if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in
             "../scripts/retrieve_electricity_demand_opsd.py"
 
 
-if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in ["archive"]:
+if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in [
+    "archive"
+]:
 
     rule retrieve_electricity_demand_opsd:
         input:
@@ -420,7 +424,9 @@ if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in
             copy2(input["csv"], output["csv"])
 
 
-if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in ["primary"]:
+if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in [
+    "primary"
+]:
 
     rule retrieve_electricity_demand_entsoe:
         params:
@@ -436,7 +442,9 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
             "../scripts/retrieve_electricity_demand_entsoe.py"
 
 
-if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in ["archive"]:
+if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in [
+    "archive"
+]:
 
     rule retrieve_electricity_demand_entsoe:
         input:
@@ -448,7 +456,9 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
             copy2(input["csv"], output["csv"])
 
 
-if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in ["primary"]:
+if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in [
+    "primary"
+]:
 
     rule retrieve_electricity_demand_neso:
         output:
@@ -462,7 +472,9 @@ if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in
             "../scripts/retrieve_electricity_demand_neso.py"
 
 
-if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in ["archive"]:
+if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in [
+    "archive"
+]:
 
     rule retrieve_electricity_demand_neso:
         input:
