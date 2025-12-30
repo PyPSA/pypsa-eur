@@ -50,14 +50,14 @@ scigrid_gas,,,
 synthetic_electricity_demand,,,
 -- source,str,"{primary, archive}","Source of the Synthetic Electricity Demand data."
 -- version,str,,"Version of the Synthetic Electricity Demand data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source."
-opsd_demand,,,
+opsd_electricity_demand,,,
 -- source,str,"{primary}","Source of the Open Power System Data Electricity Demand data."
 -- version,str,,"Version of the Open Power System Data Electricity Demand data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source."
-entsoe_demand,,,
--- source,str,"{primary, archive}","Source of the ENTSO-E Electricity Demand data."
+entsoe_electricity_demand,,,
+-- source,str,"{primary}","Source of the ENTSO-E Electricity Demand data."
 -- version,str,,"Version of the ENTSO-E Electricity Demand data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source."
-neso_demand,,,
--- source,str,"{primary, archive}","Source of the NESO Electricity Demand data."
+neso_electricity_demand,,,
+-- source,str,"{primary}","Source of the NESO Electricity Demand data."
 -- version,str,,"Version of the NESO Electricity Demand data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source."
 copernicus_land_cover,,,
 -- source,str,"{primary, archive}","Source of the Copernicus Land Cover data."
