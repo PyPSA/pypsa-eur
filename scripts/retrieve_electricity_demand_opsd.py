@@ -43,4 +43,4 @@ if __name__ == "__main__":
 
     res = transparency.fillna(powerstatistics)
 
-    res.to_csv(snakemake.output[0])
+    res.to_csv(snakemake.output.csv)

@@ -80,4 +80,4 @@ if __name__ == "__main__":
     df = pd.concat(dfs)
     df = df.resample("1h").mean()
 
-    df.to_csv(snakemake.output[0])
+    df.to_csv(snakemake.output.csv)

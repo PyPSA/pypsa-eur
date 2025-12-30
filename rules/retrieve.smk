@@ -392,13 +392,13 @@ if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
             unpack_archive(output["zip_file"], output_folder)
 
 
-if (OPSD_DEMAND_DATA := dataset_version("opsd_demand"))["source"] in ["primary"]:
+if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in ["primary"]:
 
     rule retrieve_electricity_demand_opsd:
         params:
             versions=["2019-06-05", "2020-10-06"],
         output:
-            "data/electricity_demand_opsd_raw.csv",
+            csv=f"{OPSD_DEMAND_DATA['folder']}/electricity_demand_opsd_raw.csv",
         log:
             "logs/retrieve_electricity_demand_opsd.log",
         resources:
@@ -408,13 +408,25 @@ if (OPSD_DEMAND_DATA := dataset_version("opsd_demand"))["source"] in ["primary"]
             "../scripts/retrieve_electricity_demand_opsd.py"
 
 
-if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_demand"))["source"] in ["primary"]:
+if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in ["archive"]:
+
+    rule retrieve_electricity_demand_opsd:
+        input:
+            csv=storage(OPSD_DEMAND_DATA["url"]),
+        output:
+            csv=f"{OPSD_DEMAND_DATA['folder']}/electricity_demand_opsd_raw.csv",
+        retries: 2
+        run:
+            copy2(input["csv"], output["csv"])
+
+
+if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in ["primary"]:
 
     rule retrieve_electricity_demand_entsoe:
         params:
             entsoe_token=config["secrets"]["entsoe_token"],
         output:
-            "data/electricity_demand_entsoe_raw.csv",
+            csv=f"{ENTSOE_DEMAND_DATA['folder']}/electricity_demand_entsoe_raw.csv",
         log:
             "logs/retrieve_electricity_demand_entsoe.log",
         resources:
@@ -424,11 +436,23 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_demand"))["source"] in ["prima
             "../scripts/retrieve_electricity_demand_entsoe.py"
 
 
-if (NESO_DEMAND_DATA := dataset_version("neso_demand"))["source"] in ["build"]:
+if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in ["archive"]:
+
+    rule retrieve_electricity_demand_entsoe:
+        input:
+            csv=storage(ENTSOE_DEMAND_DATA["url"]),
+        output:
+            csv=f"{ENTSOE_DEMAND_DATA['folder']}/electricity_demand_entsoe_raw.csv",
+        retries: 2
+        run:
+            copy2(input["csv"], output["csv"])
+
+
+if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in ["primary"]:
 
     rule retrieve_electricity_demand_neso:
         output:
-            "data/electricity_demand_neso_raw.csv",
+            csv=f"{NESO_DEMAND_DATA['folder']}/electricity_demand_neso_raw.csv",
         log:
             "logs/retrieve_electricity_demand_neso.log",
         resources:
@@ -436,6 +460,18 @@ if (NESO_DEMAND_DATA := dataset_version("neso_demand"))["source"] in ["build"]:
         retries: 2
         script:
             "../scripts/retrieve_electricity_demand_neso.py"
+
+
+if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in ["archive"]:
+
+    rule retrieve_electricity_demand_neso:
+        input:
+            csv=storage(NESO_DEMAND_DATA["url"]),
+        output:
+            csv=f"{NESO_DEMAND_DATA['folder']}/electricity_demand_neso_raw.csv",
+        retries: 2
+        run:
+            copy2(input["csv"], output["csv"])
 
 
 if (
