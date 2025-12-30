@@ -115,7 +115,7 @@ These settings work together to organize model runs:
   - Not shared between runs: ``resources/[run.name]``(if policy is ``false``)
   - Partially shared: If policy is ``"base"``, some common files are shared while others remain run-specific
 
-For this tutorial, with ``run.name: "test-elec"`` and ``run.shared_resources.policy: "test"``, 
+For this tutorial, with ``run.name: "test-elec"`` and ``run.shared_resources.policy: "test"``,
 intermediate resources are stored in ``resources/test/...`` while results are in ``results/test-elec/...``.
 
 The implementation of this behavior can be found in ``scripts/_helpers.py``.
@@ -127,7 +127,7 @@ Open a terminal, go into the PyPSA-Eur directory, and activate the ``pypsa-eur``
 
 .. code:: console
 
-    $ conda activate pypsa-eur
+    $ pixi shell
 
 Let's say based on the modifications above we would like to solve a very simplified model
 clustered down to 6 buses and every 24 hours aggregated to one snapshot. The command
@@ -297,7 +297,7 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
             18 -> 41
             24 -> 41
             18 -> 43
-    }     
+    }
 
 |
 

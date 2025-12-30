@@ -7,6 +7,8 @@ Repository
 ###########
 
 Data in this section is included in the PyPSA-Eur repository in the ``data`` folder.
+While most external data is stored outside of the repository, this data is inside the repository either for simplicity or historic reasons.
+New data should generally not be added to the data, but externally retrieved in a versioned manner.
 
 ``data/entsoegridkit``
 
@@ -20,7 +22,7 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **Source:** European Commission DG ENER; Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment
 - **Link:** https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en
 - **License:** CC-BY 4.0 (`reference <https://commission.europa.eu/legal-notice_en>`__)
-- **Description:** Contains country-level data on existing heating infrastructure, i.e. gas, oil, coal boilers, resistive heaters, air- and ground-sourced heat pumps.
+- **Description:** Contains country-level data on existing heating infrastructure, i.e. gas, oil, coal, biomass boilers, resistive heaters, air- and ground-sourced heat pumps.
 
 ``data/retro/comparative_level_investment.csv``
 
@@ -49,7 +51,7 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **License:** `custom <https://ec.europa.eu/eurostat/about-us/policies/copyright>`__
 - **Description:** Electricity prices for household consumers.
 
-``data/retro/{floor_area_missing,u_values_poland}.csv``
+``data/retro/floor_area_missing.csv`` and ``data/retro/u_values_poland.csv``
 
 - **Source:** EU Building Stock Observatory
 - **Link:** https://data.europa.eu/euodp/de/data/dataset/building-stock-observatory
@@ -96,13 +98,6 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **Link:** https://www.icis.com/explore/resources/news/2023/01/18/10846094/insight-poor-demand-high-costs-stifle-europe-industry-despite-falling-gas-prices/
 - **License:** CC-BY 4.0 (for compiled dataset)
 - **Description:** Locations and production capacities of ammonia plants in Europe.
-
-``data/attributed_ports.json``
-
-- **Source:** World Bank
-- **Link:** https://datacatalog.worldbank.org/search/dataset/0038118/Global---International-Ports
-- **License:** CC-BY 4.0 (`reference <https://datacatalog.worldbank.org/search/dataset/0038118/Global---International-Ports>`__)
-- **Description:** International ports with attributes describing name, port functions, total capacity and location.
 
 ``data/cement_plants-noneu.csv``
 
@@ -154,13 +149,6 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **Link:** https://www.eia.gov/international/data/world/electricity/electricity-generation
 - **License:** CC0 (`reference <https://www.eia.gov/about/copyrights_reuse.php>`__)
 - **Description:** Contains country-level hydro-electric generato for Europe by year.
-
-``data/gr-e-11.03.02.01.01-cc.csv``
-
-- **Source:** Swiss Federal Statistics Office
-- **Link:** https://www.bfs.admin.ch/asset/de/30305426
-- **License:** `custom (OPEN BY ASK) <https://www.bfs.admin.ch/bfs/en/home/fso/swiss-federal-statistical-office/terms-of-use.html>`__
-- **Description:** Stock of road motor vehicles in Switzerland.
 
 ``data/heat_load_profile_BDEW.csv``
 
