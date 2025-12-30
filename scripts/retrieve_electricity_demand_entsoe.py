@@ -14,47 +14,6 @@ from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
-# avoid unnecessary API calls by once retrieving all supported countries
-COUNTRIES = [
-    "AL",
-    "AT",
-    "BE",
-    "BA",
-    "BG",
-    "CH",
-    "CY",
-    "CZ",
-    "DE",
-    "DK",
-    "EE",
-    "ES",
-    "FI",
-    "FR",
-    "GB",
-    "GR",
-    "HR",
-    "HU",
-    "IE",
-    "IT",
-    "LT",
-    "LU",
-    "LV",
-    "MD",
-    "ME",
-    "MK",
-    "NL",
-    "NO",
-    "PL",
-    "PT",
-    "RO",
-    "RS",
-    "SE",
-    "SI",
-    "SK",
-    "UA",
-    "XK",
-]
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -73,18 +32,17 @@ if __name__ == "__main__":
     client = EntsoePandasClient(api_key=token)
     start = pd.Timestamp("20150101", tz="UTC")
     end = pd.Timestamp.today(tz="UTC")
-    loads = []
-    for country_code in COUNTRIES:
-        logger.info(f"Querying load for {country_code}...")
-        loads.append(
-            client.query_load(country_code, start=start, end=end)
-            .squeeze()
-            .rename(country_code)
-            .tz_convert("UTC")
-            .resample("1h")
-            .mean()
-        )
+    country_code = snakemake.wildcards.country
 
-    df = pd.concat(loads, axis=1, join="outer")
+    logger.info(f"Querying load for {country_code}...")
+
+    df = (
+        client.query_load(country_code, start=start, end=end)
+        .squeeze()
+        .rename(country_code)
+        .tz_convert("UTC")
+        .resample("1h")
+        .mean()
+    )
 
     df.to_csv(snakemake.output.csv)

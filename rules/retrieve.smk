@@ -428,18 +428,73 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
     "primary"
 ]:
 
-    rule retrieve_electricity_demand_entsoe:
+    ENTSOE_COUNTRIES = [
+        "AL",
+        "AT",
+        "BE",
+        "BA",
+        "BG",
+        "CH",
+        "CY",
+        "CZ",
+        "DE",
+        "DK",
+        "EE",
+        "ES",
+        "FI",
+        "FR",
+        "GB",
+        "GR",
+        "HR",
+        "HU",
+        "IE",
+        "IT",
+        "LT",
+        "LU",
+        "LV",
+        "MD",
+        "ME",
+        "MK",
+        "NL",
+        "NO",
+        "PL",
+        "PT",
+        "RO",
+        "RS",
+        "SE",
+        "SI",
+        "SK",
+        "UA",
+        "XK",
+    ]
+
+    rule retrieve_electricity_demand_entsoe_country:
         params:
             entsoe_token=config["secrets"]["entsoe_token"],
         output:
-            csv=f"{ENTSOE_DEMAND_DATA['folder']}/electricity_demand_entsoe_raw.csv",
+            csv=f"{ENTSOE_DEMAND_DATA['folder']}" + "/electricity_demand_entsoe_raw_{country}.csv",
         log:
-            "logs/retrieve_electricity_demand_entsoe.log",
+            "logs/retrieve_electricity_demand_entsoe_{country}.log",
         resources:
-            mem_mb=5000,
+            mem_mb=2000,
         retries: 2
         script:
             "../scripts/retrieve_electricity_demand_entsoe.py"
+
+
+    rule retrieve_electricity_demand_entsoe:
+        input:
+            csvs=expand(
+                f"{ENTSOE_DEMAND_DATA['folder']}" + "/electricity_demand_entsoe_raw_{country}.csv",
+                country=ENTSOE_COUNTRIES,
+            ),
+        output:
+            csv=f"{ENTSOE_DEMAND_DATA['folder']}/electricity_demand_entsoe_raw.csv",
+        run:
+            import pandas as pd
+            loads = [pd.read_csv(csv, index_col=0) for csv in input.csvs]
+            df = pd.concat(loads, axis=1, join="outer").sort_index()
+            df.to_csv(output.csv)
 
 
 if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in [
