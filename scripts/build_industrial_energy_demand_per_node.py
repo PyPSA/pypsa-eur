@@ -102,14 +102,32 @@ if __name__ == "__main__":
         .sum()
     )
 
-    rename_sectors = {
-        "elec": "electricity",
-        "biomass": "solid biomass",
-        "heat": "low-temperature heat",
-        "heat<100": "low-temperature heat",
-    }
+    rename_sectors = pd.Series(
+        {
+            "elec": "electricity",
+            "biomass": "solid biomass",
+        }
+    )
+
     nodal_df_exogenous.rename(columns=rename_sectors, inplace=True)
     nodal_df_endogenous.rename(columns=rename_sectors, inplace=True)
+
+    nodal_df_exogenous.rename(
+        columns={
+            "heat": "low-temperature heat",
+        },
+        inplace=True,
+    )
+
+    grouper = {
+        "heat<100": "low-temperature heat",
+        "heat": "low-temperature heat",
+    }
+
+    def partial_group(df, grouper):
+        return pd.concat([df.groupby(grouper).sum(), df.drop(grouper)])
+
+    nodal_df_endogenous = partial_group(nodal_df_endogenous.T, grouper).T
 
     logger.warning(
         "what about methanol, process emissions from feedstock and current electricity?"
@@ -123,6 +141,7 @@ if __name__ == "__main__":
         keys=["exogenous", "endogenous"],
     )
 
+    idx = pd.IndexSlice
     nodal_df.index.name = "TWh/a (MtCO2/a)"
 
     fn = snakemake.output.industrial_energy_demand_per_node
