@@ -4918,26 +4918,7 @@ def add_industry(
     industrial_demand.index.name = "MWh"
 
     if options["industry_t"]["endogen"]:
-        idx = pd.IndexSlice
-
-        industrial_demand = pd.concat(
-            (
-                industrial_demand.loc[:, "endogenous"],
-                industrial_demand.loc[
-                    :,
-                    idx[
-                        "exogenous",
-                        [
-                            "coal",
-                            "methanol",
-                            "process emission",
-                            "process emission from feedstock",
-                        ],
-                    ],
-                ].droplevel(0, axis=1),
-            ),
-            axis=1,
-        )
+        industrial_demand = industrial_demand.loc[:, "endogenous"]
 
         logger.warning("Treating process emissions naively.")
         industrial_demand.loc[:, "process emission"] = 0.0
@@ -5075,9 +5056,6 @@ def add_industry(
         location=spatial.methanol.demand_locations,
         unit="MWh_LHV",
     )
-
-    print(industrial_demand.head())
-    print(industrial_demand.columns)
 
     p_set_methanol = (
         industrial_demand["methanol"].rename(lambda x: x + " industry methanol")
