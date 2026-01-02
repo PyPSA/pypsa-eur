@@ -53,48 +53,48 @@ using the ``--configfile`` option:
 ``version``
 ===========
 
+.. jsonschema:: ../config/schema.json#/properties/version
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: version:
    :end-before: tutorial:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/properties/version
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _tutorial_cf:
 
 ``tutorial``
 ============
 
+.. jsonschema:: ../config/schema.json#/properties/tutorial
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: tutorial:
    :end-before: logging:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/properties/tutorial
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _logging_cf:
 
 ``logging``
 ===========
 
+.. jsonschema:: ../config/schema.json#/$defs/LoggingConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: logging:
    :end-before: remote:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/LoggingConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _remote_cf:
 
@@ -103,16 +103,16 @@ using the ``--configfile`` option:
 
 "Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
 
+.. jsonschema:: ../config/schema.json#/$defs/RemoteConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: remote:
    :end-before: run:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/RemoteConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _run_cf:
 
@@ -127,32 +127,32 @@ The ``run`` section is used for running and storing scenarios with different con
 It determines the path at which resources, networks and results are stored.
 Therefore the user can run different configurations within the same directory.
 
+.. jsonschema:: ../config/schema.json#/$defs/RunConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: run:
    :end-before: foresight:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/RunConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _foresight_cf:
 
 ``foresight``
 =============
 
+.. jsonschema:: ../config/schema.json#/$defs/ForesightConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: foresight:
    :end-before: scenario:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/ForesightConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. note::
     If you use myopic or perfect foresight, the planning horizon in
@@ -189,32 +189,32 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 .. image:: img/scenarios.png
 
+.. jsonschema:: ../config/schema.json#/$defs/ScenarioConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: scenario:
    :end-before: countries:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/ScenarioConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _countries:
 
 ``countries``
 =============
 
+.. jsonschema:: ../config/schema.json#/$defs/CountriesConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: countries:
    :end-before: snapshots:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/CountriesConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _snapshots_cf:
 
@@ -223,16 +223,16 @@ An exemplary dependency graph (starting from the simplification rules) then look
 
 Specifies the temporal range to build an energy system model for as arguments to `pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`__
 
+.. jsonschema:: ../config/schema.json#/$defs/SnapshotsConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: snapshots:
    :end-before: enable:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/SnapshotsConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _enable_cf:
 
@@ -241,32 +241,32 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 Switches for some rules and optional features.
 
+.. jsonschema:: ../config/schema.json#/$defs/EnableConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-after: inclusive: left
    :end-before: co2_budget:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/EnableConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _CO2_budget_cf:
 
 ``co2 budget``
 ==============
 
+.. jsonschema:: ../config/schema.json#/$defs/Co2BudgetConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: co2_budget:
    :end-before: electricity:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/Co2BudgetConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. note::
     this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
@@ -277,16 +277,16 @@ Switches for some rules and optional features.
 ``electricity``
 ===============
 
+.. jsonschema:: ../config/schema.json#/$defs/ElectricityConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: electricity:
    :end-before: atlite:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/ElectricityConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _atlite_cf:
 
@@ -295,16 +295,16 @@ Switches for some rules and optional features.
 
 Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`__.
 
+.. jsonschema:: ../config/schema.json#/$defs/AtliteConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: atlite:
    :end-before: renewable:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/AtliteConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _renewable_cf:
 
@@ -314,16 +314,16 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``onwind``
 ----------
 
+.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/onwind
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: renewable:
    :end-before:   offwind-ac:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/onwind
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
@@ -337,24 +337,24 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``offwind-x``
 --------------
 
+.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-ac
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   offwind-ac:
    :end-before:   solar:
 
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-ac
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
-
    .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-dc
       :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
+      :hide_key: /**/additionalProperties
 
    .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-float
       :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
+      :hide_key: /**/additionalProperties
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
@@ -369,16 +369,16 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``solar``
 ---------------
 
+.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/solar
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   solar:
    :end-before:   hydro:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/solar
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 170 MW/km^2 and assuming 1% of the area can be used for solar PV panels.
@@ -392,16 +392,16 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``hydro``
 ---------------
 
+.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/hydro
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   hydro:
    :end-before: conventional:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/hydro
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _conventional_cf:
 
@@ -415,48 +415,48 @@ with country specific values. Then, the values are read in and applied to all
 generators of the given carrier in the given country. Note that the value(s)
 overwrite the existing values.
 
+.. jsonschema:: ../config/schema.json#/$defs/ConventionalConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   conventional:
    :end-before: lines:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/ConventionalConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _lines_cf:
 
 ``lines``
 =========
 
+.. jsonschema:: ../config/schema.json#/$defs/LinesConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: lines:
    :end-before: links:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/LinesConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _links_cf:
 
 ``links``
 =============
 
+.. jsonschema:: ../config/schema.json#/$defs/LinksConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: links:
    :end-before: transmission_projects:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/LinksConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _transmission_projects_cf:
 
@@ -465,48 +465,48 @@ overwrite the existing values.
 
 Allows to define additional transmission projects that will be added to the base network, e.g., from the TYNDP 2020 dataset. The projects are read in from the CSV files in the subfolder of ``data/transmission_projects/``. New transmission projects, e.g. from TYNDP 2024, can be added in a new subfolder of transmission projects, e.g. ``data/transmission_projects/tyndp2024`` while extending the list of ``transmission_projects`` in the ``config.yaml`` by ``tyndp2024``. The CSV files in the project folder should have the same columns as the CSV files in the template folder ``data/transmission_projects/template``.
 
+.. jsonschema:: ../config/schema.json#/$defs/TransmissionProjectsConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transmission_projects:
    :end-before: transformers:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/TransmissionProjectsConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _transformers_cf:
 
 ``transformers``
 ================
 
+.. jsonschema:: ../config/schema.json#/$defs/TransformersConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transformers:
    :end-before: load:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/TransformersConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _load_cf:
 
 ``load``
 =============
 
+.. jsonschema:: ../config/schema.json#/$defs/LoadConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-after: type: ""
    :end-before: pypsa_eur:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/LoadConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _energy_cf:
 
@@ -516,16 +516,16 @@ Allows to define additional transmission projects that will be added to the base
 .. note::
    Only used for sector-coupling studies.
 
+.. jsonschema:: ../config/schema.json#/$defs/EnergyConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: energy:
    :end-before: biomass:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/EnergyConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _biomass_cf:
 
@@ -535,16 +535,16 @@ Allows to define additional transmission projects that will be added to the base
 .. note::
    Only used for sector-coupling studies.
 
+.. jsonschema:: ../config/schema.json#/$defs/BiomassConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: biomass:
    :end-before: solar_thermal:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/BiomassConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`__, namely:
 
@@ -574,16 +574,16 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. note::
    Only used for sector-coupling studies.
 
+.. jsonschema:: ../config/schema.json#/$defs/SolarThermalConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solar_thermal:
    :end-before: existing_capacities:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/SolarThermalConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _existing_capacities_cf:
 
@@ -593,16 +593,16 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. note::
    Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect foresight scenarios.
 
+.. jsonschema:: ../config/schema.json#/$defs/ExistingCapacitiesConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: existing_capacities:
    :end-before: sector:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/ExistingCapacitiesConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _sector_cf:
 
@@ -612,16 +612,18 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. note::
    Only used for sector-coupling studies.
 
-.. literalinclude:: ../config/config.default.yaml
-   :language: yaml
-   :start-at: sector:
-   :end-at: oil: 125
-
 .. dropdown:: Details
 
    .. jsonschema:: ../config/schema.json#/$defs/SectorConfig
       :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
+      :hide_key: /**/additionalProperties
+
+.. dropdown:: YAML Syntax
+
+   .. literalinclude:: ../config/config.default.yaml
+      :language: yaml
+      :start-at: sector:
+      :end-at: oil: 125
 
 .. _industry_cf:
 
@@ -631,32 +633,32 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. note::
    Only used for sector-coupling studies.
 
+.. jsonschema:: ../config/schema.json#/$defs/IndustryConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-after: oil: 125
    :end-before: costs:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/IndustryConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _costs_cf:
 
 ``costs``
 =============
 
+.. jsonschema:: ../config/schema.json#/$defs/CostsConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: costs:
    :end-before: clustering:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/CostsConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 
 .. _clustering_cf:
@@ -664,16 +666,16 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 ``clustering``
 ==============
 
+.. jsonschema:: ../config/schema.json#/$defs/ClusteringConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: clustering:
    :end-before: adjustments:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/ClusteringConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. tip::
    use ``min`` in ``p_nom_max:`` for more conservative assumptions.
@@ -683,32 +685,32 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 ``adjustments``
 ===============
 
+.. jsonschema:: ../config/schema.json#/$defs/AdjustmentsConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-after: resolution_sector: false
    :end-before: solving:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/AdjustmentsConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _solving_cf:
 
 ``solving``
 ===========
 
+.. jsonschema:: ../config/schema.json#/$defs/SolvingConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solving:
    :end-before: data:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/SolvingConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _data_cf:
 
@@ -725,52 +727,54 @@ Some datasets support `primary` or `build` as a source option, meaning that the 
 data source or build it from the latest available data.
 See the `data/versions.csv` file for all available datasets and their sources/versions that are supported.
 
-.. literalinclude:: ../config/config.default.yaml
-   :language: yaml
-   :start-at: data:
-   :end-before: overpass_api:
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schema.json#/$defs/DataConfig
+      :lift_description:
+      :hide_key: /**/additionalProperties
+
+.. dropdown:: YAML Syntax
+
+   .. literalinclude:: ../config/config.default.yaml
+      :language: yaml
+      :start-at: data:
+      :end-before: overpass_api:
 
 .. csv-table::
    :header-rows: 1
    :widths: 22,7,22,33
    :file: configtables/data.csv
 
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/DataConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
-
 .. _overpass_api_cf:
 
 ``overpass_api``
 ================
+
+.. jsonschema:: ../config/schema.json#/$defs/OverpassApiConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: overpass_api:
    :end-before: secrets:
 
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/OverpassApiConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
-
 .. _secrets_cf:
 
 ``secrets``
 ===========
 
+.. jsonschema:: ../config/schema.json#/$defs/SecretsConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: secrets:
-
-.. dropdown:: Details
-
-   .. jsonschema:: ../config/schema.json#/$defs/SecretsConfig
-      :lift_description:
-      :hide_key: /**/additionalProperties, /**/default
 
 .. _plotting_cf:
 
