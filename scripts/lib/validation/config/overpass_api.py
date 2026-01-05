@@ -33,7 +33,7 @@ class OverpassApiConfig(BaseModel):
 
     url: str = Field(
         "https://overpass-api.de/api/interpreter",
-        description="Overpass API endpoint URL. See `https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances`_ for available public instances.",
+        description="Overpass API endpoint URL. See `Overpass API Wiki <https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances>`_ for available public instances.",
     )
     max_tries: int = Field(
         5,

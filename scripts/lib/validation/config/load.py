@@ -64,7 +64,7 @@ class LoadConfig(BaseModel):
     )
     supplement_synthetic: bool = Field(
         True,
-        description="Whether to supplement missing data for selected time period should be supplemented by synthetic data from https://zenodo.org/records/10820928.",
+        description="Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
     )
     distribution_key: _DistributionKeyConfig = Field(
         default_factory=_DistributionKeyConfig,

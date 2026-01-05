@@ -22,7 +22,7 @@ class _PrepareKwargsConfig(ConfigModel):
     )
     sarah_dir: str | None = Field(
         None,
-        description="Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts.",
+        description="Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the `atlite documentation <https://atlite.readthedocs.io>`_ for details. Required for building cutouts with SARAH, not required for ERA5 cutouts.",
     )
     monthly_requests: bool | None = Field(
         None,
