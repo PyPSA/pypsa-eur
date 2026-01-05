@@ -10,10 +10,11 @@ The json schema is also contributed to the schemastore.org and matches
 `**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
 """
 
+import re
 from typing import Literal
 
-import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from ruamel.yaml import YAML
 
 from scripts.lib.validation.config._base import ConfigModel
 from scripts.lib.validation.config.adjustments import AdjustmentsConfig
@@ -240,10 +241,24 @@ def validate_config(config: dict) -> ConfigSchema:
 
 def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
     """Generate config defaults YAML file and return the defaults dict."""
+    from ruamel.yaml.comments import CommentedMap
 
-    class DoubleQuotedDumper(yaml.SafeDumper):
-        pass
+    def convert_to_field_name(key: str) -> str:
+        """Convert dash-case to snake_case for field lookup."""
+        return key.replace("-", "_")
 
+    # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
+    # the goal should be to use snake_case consistently
+    defaults = ConfigSchema().model_dump(by_alias=True)
+
+    # Create YAML instance with custom settings
+    yaml_writer = YAML()
+    yaml_writer.version = (1, 1)  # Make sure to quote boolean-looking strings
+    yaml_writer.default_flow_style = False
+    yaml_writer.width = 4096  # Avoid line wrapping
+    yaml_writer.indent(mapping=2, sequence=2, offset=0)
+
+    # Custom string representer for controlling quote style
     def str_representer(dumper, data):
         """Use block style for multiline, quotes for special chars, plain otherwise."""
         TAG = "tag:yaml.org,2002:str"
@@ -251,23 +266,27 @@ def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
             return dumper.represent_scalar(TAG, data, style="|")
         if data == "" or any(c in data for c in ":{}[]&*#?|-<>=!%@"):
             return dumper.represent_scalar(TAG, data, style='"')
-        return dumper.represent_scalar(TAG, data)
+        return dumper.represent_scalar(TAG, data, style="")
 
-    DoubleQuotedDumper.add_representer(str, str_representer)
-    # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
-    # the goal should be to use snake_case consistently
-    defaults = ConfigSchema().model_dump(by_alias=True)
+    yaml_writer.representer.add_representer(str, str_representer)
+
+    # Create a CommentedMap to add comments
+    data = CommentedMap()
+
+    # Add yaml-language-server comment at the very top (before first key)
+    data.yaml_set_start_comment("yaml-language-server: $schema=./schema.json")
+
+    for key, value in defaults.items():
+        data[key] = value
+
+        field_name = convert_to_field_name(key)
+        docs_url = f"https://pypsa-eur.readthedocs.io/en/latest/configuration.html#{field_name}"
+        data.yaml_set_comment_before_after_key(key, before=f"\ndocs in {docs_url}")
+
+    # Write to file
     with open(path, "w") as f:
-        for i, (key, value) in enumerate(defaults.items()):
-            if i > 0:
-                f.write("\n")
-            yaml.dump(
-                {key: value},
-                f,
-                Dumper=DoubleQuotedDumper,
-                sort_keys=False,
-                allow_unicode=True,
-            )
+        yaml_writer.dump(data, f)
+
     return defaults
 
 
@@ -334,12 +353,37 @@ def generate_config_schema(path: str = "config/schema.json") -> dict:
             return [remove_object_type(item, is_root=False) for item in obj]
         return obj
 
+    def convert_rst_to_markdown(obj):
+        """Convert RST-style links in 'description' to Markdown in 'markdownDescription'."""
+
+        def rst_to_md(text):
+            """Convert RST link format `Link Text <URL>`_ to Markdown [Link Text](URL)."""
+            # Pattern matches: `Link Text <URL>`_
+            pattern = r"`([^<>`]+)\s*<([^>]+)>`_"
+            return re.sub(pattern, r"[\1](\2)", text)
+
+        if isinstance(obj, dict):
+            result = {}
+            for k, v in obj.items():
+                if k == "description" and isinstance(v, str) and "`" in v and "<" in v:
+                    result[k] = v
+                    md_text = rst_to_md(v)
+                    if md_text != v:
+                        result["markdownDescription"] = md_text
+                else:
+                    result[k] = convert_rst_to_markdown(v)
+            return result
+        elif isinstance(obj, list):
+            return [convert_rst_to_markdown(item) for item in obj]
+        return obj
+
     schema = ConfigSchema.model_json_schema()
     defs = schema.get("$defs", {})
     schema = resolve_refs(schema, defs)
     schema = sanitize_for_json(schema)
     schema = remove_nested_titles(schema)
     schema = remove_object_type(schema)
+    schema = convert_rst_to_markdown(schema)
     with open(path, "w") as f:
         json.dump(schema, f, indent=2)
         f.write("\n")

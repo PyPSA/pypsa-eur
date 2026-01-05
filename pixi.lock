@@ -5,8 +5,6 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/bioconda/
     - url: https://conda.anaconda.org/gurobi/
-    options:
-      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -474,6 +472,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/rpds-py-0.30.0-py312h868fb18_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rsa-4.9.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/ruamel.yaml-0.18.17-py312h4c3975b_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/ruamel.yaml.clib-0.2.14-py312h4c3975b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ruff-0.14.7-h813ae00_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/s2n-1.6.0-h8399546_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.15.0-pyhd8ed1ab_0.conda
@@ -1016,6 +1016,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/rpds-py-0.30.0-py312h8a6388b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rsa-4.9.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/ruamel.yaml-0.18.17-py312h80b0991_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/ruamel.yaml.clib-0.2.14-py312h80b0991_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/ruff-0.14.7-hd9f4cfa_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.15.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/scikit-learn-1.7.2-py312hfee4f84_0.conda
@@ -1531,6 +1533,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rpds-py-0.30.0-py312h6ef9ec0_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rsa-4.9.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruamel.yaml-0.18.17-py312h4409184_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruamel.yaml.clib-0.2.14-py312h4409184_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruff-0.14.7-h382de68_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.15.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/scikit-learn-1.7.2-py312h79e0ffc_0.conda
@@ -2023,6 +2027,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/rpds-py-0.30.0-py312hdabe01f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rsa-4.9.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/ruamel.yaml-0.18.17-py312he06e257_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/ruamel.yaml.clib-0.2.14-py312he06e257_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/ruff-0.14.7-h15e3a1f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.15.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/scikit-learn-1.7.2-py312h91ac024_0.conda
@@ -2128,8 +2134,6 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/bioconda/
     - url: https://conda.anaconda.org/gurobi/
-    options:
-      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -3633,8 +3637,6 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/bioconda/
     - url: https://conda.anaconda.org/gurobi/
-    options:
-      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -4102,6 +4104,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/rpds-py-0.30.0-py312h868fb18_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rsa-4.9.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/ruamel.yaml-0.18.17-py312h4c3975b_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/ruamel.yaml.clib-0.2.14-py312h4c3975b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ruff-0.14.7-h813ae00_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/s2n-1.6.0-h8399546_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.15.0-pyhd8ed1ab_0.conda
@@ -4644,6 +4648,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/rpds-py-0.30.0-py312h8a6388b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rsa-4.9.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/ruamel.yaml-0.18.17-py312h80b0991_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/ruamel.yaml.clib-0.2.14-py312h80b0991_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/ruff-0.14.7-hd9f4cfa_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.15.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/scikit-learn-1.7.2-py312hfee4f84_0.conda
@@ -5159,6 +5165,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rpds-py-0.30.0-py312h6ef9ec0_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rsa-4.9.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruamel.yaml-0.18.17-py312h4409184_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruamel.yaml.clib-0.2.14-py312h4409184_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruff-0.14.7-h382de68_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.15.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/scikit-learn-1.7.2-py312h79e0ffc_0.conda
@@ -5651,6 +5659,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/rpds-py-0.30.0-py312hdabe01f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rsa-4.9.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/ruamel.yaml-0.18.17-py312he06e257_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/ruamel.yaml.clib-0.2.14-py312he06e257_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/ruff-0.14.7-h15e3a1f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.15.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/scikit-learn-1.7.2-py312h91ac024_0.conda
@@ -24758,6 +24768,106 @@ packages:
   license_family: APACHE
   size: 31709
   timestamp: 1744825527634
+- conda: https://conda.anaconda.org/conda-forge/linux-64/ruamel.yaml-0.18.17-py312h4c3975b_0.conda
+  sha256: 2298406d391da446e37c9951d15c1ca6d592f9c367123e9cca200060dd60df51
+  md5: 63ff554b2b49d8c2d7980e383735c26b
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=14
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - ruamel.yaml.clib >=0.1.2
+  license: MIT
+  license_family: MIT
+  size: 271225
+  timestamp: 1766019440263
+- conda: https://conda.anaconda.org/conda-forge/osx-64/ruamel.yaml-0.18.17-py312h80b0991_0.conda
+  sha256: 9e93cd57fe30f05b115d842c874a1fc15d12e13ffcbd7ac213d930e4098b1a5a
+  md5: 1250ecd548f1fba490fd5bc89958e011
+  depends:
+  - __osx >=10.13
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - ruamel.yaml.clib >=0.1.2
+  license: MIT
+  license_family: MIT
+  size: 271504
+  timestamp: 1766019657270
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruamel.yaml-0.18.17-py312h4409184_0.conda
+  sha256: 9b11227d0f2f9bcae52266291885244a762fdca1a877ca92093e52837b949b61
+  md5: 05c6196228fadf22b629187c2f868fbb
+  depends:
+  - __osx >=11.0
+  - python >=3.12,<3.13.0a0
+  - python >=3.12,<3.13.0a0 *_cpython
+  - python_abi 3.12.* *_cp312
+  - ruamel.yaml.clib >=0.1.2
+  license: MIT
+  license_family: MIT
+  size: 271945
+  timestamp: 1766019604068
+- conda: https://conda.anaconda.org/conda-forge/win-64/ruamel.yaml-0.18.17-py312he06e257_0.conda
+  sha256: ed4810a6e3bb6fc3f93233388952254ee3102b73f072d71811bf78a26d92152b
+  md5: e004879cb70ab474c64f5de3645d7764
+  depends:
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - ruamel.yaml.clib >=0.1.2
+  - ucrt >=10.0.20348.0
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  license: MIT
+  license_family: MIT
+  size: 271226
+  timestamp: 1766019432469
+- conda: https://conda.anaconda.org/conda-forge/linux-64/ruamel.yaml.clib-0.2.14-py312h4c3975b_0.conda
+  sha256: 4c3c9311590f1ca072ac956aa2df712600a385ffc52e90982ebfc84da8db31c3
+  md5: b59f191f3cd25057889dbe91e1387231
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=14
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  license: MIT
+  license_family: MIT
+  size: 138966
+  timestamp: 1760564285617
+- conda: https://conda.anaconda.org/conda-forge/osx-64/ruamel.yaml.clib-0.2.14-py312h80b0991_0.conda
+  sha256: fddc237b016d2498ab8c7b19423fef7f098e1fc318228f986508bce11aed8f86
+  md5: 41f0f3e5574d454f4c41c1ffbeb8532e
+  depends:
+  - __osx >=10.13
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  license: MIT
+  license_family: MIT
+  size: 121943
+  timestamp: 1760564632965
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruamel.yaml.clib-0.2.14-py312h4409184_0.conda
+  sha256: 6e3b59e64c26f62562834752476b7308e72b9aada1a85ee98d3b57c4f7ab9139
+  md5: 701d9a8bcd57c5221df9b2384a6aef93
+  depends:
+  - __osx >=11.0
+  - python >=3.12,<3.13.0a0
+  - python >=3.12,<3.13.0a0 *_cpython
+  - python_abi 3.12.* *_cp312
+  license: MIT
+  license_family: MIT
+  size: 116030
+  timestamp: 1760564523506
+- conda: https://conda.anaconda.org/conda-forge/win-64/ruamel.yaml.clib-0.2.14-py312he06e257_0.conda
+  sha256: 3d7362b2b16afb3a4e90de4a1af050933e262506e70177d4ba174b6427fc3b1a
+  md5: 02fb42bfd610f084377b05ec5bf25a18
+  depends:
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - ucrt >=10.0.20348.0
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  license: MIT
+  license_family: MIT
+  size: 105494
+  timestamp: 1760564569285
 - conda: https://conda.anaconda.org/conda-forge/linux-64/ruff-0.14.7-h813ae00_0.conda
   noarch: python
   sha256: 6cac2a69751717d7a9d713d2037a4afb3bca29cb4d18a4eb3a38a50cc7c2797f

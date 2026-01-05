@@ -62,7 +62,7 @@ using the ``--configfile`` option:
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: version:
-   :end-before: tutorial:
+   :end-before: # docs
 
 .. _tutorial_cf:
 
@@ -78,7 +78,7 @@ using the ``--configfile`` option:
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: tutorial:
-   :end-before: logging:
+   :end-before: # docs
 
 .. _logging_cf:
 
@@ -94,7 +94,7 @@ using the ``--configfile`` option:
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: logging:
-   :end-before: remote:
+   :end-before: # docs
 
 .. _remote_cf:
 
@@ -112,7 +112,7 @@ using the ``--configfile`` option:
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: remote:
-   :end-before: run:
+   :end-before: # docs
 
 .. _run_cf:
 
@@ -136,7 +136,7 @@ Therefore the user can run different configurations within the same directory.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: run:
-   :end-before: foresight:
+   :end-before: # docs
 
 .. _foresight_cf:
 
@@ -152,7 +152,7 @@ Therefore the user can run different configurations within the same directory.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: foresight:
-   :end-before: scenario:
+   :end-before: # docs
 
 .. note::
     If you use myopic or perfect foresight, the planning horizon in
@@ -198,7 +198,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: scenario:
-   :end-before: countries:
+   :end-before: # docs
 
 .. _countries:
 
@@ -214,7 +214,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: countries:
-   :end-before: snapshots:
+   :end-before: # docs
 
 .. _snapshots_cf:
 
@@ -232,7 +232,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: snapshots:
-   :end-before: enable:
+   :end-before: # docs
 
 .. _enable_cf:
 
@@ -249,8 +249,8 @@ Switches for some rules and optional features.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: inclusive: left
-   :end-before: co2_budget:
+   :start-after: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
+   :end-before: # docs
 
 .. _CO2_budget_cf:
 
@@ -266,7 +266,7 @@ Switches for some rules and optional features.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: co2_budget:
-   :end-before: electricity:
+   :end-before: # docs
 
 .. note::
     this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
@@ -286,7 +286,7 @@ Switches for some rules and optional features.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: electricity:
-   :end-before: atlite:
+   :end-before: # docs
 
 .. _atlite_cf:
 
@@ -304,7 +304,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: atlite:
-   :end-before: renewable:
+   :end-before: # docs
 
 .. _renewable_cf:
 
@@ -323,7 +323,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: renewable:
-   :end-before:   offwind-ac:
+   :end-before: "offwind-ac":
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
@@ -345,8 +345,8 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at:   offwind-ac:
-   :end-before:   solar:
+   :start-at: "offwind-ac":
+   :end-before: solar:
 
    .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-dc
       :lift_description:
@@ -401,7 +401,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   hydro:
-   :end-before: conventional:
+   :end-before: # docs
 
 .. _conventional_cf:
 
@@ -424,7 +424,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   conventional:
-   :end-before: lines:
+   :end-before: # docs
 
 .. _lines_cf:
 
@@ -440,7 +440,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: lines:
-   :end-before: links:
+   :end-before: # docs
 
 .. _links_cf:
 
@@ -456,7 +456,7 @@ overwrite the existing values.
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: links:
-   :end-before: transmission_projects:
+   :end-before: # docs
 
 .. _transmission_projects_cf:
 
@@ -474,7 +474,7 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transmission_projects:
-   :end-before: transformers:
+   :end-before: # docs
 
 .. _transformers_cf:
 
@@ -490,7 +490,7 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: transformers:
-   :end-before: load:
+   :end-before: # docs
 
 .. _load_cf:
 
@@ -505,8 +505,8 @@ Allows to define additional transmission projects that will be added to the base
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: type: ""
-   :end-before: pypsa_eur:
+   :start-at: load:
+   :end-before: # docs
 
 .. _energy_cf:
 
@@ -525,7 +525,7 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: energy:
-   :end-before: biomass:
+   :end-before: # docs
 
 .. _biomass_cf:
 
@@ -544,7 +544,7 @@ Allows to define additional transmission projects that will be added to the base
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: biomass:
-   :end-before: solar_thermal:
+   :end-before: # docs
 
 The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`__, namely:
 
@@ -583,7 +583,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solar_thermal:
-   :end-before: existing_capacities:
+   :end-before: # docs
 
 .. _existing_capacities_cf:
 
@@ -602,7 +602,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: existing_capacities:
-   :end-before: sector:
+   :end-before: # docs
 
 .. _sector_cf:
 
@@ -623,7 +623,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    .. literalinclude:: ../config/config.default.yaml
       :language: yaml
       :start-at: sector:
-      :end-at: oil: 125
+      :end-before: # docs
 
 .. _industry_cf:
 
@@ -641,8 +641,8 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: oil: 125
-   :end-before: costs:
+   :start-after: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
+   :end-before: # docs
 
 .. _costs_cf:
 
@@ -658,7 +658,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: costs:
-   :end-before: clustering:
+   :end-before: # docs
 
 
 .. _clustering_cf:
@@ -675,7 +675,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: clustering:
-   :end-before: adjustments:
+   :end-before: # docs
 
 .. tip::
    use ``min`` in ``p_nom_max:`` for more conservative assumptions.
@@ -693,8 +693,8 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after: resolution_sector: false
-   :end-before: solving:
+   :start-after: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
+   :end-before: # docs
 
 .. _solving_cf:
 
@@ -710,7 +710,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solving:
-   :end-before: data:
+   :end-before: # docs
 
 .. _data_cf:
 
@@ -738,7 +738,7 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
    .. literalinclude:: ../config/config.default.yaml
       :language: yaml
       :start-at: data:
-      :end-before: overpass_api:
+      :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -759,7 +759,7 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: overpass_api:
-   :end-before: secrets:
+   :end-before: # docs
 
 .. _secrets_cf:
 
