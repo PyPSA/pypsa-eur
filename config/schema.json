@@ -337,7 +337,8 @@
                           }
                         ],
                         "default": null,
-                        "description": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
+                        "description": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the `atlite documentation <https://atlite.readthedocs.io>`_ for details. Required for building cutouts with SARAH, not required for ERA5 cutouts.",
+                        "markdownDescription": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the [atlite documentation ](https://atlite.readthedocs.io) for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
                       },
                       "monthly_requests": {
                         "anyOf": [
@@ -2492,7 +2493,8 @@
         },
         "supplement_synthetic": {
           "default": true,
-          "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from https://zenodo.org/records/10820928.",
+          "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
+          "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
           "type": "boolean"
         },
         "distribution_key": {
@@ -2540,7 +2542,8 @@
       "properties": {
         "url": {
           "default": "https://overpass-api.de/api/interpreter",
-          "description": "Overpass API endpoint URL. See `https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances`_ for available public instances.",
+          "description": "Overpass API endpoint URL. See `Overpass API Wiki <https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances>`_ for available public instances.",
+          "markdownDescription": "Overpass API endpoint URL. See [Overpass API Wiki ](https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances) for available public instances.",
           "type": "string"
         },
         "max_tries": {
@@ -5761,7 +5764,8 @@
                     }
                   ],
                   "default": null,
-                  "description": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
+                  "description": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the `atlite documentation <https://atlite.readthedocs.io>`_ for details. Required for building cutouts with SARAH, not required for ERA5 cutouts.",
+                  "markdownDescription": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the [atlite documentation ](https://atlite.readthedocs.io) for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
                 },
                 "monthly_requests": {
                   "anyOf": [
@@ -6869,7 +6873,8 @@
             }
           ],
           "default": null,
-          "description": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
+          "description": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the `atlite documentation <https://atlite.readthedocs.io>`_ for details. Required for building cutouts with SARAH, not required for ERA5 cutouts.",
+          "markdownDescription": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the [atlite documentation ](https://atlite.readthedocs.io) for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
         },
         "monthly_requests": {
           "anyOf": [
@@ -8307,7 +8312,8 @@
                           }
                         ],
                         "default": null,
-                        "description": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
+                        "description": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the `atlite documentation <https://atlite.readthedocs.io>`_ for details. Required for building cutouts with SARAH, not required for ERA5 cutouts.",
+                        "markdownDescription": "Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the [atlite documentation ](https://atlite.readthedocs.io) for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
                       },
                       "monthly_requests": {
                         "anyOf": [
@@ -9630,7 +9636,8 @@
         },
         "supplement_synthetic": {
           "default": true,
-          "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from https://zenodo.org/records/10820928.",
+          "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
+          "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
           "type": "boolean"
         },
         "distribution_key": {
@@ -12804,7 +12811,8 @@
       "properties": {
         "url": {
           "default": "https://overpass-api.de/api/interpreter",
-          "description": "Overpass API endpoint URL. See `https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances`_ for available public instances.",
+          "description": "Overpass API endpoint URL. See `Overpass API Wiki <https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances>`_ for available public instances.",
+          "markdownDescription": "Overpass API endpoint URL. See [Overpass API Wiki ](https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances) for available public instances.",
           "type": "string"
         },
         "max_tries": {
