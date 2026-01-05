@@ -99,7 +99,7 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
 elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
 
     rule retrieve_corine:
-        message: 
+        message:
             "Retrieving Corine land cover data"
         params:
             apikey=os.environ.get("CORINE_API_TOKEN", config["secrets"]["corine"]),
