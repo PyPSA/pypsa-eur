@@ -5,9 +5,8 @@ SPDX-PackageDownloadLocation = "https://github.com/pypsa/pypsa-eur"
 
 [[annotations]]
 path = [
-    "data/**",
     "doc/configtables/*",
-    "doc/data.csv",
+    "doc/data_inventory.csv",
     "doc/img/*",
     "test/test_data/*",
 ]
@@ -18,8 +17,113 @@ SPDX-License-Identifier = "CC-BY-4.0"
 path = [
     ".github/**",
     "borg-it",
-    "envs/*.lock.yaml",
+    "pixi.lock",
     "matplotlibrc",
+    "envs/*.pin.txt",
+    "envs/environment.yaml"
 ]
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
 SPDX-License-Identifier = "CC0-1.0"
+
+
+# Make sure to keep in sync with: https://pypsa-eur.readthedocs.io/en/latest/data-repos.html
+
+[[annotations]]
+path = [
+    "data/agg_p_nom_minmax.csv",
+    "data/ammonia_plants.csv",
+    "data/ch_industrial_production_per_subsector.csv",
+    "data/district_heat_share.csv",
+    "data/entsoegridkit/*",
+    "data/heat_load_profile_BDEW.csv",
+    "data/hydro_capacities.csv",
+    "data/links_p_nom.csv",
+    "data/parameter_corrections.yaml",
+    "data/retro/window_assumptions.csv",
+    "data/retro/retro_cost_germany.csv",
+    "data/switzerland-new_format-all_years.csv",
+    "data/transmission_projects/**",
+    "data/unit_commitment.csv",
+    "data/versions.csv",
+    "data/custom_costs.csv",
+]
+SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+    "data/custom_powerplants.csv",
+]
+SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+    "data/retro/comparative_level_investments.csv",
+    "data/retro/electricity_taxes_eu.csv",
+    "data/retro/comparative_level_investment.csv",
+]
+SPDX-FileCopyrightText = "eurostat"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+    "data/retro/floor_area_missing.csv",
+    "data/retro/u_values_poland.csv",
+    "data/existing_infrastructure/existing_heating_raw.csv",
+]
+SPDX-FileCopyrightText = "European Commission, Directorate-General for Energy (DG ENER)"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+    "data/retro/data_building_stock.csv",
+]
+SPDX-FileCopyrightText = "Simon Pezzutto"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+    "data/refineries-noneu.csv",
+    "data/eia_hydro_annual_capacity.csv",
+    "data/eia_hydro_annual_generation.csv",
+]
+SPDX-FileCopyrightText = "Energy Information Agency (EIA)"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+    "data/nuclear_p_max_pu.csv",
+]
+SPDX-FileCopyrightText = "International Atomic Energy Agency (IAEA)"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+
+[[annotations]]
+path = [
+    "data/cement-plants-noneu.csv",
+]
+SPDX-FileCopyrightText = "United States Geological Survey (USGS)"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+    "data/biomass_transport_costs_supplychain1.csv",
+    "data/biomass_transport_costs_supplychain2.csv",
+]
+SPDX-FileCopyrightText = "European Commission, Joint Research Centre (JRC)"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+    "data/egs_costs.json",
+]
+SPDX-FileCopyrightText = "Arman Aghahosseini and Christian Breyer"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+    "data/ch_cantons.csv",
+]
+SPDX-FileCopyrightText = "Wikipedia contributors"
+SPDX-License-Identifier = "CC-BY-SA-4.0"

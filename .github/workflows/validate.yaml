@@ -39,7 +39,7 @@ jobs:
     name: Create report
     needs: run-validation
     if: |
-      github.event.pull_request.head.repo.full_name == github.repository && 
+      github.event.pull_request.head.repo.full_name == github.repository &&
       needs.run-validation.outputs.validation_failed != 'true'
     runs-on: ubuntu-latest
     steps:

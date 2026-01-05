@@ -21,9 +21,7 @@ rule add_existing_baseyear:
         busmap=resources("busmap_base_s_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: resources(
-            "costs_{}.csv".format(
-                config_provider("scenario", "planning_horizons", 0)(w)
-            )
+            f"costs_{config_provider("scenario", "planning_horizons",0)(w)}_processed.csv"
         ),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         existing_heating_distribution=resources(
@@ -49,8 +47,6 @@ rule add_existing_baseyear:
         benchmarks(
             "add_existing_baseyear/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/add_existing_baseyear.py"
 
@@ -88,8 +84,6 @@ rule prepare_perfect_foresight:
         logs("prepare_perfect_foresight_{clusters}_{opts}_{sector_opts}.log"),
     benchmark:
         benchmarks("prepare_perfect_foresight_{clusters}_{opts}_{sector_opts}")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/prepare_perfect_foresight.py"
 
@@ -110,7 +104,7 @@ rule solve_sector_network_perfect:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
         ),
-        costs=resources("costs_2030.csv"),
+        costs=resources("costs_2030_processed.csv"),
     output:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
@@ -133,8 +127,6 @@ rule solve_sector_network_perfect:
             RESULTS
             + "benchmarks/solve_sector_network/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years}"
         )
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/solve_network.py"
 
@@ -154,7 +146,7 @@ rule make_summary_perfect:
         "Creating summary for perfect foresight optimization results"
     input:
         unpack(input_networks_make_summary_perfect),
-        costs=resources("costs_2020.csv"),
+        costs=resources("costs_2020_processed.csv"),
     output:
         nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
         costs=RESULTS + "csvs/costs.csv",
@@ -176,7 +168,5 @@ rule make_summary_perfect:
         logs("make_summary_perfect.log"),
     benchmark:
         benchmarks("make_summary_perfect")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/make_summary_perfect.py"
