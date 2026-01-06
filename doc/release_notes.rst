@@ -13,7 +13,10 @@ Upcoming Release
   also contains the default values for all known configuration options, which means 
   `config/config.default.yaml` still exists and can be used, but will be automatically
   exported from the schema. Changes to the default config, therefore now require the
-  schema to be updated. Find a detailed explanation in the contributors documentation.
+  schema to be updated. Find a detailed explanation in the contributors documentation
+  (https://github.com/PyPSA/pypsa-eur/pull/1912).
+
+* Fix compatibility of rules `build_gas_input_locations` and `build_gas_network` with pyogrio >=0.12.0 (https://github.com/PyPSA/pypsa-eur/pull/1955).
 
 * Added interactive (html) balance maps `results/maps/interactive/` (https://github.com/PyPSA/pypsa-eur/pull/1935) based on https://docs.pypsa.org/latest/user-guide/plotting/explore/. Settings for interactive maps can be found in `plotting.default.yaml` under `plotting["balance_map_interactive"]`.
 
