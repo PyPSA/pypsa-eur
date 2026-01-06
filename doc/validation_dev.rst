@@ -74,7 +74,7 @@ For example, adding a ``file`` section to ``LoggingConfig``:
            description="File logging configuration.",
        )
 
-       
+
 There is one python module for each top level configuration. Helper classes for nested
 keys usee underscore prefix (e.g., ``_LoggingFileConfig``) by convention.
 
@@ -118,3 +118,53 @@ YAML, which is currently enforced via an upstream CI job.
 
 **Extend the schema**: It is better to add full validation of your additional
 configuration, which means you will need to update the Pydantic model as explained above.
+
+Custom Validators
+-----------------
+
+For validation logic beyond simple type checks and constraints, Pydantic provides
+``field_validator`` (for single fields) and ``model_validator`` (for cross-field validation).
+
+**Field Validator**: Validate a single field's value. For example, ensuring the log level
+is uppercase:
+
+.. code-block:: python
+
+   from pydantic import Field, field_validator
+   from scripts.lib.validation.config._base import ConfigModel
+
+   class LoggingConfig(ConfigModel):
+       """Configuration for top level `logging` settings."""
+
+       level: str = Field("INFO", description="Logging level.")
+
+       @field_validator("level")
+       @classmethod
+       def validate_level(cls, v):
+           if v.upper() != v:
+               raise ValueError("Logging level must be uppercase (e.g., 'INFO', 'DEBUG').")
+           return v
+
+**Model Validator**: Validate relationships between multiple fields. For example,
+ensuring the file path is set when file logging is enabled:
+
+.. code-block:: python
+
+   from pydantic import Field, model_validator
+   from scripts.lib.validation.config._base import ConfigModel
+
+   class LoggingConfig(ConfigModel):
+       """Configuration for top level `logging` settings."""
+
+       file_enabled: bool = Field(False, description="Enable file logging.")
+       file_path: str | None = Field(None, description="Log file path.")
+
+       @model_validator
+       def check_file_path_required(self):
+           if self.file_enabled and not self.file_path:
+               raise ValueError("file_path is required when file_enabled is True.")
+           return self
+
+Again, find more information in the Pydantic documentation on
+[Field Validators](https://docs.pydantic.dev/latest/concepts/validators/#field-validators)
+and [Model Validators](https://docs.pydantic.dev/latest/concepts/validators/#model-validators).

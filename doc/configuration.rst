@@ -348,13 +348,13 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at: "offwind-ac":
    :end-before: solar:
 
-   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-dc
-      :lift_description:
-      :hide_key: /**/additionalProperties
+.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-dc
+   :lift_description:
+   :hide_key: /**/additionalProperties
 
-   .. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-float
-      :lift_description:
-      :hide_key: /**/additionalProperties
+.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-float
+   :lift_description:
+   :hide_key: /**/additionalProperties
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
