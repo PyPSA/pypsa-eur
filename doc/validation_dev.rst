@@ -166,5 +166,5 @@ ensuring the file path is set when file logging is enabled:
            return self
 
 Again, find more information in the Pydantic documentation on
-[Field Validators](https://docs.pydantic.dev/latest/concepts/validators/#field-validators)
-and [Model Validators](https://docs.pydantic.dev/latest/concepts/validators/#model-validators).
+`Field Validators <https://docs.pydantic.dev/latest/concepts/validators/#field-validators>`_
+and `Model Validators <https://docs.pydantic.dev/latest/concepts/validators/#model-validators>`_.
