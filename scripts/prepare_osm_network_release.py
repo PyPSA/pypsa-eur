@@ -90,7 +90,6 @@ def export_clean_csv(df, columns, output_file):
     Returns:
         None
     """
-    columns = [col for col in columns if col in df.columns]
     rename_dict = {
         "Bus": "bus_id",
         "Line": "line_id",

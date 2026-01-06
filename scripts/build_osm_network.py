@@ -148,18 +148,23 @@ def _add_line_endings(buses, lines, add=0, name="line-end"):
     -------
         - pd.DataFrame: DataFrame containing the virtual bus endpoints with columns 'bus_id', 'voltage', 'geometry', and 'contains'.
     """
-    endpoints0 = lines[["voltage", "geometry"]].copy()
+    endpoints0 = lines[["voltage", "geometry", "line_id"]].copy()
     endpoints0["geometry"] = endpoints0["geometry"].apply(lambda x: x.boundary.geoms[0])
+    endpoints0["endpoint"] = 0
 
-    endpoints1 = lines[["voltage", "geometry"]].copy()
+    endpoints1 = lines[["voltage", "geometry", "line_id"]].copy()
     endpoints1["geometry"] = endpoints1["geometry"].apply(lambda x: x.boundary.geoms[1])
+    endpoints1["endpoint"] = 1
 
     endpoints = pd.concat([endpoints0, endpoints1], ignore_index=True)
     endpoints.drop_duplicates(subset=["geometry", "voltage"], inplace=True)
     endpoints.reset_index(drop=True, inplace=True)
 
-    endpoints["bus_id"] = endpoints.index + add + 1
-    endpoints["bus_id"] = "virtual" + "-" + endpoints["bus_id"].astype(str)
+    # Create deterministic ID from line_id and endpoint
+    endpoints["bus_id"] = (
+        "virtual_" + endpoints["line_id"] + "_" + endpoints["endpoint"].astype(str)
+    )
+    endpoints.drop(columns=["line_id", "endpoint"], inplace=True)
 
     endpoints["contains"] = name
 
@@ -651,10 +656,9 @@ def _create_station_seeds(
     buses_to_rename = buses_to_rename.sort_values(
         by=["country", "lat", "lon"], ascending=[True, False, True]
     )
-    buses_to_rename["bus_id"] = buses_to_rename.groupby("country").cumcount() + 1
-    buses_to_rename["bus_id"] = buses_to_rename["country"] + buses_to_rename[
-        "bus_id"
-    ].astype(str)
+    buses_to_rename["bus_id"] = buses_to_rename[
+        "country"
+    ] + buses_to_rename.index.str.replace("virtual", "")
 
     # Dict to rename virtual buses
     dict_rename = buses_to_rename["bus_id"].to_dict()
