@@ -238,6 +238,9 @@ def get_sink_inlet_temperature(
     temperature. When preheating is not used (source <= return), the heat pump
     receives water at return temperature and heats it to forward temperature.
 
+    When source temperature > return temperature, preheater is used: preheater raises return flow, heat pump inlet is at forward temp.
+    When source temperature <= return temperature, no preheating: heat pump inlet is at return temperature.
+
     Parameters
     ----------
     heat_source_name : str
@@ -256,10 +259,6 @@ def get_sink_inlet_temperature(
     """
     heat_source = HeatSource(heat_source_name)
     if heat_source.requires_preheater:
-        # When source temperature > return temperature, preheater is used:
-        # preheater raises return flow, heat pump inlet is at forward temp.
-        # When source temperature <= return temperature, no preheating:
-        # heat pump inlet is at return temperature.
         return central_heating_forward_temperature.where(
             central_heating_return_temperature < source_temperature,
             central_heating_return_temperature,
@@ -321,7 +320,7 @@ if __name__ == "__main__":
                 heat_source=heat_source_name,
                 source_inlet_temperature_celsius=source_inlet_temperature_celsius,
                 sink_outlet_temperature_celsius=central_heating_forward_temperature,
-                sink_inlet_temperature_celsius=central_heating_return_temperature,
+                sink_inlet_temperature_celsius=sink_inlet_temperature_celsius,
             )
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(
