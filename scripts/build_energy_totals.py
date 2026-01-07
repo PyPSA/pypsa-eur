@@ -358,6 +358,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[6] == "Natural gas"
     ct_totals["gas residential space efficiency"] = df.iloc[6]
 
+    assert df.index[7] == "Biomass"
+    ct_totals["biomass residential space efficiency"] = df.iloc[7]
+
     ct_totals["total residential water efficiency"] = df.loc["Water heating"]
 
     assert df.index[18] == "Diesel oil"
@@ -365,6 +368,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     assert df.index[19] == "Natural gas"
     ct_totals["gas residential water efficiency"] = df.iloc[19]
+
+    assert df.index[20] == "Biomass"
+    ct_totals["biomass residential water efficiency"] = df.iloc[20]
 
     # services
 
@@ -409,6 +415,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[7] == "Conventional gas heaters"
     ct_totals["gas services space efficiency"] = df.iloc[7]
 
+    assert df.index[8] == "Biomass"
+    ct_totals["biomass services space efficiency"] = df.iloc[8]
+
     ct_totals["total services water efficiency"] = df.loc["Hot water"]
 
     assert df.index[20] == "Diesel oil"
@@ -416,6 +425,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     assert df.index[21] == "Natural gas"
     ct_totals["gas services water efficiency"] = df.iloc[21]
+
+    assert df.index[22] == "Biomass"
+    ct_totals["biomass services water efficiency"] = df.iloc[22]
 
     # agriculture, forestry and fishing
 
@@ -1171,7 +1183,7 @@ def build_transport_data(
     Notes
     -----
     - The function first collects the number of passenger cars.
-    - For Switzerland, it reads the data from `data/gr-e-11.03.02.01.01-cc.csv`.
+    - For Switzerland, it reads the data from `data/*/vehicle_stock.csv`.
     - It fills missing data on the number of cars and fuel efficiency with average data.
 
     References
@@ -1193,7 +1205,18 @@ def build_transport_data(
 
     if "CH" in countries:
         fn = snakemake.input.swiss_transport
-        swiss_cars = pd.read_csv(fn, index_col=0).loc[years, ["passenger cars"]]
+
+        # Detect delimiter automatically; BFS files often use ';'
+        with open(fn) as f:
+            first_line = f.readline()
+        sep = ";" if ";" in first_line and "," not in first_line else ","
+
+        swiss_cars = pd.read_csv(fn, index_col=0, sep=sep).loc[
+            years, ["passenger cars"]
+        ]
+
+        # Ensure index is integer years
+        swiss_cars.index = swiss_cars.index.astype(int)
 
         swiss_cars.index = pd.MultiIndex.from_product(
             [["CH"], swiss_cars.index], names=["country", "year"]
