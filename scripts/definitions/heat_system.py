@@ -235,12 +235,12 @@ class HeatSystem(Enum):
             HeatSource.SEA_WATER,
             HeatSource.RIVER_WATER,
             HeatSource.LAKE_WATER,
-            HeatSource.ELECTROLYSIS_EXCESS,
-            HeatSource.FISCHER_TROPSCH_EXCESS,
-            HeatSource.SABATIER_EXCESS,
-            HeatSource.HABER_BOSCH_EXCESS,
-            HeatSource.METHANOLISATION_EXCESS,
-            HeatSource.FUEL_CELL_EXCESS,
+            HeatSource.ELECTROLYSIS_waste,
+            HeatSource.FISCHER_TROPSCH_waste,
+            HeatSource.SABATIER_waste,
+            HeatSource.HABER_BOSCH_waste,
+            HeatSource.METHANOLISATION_waste,
+            HeatSource.FUEL_CELL_waste,
         ]:
             return f"{self.central_or_decentral} excess-heat-sourced heat pump"
         else:

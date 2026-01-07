@@ -151,7 +151,7 @@ def get_source_temperature(
     snakemake_input : dict
         Snakemake input files containing temperature profile paths.
     heat_source_name : str
-        Name of the heat source (e.g., "air", "ground", "geothermal", "ptes", "electrolysis_excess").
+        Name of the heat source (e.g., "air", "ground", "geothermal", "ptes", "electrolysis_waste").
 
     Returns
     -------

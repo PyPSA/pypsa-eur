@@ -82,12 +82,12 @@ class HeatSource(Enum):
     GROUND = "ground"
     PTES = "ptes"
     # PTX excess heat sources
-    ELECTROLYSIS_EXCESS = "electrolysis_excess"
-    FISCHER_TROPSCH_EXCESS = "fischer_tropsch_excess"
-    SABATIER_EXCESS = "sabatier_excess"
-    HABER_BOSCH_EXCESS = "haber_bosch_excess"
-    METHANOLISATION_EXCESS = "methanolisation_excess"
-    FUEL_CELL_EXCESS = "fuel_cell_excess"
+    ELECTROLYSIS_waste = "electrolysis_waste"
+    FISCHER_TROPSCH_waste = "fischer_tropsch_waste"
+    SABATIER_waste = "sabatier_waste"
+    HABER_BOSCH_waste = "haber_bosch_waste"
+    METHANOLISATION_waste = "methanolisation_waste"
+    FUEL_CELL_waste = "fuel_cell_waste"
 
     def __str__(self) -> str:
         """
@@ -191,14 +191,9 @@ class HeatSource(Enum):
         """
         if self.source_type in [HeatSourceType.STORAGE, HeatSourceType.PROCESS_WASTE]:
             return True
-        # Geothermal also uses preheater
         if self == HeatSource.GEOTHERMAL:
             return True
         return False
-
-    # -------------------------------------------------------------------------
-    # PTX Process Waste Heat Properties
-    # -------------------------------------------------------------------------
 
     @property
     def process_carrier(self) -> str | None:
@@ -211,12 +206,12 @@ class HeatSource(Enum):
             The carrier name (e.g., "Fischer-Tropsch"), or None if not a process waste source.
         """
         mapping = {
-            HeatSource.FISCHER_TROPSCH_EXCESS: "Fischer-Tropsch",
-            HeatSource.SABATIER_EXCESS: "Sabatier",
-            HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
-            HeatSource.METHANOLISATION_EXCESS: "methanolisation",
-            HeatSource.ELECTROLYSIS_EXCESS: "H2 Electrolysis",
-            HeatSource.FUEL_CELL_EXCESS: "H2 Fuel Cell",
+            HeatSource.FISCHER_TROPSCH_waste: "Fischer-Tropsch",
+            HeatSource.SABATIER_waste: "Sabatier",
+            HeatSource.HABER_BOSCH_waste: "Haber-Bosch",
+            HeatSource.METHANOLISATION_waste: "methanolisation",
+            HeatSource.ELECTROLYSIS_waste: "H2 Electrolysis",
+            HeatSource.FUEL_CELL_waste: "H2 Fuel Cell",
         }
         return mapping.get(self)
 
@@ -231,12 +226,12 @@ class HeatSource(Enum):
             The bus index for efficiency/bus assignment, or None if not a process waste source.
         """
         mapping = {
-            HeatSource.FISCHER_TROPSCH_EXCESS: 3,
-            HeatSource.SABATIER_EXCESS: 3,
-            HeatSource.HABER_BOSCH_EXCESS: 3,
-            HeatSource.METHANOLISATION_EXCESS: 4,
-            HeatSource.ELECTROLYSIS_EXCESS: 2,
-            HeatSource.FUEL_CELL_EXCESS: 2,
+            HeatSource.FISCHER_TROPSCH_waste: 3,
+            HeatSource.SABATIER_waste: 3,
+            HeatSource.HABER_BOSCH_waste: 3,
+            HeatSource.METHANOLISATION_waste: 4,
+            HeatSource.ELECTROLYSIS_waste: 2,
+            HeatSource.FUEL_CELL_waste: 2,
         }
         return mapping.get(self)
 
@@ -251,12 +246,12 @@ class HeatSource(Enum):
             The option key (e.g., "use_fischer_tropsch_waste_heat"), or None if not applicable.
         """
         mapping = {
-            HeatSource.FISCHER_TROPSCH_EXCESS: "use_fischer_tropsch_waste_heat",
-            HeatSource.SABATIER_EXCESS: "use_methanation_waste_heat",
-            HeatSource.HABER_BOSCH_EXCESS: "use_haber_bosch_waste_heat",
-            HeatSource.METHANOLISATION_EXCESS: "use_methanolisation_waste_heat",
-            HeatSource.ELECTROLYSIS_EXCESS: "use_electrolysis_waste_heat",
-            HeatSource.FUEL_CELL_EXCESS: "use_fuel_cell_waste_heat",
+            HeatSource.FISCHER_TROPSCH_waste: "use_fischer_tropsch_waste_heat",
+            HeatSource.SABATIER_waste: "use_methanation_waste_heat",
+            HeatSource.HABER_BOSCH_waste: "use_haber_bosch_waste_heat",
+            HeatSource.METHANOLISATION_waste: "use_methanolisation_waste_heat",
+            HeatSource.ELECTROLYSIS_waste: "use_electrolysis_waste_heat",
+            HeatSource.FUEL_CELL_waste: "use_fuel_cell_waste_heat",
         }
         return mapping.get(self)
 
@@ -274,18 +269,21 @@ class HeatSource(Enum):
             The technology name for costs lookup, or None if efficiency is calculated.
         """
         mapping = {
-            HeatSource.FISCHER_TROPSCH_EXCESS: "Fischer-Tropsch",
-            HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
-            HeatSource.ELECTROLYSIS_EXCESS: "electrolysis",
-            HeatSource.HABER_BOSCH_EXCESS: "Haber-Bosch",
-            HeatSource.METHANOLISATION_EXCESS: "methanolisation",
-            # Sabatier, Fuel Cell, and Methanolisation use calculated efficiencies
+            HeatSource.FISCHER_TROPSCH_waste: "Fischer-Tropsch",
+            HeatSource.HABER_BOSCH_waste: "Haber-Bosch",
+            HeatSource.ELECTROLYSIS_waste: "electrolysis",
+            HeatSource.HABER_BOSCH_waste: "Haber-Bosch",
+            HeatSource.METHANOLISATION_waste: "methanolisation",
         }
         return mapping.get(self)
 
     def get_capital_cost(self, costs, overdim_factor: float, heat_system) -> float:
         """
         Returns the capital cost for the heat source generator.
+
+        For direct utilisation heat sources (geothermal), retrieves cost from technology-data.
+        For other limited sources (like river_water without direct utilisation), returns 0.0.
+        For inexhaustible sources (air, ground, sea water), this method shouldn't be called.
 
         Parameters
         ----------
@@ -301,9 +299,6 @@ class HeatSource(Enum):
         float
             The capital cost for the heat source generator.
         """
-        # For direct utilisation heat sources, get cost from technology-data
-        # For other limited sources (like river_water without direct utilisation), return 0.0
-        # For inexhaustible sources, this method shouldn't be called
         if self in [HeatSource.GEOTHERMAL]:
             return (
                 costs.at[
@@ -319,6 +314,10 @@ class HeatSource(Enum):
         """
         Returns the lifetime for the heat source generator.
 
+        For direct utilisation heat sources (geothermal), retrieves lifetime from technology-data.
+        For other limited sources (like river_water without direct utilisation), returns infinity.
+        For inexhaustible sources (air, ground, sea water), this method shouldn't be called.
+
         Parameters
         ----------
         costs : pd.DataFrame
@@ -331,9 +330,6 @@ class HeatSource(Enum):
         float
             The lifetime for the heat source generator in years.
         """
-        # For direct utilisation heat sources, get lifetime from technology-data
-        # For other limited sources (like river_water without direct utilisation), return np.inf
-        # For inexhaustible sources, this method shouldn't be called
         if self in [HeatSource.GEOTHERMAL]:
             return costs.at[heat_system.heat_source_costs_name(self), "lifetime"]
         else:
@@ -373,28 +369,27 @@ class HeatSource(Enum):
                 f"get_waste_heat_efficiency only applies to PROCESS_WASTE sources, not {self}"
             )
 
-        # Base branch formulas:
-        if self == HeatSource.FISCHER_TROPSCH_EXCESS:
+        if self == HeatSource.FISCHER_TROPSCH_waste:
             return costs.at[self.technology_data_name, "efficiency-heat"]
-        elif self == HeatSource.ELECTROLYSIS_EXCESS:
+        elif self == HeatSource.ELECTROLYSIS_waste:
             return costs.at[self.technology_data_name, "efficiency-heat"]
-        elif self == HeatSource.HABER_BOSCH_EXCESS:
+        elif self == HeatSource.HABER_BOSCH_waste:
             return (
                 costs.at[self.technology_data_name, "efficiency-heat"]
                 / costs.at[self.technology_data_name, "electricity-input"]
             )
-        elif self == HeatSource.METHANOLISATION_EXCESS:
+        elif self == HeatSource.METHANOLISATION_waste:
             return (
                 costs.at[self.technology_data_name, "heat-output"]
                 / costs.at[self.technology_data_name, "hydrogen-input"]
             )
-        elif self == HeatSource.SABATIER_EXCESS:
+        elif self == HeatSource.SABATIER_waste:
             return (
                 1
                 - fallback_ptx_heat_losses
                 - n.links.loc[nodes + " Sabatier", "efficiency"]
             )
-        elif self == HeatSource.FUEL_CELL_EXCESS:
+        elif self == HeatSource.FUEL_CELL_waste:
             return (
                 1
                 - fallback_ptx_heat_losses
@@ -428,13 +423,10 @@ class HeatSource(Enum):
             The bus2 name for the heat pump, or empty string if not applicable.
         """
         if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
-            # Inexhaustible sources (air, ground, sea-water) don't have a bus2
             return ""
         elif self.requires_preheater:
-            # Sources with preheater use return-temperature bus
             return self.return_temperature_bus(nodes, heat_system)
         else:
-            # Limited sources without preheater use the heat carrier bus directly
             return self.resource_bus(nodes, heat_system)
 
     def get_heat_pump_efficiency2(self, cop_heat_pump) -> float:
@@ -481,10 +473,8 @@ class HeatSource(Enum):
         prepare_sector_network.add_heat : Creates heat pump links with this efficiency.
         """
         if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
-            # Inexhaustible sources don't need resource tracking
             return 1.0
         else:
-            # Limited sources: efficiency2 = 1 - 1/COP for inverted link configuration
             return 1 - (1 / cop_heat_pump.clip(lower=0.001))
 
     def requires_heat_pump(self, ptes_discharge_resistive_boosting: bool) -> bool:
