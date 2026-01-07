@@ -17,7 +17,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("retrieve_electricity_demand")
+        snakemake = mock_snakemake("retrieve_electricity_demand_opsd")
         rootpath = ".."
     else:
         rootpath = "."
@@ -43,4 +43,4 @@ if __name__ == "__main__":
 
     res = transparency.fillna(powerstatistics)
 
-    res.to_csv(snakemake.output[0])
+    res.to_csv(snakemake.output.csv)
