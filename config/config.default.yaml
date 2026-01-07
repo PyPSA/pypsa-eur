@@ -1150,7 +1150,7 @@ data:
     source: archive
     version: latest
   lake_data:
-    source: primary
+    source: archive
     version: latest
 
 secrets:

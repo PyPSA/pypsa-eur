@@ -1179,20 +1179,3 @@ if (LAKE_DATA_DATASET := dataset_version("lake_data"))["source"] in [
                 output["zip_file"],
                 LAKE_DATA_DATASET["folder"],
             )
-
-    rule retrieve_lake_data_test_cutout:
-        input:
-            zip_file=storage(
-                f"https://zenodo.org/records/18163260/files/HydroLAKES_polys_v10_belgium.gdb.zip?download=1"
-            ),
-        output:
-            zip_file=f"{LAKE_DATA_DATASET['folder']}/HydroLAKES_polys_v10_belgium.gdb.zip",
-            lake_data=directory(
-                f"{LAKE_DATA_DATASET['folder']}/HydroLAKES_polys_v10_belgium.gdb"
-            ),
-        run:
-            copy2(input["zip_file"], output["zip_file"])
-            unpack_archive(
-                output["zip_file"],
-                LAKE_DATA_DATASET["folder"],
-            )
