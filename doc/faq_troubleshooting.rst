@@ -16,6 +16,18 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
 General
 ===============================================
 
+.. admonition:: I'm having trouble installing PyPSA-Eur or getting started. Where should I start?
+
+   The most common installation issues involve Python environment setup and solver configuration. We recommend using ``pixi`` for environment management. For solver setup, HiGHS is included by default for testing, but commercial solvers are supported as well. See :doc:`installation` for detailed platform-specific instructions, solver configuration guidance and alternative environment manager if you prefer using ``conda`` (legacy).
+
+.. admonition:: My workflow is failing or producing unexpected results. How do I troubleshoot?
+
+   Start by running ``snakemake -call -n`` (dry-run) to validate workflow structure without execution. Then, check log files in ``logs/`` and verify intermediate results at each workflow stage. For persistent issues, see :doc:`support` for community assistance channels.
+
+.. admonition:: I would like to develop and maintain a custom fork of PyPSA-Eur with additional features. How can I best manage this?
+
+   We recommend forking the PyPSA-Eur repository on GitHub and creating a dedicated branch for your custom features. Regularly sync your fork with the upstream repository to incorporate updates and improvements. Use feature branches for individual changes and consider submitting pull requests to contribute back to the main project if applicable.
+
 .. admonition:: What is the difference between snapshots and planning horizons?
 
    **Snapshots** define the temporal resolution of system operation. They represent the individual timesteps (e.g. hourly, 4-hourly, or segments of individual lengths) over which the dispatch of technologies is optimised.
