@@ -1139,6 +1139,16 @@ data:
     source: archive
     version: latest
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
+overpass_api:
+  url: https://overpass-api.de/api/interpreter
+  max_tries: 5
+  timeout: 600
+  user_agent:
+    project_name: PyPSA-Eur
+    email: contact@pypsa.org
+    website: https://github.com/PyPSA/pypsa-eur
+
 secrets:
   corine: '' #Add API key here if primary source is used for retrieving corine dataset after registering in https://land.copernicus.eu/user/login
 
