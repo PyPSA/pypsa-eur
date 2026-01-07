@@ -59,17 +59,17 @@ district_heating,--,,
 -- -- constant_temperature_celsius,C,float,Constant temperature assumed for geothermal heat sources. Used for scaling heat potentials based on actual vs assumed temperature differences.
 -- fallback_ptx_heat_losses,--,float,"Non-recoverable heat loss factor for PTX processes without efficiency-heat data in technology-data.
 heat_sources,--,,
--- urban central,--,"List of heat sources for heat pumps in urban central heating. Must be one of [air, geothermal, ptes, river_water, sea_water, electrolysis_excess, fuel_cell_excess, fischer_tropsch_excess, haber_bosch_excess, sabatier_excess, methanolisation_excess]",
+-- urban central,--,"List of heat sources for heat pumps in urban central heating. Must be one of [air, geothermal, ptes, river_water, sea_water, electrolysis_waste, fuel_cell_waste, fischer_tropsch_waste, haber_bosch_waste, sabatier_waste, methanolisation_waste]",
 -- urban decentral,--,"List of heat sources for heat pumps in urban decentral heating. Must be one of [air]",
 -- rural,--,"List of heat sources for heat pumps in rural heating. Must be one of [air, ground]",
 heat_source_temperatures,--,,Dictionary of temperatures (°C) for each heat source. Used for computing source utilisation.
 -- geothermal,°C,float,Default: 65
--- electrolysis_excess,°C,float,Default: 70C. DEA catalogue expectation for 2024.
--- fuel_cell_excess,°C,float,Default: 70C. Guesstimate based on DEA catalogue stating 70°C for PEMEC waste heat.
--- fischer_tropsch_excess,°C,float,Default: 200. DEA states FT part of hydrogen-to-jet process produces steam.
--- haber_bosch_excess,°C,float,Default: 200C. DEA states 11% of 15% heat output at 350°C.
--- sabatier_excess,°C,float,Default: 200C. Agora Energiewende states at least 200°C for catalytic methanisation A(https://www.agora-energiewende.de/en/publications/the-future-cost-of-electricity-based-synthetic-fuels-1/).
--- methanolisation_excess,°C,float,Default: 200C. Assuming steam
+-- electrolysis_waste,°C,float,Default: 70C. DEA catalogue expectation for 2024.
+-- fuel_cell_waste,°C,float,Default: 70C. Guesstimate based on DEA catalogue stating 70°C for PEMEC waste heat.
+-- fischer_tropsch_waste,°C,float,Default: 200. DEA states FT part of hydrogen-to-jet process produces steam.
+-- haber_bosch_waste,°C,float,Default: 200C. DEA states 11% of 15% heat output at 350°C.
+-- sabatier_waste,°C,float,Default: 200C. Agora Energiewende states at least 200°C for catalytic methanisation A(https://www.agora-energiewende.de/en/publications/the-future-cost-of-electricity-based-synthetic-fuels-1/).
+-- methanolisation_waste,°C,float,Default: 200C. Assuming steam
 residential_heat,--,,Configuration options for residential heat demand-side management (DSM). See `smartEn DSM study <https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf>`_ (Appendix A) for methodology.
 -- dsm,--,,
 -- -- enable,--,"{true, false}",Enable residential heat demand-side management that allows heating systems to provide flexibility by shifting demand within configurable time periods. Models building thermal mass as energy storage.
@@ -186,9 +186,9 @@ ammonia,--,"{true, false, regional}","Add ammonia as a carrrier. It can be eithe
 min_part_load_electrolysis,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for electrolysis
 min_part_load_fischer _tropsch,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the Fischer-Tropsch process
 min_part_load _methanolisation,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the methanolisation process
-use_fischer_tropsch _waste_heat,--,"{true, false}",Add option for using waste heat of Fischer Tropsch in district heating networks
+use_fischer_tropsch_waste_heat,--,"{true, false}",Add option for using waste heat of Fischer Tropsch in district heating networks
 use_fuel_cell_waste_heat,--,"{true, false}",Add option for using waste heat of fuel cells in district heating networks
-use_electrolysis_waste _heat,--,"{true, false}",Add option for using waste heat of electrolysis in district heating networks
+use_electrolysis_waste_heat,--,"{true, false}",Add option for using waste heat of electrolysis in district heating networks
 electricity_transmission _grid,--,"{true, false}",Switch for enabling/disabling the electricity transmission grid.
 electricity_distribution _grid,--,"{true, false}",Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.
 electricity_distribution _grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid

@@ -557,22 +557,22 @@ sector:
       handle_missing_countries: fill
     heat_source_temperatures:
       geothermal: 65
-      electrolysis_excess: 70
-      fuel_cell_excess: 70
-      fischer_tropsch_excess: 200
-      haber_bosch_excess: 200
-      sabatier_excess: 200
-      methanolisation_excess: 200
+      electrolysis_waste: 70
+      fuel_cell_waste: 70
+      fischer_tropsch_waste: 200
+      haber_bosch_waste: 200
+      sabatier_waste: 200
+      methanolisation_waste: 200
     fallback_ptx_heat_losses: 0.05
   heat_sources:
     urban central:
     - air
-    - electrolysis_excess
-    - fuel_cell_excess
-    - fischer_tropsch_excess
-    - haber_bosch_excess
-    - sabatier_excess
-    - methanolisation_excess
+    - electrolysis_waste
+    - fuel_cell_waste
+    - fischer_tropsch_waste
+    - haber_bosch_waste
+    - sabatier_waste
+    - methanolisation_waste
     urban decentral:
     - air
     rural:
