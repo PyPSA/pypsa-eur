@@ -184,3 +184,15 @@ Contribution & support
 
    This also generates the HTML documentation in ``doc/_build/html``.
 
+.. admonition:: How can I contribute to PyPSA-Eur?
+
+   We strongly welcome contributions! You can file issues or make pull requests on `Github <https://github.com/pypsa/pypsa-eur>`_. Please also refer to the :doc:`contributing` section.
+
+.. admonition:: Where can I get help if I encounter issues?
+
+   Please refer to the :doc:`support` page for various ways to reach out to us and the community, including Discord, mailing lists, and issue trackers.
+
+.. admonition:: Where can I report bugs or request features?
+
+   For bugs and feature requests, please use the repo's `Github issues <https://github.com/pypsa/pypsa-eur/issues>`_.
+
