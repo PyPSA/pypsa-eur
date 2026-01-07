@@ -184,14 +184,9 @@ class HeatSource(Enum):
         """
         if self.source_type in [HeatSourceType.STORAGE, HeatSourceType.PROCESS_WASTE]:
             return True
-        # Geothermal also uses preheater
         if self == HeatSource.GEOTHERMAL:
             return True
         return False
-
-    # -------------------------------------------------------------------------
-    # PTX Process Waste Heat Properties
-    # -------------------------------------------------------------------------
 
     @property
     def process_carrier(self) -> str | None:
@@ -272,13 +267,16 @@ class HeatSource(Enum):
             HeatSource.ELECTROLYSIS_waste: "electrolysis",
             HeatSource.HABER_BOSCH_waste: "Haber-Bosch",
             HeatSource.METHANOLISATION_waste: "methanolisation",
-            # Sabatier, Fuel Cell, and Methanolisation use calculated efficiencies
         }
         return mapping.get(self)
 
     def get_capital_cost(self, costs, overdim_factor: float, heat_system) -> float:
         """
         Returns the capital cost for the heat source generator.
+
+        For direct utilisation heat sources (geothermal), retrieves cost from technology-data.
+        For other limited sources (like river_water without direct utilisation), returns 0.0.
+        For inexhaustible sources (air, ground, sea water), this method shouldn't be called.
 
         Parameters
         ----------
@@ -294,9 +292,6 @@ class HeatSource(Enum):
         float
             The capital cost for the heat source generator.
         """
-        # For direct utilisation heat sources, get cost from technology-data
-        # For other limited sources (like river_water without direct utilisation), return 0.0
-        # For inexhaustible sources, this method shouldn't be called
         if self in [HeatSource.GEOTHERMAL]:
             return (
                 costs.at[
@@ -312,6 +307,10 @@ class HeatSource(Enum):
         """
         Returns the lifetime for the heat source generator.
 
+        For direct utilisation heat sources (geothermal), retrieves lifetime from technology-data.
+        For other limited sources (like river_water without direct utilisation), returns infinity.
+        For inexhaustible sources (air, ground, sea water), this method shouldn't be called.
+
         Parameters
         ----------
         costs : pd.DataFrame
@@ -324,9 +323,6 @@ class HeatSource(Enum):
         float
             The lifetime for the heat source generator in years.
         """
-        # For direct utilisation heat sources, get lifetime from technology-data
-        # For other limited sources (like river_water without direct utilisation), return np.inf
-        # For inexhaustible sources, this method shouldn't be called
         if self in [HeatSource.GEOTHERMAL]:
             return costs.at[heat_system.heat_source_costs_name(self), "lifetime"]
         else:
@@ -366,7 +362,6 @@ class HeatSource(Enum):
                 f"get_waste_heat_efficiency only applies to PROCESS_WASTE sources, not {self}"
             )
 
-        # Base branch formulas:
         if self == HeatSource.FISCHER_TROPSCH_waste:
             return costs.at[self.technology_data_name, "efficiency-heat"]
         elif self == HeatSource.ELECTROLYSIS_waste:
@@ -421,13 +416,10 @@ class HeatSource(Enum):
             The bus2 name for the heat pump, or empty string if not applicable.
         """
         if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
-            # Inexhaustible sources (air, ground, sea-water) don't have a bus2
             return ""
         elif self.requires_preheater:
-            # Sources with preheater use return-temperature bus
             return self.return_temperature_bus(nodes, heat_system)
         else:
-            # Limited sources without preheater use the heat carrier bus directly
             return self.resource_bus(nodes, heat_system)
 
     def get_heat_pump_efficiency2(self, cop_heat_pump) -> float:
@@ -474,10 +466,8 @@ class HeatSource(Enum):
         prepare_sector_network.add_heat : Creates heat pump links with this efficiency.
         """
         if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
-            # Inexhaustible sources don't need resource tracking
             return 1.0
         else:
-            # Limited sources: efficiency2 = 1 - 1/COP for inverted link configuration
             return 1 - (1 / cop_heat_pump.clip(lower=0.001))
 
     def requires_heat_pump(self, ptes_discharge_resistive_boosting: bool) -> bool:
