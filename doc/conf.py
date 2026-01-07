@@ -100,8 +100,8 @@ master_doc = "index"
 
 # General information about the project.
 project = "PyPSA-Eur"
-copyright = "2017-2025 Tom Brown (TUB, KIT, FIAS), Jonas Hoersch (OET, KIT, FIAS), Fabian Hofmann (OET, TUB, FIAS), Fabian Neumann (TUB, KIT), Marta Victoria (DTU, Aarhus University), Lisa Zeyen (TUB, KIT)"
-author = "Tom Brown (TUB, KIT, FIAS), Jonas Hoersch (OET, KIT, FIAS), Fabian Hofmann (OET, TUB, FIAS), Fabian Neumann (TUB, KIT), Marta Victoria (DTU, Aarhus University), Lisa Zeyen (TUB, KIT)"
+copyright = "PyPSA-Eur Contributors"
+author = "PyPSA-Eur Contributors"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -185,7 +185,7 @@ html_short_title = "PyPSA-Eur"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "img/pypsa-logo.png"
+html_logo = "img/logo.svg"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32

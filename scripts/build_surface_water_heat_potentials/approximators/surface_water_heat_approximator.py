@@ -4,7 +4,6 @@
 import logging
 from abc import ABC
 from functools import cached_property
-from typing import Union
 
 import geopandas as gpd
 import numpy as np
@@ -33,7 +32,7 @@ class SurfaceWaterHeatApproximator(ABC):
         self,
         volume_flow: xr.DataArray,
         water_temperature: xr.DataArray,
-        region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
+        region: shapely.geometry.polygon.Polygon | gpd.GeoSeries,
         max_relative_volume_flow: float = 1.0,
         delta_t_max: float = 4,
         min_outlet_temperature: float = 1,
