@@ -18,13 +18,15 @@ General
 
 .. admonition:: What is the difference between snapshots and planning horizons?
 
-.. admonition:: How can I resample an hourly time series to match my model's time resolution?
+   **Snapshots** define the temporal resolution of system operation. They represent the individual timesteps (e.g. hourly, 4-hourly, or segments of individual lengths) over which the dispatch of technologies is optimised.
+
+   **Planning horizons**, used for example in overnight or myopic optimisation workflows, define distinct investment periods. They either represent an individual year (e.g. 2030) or divide the long-term investment period into multiple stages (e.g. 2030, 2040, and 2050). For myopic optimisations, investments made in one horizon influence the next.
+
+   In short: snapshots handle *operational time*, planning horizons handle *investment time*.
 
 .. admonition:: In a myopic optimisation, how can I impose lower and upper bounds on renewable capacity expansion?
 
 .. admonition:: How can I change the cost assumptions for natural gas, and can I use a time-varying gas price?
-
-.. admonition:: Why does ``solve_network`` show the warning that the ``EU`` bus has no attached components?
 
 
 Solving
@@ -58,6 +60,11 @@ Solving
       )
       print(load_shedding)
 
+.. admonition:: Why does ``solve_network`` show the warning that the ``EU`` bus has no attached components?
+
+   The ``EU`` bus is introduced as an aggregate carrier bus used to track system-wide quantities—such as total fuel use (e.g. hydrogen, biomass, CO₂) across all regions. This is particularly useful when treating the respective fuel in a copperplated configuration. Because this bus is not intended to represent a physical location and no components are directly attached to it in the optimisation problem, PyPSA
+   emits a warning. The warning is harmless and can safely be ignored.
+
 
 Model configuration & customisation
 ===============================================
@@ -88,11 +95,46 @@ Model configuration & customisation
 
    Possible steps: Use ``n.statistics.energy_balance`` (`docs <https://docs.pypsa.org/latest/api/networks/statistics/#pypsa.Network.statistics.energy_balance>`__) to ensure that the technology you added is expanded and dispatched. Use ``n.statistics.opex`` (`docs <https://docs.pypsa.org/latest/api/networks/statistics/#pypsa.Network.statistics.opex>`__) and ``n.statistics.capex`` (`docs <https://docs.pypsa.org/latest/api/networks/statistics/#pypsa.Network.statistics.capex>`__) to ensure that the overall system costs stay in a reasonable range compared to the previous (or counterfactual) run.
 
+.. admonition:: How can I resample an hourly time series to match my model's time resolution?
+
+   Use PyPSA's built-in `resampling functions <https://docs.pypsa.org/latest/api/other/common/#pypsa.common.resample_timeseries>`__, which correctly aggregates time series and preserves all required metadata. For example, to convert an hourly profile to 4-hour resolution:
+
+   .. code-block:: python
+
+      from pypsa.common import resample_timeseries
+
+      ts_resampled = resample_timeseries(df, freq="4H")
+
+   Please be aware that the dataframe's index must be a DateTimeIndex.
+
 .. admonition:: How can I model electricity imports from outside the model scope (e.g. an HVDC link to North Africa)?
 
 
 Results & postprocessing
 ===============================================
+
+.. admonition:: How can I start analysing my results (e.g. energy balances) after a successful model run?
+
+   PyPSA-Eur already generates a rich set of default outputs. These are stored in the ``results/`` directory and include maps, plots, and summary tables that provide a first overview of capacities, dispatch patterns, prices, and line loadings. Reviewing these default figures is often the quickest way to understand the high-level behaviour of your scenario.
+
+   For more detailed analysis, use PyPSA's `built-in statistics API <https://docs.pypsa.org/latest/api/networks/statistics/>`__, which offers a variety of functions to extract and summarise key performance indicators. These statistics can be further processed using standard Python libraries such as Pandas.
+
+   .. code-block:: python
+
+      eb = n.statistics.energy_balance()
+      print(eb)
+
+   You can filter statistics by carrier, component, bus, or region using PyPSA's flexible filtering API. See the `documentation <https://docs.pypsa.org/stable/user-guide/statistics/#filtering>`__ for more details:
+
+   Other useful entry points include:
+
+   .. code-block:: python
+
+      n.statistics.capex()      # investment costs
+      n.statistics.opex()       # operational costs
+      n.statistics.generator()  # generator-level summaries
+
+   These tools help you go beyond the default outputs and systematically explore the solved system.
 
 .. admonition:: I observe a very high marginal electricity price in a single timestep. Is this normal?
 
