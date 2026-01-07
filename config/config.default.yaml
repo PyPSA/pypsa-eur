@@ -567,6 +567,8 @@ sector:
   heat_sources:
     urban central:
     - air
+    - ptes
+    - geothermal
     - electrolysis_waste
     - fuel_cell_waste
     - fischer_tropsch_waste
