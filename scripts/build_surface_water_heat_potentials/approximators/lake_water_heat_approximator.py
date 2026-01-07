@@ -4,7 +4,6 @@
 """Lake water heat approximator for district heating systems."""
 
 from functools import cached_property
-from typing import Union
 
 import geopandas as gpd
 import shapely
@@ -53,7 +52,7 @@ class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
     def __init__(
         self,
         ambient_temperature: xr.DataArray,
-        region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
+        region: shapely.geometry.polygon.Polygon | gpd.GeoSeries,
         lake_shapes: gpd.GeoDataFrame,
         delta_t_max: float = 1,
         min_outlet_temperature: float = 1,
