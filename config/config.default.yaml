@@ -560,6 +560,8 @@ sector:
   heat_sources:
     urban central:
     - air
+    - ptes
+    - geothermal
     urban decentral:
     - air
     rural:
