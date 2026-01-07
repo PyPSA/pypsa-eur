@@ -144,7 +144,6 @@ Results & postprocessing
 
       n.statistics.capex()      # investment costs
       n.statistics.opex()       # operational costs
-      n.statistics.generator()  # generator-level summaries
 
    These tools help you go beyond the default outputs and systematically explore the solved system.
 
