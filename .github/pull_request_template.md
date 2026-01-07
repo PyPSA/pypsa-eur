@@ -11,5 +11,5 @@ Closes # (if applicable).
 - [ ] Changes in configuration options are added in `config/config.default.yaml`.
 - [ ] Changes in configuration options are documented in `doc/configtables/*.csv`.
 - [ ] OET SPDX license header added to all touched files.
-- [ ] For new data sources or versions, `these instructions <https://pypsa-eur.readthedocs.io/en/latest/data_sources.html>`_ have been followed.
+- [ ] For new data sources or versions, [these instructions](https://pypsa-eur.readthedocs.io/en/latest/data_sources.html) have been followed.
 - [ ] A release note `doc/release_notes.rst` is added.
