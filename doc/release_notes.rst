@@ -8,6 +8,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Added Frequently Asked Questions (FAQ) and Troubleshooting guide to the documentation: https://pypsa-eur.readthedocs.io/en/latest/faq_troubleshooting.html (https://github.com/PyPSA/pypsa-eur/pull/1939)
 
 * Fix compatibility of rules `build_gas_input_locations` and `build_gas_network` with pyogrio >=0.12.0 (https://github.com/PyPSA/pypsa-eur/pull/1955).
 
