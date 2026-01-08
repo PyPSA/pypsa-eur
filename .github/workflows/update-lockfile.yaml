@@ -38,7 +38,7 @@ jobs:
         pixi workspace export conda-environment -e default envs/environment.yaml -n pypsa-eur
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: lockfiles
         path: |
@@ -51,12 +51,12 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Download all artifacts
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: lockfiles
 
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v7
+      uses: peter-evans/create-pull-request@v8
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: update-locked-environment

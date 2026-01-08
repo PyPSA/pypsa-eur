@@ -47,7 +47,7 @@ if config["foresight"] != "perfect":
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
@@ -72,7 +72,7 @@ if config["foresight"] != "perfect":
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
@@ -96,7 +96,7 @@ if config["foresight"] != "perfect":
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
@@ -114,13 +114,14 @@ if config["foresight"] != "perfect":
     rule plot_balance_map:
         params:
             plotting=config_provider("plotting"),
+            settings=lambda w: config_provider("plotting", "balance_map", w.carrier),
         input:
             network=RESULTS
             + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf",
         threads: 1
         resources:
             mem_mb=8000,
@@ -134,6 +135,34 @@ if config["foresight"] != "perfect":
             )
         script:
             "../scripts/plot_balance_map.py"
+
+    rule plot_balance_map_interactive:
+        params:
+            settings=lambda w: config_provider(
+                "plotting", "balance_map_interactive", w.carrier
+            ),
+        input:
+            network=RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        output:
+            RESULTS
+            + "maps/interactive/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.html",
+        threads: 1
+        resources:
+            mem_mb=8000,
+        log:
+            RESULTS
+            + "logs/plot_balance_map_interactive/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+        benchmark:
+            (
+                RESULTS
+                + "benchmarks/plot_interactive_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_balance_map_interactive.py"
 
     rule plot_heat_source_map:
         params:
@@ -159,9 +188,9 @@ if config["foresight"] != "perfect":
             ),
         output:
             temp_map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_{carrier}.html",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_{carrier}.html",
             energy_map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_{carrier}.html",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_{carrier}.html",
         threads: 1
         resources:
             mem_mb=150000,
@@ -182,7 +211,7 @@ if config["foresight"] == "perfect":
     def output_map_year(w):
         return {
             f"map_{year}": RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_"
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_"
             + f"{year}.pdf"
             for year in config_provider("scenario", "planning_horizons")(w)
         }
@@ -398,8 +427,8 @@ rule plot_summary:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/energy_balance.csv",
-        eurostat="data/eurostat/Balances-April2023",
-        co2="data/bundle/eea/UNFCCC_v23.csv",
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
+        co2=rules.retrieve_ghg_emissions.output["csv"],
     output:
         costs=RESULTS + "graphs/costs.svg",
         energy=RESULTS + "graphs/energy.svg",
