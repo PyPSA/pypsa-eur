@@ -98,6 +98,9 @@ osm_boundaries,,,
 gem_gspt,,,
 -- source,str,"{archive, primary}","Source of the Global Steel Plant Tracker data."
 -- version,str,,"Version of the Global Steel Plant Tracker data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source."
+gem_gcct,,,
+-- source,str,"{archive, primary}","Source of the Global Cement and Concrete Tracker data."
+-- version,str,,"Version of the Global Cement and Concrete Tracker data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source."
 tyndp,,,
 -- source,str,"{archive, primary}","Source of the TYNDP data."
 -- version,str,,"Version of the TYNDP data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source."
