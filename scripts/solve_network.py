@@ -1270,6 +1270,159 @@ def check_objective_value(n: pypsa.Network, solving: dict) -> None:
             )
 
 
+def build_mga_weights(n: pypsa.Network, run_config: dict) -> dict:
+    """
+    Build MGA weights dictionary from regex patterns.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    run_config : dict
+        Single MGA run config with component types and their parameters.
+        Example: {"Generator": {"regex": ".*wind", "variable": "p_nom", "weights": 1}}
+
+    Returns
+    -------
+    dict
+        Weights dictionary for n.optimize.optimize_mga()
+    """
+    weights = {}
+    component_map = {
+        "Generator": n.generators,
+        "Link": n.links,
+        "StorageUnit": n.storage_units,
+        "Store": n.stores,
+        "Line": n.lines,
+    }
+
+    for component_type, cfg in run_config.items():
+        if component_type not in component_map:
+            logger.warning(f"Unknown component type '{component_type}' in MGA config")
+            continue
+
+        df = component_map[component_type]
+        regex = cfg.get("regex", "")
+        variable = cfg.get("variable", "p_nom")
+        weight = cfg.get("weights", 1.0)
+
+        matching = df.index[df.index.str.contains(regex, regex=True, na=False)]
+
+        if matching.empty:
+            logger.warning(f"No {component_type}s found matching pattern '{regex}'")
+            continue
+
+        logger.info(
+            f"Found {len(matching)} {component_type}s matching pattern '{regex}'"
+        )
+
+        weights.setdefault(component_type, {})[variable] = {
+            idx: weight for idx in matching
+        }
+
+    return weights
+
+
+def run_mga_optimization(
+    n: pypsa.Network,
+    mga_params: dict,
+    mga_run: str,
+    epsilon: float,
+    sense: str,
+    model_kwargs: dict,
+    solve_kwargs: dict,
+    planning_horizons: str | None = None,
+) -> tuple[str, str]:
+    """
+    Run MGA (Modelling to Generate Alternatives) optimization.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance (already contains cost-optimal solution)
+    mga_params : dict
+        MGA configuration from snakemake.params.mga
+    mga_run : str
+        Name of the MGA run to execute
+    epsilon : float
+        Slack parameter - how much the objective can deviate from optimal (e.g., 0.05 = 5%)
+    sense : str
+        Optimization sense for MGA objective: 'min' or 'max'
+    model_kwargs : dict
+        Arguments for model creation
+    solve_kwargs : dict
+        Arguments for solving
+    planning_horizons : str, optional
+        The current planning horizon year
+
+    Returns
+    -------
+    tuple[str, str]
+        (status, condition) from the optimization
+    """
+    logger.info(f"Starting MGA optimization for run '{mga_run}'")
+    logger.info(f"MGA parameters: epsilon={epsilon}, sense={sense}")
+
+    # Get run configuration
+    mga_runs = mga_params.get("runs", {})
+    if mga_run not in mga_runs:
+        raise RuntimeError(f"MGA run '{mga_run}' not found in configuration")
+
+    run_config = mga_runs[mga_run]
+
+    # Build weights dictionary
+    weights = build_mga_weights(n, run_config)
+
+    if not weights:
+        raise RuntimeError(f"No valid weights found for MGA run '{mga_run}'")
+
+    logger.info(f"MGA weights: {weights}")
+
+    # Store original objective for reference
+    # original_objective = n.objective
+    # logger.info(f"Original (cost-optimal) objective value: {original_objective}")
+
+    # Call PyPSA's native MGA function
+    status, condition = n.optimize.optimize_mga(
+        snapshots=None,
+        multi_investment_periods=model_kwargs.get("multi_investment_periods", False),
+        weights=weights,
+        sense=sense,
+        slack=epsilon,
+        solver_name=solve_kwargs["solver_name"],
+        solver_options=solve_kwargs.get("solver_options", {}),
+        model_kwargs={
+            key: val
+            for key, val in model_kwargs.items()
+            if key != "multi_investment_periods"
+        },
+        assign_all_duals=solve_kwargs.get("assign_all_duals", False),
+        io_api=solve_kwargs.get("io_api", None),
+        keep_files=solve_kwargs.get("keep_files", False),
+        extra_functionality=partial(
+            extra_functionality, planning_horizons=planning_horizons
+        ),
+    )
+
+    # logger.info(f"MGA '{mga_run}' completed with status: {status}, condition: {condition}")
+    # logger.info(f"MGA objective value: {n.objective}")
+
+    # # Store MGA metadata
+    # if not hasattr(n, "mga_results"):
+    #     n.mga_results = {}
+    # n.mga_results[mga_run] = {
+    #     "original_objective": original_objective,
+    #     "mga_objective": n.objective,
+    #     "status": status,
+    #     "condition": condition,
+    #     "epsilon": epsilon,
+    #     "sense": sense,
+    #     "weights": weights,
+    # }
+
+    return status, condition
+
+
 def collect_kwargs(
     config: dict,
     solving: dict,
@@ -1447,6 +1600,10 @@ if __name__ == "__main__":
     rolling_horizon = cf_solving.get("rolling_horizon", False)
     skip_iterations = cf_solving.get("skip_iterations", False)
 
+    # Check for MGA mode
+    mga_run = getattr(snakemake.wildcards, "mga_run", None)
+    is_mga_run = snakemake.params["mga"]["enable"] and mga_run is not None
+
     if not n.lines.s_nom_extendable.any():
         skip_iterations = True
         logger.info("No expandable lines found. Skipping iterative solving.")
@@ -1459,7 +1616,31 @@ if __name__ == "__main__":
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=logging_frequency
     ) as mem:
-        if rolling_horizon and snakemake.rule == "solve_operations_network":
+        if is_mga_run:
+            logger.info("Using MGA...")
+            model_kwargs, solve_kwargs = collect_kwargs(
+                snakemake.config,
+                snakemake.params.solving,
+                planning_horizons,
+                log_fn=snakemake.log.solver,
+                mode="single",
+            )
+
+            # Get epsilon and sense from wildcards
+            n.config = snakemake.config
+            n.params = snakemake.params
+
+            status, condition = run_mga_optimization(
+                n,
+                mga_params=snakemake.params["mga"],
+                mga_run=mga_run,
+                epsilon=float(snakemake.wildcards.epsilon),
+                sense=snakemake.wildcards.sense,
+                model_kwargs=model_kwargs,
+                solve_kwargs=solve_kwargs,
+                planning_horizons=planning_horizons,
+            )
+        elif rolling_horizon and snakemake.rule == "solve_operations_network":
             logger.info("Using rolling horizon optimization...")
             all_kwargs, _ = collect_kwargs(
                 snakemake.config,
@@ -1540,11 +1721,13 @@ if __name__ == "__main__":
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
 
-    with open(snakemake.output.config, "w") as file:
-        yaml.dump(
-            n.meta,
-            file,
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
-        )
+    # Only write config for non-MGA runs
+    if hasattr(snakemake.output, "config"):
+        with open(snakemake.output.config, "w") as file:
+            yaml.dump(
+                n.meta,
+                file,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )

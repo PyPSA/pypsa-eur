@@ -11,6 +11,7 @@ rule solve_network:
             "sector", "co2_sequestration_potential", default=200
         ),
         custom_extra_functionality=input_custom_extra_functionality,
+        mga=config_provider("mga"),
     input:
         network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
     output:
@@ -24,6 +25,44 @@ rule solve_network:
         python=RESULTS + "logs/solve_network/base_s_{clusters}_elec_{opts}_python.log",
     benchmark:
         (RESULTS + "benchmarks/solve_network/base_s_{clusters}_elec_{opts}")
+    threads: solver_threads
+    resources:
+        mem_mb=memory,
+        runtime=config_provider("solving", "runtime", default="6h"),
+    shadow:
+        shadow_config
+    script:
+        "../scripts/solve_network.py"
+
+
+rule solve_mga_network:
+    params:
+        solving=config_provider("solving"),
+        foresight=config_provider("foresight"),
+        co2_sequestration_potential=config_provider(
+            "sector", "co2_sequestration_potential", default=200
+        ),
+        custom_extra_functionality=input_custom_extra_functionality,
+        mga=config_provider("mga"),
+    input:
+        network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
+    output:
+        network=RESULTS
+        + "networks/mga/base_s_{clusters}_elec_{opts}_{mga_run}_eps{epsilon}_sense{sense}.nc",
+    log:
+        solver=normpath(
+            RESULTS
+            + "logs/solve_mga_network/base_s_{clusters}_elec_{opts}_{mga_run}_eps{epsilon}_sense{sense}_solver.log"
+        ),
+        memory=RESULTS
+        + "logs/solve_mga_network/base_s_{clusters}_elec_{opts}_{mga_run}_eps{epsilon}_sense{sense}_memory.log",
+        python=RESULTS
+        + "logs/solve_mga_network/base_s_{clusters}_elec_{opts}_{mga_run}_eps{epsilon}_sense{sense}_python.log",
+    benchmark:
+        (
+            RESULTS
+            + "benchmarks/solve_mga_network/base_s_{clusters}_elec_{opts}_{mga_run}_eps{epsilon}_sense{sense}"
+        )
     threads: solver_threads
     resources:
         mem_mb=memory,

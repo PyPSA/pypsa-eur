@@ -1002,6 +1002,12 @@ adjustments:
           capital_cost: 1.0
     absolute: false
 
+mga:
+  enable: false
+  epsilon: [0.05]
+  sense: [min, max]
+  runs:
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
 data:
   hotmaps_industrial_sites:
