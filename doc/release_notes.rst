@@ -116,6 +116,8 @@ Upcoming Release
 
 * Added minimum unit dispatch setting option for electrolysis
 
+* Feature: All input data to the model is now version controlled. The data versions are listed in `data/versions.csv` and can be configured in the configfile. (https://github.com/PyPSA/pypsa-eur/pull/1675)
+
 * Deprecate `shared_cutouts`: This configuration entry is no longer supported. Cutouts are always shared.
   To use scenario specific cutouts with different time or spatial resolution, make sure to name those cutouts differently in the `atlite:` configuration entry.
 
