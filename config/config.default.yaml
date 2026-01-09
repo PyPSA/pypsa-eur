@@ -127,8 +127,8 @@ electricity:
 
   extendable_carriers:
     Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
-    StorageUnit: [] # battery, H2
-    Store: [battery, H2]
+    StorageUnit: [] # battery, H2, li-ion, vanadium, lfp, lair, pair, iron-air
+    Store: [battery, H2] # li-ion, vanadium, lfp, lair, pair, iron-air
     Link: [] # H2 pipeline
 
   powerplants_filter: (DateOut >= 2024 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
