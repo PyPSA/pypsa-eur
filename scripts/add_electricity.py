@@ -73,6 +73,53 @@ from scripts._helpers import (
 if PYPSA_V1:
     pypsa.options.params.add.return_names = True
 
+STORE_LOOKUP = {
+    "battery": {
+        "store": "battery storage",
+        "bicharger": "battery inverter",
+    },
+    "home battery": {
+        "store": "home battery storage",
+        "bicharger": "home battery inverter",
+    },
+    "li-ion": {
+        "store": "battery storage",
+        "bicharger": "battery inverter",
+    },
+    "lfp": {
+        "store": "Lithium-Ion-LFP-store",
+        "bicharger": "Lithium-Ion-LFP-bicharger",
+    },
+    "vanadium": {
+        "store": "Vanadium-Redox-Flow-store",
+        "bicharger": "Vanadium-Redox-Flow-bicharger",
+    },
+    "lair": {
+        "store": "Liquid-Air-store",
+        "charger": "Liquid-Air-charger",
+        "discharger": "Liquid-Air-discharger",
+    },
+    "pair": {
+        "store": "Compressed-Air-Adiabatic-store",
+        "bicharger": "Compressed-Air-Adiabatic-bicharger",
+    },
+    "iron-air": {
+        "store": "iron-air battery",
+        "charger": "iron-air battery charge",
+        "discharger": "iron-air battery discharge",
+    },
+    "H2": {
+        "store": "hydrogen storage underground",
+        "charger": "electrolysis",
+        "discharger": "fuel cell",
+    },
+    "H2 tank": {
+        "store": "hydrogen storage tank type 1 including compressor",
+        "charger": "electrolysis",
+        "discharger": "fuel cell",
+    },
+}
+
 idx = pd.IndexSlice
 
 logger = logging.getLogger(__name__)
@@ -888,9 +935,28 @@ def estimate_renewable_capacities(
             )
 
 
+def get_available_storage_carriers(carriers):
+    """
+    Filter and register available storage carriers from a given list.
+    """
+    implemented = set(STORE_LOOKUP.keys())
+    input_carriers = set(carriers)
+
+    not_implemented = input_carriers - implemented
+    if not_implemented:
+        logger.warning(
+            f"The following carriers are not implemented as storage technologies in PyPSA-Eur: {sorted(not_implemented)}"
+        )
+
+    available_carriers = sorted(input_carriers & implemented)
+
+    return available_carriers
+
+
 def attach_storageunits(
     n: pypsa.Network,
     costs: pd.DataFrame,
+    buses_i: list,
     extendable_carriers: dict,
     max_hours: dict,
 ):
@@ -903,22 +969,30 @@ def attach_storageunits(
         The PyPSA network to attach the storage units to.
     costs : pd.DataFrame
         DataFrame containing the cost data.
+    buses_i : list
+        List of high voltage electricity buses.
     extendable_carriers : dict
         Dictionary of extendable energy carriers.
     max_hours : dict
         Dictionary of maximum hours for storage units.
     """
-    carriers = extendable_carriers["StorageUnit"]
+    available_carriers = get_available_storage_carriers(extendable_carriers)
+    n.add("Carrier", available_carriers)
 
-    n.add("Carrier", carriers)
+    for carrier in available_carriers:
+        max_hour = max_hours.get(carrier)
+        if max_hour is None:
+            logger.warning(f"No max_hours defined for carrier '{carrier}'. Skipping.")
+            continue
 
-    buses_i = n.buses.index
+        roundtrip_correction = 0.5 if carrier in ["battery", "li-ion"] else 1
 
-    lookup_store = {"H2": "electrolysis", "battery": "battery inverter"}
-    lookup_dispatch = {"H2": "fuel cell", "battery": "battery inverter"}
-
-    for carrier in carriers:
-        roundtrip_correction = 0.5 if carrier == "battery" else 1
+        lookup = STORE_LOOKUP[carrier]
+        if "bicharger" in lookup:
+            lookup_charge = lookup_discharge = lookup["bicharger"]
+        else:
+            lookup_charge = lookup["charger"]
+            lookup_discharge = lookup["discharger"]
 
         n.add(
             "StorageUnit",
@@ -929,18 +1003,25 @@ def attach_storageunits(
             p_nom_extendable=True,
             capital_cost=costs.at[carrier, "capital_cost"],
             marginal_cost=costs.at[carrier, "marginal_cost"],
-            efficiency_store=costs.at[lookup_store[carrier], "efficiency"]
+            efficiency_store=costs.at[lookup_charge, "efficiency"]
             ** roundtrip_correction,
-            efficiency_dispatch=costs.at[lookup_dispatch[carrier], "efficiency"]
+            efficiency_dispatch=costs.at[lookup_discharge, "efficiency"]
             ** roundtrip_correction,
-            max_hours=max_hours[carrier],
+            max_hours=max_hour,
             cyclic_state_of_charge=True,
+            lifetime=costs.at[carrier, "lifetime"],
         )
+
+    logger.info(
+        "Add the following technologies as storage units:\n - "
+        + "\n - ".join(available_carriers)
+    )
 
 
 def attach_stores(
     n: pypsa.Network,
     costs: pd.DataFrame,
+    buses_i: list,
     extendable_carriers: dict,
 ):
     """
@@ -952,95 +1033,80 @@ def attach_stores(
         The PyPSA network to attach the stores to.
     costs : pd.DataFrame
         DataFrame containing the cost data.
+    buses_i : list
+        List of high voltage electricity buses.
     extendable_carriers : dict
         Dictionary of extendable energy carriers.
     """
-    carriers = extendable_carriers["Store"]
+    available_carriers = get_available_storage_carriers(extendable_carriers)
+    n.add("Carrier", available_carriers)
 
-    n.add("Carrier", carriers)
+    for carrier in available_carriers:
+        roundtrip_correction = 0.5 if carrier in ["battery", "li-ion"] else 1
 
-    buses_i = n.buses.index
+        lookup = STORE_LOOKUP[carrier]
+        lookup_store = lookup["store"]
+        if "bicharger" in lookup:
+            lookup_charge = lookup_discharge = lookup["bicharger"]
+        else:
+            lookup_charge = lookup["charger"]
+            lookup_discharge = lookup["discharger"]
 
-    if "H2" in carriers:
-        h2_buses_i = n.add("Bus", buses_i + " H2", carrier="H2", location=buses_i)
-
-        n.add(
-            "Store",
-            h2_buses_i,
-            bus=h2_buses_i,
-            carrier="H2",
-            e_nom_extendable=True,
-            e_cyclic=True,
-            capital_cost=costs.at["hydrogen storage underground", "capital_cost"],
+        bus_names = buses_i + f" {carrier}"
+        charge_name = "Electrolysis" if lookup_charge == "electrolysis" else "charger"
+        discharge_name = (
+            "Fuel Cell" if lookup_discharge == "fuel cell" else "discharger"
         )
 
         n.add(
-            "Link",
-            h2_buses_i + " Electrolysis",
-            bus0=buses_i,
-            bus1=h2_buses_i,
-            carrier="H2 electrolysis",
-            p_nom_extendable=True,
-            efficiency=costs.at["electrolysis", "efficiency"],
-            capital_cost=costs.at["electrolysis", "capital_cost"],
-            marginal_cost=costs.at["electrolysis", "marginal_cost"],
-        )
-
-        n.add(
-            "Link",
-            h2_buses_i + " Fuel Cell",
-            bus0=h2_buses_i,
-            bus1=buses_i,
-            carrier="H2 fuel cell",
-            p_nom_extendable=True,
-            efficiency=costs.at["fuel cell", "efficiency"],
-            # NB: fixed cost is per MWel
-            capital_cost=costs.at["fuel cell", "capital_cost"]
-            * costs.at["fuel cell", "efficiency"],
-            marginal_cost=costs.at["fuel cell", "marginal_cost"],
-        )
-
-    if "battery" in carriers:
-        b_buses_i = n.add(
-            "Bus", buses_i + " battery", carrier="battery", location=buses_i
+            "Bus",
+            bus_names,
+            location=buses_i,
+            carrier=carrier,
+            x=n.buses.loc[list(buses_i)].x.values,
+            y=n.buses.loc[list(buses_i)].y.values,
         )
 
         n.add(
             "Store",
-            b_buses_i,
-            bus=b_buses_i,
-            carrier="battery",
+            bus_names,
+            bus=bus_names,
             e_cyclic=True,
             e_nom_extendable=True,
-            capital_cost=costs.at["battery storage", "capital_cost"],
-            marginal_cost=costs.at["battery", "marginal_cost"],
+            carrier=carrier,
+            capital_cost=costs.at[lookup_store, "capital_cost"],
+            lifetime=costs.at[lookup_store, "lifetime"],
         )
-
-        n.add("Carrier", ["battery charger", "battery discharger"])
 
         n.add(
             "Link",
-            b_buses_i + " charger",
+            bus_names,
+            suffix=f" {charge_name}",
             bus0=buses_i,
-            bus1=b_buses_i,
-            carrier="battery charger",
-            # the efficiencies are "round trip efficiencies"
-            efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-            capital_cost=costs.at["battery inverter", "capital_cost"],
+            bus1=bus_names,
+            carrier=f"{carrier} {charge_name}",
+            efficiency=costs.at[lookup_charge, "efficiency"] ** roundtrip_correction,
+            capital_cost=costs.at[lookup_charge, "capital_cost"],
             p_nom_extendable=True,
-            marginal_cost=costs.at["battery inverter", "marginal_cost"],
+            lifetime=costs.at[lookup_charge, "lifetime"],
         )
 
         n.add(
             "Link",
-            b_buses_i + " discharger",
-            bus0=b_buses_i,
+            bus_names,
+            suffix=f" {discharge_name}",
+            bus0=bus_names,
             bus1=buses_i,
-            carrier="battery discharger",
-            efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
+            carrier=f"{carrier} {discharge_name}",
+            efficiency=costs.at[lookup_discharge, "efficiency"] ** roundtrip_correction,
             p_nom_extendable=True,
-            marginal_cost=costs.at["battery inverter", "marginal_cost"],
+            lifetime=costs.at[lookup_discharge, "lifetime"],
         )
+
+    logger.info(
+        "Add the following technologies as stores and links:\n - "
+        + "\n - ".join(available_carriers)
+    )
 
 
 if __name__ == "__main__":
@@ -1164,8 +1230,10 @@ if __name__ == "__main__":
 
     update_p_nom_max(n)
 
-    attach_storageunits(n, costs, extendable_carriers, max_hours)
-    attach_stores(n, costs, extendable_carriers)
+    attach_storageunits(
+        n, costs, n.buses.index, extendable_carriers["StorageUnit"], max_hours
+    )
+    attach_stores(n, costs, n.buses.index, extendable_carriers["Store"])
 
     sanitize_carriers(n, snakemake.config)
     if "location" in n.buses:

@@ -31,7 +31,7 @@ import warnings
 import pandas as pd
 import pypsa
 
-from scripts.add_electricity import calculate_annuity
+from scripts.add_electricity import STORE_LOOKUP, calculate_annuity
 
 logger = logging.getLogger(__name__)
 
@@ -180,8 +180,10 @@ def prepare_costs(
     # Calculate storage costs if max_hours is provided
     if max_hours is not None:
 
-        def costs_for_storage(store, link1, link2=None, max_hours=1.0):
-            capital_cost = link1["capital_cost"] + max_hours * store["capital_cost"]
+        def costs_for_storage(store, link1=None, link2=None, max_hours=1.0):
+            capital_cost = max_hours * store["capital_cost"]
+            if link1 is not None:
+                capital_cost += link1["capital_cost"]
             if link2 is not None:
                 capital_cost += link2["capital_cost"]
             return pd.Series(
@@ -193,17 +195,30 @@ def prepare_costs(
                 }
             )
 
-        costs.loc["battery"] = costs_for_storage(
-            costs.loc["battery storage"],
-            costs.loc["battery inverter"],
-            max_hours=max_hours["battery"],
-        )
-        costs.loc["H2"] = costs_for_storage(
-            costs.loc["hydrogen storage underground"],
-            costs.loc["fuel cell"],
-            costs.loc["electrolysis"],
-            max_hours=max_hours["H2"],
-        )
+        costs_i = costs.index
+        for k, v in max_hours.items():
+            tech = STORE_LOOKUP[k]
+            store = tech.get("store") if tech.get("store") in costs_i else None
+            bicharger = (
+                tech.get("bicharger") if tech.get("bicharger") in costs_i else None
+            )
+            charger = tech.get("charger") if tech.get("charger") in costs_i else None
+            discharger = (
+                tech.get("discharger") if tech.get("discharger") in costs_i else None
+            )
+            if bicharger:
+                costs.loc[k] = costs_for_storage(
+                    costs.loc[store],
+                    costs.loc[bicharger],
+                    max_hours=v,
+                )
+            elif store:
+                costs.loc[k] = costs_for_storage(
+                    costs.loc[store],
+                    costs.loc[charger] if charger else None,
+                    costs.loc[discharger] if discharger else None,
+                    max_hours=v,
+                )
 
     # Overwrite marginal and capital costs
     costs = overwrite_costs(costs, custom_prepared)
