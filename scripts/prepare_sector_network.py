@@ -5481,23 +5481,25 @@ def add_waste_heat(
     link_carriers = n.links.carrier.unique()
     heat_system = "urban central"
 
-    for heat_source in HeatSource:
+    for heat_source_name in options.get("heat_sources", {}).get("urban central", []):
+        heat_source = HeatSource(heat_source_name)
         # Only process waste heat sources
         if heat_source.source_type != HeatSourceType.PROCESS_WASTE:
             continue
 
-        # Check if enabled in heat_sources config
-        if heat_source.value not in options["heat_sources"].get("urban central", []):
-            continue
-
         # Check if the process exists in the network
         if heat_source.process_carrier not in link_carriers:
-            continue
+            raise RuntimeError(
+                f"Heat source {heat_source.value} requires process carrier "
+                f"'{heat_source.process_carrier}' to be present in the network, but it is missing. Make sure the corresponding industrial process link has been added."
+            )
 
         # Get utilisation factor from config
         utilisation = options.get(heat_source.waste_heat_option_key, 0)
         if not utilisation:
-            continue
+            raise RuntimeError(
+                f"Heat source {heat_source.value} enabled in heat_sources config, but utilisation factor '{heat_source.waste_heat_option_key}' is not set or zero."
+            )
 
         # Get efficiency and bus/efficiency column names
         efficiency = heat_source.get_waste_heat_efficiency(
