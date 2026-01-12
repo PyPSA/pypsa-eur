@@ -83,7 +83,9 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
             output_folder = Path(output["zip_file"]).parent
             unpack_archive(input["zip_file"], output_folder)
             copy2(input["zip_file"], output["zip_file"])
-            copy2(f"{output_folder}/corine/g250_clc06_V18_5.tif", output["tif_file"])
+            copy2(
+                f"{output_folder}/corine/g250_clc06_V18_5.tif", output["tif_file"]
+            )
 
 elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
 
