@@ -758,6 +758,7 @@ rule build_heat_source_utilisation_profiles:
             "geothermal",
             "constant_temperature_celsius",
         ),
+        ptes_enable=config_provider("sector", "district_heating", "ptes", "enable"),
     input:
         unpack(input_heat_source_temperature),
         unpack(input_ptes_bottom_temperature),

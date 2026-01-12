@@ -246,6 +246,14 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     heat_sources: list[str] = snakemake.params.heat_sources
+    ptes_enable: bool = snakemake.params.ptes_enable
+
+    # Validate PTES configuration
+    if ptes_enable and "ptes" not in heat_sources:
+        raise ValueError(
+            "PTES is enabled (district_heating.ptes.enable=true) but 'ptes' "
+            "is not in heat_sources.urban_central. PTES requires being listed in heat_sources to create the necessary buses and links for heat discharge to the 'urban central heat' bus."
+        )
 
     central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles
