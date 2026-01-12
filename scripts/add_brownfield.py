@@ -358,7 +358,7 @@ if __name__ == "__main__":
 
     update_heat_pump_efficiency(n, n_p, year)
 
-    if snakemake.params.ttes and snakemake.params.dynamic_ptes_capacity:
+    if snakemake.params.ptes and snakemake.params.dynamic_ptes_capacity:
         update_dynamic_ptes_capacity(n, n_p, year)
 
     add_brownfield(
