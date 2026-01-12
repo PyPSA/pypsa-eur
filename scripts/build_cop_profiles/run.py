@@ -195,6 +195,10 @@ def get_source_inlet_temperature(
     temperature as its effective source inlet (since it lifts from there).
     Otherwise, the heat pump draws directly from the source temperature.
 
+    Notes
+    -----
+    We assume ideal heat exchangers with no temperature losses.
+
     Parameters
     ----------
     heat_source_name : str
