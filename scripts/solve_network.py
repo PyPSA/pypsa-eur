@@ -1378,10 +1378,6 @@ def run_mga_optimization(
 
     logger.info(f"MGA weights: {weights}")
 
-    # Store original objective for reference
-    # original_objective = n.objective
-    # logger.info(f"Original (cost-optimal) objective value: {original_objective}")
-
     # Call PyPSA's native MGA function
     status, condition = n.optimize.optimize_mga(
         snapshots=None,
@@ -1403,22 +1399,6 @@ def run_mga_optimization(
             extra_functionality, planning_horizons=planning_horizons
         ),
     )
-
-    # logger.info(f"MGA '{mga_run}' completed with status: {status}, condition: {condition}")
-    # logger.info(f"MGA objective value: {n.objective}")
-
-    # # Store MGA metadata
-    # if not hasattr(n, "mga_results"):
-    #     n.mga_results = {}
-    # n.mga_results[mga_run] = {
-    #     "original_objective": original_objective,
-    #     "mga_objective": n.objective,
-    #     "status": status,
-    #     "condition": condition,
-    #     "epsilon": epsilon,
-    #     "sense": sense,
-    #     "weights": weights,
-    # }
 
     return status, condition
 
