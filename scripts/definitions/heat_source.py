@@ -186,7 +186,8 @@ class HeatSource(Enum):
             return True
         if self == HeatSource.GEOTHERMAL:
             return True
-        return False
+        else:
+            return False
 
     @property
     def process_carrier(self) -> str | None:
@@ -325,6 +326,7 @@ class HeatSource(Enum):
         - For other limited sources (like river_water), returns 0.0.
         - For inexhaustible sources, this method shouldn't be called.
         """
+
         if self in [HeatSource.GEOTHERMAL]:
             return (
                 costs.at[
