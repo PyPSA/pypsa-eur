@@ -125,7 +125,7 @@ retrofitting,,,
 -- annualise_cost,--,"{true, false}",Annualise the investment costs of retrofitting
 -- tax_weighting,--,"{true, false}",Weight the costs of retrofitting depending on taxes in countries
 -- construction_index,--,"{true, false}",Weight the costs of retrofitting depending on labour/material costs per country
-tes,--,"{true, false}",Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES)
+ttes,--,"{true, false}",Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES)
 boilers,--,"{true, false}",Add option for transforming gas into heat using gas boilers
 resistive_heaters,--,"{true, false}",Add option for transforming electricity into heat using resistive heaters (independently from gas boilers)
 oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
