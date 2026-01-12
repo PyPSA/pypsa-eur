@@ -3,13 +3,18 @@ on:
   push:
     paths:
     - pixi.toml
+    - pixi.lock
   schedule:
   - cron: "0 8 1,16 * *" # Bi-weekly
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update-locked-environment:
-    if: ${{ github.ref == 'refs/heads/master' }}
+    if: ${{ github.event_name != 'schedule' || github.ref == 'refs/heads/master' }}
     name: Update lockfiles
     runs-on: ubuntu-latest
     defaults:
@@ -22,6 +27,7 @@ jobs:
       uses: prefix-dev/setup-pixi@v0.9.3
       with:
         pixi-version: v0.59.0
+        run-install: false
 
     - name: Update lockfile
       run: |
@@ -45,7 +51,25 @@ jobs:
           pixi.lock
           envs/
 
+  create-commit:
+    if: ${{ github.ref != 'refs/heads/master' }}
+    needs: update-locked-environment
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v6
+      with:
+        name: lockfiles
+
+    - name: Create Commit
+      uses: stefanzweifel/git-auto-commit-action@v7
+      with:
+        commit_message: "[github-actions.ci] Update locked envs"
+
   create-pull-request:
+    if: ${{ github.ref == 'refs/heads/master' }}
     needs: update-locked-environment
     runs-on: ubuntu-latest
     steps:
