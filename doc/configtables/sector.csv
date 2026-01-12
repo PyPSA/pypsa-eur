@@ -24,8 +24,8 @@ district_heating,--,,
 -- -- temperature_dependent_capacity,--,"{true, false}",Enable dynamic temperature-dependent energy capacity of PTES based on actual top/bottom temperatures
 -- -- charge_boosting_required,--,"{true, false}",Require boosting when charging PTES (placeholder for future feature)
 -- -- discharge_resistive_boosting,--,"{true, false}",Use resistive heaters instead of heat pumps for boosting PTES discharge when needed
--- -- top_temperature,C,float,Operating top temperature of the PTES
--- -- bottom_temperature,C,float,Operating bottom temperature of the PTES
+-- -- top_temperature,C,float or "forward",Operating top temperature of the PTES
+-- -- bottom_temperature,C,float or "return",Operating bottom temperature of the PTES
 -- -- design_top_temperature,C,float,Design top temperature used for sizing PTES capacity (from DEA technology catalogue)
 -- -- design_bottom_temperature,C,float,Design bottom temperature used for sizing PTES capacity (from DEA technology catalogue)
 -- ates,,,
