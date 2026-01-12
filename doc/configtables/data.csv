@@ -137,3 +137,6 @@ geothermal_heat_utilisation_potentials,,,
 jrc_ardeco,,,
 -- source,str,"{archive, primary}","Source of annual regional database for EU regions"
 -- version,str,,"Version of the JRC ARDECO dataset"
+lake_data,,,
+-- source,str,"{archive, primary}","Source of global lake polygons"
+-- version,str,,"Version of the HydroLAKES dataset"

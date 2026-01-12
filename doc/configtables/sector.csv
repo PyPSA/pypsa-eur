@@ -59,7 +59,7 @@ district_heating,--,,
 -- -- constant_temperature_celsius,C,float,Constant temperature assumed for geothermal heat sources. Used for scaling heat potentials based on actual vs assumed temperature differences.
 -- fallback_ptx_heat_losses,--,float,"Non-recoverable heat loss factor for PTX processes without efficiency-heat data in technology-data.
 heat_sources,--,,
--- urban central,--,"List of heat sources for heat pumps in urban central heating. Must be one of [air, geothermal, ptes, river_water, sea_water, electrolysis_waste, fuel_cell_waste, fischer_tropsch_waste, haber_bosch_waste, sabatier_waste, methanolisation_waste]",
+-- urban central,--,"List of heat sources for heat pumps in urban central heating. Must be one of [air, geothermal, ptes, river_water, lake_water, sea_water, electrolysis_waste, fuel_cell_waste, fischer_tropsch_waste, haber_bosch_waste, sabatier_waste, methanolisation_waste]",
 -- urban decentral,--,"List of heat sources for heat pumps in urban decentral heating. Must be one of [air]",
 -- rural,--,"List of heat sources for heat pumps in rural heating. Must be one of [air, ground]",
 heat_source_temperatures,--,,Dictionary of temperatures (°C) for each heat source. Used for computing source utilisation.

@@ -234,6 +234,7 @@ class HeatSystem(Enum):
             HeatSource.GEOTHERMAL,
             HeatSource.SEA_WATER,
             HeatSource.RIVER_WATER,
+            HeatSource.LAKE_WATER,
             HeatSource.ELECTROLYSIS_waste,
             HeatSource.FISCHER_TROPSCH_waste,
             HeatSource.SABATIER_waste,
