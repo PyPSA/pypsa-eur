@@ -270,6 +270,33 @@ class HeatSource(Enum):
         }
         return mapping.get(self)
 
+    def requires_heat_pump(self, ptes_discharge_resistive_boosting: bool) -> bool:
+        """
+        Check if a heat pump should be built for this heat source.
+
+        Most heat sources require a heat pump to lift temperature to the
+        forward temperature. PTES is special: it can use either a heat pump
+        or resistive boosting for temperature lift during discharge.
+
+        Parameters
+        ----------
+        ptes_discharge_resistive_boosting : bool
+            Whether PTES uses resistive heaters instead of heat pumps.
+
+        Returns
+        -------
+        bool
+            False for PTES with resistive boosting, True otherwise.
+        """
+        if self == HeatSource.PTES and ptes_discharge_resistive_boosting:
+            logging.info(
+                "PTES configured with resistive boosting during discharge; "
+                "heat pump not built for PTES."
+            )
+            return False
+        else:
+            return True
+
     def get_capital_cost(self, costs, overdim_factor: float, heat_system) -> float:
         """
         Returns the capital cost for the heat source generator.
@@ -291,6 +318,12 @@ class HeatSource(Enum):
         -------
         float
             The capital cost for the heat source generator.
+
+        Notes
+        -----
+        - For direct utilisation heat sources (geothermal), gets cost from technology-data.
+        - For other limited sources (like river_water), returns 0.0.
+        - For inexhaustible sources, this method shouldn't be called.
         """
         if self in [HeatSource.GEOTHERMAL]:
             return (
@@ -322,6 +355,12 @@ class HeatSource(Enum):
         -------
         float
             The lifetime for the heat source generator in years.
+
+        Notes
+        -----
+        - For direct utilisation heat sources (geothermal), gets lifetime from technology-data.
+        - For other limited sources (like river_water), returns infinity.
+        - For inexhaustible sources, this method shouldn't be called.
         """
         if self in [HeatSource.GEOTHERMAL]:
             return costs.at[heat_system.heat_source_costs_name(self), "lifetime"]
@@ -430,6 +469,11 @@ class HeatSource(Enum):
         heat output (not input) to attribute capital costs to the heat bus. This
         means the link operates with negative flow (p_max_pu=0, p_min_pu < 0).
 
+        - Inexhaustible sources (air, ground, sea_water): Returns 1.0 since no
+          resource tracking is needed.
+        - Limited sources (geothermal, river_water, ptes): Returns 1 - 1/COP to
+          track heat drawn from the source bus.
+
         For a standard heat pump energy balance:
 
             Q_output = Q_source + W_electricity
@@ -469,33 +513,6 @@ class HeatSource(Enum):
             return 1.0
         else:
             return 1 - (1 / cop_heat_pump.clip(lower=0.001))
-
-    def requires_heat_pump(self, ptes_discharge_resistive_boosting: bool) -> bool:
-        """
-        Check if a heat pump should be built for this heat source.
-
-        Most heat sources require a heat pump to lift temperature to the
-        forward temperature. PTES is special: it can use either a heat pump
-        or resistive boosting for temperature lift during discharge.
-
-        Parameters
-        ----------
-        ptes_discharge_resistive_boosting : bool
-            Whether PTES uses resistive heaters instead of heat pumps.
-
-        Returns
-        -------
-        bool
-            False for PTES with resistive boosting, True otherwise.
-        """
-        if self == HeatSource.PTES and ptes_discharge_resistive_boosting:
-            logging.info(
-                "PTES configured with resistive boosting during discharge; "
-                "heat pump not built for PTES."
-            )
-            return False
-        else:
-            return True
 
     def heat_carrier(self, heat_system) -> str:
         """
