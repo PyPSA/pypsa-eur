@@ -3316,8 +3316,7 @@ def add_heat(
                     bus2=heat_source.return_temperature_bus(nodes, heat_system),
                     efficiency=preheater_utilisation_profile,
                     efficiency2=1 - preheater_utilisation_profile,
-                    p_max_pu=preheater_utilisation_profile
-                    / preheater_utilisation_profile.clip(lower=0.001),
+                    p_max_pu=(preheater_utilisation_profile > 0).astype(float),
                     carrier=f"{heat_system} {heat_source} heat preheater",
                     p_nom_extendable=True,
                 )
@@ -3397,9 +3396,7 @@ def add_heat(
                     efficiency2=efficiency2_heat_pump,
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
-                    p_min_pu=(
-                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
-                    ).squeeze(),
+                    p_min_pu=-(cop_heat_pump > 0).squeeze().astype(float),
                     p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
@@ -3445,8 +3442,7 @@ def add_heat(
                     # (similar to HP balance: p_el x COP = p_source + p_el )
                     efficiency2=1 / (ptes_boost_per_discharge_profiles + 1),
                     p_nom_extendable=True,
-                    p_min_pu=-ptes_boost_per_discharge_profiles
-                    / ptes_boost_per_discharge_profiles.clip(lower=0.001),
+                    p_min_pu=-(ptes_boost_per_discharge_profiles > 0).astype(float),
                     carrier=f"{heat_system} water pits resistive booster",
                     p_max_pu=0,
                 )
