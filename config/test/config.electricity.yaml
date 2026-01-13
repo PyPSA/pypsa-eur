@@ -30,9 +30,6 @@ enable:
   retrieve_cost_data: false
   build_cutout: false
   custom_busmap: false
-  build_renewable_profiles: true
-  # retrieve_cutout: true
-  # custom_busmap: false
   drop_leap_day: true
 
 electricity:

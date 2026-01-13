@@ -74,6 +74,10 @@ plotting:
     - offwind-dc
     - offwind-ac
     - offwind-float
+    - wave-shallow
+    - wave-nearshore
+    - wave-farshore
+    - offsolar
     - ror
     - hydro
     - PHS
@@ -373,6 +377,10 @@ plotting:
     offwind-dc: "Offshore Wind (DC)"
     offwind-float: "Offshore Wind (Floating)"
     onwind: "Onshore Wind"
+    wave-shallow: "WEC Shallow"
+    wave-nearshore: "WEC Nearshore"
+    wave-farshore: "WEC Farshore"
+    offsolar: "Offshore Solar (Floating)"
     solar: "Solar"
     PHS: "Pumped Hydro Storage"
     hydro: "Reservoir & Dam"
@@ -399,6 +407,10 @@ plotting:
     offwind-float: "#b5e2fa"
     offshore wind (Float): "#b5e2fa"
     offshore wind float: "#b5e2fa"
+    # wave
+    wave-shallow: "#216406"
+    wave-nearshore: "#24961a"
+    wave-farshore: "#4ce766"
     # water
     hydro: '#298c81'
     hydro reservoir: '#298c81'
@@ -411,6 +423,7 @@ plotting:
     solar: "#f9d002"
     solar PV: "#f9d002"
     solar-hsat: "#fdb915"
+    offsolar: "#f2620f"
     solar thermal: '#ffbf2b'
     residential rural solar thermal: '#f1c069'
     services rural solar thermal: '#eabf61'

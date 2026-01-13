@@ -729,7 +729,6 @@ def add_BAU_constraints(n: pypsa.Network, config: dict) -> None:
     lhs = p_nom.groupby(ext_carrier_i).sum()
     rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
-    logger.info("BAU is done.")
 
 
 # TODO: think about removing or make per country
@@ -1192,7 +1191,7 @@ def extra_functionality(
     config = n.config
     constraints = config["solving"].get("constraints", {})
 
-    if constraints.get("BAU", False) and n.generators.p_nom_extendable.any():
+    if constraints["BAU"] and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
     if constraints["SAFE"] and n.generators.p_nom_extendable.any():
         add_SAFE_constraints(n, config)
