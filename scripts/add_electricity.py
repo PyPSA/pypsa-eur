@@ -481,7 +481,7 @@ def attach_wind_and_solar(
                 logger.info(
                     f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
                 )
-            
+
             else:
                 capital_cost = costs.at[car, "capital_cost"]
 
