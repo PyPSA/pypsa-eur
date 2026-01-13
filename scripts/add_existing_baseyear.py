@@ -694,6 +694,38 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
 
+            efficiency = get_efficiency(
+                heat_system, "biomass", nodes, heating_efficiencies, costs
+            )
+
+            # prevents redundant addition of urban central biomass boiler which tends to crash
+            if (
+                existing_capacities.loc[
+                    nodes, (heat_system.value, "biomass boiler")
+                ].sum()
+                > 0
+            ):
+                n.add(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} biomass boiler-{grouping_year}",
+                    bus0=spatial.biomass.nodes,
+                    bus1=nodes + " " + heat_system.value + " heat",
+                    carrier=heat_system.value + " biomass boiler",
+                    efficiency=efficiency,
+                    capital_cost=efficiency
+                    * costs.at["biomass boiler", "capital_cost"],
+                    p_nom=(
+                        existing_capacities.loc[
+                            nodes, (heat_system.value, "biomass boiler")
+                        ]
+                        * ratio
+                        / efficiency
+                    ),
+                    build_year=int(grouping_year),
+                    lifetime=costs.at["biomass boiler", "lifetime"],
+                )
+
             # delete links with p_nom=nan corresponding to extra nodes in country
             n.remove(
                 "Link",

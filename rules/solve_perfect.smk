@@ -45,8 +45,6 @@ rule add_existing_baseyear:
         benchmarks(
             "add_existing_baseyear/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/add_existing_baseyear.py"
 
@@ -82,8 +80,6 @@ rule prepare_perfect_foresight:
         logs("prepare_perfect_foresight_{clusters}_{opts}_{sector_opts}.log"),
     benchmark:
         benchmarks("prepare_perfect_foresight_{clusters}_{opts}_{sector_opts}")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/prepare_perfect_foresight.py"
 
@@ -125,8 +121,6 @@ rule solve_sector_network_perfect:
             RESULTS
             + "benchmarks/solve_sector_network/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years}"
         )
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/solve_network.py"
 
@@ -166,7 +160,5 @@ rule make_summary_perfect:
         logs("make_summary_perfect.log"),
     benchmark:
         benchmarks("make_summary_perfect")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/make_summary_perfect.py"
