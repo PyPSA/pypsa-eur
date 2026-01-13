@@ -311,7 +311,7 @@ if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
 
     rule retrieve_cutout:
         input:
-            storage(CUTOUT_DATASET["url"] + "/files/{cutout}.nc"),
+            storage(CUTOUT_DATASET["url"] + "/{cutout}.nc"),
         output:
             CUTOUT_DATASET["folder"] + "/{cutout}.nc",
         log:
@@ -835,7 +835,7 @@ if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive
 
 
 
-if OSM_DATASET["source"] in ["archive"]:
+if OSM_DATASET["source"] in ["archive", "zenodo"]:
 
     OSM_ARCHIVE_FILES = [
         "buses.csv",
@@ -850,7 +850,7 @@ if OSM_DATASET["source"] in ["archive"]:
     rule retrieve_osm_archive:
         input:
             **{
-                file: storage(f"{OSM_DATASET['url']}/files/{file}")
+                file: storage(f"{OSM_DATASET['url']}/{file}")
                 for file in OSM_ARCHIVE_FILES
             },
         output:
