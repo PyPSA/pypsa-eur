@@ -239,7 +239,7 @@ class HeatSource(Enum):
             The bus2 name for the heat pump, or empty string if not applicable.
         """
         if self.requires_bus:
-            return self.heat_pump_input_bus(nodes, heat_system)
+            return nodes + f" {self.heat_pump_input_carrier(heat_system)}"
         else:
             return ""
 
@@ -372,24 +372,6 @@ class HeatSource(Enum):
             Bus name combining nodes with medium-temperature carrier in format 'nodes + {heat_system} {source} pre-heater input'.
         """
         return nodes + f" {self.preheater_input_carrier(heat_system)}"
-
-    def heat_pump_input_bus(self, nodes, heat_system) -> str:
-        """
-        Get bus name for fully-cooled heat at the given nodes.
-
-        Parameters
-        ----------
-        nodes : pd.Index or str
-            Node identifier(s).
-        heat_system : HeatSystem or str
-            The heat system (e.g., 'urban central').
-
-        Returns
-        -------
-        str
-            Bus name combining nodes with heat-pump input carrier in format 'nodes + {heat_system} {source} heat-pump input'.
-        """
-        return nodes + f" {self.heat_pump_input_carrier(heat_system)}"
 
     def resource_bus(self, nodes, heat_system) -> str:
         """

@@ -3316,7 +3316,6 @@ def add_heat(
                     bus2=heat_source.heat_pump_input_bus(nodes, heat_system),
                     efficiency=preheater_utilisation_profile,
                     efficiency2=1 - preheater_utilisation_profile,
-                    p_max_pu=(preheater_utilisation_profile > 0).astype(float),
                     carrier=f"{heat_system} {heat_source} heat preheater",
                     p_nom_extendable=True,
                 )
@@ -3376,9 +3375,6 @@ def add_heat(
                     p_max_pu=p_max_pu,
                 )
 
-            bus2_heat_pump = heat_source.get_heat_pump_input_bus(nodes, heat_system)
-            efficiency2_heat_pump = heat_source.get_heat_pump_efficiency2(cop_heat_pump)
-
             if heat_source.requires_heat_pump(
                 ptes_discharge_resistive_boosting=params.sector["district_heating"][
                     "ptes"
@@ -3390,14 +3386,13 @@ def add_heat(
                     suffix=f" {heat_system} {heat_source} heat pump",
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
-                    bus2=bus2_heat_pump,
+                    bus2=heat_source.heat_pump_input_bus(nodes, heat_system),
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=1 / cop_heat_pump.clip(lower=0.001).squeeze(),
-                    efficiency2=efficiency2_heat_pump,
+                    efficiency2=heat_source.get_heat_pump_efficiency2(cop_heat_pump),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_min_pu=-(cop_heat_pump > 0).squeeze().astype(float),
-                    p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
