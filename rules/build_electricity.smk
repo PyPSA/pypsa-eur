@@ -268,7 +268,7 @@ rule determine_availability_matrix:
         renewable=config_provider("renewable"),
     input:
         unpack(input_ua_md_availability_matrix),
-        corine=ancient(f"{rules.retrieve_corine.output['tif_file']}"),
+        corine=ancient(rules.retrieve_corine.output["tif_file"]),
         natura=lambda w: (
             f"{NATURA_DATASET["folder"]}/natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)

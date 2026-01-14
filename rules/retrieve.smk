@@ -84,8 +84,7 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
             unpack_archive(input["zip_file"], output_folder)
             copy2(input["zip_file"], output["zip_file"])
             copy2(
-                f"{CORINE_DATASET['folder']}/corine/g250_clc06_V18_5.tif",
-                output["tif_file"],
+                f"{output_folder}/corine/g250_clc06_V18_5.tif", output["tif_file"]
             )
 
 elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
@@ -615,8 +614,10 @@ if (CO2STOP_DATASET := dataset_version("co2stop"))["source"] in [
             traps_table3=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
             traps_map=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
         run:
+            output_folder = Path(output["zip_file"]).parent
+            output_folder.mkdir(parents=True, exist_ok=True)
             copy2(input["zip_file"], output["zip_file"])
-            unpack_archive(output["zip_file"], CO2STOP_DATASET["folder"])
+            unpack_archive(output["zip_file"], output_folder)
 
 
 if (GEM_EUROPE_GAS_TRACKER_DATASET := dataset_version("gem_europe_gas_tracker"))[
