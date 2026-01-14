@@ -4586,6 +4586,12 @@ def add_industry(
     # 1e6 to convert TWh to MWh
     industrial_demand = pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
 
+    if not options["biomass"]:
+        raise ValueError(
+            "Industry demand includes solid biomass, but `sector.biomass` is disabled. "
+            "Enable `sector: {biomass: true}` in config."
+        )
+
     n.add(
         "Bus",
         spatial.biomass.industry,
