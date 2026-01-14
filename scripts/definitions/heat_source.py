@@ -298,9 +298,7 @@ class HeatSource(Enum):
         if self.requires_bus:
             return 1 - (1 / cop_heat_pump.clip(lower=0.001))
         else:
-            raise NotImplementedError(
-                "get_heat_pump_efficiency2 should not be called for inexhaustible heat sources, since they don't have a bus2."
-            )
+            return None
 
     def heat_carrier(self, heat_system) -> str:
         """
