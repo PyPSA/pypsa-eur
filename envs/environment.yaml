@@ -40,6 +40,7 @@ dependencies:
 - pre-commit >=4.3.0
 - proj >=9.6.2
 - pylint >=4.0.2
+- pydeck >0.6
 - pypsa >=0.35.2
 - pyscipopt >=5.6.0
 - pytables >=3.10.2
