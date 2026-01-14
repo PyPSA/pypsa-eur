@@ -3302,7 +3302,7 @@ def add_heat(
 
                 n.add(
                     "Bus",
-                    heat_source.heat_pump_input_bus(nodes, heat_system),
+                    heat_source.get_heat_pump_input_bus(nodes, heat_system),
                     location=nodes,
                     carrier=heat_source.heat_pump_input_carrier(heat_system),
                 )
@@ -3313,7 +3313,7 @@ def add_heat(
                     suffix=f" {heat_system} {heat_source} heat preheater",
                     bus0=heat_source.preheater_input_bus(nodes, heat_system),
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=heat_source.heat_pump_input_bus(nodes, heat_system),
+                    bus2=heat_source.get_heat_pump_input_bus(nodes, heat_system),
                     efficiency=preheater_utilisation_profile,
                     efficiency2=1 - preheater_utilisation_profile,
                     carrier=f"{heat_system} {heat_source} heat preheater",
@@ -3386,7 +3386,7 @@ def add_heat(
                     suffix=f" {heat_system} {heat_source} heat pump",
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
-                    bus2=heat_source.heat_pump_input_bus(nodes, heat_system),
+                    bus2=heat_source.get_heat_pump_input_bus(nodes, heat_system),
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=1 / cop_heat_pump.clip(lower=0.001).squeeze(),
                     efficiency2=heat_source.get_heat_pump_efficiency2(cop_heat_pump),
