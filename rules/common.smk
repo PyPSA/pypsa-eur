@@ -86,7 +86,11 @@ def config_provider(*keys, default=None):
 @lru_cache
 def load_data_versions(file_path):
     data_versions = pd.read_csv(
-        file_path, dtype=str, na_filter=False, delimiter=",", comment="#"
+        file_path,
+        dtype=str,
+        na_filter=False,
+        delimiter=",",
+        comment="#",
     )
 
     # Turn pipe-separated tags into individual columns
@@ -120,7 +124,11 @@ def dataset_version(
     dataset_config = config["data"][
         name
     ]  # TODO as is right now, it is not compatible with config_provider
-    data_versions = load_data_versions("data/versions.csv")
+
+    # To use PyPSA-Eur as a snakemake module, the path to the versions.csv file needs to be
+    # registered relative to the current file with Snakemake:
+    fp = workflow.source_path("../data/versions.csv")
+    data_versions = load_data_versions(fp)
 
     dataset = data_versions.loc[
         (data_versions["dataset"] == name)
