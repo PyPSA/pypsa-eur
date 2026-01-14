@@ -387,6 +387,7 @@ load:
   scaling_factor: 1.0
   fixed_year: false
   supplement_synthetic: true
+  substation_only: true
   distribution_key:
     gdp: 0.6
     population: 0.4
@@ -1141,6 +1142,15 @@ data:
     version: latest
   jrc_ardeco:
     source: archive
+    version: latest
+  jrc_energy_atlas:
+    source: primary
+    version: latest
+  desnz_electricity_consumption:
+    source: primary
+    version: latest
+  ons_lad:
+    source: primary
     version: latest
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api

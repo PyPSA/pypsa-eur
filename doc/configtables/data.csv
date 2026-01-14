@@ -137,3 +137,12 @@ geothermal_heat_utilisation_potentials,,,
 jrc_ardeco,,,
 -- source,str,"{archive, primary}","Source of annual regional database for EU regions"
 -- version,str,,"Version of the JRC ARDECO dataset"
+jrc_energy_atlas,,,
+-- source,str,"{archive, primary}","Source of JRC Energy Atlas data"
+-- version,str,,"Version of the JRC Energy Atlas dataset"
+desnz_electricity_consumption,,,
+-- source,str,"{archive, primary}","Source of the DESNZ Electricity Consumption data"
+-- version,str,,"Version of the DESNZ Electricity Consumption dataset"
+ons_lad,,,
+-- source,str,"{archive, primary}","Source of the ONS Local Authority Districts data"
+-- version,str,,"Version of the ONS Local Authority Districts dataset"

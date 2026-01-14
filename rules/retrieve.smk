@@ -424,6 +424,55 @@ if (
             copy2(input["csv"], output["csv"])
 
 
+if ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas")["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_electricity_demand_energy_atlas:
+        input:
+            tif=storage(ENERGY_ATLAS_DATASET["url"]),
+        output:
+            tif=f"{ENERGY_ATLAS_DATASET['folder']}/electricity_tot_demand_2019.tif",
+        retries: 2
+        run:
+            copy2(input["tif"], output["tif"])
+
+
+if DESNZ_ELECTRICITY_CONSUMPTION_DATASET := dataset_version(
+    "desnz_electricity_consumption"
+)["source"] in ["primary", "archive"]:
+
+    rule retrieve_electricity_demand_subnational_gb:
+        input:
+            xlsx=storage(DESNZ_ELECTRICITY_CONSUMPTION_DATASET["url"]),
+        output:
+            xlsx=f"{DESNZ_ELECTRICITY_CONSUMPTION_DATASET['folder']}/Subnational_electricity_consumption_statistics_2005-2024.xlsx",
+        retries: 2
+        run:
+            copy2(input["xlsx"], output["xlsx"])
+
+
+if ONS_LAD_DATASET := dataset_version("ons_lad")["source"] in ["primary"]:
+
+    rule retrieve_local_authorities_uk:
+        output:
+            geojson=f"{ONS_LAD_DATASET['folder']}/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
+        run:
+            import requests
+
+            url = ONS_LAD_DATASET["url"]
+            params = {
+                "outFields": "*",
+                "where": "1=1",
+                "f": "geojson",
+            }
+            response = requests.get(url, params=params)
+            with open(output["geojson"], "wb") as f:
+                f.write(response.content)
+
+
+
 if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
     "archive",
     "primary",
