@@ -171,7 +171,7 @@
               "type": "array"
             }
           ],
-          "default": "europe-1940-2024-era5",
+          "default": "europe-2013-sarah3-era5",
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
         },
         "nprocesses": {
@@ -8216,7 +8216,7 @@
               "type": "array"
             }
           ],
-          "default": "europe-1940-2024-era5",
+          "default": "europe-2013-sarah3-era5",
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
         },
         "nprocesses": {
