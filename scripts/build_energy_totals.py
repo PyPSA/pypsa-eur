@@ -627,7 +627,7 @@ def build_idees(countries: list[str]) -> pd.DataFrame:
     )
 
     # clean up dataframe
-    years = np.arange(2000, 2022)
+    years = np.arange(2000, 2024)
     totals = totals[totals.index.get_level_values(1).isin(years)]
 
     # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
@@ -933,8 +933,8 @@ def build_energy_totals(
     if "BA" in df.index:
         # fill missing data for BA (services and road energy data)
         # proportional to RS with ratio of total residential demand
-        mean_BA = df.loc["BA"].loc[2014:2021, "total residential"].mean()
-        mean_RS = df.loc["RS"].loc[2014:2021, "total residential"].mean()
+        mean_BA = df.loc["BA"].loc[2014:2023, "total residential"].mean()
+        mean_RS = df.loc["RS"].loc[2014:2023, "total residential"].mean()
         ratio = mean_BA / mean_RS
         df.loc["BA"] = (
             df.loc["BA"].replace(0.0, np.nan).infer_objects(copy=False).values
@@ -1218,7 +1218,7 @@ def build_transport_data(
     ----------
     - Swiss transport data: `BFS <https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html>`_
     """
-    years = np.arange(2000, 2022)
+    years = np.arange(2000, 2024)
 
     # first collect number of cars
     transport_data = pd.DataFrame(idees["passenger cars"])
@@ -1324,7 +1324,7 @@ def rescale_idees_from_eurostat(
     """
 
     main_cols = ["Total all products", "Electricity"]
-    # read in the eurostat data for 2015
+    # read in the eurostat data for 2021
     eurostat_2021 = eurostat.xs(2021, level="year")[main_cols]
     # calculate the ratio of the two data sets
     ratio = eurostat[main_cols] / eurostat_2021
@@ -1423,7 +1423,7 @@ def rescale_idees_from_eurostat(
     # international navigation is already read in from the eurostat data directly
 
     for country in idees_countries:
-        filling_years = [(2015, slice(2016, 2021)), (2000, slice(1990, 1999))]
+        filling_years = [(2015, slice(2016, 2023)), (2000, slice(1990, 1999))]
 
         for source_year, target_years in filling_years:
             slicer_source = idx[country, source_year, :, :]
