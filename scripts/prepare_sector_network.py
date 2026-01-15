@@ -5612,9 +5612,7 @@ def add_industry(
         costs.at["grey methanol synthesis", "investment"]
         / costs.at["grey methanol synthesis", "efficiency"]
     )
-    co2_emissions = (
-        costs.at["grey methanol synthesis", "carbondioxide-output"]
-    )
+    co2_emissions = costs.at["grey methanol synthesis", "carbondioxide-output"]
     n.add(
         "Link",
         spatial.methanol.demand_locations,

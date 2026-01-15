@@ -7,7 +7,6 @@ horizon.
 """
 
 import logging
-import re
 from types import SimpleNamespace
 
 import country_converter as coco
@@ -65,19 +64,22 @@ def prepare_gem_database(regions):
     gdf.rename(columns={"name": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
 
-    # just get bus, country, grouping_year, plant_size, date_in, date_out, 
+    # just get bus, country, grouping_year, plant_size, date_in, date_out,
     # get plants that are still operating
     gdf = gdf[gdf["Operating status"] == "operating"]
 
-    gdf.rename(columns={
-        "Cement Capacity (millions metric tonnes per annum)": "p_set",
-        "Start date": "build_year",
-        }, inplace=True)
+    gdf.rename(
+        columns={
+            "Cement Capacity (millions metric tonnes per annum)": "p_set",
+            "Start date": "build_year",
+        },
+        inplace=True,
+    )
     gdf["p_set"] *= 1e6
     gdf["carrier"] = "cement"
     gdf["Out"] = 0
 
-    cement = gdf[['bus', 'country', 'carrier', 'p_set', 'build_year', 'Out']]
+    cement = gdf[["bus", "country", "carrier", "p_set", "build_year", "Out"]]
 
     return cement
 
@@ -117,16 +119,20 @@ def prepare_plant_data(
     }
     plant_data["carrier"] = plant_data["Process status qup"].replace(carrier_dict)
     # get build_year
-    plant_data["build_year"] = plant_data[
-        "Year of last modernisation"].replace("x", np.nan).fillna(plant_data["Last Relining"])
-    plant_data.rename(columns={"Production in tons (calibrated)": "p_set"}, inplace=True)
-    plant_data = plant_data[['bus', 'country', 'carrier', 'p_set', 'build_year', 'Out']]
+    plant_data["build_year"] = (
+        plant_data["Year of last modernisation"]
+        .replace("x", np.nan)
+        .fillna(plant_data["Last Relining"])
+    )
+    plant_data.rename(
+        columns={"Production in tons (calibrated)": "p_set"}, inplace=True
+    )
+    plant_data = plant_data[["bus", "country", "carrier", "p_set", "build_year", "Out"]]
 
     return plant_data
 
 
 def prepare_ammonia_data(regions, plant_data):
-
     df = pd.read_csv(snakemake.input.ammonia, index_col=0)
 
     geometry = gpd.points_from_xy(df.Longitude, df.Latitude)
@@ -152,18 +158,16 @@ def prepare_ammonia_data(regions, plant_data):
     gdf.drop(gdf[gdf["Ammonia [kt/a]"].isna()].index, inplace=True)
 
     # get average plant age:
-    avg_age = plant_data[plant_data.carrier == "Haber-Bosch"][
-        "build_year"].mean()
+    avg_age = plant_data[plant_data.carrier == "Haber-Bosch"]["build_year"].mean()
     # restructure to fit other data sources
     gdf["build_year"] = avg_age
     gdf["Out"] = 0
     gdf["carrier"] = "Haber-Bosch"
     gdf["Ammonia [kt/a]"] *= 1e3
     gdf.rename(columns={"Ammonia [kt/a]": "p_set"}, inplace=True)
-    gdf = gdf[['bus', 'country', 'carrier', 'p_set', 'build_year', 'Out']]
+    gdf = gdf[["bus", "country", "carrier", "p_set", "build_year", "Out"]]
 
     return gdf
-
 
 
 if __name__ == "__main__":
@@ -184,15 +188,9 @@ if __name__ == "__main__":
     # get cement plant data
     cement = prepare_gem_database(regions)
     # get data from fraunhofer database
-    fh_data = prepare_plant_data(
-        regions,
-        snakemake.input.isi_database
-    )
+    fh_data = prepare_plant_data(regions, snakemake.input.isi_database)
     # ammonia plants non-EU27
-    ammonia = prepare_ammonia_data(
-        regions,
-        fh_data
-    )
+    ammonia = prepare_ammonia_data(regions, fh_data)
 
     industry_plants = pd.concat([cement, fh_data, ammonia], ignore_index=True)
 

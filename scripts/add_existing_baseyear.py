@@ -11,11 +11,9 @@ import re
 from types import SimpleNamespace
 
 import country_converter as coco
-import geopandas as gpd
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
-import pycountry
 import pypsa
 import xarray as xr
 
@@ -752,13 +750,9 @@ def add_heating_capacities_installed_before_baseyear(
 
 def add_existing_industry(n):
     plant_data = pd.read_csv(snakemake.input.industry_plants)
-    
+
     # fill missing build_year with average
-    mean_nonzero = (plant_data
-        .groupby("carrier")["build_year"]
-        .transform("mean")
-        .round()
-    )
+    mean_nonzero = plant_data.groupby("carrier")["build_year"].transform("mean").round()
     plant_data["build_year"] = plant_data["build_year"].fillna(mean_nonzero)
     # assign industry grouping year
     grouping_years = snakemake.params.existing_capacities["grouping_years_industry"]
@@ -777,8 +771,11 @@ def add_existing_industry(n):
 
     if "cement" in options["endogenous_sectors"]:
         # add cement
-        cement = plant_data[plant_data.carrier=="cement"]
-        index = [f"{bus} cement klin-{year}" for bus, year in zip(cement["bus"], cement["grouping_year"])]
+        cement = plant_data[plant_data.carrier == "cement"]
+        index = [
+            f"{bus} cement klin-{year}"
+            for bus, year in zip(cement["bus"], cement["grouping_year"])
+        ]
         cement.index = index
         logger.info(f"Adding {len(cement)} existing cement links.")
 
@@ -816,7 +813,10 @@ def add_existing_industry(n):
         )
 
         # cement finishing
-        index = [f"{bus} cement production-{year}" for bus, year in zip(cement["bus"], cement["grouping_year"])]
+        index = [
+            f"{bus} cement production-{year}"
+            for bus, year in zip(cement["bus"], cement["grouping_year"])
+        ]
         cement.index = index
         electricity_input = (
             costs.at["cement finishing", "electricity-input"]
@@ -831,10 +831,7 @@ def add_existing_industry(n):
             bus2=cement.bus,
             carrier="cement finishing",
             p_nom_extendable=False,
-            p_nom=cement["p_set"]
-            .mul(clinker_input)
-            .div(8760)
-            .values,
+            p_nom=cement["p_set"].mul(clinker_input).div(8760).values,
             p_min_pu=0,
             capital_cost=costs.at["cement finishing", "capital_cost"] / gas_input,
             efficiency=1 / clinker_input,
@@ -844,14 +841,19 @@ def add_existing_industry(n):
         )
 
     if options["ammonia"]:
-        ammonia = plant_data[plant_data.carrier=="Haber-Bosch"]
-        index = [f"{bus} Haber-Bosch-{year}" for bus, year in zip(ammonia["bus"], ammonia["grouping_year"])]
+        ammonia = plant_data[plant_data.carrier == "Haber-Bosch"]
+        index = [
+            f"{bus} Haber-Bosch-{year}"
+            for bus, year in zip(ammonia["bus"], ammonia["grouping_year"])
+        ]
         ammonia.index = index
         logger.info(f"Adding {len(ammonia)} existing Haber-Bosch links.")
         # https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry.pdf
         # page 56: 1.83 t_CO2/t_NH3
         ch4_per_nh3 = (
-            1.83 / costs.at["gas", "CO2 intensity"] / snakemake.params["MWh_NH3_per_tNH3"]
+            1.83
+            / costs.at["gas", "CO2 intensity"]
+            / snakemake.params["MWh_NH3_per_tNH3"]
         )
         n.add(
             "Link",
@@ -883,17 +885,18 @@ def add_existing_industry(n):
         )
 
     # methanol
-    meoh = plant_data[plant_data.carrier=="grey methanol"]
-    index = [f"{bus} grey methanol-{year}" for bus, year in zip(meoh["bus"], meoh["grouping_year"])]
+    meoh = plant_data[plant_data.carrier == "grey methanol"]
+    index = [
+        f"{bus} grey methanol-{year}"
+        for bus, year in zip(meoh["bus"], meoh["grouping_year"])
+    ]
     meoh.index = index
     logger.info(f"Adding {len(meoh)} existing methanolisation links.")
     capital_cost = (
         costs.at["grey methanol synthesis", "investment"]
         / costs.at["grey methanol synthesis", "efficiency"]
     )
-    co2_emissions = (
-        costs.at["grey methanol synthesis", "carbondioxide-output"]
-    )
+    co2_emissions = costs.at["grey methanol synthesis", "carbondioxide-output"]
     n.add(
         "Link",
         index,
@@ -916,9 +919,12 @@ def add_existing_industry(n):
     )
     if "steel" in options["endogenous_sectors"]:
         # natural gas DRI
-        ng_dri = plant_data[plant_data.carrier=="gas DRI"]
+        ng_dri = plant_data[plant_data.carrier == "gas DRI"]
         logger.info(f"Adding {len(ng_dri)} existing gas DRI links.")
-        index = [f"{bus} gas DRI-{year}" for bus, year in zip(ng_dri["bus"], ng_dri["grouping_year"])]
+        index = [
+            f"{bus} gas DRI-{year}"
+            for bus, year in zip(ng_dri["bus"], ng_dri["grouping_year"])
+        ]
         ng_dri.index = index
         gas_input = costs.at["natural gas direct iron reduction furnace", "gas-input"]
         marginal_cost = (
@@ -951,14 +957,18 @@ def add_existing_industry(n):
             lifetime=costs.at["natural gas direct iron reduction furnace", "lifetime"],
         )
         # BF-BOF
-        bof = plant_data[plant_data.carrier=="BOF"]
+        bof = plant_data[plant_data.carrier == "BOF"]
 
         if options["steel_bof"]["pledge"]:
-            lifetime = bof["Out"] - bof["grouping_year"] + options["steel_bof"]["pledge_delay"]
+            lifetime = (
+                bof["Out"] - bof["grouping_year"] + options["steel_bof"]["pledge_delay"]
+            )
             if options["steel_bof"]["default_phase_out"]:
                 lifetime[lifetime < 0] = options["steel_bof"]["default_phase_out"]
             else:
-                lifetime[lifetime < 0] = costs.at["blast furnace-basic oxygen furnace", "lifetime"]
+                lifetime[lifetime < 0] = costs.at[
+                    "blast furnace-basic oxygen furnace", "lifetime"
+                ]
         else:
             lifetime = costs.at["blast furnace-basic oxygen furnace", "lifetime"]
             # regroup
@@ -966,7 +976,10 @@ def add_existing_industry(n):
                 ["bus", "country", "carrier", "grouping_year"], as_index=False
             )["p_set"].sum()
 
-        index = [f"{bus} BOF-{year}-{out}" for bus, year, out in zip(bof["bus"], bof["grouping_year"], bof["Out"])]
+        index = [
+            f"{bus} BOF-{year}-{out}"
+            for bus, year, out in zip(bof["bus"], bof["grouping_year"], bof["Out"])
+        ]
         bof.index = index
         logger.info(f"Adding {len(bof)} existing BOF links.")
 
@@ -994,7 +1007,6 @@ def add_existing_industry(n):
             build_year=bof["grouping_year"],
             lifetime=lifetime.to_list(),
         )
-
 
 
 if __name__ == "__main__":

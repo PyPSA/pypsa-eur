@@ -362,11 +362,13 @@ class _ImportsConfig(BaseModel):
         description="Price for importing renewable energy of carrier.",
     )
 
+
 class _SteelBOFConfig(BaseModel):
     """Configuration for `sector.steel_bof` settings."""
 
     pledge: bool = Field(
-        True, description="Decommissions coal blast furnaces at their pledged phase out year."
+        True,
+        description="Decommissions coal blast furnaces at their pledged phase out year.",
     )
     pledge_delay: int = Field(
         0, description="Delays the decommission year by number of years."
@@ -375,13 +377,17 @@ class _SteelBOFConfig(BaseModel):
         2035,
         description="Decommissions the coal blast furnaces that do not have a pledged phase out year.",
     )
+
     @field_validator("default_phase_out")
     def reject_true(cls, v):
         if v is True:
             raise ValueError("default_phase_out cannot be True.")
         return v
 
+
 AllowedEndogenousSectors = Literal["steel", "cement"]
+
+
 class SectorConfig(BaseModel):
     """Configuration for `sector` settings."""
 
