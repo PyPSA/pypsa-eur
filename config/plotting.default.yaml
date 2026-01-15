@@ -443,6 +443,12 @@ plotting:
     gas for industry co2 to stored: '#8a3400'
     gas for industry: '#853403'
     gas for industry CC: '#692e0a'
+    heat100-200 industry gas: '#853403'
+    heat200-500 industry gas: '#853403'
+    heat>500 industry gas: '#853403'
+    heat100-200 industry gas CC: '#692e0a'
+    heat200-500 industry gas CC: '#692e0a'
+    heat>500 industry gas CC: '#692e0a'
     gas pipeline: '#ebbca0'
     gas pipeline new: '#a87c62'
     # oil
@@ -499,6 +505,10 @@ plotting:
     BioSNG: '#123456'
     BioSNG CC: '#45233b'
     solid biomass to hydrogen: '#654321'
+    heat100-200 industry solid biomass: '#7a6d26'
+    heat200-500 industry solid biomass: '#7a6d26'
+    heat100-200 industry solid biomass CC: '#47411c'
+    heat200-500 industry solid biomass CC: '#47411c'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'
@@ -511,6 +521,7 @@ plotting:
     industry electricity: '#2d2a66'
     industry new electricity: '#2d2a66'
     agriculture electricity: '#494778'
+    heat100-200 industry electric boiler steam: '#2d2a66'
     # battery + EVs
     battery: '#ace37f'
     battery storage: '#ace37f'
@@ -571,7 +582,10 @@ plotting:
     residential urban decentral heat: '#a33c3c'
     residential urban decentral heat dsm: '#a33c3c'
     services urban decentral heat: '#cc1f1f'
-    low-temperature heat for industry: '#8f2727'
+    low-temperature heat for industry: '#8f2626'
+    heat100-200 industry: '#8f2828'
+    heat200-500 industry: '#c72020'
+    heat>500 industry: '#ff0000'
     process heat: '#ff0000'
     agriculture heat: '#d9a5a5'
     # heat supply
@@ -609,6 +623,7 @@ plotting:
     services rural resistive heater: '#a5ed9d'
     services urban decentral resistive heater: '#98e991'
     urban central resistive heater: '#8cdf85'
+    heat100-200 industry industrial heat pump high temperature: '#2fb537'
     retrofitting: '#8487e8'
     building retrofitting: '#8487e8'
     # hydrogen
@@ -629,6 +644,9 @@ plotting:
     H2 Fuel Cell: '#c251ae'
     H2 fuel cell: '#c251ae'
     H2 turbine: '#991f83'
+    heat100-200 industry hydrogen: '#991f83'
+    heat200-500 industry hydrogen: '#991f83'
+    heat>500 industry hydrogen: '#991f83'
     H2 Electrolysis: '#ff29d9'
     H2 electrolysis: '#ff29d9'
     # ammonia
