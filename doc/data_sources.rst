@@ -27,7 +27,7 @@ To ensure reproducibility, PyPSA-Eur uses a versioning system for data sources w
 
 .. note::
     For users, selection and control over which is managed through the configuration file.
-    See :ref:`_data_cf` for details.
+    See :ref:`data_cf` for details.
 
 ##########################################
 Creating a new version of the data sources
@@ -92,9 +92,9 @@ It is also possible to use the helper script in ``scripts/create_zenodo_depositi
     * ``doc/configtables/data.csv`` for the documentation
     * ``data_sources.rst`` data inventory for PyPSA-Eur
 
-==============
+##############
 Data inventory
-==============
+##############
 
 .. csv-table::
    :header-rows: 1
