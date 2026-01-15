@@ -1,8 +1,5 @@
 name: Update locked envs
 on:
-  push:
-    paths:
-    - pixi.toml
   schedule:
   - cron: "0 8 1,16 * *" # Bi-weekly
   workflow_dispatch:

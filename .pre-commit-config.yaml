@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
-exclude: "^LICENSES"
+exclude: "^LICENSES|^config/schema\\.json$|^config/config\\.default\\.yaml$"
 
 ci:
   autoupdate_schedule: quarterly
