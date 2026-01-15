@@ -15,6 +15,8 @@ Upcoming Release
   exported from the schema. Changes to the default config, therefore now require the
   schema to be updated. Find a detailed explanation in the contributors documentation
   (https://github.com/PyPSA/pypsa-eur/pull/1912).
+  
+* Fix bugs when using PyPSA-Eur as a Snakemake module by making sure that all file paths are defined relative to a rule's input or an output (https://github.com/PyPSA/pypsa-eur/pull/1967).
 
 * Fix compatibility of rules `build_gas_input_locations` and `build_gas_network` with pyogrio >=0.12.0 (https://github.com/PyPSA/pypsa-eur/pull/1955).
 

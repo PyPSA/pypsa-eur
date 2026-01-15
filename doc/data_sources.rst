@@ -92,9 +92,9 @@ It is also possible to use the helper script in ``scripts/create_zenodo_depositi
     * ``doc/configtables/data.csv`` for the documentation
     * ``data_sources.rst`` data inventory for PyPSA-Eur
 
-==============
+##############
 Data inventory
-==============
+##############
 
 .. csv-table::
    :header-rows: 1
