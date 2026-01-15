@@ -32,23 +32,18 @@ run:
   use_shadow_directory: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
-foresight: myopic
+foresight: overnight
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 scenario:
   clusters:
-  - 39
-  # - 128
-  # - 256
+  - 50
   opts:
   - ""
   sector_opts:
   - ""
   planning_horizons:
-  # - 2020
-  - 2030
-  - 2040
-  # - 2050
+  - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
@@ -879,7 +874,7 @@ sector:
   - onshore
   - nearshore
   methanol:
-    regional_methanol_demand: true
+    regional_methanol_demand: false
     methanol_reforming: false
     methanol_reforming_cc: false
     methanol_to_kerosene: false
@@ -890,7 +885,7 @@ sector:
       allam: false
     biomass_to_methanol: true
     biomass_to_methanol_cc: false
-  ammonia: regional
+  ammonia: true
   min_part_load_electrolysis: 0
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
@@ -1127,7 +1122,7 @@ clustering:
     buses: {}
   temporal:
     resolution_elec: false
-    resolution_sector: 365H
+    resolution_sector: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
