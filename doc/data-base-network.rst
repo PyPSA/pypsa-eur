@@ -12,10 +12,10 @@ Base network
 
 The map might take a moment to load. To view it in full screen, click `here <base-network-raw.html>`__.
 
-``data/osm-prebuilt``
+``data/osm/0.6/``
 
 - **Source:** OpenStreetMap; Xiong, B., Fioriti, D., Neumann, F., Riepin I. & Brown, T. (2024).
-  Prebuilt Electricity Network for PyPSA-Eur based on OpenStreetMap Data (0.5)
+  Prebuilt Electricity Network for PyPSA-Eur based on OpenStreetMap Data (0.6)
   [Data set]. Zenodo. https://doi.org/10.5281/zenodo.14144752
 - **Link:** https://zenodo.org/records/14144752
 - **License:** ODbL (`reference <https://zenodo.org/records/14144752>`)

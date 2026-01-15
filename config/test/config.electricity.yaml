@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../schema.json
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
@@ -10,7 +11,6 @@ run:
   disable_progressbar: true
   shared_resources:
     policy: false
-  shared_cutouts: true
 
 scenario:
   clusters:

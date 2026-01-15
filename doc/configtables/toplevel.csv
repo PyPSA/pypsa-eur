@@ -1,9 +1,0 @@
-,Unit,Values,Description
-version,--,0.x.x,"Version of PyPSA-Eur. Descriptive only."
-tutorial,bool,"{true, false}","Switch to retrieve the tutorial data set instead of the full data set."
-logging,,,
--- level,--,"Any of {'INFO', 'WARNING', 'ERROR'}","Restrict console outputs to all infos, warning or errors only"
--- format,--,"","Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes."
-remote,,,
--- ssh,--,,Optionally specify the SSH of a remote cluster to be synchronized.
--- path,--,,Optionally specify the file path within the remote cluster to be synchronized.
