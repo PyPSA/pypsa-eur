@@ -11,7 +11,7 @@ from natsort import natsort_keygen
 from pandera.pandas import Check, Column
 
 VERSIONS_CSV = Path(__file__).parent.parent / "data" / "versions.csv"
-VALID_SOURCES = ["primary", "archive", "zenodo", "build"]  # Order matters
+VALID_SOURCES = ["primary", "archive", "zenodo", "build"]  # Order defines sort priority
 
 VALID_TAGS = {
     "latest",
@@ -21,13 +21,11 @@ VALID_TAGS = {
     "deprecated",
     "might-work",
     "not-tested",
-    "broken link",
+    "broken-link",
 }
 
 not_empty = [Check.str_length(min_value=1), Check.str_matches(r"\S")]
-valid_tags = Check(
-    lambda s: all(t in VALID_TAGS for t in s.split("|")), element_wise=True
-)
+valid_tags = Check(lambda s: all(t in VALID_TAGS for t in s.split()), element_wise=True)
 
 
 def sort_versions(df: pd.DataFrame) -> pd.DataFrame:
