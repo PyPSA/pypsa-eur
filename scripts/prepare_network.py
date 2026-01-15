@@ -4,7 +4,7 @@
 
 
 """
-Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such
+Prepare PyPSA network for solving according to :ref:`opts`, such
 as.
 
 - adding an annual **limit** of carbon-dioxide emissions,
