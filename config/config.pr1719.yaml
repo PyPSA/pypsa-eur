@@ -1,0 +1,24 @@
+%YAML 1.1
+---
+# yaml-language-server: $schema=./schema.json
+
+run:
+  name: pr1719
+
+foresight: myopic
+
+scenario:
+  clusters:
+    - 39
+  planning_horizons:
+    - 2030
+    - 2040
+  
+sector:
+  methanol:
+    regional_methanol_demand: true
+  ammonia: regional
+
+clustering:
+  temporal:
+    resolution_sector: 365H
