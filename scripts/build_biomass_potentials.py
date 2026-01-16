@@ -4,6 +4,12 @@
 """
 Compute biogas and solid biomass potentials for each clustered model region
 using data from JRC ENSPRESO.
+
+Potentials are taken from the discrete ENSPRESO reporting years and, if
+requested, interpolated linearly between the nearest available years.
+Additional (assumed unsustainable) potentials are derived by comparison with
+Eurostat primary production data and scaled by year-dependent shares from the
+configuration.
 """
 
 import logging
@@ -17,6 +23,55 @@ from scripts.build_energy_totals import build_eurostat
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
+
+
+def _year_piecewise_linear(param_by_year, year: int) -> float:
+    """
+    Return a piecewise-linear interpolation of a year-indexed parameter map.
+
+    The function interpolates linearly between the two anchor years bracketing
+    ``year``. If ``year`` coincides with an anchor year, the corresponding value
+    is returned. If ``year`` lies outside the anchor range, the function clamps
+    to the nearest endpoint value.
+
+    Parameters
+    ----------
+    param_by_year : Mapping[int, float]
+        Mapping from year to parameter value (e.g. loaded from the YAML config).
+        Keys are interpreted as years and cast to integers.
+    year : int
+        Target year for which to obtain the interpolated parameter value.
+
+    Returns
+    -------
+    float
+        Interpolated (or clamped) parameter value for the given year.
+    """
+
+    if param_by_year is None or len(param_by_year) == 0:
+        raise ValueError("Parameter mapping is empty or None.")
+
+    # ensure int keys + float values
+    xs = np.array(sorted(int(k) for k in param_by_year.keys()), dtype=int)
+    ys = np.array([float(param_by_year[int(x)]) for x in xs], dtype=float)
+
+    # exact hit
+    if year in set(xs.tolist()):
+        return float(param_by_year[int(year)])
+
+    # clamp outside range
+    if year <= xs[0]:
+        return float(ys[0])
+    if year >= xs[-1]:
+        return float(ys[-1])
+
+    # bracket year by nearest anchors
+    i_right = int(np.searchsorted(xs, year, side="right"))
+    x0, x1 = xs[i_right - 1], xs[i_right]
+    y0, y1 = ys[i_right - 1], ys[i_right]
+
+    # linear interpolation within this interval
+    return float(y0 + (year - x0) * (y1 - y0) / (x1 - x0))
 
 
 def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_type):
@@ -303,8 +358,9 @@ def add_unsustainable_potentials(df):
 
     df_unsustainable = df_unsustainable[bio_carriers]
 
-    # Phase out unsustainable biomass potentials linearly from 2020 to 2035 while phasing in sustainable potentials
-    share_unsus = params.get("share_unsustainable_use_retained").get(investment_year)
+    # Scale sustainable/unsustainable potentials according to year-dependent shares
+    # specified in the biomass configuration (with piecewise-linear interpolation).
+    share_unsus = _year_piecewise_linear(params.get("share_unsustainable_use_retained"), investment_year)
 
     df_wo_ch = df.drop(df.filter(regex=r"CH\d*", axis=0).index)
 
@@ -326,7 +382,8 @@ def add_unsustainable_potentials(df):
         resource_type="gasoline|diesel|kerosene|liquid",
     )
 
-    share_sus = params.get("share_sustainable_potential_available").get(investment_year)
+    share_sus = _year_piecewise_linear(params.get("share_sustainable_potential_available"), investment_year)
+    
     df.loc[df_wo_ch.index] *= share_sus
 
     df = df.join(df_wo_ch.filter(like="unsustainable")).fillna(0)
@@ -353,24 +410,38 @@ if __name__ == "__main__":
     year = params["year"] if overnight else investment_year
     scenario = params["scenario"]
 
-    if year > 2050:
-        logger.info("No biomass potentials for years after 2050, using 2050.")
-        max_year = max(AVAILABLE_BIOMASS_YEARS)
+    max_year = max(AVAILABLE_BIOMASS_YEARS)
+
+    if year > max_year:
+        logger.info(f"No biomass potentials for years after {max_year}, using {max_year}.")
         enspreso = enspreso_biomass_potentials(max_year, scenario)
 
     elif year not in AVAILABLE_BIOMASS_YEARS:
-        before = int(np.floor(year / 10) * 10)
-        after = int(np.ceil(year / 10) * 10)
-        logger.info(
-            f"No biomass potentials for {year}, interpolating linearly between {before} and {after}."
-        )
+        years = np.array(sorted(AVAILABLE_BIOMASS_YEARS), dtype=int)
 
-        enspreso_before = enspreso_biomass_potentials(before, scenario)
-        enspreso_after = enspreso_biomass_potentials(after, scenario)
+        if year <= years.min():
+            before = after = int(years.min())
+            logger.info(f"No biomass potentials for {year}, using {before}.")
+            enspreso = enspreso_biomass_potentials(before, scenario)
 
-        fraction = (year - before) / (after - before)
+        elif year >= years.max():
+            before = after = int(years.max())
+            logger.info(f"No biomass potentials for {year}, using {before}.")
+            enspreso = enspreso_biomass_potentials(before, scenario)
 
-        enspreso = enspreso_before + fraction * (enspreso_after - enspreso_before)
+        else:
+            before = int(years[years < year].max())
+            after = int(years[years > year].min())
+
+            logger.info(
+                f"No biomass potentials for {year}, interpolating linearly between {before} and {after}."
+            )
+
+            enspreso_before = enspreso_biomass_potentials(before, scenario)
+            enspreso_after = enspreso_biomass_potentials(after, scenario)
+
+            fraction = (year - before) / (after - before)
+            enspreso = enspreso_before + fraction * (enspreso_after - enspreso_before)
 
     else:
         logger.info(f"Using biomass potentials for {year}.")

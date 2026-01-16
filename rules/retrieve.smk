@@ -351,12 +351,18 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
 ]:
 
     rule retrieve_cost_data:
-        input:
-            costs=storage(COSTS_DATASET["url"] + "/costs_{planning_horizons}.csv"),
         output:
             costs=COSTS_DATASET["folder"] + "/costs_{planning_horizons}.csv",
-        run:
-            copy2(input["costs"], output["costs"])
+        log:
+            "logs/retrieve_cost_data/costs_{planning_horizons}.log",
+        retries: 2
+        params:
+            costs_url=COSTS_DATASET["url"],
+            min_year=2020,
+            max_year=2050,
+            step=5,
+        script:
+            "../scripts/retrieve_cost_data_interpolated.py"
 
 
 if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
