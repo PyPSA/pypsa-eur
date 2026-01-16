@@ -10,11 +10,11 @@ foresight: myopic
 
 scenario:
   clusters:
-    - 39
+  - 39
   planning_horizons:
-    - 2030
-    - 2040
-  
+  - 2030
+  - 2040
+
 sector:
   methanol:
     regional_methanol_demand: true
