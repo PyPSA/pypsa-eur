@@ -507,6 +507,7 @@ def mock_snakemake(
     import os
 
     import snakemake as sm
+    from packaging import version
     from pypsa.definitions.structures import Dict
     from snakemake.api import Workflow
     from snakemake.common import SNAKEFILE_CHOICES
@@ -520,6 +521,7 @@ def mock_snakemake(
         StorageSettings,
         WorkflowSettings,
     )
+    from snakemake import __version__ as sm_version
 
     script_dir = Path(__file__).parent.resolve()
     if root_dir is None:
@@ -553,21 +555,26 @@ def mock_snakemake(
 
         resource_settings = ResourceSettings()
         config_settings = ConfigSettings(configfiles=map(Path, configfiles))
-        workflow_settings = WorkflowSettings()
-        output_settings = OutputSettings()
-        logger_manager = LoggerManager(logger=logger, settings=output_settings)
+        workflow_settings = WorkflowSettings()        
         storage_settings = StorageSettings()
         dag_settings = DAGSettings(rerun_triggers=[])
-        workflow = Workflow(
+
+        workflow_kwargs = dict(
             config_settings=config_settings,
             resource_settings=resource_settings,
             workflow_settings=workflow_settings,
-            logger_manager=logger_manager,
             storage_settings=storage_settings,
             dag_settings=dag_settings,
             storage_provider_settings=dict(),
             overwrite_workdir=workdir,
         )
+
+        # Snakemake version-dependent logger handling
+        if version.parse(sm_version) >= version.parse("9.14.6"):
+            output_settings = OutputSettings()
+            workflow_kwargs["logger_manager"] = LoggerManager(logger=logger, settings=output_settings)
+
+        workflow = Workflow(**workflow_kwargs)
         workflow.include(snakefile)
 
         if configfiles:
