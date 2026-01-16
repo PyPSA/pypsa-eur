@@ -52,6 +52,18 @@ class ExistingCapacitiesConfig(ConfigModel):
         ],
         description="Intervals to group existing capacities for heat.",
     )
+    grouping_years_industry: list[int] = Field(
+        default_factory=lambda: [
+            1995,
+            2000,
+            2005,
+            2010,
+            2015,
+            2020,
+            2025,
+        ],
+        description="Intervals to group existing capacities for industry.",
+    )
     threshold_capacity: float = Field(
         10,
         description="Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
