@@ -555,10 +555,7 @@ def mock_snakemake(
         config_settings = ConfigSettings(configfiles=map(Path, configfiles))
         workflow_settings = WorkflowSettings()
         output_settings = OutputSettings()
-        logger_manager = LoggerManager(
-            logger=logger,
-            settings=output_settings
-        )
+        logger_manager = LoggerManager(logger=logger, settings=output_settings)
         storage_settings = StorageSettings()
         dag_settings = DAGSettings(rerun_triggers=[])
         workflow = Workflow(
