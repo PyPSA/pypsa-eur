@@ -9,6 +9,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Update energy balances from JRC-IDEES-2021 to `JRC-IDEES-2023
+  <https://publications.jrc.ec.europa.eu/repository/handle/JRC138195>`__. The
+  default reference year was changed from 2019 to 2023.
+
 * Important: PyPSA-Eur now uses a validation schema for configuration files. The schema 
   also contains the default values for all known configuration options, which means 
   `config/config.default.yaml` still exists and can be used, but will be automatically

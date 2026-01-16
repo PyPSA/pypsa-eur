@@ -1294,7 +1294,7 @@ data:
     source: archive
     version: latest
   jrc_idees:
-    source: archive
+    source: primary
     version: latest
   scigrid_gas:
     source: primary
