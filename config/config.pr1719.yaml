@@ -22,3 +22,9 @@ sector:
 clustering:
   temporal:
     resolution_sector: 365H
+
+# TODO: Create new TD release including grey methanol
+data:
+  costs:
+    source: primary
+    version: dev
