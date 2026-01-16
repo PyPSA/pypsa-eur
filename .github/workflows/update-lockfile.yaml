@@ -13,8 +13,40 @@ permissions:
   pull-requests: write
 
 jobs:
+  check-diff:
+    runs-on: ubuntu-latest
+    outputs:
+      has_diff: ${{ steps.check_diff.outputs.has_diff }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Check pixi files diff
+      id: check_diff
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+          echo "has_diff=true" >> $GITHUB_OUTPUT
+          echo "Running on master branch - will proceed with update of lockfiles."
+          exit 0
+        fi
+
+        git fetch origin master
+        if git diff origin/master...HEAD -- pixi.toml pixi.lock | grep -q .; then
+          echo "has_diff=true" >> $GITHUB_OUTPUT
+          echo "Differences found compared to master - will proceed with update of lockfiles."
+        else
+          echo "has_diff=false" >> $GITHUB_OUTPUT
+          echo "No differences found compared to master - will skip update of lockfiles."
+        fi
+      env:
+        GH_TOKEN: ${{ github.token }}
+
   update-locked-environment:
-    if: ${{ github.event_name != 'schedule' || github.ref == 'refs/heads/master' }}
+    if: |
+      needs.check-diff.outputs.has_diff == 'true' &&
+      (github.event_name != 'schedule' || github.ref == 'refs/heads/master')
+    needs: check-diff
     name: Update lockfiles
     runs-on: ubuntu-latest
     defaults:
