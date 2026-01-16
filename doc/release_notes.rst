@@ -115,6 +115,8 @@ Upcoming Release
 
 * Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)
 
+* Add user-readable messages to each rule (https://github.com/PyPSA/pypsa-eur/pull/1846)
+
 * Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
 
 * Running perfect foresight is now marked as unstable and may not work as expected.
