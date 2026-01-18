@@ -1279,7 +1279,7 @@ data:
     source: archive
     version: latest
   eurostat_balances:
-    source: archive
+    source: primary
     version: latest
   eurostat_household_balances:
     source: archive
