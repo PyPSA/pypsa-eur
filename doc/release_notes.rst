@@ -9,10 +9,6 @@ Release Notes
 Upcoming Release
 ================
 
-* Download and process Eurostat energy balances from API. This replaces the discontinued ZIP bulk download.
-
-* The function `rescale_idees_from_eurostat` was removed.
-
 * Important: PyPSA-Eur now uses a validation schema for configuration files. The schema 
   also contains the default values for all known configuration options, which means 
   `config/config.default.yaml` still exists and can be used, but will be automatically
