@@ -255,7 +255,7 @@ def co2_emissions_year(
     """
     eea_co2 = build_eea_co2(input_co2, year, emissions_scope)
 
-    eurostat = build_eurostat(input_eurostat)
+    eurostat = build_eurostat(input_eurostat, countries)
 
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK, XK
     eurostat_co2 = build_eurostat_co2(eurostat, year)

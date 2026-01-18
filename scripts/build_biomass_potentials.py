@@ -246,7 +246,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     return bio_regions
 
 
-def add_unsustainable_potentials(df, input_eurostat):
+def add_unsustainable_potentials(df):
     """
     Add unsustainable biomass potentials to the given dataframe. The difference
     between the data of JRC and Eurostat is assumed to be unsustainable
@@ -269,29 +269,36 @@ def add_unsustainable_potentials(df, input_eurostat):
     else:
         latest_year = 2021
     idees_rename = {"GR": "EL", "GB": "UK"}
-    year = max(min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990)  # noqa: F841
     df_unsustainable = (
-        build_eurostat(input_eurostat)
-        .query("year == @year and nrg_bal == 'PPRD'")  # Primary production
-        .set_index(["country", "siec"])
-        .value.unstack("siec")
+        build_eurostat(
+            countries=snakemake.config["countries"],
+            input_eurostat=snakemake.input.eurostat,
+            nprocesses=int(snakemake.threads),
+        )
+        .xs(
+            max(min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990),
+            level=1,
+        )
+        .xs("Primary production", level=2)
+        .droplevel([1, 2, 3])
     )
 
+    df_unsustainable.index = df_unsustainable.index.str.strip()
     df_unsustainable = df_unsustainable.rename(
         {v: k for k, v in idees_rename.items()}, axis=0
     )
 
     bio_carriers = [
-        "R5110-5150_W6000RI",  # Primary solid biofuels
-        "R5300",  # Biogases
-        "W6210",  # Renewable municipal waste
-        "R5210P",  # Pure biogasoline
-        "R5210B",  # Blended biogasoline
-        "R5220P",  # Pure biodiesels
-        "R5220B",  # Blended biodiesels
-        "R5230P",  # Pure bio jet kerosene
-        "R5230B",  # Blended bio jet kerosene
-        "R5290",  # Other liquid biofuels
+        "Primary solid biofuels",
+        "Biogases",
+        "Renewable municipal waste",
+        "Pure biogasoline",
+        "Blended biogasoline",
+        "Pure biodiesels",
+        "Blended biodiesels",
+        "Pure bio jet kerosene",
+        "Blended bio jet kerosene",
+        "Other liquid biofuels",
     ]
 
     df_unsustainable = df_unsustainable[bio_carriers]
@@ -303,18 +310,12 @@ def add_unsustainable_potentials(df, input_eurostat):
 
     # Calculate unsustainable solid biomass
     df_wo_ch["unsustainable solid biomass"] = _calc_unsustainable_potential(
-        df_wo_ch,
-        df_unsustainable,
-        share_unsus,
-        "R5110-5150_W6000RI",  # Primary solid biofuels
+        df_wo_ch, df_unsustainable, share_unsus, "Primary solid biofuels"
     )
 
     # Calculate unsustainable biogas
     df_wo_ch["unsustainable biogas"] = _calc_unsustainable_potential(
-        df_wo_ch,
-        df_unsustainable,
-        share_unsus,
-        "R5300",  # Biogases
+        df_wo_ch, df_unsustainable, share_unsus, "Biogases"
     )
 
     # Calculate unsustainable bioliquids
@@ -322,7 +323,7 @@ def add_unsustainable_potentials(df, input_eurostat):
         df_wo_ch,
         df_unsustainable,
         share_unsus,
-        resource_type="R5210|R5220|R5230|R5290",  # gasoline, diesel, kerosene, liquids
+        resource_type="gasoline|diesel|kerosene|liquid",
     )
 
     share_sus = params.get("share_sustainable_potential_available").get(investment_year)
@@ -390,8 +391,7 @@ if __name__ == "__main__":
     grouper = {v: k for k, vv in params["classes"].items() for v in vv}
     df = df.T.groupby(grouper).sum().T
 
-    input_eurostat = snakemake.input.eurostat
-    df = add_unsustainable_potentials(df, input_eurostat)
+    df = add_unsustainable_potentials(df)
 
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"

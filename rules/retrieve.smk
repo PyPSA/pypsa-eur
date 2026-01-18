@@ -31,11 +31,13 @@ if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"]
         message:
             "Retrieving Eurostat balances data"
         input:
-            tsv_gz=storage(EUROSTAT_BALANCES_DATASET["url"]),
+            zip_file=storage(EUROSTAT_BALANCES_DATASET["url"]),
         output:
-            tsv_gz=f"{EUROSTAT_BALANCES_DATASET['folder']}/estat_nrg_bal_c.tsv.gz",
+            zip_file=f"{EUROSTAT_BALANCES_DATASET['folder']}/balances.zip",
+            directory=directory(EUROSTAT_BALANCES_DATASET["folder"]),
         run:
-            copy2(input["tsv_gz"], output["tsv_gz"])
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], output["directory"])
 
 
 if (

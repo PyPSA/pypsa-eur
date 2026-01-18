@@ -791,7 +791,7 @@ rule build_energy_totals:
         swiss_transport=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         idees=rules.retrieve_jrc_idees.output["directory"],
         district_heat_share="data/district_heat_share.csv",
-        eurostat=rules.retrieve_eurostat_balances.output["tsv_gz"],
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
         eurostat_households=rules.retrieve_eurostat_household_balances.output["csv"],
     output:
         transformation_output_coke=resources("transformation_output_coke.csv"),
@@ -859,7 +859,7 @@ rule build_biomass_potentials:
         biomass=config_provider("biomass"),
     input:
         enspreso_biomass=rules.retrieve_enspreso_biomass.output["xlsx"],
-        eurostat=rules.retrieve_eurostat_balances.output["tsv_gz"],
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
         nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         nuts3_population=ancient(rules.retrieve_nuts3_population.output["gz"]),
@@ -1049,7 +1049,7 @@ rule build_industrial_production_per_country:
     input:
         ch_industrial_production="data/ch_industrial_production_per_subsector.csv",
         ammonia_production=resources("ammonia_production.csv"),
-        eurostat=rules.retrieve_eurostat_balances.output["tsv_gz"],
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
         jrc=rules.retrieve_jrc_idees.output["directory"],
     output:
         industrial_production_per_country=resources(
@@ -1595,7 +1595,7 @@ rule prepare_sector_network:
             else []
         ),
         network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
-        eurostat=rules.retrieve_eurostat_balances.output["tsv_gz"],
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s_{clusters}.csv"
         ),
