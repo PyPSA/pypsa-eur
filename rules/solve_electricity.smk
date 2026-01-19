@@ -4,6 +4,8 @@
 
 
 rule solve_network:
+    message:
+        "Solving electricity network optimization for {wildcards.clusters} clusters and {wildcards.opts} electric options"
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
@@ -35,6 +37,8 @@ rule solve_network:
 
 
 rule solve_operations_network:
+    message:
+        "Solving electricity network operations optimization for {wildcards.clusters} clusters and {wildcards.opts} electric options"
     params:
         options=config_provider("solving", "options"),
         solving=config_provider("solving"),
