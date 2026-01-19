@@ -677,16 +677,6 @@ sector:
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
       min_delta_t_lift: 10
-    limited_heat_sources:
-      geothermal:
-        constant_temperature_celsius: 65
-        ignore_missing_regions: false
-      river_water:
-        constant_temperature_celsius: false
-    direct_utilisation_heat_sources:
-    - geothermal
-    temperature_limited_stores:
-    - ptes
     dh_areas:
       buffer: 1000
       handle_missing_countries: fill
