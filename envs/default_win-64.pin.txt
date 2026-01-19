@@ -232,7 +232,7 @@ https://conda.anaconda.org/conda-forge/win-64/libzip-1.11.2-h3135430_0.conda#090
 https://conda.anaconda.org/conda-forge/win-64/hdf4-4.2.15-h5557f11_7.conda#84344a916a73727c1326841007b52ca8
 https://conda.anaconda.org/conda-forge/win-64/libnetcdf-4.9.3-nompi_h7d90bef_103.conda#0c157867805749ddbf608766f1350e11
 https://conda.anaconda.org/conda-forge/win-64/cftime-1.6.5-py313h0591002_0.conda#75ee7a92ec8bb2d7537ae8906fb534b0
-https://conda.anaconda.org/conda-forge/win-64/netcdf4-1.7.4-nompi_py313h08d0110_101.conda#778189b924f9c6b448d69db5e2c76e03
+https://conda.anaconda.org/conda-forge/win-64/netcdf4-1.7.3-nompi_py313h08d0110_101.conda#778189b924f9c6b448d69db5e2c76e03
 https://conda.anaconda.org/conda-forge/noarch/toolz-1.1.0-pyhd8ed1ab_1.conda#c07a6153f8306e45794774cf9b13bd32
 https://conda.anaconda.org/conda-forge/noarch/cpython-3.13.11-py313hd8ed1ab_100.conda#5bf347916a543bcb290c780fa449bf73
 https://conda.anaconda.org/conda-forge/noarch/python-gil-3.13.11-h4df99d1_100.conda#d1461b2e63b1909f4f5b41c823bd90ae

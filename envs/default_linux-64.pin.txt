@@ -251,7 +251,7 @@ https://conda.anaconda.org/conda-forge/linux-64/hdf4-4.2.15-h2a13503_7.conda#bd7
 https://conda.anaconda.org/conda-forge/linux-64/attr-2.5.2-h39aace5_0.conda#791365c5f65975051e4e017b5da3abf5
 https://conda.anaconda.org/conda-forge/linux-64/libnetcdf-4.9.3-nompi_h11f7409_103.conda#3ccff1066c05a1e6c221356eecc40581
 https://conda.anaconda.org/conda-forge/linux-64/cftime-1.6.5-py312h4f23490_0.conda#acb46785d4866cec0a88b4d6e991c33f
-https://conda.anaconda.org/conda-forge/linux-64/netcdf4-1.7.4-nompi_py312h25f8dc5_101.conda#b1c45859b7cfc04b81362fe7f0b75fa2
+https://conda.anaconda.org/conda-forge/linux-64/netcdf4-1.7.3-nompi_py312h25f8dc5_101.conda#b1c45859b7cfc04b81362fe7f0b75fa2
 https://conda.anaconda.org/conda-forge/noarch/toolz-1.1.0-pyhd8ed1ab_1.conda#c07a6153f8306e45794774cf9b13bd32
 https://conda.anaconda.org/conda-forge/noarch/cpython-3.12.12-py312hd8ed1ab_1.conda#99d689ccc1a360639eec979fd7805be9
 https://conda.anaconda.org/conda-forge/noarch/python-gil-3.12.12-hd8ed1ab_1.conda#c20172b4c59fbe288fa50cdc1b693d73
