@@ -331,7 +331,7 @@ class SolvingConfig(BaseModel):
                     raise ValueError(
                         f"Gurobi license credentials ({', '.join(found)}) must not be set in config to avoid leaking secrets. "
                         "Use a license file instead or check the PyPSA options documentation on how to pass solver_options via environment variables, "
-                        'e.g. PYPSA_PARAMS__OPTIMIZE__SOLVER_OPTIONS=\'{"env": {"WLSACCESSID": "...", "WLSSECRET": "...", "LICENSEID": "..."}}\''
+                        'e.g. PYPSA_PARAMS__OPTIMIZE__SOLVER_OPTIONS={"env": {"WLSACCESSID": "...", "WLSSECRET": "...", "LICENSEID": 1234}}'
                     )
         return v
 
