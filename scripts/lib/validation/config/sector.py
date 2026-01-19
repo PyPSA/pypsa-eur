@@ -461,13 +461,6 @@ class SectorConfig(BaseModel):
         description="District heating configuration.",
     )
 
-    # Allowed heat sources per system type (used for validation and description)
-    _allowed_heat_sources: dict[HeatSystemType, list[HeatSource]] = {
-        HeatSystemType.URBAN_CENTRAL: [s for s in HeatSource if s != HeatSource.GROUND],
-        HeatSystemType.URBAN_DECENTRAL: [HeatSource.AIR],
-        HeatSystemType.RURAL: [HeatSource.AIR, HeatSource.GROUND],
-    }
-
     heat_sources: dict[HeatSystemType, list[HeatSource]] = Field(
         default_factory=lambda: {
             HeatSystemType.URBAN_CENTRAL: [
@@ -478,12 +471,12 @@ class SectorConfig(BaseModel):
             HeatSystemType.URBAN_DECENTRAL: [HeatSource.AIR],
             HeatSystemType.RURAL: [HeatSource.AIR, HeatSource.GROUND],
         },
-        description="Heat sources by heat system type. Allowed: "
-        + "; ".join(
-            f"{st.value}: {[s.value for s in sources]}"
-            for st, sources in _allowed_heat_sources.items()
-        )
-        + ".",
+        description=(
+            "Heat sources by heat system type. Allowed: "
+            "urban central: all except 'ground'; "
+            "urban decentral: ['air']; "
+            "rural: ['air', 'ground']."
+        ),
     )
 
     @field_validator("heat_sources")
@@ -492,8 +485,15 @@ class SectorConfig(BaseModel):
         cls, v: dict[HeatSystemType, list[HeatSource]]
     ) -> dict[HeatSystemType, list[HeatSource]]:
         """Validate that heat sources are appropriate for each system type."""
+        allowed_heat_sources = {
+            HeatSystemType.URBAN_CENTRAL: [
+                s for s in HeatSource if s != HeatSource.GROUND
+            ],
+            HeatSystemType.URBAN_DECENTRAL: [HeatSource.AIR],
+            HeatSystemType.RURAL: [HeatSource.AIR, HeatSource.GROUND],
+        }
         for system_type, sources in v.items():
-            allowed = SectorConfig._allowed_heat_sources[system_type]
+            allowed = allowed_heat_sources[system_type]
             invalid = [s for s in sources if s not in allowed]
             if invalid:
                 raise ValueError(
