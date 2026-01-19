@@ -101,7 +101,7 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
         message:
             "Retrieving Corine land cover data"
         params:
-            apikey=os.environ.get("CORINE_API_TOKEN", config["secrets"]["corine"]),
+            apikey=os.environ.get("CORINE_API_TOKEN", ""),
         output:
             zip=f"{CORINE_DATASET['folder']}/corine.zip",
             tif_file=f"{CORINE_DATASET['folder']}/corine.tif",

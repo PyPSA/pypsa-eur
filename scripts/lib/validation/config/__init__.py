@@ -76,15 +76,6 @@ class RemoteConfig(ConfigModel):
     )
 
 
-class SecretsConfig(ConfigModel):
-    """Configuration for top level `secrets` settings."""
-
-    corine: str = Field(
-        "",
-        description='API token for corine dataset retrieval. You can also pass the token by setting the environment variable "CORINE_API_TOKEN". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.',
-    )
-
-
 class ConfigSchema(BaseModel):
     """
     Combined configuration schema for PyPSA-EUR.
@@ -227,10 +218,6 @@ class ConfigSchema(BaseModel):
     overpass_api: OverpassApiConfig = Field(
         default_factory=OverpassApiConfig,
         description="Overpass API configuration for OSM data retrieval.",
-    )
-    secrets: SecretsConfig = Field(
-        default_factory=SecretsConfig,
-        description="Secrets configuration for API tokens.",
     )
 
 
