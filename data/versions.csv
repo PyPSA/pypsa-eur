@@ -48,7 +48,7 @@ gebco,2014,primary,latest supported,2025-12-02,The dataset will be cut for the r
 gebco,2014,archive,latest supported,2026-01-13,Earlier part of databundle,https://data.pypsa.org/workflows/eur/gebco/2014/GEBCO_2014_2D.nc
 gem_europe_gas_tracker,may-2024,primary,latest supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
 gem_europe_gas_tracker,may-2024,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_europe_gas_tracker/may-2024/Europe-Gas-Tracker-2024-05.xlsx
-gem_gspt,march-2025-v1,primary,not-supported,2025-12-02,,"https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.xlsx"""
+gem_gspt,march-2025-v1,primary,not-supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.xlsx
 gem_gspt,april-2024-v1,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_gspt/april-2024-v1/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
 geothermal_heat_utilisation_potentials,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx
 geothermal_heat_utilisation_potentials,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/geothermal_heat_utilisation_potentials/341.5/Results_DH_Matching_Cluster.xlsx
@@ -79,7 +79,7 @@ natura,2025-08-15,primary,latest supported,2025-12-02,,https://zenodo.org/record
 natura,2025-08-15,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/natura/2025-08-15/natura.tiff
 nitrogen_statistics,2023,primary,latest not-tested,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2023-nitro-ERT.xlsx
 nitrogen_statistics,2022,primary,supported,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx
-nitrogen_statistics,2022,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2022/nitro-ert.xlsx
+nitrogen_statistics,2022,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2022/nitro-ert.xlsx
 nuts3_population,13-03-2025,primary,latest supported,2025-12-02,,https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp?format=TSV&compressed=true
 nuts3_population,13-03-2025,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/nuts3_population/13-03-2025/nama_10r_3popgdp.tsv.gz
 osm,unknown,build,latest supported,2025-12-02,Latest dataset built using OSM data. No single URL available to access the data. See the related scripts and documentation for details.,
