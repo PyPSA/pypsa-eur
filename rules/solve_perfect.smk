@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 rule add_existing_baseyear:
+    message:
+        "Adding existing infrastructure for base year for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     params:
         baseyear=config_provider("scenario", "planning_horizons", 0),
         sector=config_provider("sector"),
@@ -19,7 +21,7 @@ rule add_existing_baseyear:
         busmap=resources("busmap_base_s_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: resources(
-            f"costs_{config_provider("scenario", "planning_horizons",0)(w)}_processed.csv"
+            f"costs_{config_provider('scenario', 'planning_horizons',0)(w)}_processed.csv"
         ),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         existing_heating_distribution=resources(
@@ -58,6 +60,8 @@ def input_network_year(w):
 
 
 rule prepare_perfect_foresight:
+    message:
+        "Preparing data for perfect foresight optimization for {wildcards.clusters} clusters, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     params:
         costs=config_provider("costs"),
         time_resolution=config_provider("clustering", "temporal", "sector"),
@@ -85,6 +89,8 @@ rule prepare_perfect_foresight:
 
 
 rule solve_sector_network_perfect:
+    message:
+        "Solving sector-coupled network with perfect foresight for {wildcards.clusters} clusters, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
@@ -136,6 +142,8 @@ def input_networks_make_summary_perfect(w):
 
 
 rule make_summary_perfect:
+    message:
+        "Creating summary for perfect foresight optimization results"
     input:
         unpack(input_networks_make_summary_perfect),
         costs=resources("costs_2020_processed.csv"),
