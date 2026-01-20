@@ -305,7 +305,7 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
         - Identifies shared buses to remove using networkx.
         - Creates a network graph of lines to be merged using networkx
         - Identifies connected components in the graph and merges lines within each component.
-        - Note that only lines that unambigruosly can be merged are considered.
+        - Note that only lines that unambiguously can be merged are considered.
 
     Parameters
     ----------
