@@ -9,13 +9,9 @@ Release Notes
 Upcoming Release
 ================
 
-* Fix virtual bus naming when building the transmission network from raw OSM data to use invariant names.
+* Fix virtual bus naming when building the transmission network from raw OSM data to use persistent names.
 
 * Fix column selection when preparing OSM pre-built releases.
-
-* Download and process Eurostat energy balances from API. This replaces the discontinued ZIP bulk download.
-
-* The function `rescale_idees_from_eurostat` was removed.
 
 * Fix `mock_snakemake` due to breaking `snakemake` upstream API changes, i.e., requiring passing a `LoggerManager` instance (https://github.com/PyPSA/pypsa-eur/pull/1984).
 
