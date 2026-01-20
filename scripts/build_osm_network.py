@@ -1549,7 +1549,7 @@ def build_network(
     buses_polygon.drop(columns=["voltage"], inplace=True)
 
     # Lines
-    lines = gpd.read_file(inputs["lines"])
+    lines = gpd.read_file(inputs["lines"]).drop("contains", axis=1)
     lines = _merge_identical_lines(lines)
 
     # Floor voltages to 3 decimal places (e.g., 66600 becomes 66000, 220000 stays 220000)
