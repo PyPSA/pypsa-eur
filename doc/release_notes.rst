@@ -17,6 +17,8 @@ Upcoming Release
 
 * The function `rescale_idees_from_eurostat` was removed.
 
+* Fix `mock_snakemake` due to breaking `snakemake` upstream API changes, i.e., requiring passing a `LoggerManager` instance (https://github.com/PyPSA/pypsa-eur/pull/1984).
+
 * Added technology-data v0.13.4 (https://github.com/PyPSA/technology-data/releases/tag/v0.13.4) to data versions (https://github.com/PyPSA/pypsa-eur/pull/1985).
 
 * Important: PyPSA-Eur now uses a validation schema for configuration files. The schema
