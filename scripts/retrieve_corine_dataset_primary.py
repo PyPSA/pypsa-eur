@@ -76,7 +76,8 @@ if __name__ == "__main__":
     if not apikey:
         raise ValueError(
             "Environment variable CORINE_API_TOKEN is not set.\n"
-            "To download CORINE data from the primary source you need to provide an valid API key. See ... for details."
+            "To download CORINE data from the primary source you need to provide a valid API key. "
+            "See retrieve_corine_dataset_primary.py for details."
         )
     output_zip_file = snakemake.output["zip"]
     tif_file = snakemake.output["tif_file"]
