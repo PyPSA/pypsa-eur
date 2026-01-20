@@ -11,7 +11,7 @@ from natsort import natsort_keygen
 from pandera.pandas import Check, Column
 
 VERSIONS_CSV = Path(__file__).parent.parent / "data" / "versions.csv"
-VALID_SOURCES = ["primary", "archive", "zenodo", "build"]  # Order defines sort priority
+VALID_SOURCES = ["primary", "archive", "build"]  # Order defines sort priority
 
 VALID_TAGS = {
     "latest",
@@ -43,10 +43,6 @@ def sort_versions(df: pd.DataFrame) -> pd.DataFrame:
 
 
 is_sorted = Check(lambda df: df.equals(sort_versions(df)), error="Data must be sorted")
-zenodo_has_zenodo_url = Check(
-    lambda df: df.loc[df["source"] == "zenodo", "url"].str.contains("zenodo.org").all(),
-    error="Zenodo entries must have zenodo.org URLs",
-)
 archive_has_url = Check(
     lambda df: df.loc[df["source"] == "archive", "url"].str.len().gt(0).all(),
     error="Archive entries must have a URL",
@@ -68,7 +64,7 @@ VersionsSchema = pa.DataFrameSchema(
         "note": Column(str, nullable=True),
         "url": Column(str, nullable=True),
     },
-    checks=[is_sorted, zenodo_has_zenodo_url, archive_has_url],
+    checks=[is_sorted, archive_has_url],
     coerce=True,
     strict=True,
     ordered=True,
