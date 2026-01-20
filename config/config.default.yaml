@@ -1389,6 +1389,12 @@ data:
   jrc_ardeco:
     source: archive
     version: latest
+  bidding_zones_electricitymaps:
+    source: primary
+    version: latest
+  bidding_zones_entsoepy:
+    source: primary
+    version: latest
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
 overpass_api:
