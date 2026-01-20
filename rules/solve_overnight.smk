@@ -4,6 +4,8 @@
 
 
 rule solve_sector_network:
+    message:
+        "Solving sector-coupled network with overnight investment optimization for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),

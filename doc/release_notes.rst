@@ -9,7 +9,9 @@ Release Notes
 Upcoming Release
 ================
 
-* Fix `mock_snakemake` due to breaking `snakemake` upstream API changes, i.e., requiring passing a `LoggerManager` instance (https://github.com/PyPSA/pypsa-eur/pull/1984). See https://github.com/PyPSA/pypsa-eur/issues/1981 and https://github.com/snakemake/snakemake/releases/tag/v9.14.6 .
+* Fix `mock_snakemake` due to breaking `snakemake` upstream API changes, i.e., requiring passing a `LoggerManager` instance (https://github.com/PyPSA/pypsa-eur/pull/1984).
+
+* Added technology-data v0.13.4 (https://github.com/PyPSA/technology-data/releases/tag/v0.13.4) to data versions (https://github.com/PyPSA/pypsa-eur/pull/1985).
 
 * Important: PyPSA-Eur now uses a validation schema for configuration files. The schema 
   also contains the default values for all known configuration options, which means 
@@ -116,6 +118,8 @@ Upcoming Release
 * Added integration with the OETC platform
 
 * Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)
+
+* Add user-readable messages to each rule (https://github.com/PyPSA/pypsa-eur/pull/1846)
 
 * Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
 
