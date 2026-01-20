@@ -75,8 +75,10 @@
 "tyndp","archive","2024","['latest', 'supported']","https://zenodo.org/records/16759672/files",""
 "powerplants","primary","0.7.1","['latest', 'supported']","https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv","Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry."
 "powerplants","primary","0.7.0","['supported']","https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.0/powerplants.csv","Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry."
-"costs","primary","v0.13.3","['latest', 'supported']","https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.3/outputs","Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry."
-"costs","primary","v0.13.2","['partially-supported']","https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.2/outputs","Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry."
+"costs","primary","v0.13.4","['latest', 'supported']","https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.4/outputs","Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry."
+"costs","primary","v0.13.3","['supported']","https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.3/outputs","Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry."
+"costs","primary","v0.13.2","['supported']","https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.2/outputs","Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry."
+
 "country_runoff","archive","2025-08-13","['latest', 'supported']","https://zenodo.org/records/16849356/files/era5-runoff-per-country.csv",""
 "country_runoff","build","unknown","['latest', 'supported']","","Latest dataset built using ERA5 runoff data. This takes a very long time to build."
 "country_hdd","archive","2025-08-13","['latest', 'supported']","https://zenodo.org/records/16849356/files/era5-HDD-per-country.csv",""
