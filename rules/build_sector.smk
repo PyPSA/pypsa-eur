@@ -1528,6 +1528,27 @@ def input_heat_source_power(w):
     }
 
 
+rule build_industry_plants:
+    params:
+        countries=config_provider("countries"),
+    input:
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        ammonia="data/ammonia_plants.csv",
+        isi_database="data/1-s2.0-S0196890424010586-mmc2.xlsx",
+        gem_gcct="data/gem/Global-Cement-and-Concrete-Tracker_July-2025.xlsx",
+    output:
+        industry_plants=resources("industry_plants_{clusters}.csv"),
+    threads: 1
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_industry_plants_{clusters}.log"),
+    benchmark:
+        benchmarks("build_industry_plants_{clusters}")
+    script:
+        "../scripts/build_industry_plants.py"
+
+
 rule prepare_sector_network:
     message:
         "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizon, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
@@ -1688,6 +1709,9 @@ rule prepare_sector_network:
             resources("ates_potentials_base_s_{clusters}_{planning_horizons}.csv")
             if config_provider("sector", "district_heating", "ates", "enable")(w)
             else []
+        ),
+        industry_sector_ratios=resources(
+            "industry_sector_ratios_{planning_horizons}.csv"
         ),
     output:
         resources(

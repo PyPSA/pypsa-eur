@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=../schema.json
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  name: pr1719
+
+foresight: myopic
+
+scenario:
+  clusters:
+  - 39
+  planning_horizons:
+  - 2030
+  - 2040
+
+sector:
+  methanol:
+    regional_methanol_demand: true
+  ammonia: regional
+
+clustering:
+  temporal:
+    resolution_sector: 365H
+
+# TODO: Create new TD release including grey methanol
+data:
+  costs:
+    source: primary
+    version: dev

@@ -8,9 +8,9 @@ Sector configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 """
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -361,6 +361,31 @@ class _ImportsConfig(BaseModel):
         },
         description="Price for importing renewable energy of carrier.",
     )
+
+
+class _SteelBOFConfig(BaseModel):
+    """Configuration for `sector.steel_bof` settings."""
+
+    pledge: bool = Field(
+        True,
+        description="Decommissions coal blast furnaces at their pledged phase out year.",
+    )
+    pledge_delay: int = Field(
+        0, description="Delays the decommission year by number of years."
+    )
+    default_phase_out: bool | int = Field(
+        2035,
+        description="Decommissions the coal blast furnaces that do not have a pledged phase out year.",
+    )
+
+    @field_validator("default_phase_out")
+    def reject_true(cls, v):
+        if v is True:
+            raise ValueError("default_phase_out cannot be True.")
+        return v
+
+
+AllowedEndogenousSectors = Literal["steel", "cement"]
 
 
 class SectorConfig(BaseModel):
@@ -922,4 +947,17 @@ class SectorConfig(BaseModel):
     )
     imports: _ImportsConfig = Field(
         default_factory=_ImportsConfig, description="Imports configuration."
+    )
+
+    # Endogenous sectors
+    endogenous_sectors: list[AllowedEndogenousSectors] = Field(
+        default_factory=lambda: ["steel", "cement"],
+        description="Sectors modelled endogenously.",
+    )
+    hbi_relocation: bool = Field(
+        False,
+        description="Allow the relocation of iron ore reduction step.",
+    )
+    steel_bof: _SteelBOFConfig = Field(
+        default_factory=_SteelBOFConfig, description="Steel BOF configuration."
     )

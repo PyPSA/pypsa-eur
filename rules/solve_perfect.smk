@@ -12,6 +12,8 @@ rule add_existing_baseyear:
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
+        countries=config_provider("countries"),
+        MWh_NH3_per_tNH3=config_provider("industry", "MWh_NH3_per_tNH3"),
     input:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
@@ -29,6 +31,9 @@ rule add_existing_baseyear:
         ),
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
         heating_efficiencies=resources("heating_efficiencies.csv"),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        ammonia="data/ammonia_plants.csv",
+        isi_database="data/1-s2.0-S0196890424010586-mmc2.xlsx",
     output:
         resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"

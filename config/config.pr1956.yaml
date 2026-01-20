@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+run:
+  name: "pr1956"
+
+countries:
+- AT
+- BE
+- CH
+- DE
+
+electricity:
+  voltages: [63., 66., 90., 110., 132., 150., 220., 300., 330., 380., 400., 500., 750.]
+  base_network: osm
+
+transmission_projects:
+  enable: false
+
+data:
+  osm:
+    source: build
+    version: unknown
+
+# Please provide your own user agent details when using the Overpass API
+overpass_api:
+  url: https://overpass.osm.jp/api/interpreter
+  max_tries: 5
+  timeout: 600
+  user_agent:
+    project_name: PyPSA-Eur
+    email: contact@pypsa.org
+    website: https://github.com/PyPSA/pypsa-eur
