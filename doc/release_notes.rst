@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Removed the ``secrets`` configuration section and disallow setting Gurobi license credentials (WLSACCESSID, WLSSECRET, LICENSEID) in config files to prevent accidental exposure of sensitive credentials. Use environment variables or license files instead.
+
 * Important: PyPSA-Eur now uses a validation schema for configuration files. The schema 
   also contains the default values for all known configuration options, which means 
   `config/config.default.yaml` still exists and can be used, but will be automatically
