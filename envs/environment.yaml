@@ -30,13 +30,14 @@ dependencies:
 - lxml >=6.0.2
 - matplotlib >=3.10.7
 - memory_profiler >=0.61.0
-- netcdf4 >=1.7.2
+- netcdf4 >=1.7.2,!=1.7.4
 - networkx >=3.5
 - numpy >=1.26.4
 - openpyxl >=3.1.5
 - pandas >=2.1
 - plotly >=6.4.0
 - powerplantmatching >=0.5.15
+- pydantic >=2
 - pre-commit >=4.3.0
 - proj >=9.6.2
 - pylint >=4.0.2
@@ -50,6 +51,7 @@ dependencies:
 - rasterio >=1.4.3
 - rioxarray >=0.20.0
 - ruff >=0.14.3
+- ruamel.yaml >=0.18.0
 - scipy >=1.16.3
 - seaborn >=0.13.2
 - shapely >=2.0
@@ -64,3 +66,4 @@ dependencies:
 - xlrd >=2.0.2
 - yaml >=0.2.5
 - snakemake-storage-plugin-cached-http >=0.1.0
+- snakemake-logger-plugin-pypsa >=0.1.0
