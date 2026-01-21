@@ -31,7 +31,7 @@ Upcoming Release
   - Restructured ``co2_budget:``. Now requires ``emissions_scope`` and ``relative`` (true/false) plus ``upper``/``lower`` bounds, where each bound can be ``null``, a scalar, or a ``{year: value}`` mapping.
   - Renamed transmission extension keys. ``lines: max_extension`` → ``s_nom_max_extension``; ``links: max_extension`` → ``p_nom_max_extension``.
   - Changed ``lines: s_nom_max`` default. Now ``10_000`` MW instead of ``.inf``.
-  - Restructured ``sector:`` toggles. Added ``sector: enabled`` master toggle. Individual sectors changed from ``transport: true`` to ``transport: enable: true`` (same for heating, biomass, industry, shipping, aviation, agriculture, fossil_fuels).
+  - Added ``sector: enabled`` to control sector coupling. Set to ``false`` for electricity-only models.
   - Added ``existing_capacities:`` keys. New ``enabled`` toggle and ``baseyear`` setting required for brownfield runs.
   - Added ``clustering: cluster_network: n_clusters``. Replaces the ``{clusters}`` wildcard in filenames.
 

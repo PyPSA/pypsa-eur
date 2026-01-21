@@ -20,8 +20,6 @@ if config["foresight"] != "perfect":
             mem_mb=4000,
         benchmark:
             benchmarks("plot_base_network")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_base_network.py"
 
@@ -39,8 +37,6 @@ if config["foresight"] != "perfect":
             mem_mb=4000,
         benchmark:
             benchmarks("plot_power_network")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_power_network.py"
 
@@ -60,8 +56,6 @@ if config["foresight"] != "perfect":
             RESULTS + "logs/plot_power_network_{horizon}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_power_network_{horizon}")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_power_network.py"
 
@@ -81,8 +75,6 @@ if config["foresight"] != "perfect":
             RESULTS + "logs/plot_hydrogen_network_{horizon}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_hydrogen_network_{horizon}")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_hydrogen_network.py"
 
@@ -101,8 +93,6 @@ if config["foresight"] != "perfect":
             RESULTS + "logs/plot_gas_network_{horizon}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_gas_network_{horizon}")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_gas_network.py"
 
@@ -122,8 +112,6 @@ if config["foresight"] != "perfect":
             RESULTS + "logs/plot_balance_map_{horizon}-{carrier}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_balance_map_{horizon}-{carrier}")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_balance_map.py"
 
@@ -144,8 +132,6 @@ if config["foresight"] != "perfect":
             RESULTS + "logs/plot_balance_map_interactive/{horizon}_{carrier}.log",
         benchmark:
             RESULTS + "benchmarks/plot_balance_map_interactive/{horizon}_{carrier}"
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_balance_map_interactive.py"
 
@@ -177,8 +163,6 @@ if config["foresight"] != "perfect":
             RESULTS + "logs/plot_heat_source_map/{horizon}_{carrier}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_heat_source_map/{horizon}_{carrier}")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_heat_source_map.py"
 
@@ -245,8 +229,6 @@ rule make_summary:
         RESULTS + "logs/make_summary.log",
     benchmark:
         RESULTS + "benchmarks/make_summary"
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/make_summary.py"
 
@@ -297,8 +279,6 @@ rule plot_balance_timeseries:
         RESULTS
 
         +"benchmarks/plot_balance_timeseries_{horizon}"
-    conda:
-        "../envs/environment.yaml"
     output:
         directory(RESULTS + "graphs/balance_timeseries_{horizon}"),
     script:
@@ -322,8 +302,6 @@ rule plot_heatmap_timeseries:
         RESULTS
 
         +"benchmarks/plot_heatmap_timeseries_{horizon}"
-    conda:
-        "../envs/environment.yaml"
     output:
         directory(RESULTS + "graphs/heatmap_timeseries_{horizon}"),
         {},
@@ -375,8 +353,6 @@ rule build_ambient_air_temperature_yearly_average:
         RESULTS + "logs/build_ambient_air_temperature_yearly_average.log",
     benchmark:
         (RESULTS + "benchmarks/build_ambient_air_temperature_yearly_average")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_ambient_air_temperature_yearly_average.py"
 

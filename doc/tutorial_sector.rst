@@ -41,7 +41,7 @@ be retrofitted to transport hydrogen instead.
 
 Documentation for all options will be added successively to :ref:`config`.
 
-Scenarios can be defined like for electricity-only studies, but with additional configuration namespaces. Define scenario entries in ``config/scenarios.yaml`` and enable them via ``run.scenarios.enable: true`` to sweep different combinations of sector settings. See :doc:`wildcards` for the remaining dynamic placeholders.
+Scenarios can be defined like for electricity-only studies, but with additional configuration namespaces. Define scenario entries in ``config/scenarios.yaml`` and enable them via ``run.scenarios.enable: true`` to sweep different combinations of settings.  
 
 Execution
 ---------
@@ -52,7 +52,7 @@ To run an overnight / greenfiled scenario with the specifications above, run
 
     $ snakemake -call all --configfile config/test/config.overnight.yaml
 
-Running this target orchestrates data retrieval, network preparation, and the final optimisation. Use ``snakemake -n all --configfile config/test/config.overnight.yaml`` to inspect the exact job summary for your setup; it will list the relevant ``build_*`` preprocessing tasks together with ``compose_network`` and ``solve_network``.
+Running this target orchestrates data retrieval, network preparation, optimization, and the creation of statistics and visualizations. Use ``snakemake -n all --configfile config/test/config.overnight.yaml`` to inspect the exact job summary for your setup; it will list the relevant ``build_*`` preprocessing tasks together with ``compose_network`` and ``solve_network``.
 
 This covers the retrieval of additional raw data from online resources and
 preprocessing data about the transport, industry, and heating sectors as well as

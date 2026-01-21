@@ -3,7 +3,7 @@
 .. SPDX-License-Identifier: CC-BY-4.0
 
 ##########################################
-Migration Guide (PR1838 Workflow Refactor)
+Migration Guide
 ##########################################
 
 This guide summarises the changes introduced with the PR1838 workflow
@@ -22,9 +22,7 @@ Overview
 - Configuration options such as ``planning_horizons`` and CO₂ budgets moved to
   the top level, so scenario sweeps reference config files directly instead of
   wildcard combinations.
-- Warm-start behaviour is explicit: myopic foresight reads the solved network
-  from the previous horizon, perfect foresight reuses the previous composed
-  network, and overnight runs keep a single horizon.
+
 
 Workflow changes
 ================
@@ -86,7 +84,7 @@ Configuration changes
    ``clustering.temporal.resolution_sector`` have been unified into a single
    ``clustering.temporal.resolution`` setting.
 
-Warm-start expectations
+Foresight modes
 =======================
 
 - **Overnight**: Require a single horizon; ``compose_network`` never looks for
@@ -94,19 +92,7 @@ Warm-start expectations
 - **Myopic**: ``compose_network`` imports
   ``results/{run}/networks/solved_{previous}.nc`` via the helper
   ``solved_previous_horizon``. Ensure horizons are sorted ascendingly.
-- **Perfect**: ``compose_network`` uses ``networks/composed_{previous}.nc`` as
+- **Perfect**: ``compose_network`` uses ``resources/{run}/networks/composed_{previous}.nc`` as  
   the brownfield baseline to build the full multi-period optimisation.
 
-Release checklist
-=================
 
-- Update any bespoke scripts or notebooks to read
-  ``results/{run}/networks/solved_{horizon}.nc`` and the new CSV names from
-  :mod:`scripts/make_summary`.
-- Configure clustering counts, electricity options, sector options, and
-  planning horizons directly in their respective config sections.
-- Verify documentation builds via ``make -C doc html`` and search for outdated
-  targets with ``rg -n "base_s" doc build/html``. Older workflows exposed these
-  controls via the ``{clusters}``, ``{opts}``, ``{sector_opts}``, and
-  ``{planning_horizons}`` wildcards, so scrub those placeholders when migrating
-  custom rule code.

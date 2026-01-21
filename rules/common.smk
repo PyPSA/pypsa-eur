@@ -46,7 +46,7 @@ def scenario_config(scenario_name):
 
 
 @lru_cache(maxsize=128)
-def get_full_config(wildcards_tuple):
+def _get_config_cached(wildcards_tuple):
     """
     Get full scenario-aware config for given wildcards (internal cached version).
 
@@ -110,7 +110,7 @@ def get_config(w):
     """
     # Convert wildcards to hashable tuple for caching
     wildcards_tuple = tuple(sorted(w.items()))
-    return get_full_config(wildcards_tuple)
+    return _get_config_cached(wildcards_tuple)
 
 
 def static_getter(wildcards, keys, default):
@@ -248,9 +248,9 @@ def input_custom_extra_functionality(w):
 def solved_previous_horizon(w):
     horizons = config_provider("planning_horizons")(w)
     i = horizons.index(int(w.horizon))
-    planning_horizon_p = str(horizons[i - 1])
+    horizon_p = str(horizons[i - 1])
 
-    return RESULTS + "networks/solved_" + planning_horizon_p + ".nc"
+    return RESULTS + "networks/solved_" + horizon_p + ".nc"
 
 
 def input_cutout(wildcards, cutout_names="default"):

@@ -10,7 +10,7 @@ After generating and clustering the networks, :mod:`compose_network` produces
 ``networks/composed_{horizon}.nc`` for each planning horizon. These files are
 then passed to the single :mod:`solve_network` rule, which runs
 ``scripts/solve_network.py`` regardless of whether the study is electricity-only
-or sector-coupled. Dispatch-only analyses on an already solved network remain
+or sector-coupled. Dispatch-only analyses on an already solved network are  
 available through :mod:`solve_operations_network`.
 
 .. _solve:

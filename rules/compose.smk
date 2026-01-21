@@ -12,9 +12,6 @@ All configuration is now driven by config sections rather than wildcards.
 """
 
 
-from pathlib import Path
-
-
 def get_compose_inputs(w):
     """Determine inputs for compose rule based on foresight and horizon."""
     cfg = get_config(w)
@@ -210,7 +207,6 @@ rule compose_network:
     output:
         resources("networks/composed_{horizon}.nc"),
     params:
-        # Pass entire config sections using config_provider
         foresight=config_provider("foresight"),
         electricity=config_provider("electricity"),
         sector=config_provider("sector"),
@@ -228,17 +224,13 @@ rule compose_network:
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
         ),
-        # Direct parameters
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        # Derived parameters
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-        # Parameters from add_existing_baseyear
         baseyear=config_provider("planning_horizons"),
         renewable_carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        # Brownfield settings (for myopic)
         h2_retrofit=config_provider("sector", "H2_retrofit"),
         h2_retrofit_capacity_per_ch4=config_provider(
             "sector", "H2_retrofit_capacity_per_CH4"
@@ -251,12 +243,11 @@ rule compose_network:
         direct_utilisation_heat_sources=config_provider(
             "sector", "district_heating", "direct_utilisation_heat_sources"
         ),
-        # CO2 budget handling (pass entire co2_budget config section)
         co2_budget=config_provider("co2_budget"),
     log:
         logs("compose_network_{horizon}.log"),
     threads: 1
     resources:
-        mem_mb=20000,
+        mem_mb=8000,
     script:
         "../scripts/compose_network.py"

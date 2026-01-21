@@ -12,7 +12,7 @@ Not all data dependencies are shipped with the git repository.
 Instead we provide separate data bundles which can be obtained
 using the ``retrieve*`` rules (:ref:`data`).
 
-The sector-specific preprocessing rules generate intermediate data files that are later consumed by :mod:`compose_network`, which orchestrates the final network assembly. This includes injecting existing capacities (via functions from :mod:`add_existing_baseyear`), applying brownfield constraints for myopic foresight (via :mod:`add_brownfield`), and integrating sectoral demand and supply (via :mod:`prepare_sector_network`).
+The sector-specific preprocessing rules generate intermediate data files that are later consumed by :mod:`compose_network`, which orchestrates the final network assembly. This includes adding existing capacities (via functions from :mod:`add_existing_baseyear`), applying brownfield developments in myopic foresight optimization (via :mod:`add_brownfield`), and integrating sectoral demand and supply (via functions from :mod:`prepare_sector_network`).  
 
 .. note::
 

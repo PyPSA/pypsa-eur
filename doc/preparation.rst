@@ -8,8 +8,8 @@ Building Electricity Networks
 
 The preparation process of the PyPSA-Eur energy system model consists of a group of ``snakemake``
 rules which are briefly outlined and explained in detail in the sections below. The pipeline follows 
-the strict order ``base → simplified → clustered → composed → solved``;
-intermediate artifacts live under ``resources/{run}/networks`` while solved networks are written to
+the order ``base → simplified → clustered → composed → solved``;
+intermediate networks are stored under ``resources/{run}/networks``, while solved networks are written to
 ``results/{run}/networks/solved_{horizon}.nc``.
 
 Not all data dependencies are shipped with the git repository.
@@ -40,7 +40,7 @@ Then, the process continues by calculating conventional power plant capacities, 
 Once ``networks/clustered.nc`` and the associated bus/line maps exist, the single rule
 :mod:`compose_network` stitches electricity, sector, and brownfield inputs together into
 ``networks/composed_{horizon}.nc``. These per-horizon files are then consumed by
-:mod:`solve_network` without relying on any of the legacy ``add_*`` or ``prepare_*`` steps.
+:mod:`solve_network`.
 
 .. _cutout:
 

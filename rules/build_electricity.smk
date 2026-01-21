@@ -378,8 +378,6 @@ if COUNTRY_RUNOFF_DATASET["source"] == "build":
             logs("build_country_runoff.log"),
         benchmark:
             benchmarks("build_country_runoff")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/build_country_runoff.py"
 

@@ -76,8 +76,8 @@ them:
 
 .. note::
 
-   This extension replaces the functionality that shipped under the
-   **PyPSA-Eur-Sec** name, which remains deprecated.
+   This extension replaces the functionality that previously shipped under the **PyPSA-Eur-Sec** name.  
+
 
 .. image:: img/multisector_figure.png
     :width: 70%
@@ -150,10 +150,9 @@ Workflow
 
 The rule set follows ``base → simplified → clustered → composed
 → solved``. Intermediate networks (`networks/simplified.nc`,
-`networks/clustered.nc`, `networks/composed_{horizon}.nc`) live under
-``resources/{run}``, while solved artefacts are always written to
-``results/{run}/networks/solved_{horizon}.nc``. For users upgrading from the
-legacy ``base_s`` naming scheme, see the dedicated :doc:`migration` guide.
+`networks/clustered.nc`, `networks/composed_{horizon}.nc`) are stored in
+``resources/{run}``, while solved networks are always written to
+``results/{run}/networks/solved_{horizon}.nc``.
 
 
 Learning Energy System Modelling
@@ -237,7 +236,6 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
    introduction
    installation
    tutorial
-   migration
    tutorial_sector
 
 .. toctree::
@@ -276,6 +274,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
    :caption: References
 
    release_notes
+   migration
    licenses
    data_sources
    validation
