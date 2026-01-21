@@ -79,9 +79,9 @@ natura,v0.8.2,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur
 natura,unknown,build,latest supported,2025-12-02,,https://sdi.eea.europa.eu/datashare/s/tWpGXaWdWGYcqsL/download
 natura,2025-08-15,primary,latest supported,2025-12-02,,https://zenodo.org/records/16881818/files/natura.tiff
 natura,2025-08-15,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/natura/2025-08-15/natura.tiff
-nitrogen_statistics,2023,primary,latest not-tested,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2023-nitro-ERT.xlsx
-nitrogen_statistics,2022,primary,supported,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx
-nitrogen_statistics,2022,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2022/nitro-ert.xlsx
+nitrogen_statistics,2023,primary,not-tested,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2023-nitro-ERT.xlsx
+nitrogen_statistics,2022,primary,latest supported,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx
+nitrogen_statistics,2022,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2022/nitro-ert.xlsx
 nuts3_population,13-03-2025,primary,latest supported,2025-12-02,,https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp?format=TSV&compressed=true
 nuts3_population,13-03-2025,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/nuts3_population/13-03-2025/nama_10r_3popgdp.tsv.gz
 osm,unknown,build,latest supported,2025-12-02,Latest dataset built using OSM data. No single URL available to access the data. See the related scripts and documentation for details.,

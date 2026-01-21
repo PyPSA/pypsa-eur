@@ -93,8 +93,8 @@ def load_data_versions(file_path):
         comment="#",
     )
 
-    # Turn pipe-separated tags into individual columns
-    data_versions["tags"] = data_versions["tags"].str.split("|")
+    # Turn space-separated tags into individual columns
+    data_versions["tags"] = data_versions["tags"].str.split()
     exploded = data_versions.explode("tags")
     dummies = pd.get_dummies(exploded["tags"], dtype=bool)
     tags_matrix = dummies.groupby(dummies.index).max()
@@ -208,7 +208,7 @@ def solved_previous_horizon(w):
 
 def input_cutout(wildcards, cutout_names="default"):
 
-    cutouts_path = dataset_version("cutout")["folder"]
+    cutouts_path = dataset_version("cutouts")["folder"]
 
     if cutout_names == "default":
         cutout_names = config_provider("atlite", "default_cutout")(wildcards)

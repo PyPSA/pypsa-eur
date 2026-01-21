@@ -1377,7 +1377,7 @@ data:
   mobility_profiles:
     source: archive
     version: latest
-  cutout:
+  cutouts:
     source: archive
     version: latest
   dh_areas:

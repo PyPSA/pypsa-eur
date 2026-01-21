@@ -334,7 +334,7 @@ rule retrieve_bidding_zones:
         "../scripts/retrieve_bidding_zones.py"
 
 
-if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
+if (CUTOUT_DATASET := dataset_version("cutouts"))["source"] in [
     "archive",
 ]:
 
