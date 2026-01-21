@@ -208,7 +208,7 @@ def solved_previous_horizon(w):
 
 def input_cutout(wildcards, cutout_names="default"):
 
-    cutouts_path = dataset_version("cutouts")["folder"]
+    cutouts_path = dataset_version("cutout")["folder"]
 
     if cutout_names == "default":
         cutout_names = config_provider("atlite", "default_cutout")(wildcards)

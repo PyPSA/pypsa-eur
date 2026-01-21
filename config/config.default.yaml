@@ -1380,7 +1380,7 @@ data:
   mobility_profiles:
     source: archive
     version: latest
-  cutouts:
+  cutout:
     source: archive
     version: latest
   dh_areas:
