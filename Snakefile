@@ -11,11 +11,12 @@ from snakemake.utils import min_version
 min_version("8.11")
 
 from scripts._helpers import (
-    path_provider,
-    get_scenarios,
     get_rdir,
+    get_scenarios,
     get_shadow,
+    path_provider,
 )
+from scripts.lib.validation.config import validate_config
 
 
 configfile: "config/config.default.yaml"
@@ -26,6 +27,8 @@ if Path("config/config.yaml").exists():
 
     configfile: "config/config.yaml"
 
+
+validate_config(config)
 
 run = config["run"]
 scenarios = get_scenarios(run)
@@ -68,10 +71,8 @@ wildcard_constraints:
 include: "rules/common.smk"
 
 
-# Set cutout directory after dataset_version function is available
-cutout_dir = dataset_version("cutout")["folder"]
-shared_cutouts = run.get("shared_cutouts", False)
-CDIR = Path(cutout_dir).joinpath("" if shared_cutouts else RDIR)
+# Data constants
+OSM_DATASET = dataset_version("osm")
 
 
 include: "rules/collect.smk"
@@ -99,7 +100,7 @@ if config["foresight"] != "perfect":
     NETWORK_PLOT_OUTPUTS = [
         resources("maps/base_network.pdf"),
         resources("maps/clustered_network.pdf"),
-        RESULTS + "maps/power_network_{horizon}.pdf",
+        RESULTS + "maps/static/power_network_{horizon}.pdf",
         RESULTS + "graphs/cop_profiles_{horizon}.html",
     ]
     TIMESERIES_OUTPUTS = [
@@ -126,7 +127,7 @@ def get_sector_network_plots(w):
     if config_provider("sector", "H2_network")(w):
         plots.extend(
             expand(
-                RESULTS + "maps/h2_network_{horizon}.pdf",
+                RESULTS + "maps/static/h2_network_{horizon}.pdf",
                 horizon=config["planning_horizons"],
                 run=config["run"]["name"],
             )
@@ -134,7 +135,7 @@ def get_sector_network_plots(w):
     if config_provider("sector", "gas_network")(w):
         plots.extend(
             expand(
-                RESULTS + "maps/ch4_network_{horizon}.pdf",
+                RESULTS + "maps/static/ch4_network_{horizon}.pdf",
                 horizon=config["planning_horizons"],
                 run=config["run"]["name"],
             )
@@ -143,20 +144,39 @@ def get_sector_network_plots(w):
 
 
 def get_balance_map_plots(w):
-    """Returns balance map plots if bus carriers are configured and not perfect foresight."""
+    """Returns balance map plots (static + interactive) if configured and not perfect foresight."""
     if config["foresight"] == "perfect":
         return []
 
-    bus_carriers = config_provider("plotting", "balance_map", "bus_carriers")(w)
-    if not bus_carriers:
-        return []
+    plots = []
 
-    return expand(
-        RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf",
-        horizon=config["planning_horizons"],
-        run=config["run"]["name"],
-        carrier=bus_carriers,
-    )
+    # Static balance maps (PDF)
+    static_carriers = config_provider("plotting", "balance_map", "bus_carriers")(w)
+    if static_carriers:
+        plots.extend(
+            expand(
+                RESULTS + "maps/static/{carrier}_balance_map_{horizon}.pdf",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+                carrier=static_carriers,
+            )
+        )
+
+    # Interactive balance maps (HTML)
+    interactive_carriers = config_provider(
+        "plotting", "balance_map_interactive", "bus_carriers"
+    )(w)
+    if interactive_carriers:
+        plots.extend(
+            expand(
+                RESULTS + "maps/interactive/{carrier}_balance_map_{horizon}.html",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+                carrier=interactive_carriers,
+            )
+        )
+
+    return plots
 
 
 rule all:

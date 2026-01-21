@@ -805,7 +805,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"
             cutouts=["cutouts/europe-1940-2024-era5.nc"],
             country_shapes=resources("country_shapes.geojson"),
         output:
-            era5_hdd=f"{COUNTRY_HDD_DATASET["folder"]}/era5-HDD-per-country.csv",
+            era5_hdd=f"{COUNTRY_HDD_DATASET['folder']}/era5-HDD-per-country.csv",
         log:
             logs("build_country_hdd.log"),
         benchmark:
@@ -818,7 +818,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"
 
 rule build_heat_totals:
     input:
-        hdd=f"{COUNTRY_HDD_DATASET["folder"]}/era5-HDD-per-country.csv",
+        hdd=f"{COUNTRY_HDD_DATASET['folder']}/era5-HDD-per-country.csv",
         energy_totals=resources("energy_totals.csv"),
     output:
         heat_totals=resources("heat_totals.csv"),
@@ -1300,8 +1300,8 @@ rule build_transport_demand:
         clustered_pop_layout=resources("pop_layout.csv"),
         pop_weighted_energy_totals=resources("pop_weighted_energy_totals.csv"),
         transport_data_raw=resources("transport_data_raw.csv"),
-        traffic_data_KFZ=f"{MOBILITY_PROFILES_DATASET["folder"]}/kfz.csv",
-        traffic_data_Pkw=f"{MOBILITY_PROFILES_DATASET["folder"]}/pkw.csv",
+        traffic_data_KFZ=f"{MOBILITY_PROFILES_DATASET['folder']}/kfz.csv",
+        traffic_data_Pkw=f"{MOBILITY_PROFILES_DATASET['folder']}/pkw.csv",
         temp_air_total=resources("temp_air_total.nc"),
     output:
         transport_demand=resources("transport_demand.csv"),

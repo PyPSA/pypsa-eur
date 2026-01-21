@@ -8,10 +8,11 @@ import logging
 import os
 import re
 import time
+from collections.abc import Callable
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, Union
+from typing import Any
 
 import atlite
 import fiona
@@ -795,19 +796,19 @@ def update_config_from_wildcards(config, w, inplace=True):
         opts = w.sector_opts.split("-")
 
         if "T" in opts:
-            config["sector"]["transport"] = {"enable": True}
+            config["sector"]["transport"] = True
 
         if "H" in opts:
-            config["sector"]["heating"] = {"enable": True}
+            config["sector"]["heating"] = True
 
         if "B" in opts:
-            config["sector"]["biomass"] = {"enable": True}
+            config["sector"]["biomass"] = True
 
         if "I" in opts:
-            config["sector"]["industry"] = {"enable": True}
+            config["sector"]["industry"] = True
 
         if "A" in opts:
-            config["sector"]["agriculture"] = {"enable": True}
+            config["sector"]["agriculture"] = True
 
         if "CCL" in opts:
             config["solving"]["constraints"]["CCL"] = True
@@ -1056,7 +1057,7 @@ def rename_techs(label: str) -> str:
 
 
 def load_cutout(
-    cutout_files: Union[str, list[str]], time: Union[None, pd.DatetimeIndex] = None
+    cutout_files: str | list[str], time: None | pd.DatetimeIndex = None
 ) -> atlite.Cutout:
     """
     Load and optionally combine multiple cutout files.

@@ -52,7 +52,7 @@ if config["foresight"] != "perfect":
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS + "maps/power_network_{horizon}.pdf",
+            map=RESULTS + "maps/static/power_network_{horizon}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
@@ -73,7 +73,7 @@ if config["foresight"] != "perfect":
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS + "maps/h2_network_{horizon}.pdf",
+            map=RESULTS + "maps/static/h2_network_{horizon}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
@@ -93,7 +93,7 @@ if config["foresight"] != "perfect":
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS + "maps/ch4_network_{horizon}.pdf",
+            map=RESULTS + "maps/static/ch4_network_{horizon}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
@@ -109,11 +109,12 @@ if config["foresight"] != "perfect":
     rule plot_balance_map:
         params:
             plotting=config_provider("plotting"),
+            settings=lambda w: config_provider("plotting", "balance_map", w.carrier),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf",
+            RESULTS + "maps/static/{carrier}_balance_map_{horizon}.pdf",
         threads: 1
         resources:
             mem_mb=8000,
@@ -125,6 +126,28 @@ if config["foresight"] != "perfect":
             "../envs/environment.yaml"
         script:
             "../scripts/plot_balance_map.py"
+
+    rule plot_balance_map_interactive:
+        params:
+            settings=lambda w: config_provider(
+                "plotting", "balance_map_interactive", w.carrier
+            ),
+        input:
+            network=RESULTS + "networks/solved_{horizon}.nc",
+            regions=resources("regions_onshore.geojson"),
+        output:
+            RESULTS + "maps/interactive/{carrier}_balance_map_{horizon}.html",
+        threads: 1
+        resources:
+            mem_mb=8000,
+        log:
+            RESULTS + "logs/plot_balance_map_interactive/{horizon}_{carrier}.log",
+        benchmark:
+            RESULTS + "benchmarks/plot_balance_map_interactive/{horizon}_{carrier}"
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_balance_map_interactive.py"
 
     rule plot_heat_source_map:
         params:
@@ -144,8 +167,9 @@ if config["foresight"] != "perfect":
             ),
         output:
             temp_map=RESULTS
-            + "maps/{horizon}-heat_source_temperature_map_{carrier}.html",
-            energy_map=RESULTS + "maps/{horizon}-heat_source_energy_map_{carrier}.html",
+            + "maps/static/{horizon}-heat_source_temperature_map_{carrier}.html",
+            energy_map=RESULTS
+            + "maps/static/{horizon}-heat_source_energy_map_{carrier}.html",
         threads: 1
         resources:
             mem_mb=150000,
@@ -159,13 +183,11 @@ if config["foresight"] != "perfect":
             "../scripts/plot_heat_source_map.py"
 
 
-if config["foresight"] == "perfect" and config.get("enable", {}).get(
-    "perfect_foresight_postprocess", False
-):
+if config["foresight"] == "perfect":
 
     def output_map_year(w):
         return {
-            f"map_{year}": RESULTS + "maps/costs-all_" + f"{year}.pdf"
+            f"map_{year}": RESULTS + "maps/static/costs-all_{year}.pdf"
             for year in config_provider("planning_horizons")(w)
         }
 

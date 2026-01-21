@@ -22,8 +22,8 @@ rule process_costs:
             if config_provider("foresight")(w) == "overnight"
             else expand(
                 resources("costs_{horizon}_processed.csv"),
-                **config["scenario"],
                 run=config["run"]["name"],
+                horizon=config["planning_horizons"],
             )
         ),
 
@@ -54,18 +54,38 @@ rule solve_networks:
         ),
 
 
+def balance_map_paths(kind, w):
+    """
+    kind = "static" or "interactive"
+    """
+    cfg_key = "balance_map" if kind == "static" else "balance_map_interactive"
+    ext = "pdf" if kind == "static" else "html"
+
+    if config["foresight"] == "perfect":
+        return []
+
+    return expand(
+        RESULTS + f"maps/{kind}/{{carrier}}_balance_map_{{horizon}}.{ext}",
+        run=config["run"]["name"],
+        horizon=config["planning_horizons"],
+        carrier=config_provider("plotting", cfg_key, "bus_carriers")(w),
+    )
+
+
 rule plot_balance_maps:
     input:
-        lambda w: (
-            expand(
-                (RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf"),
-                run=config["run"]["name"],
-                horizon=config["planning_horizons"],
-                carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
-            )
-            if config["foresight"] != "perfect"
-            else []
-        ),
+        static=lambda w: balance_map_paths("static", w),
+        interactive=lambda w: balance_map_paths("interactive", w),
+
+
+rule plot_balance_maps_static:
+    input:
+        lambda w: balance_map_paths("static", w),
+
+
+rule plot_balance_maps_interactive:
+    input:
+        lambda w: balance_map_paths("interactive", w),
 
 
 rule plot_power_networks:

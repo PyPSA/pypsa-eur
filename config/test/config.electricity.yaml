@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../schema.json
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
@@ -124,22 +125,15 @@ lines:
 
 sector:
   enabled: false
-  transport:
-    enable: false
-  heating:
-    enable: false
-  biomass:
-    enable: false
+  transport: false
+  heating: false
+  biomass: false
   ammonia: false
   methanol: false
-  industry:
-    enable: false
-  shipping:
-    enable: false
-  aviation:
-    enable: false
-  agriculture:
-    enable: false
+  industry: false
+  shipping: false
+  aviation: false
+  agriculture: false
   dac: false
   H2_network: false
   electricity_transmission_grid: true

@@ -765,7 +765,7 @@ def add_sector_components(
     )
 
     # Add transport if enabled
-    if params.sector["transport"]["enable"]:
+    if params.sector["transport"]:
         add_land_transport(
             n=n,
             costs=costs,
@@ -781,7 +781,7 @@ def add_sector_components(
         )
 
     # Add heating if enabled
-    if params.sector["heating"]["enable"]:
+    if params.sector["heating"]:
         # Gather heat source profiles
         heat_source_profiles = {
             source: inputs[source]
@@ -828,7 +828,7 @@ def add_sector_components(
         )
 
     # Add biomass if enabled
-    if params.sector["biomass"]["enable"]:
+    if params.sector["biomass"]:
         add_biomass(
             n=n,
             costs=costs,
@@ -852,7 +852,7 @@ def add_sector_components(
         )
 
     # Add industry if enabled
-    if params.sector["industry"]["enable"]:
+    if params.sector["industry"]:
         add_industry(
             n=n,
             costs=costs,
@@ -866,7 +866,7 @@ def add_sector_components(
         )
 
     # Add shipping if enabled
-    if params.sector["shipping"]["enable"]:
+    if params.sector["shipping"]:
         add_shipping(
             n=n,
             costs=costs,
@@ -879,7 +879,7 @@ def add_sector_components(
         )
 
     # Add aviation if enabled
-    if params.sector["aviation"]["enable"]:
+    if params.sector["aviation"]:
         add_aviation(
             n=n,
             costs=costs,
@@ -890,11 +890,11 @@ def add_sector_components(
         )
 
     # Add waste heat if heating is enabled
-    if params.sector["heating"]["enable"]:
+    if params.sector["heating"]:
         add_waste_heat(n, costs, params.sector, params.industry)
 
     # Add agriculture if enabled (requires H and I)
-    if params.sector["agriculture"]["enable"]:
+    if params.sector["agriculture"]:
         add_agriculture(
             n,
             costs,
@@ -934,7 +934,7 @@ def add_sector_components(
         cluster_heat_buses(n)
 
     # Adjust biomass availability to match industrial demand
-    if params.sector["biomass"]["enable"] and params.sector["industry"]["enable"]:
+    if params.sector["biomass"] and params.sector["industry"]:
         adjust_biomass_availability(n)
 
     logger.info("Completed sector components")
@@ -993,7 +993,7 @@ def add_existing_capacities(
         )
 
     # Add heating capacities if sector coupling is enabled
-    if params.sector["enabled"] and params.sector["heating"]["enable"]:
+    if params.sector["enabled"] and params.sector["heating"]:
         grouping_years_heat = existing_cfg["grouping_years_heat"]
         if grouping_years_heat:
             existing_heating_file = inputs.get("existing_heating_distribution")

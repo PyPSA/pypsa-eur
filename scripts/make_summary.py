@@ -12,6 +12,12 @@ import numpy as np
 import pandas as pd
 import pypsa
 from numpy import atleast_1d
+
+try:
+    from numpy import trapezoid
+except ImportError:
+    # before numpy 2.0
+    from numpy import trapz as trapezoid
 from pypsa import NetworkCollection
 
 from scripts._helpers import configure_logging, set_scenario_config
@@ -368,7 +374,7 @@ def calculate_cumulative_costs(
         index=discount_rates, name="cumulative_cost", dtype=float
     )
     for rate in discount_rates:
-        integrated_costs[rate] = np.trapz(
+        integrated_costs[rate] = trapezoid(
             cumulative_cost.loc[rate, :].values, x=planning_horizons.values
         )
 
