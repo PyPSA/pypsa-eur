@@ -13,7 +13,7 @@ Upcoming Release
 
   **Workflow structure (related to streamlining):**
 
-  - The network pipeline now follows a clear 4-stage progression: ``base.nc`` → ``simplified.nc`` → ``clustered.nc`` → ``composed_{horizon}.nc`` → ``solved_{horizon}.nc``.
+  - The network pipeline now follows a 4-stage progression: ``base.nc`` → ``simplified.nc`` → ``clustered.nc`` → ``composed_{horizon}.nc`` → ``solved_{horizon}.nc``.
   - Cryptic filenames like ``elec_s_37_lv1.25_3H_2030.nc`` are replaced with readable names. Scenario parameters (clusters, opts, sector_opts) are now set via configuration rather than filename wildcards.
   - A unified ``compose_network`` rule handles greenfield, brownfield, and perfect foresight network assembly for both electricity-only and sector-coupled models.
   - A single ``solve_network`` rule replaces the separate ``solve_electricity.smk``, ``solve_overnight.smk``, ``solve_myopic.smk``, and ``solve_perfect.smk`` rule files (now deleted).
