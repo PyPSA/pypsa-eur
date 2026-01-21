@@ -1299,6 +1299,9 @@ data:
   scigrid_gas:
     source: primary
     version: latest
+  seawater_temperature:
+    source: archive
+    version: latest
   synthetic_electricity_demand:
     source: primary
     version: latest
@@ -1399,7 +1402,3 @@ overpass_api:
     project_name: "PyPSA-Eur"
     email: "contact@pypsa.org"
     website: "https://github.com/PyPSA/pypsa-eur"
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#secrets
-secrets:
-  corine: ""

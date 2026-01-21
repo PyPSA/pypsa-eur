@@ -6,9 +6,9 @@ To download CORINE dataset from the primary data source - https://land.copernicu
 
 Usage Instructions:
     1. Login using EU login at https://land.copernicus.eu/user/login and create an API key
-    2. Copy API key into the config.default.yaml -> (save from portal)
-    #   secrets:
-    #       corine: ''
+    2. Set the environment variable CORINE_API_TOKEN:
+       - Option 1: For Linux `export CORINE_API_TOKEN=<your-api-key>` and for Windows `set CORINE_API_TOKEN=<your-api-key>`. Note that this is only temporary and you will need to either make this variable permanent or set it each time you restart your command line.
+       - Option 2: Add a file `.env` to your local repository root, e.g. `.../PyPSA-Eur/.env`. Do not add this file to  `git`!. Then add the following line: `CORINE_API_TOKEN=<your-api-key>`.
 """
 
 import json
@@ -28,9 +28,7 @@ logger = logging.getLogger(__name__)
 
 def load_access_token(apikey):
     # Login using EU login at https://land.copernicus.eu/user/login and create an API key
-    # Copy API key into the config.default.yaml -> (save from portal)
-    #   secrets:
-    #       corine: ''
+    # Set CORINE_API_TOKEN environment variable or add to .env file
     try:
         service_key = json.loads(apikey)
         private_key = service_key["private_key"].encode("utf-8")
@@ -75,6 +73,12 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     apikey = snakemake.params["apikey"]
+    if not apikey:
+        raise ValueError(
+            "Environment variable CORINE_API_TOKEN is not set.\n"
+            "To download CORINE data from the primary source you need to provide a valid API key. "
+            "See retrieve_corine_dataset_primary.py for details."
+        )
     output_zip_file = snakemake.output["zip"]
     tif_file = snakemake.output["tif_file"]
     access_token = load_access_token(apikey)
