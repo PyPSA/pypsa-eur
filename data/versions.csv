@@ -110,7 +110,7 @@ scigrid_gas,1.1.2,archive,latest supported,2026-01-20,the primary is already fro
 scigrid_gas,1.1.1,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.1/IGGIELGN.zip
 scigrid_gas,1.1.0,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.0/IGGIELGN.zip
 seawater_temperature,v1.0,primary,latest supported,2026-01-21,Test cutout seawater temperature,https://zenodo.org/records/15828866/files/seawater_temperature.nc
-seawater_temperature,v1.0,archive,latest supported,2026-01-21,Test cutout seawater temperature,https://data.pypsa.org/workflows/eur/seawater_temperature/v1.0
+seawater_temperature,v1.0,archive,latest supported,2026-01-21,Test cutout seawater temperature,https://data.pypsa.org/workflows/eur/seawater_temperature/v1.0/seawater_temperature.nc
 ship_raster,v5,primary,latest supported,2025-12-02,,https://datacatalogfiles.worldbank.org/ddh-published/0037580/5/DR0045406/shipdensity_global.zip
 ship_raster,v5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/ship_raster/v5/shipdensity_global.zip
 synthetic_electricity_demand,v2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/10820928/files/demand_hourly.csv
