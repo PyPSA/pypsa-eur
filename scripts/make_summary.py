@@ -191,7 +191,7 @@ def calculate_energy(n: pypsa.Network) -> pd.Series:
     return result.sort_values(ascending=False)
 
 
-def calculate_energy_balance(n: pypsa.Network) -> pd.Series:
+def calculate_energy_balance(n: pypsa.Network) -> pd.Series | pd.DataFrame:
     """
     Calculate the energy supply (positive) and consumption (negative) by technology carrier for each bus carrier.
 
