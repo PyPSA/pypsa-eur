@@ -62,7 +62,7 @@ linopy = ">=0.4.4"
 lxml = ">=6.0.2"
 matplotlib = ">=3.10.7"
 memory_profiler = ">=0.61.0"
-netcdf4 = ">=1.7.2"
+netcdf4 = ">=1.7.2,!=1.7.4"
 networkx = ">=3.5"
 numpy = ">=1.26.4"
 openpyxl = ">=3.1.5"
@@ -100,6 +100,7 @@ yaml = ">=0.2.5"
 snakemake-storage-plugin-cached-http = ">=0.1.0"
 pandera = ">=0.28.1"
 natsort = ">=8.4.0"
+snakemake-logger-plugin-pypsa = ">=0.1.0"
 
 [feature.doc.tasks.build-docs]
 args = ["dir", {"arg" = "output", "default" = "html"}]
