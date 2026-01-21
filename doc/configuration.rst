@@ -41,18 +41,12 @@ using the ``--configfile`` option:
 
     $ snakemake -call --configfile my_config.yaml
 
-.. note::
-
-    PyPSA-Eur versions ``<=2025.04.0`` wrote a fresh copy of the merged
-    configuration to ``config/config.yaml`` on every run. The file is no longer
-    auto-generated; Snakemake only reads it when you create it manually.
 
 Accessing configuration inside Snakemake
 ----------------------------------------
 
-Rules should **not** index ``config`` directly because overrides from
-``run.scenarios`` and wildcards are only applied through the helpers in
-``rules/common.smk``:
+Rules should **not** access the ``snakemake.config`` object directly because overrides from
+``run.scenarios`` are only applied through the helpers in ``rules/common.smk``:
 
 - ``config_provider("electricity", "extendable_carriers")`` returns a callable
   that Snakemake evaluates per wildcard combination. This keeps caching fast and
@@ -171,9 +165,15 @@ Therefore the user can run different configurations within the same directory.
    :end-before: # docs
 
 .. note::
-    If you use myopic or perfect foresight, define at least two values in the
-    top-level :ref:`planning_horizons` list so the warm-start logic can look up
-    previous horizons.
+   If you use myopic or perfect foresight, define at least two values in the
+   top-level :ref:`planning_horizons` list.
+
+.. note::
+   The ``foresight`` setting cannot vary across scenarios defined in
+   ``run.scenarios``. It is evaluated at workflow parsing time
+   to determine which outputs to include. If you need to compare different 
+   foresight modes, run them as separate workflows with distinct ``run.name``
+
 
 .. _planning-horizons:
 
@@ -200,7 +200,7 @@ years that should be simulated sequentially:
    :end-before: # docs
 
 - Overnight runs require a single value.
-- Myopic runs expect strictly ascending values and warm-start each horizon from
+- Myopic runs expect strictly ascending values and continue each horizon from
   ``RESULTS/networks/solved_{previous}.nc``.
 - Perfect foresight also iterates over the list but reuses
   ``networks/composed_{previous}.nc`` as the brownfield seed.
@@ -273,8 +273,7 @@ Carbon budgets share one schema for all foresight modes. The ``values`` key
 selects whether yearly entries inside ``upper``/``lower`` are interpreted as
 fractions of the 1990 baseline (``fraction``) or absolute GtCO₂/year
 (``absolute``). Enable ``upper`` and/or ``lower`` to enforce those caps only for
-the explicitly listed years. Optional ``total`` and ``distribution`` entries let
-you spread an aggregate budget across all :ref:`planning_horizons`.
+the explicitly listed years or a total budget across all :ref:`planning_horizons`. 
 
 .. jsonschema:: ../config/schema.json#/$defs/Co2BudgetConfig
    :lift_description:
