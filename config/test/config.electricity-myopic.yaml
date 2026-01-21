@@ -21,12 +21,10 @@ snapshots:
   end: "2013-03-08"
 
 co2_budget:
-  emissions_scope: All greenhouse gases - (CO2 equivalent)
   relative: false
   upper:
-    2030: 0.1  # 100 Mt CO2/year = 0.1 Gt
-    2040: 0.05  # 50 Mt CO2/year = 0.05 Gt
-  lower:
+    2030: 0.1
+    2040: 0.05
 
 electricity:
   gaslimit_enable: false

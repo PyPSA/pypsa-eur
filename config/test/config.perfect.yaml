@@ -59,18 +59,13 @@ sector:
   electrobiofuels: false
 
 co2_budget:
-  emissions_scope: All greenhouse gases - (CO2 equivalent)
   relative: false
-
   upper:
-    2030: 2.0  # Gt CO2 for 2030
-    2040:       # Explicitly clear default 2040 bound from config.default.yaml
-    2050: 0.0  # Gt CO2 for 2050 (climate neutral)
-
-  # Lower emissions constraints (floor) - also testing selective years
+    2030: 2.0
+    2040:
+    2050: 0.0
   lower:
-    2030: 0.5  # Gt CO2 minimum for 2030
-    # 2040 and 2050 not specified - no lower constraints (tests optional bounds)
+    2030: 0.5
 
 electricity:
   extendable_carriers:
