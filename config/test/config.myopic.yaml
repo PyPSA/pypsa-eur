@@ -12,7 +12,10 @@ run:
     policy: false
 
 foresight: myopic
-planning_horizons: [2030, 2040, 2050]
+planning_horizons:
+- 2030
+- 2040
+- 2050
 
 countries: ['BE']
 
