@@ -1234,7 +1234,7 @@ def apply_co2_budget_constraints(
         )
 
     baseline_1990 = None
-    if co2_budget["values"] == "fraction":
+    if co2_budget["relative"]:
         upper_raw = bound_value_for_horizon(upper_cfg, current_horizon)
         lower_raw = bound_value_for_horizon(lower_cfg, current_horizon)
         if upper_raw is not None or lower_raw is not None:

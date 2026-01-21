@@ -677,23 +677,37 @@
           "description": "Emissions scope for CO2 budget calculations.",
           "type": "string"
         },
-        "values": {
-          "default": "fraction",
-          "description": "Interpretation of budget values: 'fraction' or 'absolute'.",
-          "type": "string"
+        "relative": {
+          "default": true,
+          "description": "If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",
+          "type": "boolean"
         },
         "upper": {
           "additionalProperties": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
-          "description": "Upper CO2 budget as fraction of base year emissions per planning horizon.",
+          "description": "Upper CO2 budget as fraction of base year emissions per planning horizon. Set to None to disable constraint for a year.",
           "type": "object"
         },
         "lower": {
           "anyOf": [
             {
               "additionalProperties": {
-                "type": "number"
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "type": "object"
             },
@@ -702,7 +716,7 @@
             }
           ],
           "default": null,
-          "description": "Lower CO2 budget limit to prevent unrealistic/too-fast decarbonization."
+          "description": "Lower CO2 budget limit to prevent unrealistic/too-fast decarbonization. Set individual years to None to disable constraint."
         }
       }
     },
@@ -7955,23 +7969,37 @@
           "description": "Emissions scope for CO2 budget calculations.",
           "type": "string"
         },
-        "values": {
-          "default": "fraction",
-          "description": "Interpretation of budget values: 'fraction' or 'absolute'.",
-          "type": "string"
+        "relative": {
+          "default": true,
+          "description": "If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",
+          "type": "boolean"
         },
         "upper": {
           "additionalProperties": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
-          "description": "Upper CO2 budget as fraction of base year emissions per planning horizon.",
+          "description": "Upper CO2 budget as fraction of base year emissions per planning horizon. Set to None to disable constraint for a year.",
           "type": "object"
         },
         "lower": {
           "anyOf": [
             {
               "additionalProperties": {
-                "type": "number"
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "type": "object"
             },
@@ -7980,7 +8008,7 @@
             }
           ],
           "default": null,
-          "description": "Lower CO2 budget limit to prevent unrealistic/too-fast decarbonization."
+          "description": "Lower CO2 budget limit to prevent unrealistic/too-fast decarbonization. Set individual years to None to disable constraint."
         }
       }
     },

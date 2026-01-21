@@ -204,9 +204,9 @@ myopic, perfect).
 
   co2_budget:
     emissions_scope: All greenhouse gases - (CO2 equivalent)
-    values: fraction  # "fraction" (% of 1990 baseline) or "absolute" (Gt CO2/year)
-    upper: null       # null | scalar | {year: value}
-    lower: null       # null | scalar | {year: value}
+    relative: true  # true = fraction of 1990 baseline, false = absolute (Gt CO2/year)
+    upper: null     # null | scalar | {year: value}
+    lower: null     # null | scalar | {year: value}
 
 **Constraint semantics:**
 
@@ -221,12 +221,12 @@ myopic, perfect).
   - **myopic**: one CO₂ constraint for each solved horizon.
   - **perfect**: one joint CO₂ constraint across all horizons, added in the final horizon.
 
-**Example 1: Per-period caps with fraction values**
+**Example 1: Per-period caps with relative values**
 
 .. code:: yaml
 
   co2_budget:
-    values: fraction
+    relative: true
     upper:
       2030: 0.450  # 45% of 1990 emissions
       2040: 0.100
@@ -237,7 +237,7 @@ myopic, perfect).
 .. code:: yaml
 
   co2_budget:
-    values: absolute
+    relative: false
     upper: 2.04  # Gt CO2/year, same semantics across foresight modes (see above)
 
 **Example 3: Selective year constraints**
@@ -247,7 +247,7 @@ myopic, perfect).
   planning_horizons: [2030, 2040, 2050]
 
   co2_budget:
-    values: absolute
+    relative: false
     upper:
       2030: 2.0
       2050: 0.0
@@ -258,7 +258,7 @@ myopic, perfect).
 **Emissions scope:**
 
 The ``emissions_scope`` parameter determines which greenhouse gas(es) are accounted for
-when calculating the 1990 baseline for ``values: fraction`` and applying the corresponding
+when calculating the 1990 baseline for ``relative: true`` and applying the corresponding
 budget constraints. This parameter corresponds to the ``Pollutant_name`` field in the EEA
 UNFCCC emissions database.
 

@@ -22,7 +22,7 @@ snapshots:
 
 co2_budget:
   emissions_scope: All greenhouse gases - (CO2 equivalent)
-  values: absolute  # Values in Gt CO2/year
+  relative: false
   upper:
     2030: 0.1  # 100 Mt CO2/year = 0.1 Gt
     2040: 0.05  # 50 Mt CO2/year = 0.05 Gt

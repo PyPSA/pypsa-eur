@@ -22,9 +22,8 @@ snapshots:
 
 co2_budget:
   emissions_scope: All greenhouse gases - (CO2 equivalent)
-  values: fraction  # Interpret values as fractions of 1990 baseline
+  relative: true
 
-  # Upper emissions constraints
   upper:
     2030: 0.450  # 45% of 1990 emissions (55% reduction by 2030)
     2040: 0.100  # 10% of 1990 emissions (90% reduction by 2040)

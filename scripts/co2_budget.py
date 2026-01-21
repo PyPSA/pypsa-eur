@@ -38,7 +38,7 @@ def co2_budget_for_horizon(
     current_horizon: int,
     baseline_1990: float | None = None,
 ) -> tuple[float | None, float | None]:
-    values_mode = co2_budget["values"]
+    relative = co2_budget["relative"]
 
     upper_raw = co2_budget["upper"]
     lower_raw = co2_budget["lower"]
@@ -46,19 +46,15 @@ def co2_budget_for_horizon(
     upper = bound_value_for_horizon(upper_raw, current_horizon)
     lower = bound_value_for_horizon(lower_raw, current_horizon)
 
-    if values_mode == "fraction":
+    if relative:
         if baseline_1990 is None:
             raise ValueError(
-                "co2_budget.values is 'fraction' but no 1990 baseline emissions were provided."
+                "co2_budget.relative is true but no 1990 baseline emissions were provided."
             )
         if upper is not None:
             upper *= baseline_1990
         if lower is not None:
             lower *= baseline_1990
-    elif values_mode != "absolute":
-        raise ValueError(
-            f"Invalid co2_budget.values: '{values_mode}'. Valid options: 'absolute', 'fraction'."
-        )
 
     if upper is None:
         # If upper is explicitly disabled but a lower bound is provided, this is invalid.

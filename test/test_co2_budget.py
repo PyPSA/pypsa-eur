@@ -28,7 +28,7 @@ def test_bound_value_for_horizon_dict_year_str():
 
 def test_co2_budget_for_horizon_absolute_dict_and_null_lower():
     co2_budget = {
-        "values": "absolute",
+        "relative": False,
         "upper": {2050: 0.1},
         "lower": None,
     }
@@ -37,9 +37,9 @@ def test_co2_budget_for_horizon_absolute_dict_and_null_lower():
     assert lower is None
 
 
-def test_co2_budget_for_horizon_fraction_requires_baseline():
+def test_co2_budget_for_horizon_relative_requires_baseline():
     co2_budget = {
-        "values": "fraction",
+        "relative": True,
         "upper": 0.5,
         "lower": None,
     }
@@ -47,9 +47,9 @@ def test_co2_budget_for_horizon_fraction_requires_baseline():
         co2_budget_for_horizon(co2_budget, current_horizon=2030)
 
 
-def test_co2_budget_for_horizon_fraction_applies_baseline():
+def test_co2_budget_for_horizon_relative_applies_baseline():
     co2_budget = {
-        "values": "fraction",
+        "relative": True,
         "upper": 0.5,
         "lower": 0.1,
     }
@@ -62,7 +62,7 @@ def test_co2_budget_for_horizon_fraction_applies_baseline():
 
 def test_co2_budget_for_horizon_rejects_lower_without_upper():
     co2_budget = {
-        "values": "absolute",
+        "relative": False,
         "upper": None,
         "lower": 0.1,
     }
@@ -72,7 +72,7 @@ def test_co2_budget_for_horizon_rejects_lower_without_upper():
 
 def test_co2_budget_for_horizon_rejects_lower_greater_equal_upper():
     co2_budget = {
-        "values": "absolute",
+        "relative": False,
         "upper": 0.1,
         "lower": 0.1,
     }
