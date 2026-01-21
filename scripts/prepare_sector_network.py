@@ -451,13 +451,18 @@ def update_wind_solar_costs(
 
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
-    n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
-        "solar-utility", "capital_cost"
-    ]
+    carrier_cost_dict = {
+        "solar": "solar-utility",
+        "solar-hsat": "solar-hsat",
+        "onwind": "onwind",
+    }
 
-    n.generators.loc[n.generators.carrier == "onwind", "capital_cost"] = costs.at[
-        "onwind", "capital_cost"
-    ]
+    for carrier, cost_key in carrier_cost_dict.items():
+        if carrier not in n.generators.carrier.values:
+            continue
+        n.generators.loc[n.generators.carrier == carrier, "capital_cost"] = costs.at[
+            cost_key, "capital_cost"
+        ]
 
     # for offshore wind, need to calculated connection costs
     for key, fn in profiles.items():
