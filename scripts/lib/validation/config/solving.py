@@ -318,6 +318,23 @@ class SolvingConfig(BaseModel):
         },
         description="Dictionaries with solver-specific parameter settings.",
     )
+
+    @field_validator("solver_options")
+    @classmethod
+    def check_no_gurobi_credentials(cls, v):
+        """Prevent Gurobi license credentials from being stored in config."""
+        forbidden_keys = {"WLSACCESSID", "WLSSECRET", "LICENSEID"}
+        for solver_name, options in v.items():
+            if "env" in options:
+                found = forbidden_keys & set(options["env"].keys())
+                if found:
+                    raise ValueError(
+                        f"Gurobi license credentials ({', '.join(found)}) must not be set in config to avoid leaking secrets. "
+                        "Use a license file instead or check the PyPSA options documentation on how to pass solver_options via environment variables, "
+                        'e.g. PYPSA_PARAMS__OPTIMIZE__SOLVER_OPTIONS={"env": {"WLSACCESSID": "...", "WLSSECRET": "...", "LICENSEID": 1234}}'
+                    )
+        return v
+
     check_objective: _CheckObjectiveConfig = Field(
         default_factory=_CheckObjectiveConfig,
         description="Objective checking configuration.",
