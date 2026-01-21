@@ -9,7 +9,7 @@ Release Notes
 Upcoming Release
 ================
 
-* Streamlined workflow with simplified configuration (https://github.com/PyPSA/pypsa-eur/pull/1838). See ``doc/migration.rst`` for detailed migration guidance.
+* Streamlined workflow (https://github.com/PyPSA/pypsa-eur/pull/1838). See ``doc/migration.rst`` for detailed migration guidance.
 
   **Workflow structure (related to streamlining):**
 
