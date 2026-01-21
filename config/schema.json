@@ -3759,16 +3759,6 @@
         }
       }
     },
-    "SecretsConfig": {
-      "description": "Configuration for top level `secrets` settings.",
-      "properties": {
-        "corine": {
-          "default": "",
-          "description": "API token for corine dataset retrieval. You can also pass the token by setting the environment variable \"CORINE_API_TOKEN\". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.",
-          "type": "string"
-        }
-      }
-    },
     "SectorConfig": {
       "description": "Configuration for `sector` settings.",
       "properties": {
@@ -12884,16 +12874,6 @@
               "type": "string"
             }
           }
-        }
-      }
-    },
-    "secrets": {
-      "description": "Configuration for top level `secrets` settings.",
-      "properties": {
-        "corine": {
-          "default": "",
-          "description": "API token for corine dataset retrieval. You can also pass the token by setting the environment variable \"CORINE_API_TOKEN\". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.",
-          "type": "string"
         }
       }
     }
