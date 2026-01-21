@@ -1299,6 +1299,9 @@ data:
   scigrid_gas:
     source: primary
     version: latest
+  seawater_temperature:
+    source: archive
+    version: latest
   synthetic_electricity_demand:
     source: primary
     version: latest
