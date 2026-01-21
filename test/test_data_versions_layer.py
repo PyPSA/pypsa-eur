@@ -107,7 +107,8 @@ def validate_versions(fix: bool = False) -> pd.DataFrame:
         df = VersionsSchema.validate(df, lazy=True)
     except pa.errors.SchemaErrors as e:
         msg = f"{e.message}\n\nTry 'pixi run python test/test_data_versions_layer.py' to auto-fix (sorting, defaults, etc.)."
-        raise pa.errors.SchemaErrors(e.schema_errors, e.data, msg) from None
+        e.message = msg
+        raise
     if fix:
         df.to_csv(VERSIONS_CSV, index=False)
     return df
