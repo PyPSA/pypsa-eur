@@ -133,7 +133,7 @@ rule cluster_gas_network:
     log:
         logs("cluster_gas_network.log"),
     benchmark:
-        benchmarks("cluster_gas_network/s")
+        benchmarks("cluster_gas_network")
     conda:
         "../envs/environment.yaml"
     script:
@@ -156,9 +156,9 @@ rule build_daily_heat_demand:
         mem_mb=20000,
     threads: 8
     log:
-        logs("build_daily_heat_demand_total.loc"),
+        logs("build_daily_heat_demand_total.log"),
     benchmark:
-        benchmarks("build_daily_heat_demand/total")
+        benchmarks("build_daily_heat_demand_total")
     conda:
         "../envs/environment.yaml"
     script:
@@ -182,7 +182,7 @@ rule build_hourly_heat_demand:
     log:
         logs("build_hourly_heat_demand_total.loc"),
     benchmark:
-        benchmarks("build_hourly_heat_demand/total")
+        benchmarks("build_hourly_heat_demand_total")
     conda:
         "../envs/environment.yaml"
     script:
@@ -1379,7 +1379,7 @@ rule time_aggregation:
         network=resources("networks/clustered.nc"),
         hourly_heat_demand_total=lambda w: (
             resources("hourly_heat_demand_total.nc")
-            if config_provider("sector", "heating", "enable")(w)
+            if config_provider("sector", "heating")(w)
             else []
         ),
         solar_thermal_total=lambda w: (

@@ -92,7 +92,7 @@ rule plot_power_networks:
     input:
         (
             expand(
-                resources("maps/clustered_network.pdf"),
+                resources("maps/clustered_power_network.pdf"),
                 run=config["run"]["name"],
             )
             if config["foresight"] != "perfect"

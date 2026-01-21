@@ -10,7 +10,7 @@ rule solve_network:
         planning_horizons=config_provider("planning_horizons"),
         sector=config_provider("sector"),
         co2_sequestration_potential=config_provider(
-            "sector", "co2_sequestration_potential", default=200
+            "sector", "co2_sequestration_potential"
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
@@ -25,7 +25,7 @@ rule solve_network:
         (RESULTS + "benchmarks/solve_network_{horizon}.log")
     threads: solver_threads
     resources:
-        # mem_mb=memory, # TODO: renew memory function based on config
+        mem_mb=config_provider("solving", "mem_mb"),
         runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
         shadow_config

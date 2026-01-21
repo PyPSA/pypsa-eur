@@ -429,7 +429,7 @@ def apply_variable_renewable_lifetimes(n: pypsa.Network, costs: pd.DataFrame) ->
         n.generators.loc[n.generators.carrier == carrier, "lifetime"] = lifetime
 
 
-def restrict_electricity_components(
+def remove_electricity_components(
     n: pypsa.Network, carriers_to_keep: dict[str, list]
 ) -> None:
     """Remove electricity components whose carrier is not in ``carriers_to_keep``."""

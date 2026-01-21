@@ -8,30 +8,28 @@
 Foresight Options
 #####################
 
-Planning horizons and warm starts
+Planning horizons
 =================================
 
 All foresight modes share the same ``planning_horizons`` list at the top of the
 configuration file. The workflow iterates over this list and composes/solves a
-network for each year while persisting two canonical artefacts:
+network for each year:
 
 - ``resources/{run}/networks/composed_{horizon}.nc`` — output of
-  :mod:`scripts/compose_network`
+  :mod:`compose_network`
 - ``results/{run}/networks/solved_{horizon}.nc`` — output of
   :mod:`scripts/solve_network`
 
-Warm-start behaviour depends on the foresight mode:
+Iteration behaviour depends on the foresight mode:
 
 - ``overnight`` expects a single value and does **not** reuse previous years.
 - ``myopic`` requires at least two horizons and feeds the solved network from
   the previous year ``RESULTS/networks/solved_{prev}.nc`` into the next
   ``compose_network`` call.
 - ``perfect`` also iterates sequentially but consumes
-  ``networks/composed_{prev}.nc`` to build the full multi-period optimisation.
+  ``networks/composed_{prev}.nc`` to build the full multi-period optimisation, after which the complete network is solved.
 
-When in doubt, inspect :mod:`rules/compose.smk` to see how the helpers
-``solved_previous_horizon`` and ``compose_previous_horizon`` assemble these
-paths.
+
 
 .. _overnight:
 
@@ -132,9 +130,7 @@ For running myopic foresight transition scenarios, set in ``config/config.yaml``
 The following options included in the ``config/config.yaml`` file  are relevant for the
 myopic code.
 
-The ``{horizon}`` wildcard indicates the year in which the network is optimized.
-For a myopic optimization, this is equivalent to the investment year. The set
-of values is pulled directly from the top-level ``planning_horizons`` list. To
+The ``{horizon}`` wildcard indicates the year for which the network is optimized.
 set the investment years which are sequentially simulated for the myopic
 investment planning, select for example:
 
@@ -194,13 +190,7 @@ Carbon Budget Configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The carbon budget for the entire transition path can be specified in the
-``co2_budget`` section in ``config/config.yaml`` using a unified configuration
-structure that works consistently across all three foresight modes (overnight,
-myopic, perfect).
-
-**Unified configuration structure:**
-
-.. code:: yaml
+``co2_budget`` section in ``config/config.yaml`` for all three foresight modes (overnight, myopic, perfect).
 
   co2_budget:
     emissions_scope: All greenhouse gases - (CO2 equivalent)
