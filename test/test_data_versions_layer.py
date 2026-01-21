@@ -54,9 +54,9 @@ one_latest_per_dataset_source = Check(
     lambda df: df[df["tags"].str.contains("latest")]
     .groupby(["dataset", "source"])
     .size()
-    .le(1)
+    .eq(1)
     .all(),
-    error="Only one 'latest' tag allowed per dataset/source combination",
+    error="Exactly one 'latest' tag required per dataset/source combination",
 )
 latest_same_version_across_sources = Check(
     lambda df: df[(df["tags"].str.contains("latest")) & (df["version"] != "unknown")]
