@@ -56,7 +56,6 @@ def benchmarks(fn):
     return str(path)
 
 
-# CDIR will be set after common.smk is included
 RESULTS = "results/" + RDIR
 
 
