@@ -199,9 +199,9 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="Mobility profiles data source configuration.",
     )
-    cutout: _DataSourceConfig = Field(
+    cutouts: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
-        description="Cutout data source configuration.",
+        description="Cutouts data source configuration.",
     )
     dh_areas: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,

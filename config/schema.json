@@ -1692,7 +1692,7 @@
             }
           }
         },
-        "cutout": {
+        "cutouts": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -12724,7 +12724,7 @@
             }
           }
         },
-        "cutout": {
+        "cutouts": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

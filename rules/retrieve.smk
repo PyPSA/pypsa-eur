@@ -920,7 +920,7 @@ if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive
 
 
 
-if OSM_DATASET["source"] in ["archive", "zenodo"]:
+if OSM_DATASET["source"] in ["archive"]:
 
     OSM_ARCHIVE_FILES = [
         "buses.csv",
