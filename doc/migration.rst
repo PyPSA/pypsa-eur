@@ -92,7 +92,7 @@ Warm-start expectations
 - **Overnight**: Require a single horizon; ``compose_network`` never looks for
   previous outputs.
 - **Myopic**: ``compose_network`` imports
-  ``RESULTS/networks/solved_{previous}.nc`` via the helper
+  ``results/{run}/networks/solved_{previous}.nc`` via the helper
   ``solved_previous_horizon``. Ensure horizons are sorted ascendingly.
 - **Perfect**: ``compose_network`` uses ``networks/composed_{previous}.nc`` as
   the brownfield baseline to build the full multi-period optimisation.
