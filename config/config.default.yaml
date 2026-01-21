@@ -86,7 +86,7 @@ enable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2_budget
 co2_budget:
-  emissions_scope: "All greenhouse gases - (CO2 equivalent)"
+  emissions_scope: "CO2"
   relative: true
   upper:
     2020: 0.72
@@ -166,7 +166,6 @@ electricity:
   autarky:
     enable: false
     by_country: false
-  exclude_carriers: []
   transmission_limit: vopt
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite

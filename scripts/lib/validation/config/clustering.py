@@ -161,7 +161,7 @@ class ClusteringConfig(BaseModel):
     )
     exclude_carriers: list[str] = Field(
         default_factory=list,
-        description="List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
+        description="List of carriers to exclude from aggregation. Excluded carriers keep individual plant representation instead of being aggregated per bus.",
     )
     consider_efficiency_classes: bool = Field(
         False,

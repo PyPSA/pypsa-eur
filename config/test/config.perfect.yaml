@@ -104,9 +104,6 @@ clustering:
   cluster_network:
     algorithm: kmeans
     n_clusters: 5  # Small number for testing
-    hac_features:
-    - wnd100m
-    - influx_direct
 
 industry:
   St_primary_fraction:

@@ -193,7 +193,7 @@ The carbon budget for the entire transition path can be specified in the
 ``co2_budget`` section in ``config/config.yaml`` for all three foresight modes (overnight, myopic, perfect).
 
   co2_budget:
-    emissions_scope: All greenhouse gases - (CO2 equivalent)
+    emissions_scope: CO2
     relative: true  # true = fraction of 1990 baseline, false = absolute (Gt CO2/year)
     upper: null     # null | scalar | {year: value}
     lower: null     # null | scalar | {year: value}
@@ -204,12 +204,11 @@ The carbon budget for the entire transition path can be specified in the
   (omitted years are unconstrained). In perfect foresight, these constraints are attached
   to the corresponding investment period. Use ``<year>: null`` to explicitly clear an
   inherited default bound for a specific year.
-- ``upper``/``lower`` as a **scalar**: add a single timeless CO₂ constraint (no investment
-  period reference).
+- ``upper``/``lower`` as a **scalar**: add a single constraint as a budget across all investment periods.
 
   - **overnight**: one CO₂ constraint for the solved model.
   - **myopic**: one CO₂ constraint for each solved horizon.
-  - **perfect**: one joint CO₂ constraint across all horizons, added in the final horizon.
+  - **perfect**: one total CO₂ constraint across all horizons (budget), added when composing the final horizon.  
 
 **Example 1: Per-period caps with relative values**
 
@@ -252,11 +251,10 @@ when calculating the 1990 baseline for ``relative: true`` and applying the corre
 budget constraints. This parameter corresponds to the ``Pollutant_name`` field in the EEA
 UNFCCC emissions database.
 
-Available options:
+Only available options currently is `CO2`, other options that could potentially be tracked 
 
 - ``All greenhouse gases - (CO2 equivalent)`` - All greenhouse gases in CO₂-equivalent,
-  including CO₂, CH₄, N₂O, and fluorinated gases (HFCs, PFCs, SF₆, NF₃) (**default**)
-- ``CO2`` - Carbon dioxide only
+  including CO₂, CH₄, N₂O, and fluorinated gases (HFCs, PFCs, SF₆, NF₃)
 - ``CH4`` - Methane emissions only
 - ``N2O`` - Nitrous oxide emissions only
 
@@ -286,18 +284,18 @@ The myopic workflow iterates through ``planning_horizons`` inside a single
 
 1. Load ``networks/clustered.nc`` together with all derived assets (busmaps,
    demand profiles, sectoral inputs).
-2. If ``existing_capacities.enabled`` is ``true``, merge the brownfield assets
+2. If ``existing_capacities.enabled`` is ``true``, insert the brownfield assets  
    built before the base year via ``add_existing_capacities`` inside
-   ``compose_network.py``.
+   :mod:`compose_network`.  
 3. When ``w.horizon`` is not the first element of ``planning_horizons``, import
    ``RESULTS/networks/solved_{prev}.nc`` (myopic) or
-   ``networks/composed_{prev}.nc`` (perfect) as the warm-start baseline.
-4. Persist the assembled network as ``resources/{run}/networks/composed_{horizon}.nc``.
+   ``networks/composed_{prev}.nc`` (perfect) as the solution from the previous planning horizon.  
+4. Store the composed network as ``resources/{run}/networks/composed_{horizon}.nc``.  
 
-After composition, :mod:`scripts/solve_network` optimises every horizon to
-produce ``results/{run}/networks/solved_{horizon}.nc``. Downstream plotting and
-reporting stages such as :mod:`scripts/make_summary` consume these solved files
-directly, so all foresight modes share the same results directory structure.
+After composition, :mod:`solve_network` optimises every horizon to  
+produce ``results/{run}/networks/solved_{horizon}.nc``. Downstream plotting and  
+reporting stages such as :mod:`make_summary` consume these solved files  
+directly.  
 
 Rule overview
 --------------
@@ -305,27 +303,25 @@ Rule overview
 - :mod:`compose_network`
 
   Performs the per-horizon assembly of simplified assets, existing capacities,
-  and warm-start seeding within a single entry point. Custom extensions should
+  and investments from solved previous planning horizons.  
   hook into the clearly marked sections of ``scripts/compose_network.py``.
 
   .. note::
 
-     Earlier workflows used dedicated ``add_*`` and ``prepare_*`` rules. Keep
-     bespoke injections inside ``compose_network.py`` to stay aligned with the
-     streamlined pipeline.
+    Earlier workflows used several add_* and prepare_* rules, which are now unified in a single :mod:`compose_network` rule."
 
 - :mod:`solve_network`
 
-  Applies the configured solver to each composed network and writes
+  Solves each composed network and writes and writes 
   ``results/{run}/networks/solved_{horizon}.nc`` alongside solver logs stored
   in ``results/{run}/logs/solve_network``.
 
 - :mod:`make_summary`
 
-  Converts the solved networks into CSV/plot outputs for downstream dashboards.
+  Converts the solved networks into CSVs.
 
   .. note::
 
-     Legacy helper scripts such as ``make_summary_perfect.py`` distinguished
-     between foresight modes. The refactored workflow routes every summary
-     through ``scripts/make_summary.py``.
+    Legacy helper scripts such as ``make_summary_perfect.py`` distinguished
+    between foresight modes. The refactored workflow routes every summary
+    through ``scripts/make_summary.py``.

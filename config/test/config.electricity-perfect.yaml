@@ -58,7 +58,6 @@ electricity:
     technology_mapping:
       Onshore: onwind
       PV: solar
-  exclude_carriers: []
   conventional_carriers: []
 
 existing_capacities:

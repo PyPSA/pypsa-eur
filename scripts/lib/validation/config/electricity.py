@@ -210,10 +210,6 @@ class ElectricityConfig(BaseModel):
         default_factory=_AutarkyConfig,
         description="Autarky configuration.",
     )
-    exclude_carriers: list[str] = Field(
-        default_factory=list,
-        description="List of carriers to exclude during clustering.",
-    )
     transmission_limit: str = Field(
         "vopt",
         description="Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",

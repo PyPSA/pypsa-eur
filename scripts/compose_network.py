@@ -509,7 +509,7 @@ def add_electricity_components(
         costs,
         consider_efficiency_classes=params.clustering["consider_efficiency_classes"],
         aggregation_strategies=params.clustering["aggregation_strategies"],
-        exclude_carriers=params.electricity["exclude_carriers"],
+        exclude_carriers=params.clustering["exclude_carriers"],
     )
 
     # Attach load

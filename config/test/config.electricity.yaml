@@ -51,7 +51,6 @@ electricity:
     technology_mapping:
       Onshore: onwind
       PV: solar
-  exclude_carriers: []
   conventional_carriers: []
 
 existing_capacities:
@@ -64,16 +63,6 @@ existing_capacities:
   conventional_carriers: []
   enabled: false
 
-costs:
-  fill_values:
-    CO2 intensity: 0
-    FOM: 0
-    VOM: 0
-    discount rate: 0.07
-    efficiency: 1
-    fuel: 0
-    investment: 0
-    lifetime: 25
   emission_prices:
     enable: false
     co2: 0.0
@@ -124,38 +113,6 @@ lines:
 
 sector:
   enabled: false
-  transport: false
-  heating: false
-  biomass: false
-  ammonia: false
-  methanol: false
-  industry: false
-  shipping: false
-  aviation: false
-  agriculture: false
-  dac: false
-  H2_network: false
-  electricity_transmission_grid: true
-  co2_network: false
-  co2_network_cost_factor: 0.0
-  allam_cycle_gas: false
-  cluster_heat_buses: false
-  conventional_generation: []
-  hydrogen_underground_storage_locations: []
-  district_heating:
-    ates:
-      enable: false
-      capex_as_fraction_of_geothermal_heat_source: 0.0
-      marginal_cost_charger: 0.0
-      recovery_factor: 0.0
-    ptes:
-      dynamic_capacity: false
-      supplemental_heating:
-        enable: false
-        booster_heat_pump: false
-  limited_heat_sources: []
-  time_dep_hp_cop: false
-  electricity_distribution_grid: false
 
 solving:
   solver:

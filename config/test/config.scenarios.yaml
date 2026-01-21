@@ -14,7 +14,8 @@ run:
     file: "config/test/scenarios.yaml"
   disable_progressbar: true
 
-planning_horizons: [2030]
+planning_horizons:
+- 2030
 
 countries: ['BE']
 

@@ -292,18 +292,6 @@ the explicitly listed years or a total budget across all :ref:`planning_horizons
 ``electricity``
 ===============
 
-The ``transmission_limit`` key encodes both the metric (``v``olume or
-``c``ost) and an absolute cap (``opt`` for unconstrained optimisation or a
-multiplier such as ``1.25``). When combined with ``existing_capacities.enabled``
-the workflow automatically injects brownfield assets during
-``compose_network``—set ``existing_capacities.enabled`` to ``true`` only if you
-also provide the corresponding CSV inputs (see :ref:`existing_capacities_cf`).
-
-.. note::
-
-   Legacy configurations split transmission metrics and caps across several
-   keys. Update custom YAML files to the concise ``transmission_limit:
-   <metric><cap>`` notation when migrating existing studies.
 .. jsonschema:: ../config/schema.json#/$defs/ElectricityConfig
    :lift_description:
    :hide_key: /**/additionalProperties
