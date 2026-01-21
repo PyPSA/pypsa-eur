@@ -9,6 +9,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Added option to model n largest district heating systems (according to demand in #1516) explicitly. Enable via ``sector: district_heating:
+  subnodes: enable: true``.
+
 * Fix ConsistencyError for Links without buses when `gas_network: true`, but no `conventional_generation` (https://github.com/PyPSA/pypsa-eur/pull/1971)
 
 * Fix ConsistencyError for Links without buses when `industry: true`, but no `conventional_generation` or `biomass` (https://github.com/PyPSA/pypsa-eur/pull/1971)

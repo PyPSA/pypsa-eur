@@ -74,6 +74,10 @@ sector:
       - 10
       - 21
   district_heating:
+    subnodes:
+      enable: true
+      n_subnodes: 3
+      countries: ['BE']
     ptes:
       supplemental_heating:
         enable: true
