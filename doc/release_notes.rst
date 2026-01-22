@@ -8,6 +8,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Added Frequently Asked Questions (FAQ) and Troubleshooting guide to the documentation: https://pypsa-eur.readthedocs.io/en/latest/faq_troubleshooting.html (https://github.com/PyPSA/pypsa-eur/pull/1939)
 
 * Fix: capital-cost of solar-hsat did not get adjusted to current planning_horizon in myopic optimization
 

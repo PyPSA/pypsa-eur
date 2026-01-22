@@ -102,8 +102,9 @@ master_doc = "index"
 
 # General information about the project.
 project = "PyPSA-Eur"
-copyright = "PyPSA-Eur Contributors"
-author = "PyPSA-Eur Contributors"
+copyright = "2017-2025 Contributors to PyPSA-Eur"
+author = "Contributors to PyPSA-Eur"
+
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
