@@ -358,7 +358,7 @@ if (BIDDING_ZONES_ENTSOEPY_DATASET := dataset_version("bidding_zones_entsoepy"))
 
             logger.info("Downloading entsoe-py zones...")
             gdfs: list[gpd.GeoDataFrame] = []
-            url = f"{BIDDING_ZONES_ENTSOEPY_DATASET['url']}/entsoe/geo/geojson"
+            url = f"{BIDDING_ZONES_ENTSOEPY_DATASET['url']}"
             for area in entsoe.Area:
                 name = area.name
                 try:
