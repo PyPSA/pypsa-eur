@@ -926,6 +926,10 @@ sector:
   solar_cf_correction: 0.788457
   methanation: true
   coal_cc: false
+  gas_ccgt_cc:
+    enable: true
+    efficiency_penalty: 0.075  # NB. absolute not relative; source: IEAGHG (2012) https://ieaghg.org/publications/co2-capture-at-gas-fired-power-plants/ (conclusion)
+    capex_uplift_factor: 1.8  # source: DEA (2024) https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage, Figure 12
   dac: true
   co2_vent: false
   heat_vent:

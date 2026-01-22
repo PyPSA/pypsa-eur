@@ -1979,6 +1979,57 @@ def add_h2_gas_infrastructure(
             lifetime=costs.at["coal", "lifetime"],
         )
 
+    if options["gas_ccgt_cc"]["enable"]:
+
+        add_carrier_buses(
+            n=n,
+            carrier="gas",
+            costs=costs,
+            spatial=spatial,
+            options=options,
+            cf_industry=None,
+        )
+
+        capture_rate = costs.at["biomass boiler capture"]["capture_rate"]
+        efficiency_penalty = options["gas_ccgt_cc"]["efficiency_penalty"]
+        capex_uplift_factor = options["gas_ccgt_cc"]["capex_uplift_factor"]
+        co2_captured = costs.at["gas", "CO2 intensity"] * capture_rate  # (tCO2_captured_by_CC/MWh_fuel)
+        marginal_cost_ccgt = (
+            costs.at["CCGT", "VOM"] # (€/MWh_output)
+            * costs.at["CCGT", "efficiency"]  # (MWh_output/MWh_fuel)
+        )
+        marginal_cost_cc = (
+            costs.at["biomass boiler capture", "VOM"]  # (€/tCO2_captured_by_CC)
+            * co2_captured  # (tCO2_captured_by_CC/MWh_fuel)
+        )
+        capital_cost_ccgt = (
+            costs.at["CCGT", "capital_cost"]  # (€/MW_output)
+            * costs.at["CCGT", "efficiency"]  # (MW_output/MW_input)
+        )
+        capital_cost_cc = (
+            costs.at["biomass boiler capture", "capital_cost"]  # (€/(tCO2_captured_by_CC/h))
+            * capex_uplift_factor # increase to specific capture cost because ccgt has lower CO2 conc. than biomass CHP
+            * co2_captured  # (tCO2_captured_by_CC/MWh_fuel)
+        )
+
+        n.add(
+            "Link",
+            spatial.nodes,
+            suffix = " ccgt_cc",
+            bus0=spatial.gas.nodes,
+            bus1=spatial.nodes,
+            bus2=spatial.co2.df.loc[spatial.nodes, "nodes"].values,
+            bus3="co2 atmosphere",
+            marginal_cost=marginal_cost_ccgt+marginal_cost_cc,  # (€/MWh_fuel)
+            capital_cost=capital_cost_ccgt+capital_cost_cc,  # (€/MW_input)
+            efficiency=costs.at["ccgt", "efficiency"] - efficiency_penalty,
+            efficiency2=co2_captured,
+            efficiency3=costs.at["gas", "CO2 intensity"]*(1-capture_rate),
+            carrier="gas_ccgt_cc",
+            p_nom_extendable=True,
+            lifetime=costs.at["ccgt", "lifetime"]
+        )
+
     if options["SMR_cc"]:
         n.add(
             "Link",
