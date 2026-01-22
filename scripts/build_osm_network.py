@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 from pyproj import Transformer
-from shapely import prepare
+from shapely import get_point, prepare
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge, split
@@ -148,18 +148,23 @@ def _add_line_endings(buses, lines, add=0, name="line-end"):
     -------
         - pd.DataFrame: DataFrame containing the virtual bus endpoints with columns 'bus_id', 'voltage', 'geometry', and 'contains'.
     """
-    endpoints0 = lines[["voltage", "geometry"]].copy()
-    endpoints0["geometry"] = endpoints0["geometry"].apply(lambda x: x.boundary.geoms[0])
-
-    endpoints1 = lines[["voltage", "geometry"]].copy()
-    endpoints1["geometry"] = endpoints1["geometry"].apply(lambda x: x.boundary.geoms[1])
-
+    line_data = lines[["voltage", "geometry", "line_id"]]
+    line_geoms = line_data["geometry"].apply(_remove_loops_from_multiline)
+    endpoints0 = line_data.assign(
+        geometry=get_point(line_geoms.geometry, 0), endpoint=0
+    )
+    endpoints1 = line_data.assign(
+        geometry=get_point(line_geoms.geometry, -1), endpoint=1
+    )
     endpoints = pd.concat([endpoints0, endpoints1], ignore_index=True)
     endpoints.drop_duplicates(subset=["geometry", "voltage"], inplace=True)
     endpoints.reset_index(drop=True, inplace=True)
 
-    endpoints["bus_id"] = endpoints.index + add + 1
-    endpoints["bus_id"] = "virtual" + "-" + endpoints["bus_id"].astype(str)
+    # Create deterministic ID from line_id and endpoint
+    endpoints["bus_id"] = (
+        "virtual_" + endpoints["line_id"] + "_" + endpoints["endpoint"].astype(str)
+    )
+    endpoints.drop(columns=["line_id", "endpoint"], inplace=True)
 
     endpoints["contains"] = name
 
@@ -300,7 +305,7 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
         - Identifies shared buses to remove using networkx.
         - Creates a network graph of lines to be merged using networkx
         - Identifies connected components in the graph and merges lines within each component.
-        - Note that only lines that unambigruosly can be merged are considered.
+        - Note that only lines that unambiguously can be merged are considered.
 
     Parameters
     ----------
@@ -651,10 +656,9 @@ def _create_station_seeds(
     buses_to_rename = buses_to_rename.sort_values(
         by=["country", "lat", "lon"], ascending=[True, False, True]
     )
-    buses_to_rename["bus_id"] = buses_to_rename.groupby("country").cumcount() + 1
-    buses_to_rename["bus_id"] = buses_to_rename["country"] + buses_to_rename[
-        "bus_id"
-    ].astype(str)
+    buses_to_rename["bus_id"] = buses_to_rename[
+        "country"
+    ] + buses_to_rename.index.str.replace("virtual", "")
 
     # Dict to rename virtual buses
     dict_rename = buses_to_rename["bus_id"].to_dict()
@@ -729,7 +733,7 @@ def _merge_buses_to_stations(
         voltages = sorted(
             g_value["voltage"].unique(), reverse=True
         )  # Sort voltags in descending order
-
+        not_virtual = ~g_value.bus_id.str.startswith("virtual_")
         if len(voltages) > 1:
             poi_x, poi_y = geo_to_dist.transform(
                 g_value["poi"].values[0].x, g_value["poi"].values[0].y
@@ -745,10 +749,11 @@ def _merge_buses_to_stations(
 
                 poi_offset = Point(dist_to_geo.transform(poi_x_offset, poi_y_offset))
 
-                # Update bus_name
-                g_value.loc[g_value["voltage"] == v, "bus_id"] = (
-                    g_name + "-" + str(int(v / 1000))
-                )
+                # Update bus_name if not virtual (in which case the voltage suffix is already present)
+                g_value.loc[
+                    (g_value["voltage"] == v) & not_virtual,
+                    "bus_id",
+                ] = g_name + "-" + str(int(v / 1000))
 
                 # Update geometry
                 g_value.loc[g_value["voltage"] == v, "geometry"] = poi_offset
@@ -757,7 +762,9 @@ def _merge_buses_to_stations(
             buses_all.loc[g_value.index, "geometry"] = g_value["geometry"]
         else:
             v = voltages[0]
-            buses_all.loc[g_value.index, "bus_id"] = g_name + "-" + str(int(v / 1000))
+            buses_all.loc[g_value.loc[not_virtual].index, "bus_id"] = (
+                g_name + "-" + str(int(v / 1000))
+            )
             buses_all.loc[g_value.index, "geometry"] = g_value["poi"]
 
     return buses_all
@@ -889,8 +896,9 @@ def _map_endpoints_to_buses(
     for coord in range(2):
         # Obtain endpoints
         endpoints = lines_all[["voltage", "geometry"]].copy()
-        endpoints["geometry"] = endpoints["geometry"].apply(
-            lambda x: x.boundary.geoms[coord]
+        # -1 * coord returns 0 for coord=0 and -1 for coord=1
+        endpoints["geometry"] = get_point(
+            endpoints.geometry.apply(_remove_loops_from_multiline), -1 * coord
         )
         if sjoin == "intersects":
             endpoints = gpd.sjoin(
@@ -1541,7 +1549,7 @@ def build_network(
     buses_polygon.drop(columns=["voltage"], inplace=True)
 
     # Lines
-    lines = gpd.read_file(inputs["lines"])
+    lines = gpd.read_file(inputs["lines"]).drop("contains", axis=1)
     lines = _merge_identical_lines(lines)
 
     # Floor voltages to 3 decimal places (e.g., 66600 becomes 66000, 220000 stays 220000)

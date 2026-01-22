@@ -9,6 +9,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Fix virtual bus naming when building the transmission network from raw OSM data to use persistent names (https://github.com/PyPSA/pypsa-eur/pull/1956).
+
+* Fix column selection when preparing OSM pre-built releases (https://github.com/PyPSA/pypsa-eur/pull/1956).
+
 * Fix: capital-cost of solar-hsat did not get adjusted to current planning_horizon in myopic optimization
 
 * Removed the ``secrets`` configuration section and disallow setting Gurobi license credentials (WLSACCESSID, WLSSECRET, LICENSEID) in config files to prevent accidental exposure of sensitive credentials. Use environment variables or license files instead (https://github.com/PyPSA/pypsa-eur/pull/1989).
@@ -21,28 +25,28 @@ Upcoming Release
 
 * Added technology-data v0.13.4 (https://github.com/PyPSA/technology-data/releases/tag/v0.13.4) to data versions (https://github.com/PyPSA/pypsa-eur/pull/1985).
 
-* Important: PyPSA-Eur now uses a validation schema for configuration files. The schema 
-  also contains the default values for all known configuration options, which means 
+* Important: PyPSA-Eur now uses a validation schema for configuration files. The schema
+  also contains the default values for all known configuration options, which means
   `config/config.default.yaml` still exists and can be used, but will be automatically
   exported from the schema. Changes to the default config, therefore now require the
   schema to be updated. Find a detailed explanation in the contributors documentation
   (https://github.com/PyPSA/pypsa-eur/pull/1912).
-  
+
 * Fix bugs when using PyPSA-Eur as a Snakemake module by making sure that all file paths are defined relative to a rule's input or an output (https://github.com/PyPSA/pypsa-eur/pull/1967).
 
 * Fix compatibility of rules `build_gas_input_locations` and `build_gas_network` with pyogrio >=0.12.0 (https://github.com/PyPSA/pypsa-eur/pull/1955).
 
 * Added interactive (html) balance maps `results/maps/interactive/` (https://github.com/PyPSA/pypsa-eur/pull/1935) based on https://docs.pypsa.org/latest/user-guide/plotting/explore/. Settings for interactive maps can be found in `plotting.default.yaml` under `plotting["balance_map_interactive"]`.
 
-* Relocated and modified static (pdf) balance maps to `results/maps/static/` (https://github.com/PyPSA/pypsa-eur/pull/1935) for better organization. 
+* Relocated and modified static (pdf) balance maps to `results/maps/static/` (https://github.com/PyPSA/pypsa-eur/pull/1935) for better organization.
 
-* With https://github.com/PyPSA/pypsa-eur/pull/1935, note that bus carriers for balance maps containing spaces need to be specified with underscores `_` in the configuration file, e.g., `co2_stored` instead of `co2 stored`. This is to ensure compatibility with queue managers like slurm. 
+* With https://github.com/PyPSA/pypsa-eur/pull/1935, note that bus carriers for balance maps containing spaces need to be specified with underscores `_` in the configuration file, e.g., `co2_stored` instead of `co2 stored`. This is to ensure compatibility with queue managers like slurm.
 
 * Fix building osm network using overpass API (https://github.com/PyPSA/pypsa-eur/pull/1940).
 
 * Added configuration option to set overpass API URL, maximum retries, timeout and user agent information (https://github.com/PyPSA/pypsa-eur/pull/1940 and https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api). For a list of public overpass APIs see `here <https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances>`_.
 
-* Refactored `solve_network.py` and `solve_operations_network.py` to separate optimization problem preparation from solving, enabling inspection of optimization problems before solve execution. 
+* Refactored `solve_network.py` and `solve_operations_network.py` to separate optimization problem preparation from solving, enabling inspection of optimization problems before solve execution.
 
 * Added example configurations for rolling horizon and iterative optimization modes in `config/examples/`.
 
