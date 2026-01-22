@@ -101,7 +101,7 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
         message:
             "Retrieving Corine land cover data"
         params:
-            apikey=os.environ.get("CORINE_API_TOKEN", config["secrets"]["corine"]),
+            apikey=os.environ.get("CORINE_API_TOKEN", ""),
         output:
             zip=f"{CORINE_DATASET['folder']}/corine.zip",
             tif_file=f"{CORINE_DATASET['folder']}/corine.tif",
@@ -388,7 +388,7 @@ if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
         message:
             "Retrieving cutout data for {wildcards.cutout}"
         input:
-            storage(CUTOUT_DATASET["url"] + "/files/{cutout}.nc"),
+            storage(CUTOUT_DATASET["url"] + "/{cutout}.nc"),
         output:
             CUTOUT_DATASET["folder"] + "/{cutout}.nc",
         log:
@@ -983,7 +983,7 @@ if OSM_DATASET["source"] in ["archive"]:
             "Retrieving OSM archive data"
         input:
             **{
-                file: storage(f"{OSM_DATASET['url']}/files/{file}")
+                file: storage(f"{OSM_DATASET['url']}/{file}")
                 for file in OSM_ARCHIVE_FILES
             },
         output:
@@ -1154,6 +1154,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
             "Retrieving seawater temperature data for {wildcards.year}"
         params:
             default_cutout=config_provider("atlite", "default_cutout"),
+            test_data_url=dataset_version("seawater_temperature")["url"],
         output:
             seawater_temperature="data/seawater_temperature_{year}.nc",
         log:

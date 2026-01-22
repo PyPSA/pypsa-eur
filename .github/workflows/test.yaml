@@ -106,6 +106,10 @@ jobs:
           cutouts
         key: data-cutouts-${{ env.WEEK }}
 
+    - name: Restore git-tracked files in data/
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      run: git checkout HEAD -- data/
+
     - name: Run pylint check on scripts
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       # check for undefined variables to reuse functions across scripts
