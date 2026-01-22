@@ -7,6 +7,10 @@ bfs_gdp_and_population,2019-03-28,primary,latest supported,2025-12-02,,https://d
 bfs_gdp_and_population,2019-03-28,archive,latest supported,2025-12-02,,https://web.archive.org/web/20250818151254if_/https://dam-api.bfs.admin.ch/hub/api/dam/assets/7786557/master
 bfs_road_vehicle_stock,unknown,primary,latest supported,2025-12-02,This dataset is not versioned and is updated regularly. The link points to the latest version. More information on the latest update on this website: https://www.bfs.admin.ch/bfs/de/home/statistiken/kataloge-datenbanken.assetdetail.33827666.html,https://datawrapper.dwcdn.net/31f3521eddfa82ada1a436983c31caf5/1/dataset.csv
 bfs_road_vehicle_stock,2024-03-13,archive,latest supported,2025-12-02,,https://raw.githubusercontent.com/PyPSA/pypsa-eur/5b5d308bf70f15dd0b107d8a19c121093dcdd5bd/data/gr-e-11.03.02.01.01-cc.csv
+bidding_zones_electricitymaps,v1.238.0,primary,latest supported,2026-01-22,,https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/refs/tags/v1.238.0/web/geo/world.geojson
+bidding_zones_electricitymaps,v1.238.0,archive,latest supported,2026-01-22,,https://data.pypsa.org/workflows/eur/bidding_zones_electricitymaps/v1.238.0/world.geojson
+bidding_zones_entsoepy,v0.6.18,primary,latest supported,2026-01-22,,https://raw.githubusercontent.com/EnergieID/entsoe-py/refs/tags/V0.6.18/entsoe/geo/geojson
+bidding_zones_entsoepy,v0.6.18,archive,latest supported,2026-01-22,,https://data.pypsa.org/workflows/eur/bidding_zones_entsoepy/v0.6.18
 co2stop,26-august-2020,primary,latest supported,2025-12-02,,https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip
 co2stop,26-august-2020,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/co2stop/26-august-2020/co2jrc_openformats.zip
 copernicus_land_cover,v3.0.1,primary,latest supported,2025-12-02,"The primary is already from Zenodo, documentation in https://zenodo.org/records/4723921",https://zenodo.org/records/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif
@@ -14,11 +18,11 @@ copernicus_land_cover,v3.0.1,archive,latest supported,2026-01-20,"The primary is
 copernicus_land_cover,v2.0.2,archive,deprecated supported,2026-01-13,,https://data.pypsa.org/workflows/eur/copernicus_land_cover/v2.0.2/PROBAV_LC100_global_v3.0.1_2015-base_Discrete-Classification-map_EPSG-4326.tif
 corine,v18_5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/corine/v18_5/corine.zip
 corine,unknown,primary,latest supported,2025-12-02,Need to register with CLMS API and create an access token. The download URL is dynamic,
-costs,v0.13.4,primary,latest supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.4/outputs
+costs,v0.13.4,primary,latest supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.4/outputs
 costs,v0.13.4,archive,supported,2026-01-21,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/costs/v0.13.4
-costs,v0.13.3,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.3/outputs
+costs,v0.13.3,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.3/outputs
 costs,v0.13.3,archive,supported,2026-01-20,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/costs/v0.13.3
-costs,v0.13.2,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.2/outputs
+costs,v0.13.2,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.2/outputs
 costs,v0.13.2,archive,supported,2026-01-20,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/costs/v0.13.2
 country_hdd,unknown,build,latest supported,2025-12-02,Latest dataset built using ERA5 runoff data. This takes a very long time to build.,
 country_hdd,2025-08-13,primary,latest supported,2025-12-02,,https://zenodo.org/records/16849356/files/era5-HDD-per-country.csv

@@ -219,3 +219,11 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="JRC ARDECO data source configuration.",
     )
+    bidding_zones_electricitymaps: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="Electricitymaps bidding zones data source configuration.",
+    )
+    bidding_zones_entsoepy: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="Entsoepy bidding zones data source configuration.",
+    )

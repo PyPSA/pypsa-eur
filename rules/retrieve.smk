@@ -319,19 +319,62 @@ if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
             unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
 
-rule retrieve_bidding_zones:
-    message:
-        "Retrieving bidding zones data from ENTSO-E and Electricity Maps"
-    output:
-        file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
-        file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
-    log:
-        "logs/retrieve_bidding_zones.log",
-    resources:
-        mem_mb=1000,
-    retries: 2
-    script:
-        "../scripts/retrieve_bidding_zones.py"
+if (
+    BIDDING_ZONES_ELECTRICITYMAPS_DATASET := dataset_version(
+        "bidding_zones_electricitymaps"
+    )
+)["source"] in ["primary"]:
+
+    rule retrieve_bidding_zones_electricitymaps:
+        input:
+            geojson=storage(BIDDING_ZONES_ELECTRICITYMAPS_DATASET["url"]),
+        output:
+            geojson=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET["folder"]}/bidding_zones_electricitymaps.geojson",
+        log:
+            "logs/retrieve_bidding_zones_electricitymaps.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        run:
+            copy2(input["geojson"], output["geojson"])
+
+
+if (BIDDING_ZONES_ENTSOEPY_DATASET := dataset_version("bidding_zones_entsoepy"))[
+    "source"
+] in ["primary"]:
+
+    rule retrieve_bidding_zones_entsoepy:
+        output:
+            geojson=f"{BIDDING_ZONES_ENTSOEPY_DATASET['folder']}/bidding_zones_entsoepy.geojson",
+        log:
+            "logs/retrieve_bidding_zones_entsoepy.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        run:
+            import entsoe
+            import geopandas as gpd
+            from urllib.error import HTTPError, URLError
+
+            logger.info("Downloading entsoe-py zones...")
+            gdfs: list[gpd.GeoDataFrame] = []
+            url = f"{BIDDING_ZONES_ENTSOEPY_DATASET['url']}"
+            for area in entsoe.Area:
+                name = area.name
+                try:
+                    file_url = f"{url}/{name}.geojson"
+                    gdfs.append(gpd.read_file(file_url))
+                except HTTPError as e:
+                    logger.debug(f"Area file not available for {name}: {e}")
+                    continue
+                except (URLError, TimeoutError) as e:
+                    raise Exception(f"Network error retrieving {name}: {e}")
+            shapes = pd.concat(gdfs, ignore_index=True)  # type: ignore
+
+            logger.info("Downloading entsoe-py zones... Done")
+
+            shapes.to_file(output.geojson)
+
 
 
 if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
