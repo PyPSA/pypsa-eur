@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Add script path getter helper method to allow for rule inheritance in nested snakefiles.
+
 * Added missing bidding zone data sources to data layer (https://github.com/PyPSA/pypsa-eur/pull/1991).
 
 * Fix virtual bus naming when building the transmission network from raw OSM data to use persistent names (https://github.com/PyPSA/pypsa-eur/pull/1956).

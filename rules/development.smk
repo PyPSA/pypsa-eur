@@ -29,4 +29,4 @@ if (
         resources:
             mem_mb=1000,
         script:
-            "../scripts/prepare_osm_network_release.py"
+            scripts("/prepare_osm_network_release.py")

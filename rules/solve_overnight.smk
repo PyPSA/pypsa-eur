@@ -41,4 +41,4 @@ rule solve_sector_network:
             + "benchmarks/solve_sector_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")
