@@ -35,7 +35,6 @@ from scripts._helpers import (
 )
 from scripts.add_electricity import (
     calculate_annuity,
-    finalize_electricity_network,
     flatten,
     remove_non_power_buses,
     restrict_electricity_components,
@@ -6144,7 +6143,6 @@ if __name__ == "__main__":
     carriers_to_keep = snakemake.params.pypsa_eur
     restrict_electricity_components(n, carriers_to_keep)
     remove_non_power_buses(n)
-    finalize_electricity_network(n)
 
     fn = snakemake.input.heating_efficiencies
     year = int(snakemake.params["energy_totals_year"])

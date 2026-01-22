@@ -17,7 +17,7 @@ class Co2BudgetConfig(ConfigModel):
     """Configuration for `co2_budget` settings."""
 
     emissions_scope: str = Field(
-        "All greenhouse gases - (CO2 equivalent)",
+        "CO2",
         description="Emissions scope for CO2 budget calculations.",
     )
     relative: bool = Field(

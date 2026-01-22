@@ -9,10 +9,6 @@ greenfield and battery and hydrogen storage to the clustered network.
 Description
 -----------
 
-.. note::
-
-    This script's functionality has been integrated into :mod:`compose_network`
-    in the streamlined workflow. This script is maintained for backwards compatibility.
 
 The rule :mod:`add_electricity` ties all the different data inputs from the
 preceding rules together into a detailed PyPSA network. It includes:
@@ -363,25 +359,7 @@ def attach_load(
     logger.info(f"Load data scaled by factor {scaling}.")
     load *= scaling
 
-    n.add("Load", load.columns, bus=load.columns, p_set=load)  # carrier="electricity"
-
-
-def finalize_electricity_network(n: pypsa.Network) -> None:
-    """Ensure core metadata on buses and loads for downstream processing."""
-
-    if "carrier" not in n.loads.columns:
-        n.loads["carrier"] = "electricity"
-    else:
-        n.loads["carrier"] = "electricity"
-
-    if "location" not in n.buses.columns:
-        n.buses["location"] = n.buses.index
-    else:
-        n.buses["location"] = n.buses.location.where(
-            n.buses.location.ne("") & n.buses.location.notnull(), n.buses.index
-        )
-
-    n.buses["unit"] = "MWh_el"
+    n.add("Load", load.columns, bus=load.columns, p_set=load, carrier="electricity")
 
 
 def remove_non_power_buses(n: pypsa.Network) -> None:
@@ -404,29 +382,6 @@ def remove_non_power_buses(n: pypsa.Network) -> None:
         sorted(n.buses.loc[to_drop, "carrier"].unique()),
     )
     n.remove("Bus", to_drop)
-
-
-def apply_variable_renewable_lifetimes(n: pypsa.Network, costs: pd.DataFrame) -> None:
-    """Set lifetimes for variable renewable generators based on cost assumptions."""
-
-    carrier_to_cost = {
-        "solar": "solar",
-        "solar-hsat": "solar",
-        "onwind": "onwind",
-        "offwind-ac": "offwind",
-        "offwind-dc": "offwind",
-        "offwind-float": "offwind",
-    }
-
-    for carrier, cost_key in carrier_to_cost.items():
-        if carrier not in n.generators.carrier.unique():
-            continue
-
-        if cost_key not in costs.index:
-            continue
-
-        lifetime = costs.at[cost_key, "lifetime"]
-        n.generators.loc[n.generators.carrier == carrier, "lifetime"] = lifetime
 
 
 def remove_electricity_components(
@@ -1043,11 +998,11 @@ def attach_storageunits(
     allowed_carriers : list | set, optional
         Optional list of carrier names that are permitted to be attached.
     """
-    carriers = list(extendable_carriers["StorageUnit"])
+    carriers: set | list = set(extendable_carriers["StorageUnit"])
 
     if allowed_carriers is not None:
         allowed_carriers = set(allowed_carriers)
-        carriers = [carrier for carrier in carriers if carrier in allowed_carriers]
+        carriers = list(carriers & allowed_carriers)
 
     if not carriers:
         return

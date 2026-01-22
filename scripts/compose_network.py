@@ -44,7 +44,6 @@ from scripts.add_brownfield import (
     update_heat_pump_efficiency,
 )
 from scripts.add_electricity import (
-    apply_variable_renewable_lifetimes,
     attach_conventional_generators,
     attach_GEM_renewables,
     attach_hydro,
@@ -53,7 +52,6 @@ from scripts.add_electricity import (
     attach_stores,
     attach_wind_and_solar,
     estimate_renewable_capacities,
-    finalize_electricity_network,
     load_and_aggregate_powerplants,
     load_costs,
     remove_non_power_buses,
@@ -582,9 +580,6 @@ def add_electricity_components(
         landfall_lengths,
     )
 
-    if foresight in ["myopic", "perfect"]:
-        apply_variable_renewable_lifetimes(n, costs)
-
     # Attach hydro if included
     profile_hydro = inputs.get("profile_hydro")
     hydro_capacities = inputs.get("hydro_capacities")
@@ -639,8 +634,6 @@ def add_electricity_components(
         extendable_carriers,
         allowed_carriers=carriers_to_keep.get("Store") if sector_mode else None,
     )
-
-    finalize_electricity_network(n)
 
     logger.info("Completed electricity components")
 

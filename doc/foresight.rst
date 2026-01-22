@@ -266,14 +266,14 @@ The choice of emissions scope affects:
    to the selected emissions scope
 
 .. note::
-   The default uses all greenhouse gases in CO₂-equivalent to align with EU climate policy
-   targets (e.g., Fit for 55: 55% GHG reduction by 2030, climate neutrality by 2050). This
-   ensures budget calculations use the same baseline as official climate targets. While the
-   energy system model primarily tracks and optimizes CO₂ emissions from energy use, using
-   all GHGs for baseline calculations provides proper context for the model's emission
-   constraints relative to economy-wide climate goals. Non-energy GHG emissions (e.g., from
-   agriculture, industrial processes) are typically handled as exogenous assumptions or
-   boundary conditions.
+   The default uses ``CO2`` emissions scope, tracking only direct energy-related CO₂ emissions.
+   This aligns with the model's primary focus on optimizing energy system decarbonization.
+   While EU climate policy targets (e.g., Fit for 55) include all greenhouse gases in CO₂-equivalent,
+   the energy system model constraints apply specifically to energy-related CO₂. For analyses
+   requiring broader GHG scope alignment with EU targets, the ``emissions_scope`` parameter
+   can be set to ``All greenhouse gases - (CO2 equivalent)``. Non-energy GHG emissions
+   (e.g., from agriculture, industrial processes) are typically handled as exogenous
+   assumptions or boundary conditions.
 
 
 General myopic code structure

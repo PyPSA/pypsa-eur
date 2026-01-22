@@ -673,7 +673,7 @@
       "description": "Configuration for `co2_budget` settings.",
       "properties": {
         "emissions_scope": {
-          "default": "All greenhouse gases - (CO2 equivalent)",
+          "default": "CO2",
           "description": "Emissions scope for CO2 budget calculations.",
           "type": "string"
         },
@@ -7958,7 +7958,7 @@
       "description": "Configuration for `co2_budget` settings.",
       "properties": {
         "emissions_scope": {
-          "default": "All greenhouse gases - (CO2 equivalent)",
+          "default": "CO2",
           "description": "Emissions scope for CO2 budget calculations.",
           "type": "string"
         },

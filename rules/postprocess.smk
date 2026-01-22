@@ -12,7 +12,7 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
         input:
             network=resources("networks/base.nc"),
-            regions_onshore=resources("regions_onshore.geojson"),
+            regions_onshore=resources("regions_onshore_base.geojson"),
         output:
             map=resources("maps/base_network.pdf"),
         threads: 1
@@ -36,9 +36,9 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=4000,
         benchmark:
-            benchmarks("plot_power_network")
+            benchmarks("plot_clustered_network")
         script:
-            "../scripts/plot_power_network.py"
+            "../scripts/plot_power_network_clustered.py"
 
     rule plot_power_network:
         params:
@@ -109,9 +109,9 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=8000,
         log:
-            RESULTS + "logs/plot_balance_map_{horizon}-{carrier}.log",
+            RESULTS + "logs/plot_balance_map_{horizon}_{carrier}.log",
         benchmark:
-            (RESULTS + "benchmarks/plot_balance_map_{horizon}-{carrier}")
+            (RESULTS + "benchmarks/plot_balance_map_{horizon}_{carrier}")
         script:
             "../scripts/plot_balance_map.py"
 
@@ -153,9 +153,9 @@ if config["foresight"] != "perfect":
             ),
         output:
             temp_map=RESULTS
-            + "maps/static/{horizon}-heat_source_temperature_map_{carrier}.html",
+            + "maps/static/{horizon}_heat_source_temperature_map_{carrier}.html",
             energy_map=RESULTS
-            + "maps/static/{horizon}-heat_source_energy_map_{carrier}.html",
+            + "maps/static/{horizon}_heat_source_energy_map_{carrier}.html",
         threads: 1
         resources:
             mem_mb=150000,
@@ -171,7 +171,7 @@ if config["foresight"] == "perfect":
 
     def output_map_year(w):
         return {
-            f"map_{year}": RESULTS + "maps/static/costs-all_{year}.pdf"
+            f"map_{year}": RESULTS + "maps/static/costs_all_{year}.pdf"
             for year in config_provider("planning_horizons")(w)
         }
 
@@ -252,7 +252,7 @@ rule plot_summary:
     output:
         costs=RESULTS + "graphs/costs.svg",
         energy=RESULTS + "graphs/energy.svg",
-        balances=RESULTS + "graphs/balances-energy.svg",
+        balances=RESULTS + "graphs/balances_energy.svg",
     threads: 2
     resources:
         mem_mb=10000,

@@ -716,6 +716,9 @@ if __name__ == "__main__":
         clustered_regions.to_file(snakemake.output[which])
         # append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
 
+    nc.buses["location"] = nc.buses.index
+    nc.buses["unit"] = "MWh_el"
+
     nc.meta = dict(
         snakemake.config,
         **dict(parameters=dict(n_clusters=n_clusters_value)),

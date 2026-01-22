@@ -43,7 +43,7 @@ rule build_powerplants:
     log:
         logs("build_powerplants.log"),
     benchmark:
-        benchmarks("build_powerplants_s")
+        benchmarks("build_powerplants")
     threads: 1
     resources:
         mem_mb=7000,
@@ -378,6 +378,8 @@ if COUNTRY_RUNOFF_DATASET["source"] == "build":
             logs("build_country_runoff.log"),
         benchmark:
             benchmarks("build_country_runoff")
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/build_country_runoff.py"
 
