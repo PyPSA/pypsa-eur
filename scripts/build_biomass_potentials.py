@@ -346,7 +346,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_biomass_potentials",
             horizon=2050,
-            configfiles="config/test/config.electricity.yaml",
         )
 
     configure_logging(snakemake)

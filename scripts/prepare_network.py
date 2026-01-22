@@ -37,11 +37,7 @@ import pypsa
 
 from scripts._helpers import (
     PYPSA_V1,
-    configure_logging,
     get,
-    load_costs,
-    set_scenario_config,
-    update_config_from_wildcards,
 )
 from scripts.add_electricity import set_transmission_costs
 
@@ -409,80 +405,3 @@ def cap_transmission_capacity(
     # Apply absolute link capacity limit if specified
     if link_max is not None and np.isfinite(link_max):
         n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=link_max)
-
-
-if __name__ == "__main__":
-    if "snakemake" not in globals():
-        from scripts._helpers import mock_snakemake
-
-        snakemake = mock_snakemake(
-            "prepare_network",
-        )
-    configure_logging(snakemake)  # pylint: disable=E0606
-    set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
-    logger.warning(
-        "Deprecated: final network preparation is handled by "
-        "compose_network.py under 'NETWORK PREPARATION (from prepare_network.py)' "
-        "(see prepare_network_for_solving). Use compose_network.py instead."
-    )
-
-    n = pypsa.Network(snakemake.input[0])
-    Nyears = n.snapshot_weightings.objective.sum() / 8760.0
-    costs = load_costs(snakemake.input.costs)
-
-    set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
-
-    # temporal averaging
-    time_resolution = snakemake.params.time_resolution
-    is_string = isinstance(time_resolution, str)
-    if is_string and time_resolution.lower().endswith("h"):
-        n = average_every_nhours(n, time_resolution, snakemake.params.drop_leap_day)
-
-    # segments with package tsam
-    if is_string and time_resolution.lower().endswith("seg"):
-        solver_name = snakemake.config["solving"]["solver"]["name"]
-        segments = int(time_resolution.replace("seg", ""))
-        n = apply_time_segmentation(n, segments, solver_name)
-
-    if snakemake.params.co2limit_enable:
-        add_co2limit(n, snakemake.params.co2limit, None, Nyears)
-
-    if snakemake.params.gaslimit_enable:
-        add_gaslimit(n, snakemake.params.gaslimit, Nyears)
-
-    maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
-
-    emission_prices = snakemake.params.emission_prices
-    if emission_prices["co2_monthly_prices"]:
-        logger.info(
-            "Setting time dependent emission prices according spot market price"
-        )
-        add_dynamic_emission_prices(n, snakemake.input.co2_price)
-    elif emission_prices["enable"]:
-        if isinstance(emission_prices["co2"], dict):
-            logger.warning(
-                "Not setting emission prices on generators and storage units, "
-                "due to their configuration per planning horizon"
-            )
-        elif isinstance(emission_prices["co2"], float):
-            add_emission_prices(n, dict(co2=emission_prices["co2"]))
-
-    kind = snakemake.params.transmission_limit[0]
-    factor = snakemake.params.transmission_limit[1:]
-    set_transmission_limit(n, kind, factor, costs, Nyears)
-
-    cap_transmission_capacity(
-        n,
-        line_max=snakemake.params.lines.get("s_nom_max", np.inf),
-        link_max=snakemake.params.links.get("p_nom_max", np.inf),
-        line_max_extension=snakemake.params.lines.get("max_extension", np.inf),
-        link_max_extension=snakemake.params.links.get("max_extension", np.inf),
-    )
-
-    if snakemake.params.autarky["enable"]:
-        only_crossborder = snakemake.params.autarky["by_country"]
-        enforce_autarky(n, only_crossborder=only_crossborder)
-
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output[0])

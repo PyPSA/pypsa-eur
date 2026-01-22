@@ -31,12 +31,7 @@ from six import iterkeys
 
 from scripts._helpers import (
     PYPSA_V1,
-    configure_logging,
-    sanitize_custom_columns,
-    set_scenario_config,
-    update_config_from_wildcards,
 )
-from scripts.add_electricity import sanitize_carriers
 from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 # Allow for PyPSA versions <0.35
@@ -827,72 +822,3 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]) -> None:
         n.links_t["efficiency"].loc[(year, slice(None)), heat_pump_idx] = (
             correct_efficiency.values
         )
-
-
-if __name__ == "__main__":
-    if "snakemake" not in globals():
-        from scripts._helpers import mock_snakemake
-
-        snakemake = mock_snakemake(
-            "prepare_perfect_foresight",
-        )
-    configure_logging(snakemake)  # pylint: disable=E0606
-    set_scenario_config(snakemake)
-
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
-    logger.warning(
-        "Deprecated: perfect-foresight concatenation now happens inside "
-        "compose_network.py under 'PERFECT FORESIGHT CONCATENATION "
-        "(from prepare_perfect_foresight.py)' (see concatenate_network_with_previous "
-        "and apply_investment_period_weightings). Run compose_network.py instead."
-    )
-    # parameters -----------------------------------------------------------
-    years = snakemake.config["scenario"]["planning_horizons"]
-    social_discountrate = snakemake.params.costs["social_discountrate"]
-
-    logger.info(
-        f"Concat networks of investment period {years} with social discount rate of {social_discountrate * 100}%"
-    )
-
-    # concat prepared networks of planning horizon to single network ------------
-    network_paths = [snakemake.input.brownfield_network] + [
-        snakemake.input[f"network_{year}"] for year in years[1:]
-    ]
-    n = concat_networks(years, network_paths, social_discountrate)
-
-    # temporal aggregate
-    solver_name = snakemake.config["solving"]["solver"]["name"]
-    segments = snakemake.params.time_resolution
-    if isinstance(segments, (int, float)):
-        apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
-
-    # adjust global constraints lv limit if the same for all years
-    adjust_lvlimit(n)
-    # adjust global constraints CO2 limit
-    adjust_CO2_glc(n)
-    # adjust stores to multi period investment
-    adjust_stores_for_perfect_foresight(n)
-
-    # set phase outs
-    set_all_phase_outs(n, years)
-
-    # add H2 boiler
-    add_H2_boilers(n)
-
-    # set carbon constraints
-    set_carbon_constraints(
-        n,
-        co2_budget=snakemake.config["co2_budget"],
-        sector_opts=snakemake.wildcards.sector_opts,
-    )
-
-    # update meta
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-
-    # update heat pump efficiency
-    update_heat_pump_efficiency(n=n, years=years)
-
-    # export network
-    sanitize_custom_columns(n)
-    sanitize_carriers(n, snakemake.config)
-    n.export_to_netcdf(snakemake.output[0])

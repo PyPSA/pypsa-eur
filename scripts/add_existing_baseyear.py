@@ -17,17 +17,8 @@ import powerplantmatching as pm
 import pypsa
 import xarray as xr
 
-from scripts._helpers import (
-    configure_logging,
-    load_costs,
-    sanitize_custom_columns,
-    set_scenario_config,
-    update_config_from_wildcards,
-)
-from scripts.add_electricity import sanitize_carriers
 from scripts.build_energy_totals import cartesian
 from scripts.definitions.heat_system import HeatSystem
-from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -746,93 +737,3 @@ def add_heating_capacities_installed_before_baseyear(
                     and n.links.p_nom[index] < capacity_threshold
                 ],
             )
-
-
-if __name__ == "__main__":
-    if "snakemake" not in globals():
-        from scripts._helpers import mock_snakemake
-
-        snakemake = mock_snakemake(
-            "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
-            horizon=2030,
-        )
-
-    configure_logging(snakemake)  # pylint: disable=E0606
-    set_scenario_config(snakemake)
-
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
-    logger.warning(
-        "Deprecated: existing-capacity injection now happens inside "
-        "compose_network.py under 'EXISTING CAPACITIES (from add_existing_baseyear.py)' "
-        "(see add_existing_capacities). Use compose_network.py instead."
-    )
-
-    options = snakemake.params.sector
-
-    renewable_carriers = snakemake.params.carriers
-
-    baseyear = snakemake.params.baseyear
-
-    n = pypsa.Network(snakemake.input.network)
-
-    # define spatial resolution of carriers
-    spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
-    add_build_year_to_new_assets(n, baseyear)
-
-    costs = load_costs(snakemake.input.costs)
-
-    grouping_years_power = snakemake.params.existing_capacities["grouping_years_power"]
-    grouping_years_heat = snakemake.params.existing_capacities["grouping_years_heat"]
-    add_power_capacities_installed_before_baseyear(
-        n=n,
-        costs=costs,
-        grouping_years=grouping_years_power,
-        baseyear=baseyear,
-        powerplants_file=snakemake.input.powerplants,
-        countries=snakemake.config["countries"],
-        capacity_threshold=snakemake.params.existing_capacities["threshold_capacity"],
-        lifetime_values=snakemake.params.costs["fill_values"],
-        renewable_carriers=renewable_carriers,
-    )
-
-    if options["heating"]:
-        # one could use baseyear here instead (but dangerous if no data)
-        fn = snakemake.input.heating_efficiencies
-        year = int(snakemake.params["energy_totals_year"])
-        heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
-
-        add_heating_capacities_installed_before_baseyear(
-            n=n,
-            costs=costs,
-            baseyear=baseyear,
-            grouping_years=grouping_years_heat,
-            heat_pump_cop=xr.open_dataarray(snakemake.input.cop_profiles),
-            use_time_dependent_cop=options["time_dep_hp_cop"],
-            default_lifetime=snakemake.params.existing_capacities[
-                "default_heating_lifetime"
-            ],
-            existing_capacities=pd.read_csv(
-                snakemake.input.existing_heating_distribution,
-                header=[0, 1],
-                index_col=0,
-            ),
-            heat_pump_source_types=snakemake.params.heat_pump_sources,
-            efficiency_file=snakemake.input.heating_efficiencies,
-            energy_totals_year=snakemake.params["energy_totals_year"],
-            capacity_threshold=snakemake.params.existing_capacities[
-                "threshold_capacity"
-            ],
-            use_electricity_distribution_grid=options["electricity_distribution_grid"],
-        )
-
-    # Set defaults for missing missing values
-
-    if options.get("cluster_heat_buses", False):
-        cluster_heat_buses(n)
-
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-
-    sanitize_custom_columns(n)
-    sanitize_carriers(n, snakemake.config)
-    n.export_to_netcdf(snakemake.output[0])

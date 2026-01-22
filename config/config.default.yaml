@@ -432,8 +432,8 @@ lines:
     500.0: "Al/St 240/40 4-bundle 380.0"
     750.0: "Al/St 560/50 4-bundle 750.0"
   s_max_pu: 0.7
-  s_nom_max: 10000
-  s_nom_max_extension: 8000
+  s_nom_max: .inf
+  s_nom_max_extension: 20000
   length_factor: 1.25
   reconnect_crimea: true
   under_construction: keep

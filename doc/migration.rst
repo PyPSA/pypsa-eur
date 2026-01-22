@@ -92,7 +92,166 @@ Foresight modes
 - **Myopic**: ``compose_network`` imports
   ``results/{run}/networks/solved_{previous}.nc`` via the helper
   ``solved_previous_horizon``. Ensure horizons are sorted ascendingly.
-- **Perfect**: ``compose_network`` uses ``resources/{run}/networks/composed_{previous}.nc`` as  
+- **Perfect**: ``compose_network`` uses ``resources/{run}/networks/composed_{previous}.nc`` as
   the brownfield baseline to build the full multi-period optimisation.
+
+
+Migrating forked repositories
+=============================
+
+If you maintain a fork of PyPSA-Eur with custom scripts or rules, the
+streamlined workflow consolidates previously scattered logic into
+``scripts/compose_network.py``. This section explains how to port your
+customizations.
+
+Customization points mapping
+----------------------------
+
+The table below shows where legacy customization points now reside:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 35 30
+
+   * - Legacy location
+     - New location
+     - Section marker in compose_network.py
+   * - ``add_electricity.py`` main section
+     - ``add_electricity_components()`` function
+     - ``ELECTRICITY COMPONENTS (from add_electricity.py)``
+   * - ``prepare_sector_network.py`` main section
+     - ``add_sector_components()`` function
+     - ``SECTOR COMPONENTS (from prepare_sector_network.py)``
+   * - ``add_existing_baseyear.py`` main section
+     - ``add_existing_capacities()`` function
+     - ``EXISTING CAPACITIES (from add_existing_baseyear.py)``
+   * - ``add_brownfield.py`` main section
+     - Inline brownfield block
+     - ``BROWNFIELD FOR MYOPIC (from add_brownfield.py)``
+   * - ``prepare_network.py`` main section
+     - ``prepare_network_for_solving()`` function
+     - ``NETWORK PREPARATION (from prepare_network.py)``
+   * - ``prepare_perfect_foresight.py`` main section
+     - ``concatenate_network_with_previous()`` + inline block
+     - ``PERFECT FORESIGHT CONCATENATION (from prepare_perfect_foresight.py)``
+
+Porting custom functions
+------------------------
+
+**Scenario 1: You added a function to a legacy script**
+
+If you added a helper function (e.g., ``attach_custom_generators()``) to
+``add_electricity.py``, keep the function in that file. The streamlined
+workflow imports functions from legacy scripts, so your function remains
+available::
+
+    # In your fork's add_electricity.py, add your function:
+    def attach_custom_generators(n, costs, params):
+        """Add custom generator type."""
+        ...
+
+    # In compose_network.py, add the import and call:
+    from scripts.add_electricity import (
+        ...
+        attach_custom_generators,  # Add your import
+    )
+
+    # Then call it in the ELECTRICITY COMPONENTS section:
+    attach_custom_generators(n, costs, params)
+
+**Scenario 2: You modified the main execution flow**
+
+If you inserted logic between existing steps (e.g., filtering buses after
+load attachment), locate the corresponding section in ``compose_network.py``
+and insert your code there. Each section is clearly marked with comments like::
+
+    # ========== ELECTRICITY COMPONENTS (from add_electricity.py) ==========
+
+**Scenario 3: You added a custom Snakemake rule**
+
+If you had a custom rule (e.g., ``add_custom_data``) that ran between
+``add_electricity`` and ``prepare_network``, you have two options:
+
+1. **Integrate into compose_network.py**: Add your logic as a function call
+   in the appropriate section. This is preferred for logic that modifies
+   the network.
+
+2. **Keep as separate rule**: If your rule produces independent data files,
+   keep it separate and add its outputs to ``get_compose_inputs()`` in
+   ``rules/compose.smk``.
+
+Adding custom inputs to compose_network
+---------------------------------------
+
+To add custom data files as inputs to the compose rule, extend
+``get_compose_inputs()`` in ``rules/compose.smk``::
+
+    def get_compose_inputs(w):
+        cfg = get_config(w)
+        ...
+        inputs = dict(
+            ...existing inputs...
+        )
+
+        # Add your custom inputs
+        if cfg.get("my_custom_feature", {}).get("enabled", False):
+            inputs["custom_data"] = resources("my_custom_data.csv")
+            inputs["custom_profiles"] = resources("my_custom_profiles_{horizon}.nc")
+
+        return inputs
+
+Then access them in ``compose_network.py`` via ``snakemake.input.custom_data``.
+
+Example: Porting a custom carrier
+---------------------------------
+
+Suppose your fork adds a "green ammonia" carrier in ``prepare_sector_network.py``.
+Here's how to port it:
+
+1. **Keep the function in the legacy script**::
+
+       # scripts/prepare_sector_network.py
+       def add_green_ammonia(n, costs, spatial, options):
+           """Add green ammonia production and storage."""
+           ...
+
+2. **Add the import in compose_network.py**::
+
+       from scripts.prepare_sector_network import (
+           ...
+           add_green_ammonia,
+       )
+
+3. **Call it in the SECTOR COMPONENTS section**::
+
+       # In compose_network.py, after existing sector components:
+       if sector_opts.get("green_ammonia", False):
+           add_green_ammonia(n, costs, spatial, sector_opts)
+
+4. **Add any required inputs to get_compose_inputs()**::
+
+       # In rules/compose.smk
+       if cfg["sector"].get("green_ammonia", False):
+           inputs["green_ammonia_potentials"] = resources("green_ammonia_potentials.csv")
+
+Best practices for fork maintenance
+-----------------------------------
+
+1. **Minimize changes to compose_network.py**: Keep custom functions in the
+   legacy script files and only add imports and calls in ``compose_network.py``.
+   This reduces merge conflicts when pulling upstream changes.
+
+2. **Use config flags for custom features**: Gate your customizations with
+   configuration options so they can be disabled when testing against upstream.
+
+3. **Document your integration points**: Add comments indicating where your
+   custom code integrates, referencing any related issues or documentation.
+
+4. **Test incrementally**: After merging upstream changes, run the test suite
+   with your customizations disabled first, then enable them one by one.
+
+5. **Watch for function signature changes**: When upstream modifies a function
+   you import, check if the signature changed. The deprecation of main sections
+   means function signatures are now the stable API.
 
 

@@ -13,14 +13,9 @@ import pypsa
 import xarray as xr
 
 from scripts._helpers import (
-    configure_logging,
     get_snapshots,
-    sanitize_custom_columns,
-    set_scenario_config,
-    update_config_from_wildcards,
 )
-from scripts.add_electricity import flatten, sanitize_carriers
-from scripts.add_existing_baseyear import add_build_year_to_new_assets
+from scripts.add_electricity import flatten
 
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
@@ -334,59 +329,3 @@ def update_dynamic_ptes_capacity(
     n_p.stores_t.e_max_pu[dynamic_ptes_idx_previous_iteration] = n.stores_t.e_max_pu[
         corresponding_idx_this_iteration
     ].values
-
-
-if __name__ == "__main__":
-    if "snakemake" not in globals():
-        from scripts._helpers import mock_snakemake
-
-        snakemake = mock_snakemake(
-            "add_brownfield",
-            horizon=2050,
-        )
-
-    configure_logging(snakemake)  # pylint: disable=E0606
-    set_scenario_config(snakemake)
-
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
-    logger.warning(
-        "Deprecated: brownfield application is now coordinated by compose_network.py "
-        "under 'BROWNFIELD FOR MYOPIC (from add_brownfield.py)' where add_brownfield "
-        "is orchestrated. Call compose_network instead of running add_brownfield "
-        "directly."
-        "Call compose_network instead of running add_brownfield directly."
-    )
-
-    logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
-
-    year = int(snakemake.wildcards.horizon)
-
-    n = pypsa.Network(snakemake.input.network)
-
-    adjust_renewable_profiles(n, snakemake.input, snakemake.params, year)
-
-    add_build_year_to_new_assets(n, year)
-
-    n_p = pypsa.Network(snakemake.input.network_p)
-
-    update_heat_pump_efficiency(n, n_p, year)
-
-    if snakemake.params.tes and snakemake.params.dynamic_ptes_capacity:
-        update_dynamic_ptes_capacity(n, n_p, year)
-
-    add_brownfield(
-        n,
-        n_p,
-        year,
-        h2_retrofit=snakemake.params.H2_retrofit,
-        h2_retrofit_capacity_per_ch4=snakemake.params.H2_retrofit_capacity_per_CH4,
-        capacity_threshold=snakemake.params.threshold_capacity,
-    )
-
-    disable_grid_expansion_if_limit_hit(n)
-
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-
-    sanitize_custom_columns(n)
-    sanitize_carriers(n, snakemake.config)
-    n.export_to_netcdf(snakemake.output[0])
