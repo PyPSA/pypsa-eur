@@ -327,22 +327,16 @@ if (
 
     rule retrieve_bidding_zones_electricitymaps:
         input:
-            gpd=storage(
-                f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET["url"]}/{BIDDING_ZONES_ELECTRICITYMAPS_DATASET["version"]}/web/geo/world.geojson"
-            ),
+            geojson=storage(BIDDING_ZONES_ELECTRICITYMAPS_DATASET["url"]),
         output:
-            file=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET["folder"]}/bidding_zones_electricitymaps.geojson",
+            geojson=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET["folder"]}/bidding_zones_electricitymaps.geojson",
         log:
             "logs/retrieve_bidding_zones_electricitymaps.log",
         resources:
             mem_mb=1000,
         retries: 2
         run:
-            import geopandas as gpd
-
-            df = gpd.read_file(input.gpd)
-            df.to_file(output.file)
-            logger.info("Downloading electricitymaps-contrib zones... Done")
+            copy2(input["geojson"], output["geojson"])
 
 
 if (BIDDING_ZONES_ENTSOEPY_DATASET := dataset_version("bidding_zones_entsoepy"))[
@@ -364,7 +358,7 @@ if (BIDDING_ZONES_ENTSOEPY_DATASET := dataset_version("bidding_zones_entsoepy"))
 
             logger.info("Downloading entsoe-py zones...")
             gdfs: list[gpd.GeoDataFrame] = []
-            url = f"{BIDDING_ZONES_ENTSOEPY_DATASET['url']}/{BIDDING_ZONES_ENTSOEPY_DATASET['version']}/entsoe/geo/geojson"
+            url = f"{BIDDING_ZONES_ENTSOEPY_DATASET['url']}/entsoe/geo/geojson"
             for area in entsoe.Area:
                 name = area.name
                 try:
