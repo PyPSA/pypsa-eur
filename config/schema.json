@@ -1920,6 +1920,42 @@
               "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             },
+            "li-ion": {
+              "default": 6,
+              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "lfp": {
+              "default": 6,
+              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "vanadium": {
+              "default": 10,
+              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "lair": {
+              "default": 12,
+              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "pair": {
+              "default": 24,
+              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "iron-air": {
+              "default": 100,
+              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
             "H2": {
               "default": 168,
               "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
@@ -1939,14 +1975,14 @@
               "type": "array"
             },
             "StorageUnit": {
-              "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+              "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
               "items": {
                 "type": "string"
               },
               "type": "array"
             },
             "Store": {
-              "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+              "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
               "items": {
                 "type": "string"
               },
@@ -6415,6 +6451,42 @@
           "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
           "type": "number"
         },
+        "li-ion": {
+          "default": 6,
+          "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "lfp": {
+          "default": 6,
+          "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "vanadium": {
+          "default": 10,
+          "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "lair": {
+          "default": 12,
+          "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "pair": {
+          "default": 24,
+          "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "iron-air": {
+          "default": 100,
+          "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
         "H2": {
           "default": 168,
           "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
@@ -8020,6 +8092,42 @@
               "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             },
+            "li-ion": {
+              "default": 6,
+              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "lfp": {
+              "default": 6,
+              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "vanadium": {
+              "default": 10,
+              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "lair": {
+              "default": 12,
+              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "pair": {
+              "default": 24,
+              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "iron-air": {
+              "default": 100,
+              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
             "H2": {
               "default": 168,
               "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
@@ -8039,14 +8147,14 @@
               "type": "array"
             },
             "StorageUnit": {
-              "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+              "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
               "items": {
                 "type": "string"
               },
               "type": "array"
             },
             "Store": {
-              "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+              "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
               "items": {
                 "type": "string"
               },

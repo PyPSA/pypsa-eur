@@ -125,12 +125,12 @@ electricity:
     contingency: 4000
   max_hours:
     battery: 6
-    li-ion: 6
+    "li-ion": 6
     lfp: 6
     vanadium: 10
     lair: 12
     pair: 24
-    iron-air: 100
+    "iron-air": 100
     H2: 168
   extendable_carriers:
     Generator:
