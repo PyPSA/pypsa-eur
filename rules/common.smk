@@ -198,6 +198,7 @@ def output_model(path_template):
         if config_provider("solving", "options", "store_model")(w):
             return path_template.format(**dict(w))
         return []
+
     return _output_model
 
 
