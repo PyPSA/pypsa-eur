@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: CC0-1.0
 
 
-  
 
 run:
   name: "Test_2030" # Run identification for 2024
@@ -27,7 +26,7 @@ countries: ['BE']
 snapshots:
   start: "2030-01-01"
   end: "2030-12-31"
- 
+
 
 
 electricity:
@@ -35,16 +34,14 @@ electricity:
   co2limit: 100.e+6
   battery_cost_reduction: true
   #base_network: osm-raw
-  
-  
   powerplants_filter: DateOut >= 2023
 atlite:
   default_cutout: europe-2030-sarah3-era5
   cutouts:
     europe-2030-sarah3-era5:
       module: [sarah3, era5] # in priority order
-      x: [-12., 42.] 
-      y: [33., 72.] 
+      x: [-12., 42.]
+      y: [33., 72.]
       time: ['2030-01-01', '2030-12-31']
 
 conventional:
@@ -83,7 +80,7 @@ renewable:
 load:
   scaling_factor: 1.2
   fixed_year: 2023
-  
+
 
 
 
@@ -115,7 +112,7 @@ solving:
     options: highs-default
 
   solver_options:
-     highs-default:
+    highs-default:
       solver: ipm
       run_crossover: off          # skip crossover; faster & fine for LP
       threads: 8                  # try 6–10; don’t overcommit
@@ -126,6 +123,6 @@ solving:
       dual_feasibility_tolerance: 1e-5
       ipm_optimality_tolerance: 1e-4
       random_seed: 123
-  
+
 
 
