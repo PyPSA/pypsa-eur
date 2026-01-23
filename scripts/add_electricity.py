@@ -972,7 +972,7 @@ def attach_storageunits(
     buses_i : list
         List of high voltage electricity buses.
     extendable_carriers : dict
-        Dictionary of extendable energy carriers.
+        List of extendable storage units carrier names.
     max_hours : dict
         Dictionary of maximum hours for storage units.
     """
@@ -1036,7 +1036,7 @@ def attach_stores(
     buses_i : list
         List of high voltage electricity buses.
     extendable_carriers : dict
-        Dictionary of extendable energy carriers.
+        List of extendable storage carrier names.
     """
     available_carriers = get_available_storage_carriers(extendable_carriers)
     n.add("Carrier", available_carriers)
