@@ -110,6 +110,9 @@ rule solve_sector_network_perfect:
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.yaml",
+        model=output_model(
+            RESULTS + "models/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        ),
     threads: solver_threads
     resources:
         mem_mb=config_provider("solving", "mem"),

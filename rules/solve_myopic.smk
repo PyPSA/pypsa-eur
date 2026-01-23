@@ -123,6 +123,9 @@ rule solve_sector_network_myopic:
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.yaml",
+        model=output_model(
+            RESULTS + "models/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
     shadow:
         shadow_config
     log:
