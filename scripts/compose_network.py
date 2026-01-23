@@ -4,25 +4,12 @@
 
 """
 Compose network by combining all electricity and sector components.
-
-This script combines functionality from add_electricity.py, prepare_sector_network.py,
-add_existing_baseyear.py, add_brownfield.py, prepare_network.py, and
-prepare_perfect_foresight.py into a unified composition step for the streamlined
-workflow.
-
-Each major section is tagged with a subtitle indicating which legacy script it
-replaces (for example, 'ELECTRICITY COMPONENTS (from add_electricity.py)').
-
-All function calls are made directly in the main section without defining
-additional functions, following the additive approach of importing existing
-functions and calling them in sequence.
 """
 
 import logging
 import os
 from collections.abc import Mapping
 
-import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
@@ -276,77 +263,19 @@ def concatenate_network_with_previous(
     snapshot_periods = list(n.snapshots.get_level_values("period").unique())
     investment_periods_list = list(n.investment_periods)
 
-    if snapshot_periods != investment_periods_list:
-        logger.warning(
-            f"Investment periods mismatch detected: snapshots have {snapshot_periods}, "
-            f"but investment_periods is {investment_periods_list}. Synchronizing..."
-        )
-        # Force synchronization by setting investment_periods to match snapshots
-        # Use set_investment_periods() to ensure proper validation and storage
-        n.set_investment_periods(snapshot_periods)
+    assert snapshot_periods == investment_periods_list
+    # logger.warning(
+    #     f"Investment periods mismatch detected: snapshots have {snapshot_periods}, "
+    #     f"but investment_periods is {investment_periods_list}. Synchronizing..."
+    # )
+    # # Force synchronization by setting investment_periods to match snapshots
+    # # Use set_investment_periods() to ensure proper validation and storage
+    # n.set_investment_periods(snapshot_periods)
 
     logger.info(
         f"Successfully concatenated network: {len(n.investment_periods)} investment periods"
     )
     return n
-
-
-def validate_network_state(
-    n: pypsa.Network, stage_name: str, expected_components: dict[str, int] | None = None
-) -> dict[str, int]:
-    """
-    Validate network state and log component counts after a stage.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Network to validate
-    stage_name : str
-        Name of the stage for logging
-    expected_components : dict[str, int] | None
-        Optional dict of {component_type: minimum_count} to validate
-
-    Returns
-    -------
-    dict[str, int]
-        Current component counts for reference
-
-    Raises
-    ------
-    ValueError
-        If expected component counts are not met
-    """
-    counts = {
-        "buses": len(n.buses),
-        "generators": len(n.generators),
-        "loads": len(n.loads),
-        "lines": len(n.lines),
-        "links": len(n.links),
-        "stores": len(n.stores),
-        "storage_units": len(n.storage_units),
-    }
-
-    logger.debug(
-        f"Network state after {stage_name}: "
-        f"{counts['buses']} buses, "
-        f"{counts['generators']} generators, "
-        f"{counts['loads']} loads, "
-        f"{counts['lines']} lines, "
-        f"{counts['links']} links, "
-        f"{counts['stores']} stores, "
-        f"{counts['storage_units']} storage_units"
-    )
-
-    if expected_components:
-        for component, min_count in expected_components.items():
-            actual = counts.get(component, 0)
-            if actual < min_count:
-                raise ValueError(
-                    f"After {stage_name}: expected at least {min_count} {component}, "
-                    f"but found {actual}"
-                )
-
-    return counts
 
 
 def adjust_renewable_capacity_limits(
@@ -399,59 +328,6 @@ def adjust_renewable_capacity_limits(
         ]
 
     n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
-
-
-def adjust_biomass_availability(n: pypsa.Network) -> None:
-    """
-    Adjust biomass generator availability to meet industrial feedstock demand.
-
-    Scales biomass generator e_sum_max capacity proportionally if the required
-    energy for industrial biomass loads exceeds the available biomass energy.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Network containing biomass generators and loads
-
-    Notes
-    -----
-    Modifies n.generators["e_sum_max"] in-place if adjustment is needed.
-    Issues a warning log when scaling occurs.
-    """
-    biomass_generators = n.generators[n.generators.carrier == "solid biomass"]
-    if biomass_generators.empty:
-        return
-
-    weight_sum = float(n.snapshot_weightings.generators.sum())
-    industry_loads = n.loads[n.loads.carrier == "solid biomass for industry"]
-
-    if weight_sum > 0 and not industry_loads.empty:
-        required_energy = float((industry_loads.p_set * weight_sum).sum())
-        available_energy = float(
-            biomass_generators["e_sum_max"].replace([np.inf, -np.inf], pd.NA).sum()
-        )
-
-        if pd.isna(available_energy) or available_energy <= 0:
-            available_energy = 0.0
-
-        if required_energy > available_energy:
-            deficit = required_energy - available_energy
-            shares = biomass_generators["e_sum_max"].replace(0.0, pd.NA)
-
-            if shares.notna().any():
-                shares = shares.fillna(0.0) / shares.sum()
-            else:
-                shares = pd.Series(
-                    1.0 / len(biomass_generators), index=biomass_generators.index
-                )
-
-            for gen, share in shares.items():
-                n.generators.at[gen, "e_sum_max"] += deficit * share
-
-            logger.warning(
-                "Scaled solid biomass availability by %+0.1f MWh to match industrial feedstock demand.",
-                deficit,
-            )
 
 
 def add_electricity_components(
@@ -926,10 +802,6 @@ def add_sector_components(
     if params.sector["cluster_heat_buses"]:
         cluster_heat_buses(n)
 
-    # Adjust biomass availability to match industrial demand
-    if params.sector["biomass"] and params.sector["industry"]:
-        adjust_biomass_availability(n)
-
     logger.info("Completed sector components")
 
 
@@ -1342,11 +1214,6 @@ if __name__ == "__main__":
         restrict_electricity_components(n, carriers_to_keep)
         remove_non_power_buses(n)
 
-    # Validate base network state
-    validate_network_state(
-        n, "base network load", expected_components={"buses": 1, "lines": 0}
-    )
-
     # Calculate year weighting
     nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
@@ -1372,13 +1239,6 @@ if __name__ == "__main__":
         foresight,
         sector_mode,
         carriers_to_keep,
-    )
-
-    # Validate after electricity components
-    counts_after_elec = validate_network_state(
-        n,
-        "electricity components",
-        expected_components={"buses": 1, "generators": 1, "loads": 1},
     )
 
     # Clean up orphaned components in sector mode (generators referencing non-existent buses)
@@ -1421,17 +1281,9 @@ if __name__ == "__main__":
             foresight,
         )
 
-        # Validate after sector components
-        counts_after_sector = validate_network_state(
-            n, "sector components", expected_components={"buses": 2}
-        )
-
     # ========== TEMPORAL AGGREGATION (from prepare_sector_network.py / prepare_network.py) ==========
     # Apply temporal aggregation before adding existing components
     apply_temporal_aggregation(n, inputs, params)
-
-    # Validate after temporal aggregation
-    validate_network_state(n, "temporal aggregation")
 
     # ========== EXISTING CAPACITIES (from add_existing_baseyear.py) ==========
     if params.existing_capacities["enabled"] and is_first_horizon:
@@ -1444,9 +1296,6 @@ if __name__ == "__main__":
             renewable_carriers,
             baseyear,
         )
-
-        # Validate after existing capacities
-        validate_network_state(n, "existing capacities")
 
     # ========== BROWNFIELD FOR MYOPIC (from add_brownfield.py) ==========
     # Apply brownfield constraints for myopic mode (non-first horizon)
@@ -1509,9 +1358,6 @@ if __name__ == "__main__":
         current_horizon=current_horizon,
         apply_perfect_scalar_now=not (foresight == "perfect"),
     )
-
-    # Validate before finalization
-    validate_network_state(n, "network preparation")
 
     # ========== PERFECT FORESIGHT CONCATENATION (from prepare_perfect_foresight.py) ==========
     # For perfect foresight, concatenate with previous composed network

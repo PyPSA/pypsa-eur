@@ -592,7 +592,7 @@ rule simplify_network:
         network=resources("networks/simplified.nc"),
         regions_onshore=resources("regions_onshore_simplified.geojson"),
         regions_offshore=resources("regions_offshore_simplified.geojson"),
-        busmap=resources("busmap_simplified.csv"),
+        busmap=resources("busmap_simplify_network.csv"),
     log:
         logs("simplify_network.log"),
     benchmark:
@@ -659,15 +659,15 @@ rule cluster_network:
     input:
         unpack(input_custom_busmap),
         network=resources("networks/simplified.nc"),
-        simplified_busmap=resources("busmap_simplified.csv"),
+        simplified_busmap=resources("busmap_simplify_network.csv"),
         admin_shapes=resources("admin_shapes.geojson"),
         bidding_zones=lambda w: (
             resources("bidding_zones.geojson")
             if config_provider("clustering", "mode")(w) == "administrative"
             else []
         ),
-        regions_onshore=resources("regions_onshore_base.geojson"),
-        regions_offshore=resources("regions_offshore_base.geojson"),
+        regions_onshore=resources("regions_onshore_simplified.geojson"),
+        regions_offshore=resources("regions_offshore_simplified.geojson"),
         hac_features=lambda w: (
             resources("hac_features.nc")
             if config_provider("clustering", "cluster_network", "algorithm")(w)
@@ -676,11 +676,13 @@ rule cluster_network:
         ),
         load=resources("electricity_demand_simplified.nc"),
     output:
+        # TODO: change busmap mapping from base to clustered (currently only from simplified to clustered)
         network=resources("networks/clustered.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
-        busmap=resources("busmap.csv"),
-        linemap=resources("linemap.csv"),
+        busmap_cluster_network=resources("busmap_cluster_network.csv"),
+        busmap=resources("busmap.csv"),  # base -> clustered
+        linemap=resources("linemap.csv"),  # base -> clustered
     log:
         logs("cluster_network.log"),
     benchmark:

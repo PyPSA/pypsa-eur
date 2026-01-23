@@ -701,7 +701,7 @@ if __name__ == "__main__":
 
     nc = clustering.n
     cluster_busmap = sanitize_busmap(clustering.busmap)
-    busmaps_for_regions = (simplified_busmap, cluster_busmap)
+    busmaps_for_regions = cluster_busmap
 
     if snakemake.params.copperplate_regions:
         copperplate_buses(nc, snakemake.params.copperplate_regions)

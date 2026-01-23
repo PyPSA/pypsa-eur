@@ -26,7 +26,6 @@ if config["foresight"] != "perfect":
     rule plot_clustered_network:
         params:
             plotting=config_provider("plotting"),
-            transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
             network=resources("networks/clustered.nc"),
             regions=resources("regions_onshore.geojson"),

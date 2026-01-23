@@ -15,7 +15,6 @@ import json
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
-from scripts._helpers import update_config_from_wildcards
 from snakemake.utils import update_config
 
 
@@ -74,10 +73,7 @@ def _get_config_cached(wildcards_tuple):
     else:
         base = copy.deepcopy(config)
 
-    # Apply wildcard overrides
-    result = update_config_from_wildcards(base, wildcards, inplace=False)
-
-    return result
+    return base
 
 
 def get_config(w):
@@ -115,10 +111,7 @@ def get_config(w):
 
 def static_getter(wildcards, keys, default):
     """Getter function for static config values."""
-    config_with_wildcards = update_config_from_wildcards(
-        config, wildcards, inplace=False
-    )
-    return navigate_config(config_with_wildcards, keys, default)
+    return navigate_config(config, keys, default)
 
 
 def dynamic_getter(wildcards, keys, default):
@@ -131,10 +124,7 @@ def dynamic_getter(wildcards, keys, default):
             f"Scenario {scenario_name} not found in file {config['run']['scenarios']['file']}."
         )
     config_with_scenario = scenario_config(scenario_name)
-    config_with_wildcards = update_config_from_wildcards(
-        config_with_scenario, wildcards, inplace=False
-    )
-    return navigate_config(config_with_wildcards, keys, default)
+    return navigate_config(config_with_scenario, keys, default)
 
 
 def config_provider(*keys, default=None):

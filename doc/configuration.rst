@@ -609,9 +609,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect foresight scenarios.
 
 Activating ``enabled`` instructs :mod:`compose_network` to merge the historical
-assets stored in ``resources/powerplants_s.csv`` (and the heat/industry inputs)
-into ``networks/composed_{horizon}.nc``. Leave it ``false`` for greenfield
-studies.
+assets stored in ``resources/powerplants.csv`` into ``networks/composed_{horizon}.nc``.
 
 .. jsonschema:: ../config/schema.json#/$defs/ExistingCapacitiesConfig
    :lift_description:
