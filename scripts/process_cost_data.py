@@ -180,8 +180,10 @@ def prepare_costs(
     # Calculate storage costs if max_hours is provided
     if max_hours is not None:
 
-        def costs_for_storage(store, link1=None, link2=None, max_hours=1.0):
-            capital_cost = max_hours * store["capital_cost"]
+        def costs_for_storage(store=None, link1=None, link2=None, max_hours=1.0):
+            capital_cost = 0
+            if store is not None:
+                capital_cost += max_hours * store["capital_cost"]
             if link1 is not None:
                 capital_cost += link1["capital_cost"]
             if link2 is not None:

@@ -1078,6 +1078,8 @@ def attach_stores(
             lifetime=costs.at[lookup_store, "lifetime"],
         )
 
+        n.add("Carrier", [f"{carrier} {charge_name}", f"{carrier} {discharge_name}"])
+
         n.add(
             "Link",
             bus_names,
@@ -1088,6 +1090,7 @@ def attach_stores(
             efficiency=costs.at[lookup_charge, "efficiency"] ** roundtrip_correction,
             capital_cost=costs.at[lookup_charge, "capital_cost"],
             p_nom_extendable=True,
+            marginal_cost=costs.at[lookup_charge, "marginal_cost"],
             lifetime=costs.at[lookup_charge, "lifetime"],
         )
 
@@ -1100,6 +1103,7 @@ def attach_stores(
             carrier=f"{carrier} {discharge_name}",
             efficiency=costs.at[lookup_discharge, "efficiency"] ** roundtrip_correction,
             p_nom_extendable=True,
+            marginal_cost=costs.at[lookup_discharge, "marginal_cost"],
             lifetime=costs.at[lookup_discharge, "lifetime"],
         )
 
