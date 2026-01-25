@@ -193,6 +193,7 @@ def input_custom_extra_functionality(w):
     return []
 
 
+<<<<<<< HEAD
 def output_model(path_template):
     def _output_model(w):
         if config_provider("solving", "options", "store_model")(w):
@@ -202,6 +203,8 @@ def output_model(path_template):
     return _output_model
 
 
+=======
+>>>>>>> 5049060a (apply suggestion)
 def solved_previous_horizon(w):
     planning_horizons = config_provider("scenario", "planning_horizons")(w)
     i = planning_horizons.index(int(w.planning_horizons))
