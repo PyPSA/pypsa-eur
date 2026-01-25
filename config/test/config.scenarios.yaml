@@ -17,7 +17,7 @@ run:
 planning_horizons:
 - 2030
 
-countries: ['BE']
+countries: ["BE"]
 
 snapshots:
   start: "2013-03-01"

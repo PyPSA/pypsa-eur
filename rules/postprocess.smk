@@ -2,9 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-from numpy import atleast_1d
-
-
 if config["foresight"] != "perfect":
 
     rule plot_base_network:
@@ -195,14 +192,11 @@ rule make_summary:
         planning_horizons=config_provider("planning_horizons"),
     input:
         networks=lambda w: (
-            [
-                RESULTS
-                + f"networks/solved_{atleast_1d(config['planning_horizons'])[-1]}.nc"
-            ]
+            [RESULTS + f"networks/solved_{config['planning_horizons'][-1]}.nc"]
             if config["foresight"] == "perfect"
             else [
                 RESULTS + f"networks/solved_{h}.nc"
-                for h in atleast_1d(config["planning_horizons"])
+                for h in config["planning_horizons"]
             ]
         ),
     output:

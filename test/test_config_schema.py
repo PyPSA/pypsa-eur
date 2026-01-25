@@ -13,6 +13,8 @@ import pytest
 from scripts.lib.validation.config import (
     generate_config_defaults,
     generate_config_schema,
+    normalize_config,
+    validate_config,
 )
 
 
@@ -70,3 +72,39 @@ def test_config_schema_json_in_sync():
         generate_config_schema,
         "json",
     )
+
+
+class TestPlanningHorizonsNormalization:
+    """Tests for planning_horizons validation and normalization."""
+
+    def test_validate_accepts_single_int(self):
+        cfg = {"planning_horizons": 2050}
+        validated = validate_config(cfg)
+        assert validated.planning_horizons == [2050]
+
+    def test_validate_accepts_single_str(self):
+        cfg = {"planning_horizons": "2030"}
+        validated = validate_config(cfg)
+        assert validated.planning_horizons == [2030]
+
+    def test_validate_accepts_list(self):
+        cfg = {"planning_horizons": [2030, 2040, 2050]}
+        validated = validate_config(cfg)
+        assert validated.planning_horizons == [2030, 2040, 2050]
+
+    def test_validate_does_not_modify_config(self):
+        cfg = {"planning_horizons": 2050}
+        validate_config(cfg)
+        assert cfg["planning_horizons"] == 2050
+
+    def test_normalize_updates_config_in_place(self):
+        cfg = {"planning_horizons": 2050}
+        validated = validate_config(cfg)
+        normalize_config(cfg, validated)
+        assert cfg["planning_horizons"] == [2050]
+
+    def test_normalize_with_list_unchanged(self):
+        cfg = {"planning_horizons": [2030, 2050]}
+        validated = validate_config(cfg)
+        normalize_config(cfg, validated)
+        assert cfg["planning_horizons"] == [2030, 2050]

@@ -67,28 +67,22 @@ def build_nuts_population_data(year=2013):
         index_col=1,
     )[str(year)]
 
-    swiss_population_fn = snakemake.input.get("swiss_population")
-    swiss_cantons_fn = snakemake.input.get("swiss_cantons")
+    # mapping from Cantons to NUTS3
+    cantons = pd.read_csv(snakemake.input.swiss_cantons)
+    cantons = cantons.set_index(cantons.HASC.str[3:]).NUTS
+    cantons = cantons.str.pad(5, side="right", fillchar="0")
 
-    if swiss_population_fn and swiss_cantons_fn:
-        # mapping from Cantons to NUTS3
-        cantons = pd.read_csv(swiss_cantons_fn)
-        cantons = cantons.set_index(cantons.HASC.str[3:]).NUTS
-        cantons = cantons.str.pad(5, side="right", fillchar="0")
+    # get population by NUTS3
+    swiss = pd.read_excel(
+        snakemake.input.swiss_population, skiprows=3, index_col=0
+    ).loc["Residents in 1000"]
+    swiss = swiss.rename(cantons).filter(like="CH")
 
-        # get population by NUTS3
-        swiss = pd.read_excel(swiss_population_fn, skiprows=3, index_col=0).loc[
-            "Residents in 1000"
-        ]
-        swiss = swiss.rename(cantons).filter(like="CH")
+    # aggregate also to higher order NUTS levels
+    swiss = [swiss.groupby(swiss.index.str[:i]).sum() for i in range(2, 6)]
 
-        # aggregate also to higher order NUTS levels
-        swiss = [swiss.groupby(swiss.index.str[:i]).sum() for i in range(2, 6)]
-
-        # merge Europe + Switzerland
-        pop = pd.concat([pop, pd.concat(swiss)]).to_frame("total")
-    else:
-        pop = pop.to_frame("total")
+    # merge Europe + Switzerland
+    pop = pd.concat([pop, pd.concat(swiss)]).to_frame("total")
 
     # add missing manually
     pop["AL"] = 2778

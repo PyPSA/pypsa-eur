@@ -14,14 +14,13 @@ run:
 foresight: overnight
 planning_horizons: 2040
 
-countries: ['BE']
+countries: ["BE"]
 
 snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
 electricity:
-
   extendable_carriers:
     Generator: [OCGT]
     StorageUnit: [battery]

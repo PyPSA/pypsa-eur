@@ -7835,19 +7835,14 @@
       "type": "string"
     },
     "planning_horizons": {
-      "anyOf": [
-        {
-          "type": "integer"
-        },
-        {
-          "items": {
-            "type": "integer"
-          },
-          "type": "array"
-        }
+      "default": [
+        2050
       ],
-      "default": 2050,
-      "description": "Planning horizon year(s) for the optimization. Single year or list of years."
+      "description": "Planning horizon year(s) for the optimization.",
+      "items": {
+        "type": "integer"
+      },
+      "type": "array"
     },
     "countries": {
       "default": [
@@ -11465,7 +11460,7 @@
           }
         },
         "exclude_carriers": {
-          "description": "List of carriers to exclude from powerplant aggregation. Excluded carriers keep individual plant representation instead of being aggregated per bus.",
+          "description": "List of carriers to exclude from aggregation. Excluded carriers keep individual plant representation instead of being aggregated per bus.",
           "items": {
             "type": "string"
           },

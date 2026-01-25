@@ -18,6 +18,8 @@ temporal adjustments.
 """
 
 import logging
+import os
+from collections.abc import Mapping
 
 import numpy as np
 import pandas as pd
@@ -28,6 +30,8 @@ from scripts._helpers import (
     get,
 )
 from scripts.add_electricity import set_transmission_costs
+from scripts.co2_budget import bound_value_for_horizon, co2_budget_for_horizon
+from scripts.prepare_sector_network import co2_emissions_year, set_temporal_aggregation
 
 # Allow for PyPSA versions <0.35
 if PYPSA_V1:
@@ -145,6 +149,104 @@ def add_co2limit(
             sense=">=",
             constant=co2_min * GT_TO_TONNES * nyears,
         )
+
+
+def _is_scalar_bound(bound: object) -> bool:
+    return isinstance(bound, (int, float))
+
+
+def _is_mapping_bound(bound: object) -> bool:
+    return isinstance(bound, Mapping)
+
+
+def apply_co2_budget_constraints(
+    n: pypsa.Network,
+    *,
+    inputs,
+    params,
+    nyears: float,
+    current_horizon: int,
+) -> None:
+    foresight = params.foresight
+    horizons = params.horizons
+
+    co2_budget = params["co2_budget"]
+    upper_cfg = co2_budget["upper"]
+    lower_cfg = co2_budget["lower"]
+
+    if upper_cfg is None:
+        logger.info(
+            f"CO2 budget upper constraint not specified for horizon {current_horizon}. "
+            "Skipping CO2 constraint for this horizon."
+        )
+        return
+
+    upper_is_scalar = _is_scalar_bound(upper_cfg)
+    upper_is_mapping = _is_mapping_bound(upper_cfg)
+
+    if not (upper_is_scalar or upper_is_mapping):
+        raise TypeError(
+            "co2_budget.upper must be null, a number, or a dict mapping year to value. "
+            f"Received {type(upper_cfg).__name__}."
+        )
+
+    if upper_is_scalar and _is_mapping_bound(lower_cfg):
+        raise ValueError(
+            "Invalid co2_budget configuration: when co2_budget.upper is a scalar, "
+            "co2_budget.lower must be null or a scalar (not a dict)."
+        )
+
+    baseline_1990 = None
+    if co2_budget["relative"]:
+        upper_raw = bound_value_for_horizon(upper_cfg, current_horizon)
+        lower_raw = bound_value_for_horizon(lower_cfg, current_horizon)
+        if upper_raw is not None or lower_raw is not None:
+            baseline_1990 = co2_emissions_year(
+                countries=params.countries,
+                input_eurostat=inputs["eurostat"],
+                options=params.sector,
+                emissions_scope=co2_budget["emissions_scope"],
+                input_co2=inputs["co2"],
+                year=1990,
+            )
+
+    upper, lower = co2_budget_for_horizon(
+        co2_budget,
+        current_horizon=current_horizon,
+        baseline_1990=baseline_1990,
+    )
+
+    if upper is None:
+        logger.info(
+            f"CO2 budget upper constraint not specified for horizon {current_horizon}. "
+            "Skipping CO2 constraint for this horizon."
+        )
+        return
+
+    is_last_horizon = current_horizon == horizons[-1]
+
+    if upper_is_scalar:
+        if foresight == "perfect" and not is_last_horizon:
+            logger.info(
+                f"Deferring scalar CO2 constraint until final horizon {horizons[-1]}."
+            )
+            return
+        if foresight == "perfect":
+            nyears = n.snapshot_weightings.objective.sum() / 8760.0
+        add_co2limit(n, upper, lower, nyears)
+        return
+
+    if foresight == "perfect":
+        add_co2limit(
+            n,
+            upper,
+            lower,
+            nyears,
+            suffix=f"-{current_horizon}",
+            investment_period=current_horizon,
+        )
+    else:
+        add_co2limit(n, upper, lower, nyears)
 
 
 def add_gaslimit(n, gaslimit, Nyears=1.0):
@@ -393,3 +495,104 @@ def cap_transmission_capacity(
     # Apply absolute link capacity limit if specified
     if link_max is not None and np.isfinite(link_max):
         n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=link_max)
+
+
+def apply_temporal_aggregation(
+    n: pypsa.Network,
+    inputs,
+    params,
+) -> None:
+    logger.info("Applying temporal aggregation")
+
+    clustering_temporal_cfg = params.clustering_temporal
+    time_resolution = clustering_temporal_cfg["resolution"]
+    time_segmentation = clustering_temporal_cfg["time_segmentation"]
+
+    has_averaging = isinstance(
+        time_resolution, str
+    ) and time_resolution.lower().endswith("h")
+    has_segmentation = time_segmentation["enable"] and time_segmentation["segments"]
+
+    if has_averaging and has_segmentation:
+        raise ValueError(
+            "Cannot use both temporal averaging (resolution) and time "
+            "segmentation simultaneously. Please configure only one method:\n"
+            f"  - resolution: {time_resolution}\n"
+            f"  - time_segmentation.segments: {time_segmentation['segments']}\n"
+            "Set one to False/empty to use the other."
+        )
+
+    if has_averaging:
+        logger.info(f"Applying temporal averaging: {time_resolution}")
+        if params.sector["enabled"]:
+            snapshot_weightings_file = inputs.snapshot_weightings
+            n_new = set_temporal_aggregation(
+                n,
+                time_resolution,
+                snapshot_weightings_file,
+            )
+        else:
+            n_new = average_every_nhours(n, time_resolution, params.drop_leap_day)
+        n.__dict__.update(n_new.__dict__)
+
+    if has_segmentation:
+        logger.info("Applying time segmentation")
+        apply_time_segmentation(
+            n,
+            time_segmentation["segments"],
+            params.solver_name,
+        )
+
+    logger.info("Completed temporal aggregation")
+
+
+def main(
+    n: pypsa.Network,
+    inputs,
+    params,
+    costs: pd.DataFrame,
+    nyears: float,
+) -> None:
+    logger.info("Preparing network for solving")
+
+    electricity_cfg = params.electricity
+
+    if electricity_cfg["gaslimit_enable"]:
+        gaslimit = electricity_cfg["gaslimit"]
+        add_gaslimit(n, gaslimit, nyears)
+
+    emission_prices = params.costs["emission_prices"]
+
+    if emission_prices["enable"]:
+        add_emission_prices(
+            n,
+            {"co2": emission_prices["co2"]},
+            exclude_co2=False,
+        )
+        if emission_prices["co2_monthly_prices"]:
+            if not os.path.exists(inputs.co2_price):
+                raise ValueError("CO2 price file for monthly prices not found")
+            add_dynamic_emission_prices(n, inputs.co2_price)
+
+    transmission_limit = electricity_cfg["transmission_limit"]
+    if isinstance(transmission_limit, str):
+        kind = transmission_limit[0]
+        factor = transmission_limit[1:] or "opt"
+    elif isinstance(transmission_limit, (list, tuple)) and len(transmission_limit) == 2:
+        kind, factor = transmission_limit
+    else:
+        raise ValueError(
+            "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
+        )
+
+    set_transmission_limit(n, kind, factor, costs, nyears)
+
+    cap_transmission_capacity(
+        n,
+        line_max=params.lines["s_nom_max"],
+        link_max=params.links["p_nom_max"],
+        line_max_extension=params.lines["s_nom_max_extension"],
+        link_max_extension=params.links["p_nom_max_extension"],
+        line_max_pu=params.lines["s_max_pu"],
+        link_max_pu=params.links["p_max_pu"],
+    )

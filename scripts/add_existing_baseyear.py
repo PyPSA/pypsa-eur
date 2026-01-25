@@ -19,11 +19,11 @@ import xarray as xr
 
 from scripts.build_energy_totals import cartesian
 from scripts.definitions.heat_system import HeatSystem
+from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 idx = pd.IndexSlice
-spatial = SimpleNamespace()
 
 
 def add_build_year_to_new_assets(n: pypsa.Network, baseyear: int) -> None:
@@ -147,6 +147,7 @@ def add_power_capacities_installed_before_baseyear(
     capacity_threshold: float,
     lifetime_values: dict[str, float],
     renewable_carriers: list[str],
+    spatial: SimpleNamespace,
 ) -> None:
     """
     Add power generation capacities installed before base year.
@@ -171,6 +172,8 @@ def add_power_capacities_installed_before_baseyear(
         Default values for missing data
     renewable_carriers: list
         List of renewable carriers in the network
+    spatial: SimpleNamespace
+        Container of spatial data
     """
     logger.debug(f"Adding power capacities installed before {baseyear}")
 
@@ -480,6 +483,7 @@ def add_heating_capacities_installed_before_baseyear(
     energy_totals_year: int,
     capacity_threshold: float,
     use_electricity_distribution_grid: bool,
+    spatial: SimpleNamespace,
 ) -> None:
     """
     Add heating capacities installed before base year.
@@ -512,6 +516,8 @@ def add_heating_capacities_installed_before_baseyear(
         Minimum capacity threshold
     use_electricity_distribution_grid : bool
         Whether to use electricity distribution grid
+    spatial : SimpleNamespace
+        Container of spatial data
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
@@ -737,3 +743,62 @@ def add_heating_capacities_installed_before_baseyear(
                     and n.links.p_nom[index] < capacity_threshold
                 ],
             )
+
+
+def main(
+    n: pypsa.Network,
+    inputs,
+    params,
+    costs: pd.DataFrame,
+) -> None:
+    logger.info("Adding existing capacities")
+    baseyear = params.existing_capacities["baseyear"]
+    renewable_carriers = set(params.renewable_carriers)
+
+    options = params.sector
+
+    # define spatial resolution of carriers
+    spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
+    add_build_year_to_new_assets(n, baseyear)
+
+    grouping_years_power = params.existing_capacities["grouping_years_power"]
+    grouping_years_heat = params.existing_capacities["grouping_years_heat"]
+    add_power_capacities_installed_before_baseyear(
+        n=n,
+        costs=costs,
+        grouping_years=grouping_years_power,
+        baseyear=baseyear,
+        powerplants_file=inputs.powerplants,
+        countries=params.countries,
+        capacity_threshold=params.existing_capacities["threshold_capacity"],
+        lifetime_values=params.costs["fill_values"],
+        renewable_carriers=renewable_carriers,
+        spatial=spatial,
+    )
+
+    if options["heating"]:
+        add_heating_capacities_installed_before_baseyear(
+            n=n,
+            costs=costs,
+            baseyear=baseyear,
+            grouping_years=grouping_years_heat,
+            heat_pump_cop=xr.open_dataarray(inputs.cop_profiles),
+            use_time_dependent_cop=options["time_dep_hp_cop"],
+            default_lifetime=params.existing_capacities["default_heating_lifetime"],
+            existing_capacities=pd.read_csv(
+                inputs.existing_heating_distribution,
+                header=[0, 1],
+                index_col=0,
+            ),
+            heat_pump_source_types=params.heat_pump_sources,
+            efficiency_file=inputs.heating_efficiencies,
+            energy_totals_year=params["energy_totals_year"],
+            capacity_threshold=params.existing_capacities["threshold_capacity"],
+            use_electricity_distribution_grid=options["electricity_distribution_grid"],
+            spatial=spatial,
+        )
+
+    # Set defaults for missing missing values
+
+    if options.get("cluster_heat_buses", False):
+        cluster_heat_buses(n)

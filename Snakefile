@@ -16,7 +16,7 @@ from scripts._helpers import (
     get_shadow,
     path_provider,
 )
-from scripts.lib.validation.config import validate_config
+from scripts.lib.validation.config import normalize_config, validate_config
 
 
 configfile: "config/config.default.yaml"
@@ -28,7 +28,8 @@ if Path("config/config.yaml").exists():
     configfile: "config/config.yaml"
 
 
-validate_config(config)
+validated = validate_config(config)
+normalize_config(config, validated)
 
 run = config["run"]
 scenarios = get_scenarios(run)

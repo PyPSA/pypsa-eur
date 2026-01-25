@@ -13,7 +13,7 @@ The json schema is also contributed to the schemastore.org and matches
 import re
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from ruamel.yaml import YAML
 
 from scripts.lib.validation.config._base import ConfigModel
@@ -119,10 +119,18 @@ class ConfigSchema(BaseModel):
         default_factory=ForesightConfig,
         description="Foresight mode for the optimization. See Foresight Options for detailed explanations.",
     )
-    planning_horizons: int | list[int] = Field(
-        2050,
-        description="Planning horizon year(s) for the optimization. Single year or list of years.",
+    planning_horizons: list[int] = Field(
+        [2050],
+        description="Planning horizon year(s) for the optimization.",
     )
+
+    @field_validator("planning_horizons", mode="before")
+    @classmethod
+    def normalize_planning_horizons(cls, v):
+        if isinstance(v, (int, str)):
+            return [int(v)]
+        return [int(h) for h in v]
+
     countries: CountriesConfig = Field(
         default_factory=CountriesConfig,
         description="European countries defined by their Two-letter country codes (ISO 3166-1) which should be included in the energy system model.",
@@ -236,6 +244,11 @@ class ConfigSchema(BaseModel):
 def validate_config(config: dict) -> ConfigSchema:
     """Validate config dict against schema."""
     return ConfigSchema(**config)
+
+
+def normalize_config(config: dict, validated: ConfigSchema) -> None:
+    """Normalize config values in place (e.g., ensure planning_horizons is a list)."""
+    config["planning_horizons"] = validated.planning_horizons
 
 
 def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
@@ -392,6 +405,7 @@ def generate_config_schema(path: str = "config/schema.json") -> dict:
 __all__ = [
     "ConfigSchema",
     "validate_config",
+    "normalize_config",
     "generate_config_defaults",
     "generate_config_schema",
     "ValidationError",

@@ -17,7 +17,7 @@ planning_horizons:
 - 2040
 - 2050
 
-countries: ['BE']
+countries: ["BE"]
 
 snapshots:
   start: "2013-03-01"
@@ -99,7 +99,7 @@ clustering:
     resolution: 24h
   cluster_network:
     algorithm: kmeans
-    n_clusters: 5  # Small number for testing
+    n_clusters: 5 # Small number for testing
     hac_features:
     - wnd100m
     - influx_direct

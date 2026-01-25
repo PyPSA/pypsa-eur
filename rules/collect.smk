@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-from numpy import atleast_1d
-
 
 localrules:
     all,
@@ -50,7 +48,7 @@ rule solve_networks:
         expand(
             RESULTS + "networks/solved_{horizon}.nc",
             run=config["run"]["name"],
-            horizon=atleast_1d(config["planning_horizons"])[-1],
+            horizon=config["planning_horizons"][-1],
         ),
 
 

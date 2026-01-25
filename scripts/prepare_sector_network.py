@@ -546,6 +546,47 @@ def add_carrier_buses(
         )
 
 
+# TODO: PyPSA-Eur merge issue
+def remove_elec_base_techs(n: pypsa.Network, carriers_to_keep: dict) -> None:
+    """
+    Remove conventional generators (e.g. OCGT) and storage units (e.g.
+    batteries and H2) from base electricity-only network, since they're added
+    here differently using links.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to remove components from
+    carriers_to_keep : dict
+        Dictionary specifying which carriers to keep for each component type
+        e.g. {'Generator': ['hydro'], 'StorageUnit': ['PHS']}
+    """
+    for c in n.iterate_components(carriers_to_keep):
+        to_keep = carriers_to_keep[c.name]
+        to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
+        if to_remove.empty:
+            continue
+        logger.info(f"Removing {c.list_name} with carrier {list(to_remove)}")
+        names = c.df.index[c.df.carrier.isin(to_remove)]
+        n.remove(c.name, names)
+        n.carriers.drop(to_remove, inplace=True, errors="ignore")
+
+
+# TODO: PyPSA-Eur merge issue
+def remove_non_electric_buses(n):
+    """
+    Remove buses from pypsa-eur with carriers which are not AC buses.
+    """
+    if to_drop := list(n.buses.query("carrier not in ['AC', 'DC']").carrier.unique()):
+        logger.info(f"Drop buses from PyPSA-Eur with carrier: {to_drop}")
+        n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
+
+
+def patch_electricity_network(n, carriers_to_keep):
+    remove_elec_base_techs(n, carriers_to_keep)
+    remove_non_electric_buses(n)
+
+
 def add_eu_bus(n, x=-5.5, y=46):
     """
     Add EU bus to the network.
@@ -6087,3 +6128,277 @@ def add_import_options(
             p_nom=p_nom,
             marginal_cost=import_options["H2"],
         )
+
+
+def main(
+    n: pypsa.Network,
+    inputs,
+    params,
+    costs: pd.DataFrame,
+    nyears: float,
+    current_horizon: int,
+) -> None:
+    logger.info("Adding sector components")
+    foresight = params.foresight
+
+    options = params.sector
+    cf_industry = params.industry
+
+    investment_year = current_horizon
+
+    pop_layout = pd.read_csv(inputs.clustered_pop_layout, index_col=0)
+    spatial = define_spatial(pop_layout.index, options)
+
+    pop_weighted_energy_totals = (
+        pd.read_csv(inputs["pop_weighted_energy_totals"], index_col=0) * nyears
+    )
+
+    pop_weighted_heat_totals = (
+        pd.read_csv(inputs["pop_weighted_heat_totals"], index_col=0) * nyears
+    )
+    pop_weighted_energy_totals.update(pop_weighted_heat_totals)
+
+    fn = inputs.gas_input_nodes_simplified
+    gas_input_nodes = pd.read_csv(fn, index_col=0)
+
+    carriers_to_keep = params.pypsa_eur
+    patch_electricity_network(n, carriers_to_keep)
+
+    fn = inputs.heating_efficiencies
+    year = int(params["energy_totals_year"])
+    heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
+
+    spatial = define_spatial(pop_layout.index, options)
+
+    if foresight in ["myopic", "perfect"]:
+        conventional = params.conventional_carriers
+        for carrier in conventional:
+            add_carrier_buses(
+                n=n,
+                carrier=carrier,
+                costs=costs,
+                spatial=spatial,
+                options=options,
+                cf_industry=cf_industry,
+            )
+
+    add_eu_bus(n)
+
+    emission_prices = params["emission_prices"]
+    co2_price = (
+        get(emission_prices["co2"], investment_year)
+        if emission_prices["enable"]
+        else 0.0
+    )
+    add_co2_tracking(
+        n,
+        costs,
+        options,
+        sequestration_potential_file=inputs["sequestration_potential"],
+        co2_price=co2_price,
+    )
+
+    add_generation(
+        n=n,
+        costs=costs,
+        pop_layout=pop_layout,
+        conventionals=options["conventional_generation"],
+        spatial=spatial,
+        options=options,
+        cf_industry=cf_industry,
+    )
+
+    add_storage_and_grids(
+        n=n,
+        costs=costs,
+        pop_layout=pop_layout,
+        h2_cavern_file=inputs.h2_cavern,
+        cavern_types=options["hydrogen_underground_storage_locations"],
+        clustered_gas_network_file=inputs.clustered_gas_network,
+        gas_input_nodes=gas_input_nodes,
+        spatial=spatial,
+        options=options,
+    )
+
+    if options["transport"]:
+        add_land_transport(
+            n=n,
+            costs=costs,
+            transport_demand_file=inputs.transport_demand,
+            transport_data_file=inputs.transport_data,
+            avail_profile_file=inputs.avail_profile,
+            dsm_profile_file=inputs.dsm_profile,
+            temp_air_total_file=inputs.temp_air_total,
+            cf_industry=cf_industry,
+            options=options,
+            investment_year=current_horizon,
+            nodes=spatial.nodes,
+        )
+
+    if options["heating"]:
+        add_heat(
+            n=n,
+            costs=costs,
+            cop_profiles_file=inputs.cop_profiles,
+            direct_heat_source_utilisation_profile_file=inputs.direct_heat_source_utilisation_profiles,
+            hourly_heat_demand_total_file=inputs.hourly_heat_demand_total,
+            ptes_e_max_pu_file=inputs.ptes_e_max_pu_profiles,
+            ates_e_nom_max=inputs.ates_potentials,
+            ates_capex_as_fraction_of_geothermal_heat_source=options[
+                "district_heating"
+            ]["ates"]["capex_as_fraction_of_geothermal_heat_source"],
+            ates_marginal_cost_charger=options["district_heating"]["ates"][
+                "marginal_cost_charger"
+            ],
+            ates_recovery_factor=options["district_heating"]["ates"]["recovery_factor"],
+            enable_ates=options["district_heating"]["ates"]["enable"],
+            ptes_direct_utilisation_profile=inputs.ptes_direct_utilisation_profiles,
+            district_heat_share_file=inputs.district_heat_share,
+            solar_thermal_total_file=inputs.solar_thermal_total,
+            retro_cost_file=inputs.retro_cost,
+            floor_area_file=inputs.floor_area,
+            heat_source_profile_files={
+                source: inputs[source]
+                for source in params.limited_heat_sources
+                if source in inputs.keys()
+            },
+            heat_dsm_profile_file=inputs.heat_dsm_profile,
+            params=params,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            heating_efficiencies=heating_efficiencies,
+            pop_layout=pop_layout,
+            spatial=spatial,
+            options=options,
+            investment_year=current_horizon,
+        )
+
+    if options["biomass"]:
+        add_biomass(
+            n=n,
+            costs=costs,
+            options=options,
+            spatial=spatial,
+            cf_industry=cf_industry,
+            pop_layout=pop_layout,
+            biomass_potentials_file=inputs.biomass_potentials,
+            biomass_transport_costs_file=inputs.biomass_transport_costs,
+            nyears=nyears,
+        )
+
+    if options["ammonia"]:
+        add_ammonia(n, costs, pop_layout, spatial, cf_industry)
+
+    if options["methanol"]:
+        add_methanol(n, costs, options=options, spatial=spatial, pop_layout=pop_layout)
+
+    if options["industry"]:
+        add_industry(
+            n=n,
+            costs=costs,
+            industrial_demand_file=inputs.industrial_demand,
+            pop_layout=pop_layout,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            options=options,
+            spatial=spatial,
+            cf_industry=cf_industry,
+            investment_year=current_horizon,
+        )
+
+    if options["shipping"]:
+        add_shipping(
+            n=n,
+            costs=costs,
+            shipping_demand_file=inputs.shipping_demand,
+            pop_layout=pop_layout,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            options=options,
+            spatial=spatial,
+            investment_year=current_horizon,
+        )
+
+    if options["aviation"]:
+        add_aviation(
+            n=n,
+            costs=costs,
+            pop_layout=pop_layout,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            options=options,
+            spatial=spatial,
+        )
+
+    if options["heating"]:
+        add_waste_heat(n, costs, options, cf_industry)
+
+    if options["agriculture"]:
+        add_agriculture(
+            n,
+            costs,
+            pop_layout,
+            pop_weighted_energy_totals,
+            current_horizon,
+            options,
+            spatial,
+        )
+
+    if options["dac"]:
+        add_dac(n, costs)
+
+    if not options["electricity_transmission_grid"]:
+        decentral(n)
+
+    if not options["H2_network"]:
+        remove_h2_network(n)
+
+    if options["co2_network"]:
+        add_co2_network(
+            n,
+            costs,
+            co2_network_cost_factor=options["co2_network_cost_factor"],
+        )
+
+    if options["allam_cycle_gas"]:
+        add_allam_gas(n, costs, pop_layout=pop_layout, spatial=spatial)
+
+    if options["electricity_distribution_grid"]:
+        insert_electricity_distribution_grid(
+            n, costs, options, pop_layout, inputs.solar_rooftop_potentials
+        )
+
+    if options["enhanced_geothermal"].get("enable", False):
+        logger.info("Adding Enhanced Geothermal Systems (EGS).")
+        add_enhanced_geothermal(
+            n,
+            costs=costs,
+            costs_config=params.costs,
+            egs_potentials=inputs.egs_potentials,
+            egs_overlap=inputs.egs_overlap,
+            egs_config=options["enhanced_geothermal"],
+            egs_capacity_factors="path/to/capacity_factors.csv",
+        )
+
+    if options["imports"]["enable"]:
+        add_import_options(n, costs, options, gas_input_nodes)
+
+    if options["gas_distribution_grid"]:
+        insert_gas_distribution_costs(n, costs, options=options)
+
+    if options["electricity_grid_connection"]:
+        add_electricity_grid_connection(n, costs)
+
+    for k, v in options["transmission_efficiency"].items():
+        if k in options["transmission_efficiency"]["enable"]:
+            lossy_bidirectional_links(n, k, v)
+
+    # Workaround: Remove lines with conflicting (and unrealistic) properties
+    # cf. https://github.com/PyPSA/pypsa-eur/issues/444
+    if params.transmission_losses:
+        idx = n.lines.query("num_parallel == 0").index
+        logger.info(
+            f"Removing {len(idx)} line(s) with properties conflicting with transmission losses functionality."
+        )
+        n.remove("Line", idx)
+
+    if options["cluster_heat_buses"]:
+        cluster_heat_buses(n)
+
+    logger.info("Completed sector components")

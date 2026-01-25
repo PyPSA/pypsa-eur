@@ -251,5 +251,3 @@ Best practices for fork maintenance
 5. **Watch for function signature changes**: When upstream modifies a function
    you import, check if the signature changed. The deprecation of main sections
    means function signatures are now the stable API.
-
-

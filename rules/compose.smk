@@ -20,12 +20,7 @@ def get_compose_inputs(w):
     sector_enabled = cfg["sector"]["enabled"]
     co2_budget_values = cfg["co2_budget"]["values"]
 
-    # Handle both single value and list for planning_horizons
-    planning_horizons = cfg["planning_horizons"]
-    if isinstance(planning_horizons, (int, str)):
-        horizons = [int(planning_horizons)]
-    else:
-        horizons = [int(h) for h in planning_horizons]
+    horizons = cfg["planning_horizons"]
 
     # Electricity-only inputs (always included)
     inputs = dict(
@@ -47,7 +42,6 @@ def get_compose_inputs(w):
         co2_price=resources("co2_price.csv"),
         load=resources("electricity_demand_simplified.nc"),
         snapshot_weightings=resources("snapshot_weightings.csv"),
-        clustered=resources("networks/clustered.nc"),
         network=resources("networks/clustered.nc"),
         costs=(
             expand(
@@ -203,9 +197,11 @@ rule compose_network:
         renewable=config_provider("renewable"),
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),
+        emission_prices=config_provider("costs", "emission_prices"),
         load=config_provider("load"),
         lines=config_provider("lines"),
         links=config_provider("links"),
+        transmission_losses=config_provider("solving", "options", "transmission_losses"),
         industry=config_provider("industry"),
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
@@ -214,14 +210,18 @@ rule compose_network:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-        baseyear=config_provider("planning_horizons"),
+        horizons=config_provider("planning_horizons"),
         renewable_carriers=config_provider("electricity", "renewable_carriers"),
+        conventional_carriers=config_provider("electricity", "conventional_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         h2_retrofit=config_provider("sector", "H2_retrofit"),
         h2_retrofit_capacity_per_ch4=config_provider(
             "sector", "H2_retrofit_capacity_per_CH4"
         ),
         capacity_threshold=config_provider("existing_capacities", "threshold_capacity"),
+        temperature_limited_stores=config_provider(
+            "sector", "district_heating", "temperature_limited_stores"
+        ),
         tes=config_provider("sector", "tes"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
@@ -230,6 +230,8 @@ rule compose_network:
             "sector", "district_heating", "direct_utilisation_heat_sources"
         ),
         co2_budget=config_provider("co2_budget"),
+        adjustments=config_provider("adjustments"),
+        solver_name=config_provider("solving", "solver", "name"),
     log:
         logs("compose_network_{horizon}.log"),
     threads: 1

@@ -32,6 +32,106 @@ logger.warning(
 
 
 # helper functions ---------------------------------------------------
+
+
+def extend_snapshot_multiindex(
+    existing_snapshots: pd.MultiIndex,
+    new_timesteps: pd.Index,
+    period: int,
+) -> pd.MultiIndex:
+    if not isinstance(existing_snapshots, pd.MultiIndex):
+        raise TypeError("existing_snapshots must be a MultiIndex")
+
+    if list(existing_snapshots.names) != ["period", "timestep"]:
+        raise ValueError(
+            f"existing_snapshots must have levels ['period', 'timestep'], "
+            f"but has {existing_snapshots.names}"
+        )
+
+    if isinstance(new_timesteps, pd.MultiIndex):
+        raise TypeError("new_timesteps must be a single-level Index, not a MultiIndex")
+
+    new_snapshots = pd.MultiIndex.from_product(
+        [[period], new_timesteps], names=["period", "timestep"]
+    )
+
+    combined = pd.MultiIndex.from_tuples(
+        list(existing_snapshots) + list(new_snapshots), names=["period", "timestep"]
+    )
+
+    return combined
+
+
+def concatenate_network_with_previous(
+    n_previous: pypsa.Network,
+    n_current: pypsa.Network,
+    current_horizon: int,
+) -> pypsa.Network:
+    logger.info(
+        f"Concatenating network for horizon {current_horizon} with previous periods"
+    )
+
+    n = n_previous.copy()
+
+    if n.investment_periods.empty:
+        raise ValueError("Previous network must have investment periods")
+    if n_current.investment_periods.empty:
+        raise ValueError("Current network must have investment periods")
+
+    combined_snapshots = list(n.snapshots) + list(n_current.snapshots)
+    extended_snapshots = pd.MultiIndex.from_tuples(combined_snapshots)
+
+    n.set_snapshots(extended_snapshots)
+    n.snapshot_weightings.loc[current_horizon] = n_current.snapshot_weightings
+    n.set_investment_periods(list(n.investment_periods))
+
+    for c_current in n_current.components.values():
+        c = n.c[c_current.name]
+        existing_comps = c.static.index
+        overlap_comps = c_current.static.index.intersection(existing_comps)
+        new_comps = c_current.static.index.difference(existing_comps)
+        new_static = c_current.static.loc[new_comps]
+        n.add(c_current.name, new_static.index, **new_static)
+
+        for attr, df in c_current.dynamic.items():
+            if df.empty:
+                continue
+
+            default = c.attrs.default[attr]
+            c.dynamic[attr].loc[current_horizon, df.columns] = df.values
+            c.dynamic[attr] = c.dynamic[attr].fillna(default)
+
+            overlap_non_equal_static_only = c_current.static.loc[
+                overlap_comps, attr
+            ].ne(c.static.loc[overlap_comps, attr]) & ~overlap_comps.isin(
+                c.dynamic[attr].columns
+            )
+            if overlap_non_equal_static_only.any():
+                if PYPSA_V1:
+                    casted = c._as_dynamic(
+                        attr, n.snapshots, overlap_non_equal_static_only
+                    )
+                else:
+                    casted = n.get_switchable_as_dense(
+                        c.name, attr, inds=overlap_non_equal_static_only
+                    )
+                casted.loc[current_horizon] = c_current.static.loc[overlap_comps]
+
+    n.meta = {**n_previous.meta, **n_current.meta}
+
+    snapshot_periods = list(n.snapshots.get_level_values("period").unique())
+    investment_periods_list = list(n.investment_periods)
+
+    assert snapshot_periods == investment_periods_list, (
+        "Investment periods do not match snapshot periods after concatenation"
+    )
+
+    logger.info(
+        f"Successfully concatenated network: {len(n.investment_periods)} investment periods"
+    )
+    return n
+
+
 def get_missing(df: pd.DataFrame, n: pypsa.Network, c: str) -> pd.DataFrame:
     """
     Get missing assets in network n compared to df for component c.
@@ -805,3 +905,44 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]) -> None:
         n.links_t["efficiency"].loc[(year, slice(None)), heat_pump_idx] = (
             correct_efficiency.values
         )
+
+
+def main(
+    n: pypsa.Network,
+    n_previous: pypsa.Network | None,
+    params,
+    current_horizon: int,
+) -> pypsa.Network:
+    is_first_horizon = current_horizon == params.horizons[0]
+    sector_mode = params.sector["enabled"]
+
+    add_build_year_to_new_assets(n, current_horizon)
+
+    if sector_mode:
+        update_heat_pump_efficiency_for_horizon(n, current_horizon)
+
+    adjust_stores_for_perfect_foresight(n)
+
+    logger.info(f"Converting horizon {current_horizon} to multi-period structure")
+    n.set_investment_periods([current_horizon])
+
+    if not is_first_horizon:
+        logger.info(
+            "Concatenating with previous composed network for perfect foresight"
+        )
+        n = concatenate_network_with_previous(
+            n_previous=n_previous,
+            n_current=n,
+            current_horizon=current_horizon,
+        )
+
+        social_discountrate = params.costs["social_discountrate"]
+        apply_investment_period_weightings(n, social_discountrate)
+        logger.info(
+            f"Investment period weightings applied for {len(n.investment_periods)} periods"
+        )
+
+    n.stores.e_initial_per_period = ~n.stores.e_cyclic
+    n.stores.e_cyclic_per_period = n.stores.e_cyclic
+
+    return n

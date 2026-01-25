@@ -13,7 +13,6 @@ from typing import TypeAlias
 import numpy as np
 import pandas as pd
 import pypsa
-from numpy import atleast_1d
 
 try:
     from numpy import trapezoid
@@ -341,7 +340,7 @@ if __name__ == "__main__":
     pypsa.options.params.statistics.drop_zero = False
 
     foresight = snakemake.config["foresight"]
-    planning_horizons = pd.Index(atleast_1d(snakemake.config["planning_horizons"]))
+    planning_horizons = pd.Index(snakemake.config["planning_horizons"])
     network_files = snakemake.input.networks
 
     logger.debug(f"Processing {foresight} mode with {len(network_files)} network(s)")
@@ -377,10 +376,10 @@ if __name__ == "__main__":
             continue
         logger.debug(f"Calculating {output}")
         result = globals()["calculate_" + output](obj)
-        if output == "costs":
-            costs_df = result
         if is_overnight and isinstance(result, pd.Series):
             result = pd.DataFrame({planning_horizons[0]: result})
+        if output == "costs":
+            costs_df = result
         result.to_csv(snakemake.output[output])
 
     if costs_df is not None and len(planning_horizons) > 1:

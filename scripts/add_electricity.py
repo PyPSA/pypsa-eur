@@ -64,6 +64,7 @@ from scripts._helpers import (
     PYPSA_V1,
     rename_techs,
     sanitize_busmap,
+    update_p_nom_max,
 )
 
 if PYPSA_V1:
@@ -72,6 +73,13 @@ if PYPSA_V1:
 idx = pd.IndexSlice
 
 logger = logging.getLogger(__name__)
+
+
+def load_costs(fn: str) -> pd.DataFrame:
+    costs = pd.read_csv(fn, index_col=[0, 1])
+    costs = costs.loc[idx[:, "value"], :].droplevel(1)
+    costs.columns = costs.columns.str.replace("-", "_")
+    return costs
 
 
 def normed(s: pd.Series) -> pd.Series:
@@ -338,14 +346,7 @@ def attach_load(
 
     # apply clustering busmap
     busmap = pd.read_csv(busmap_fn, dtype=str)
-    if "name" in busmap.columns:
-        index_col = "name"
-    elif "Bus" in busmap.columns:
-        index_col = "Bus"
-    else:
-        raise KeyError(
-            f"Busmap file must contain a 'name' or 'Bus' column, got {list(busmap.columns)}."
-        )
+    index_col = "name" if PYPSA_V1 else "Bus"
     busmap = busmap.set_index(index_col).squeeze()
     busmap = sanitize_busmap(busmap)
 
@@ -355,64 +356,6 @@ def attach_load(
     load *= scaling
 
     n.add("Load", load.columns, bus=load.columns, p_set=load, carrier="electricity")
-
-
-def remove_non_power_buses(n: pypsa.Network) -> None:
-    """Drop buses that do not belong to the AC/DC transmission system."""
-
-    if "carrier" not in n.buses.columns:
-        return
-
-    mask = n.buses.carrier.isin(["AC", "DC"])
-    if mask.all():
-        return
-
-    to_drop = n.buses.index[~mask]
-    if not len(to_drop):
-        return
-
-    logger.info(
-        "Removing %d non-power buses with carriers %s",
-        len(to_drop),
-        sorted(n.buses.loc[to_drop, "carrier"].unique()),
-    )
-    n.remove("Bus", to_drop)
-
-
-def remove_electricity_components(
-    n: pypsa.Network, carriers_to_keep: dict[str, list]
-) -> None:
-    """Remove electricity components whose carrier is not in ``carriers_to_keep``."""
-
-    if not carriers_to_keep:
-        return
-
-    removed_carriers: set[str] = set()
-
-    for component in n.iterate_components(carriers_to_keep):
-        allowed = set(carriers_to_keep.get(component.name, []))
-
-        if component.df.empty:
-            continue
-
-        drop_mask = ~component.df.carrier.isin(allowed)
-        if not drop_mask.any():
-            continue
-
-        names = component.df.index[drop_mask]
-        carriers_removed = component.df.loc[names, "carrier"].unique()
-        removed_carriers.update(carriers_removed)
-
-        logger.info(
-            "Removing %d %s items with carriers %s",
-            len(names),
-            component.list_name,
-            sorted(carriers_removed),
-        )
-        n.remove(component.name, names)
-
-    if removed_carriers:
-        n.carriers.drop(list(removed_carriers), inplace=True, errors="ignore")
 
 
 def set_transmission_costs(
@@ -582,7 +525,6 @@ def attach_conventional_generators(
     conventional_inputs: dict,
     unit_commitment: pd.DataFrame = None,
     fuel_price: pd.DataFrame = None,
-    allowed_carriers: list | set | None = None,
 ):
     """
     Attach conventional generators to the network.
@@ -607,23 +549,13 @@ def attach_conventional_generators(
         DataFrame containing unit commitment data, by default None.
     fuel_price : pd.DataFrame, optional
         DataFrame containing fuel price data, by default None.
-    allowed_carriers : list | set, optional
-        Optional set of carrier names to keep; others will be skipped.
     """
-    carriers = set(conventional_carriers) | set(extendable_carriers["Generator"])
+    carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
 
-    if allowed_carriers is not None:
-        allowed_carriers = set(allowed_carriers)
-        carriers &= allowed_carriers
-        ppl = ppl[ppl.carrier.isin(allowed_carriers)]
-    else:
-        ppl = ppl[ppl.carrier.isin(carriers)]
+    ppl = ppl.query("carrier in @carriers")
 
-    if ppl.empty or not carriers:
-        logger.info("No conventional generators to attach after filtering carriers.")
-        return
-
-    carriers = list(carriers & set(ppl.carrier.unique()))
+    # reduce carriers to those in power plant dataset
+    carriers = list(set(carriers) & set(ppl.carrier.unique()))
     add_missing_carriers(n, carriers)
     add_co2_emissions(n, costs, carriers)
 
@@ -653,22 +585,14 @@ def attach_conventional_generators(
     caps = ppl.groupby("carrier").p_nom.sum().div(1e3).round(2)
     logger.info(f"Adding {len(ppl)} generators with capacities [GW]pp \n{caps}")
 
-    active_extendable = set(extendable_carriers["Generator"])
-    if allowed_carriers is not None:
-        active_extendable &= allowed_carriers
-
-    active_conventional = set(conventional_carriers)
-    if allowed_carriers is not None:
-        active_conventional &= allowed_carriers
-
     n.add(
         "Generator",
         ppl.index,
         carrier=ppl.carrier,
         bus=ppl.bus,
-        p_nom_min=ppl.p_nom.where(ppl.carrier.isin(active_conventional), 0),
-        p_nom=ppl.p_nom.where(ppl.carrier.isin(active_conventional), 0),
-        p_nom_extendable=ppl.carrier.isin(active_extendable),
+        p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+        p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+        p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
         efficiency=ppl.efficiency,
         marginal_cost=marginal_cost,
         capital_cost=ppl.capital_cost,
@@ -975,7 +899,6 @@ def attach_storageunits(
     costs: pd.DataFrame,
     extendable_carriers: dict,
     max_hours: dict,
-    allowed_carriers: list | set | None = None,
 ):
     """
     Attach storage units to the network.
@@ -990,17 +913,8 @@ def attach_storageunits(
         Dictionary of extendable energy carriers.
     max_hours : dict
         Dictionary of maximum hours for storage units.
-    allowed_carriers : list | set, optional
-        Optional list of carrier names that are permitted to be attached.
     """
-    carriers: set | list = set(extendable_carriers["StorageUnit"])
-
-    if allowed_carriers is not None:
-        allowed_carriers = set(allowed_carriers)
-        carriers = list(carriers & allowed_carriers)
-
-    if not carriers:
-        return
+    carriers = extendable_carriers["StorageUnit"]
 
     n.add("Carrier", carriers)
 
@@ -1034,7 +948,6 @@ def attach_stores(
     n: pypsa.Network,
     costs: pd.DataFrame,
     extendable_carriers: dict,
-    allowed_carriers: list | set | None = None,
 ):
     """
     Attach stores to the network.
@@ -1047,26 +960,15 @@ def attach_stores(
         DataFrame containing the cost data.
     extendable_carriers : dict
         Dictionary of extendable energy carriers.
-    allowed_carriers : list | set, optional
-        Optional list of carrier names that are permitted to be attached.
     """
-    carriers = list(extendable_carriers["Store"])
-
-    if allowed_carriers is not None:
-        allowed_carriers = set(allowed_carriers)
-        carriers = [carrier for carrier in carriers if carrier in allowed_carriers]
-
-    if not carriers:
-        return
+    carriers = extendable_carriers["Store"]
 
     n.add("Carrier", carriers)
 
     buses_i = n.buses.index
 
     if "H2" in carriers:
-        h2_buses_i = n.add(
-            "Bus", buses_i + " H2", carrier="H2", location=buses_i, return_names=True
-        )
+        h2_buses_i = n.add("Bus", buses_i + " H2", carrier="H2", location=buses_i)
 
         n.add(
             "Store",
@@ -1106,11 +1008,7 @@ def attach_stores(
 
     if "battery" in carriers:
         b_buses_i = n.add(
-            "Bus",
-            buses_i + " battery",
-            carrier="battery",
-            location=buses_i,
-            return_names=True,
+            "Bus", buses_i + " battery", carrier="battery", location=buses_i
         )
 
         n.add(
@@ -1149,3 +1047,123 @@ def attach_stores(
             p_nom_extendable=True,
             marginal_cost=costs.at["battery inverter", "marginal_cost"],
         )
+
+
+def main(
+    n: pypsa.Network,
+    inputs,
+    params,
+    costs: pd.DataFrame,
+) -> None:
+    logger.info("Adding electricity components")
+    foresight = params.foresight
+
+    landfall_lengths = {
+        tech: settings["landfall_length"]
+        for tech, settings in params.renewable.items()
+        if "landfall_length" in settings.keys()
+    }
+
+    ppl = load_and_aggregate_powerplants(
+        inputs["powerplants"],
+        costs,
+        consider_efficiency_classes=params.clustering["consider_efficiency_classes"],
+        aggregation_strategies=params.clustering["aggregation_strategies"],
+        exclude_carriers=params.clustering["exclude_carriers"],
+    )
+
+    attach_load(
+        n,
+        inputs["load"],
+        inputs["busmap"],
+        params.load["scaling_factor"],
+    )
+
+    set_transmission_costs(
+        n,
+        costs,
+        params.lines["length_factor"],
+        params.links["length_factor"],
+    )
+
+    renewable_carriers = set(params.electricity["renewable_carriers"])
+    extendable_carriers = params.electricity["extendable_carriers"]
+    conventional_carriers = params.electricity["conventional_carriers"]
+    conventional_inputs = {
+        k: v for k, v in inputs.items() if k.startswith("conventional_")
+    }
+
+    if params.conventional["unit_commitment"]:
+        unit_commitment = pd.read_csv(inputs.unit_commitment, index_col=0)
+    else:
+        unit_commitment = None
+
+    if params.conventional["dynamic_fuel_price"]:
+        fuel_price = pd.read_csv(
+            inputs.fuel_price, index_col=0, header=0, parse_dates=True
+        )
+        fuel_price = fuel_price.reindex(n.snapshots).ffill()
+    else:
+        fuel_price = None
+
+    attach_conventional_generators(
+        n,
+        costs,
+        ppl,
+        conventional_carriers,
+        extendable_carriers,
+        params.conventional,
+        conventional_inputs,
+        unit_commitment=unit_commitment,
+        fuel_price=fuel_price,
+    )
+
+    attach_wind_and_solar(
+        n,
+        costs,
+        inputs,
+        renewable_carriers,
+        extendable_carriers,
+        params.lines["length_factor"],
+        landfall_lengths,
+    )
+
+    if "hydro" in renewable_carriers:
+        p = params.renewable["hydro"].copy()
+        carriers = p.pop("carriers", [])
+        attach_hydro(
+            n,
+            costs,
+            ppl,
+            inputs.profile_hydro,
+            inputs.hydro_capacities,
+            carriers,
+            **p,
+        )
+
+    estimate_renewable_caps = params.electricity["estimate_renewable_capacities"]
+    if estimate_renewable_caps["enable"]:
+        if foresight != "overnight":
+            logger.info(
+                "Skipping renewable capacity estimation because they are added later "
+                "in add_existing_baseyear with foresight mode 'myopic'."
+            )
+        else:
+            tech_map = estimate_renewable_caps["technology_mapping"]
+            expansion_limit = estimate_renewable_caps["expansion_limit"]
+            year = estimate_renewable_caps["year"]
+
+            if estimate_renewable_caps["from_gem"]:
+                attach_GEM_renewables(n, tech_map, inputs)
+
+            estimate_renewable_capacities(
+                n, year, tech_map, expansion_limit, params.countries
+            )
+
+    update_p_nom_max(n)
+
+    max_hours = params.electricity["max_hours"]
+    attach_storageunits(n, costs, extendable_carriers, max_hours)
+    attach_stores(n, costs, extendable_carriers)
+
+    logger.info("Completed electricity components")
