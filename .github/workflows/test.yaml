@@ -69,6 +69,8 @@ jobs:
             - 'pixi.toml'
             - 'pixi.lock'
             - '.github/workflows/test.yaml'
+          versions:
+            - 'data/versions.csv'
 
     - name: Free up disk space
       run: |
@@ -99,12 +101,16 @@ jobs:
         echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
 
     - uses: actions/cache@v5
+      if: (steps.filter.outputs.src == 'true' || github.event_name == 'schedule') && steps.filter.outputs.versions != 'true'
+      with:
+        path: data
+        key: data-${{ env.WEEK }}
+
+    - uses: actions/cache@v5
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       with:
-        path: |
-          data
-          cutouts
-        key: data-cutouts-${{ env.WEEK }}
+        path: cutouts
+        key: cutouts-${{ env.WEEK }}
 
     - name: Restore git-tracked files in data/
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
