@@ -41,9 +41,9 @@ Inputs
 
 - ``resources/natura.tiff``: confer :ref:`natura`
 - ``resources/offshore_shapes.geojson``: confer :ref:`shapes`
-- ``resources/{run}/regions_onshore.geojson``: (if not offshore
+- ``resources/{run}/onshore_regions.geojson``: (if not offshore
   wind), confer :ref:`busregions`
-- ``resources/{run}/regions_offshore.geojson``: (if offshore wind),
+- ``resources/{run}/offshore_regions.geojson``: (if offshore wind),
   :ref:`busregions`
 - ``"cutouts/" + params["renewable"][{technology}]['cutout']``: :ref:`cutout`
 - ``resources/{run}/base_network.nc``: :ref:`base`

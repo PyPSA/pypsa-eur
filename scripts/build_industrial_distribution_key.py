@@ -384,7 +384,7 @@ if __name__ == "__main__":
 
     countries = snakemake.params.countries
 
-    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
+    regions = gpd.read_file(snakemake.input.onshore_regions).set_index("name")
 
     hotmaps = prepare_hotmaps_database(regions)
 

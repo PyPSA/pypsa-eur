@@ -18,12 +18,6 @@ is provided in the
 
 The optimization is based on the :func:`network.optimize` function.
 Additionally, some extra constraints specified in :mod:`solve_network` are added.
-
-.. note::
-
-    The rule :mod:`solve_network` handles both electricity-only and sector-coupled
-    network optimization. The deprecated rules ``solve_elec_networks`` and
-    ``solve_sector_networks`` have been replaced by this unified rule.
 """
 
 import importlib
@@ -51,7 +45,6 @@ from scripts._helpers import (
     configure_logging,
     get,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 
 logger = logging.getLogger(__name__)
@@ -1391,7 +1384,6 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     solve_opts = snakemake.params.solving["options"]
     cf_solving = snakemake.params.solving["options"]

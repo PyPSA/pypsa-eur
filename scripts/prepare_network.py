@@ -15,18 +15,6 @@ temporal adjustments.
 - reducing the **temporal** resolution by averaging over multiple hours
   or segmenting time series into chunks of varying lengths using ``tsam``.
 
-Description
------------
-
-.. note::
-
-    This script's functionality has been integrated into :mod:`compose_network`
-    in the streamlined workflow. This script is maintained for backwards compatibility.
-
-.. tip::
-    The deprecated rule :mod:`prepare_elec_networks` has been replaced by the
-    unified :mod:`compose_network` script which handles network preparation for
-    all scenarios.
 """
 
 import logging

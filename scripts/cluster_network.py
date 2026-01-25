@@ -10,10 +10,10 @@ buses and transmission corridors.
 Outputs
 -------
 
-- ``resources/{run}/networks/regions_onshore.geojson``:
+- ``resources/{run}/networks/onshore_regions.geojson``:
   Onshore regions for clustered network
 
-- ``resources/{run}/networks/regions_offshore.geojson``:
+- ``resources/{run}/networks/offshore_regions.geojson``:
   Offshore regions for clustered network
 
 - ``resources/{run}/networks/busmap.csv``: Mapping of buses from ``networks/simplified.nc`` to ``networks/clustered.nc``;
@@ -710,7 +710,7 @@ if __name__ == "__main__":
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
     # nc.shapes = n.shapes.copy()
-    for which in ["regions_onshore", "regions_offshore"]:
+    for which in ["onshore_regions", "offshore_regions"]:
         regions = gpd.read_file(snakemake.input[which])
         clustered_regions = cluster_regions(busmaps_for_regions, regions)
         clustered_regions.to_file(snakemake.output[which])

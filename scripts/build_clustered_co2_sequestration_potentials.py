@@ -55,9 +55,9 @@ if __name__ == "__main__":
 
     gdf = gpd.read_file(snakemake.input.sequestration_potential)
 
-    regions = gpd.read_file(snakemake.input.regions_offshore)
+    regions = gpd.read_file(snakemake.input.offshore_regions)
     if cf["include_onshore"]:
-        onregions = gpd.read_file(snakemake.input.regions_onshore)
+        onregions = gpd.read_file(snakemake.input.onshore_regions)
         regions = pd.concat([regions, onregions]).dissolve(by="name").reset_index()
 
     s = allocate_sequestration_potential(

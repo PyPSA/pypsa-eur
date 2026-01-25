@@ -3,23 +3,6 @@
 # SPDX-License-Identifier: MIT
 """
 Perfect foresight utility functions for multi-period optimization.
-
-This module provides functions for perfect foresight optimization in the
-streamlined workflow. Functions are used by compose_network.py for incremental
-network composition across planning horizons.
-
-The main script portion (concat_networks, if __name__ == "__main__") is DEPRECATED
-and not used in the streamlined workflow, as networks are now composed incrementally
-rather than batch-concatenated.
-
-Functions currently used in streamlined workflow:
-- get_investment_weighting(): Calculate social discount weightings
-- adjust_stores_for_perfect_foresight(): Configure store cycling behavior
-
-Functions not yet integrated (TODO):
-- set_all_phase_outs(): National energy policy phase-out constraints
-- update_heat_pump_efficiency(): Heat pump COP updates across all periods
-- apply_time_segmentation_perfect(): Time segmentation for multi-period networks
 """
 
 import logging

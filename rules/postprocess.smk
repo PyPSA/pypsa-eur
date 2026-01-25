@@ -12,7 +12,7 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
         input:
             network=resources("networks/base.nc"),
-            regions_onshore=resources("regions_onshore_base.geojson"),
+            onshore_regions=resources("onshore_regions_base.geojson"),
         output:
             map=resources("maps/base_network.pdf"),
         threads: 1
@@ -28,7 +28,7 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
         input:
             network=resources("networks/clustered.nc"),
-            regions=resources("regions_onshore.geojson"),
+            regions=resources("onshore_regions.geojson"),
         output:
             map=resources("maps/clustered_network.pdf"),
         threads: 1
@@ -45,7 +45,7 @@ if config["foresight"] != "perfect":
             transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
-            regions=resources("regions_onshore.geojson"),
+            regions=resources("onshore_regions.geojson"),
         output:
             map=RESULTS + "maps/static/power_network_{horizon}.pdf",
         threads: 2
@@ -64,7 +64,7 @@ if config["foresight"] != "perfect":
             foresight=config_provider("foresight"),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
-            regions=resources("regions_onshore.geojson"),
+            regions=resources("onshore_regions.geojson"),
         output:
             map=RESULTS + "maps/static/h2_network_{horizon}.pdf",
         threads: 2
@@ -82,7 +82,7 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
-            regions=resources("regions_onshore.geojson"),
+            regions=resources("onshore_regions.geojson"),
         output:
             map=RESULTS + "maps/static/ch4_network_{horizon}.pdf",
         threads: 2
@@ -101,9 +101,9 @@ if config["foresight"] != "perfect":
             settings=lambda w: config_provider("plotting", "balance_map", w.carrier),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
-            regions=resources("regions_onshore.geojson"),
+            regions=resources("onshore_regions.geojson"),
         output:
-            RESULTS + "maps/static/{carrier}_balance_map_{horizon}.pdf",
+            RESULTS + "maps/static/balance_map_{carrier}_{horizon}.pdf",
         threads: 1
         resources:
             mem_mb=8000,
@@ -121,9 +121,9 @@ if config["foresight"] != "perfect":
             ),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
-            regions=resources("regions_onshore.geojson"),
+            regions=resources("onshore_regions.geojson"),
         output:
-            RESULTS + "maps/interactive/{carrier}_balance_map_{horizon}.html",
+            RESULTS + "maps/interactive/balance_map_{carrier}_{horizon}.html",
         threads: 1
         resources:
             mem_mb=8000,
@@ -139,7 +139,7 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
             heat_sources=config_provider("sector", "heat_pump_sources"),
         input:
-            regions=resources("regions_onshore.geojson"),
+            regions=resources("onshore_regions.geojson"),
             heat_source_temperature=lambda w: (
                 resources("temp_" + w.carrier + "_temporal_aggregate.nc")
                 if w.carrier in ["river_water", "sea_water", "ambient_air"]
@@ -152,16 +152,16 @@ if config["foresight"] != "perfect":
             ),
         output:
             temp_map=RESULTS
-            + "maps/static/{horizon}_heat_source_temperature_map_{carrier}.html",
+            + "maps/static/heat_source_temperature_map_{carrier}_{horizon}.html",
             energy_map=RESULTS
-            + "maps/static/{horizon}_heat_source_energy_map_{carrier}.html",
+            + "maps/static/heat_source_energy_map_{carrier}_{horizon}.html",
         threads: 1
         resources:
             mem_mb=150000,
         log:
-            RESULTS + "logs/plot_heat_source_map/{horizon}_{carrier}.log",
+            RESULTS + "logs/plot_heat_source_map/{carrier}_{horizon}.log",
         benchmark:
-            (RESULTS + "benchmarks/plot_heat_source_map/{horizon}_{carrier}")
+            (RESULTS + "benchmarks/plot_heat_source_map/{carrier}_{horizon}")
         script:
             "../scripts/plot_heat_source_map.py"
 
@@ -179,7 +179,7 @@ if config["foresight"] == "perfect":
             plotting=config_provider("plotting"),
         input:
             network=RESULTS + "networks_brownfield_all_years.nc",
-            regions=resources("regions_onshore.geojson"),
+            regions=resources("onshore_regions.geojson"),
         output:
             unpack(output_map_year),
         threads: 2
@@ -340,7 +340,7 @@ rule plot_base_statistics:
 rule build_ambient_air_temperature_yearly_average:
     input:
         cutout=lambda w: input_cutout(w),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
     output:
         average_ambient_air_temperature=resources(
             "temp_ambient_air_temporal_aggregate.nc"

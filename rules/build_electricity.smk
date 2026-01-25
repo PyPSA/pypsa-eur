@@ -87,8 +87,8 @@ rule base_network:
         europe_shape=resources("europe_shape.geojson"),
     output:
         base_network=resources("networks/base.nc"),
-        regions_onshore=resources("regions_onshore_base.geojson"),
-        regions_offshore=resources("regions_offshore_base.geojson"),
+        onshore_regions=resources("onshore_regions_base.geojson"),
+        offshore_regions=resources("offshore_regions_base.geojson"),
         admin_shapes=resources("admin_shapes.geojson"),
     log:
         logs("base_network.log"),
@@ -229,9 +229,9 @@ rule determine_availability_matrix_MD_UA:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
-            resources("regions_onshore.geojson")
+            resources("onshore_regions.geojson")
             if w.technology in ("onwind", "solar", "solar-hsat")
-            else resources("regions_offshore.geojson")
+            else resources("offshore_regions.geojson")
         ),
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", w.technology, "cutout")(w)
@@ -291,9 +291,9 @@ rule determine_availability_matrix:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
-            resources("regions_onshore.geojson")
+            resources("onshore_regions.geojson")
             if w.technology in ("onwind", "solar", "solar-hsat")
-            else resources("regions_offshore.geojson")
+            else resources("offshore_regions.geojson")
         ),
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", w.technology, "cutout")(w)
@@ -319,11 +319,11 @@ rule build_renewable_profiles:
     input:
         availability_matrix=resources("availability_matrix_{technology}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
-        distance_regions=resources("regions_onshore.geojson"),
+        distance_regions=resources("onshore_regions.geojson"),
         resource_regions=lambda w: (
-            resources("regions_onshore.geojson")
+            resources("onshore_regions.geojson")
             if w.technology in ("onwind", "solar", "solar-hsat")
-            else resources("regions_offshore.geojson")
+            else resources("offshore_regions.geojson")
         ),
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", w.technology, "cutout")(w)
@@ -514,7 +514,7 @@ rule build_electricity_demand_base:
         distribution_key=config_provider("load", "distribution_key"),
     input:
         base_network=resources("networks/simplified.nc"),
-        regions=resources("regions_onshore_simplified.geojson"),
+        regions=resources("onshore_regions_simplified.geojson"),
         nuts3=resources("nuts3_shapes.geojson"),
         load=resources("electricity_demand.csv"),
     output:
@@ -536,7 +536,7 @@ rule build_hac_features:
         features=config_provider("clustering", "cluster_network", "hac_features"),
     input:
         cutout=lambda w: input_cutout(w),
-        regions=resources("regions_onshore_simplified.geojson"),
+        regions=resources("onshore_regions_simplified.geojson"),
     output:
         resources("hac_features.nc"),
     log:
@@ -585,13 +585,13 @@ rule simplify_network:
         p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
     input:
         network=resources("networks/base_extended.nc"),
-        regions_onshore=resources("regions_onshore_base.geojson"),
-        regions_offshore=resources("regions_offshore_base.geojson"),
+        onshore_regions=resources("onshore_regions_base.geojson"),
+        offshore_regions=resources("offshore_regions_base.geojson"),
         admin_shapes=resources("admin_shapes.geojson"),
     output:
         network=resources("networks/simplified.nc"),
-        regions_onshore=resources("regions_onshore_simplified.geojson"),
-        regions_offshore=resources("regions_offshore_simplified.geojson"),
+        onshore_regions=resources("onshore_regions_simplified.geojson"),
+        offshore_regions=resources("offshore_regions_simplified.geojson"),
         busmap=resources("busmap_simplify_network.csv"),
     log:
         logs("simplify_network.log"),
@@ -666,8 +666,8 @@ rule cluster_network:
             if config_provider("clustering", "mode")(w) == "administrative"
             else []
         ),
-        regions_onshore=resources("regions_onshore_simplified.geojson"),
-        regions_offshore=resources("regions_offshore_simplified.geojson"),
+        onshore_regions=resources("onshore_regions_simplified.geojson"),
+        offshore_regions=resources("offshore_regions_simplified.geojson"),
         hac_features=lambda w: (
             resources("hac_features.nc")
             if config_provider("clustering", "cluster_network", "algorithm")(w)
@@ -678,8 +678,8 @@ rule cluster_network:
     output:
         # TODO: change busmap mapping from base to clustered (currently only from simplified to clustered)
         network=resources("networks/clustered.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
+        offshore_regions=resources("offshore_regions.geojson"),
         busmap_cluster_network=resources("busmap_cluster_network.csv"),
         busmap=resources("busmap.csv"),  # base -> clustered
         linemap=resources("linemap.csv"),  # base -> clustered

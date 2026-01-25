@@ -29,14 +29,14 @@ Relevant Settings
 
 Inputs
 ------
-- `resources/{run}/regions_onshore.geojson`: Regional boundaries
+- `resources/{run}/onshore_regions.geojson`: Regional boundaries
 - `resources/{run}/temp_{carrier}_temporal_aggregate.nc`: Temperature data
 - `resources/{run}/heat_source_energy_{carrier}_temporal_aggregate.nc`: Energy data (optional)
 
 Outputs
 -------
-- `results/{run}/plots/heat_source_map_{carrier}_temperature.html`: Interactive temperature map
-- `results/{run}/plots/heat_source_map_{carrier}_energy.html`: Interactive energy potential map
+- `results/{run}/maps/static/heat_source_temperature_map_{carrier}_{horizon}.html`: Interactive temperature map
+- `results/{run}/maps/static/heat_source_energy_map_{carrier}_{horizon}.html`: Interactive energy potential map
 
 Notes
 -----
@@ -53,7 +53,6 @@ import xarray as xr
 from _helpers import (
     configure_logging,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 
 logger = logging.getLogger(__name__)
@@ -61,7 +60,7 @@ logger = logging.getLogger(__name__)
 
 def plot_heat_source_map(
     da: xr.DataArray,
-    regions_onshore: gpd.GeoDataFrame,
+    onshore_regions: gpd.GeoDataFrame,
     var_name: str,
     longitude_name: str = "longitude",
     latitude_name: str = "latitude",
@@ -82,7 +81,7 @@ def plot_heat_source_map(
     ----------
     da : xr.DataArray
         DataArray containing heat source data with spatial coordinates.
-    regions_onshore : gpd.GeoDataFrame
+    onshore_regions : gpd.GeoDataFrame
         GeoDataFrame with onshore region geometries for boundary overlay.
     var_name : str
         Name of the variable to plot from the DataArray.
@@ -91,7 +90,7 @@ def plot_heat_source_map(
     latitude_name : str, default 'latitude'
         Name of the latitude coordinate in the DataArray.
     onshore_region_name : str, default 'name'
-        Column name in regions_onshore containing region identifiers.
+        Column name in onshore_regions containing region identifiers.
     title : str, optional
         Title for the map legend. If None, uses var_name.
     cmap : str, default 'viridis'
@@ -111,11 +110,11 @@ def plot_heat_source_map(
         If required columns/coordinates are missing or invalid aggregate_type.
     """
     # Reset index if needed and check for required column
-    if hasattr(regions_onshore, "index"):
-        regions_onshore = regions_onshore.reset_index()
+    if hasattr(onshore_regions, "index"):
+        onshore_regions = onshore_regions.reset_index()
 
-    if onshore_region_name not in regions_onshore.columns:
-        raise ValueError(f"Column '{onshore_region_name}' not found in regions_onshore")
+    if onshore_region_name not in onshore_regions.columns:
+        raise ValueError(f"Column '{onshore_region_name}' not found in onshore_regions")
 
     # Convert DataArray to DataFrame
     df = da.to_dataframe().reset_index()
@@ -153,7 +152,7 @@ def plot_heat_source_map(
         )
 
     # Merge region totals back to regions
-    regions_with_totals = regions_onshore.merge(
+    regions_with_totals = onshore_regions.merge(
         region_totals, on=onshore_region_name, how="left"
     )
 
@@ -206,11 +205,10 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # Load onshore regions shapefile
-    regions_onshore = gpd.read_file(snakemake.input.regions)
-    region_onshore = regions_onshore.to_crs("EPSG:4326")
+    onshore_regions = gpd.read_file(snakemake.input.regions)
+    onshore_regions = onshore_regions.to_crs("EPSG:4326")
 
     # Get colormaps from config
     temperature_cmap = snakemake.params.plotting.get("heat_source_map", {}).get(
@@ -242,7 +240,7 @@ if __name__ == "__main__":
         # Create and save the temperature map
         temp_map = plot_heat_source_map(
             da=plot_data,
-            regions_onshore=regions_onshore,
+            onshore_regions=onshore_regions,
             var_name=temp_var,
             title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Temperature (°C)",
             cmap=temperature_cmap,
@@ -269,7 +267,7 @@ if __name__ == "__main__":
             # Create and save the energy map
             energy_map = plot_heat_source_map(
                 da=energy_data["total_energy"] / 1e6,  # Convert to TWh
-                regions_onshore=regions_onshore,
+                onshore_regions=onshore_regions,
                 var_name="total_energy",
                 title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Energy Potential (TWh)",
                 cmap=energy_cmap,

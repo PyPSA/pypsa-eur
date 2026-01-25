@@ -73,8 +73,8 @@ if __name__ == "__main__":
     ambient_temperature = xr.open_mfdataset(snakemake.input.cutout).temperature - 273.15
 
     # Load onshore regions
-    regions_onshore = gpd.read_file(snakemake.input.regions_onshore)
-    regions_onshore.set_index("name", inplace=True)
+    onshore_regions = gpd.read_file(snakemake.input.onshore_regions)
+    onshore_regions.set_index("name", inplace=True)
 
     # Calculate yearly average temperature for each grid cell
     # and rename the coordinates to match the expected format
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     # Get data in unary region
     average_temperature_in_all_onshore_regions = get_data_in_geometry(
-        average_temperature_in_cutout, regions_onshore.geometry.union_all()
+        average_temperature_in_cutout, onshore_regions.geometry.union_all()
     )
 
     # add onshore_region as additional coordinate
@@ -92,11 +92,11 @@ if __name__ == "__main__":
         [
             get_data_in_geometry(
                 data=average_temperature_in_all_onshore_regions,
-                geometry=regions_onshore.loc[region_name].geometry,
+                geometry=onshore_regions.loc[region_name].geometry,
             )
-            for region_name in regions_onshore.index
+            for region_name in onshore_regions.index
         ],
-        dim=regions_onshore.index,
+        dim=onshore_regions.index,
     )
 
     # Save the result

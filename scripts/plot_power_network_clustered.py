@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
-    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
+    regions = gpd.read_file(snakemake.input.regions).set_index("name")
 
     proj = load_projection(snakemake.params.plotting)
 

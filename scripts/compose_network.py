@@ -20,11 +20,11 @@ from scripts._helpers import (
     configure_logging,
     sanitize_custom_columns,
     set_scenario_config,
-    update_config_from_wildcards,
     update_p_nom_max,
 )
 from scripts.add_brownfield import (
     add_brownfield,
+    adjust_renewable_capacity_limits,
     adjust_renewable_profiles,
     disable_grid_expansion_if_limit_hit,
     update_dynamic_ptes_capacity,
@@ -41,8 +41,8 @@ from scripts.add_electricity import (
     estimate_renewable_capacities,
     load_and_aggregate_powerplants,
     load_costs,
+    remove_electricity_components,
     remove_non_power_buses,
-    restrict_electricity_components,
     sanitize_carriers,
     sanitize_locations,
     set_transmission_costs,
@@ -276,58 +276,6 @@ def concatenate_network_with_previous(
         f"Successfully concatenated network: {len(n.investment_periods)} investment periods"
     )
     return n
-
-
-def adjust_renewable_capacity_limits(
-    n: pypsa.Network, horizon: str, renewable_carriers: list[str]
-) -> None:
-    """
-    Adjust renewable capacity limits by subtracting existing capacities from previous horizons.
-
-    For each renewable carrier, this function sums the capacity of non-extendable
-    generators (representing existing capacities from previous planning horizons)
-    and subtracts that value from the p_nom_max of extendable generators in the
-    current horizon. This ensures that the technical potential is properly adjusted
-    for brownfield scenarios.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Network containing renewable generators
-    horizon : str
-        The current planning horizon year as string
-    renewable_carriers : list[str]
-        List of renewable carrier names from config
-
-    Notes
-    -----
-    Modifies n.generators["p_nom_max"] in-place.
-    Issues a warning if existing capacities exceed technical potential.
-    Clips p_nom_max to non-negative values.
-    """
-    for carrier in renewable_carriers:
-        ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
-        grouper = n.generators.loc[ext_i].index.str.replace(
-            f" {carrier}.*$", "", regex=True
-        )
-        existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
-        existing.index += f" {carrier}-{horizon}"
-        n.generators.loc[existing.index, "p_nom_max"] -= existing
-
-    # Check if existing capacities are larger than technical potential
-    existing_large = n.generators[
-        n.generators["p_nom_min"] > n.generators["p_nom_max"]
-    ].index
-    if len(existing_large):
-        logger.warning(
-            f"Existing capacities larger than technical potential for {existing_large}, "
-            "adjust technical potential to existing capacities"
-        )
-        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
-            existing_large, "p_nom_min"
-        ]
-
-    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
 
 def add_electricity_components(
@@ -1159,7 +1107,6 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # Extract configuration and parameters
     config = snakemake.config
@@ -1211,7 +1158,7 @@ if __name__ == "__main__":
             n = pypsa.Network(snakemake.input.clustered)
 
     if sector_mode:
-        restrict_electricity_components(n, carriers_to_keep)
+        remove_electricity_components(n, carriers_to_keep)
         remove_non_power_buses(n)
 
     # Calculate year weighting

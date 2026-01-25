@@ -329,3 +329,55 @@ def update_dynamic_ptes_capacity(
     n_p.stores_t.e_max_pu[dynamic_ptes_idx_previous_iteration] = n.stores_t.e_max_pu[
         corresponding_idx_this_iteration
     ].values
+
+
+def adjust_renewable_capacity_limits(
+    n: pypsa.Network, horizon: str, renewable_carriers: list[str]
+) -> None:
+    """
+    Adjust renewable capacity limits by subtracting existing capacities from previous horizons.
+
+    For each renewable carrier, this function sums the capacity of non-extendable
+    generators (representing existing capacities from previous planning horizons)
+    and subtracts that value from the p_nom_max of extendable generators in the
+    current horizon. This ensures that the technical potential is properly adjusted
+    for brownfield scenarios.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network containing renewable generators
+    horizon : str
+        The current planning horizon year as string
+    renewable_carriers : list[str]
+        List of renewable carrier names from config
+
+    Notes
+    -----
+    Modifies n.generators["p_nom_max"] in-place.
+    Issues a warning if existing capacities exceed technical potential.
+    Clips p_nom_max to non-negative values.
+    """
+    for carrier in renewable_carriers:
+        ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
+        grouper = n.generators.loc[ext_i].index.str.replace(
+            f" {carrier}.*$", "", regex=True
+        )
+        existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
+        existing.index += f" {carrier}-{horizon}"
+        n.generators.loc[existing.index, "p_nom_max"] -= existing
+
+    # Check if existing capacities are larger than technical potential
+    existing_large = n.generators[
+        n.generators["p_nom_min"] > n.generators["p_nom_max"]
+    ].index
+    if len(existing_large):
+        logger.warning(
+            f"Existing capacities larger than technical potential for {existing_large}, "
+            "adjust technical potential to existing capacities"
+        )
+        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
+            existing_large, "p_nom_min"
+        ]
+
+    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)

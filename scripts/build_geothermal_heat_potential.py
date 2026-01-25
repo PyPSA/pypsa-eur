@@ -19,7 +19,7 @@ Relevant Settings
 
 Inputs
 ------
-- `resources/{run}/regions_onshore.geojson`
+- `resources/{run}/onshore_regions.geojson`
 - `resources/{run}/lau_regions.geojson`
 - `resources/{run}/isi_heat_potentials.xlsx`
 
@@ -92,14 +92,14 @@ def get_unit_conversion_factor(
 
 
 def identify_non_covered_regions(
-    regions_onshore: gpd.GeoDataFrame, heat_source_power: pd.DataFrame
+    onshore_regions: gpd.GeoDataFrame, heat_source_power: pd.DataFrame
 ) -> pd.Index:
     """
     Identify regions without heat source power data.
 
     Parameters
     ----------
-    regions_onshore : gpd.GeoDataFrame
+    onshore_regions : gpd.GeoDataFrame
         GeoDataFrame of the onshore regions, indexed by region name.
     heat_source_power : pd.DataFrame
         Heat source power data, indexed by region name.
@@ -109,11 +109,11 @@ def identify_non_covered_regions(
     pd.Index
         Index of regions that have no heat source power data.
     """
-    return regions_onshore.index.difference(heat_source_power.index)
+    return onshore_regions.index.difference(heat_source_power.index)
 
 
 def get_heat_source_power(
-    regions_onshore: gpd.GeoDataFrame,
+    onshore_regions: gpd.GeoDataFrame,
     supply_potentials: gpd.GeoDataFrame,
     full_load_hours: float,
     input_unit: str,
@@ -129,7 +129,7 @@ def get_heat_source_power(
 
     Parameters
     ----------
-    regions_onshore : gpd.GeoDataFrame
+    onshore_regions : gpd.GeoDataFrame
         GeoDataFrame of the onshore regions.
     supply_potentials : gpd.GeoDataFrame
         GeoDataFrame of the heat source supply potentials.
@@ -158,7 +158,7 @@ def get_heat_source_power(
     )
 
     heat_potentials_in_onshore_regions = gpd.sjoin(
-        heat_potentials_in_lau, regions_onshore, how="inner", predicate="intersects"
+        heat_potentials_in_lau, onshore_regions, how="inner", predicate="intersects"
     )
     heat_potentials_in_onshore_regions_aggregated = (
         heat_potentials_in_onshore_regions.groupby("name").sum(numeric_only=True)
@@ -167,7 +167,7 @@ def get_heat_source_power(
     heat_source_power = heat_potentials_in_onshore_regions_aggregated * scaling_factor
 
     non_covered_regions = identify_non_covered_regions(
-        regions_onshore, heat_source_power
+        onshore_regions, heat_source_power
     )
 
     not_eu_27 = [
@@ -189,7 +189,7 @@ def get_heat_source_power(
                     f"The onshore regions outside EU 27 ({non_covered_regions.to_list()}) have no heat source power. Filling with zeros."
                 )
                 heat_source_power = heat_source_power.reindex(
-                    regions_onshore.index, fill_value=0
+                    onshore_regions.index, fill_value=0
                 )
             else:
                 raise ValueError(
@@ -216,9 +216,9 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     # get onshore regions and index them by region name
-    regions_onshore = gpd.read_file(snakemake.input.regions_onshore).to_crs("EPSG:4326")
-    regions_onshore.index = regions_onshore.name
-    regions_onshore.drop(columns=["name"], inplace=True)
+    onshore_regions = gpd.read_file(snakemake.input.onshore_regions).to_crs("EPSG:4326")
+    onshore_regions.index = onshore_regions.name
+    onshore_regions.drop(columns=["name"], inplace=True)
 
     # get LAU regions and index them by LAU-ID
     lau_regions = gpd.read_file(
@@ -260,7 +260,7 @@ if __name__ == "__main__":
 
     # get heat source power by mapping heat potentials to onshore regions and scaling to from supply potentials to technical potentials
     heat_source_power = get_heat_source_power(
-        regions_onshore=regions_onshore,
+        onshore_regions=onshore_regions,
         supply_potentials=geothermal_supply_potentials,
         full_load_hours=FULL_LOAD_HOURS,
         input_unit=input_unit,

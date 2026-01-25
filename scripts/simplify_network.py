@@ -11,14 +11,14 @@ link.
 Outputs
 -------
 
-- ``resources/regions_onshore_base.geojson``:
+- ``resources/onshore_regions_base.geojson``:
 
-    .. image:: img/regions_onshore_base_s.png
+    .. image:: img/onshore_regions_base_s.png
             :scale: 33 %
 
-- ``resources/regions_offshore_base.geojson``:
+- ``resources/offshore_regions_base.geojson``:
 
-    .. image:: img/regions_offshore_base_s  .png
+    .. image:: img/offshore_regions_base_s  .png
             :scale: 33 %
 
 - ``resources/busmap_simplified.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/simplified.nc``;
@@ -494,7 +494,7 @@ if __name__ == "__main__":
     busmap_s = sanitize_busmap(busmap_s)
     busmap_s.to_csv(snakemake.output.busmap)
 
-    for which in ["regions_onshore", "regions_offshore"]:
+    for which in ["onshore_regions", "offshore_regions"]:
         regions = gpd.read_file(snakemake.input[which])
         clustered_regions = cluster_regions(busmaps, regions, with_country=True)
         clustered_regions.to_file(snakemake.output[which])

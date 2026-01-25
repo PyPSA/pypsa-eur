@@ -31,7 +31,7 @@ Inputs
 ------
 - `data/hera_{year}/river_discharge_{year}.nc`: River discharge data from HERA
 - `data/hera_{year}/ambient_temp_{year}.nc`: Ambient temperature data from HERA
-- `resources/{run}/regions_onshore.geojson`: Onshore regions
+- `resources/{run}/onshore_regions.geojson`: Onshore regions
 - `resources/{run}/dh_areas.geojson`: District heating areas
 
 Outputs
@@ -54,7 +54,6 @@ from _helpers import (
     configure_logging,
     get_snapshots,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 from approximators.river_water_heat_approximator import RiverWaterHeatApproximator
 
@@ -369,7 +368,6 @@ if __name__ == "__main__":
     # Configure logging and scenario
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # Get simulation snapshots
     snapshots: pd.DatetimeIndex = get_snapshots(
@@ -377,9 +375,9 @@ if __name__ == "__main__":
     )
 
     # Load regions and district heating areas
-    regions_onshore = gpd.read_file(snakemake.input["regions_onshore"])
-    regions_onshore.set_index("name", inplace=True)
-    regions_onshore = regions_onshore.to_crs("EPSG:4326")
+    onshore_regions = gpd.read_file(snakemake.input["onshore_regions"])
+    onshore_regions.set_index("name", inplace=True)
+    onshore_regions = onshore_regions.to_crs("EPSG:4326")
 
     dh_areas = gpd.read_file(snakemake.input["dh_areas"]).to_crs("EPSG:3035")
     # Buffer district heating areas by specified amount
@@ -396,9 +394,9 @@ if __name__ == "__main__":
 
     # Process regions sequentially but with multi-threaded Dask operations
     results = []
-    for i, region_name in enumerate(regions_onshore.index, 1):
+    for i, region_name in enumerate(onshore_regions.index, 1):
         # Extract region geometry and create a copy to avoid modification conflicts
-        region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
+        region = gpd.GeoSeries(onshore_regions.loc[region_name].copy(deep=True))
 
         # Process region with multi-threaded Dask operations
         result = get_regional_result(
@@ -419,7 +417,7 @@ if __name__ == "__main__":
     power = pd.DataFrame(
         {
             region_name: res["spatial aggregate"]["total_power"].to_pandas()
-            for region_name, res in zip(regions_onshore.index, results)
+            for region_name, res in zip(onshore_regions.index, results)
         }
     ).dropna()
 
@@ -436,7 +434,7 @@ if __name__ == "__main__":
             [res["spatial aggregate"]["average_temperature"] for res in results],
             dim="name",
         )
-        .assign_coords(name=regions_onshore.index)
+        .assign_coords(name=onshore_regions.index)
         .dropna(dim="time")
     )
 
@@ -455,14 +453,14 @@ if __name__ == "__main__":
         # Units: MWh (megawatt-hours) - total energy potential per location
         xr.concat(
             [res["temporal aggregate"]["total_energy"] for res in results],
-            dim=regions_onshore.index,
+            dim=onshore_regions.index,
         ).to_netcdf(snakemake.output.heat_source_energy_temporal_aggregate)
 
         # Temperature temporal aggregate: spatial distribution of temperatures
         # Units: °C (degrees Celsius) - average temperature per location
         xr.concat(
             [res["temporal aggregate"]["average_temperature"] for res in results],
-            dim=regions_onshore.index,
+            dim=onshore_regions.index,
         ).to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)
 
     else:

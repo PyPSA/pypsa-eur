@@ -386,7 +386,7 @@ if __name__ == "__main__":
 
     df_nuts2 = gpd.GeoDataFrame(nuts2.geometry).join(enspreso)
 
-    regions = gpd.read_file(snakemake.input.regions_onshore)
+    regions = gpd.read_file(snakemake.input.onshore_regions)
 
     df = convert_nuts2_to_regions(df_nuts2, regions)
 

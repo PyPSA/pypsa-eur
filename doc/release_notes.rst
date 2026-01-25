@@ -11,7 +11,7 @@ Upcoming Release
 
 * Streamlined workflow (https://github.com/PyPSA/pypsa-eur/pull/1838). See ``doc/migration.rst`` for detailed migration guidance.
 
-  **Workflow structure (related to streamlining):**
+  **Workflow structure:**
 
   - The network pipeline now follows a 4-stage progression: ``base.nc`` → ``simplified.nc`` → ``clustered.nc`` → ``composed_{horizon}.nc`` → ``solved_{horizon}.nc``.
   - Cryptic filenames like ``elec_s_37_lv1.25_3H_2030.nc`` are replaced with readable names. Scenario parameters (clusters, opts, sector_opts) are now set via configuration rather than filename wildcards.
@@ -24,7 +24,7 @@ Upcoming Release
   - A new migration guide ``doc/migration.rst`` documents file name mappings and configuration changes in detail.
 
 
-  **Breaking configuration changes (related to streamlining):**
+  **Breaking configuration changes:**
 
   - Removed ``scenario:`` block. The ``scenario: clusters/opts/sector_opts/planning_horizons`` section is removed. Use ``planning_horizons`` at top-level and ``clustering: cluster_network: n_clusters`` for cluster count.
   - Removed ``electricity: co2limit_enable``, ``electricity: co2limit``, and ``electricity: co2base``. Use the unified ``co2_budget`` section with ``upper:``/``lower:`` bounds instead. The ``Co2L`` and ``cb*`` wildcards (both opts and sector_opts) are also removed.
@@ -33,6 +33,11 @@ Upcoming Release
   - Added ``sector: enabled`` to control sector coupling. Set to ``false`` for electricity-only models.
   - Added ``existing_capacities:`` keys. New ``enabled`` toggle and ``baseyear`` setting required for brownfield runs.
   - Added ``clustering: cluster_network: n_clusters``. Replaces the ``{clusters}`` wildcard in filenames.
+  - Rename ``regions_onshore_base_s_{clusters}.geojson`` to ``onshore_regions.geojson`` and ``regions_offshore_base_s_{clusters}.geojson`` to ``offshore_regions.geojson``. The process chain for shape files is now: ``onshore_shapes``/ ``offshore_shapes`` → ``onshore_regions.geojson``/ ``offshore_regions.geojson``, for shape files for the simplified resolution are now stored at ``onshore_regions_simplified.geojson`` and ``offshore_regions_simplified.geojson``. 
+
+  **Conventions**:
+  - Inputs to ``compose_network`` are already regionally clustered and simplified to be processed without further aggregation.
+  - Data file that represent a final version of itself don't have dedicated suffixes (e.g. regionally aggregated shapes are stored at ``onsore_regions.geojson``). Ancestor files that are intermediate steps in the processing chain may rely on suffixes (e.g. ``onshore_shapes_simplified.geojson``).  
 
 * Unified temporal resolution configuration: ``clustering: temporal: resolution_elec`` and ``clustering: temporal: resolution_sector`` have been merged into a single ``clustering: temporal: resolution`` setting.
 

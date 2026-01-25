@@ -65,7 +65,7 @@ def balance_map_paths(kind, w):
         return []
 
     return expand(
-        RESULTS + f"maps/{kind}/{{carrier}}_balance_map_{{horizon}}.{ext}",
+        RESULTS + f"maps/{kind}/balance_map_{{carrier}}_{{horizon}}.{ext}",
         run=config["run"]["name"],
         horizon=config["planning_horizons"],
         carrier=config_provider("plotting", cfg_key, "bus_carriers")(w),

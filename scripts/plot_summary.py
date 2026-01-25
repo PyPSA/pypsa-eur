@@ -6,6 +6,7 @@ Creates plots from summary CSV files.
 """
 
 import logging
+import os
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
@@ -311,9 +312,6 @@ def plot_balances():
         )
         plt.close(fig)
 
-    # Ensure the main output file exists even if all balances were empty
-    import os
-
     if not os.path.exists(snakemake.output.balances):
         logger.warning("No balance data was plotted. Creating placeholder file.")
         create_placeholder_plot(
@@ -464,7 +462,7 @@ def plot_carbon_budget_distribution(input_eurostat, options):
                 supply_energy.loc["co2"].droplevel(0).drop("co2").sum().unstack().T
                 / 1e9
             )
-            co2_cap.rename(index=lambda x: int(x), inplace=True)
+            co2_cap.rename(index=int, inplace=True)
         except KeyError as e:
             logger.warning(
                 f"Missing required key for carbon budget plot: {e}. Skipping plot."

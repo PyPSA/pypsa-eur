@@ -42,9 +42,9 @@ def load_bus_regions(onshore_path, offshore_path):
     """
     Load pypsa-eur on- and offshore regions and concat.
     """
-    bus_regions_offshore = gpd.read_file(offshore_path)
-    bus_regions_onshore = gpd.read_file(onshore_path)
-    bus_regions = concat_gdf([bus_regions_offshore, bus_regions_onshore])
+    offshore_bus_regions = gpd.read_file(offshore_path)
+    onshore_bus_regions = gpd.read_file(onshore_path)
+    bus_regions = concat_gdf([offshore_bus_regions, onshore_bus_regions])
     bus_regions = bus_regions.dissolve(by="name", aggfunc="sum")
 
     return bus_regions
@@ -82,8 +82,8 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    fn_onshore = snakemake.input.regions_onshore
-    fn_offshore = snakemake.input.regions_offshore
+    fn_onshore = snakemake.input.onshore_regions
+    fn_offshore = snakemake.input.offshore_regions
 
     regions = load_bus_regions(fn_onshore, fn_offshore)
 

@@ -15,7 +15,6 @@ from scripts._benchmark import memory_logger
 from scripts._helpers import (
     configure_logging,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 from scripts.solve_network import (
     collect_kwargs,
@@ -36,7 +35,6 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     solve_opts = snakemake.params.options
     cf_solving = snakemake.params.solving["options"]

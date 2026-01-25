@@ -28,7 +28,7 @@ rule build_clustered_population_layouts:
         pop_layout_total=resources("pop_layout_total.nc"),
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         cutout=lambda w: input_cutout(w),
     output:
         clustered_pop_layout=resources("pop_layout.csv"),
@@ -64,7 +64,7 @@ rule build_simplified_population_layouts:
         pop_layout_total=resources("pop_layout_total.nc"),
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
-        regions_onshore=resources("regions_onshore_simplified.geojson"),
+        onshore_regions=resources("onshore_regions_simplified.geojson"),
         cutout=lambda w: input_cutout(w),
     output:
         clustered_pop_layout=resources("pop_layout_simplified.csv"),
@@ -98,8 +98,8 @@ rule build_gas_input_locations:
         gem="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         entry=rules.retrieve_gas_infrastructure_data.output["entry"],
         storage=rules.retrieve_gas_infrastructure_data.output["storage"],
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
+        offshore_regions=resources("offshore_regions.geojson"),
     output:
         gas_input_nodes=resources("gas_input_locations.geojson"),
         gas_input_nodes_simplified=resources("gas_input_locations_simplified.csv"),
@@ -116,8 +116,8 @@ rule build_gas_input_locations:
 rule cluster_gas_network:
     input:
         cleaned_gas_network=resources("gas_network.csv"),
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
+        offshore_regions=resources("offshore_regions.geojson"),
     output:
         clustered_gas_network=resources("gas_network_clustered.csv"),
     resources:
@@ -136,7 +136,7 @@ rule build_daily_heat_demand:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         pop_layout=resources("pop_layout_total.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         cutout=lambda w: input_cutout(
             w, config_provider("sector", "heat_demand_cutout")(w)
         ),
@@ -181,7 +181,7 @@ rule build_temperature_profiles:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         pop_layout=resources("pop_layout_total.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         cutout=lambda w: input_cutout(
             w, config_provider("sector", "heat_demand_cutout")(w)
         ),
@@ -248,7 +248,7 @@ rule build_central_heating_temperature_profiles:
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         temp_air_total=resources("temp_air_total.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
     output:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_{horizon}.nc"
@@ -274,7 +274,7 @@ rule build_dh_areas:
         countries=config_provider("countries"),
     input:
         dh_areas=rules.retrieve_dh_areas.output["dh_areas"],
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
     output:
         dh_areas=resources("dh_areas.geojson"),
     resources:
@@ -309,7 +309,7 @@ rule build_geothermal_heat_potential:
         isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output[
             "isi_heat_potentials"
         ],
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         lau_regions=rules.retrieve_lau_regions.output["zip"],
     output:
         heat_source_power=resources("heat_source_power_geothermal.csv"),
@@ -377,7 +377,7 @@ rule build_ates_potentials:
     input:
         aquifer_shapes_shp=rules.retrieve_aquifer_data_bgr.output["aquifer_shapes"][0],
         dh_areas=resources("dh_areas.geojson"),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_{horizon}.nc"
         ),
@@ -448,7 +448,7 @@ rule build_river_heat_potential:
         enable_heat_source_maps=config_provider("plotting", "enable_heat_source_maps"),
     input:
         unpack(input_hera_data),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         dh_areas=resources("dh_areas.geojson"),
     output:
         heat_source_power=resources("heat_source_power_river_water.csv"),
@@ -578,7 +578,7 @@ rule build_sea_heat_potential:
     input:
         # seawater_temperature=lambda w: input_seawater_temperature(w),
         unpack(input_seawater_temperature),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         dh_areas=resources("dh_areas.geojson"),
     output:
         heat_source_temperature=resources("temp_sea_water.nc"),
@@ -623,7 +623,7 @@ rule build_cop_profiles:
         temp_soil_total=resources("temp_soil_total.nc"),
         temp_air_total=resources("temp_air_total.nc"),
         temp_ptes_total=resources("ptes_top_temperature_profiles_{horizon}.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
     output:
         cop_profiles=resources("cop_profiles_{horizon}.nc"),
     resources:
@@ -658,7 +658,7 @@ rule build_ptes_operations:
         central_heating_return_temperature_profiles=resources(
             "central_heating_return_temperature_profiles_{horizon}.nc"
         ),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
     output:
         ptes_direct_utilisation_profiles=resources(
             "ptes_direct_utilisation_profiles_{horizon}.nc"
@@ -711,7 +711,7 @@ rule build_solar_thermal_profiles:
         solar_thermal=config_provider("solar_thermal"),
     input:
         pop_layout=resources("pop_layout_total.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         cutout=lambda w: input_cutout(w, config_provider("solar_thermal", "cutout")(w)),
     output:
         solar_thermal=resources("solar_thermal_total.nc"),
@@ -806,7 +806,7 @@ rule build_biomass_potentials:
         enspreso_biomass=rules.retrieve_enspreso_biomass.output["xlsx"],
         eurostat=rules.retrieve_eurostat_balances.output["directory"],
         nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         nuts3_population=ancient(rules.retrieve_nuts3_population.output["gz"]),
         swiss_cantons=lambda w: (
             ancient("data/ch_cantons.csv")
@@ -878,8 +878,8 @@ rule build_clustered_co2_sequestration_potentials:
         ),
     input:
         sequestration_potential=resources("co2_sequestration_potentials.geojson"),
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
+        offshore_regions=resources("offshore_regions.geojson"),
     output:
         sequestration_potential=resources("co2_sequestration_potential.csv"),
     threads: 1
@@ -896,8 +896,8 @@ rule build_clustered_co2_sequestration_potentials:
 rule build_salt_cavern_potentials:
     input:
         salt_caverns=rules.retrieve_h2_salt_caverns.output["geojson"],
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
+        offshore_regions=resources("offshore_regions.geojson"),
     output:
         h2_cavern_potential=resources("salt_cavern_potentials.csv"),
     threads: 1
@@ -1024,7 +1024,7 @@ rule build_industrial_distribution_key:
         ),
         countries=config_provider("countries"),
     input:
-        regions_onshore=resources("regions_onshore.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
         clustered_pop_layout=resources("pop_layout.csv"),
         hotmaps=rules.retrieve_hotmaps_industrial_sites.output["csv"],
         gem_gspt=rules.retrieve_gem_steel_plant_tracker.output["xlsx"],
@@ -1184,7 +1184,7 @@ rule build_shipping_demand:
     input:
         ports=rules.retrieve_attributed_ports.output["json"],
         scope=resources("europe_shape.geojson"),
-        regions=resources("regions_onshore.geojson"),
+        regions=resources("onshore_regions.geojson"),
         demand=resources("energy_totals.csv"),
     params:
         energy_totals_year=config_provider("energy", "energy_totals_year"),
@@ -1350,7 +1350,7 @@ rule build_egs_potentials:
         costs=config_provider("costs"),
     input:
         egs_cost="data/egs_costs.json",
-        regions=resources("regions_onshore.geojson"),
+        regions=resources("onshore_regions.geojson"),
         air_temperature=(
             resources("temp_air_total.nc")
             if config_provider("sector", "enhanced_geothermal", "var_cf")

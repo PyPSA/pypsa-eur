@@ -154,7 +154,7 @@ def get_balance_map_plots(w):
     if static_carriers:
         plots.extend(
             expand(
-                RESULTS + "maps/static/{carrier}_balance_map_{horizon}.pdf",
+                RESULTS + "maps/static/balance_map_{carrier}_{horizon}.pdf",
                 horizon=config["planning_horizons"],
                 run=config["run"]["name"],
                 carrier=static_carriers,
@@ -168,7 +168,7 @@ def get_balance_map_plots(w):
     if interactive_carriers:
         plots.extend(
             expand(
-                RESULTS + "maps/interactive/{carrier}_balance_map_{horizon}.html",
+                RESULTS + "maps/interactive/balance_map_{carrier}_{horizon}.html",
                 horizon=config["planning_horizons"],
                 run=config["run"]["name"],
                 carrier=interactive_carriers,

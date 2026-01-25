@@ -29,9 +29,9 @@ def load_bus_regions(onshore_path, offshore_path):
     """
     Load pypsa-eur on- and offshore regions and concat.
     """
-    bus_regions_offshore = gpd.read_file(offshore_path)
-    bus_regions_onshore = gpd.read_file(onshore_path)
-    bus_regions = concat_gdf([bus_regions_offshore, bus_regions_onshore])
+    offshore_bus_regions = gpd.read_file(offshore_path)
+    onshore_bus_regions = gpd.read_file(onshore_path)
+    bus_regions = concat_gdf([offshore_bus_regions, onshore_bus_regions])
     bus_regions = bus_regions.dissolve(by="name", aggfunc="sum")
 
     return bus_regions
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         df[col] = df[col].apply(wkt.loads)
 
     bus_regions = load_bus_regions(
-        snakemake.input.regions_onshore, snakemake.input.regions_offshore
+        snakemake.input.onshore_regions, snakemake.input.offshore_regions
     )
 
     gas_network = build_clustered_gas_network(df, bus_regions)

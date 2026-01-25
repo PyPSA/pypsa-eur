@@ -22,7 +22,6 @@ from scripts._helpers import (
     configure_logging,
     create_placeholder_plot,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 from scripts.add_electricity import sanitize_carriers
 from scripts.plot_power_network import load_projection
@@ -41,7 +40,6 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     n = pypsa.Network(snakemake.input.network)
     sanitize_carriers(n, snakemake.config)

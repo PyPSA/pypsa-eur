@@ -57,10 +57,9 @@ workflow.
 
 ``compose_network`` now orchestrates all per-horizon assembly steps, from
 merging simplified assets to applying brownfield capacities and warm-start data.
-Legacy Snakemake workflows split these responsibilities across multiple
-``add_*`` and ``prepare_*`` rules, so custom injections should extend the
-dedicated sections inside ``scripts/compose_network.py`` instead of re-adding
-bespoke steps.
+Previous Snakemake workflows split these responsibilities across multiple
+``add_*`` and ``prepare_*`` rules. Custom injections should now extend the
+dedicated sections inside ``scripts/compose_network.py``.
 
 Configuration changes
 =====================
@@ -107,14 +106,14 @@ customizations.
 Customization points mapping
 ----------------------------
 
-The table below shows where legacy customization points now reside:
+The table below shows how previous customization points map to the new structure:
 
 .. list-table::
    :header-rows: 1
    :widths: 35 35 30
 
-   * - Legacy location
-     - New location
+   * - Previous entry point
+     - New orchestration point
      - Section marker in compose_network.py
    * - ``add_electricity.py`` main section
      - ``add_electricity_components()`` function
@@ -138,11 +137,11 @@ The table below shows where legacy customization points now reside:
 Porting custom functions
 ------------------------
 
-**Scenario 1: You added a function to a legacy script**
+**Scenario 1: You added a function to a source script**
 
 If you added a helper function (e.g., ``attach_custom_generators()``) to
 ``add_electricity.py``, keep the function in that file. The streamlined
-workflow imports functions from legacy scripts, so your function remains
+workflow imports functions from these scripts, so your function remains
 available::
 
     # In your fork's add_electricity.py, add your function:
@@ -208,11 +207,10 @@ Example: Porting a custom carrier
 Suppose your fork adds a "green ammonia" carrier in ``prepare_sector_network.py``.
 Here's how to port it:
 
-1. **Keep the function in the legacy script**::
+1. **Keep the function in the source script**::
 
        # scripts/prepare_sector_network.py
        def add_green_ammonia(n, costs, spatial, options):
-           """Add green ammonia production and storage."""
            ...
 
 2. **Add the import in compose_network.py**::
@@ -238,7 +236,7 @@ Best practices for fork maintenance
 -----------------------------------
 
 1. **Minimize changes to compose_network.py**: Keep custom functions in the
-   legacy script files and only add imports and calls in ``compose_network.py``.
+   source script files and only add imports and calls in ``compose_network.py``.
    This reduces merge conflicts when pulling upstream changes.
 
 2. **Use config flags for custom features**: Gate your customizations with

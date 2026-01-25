@@ -42,7 +42,6 @@ import requests
 from scripts._helpers import (
     configure_logging,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 
 logger = logging.getLogger(__name__)
@@ -60,7 +59,6 @@ if __name__ == "__main__":
     # Configure logging and scenario
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     if snakemake.params.default_cutout == "be-03-2013-era5":
         logger.info("Retrieving test-cutout seawater temperature data.")

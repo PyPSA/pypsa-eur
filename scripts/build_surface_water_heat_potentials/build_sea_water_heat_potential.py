@@ -29,7 +29,7 @@ Relevant Settings
 Inputs
 ------
 - `data/seawater_temperature.nc`: Sea water temperature data
-- `resources/{run}/regions_onshore.geojson`: Onshore regions
+- `resources/{run}/onshore_regions.geojson`: Onshore regions
 - `resources/{run}/dh_areas.geojson`: District heating areas
 
 Outputs
@@ -48,7 +48,6 @@ from _helpers import (
     configure_logging,
     get_snapshots,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 from approximators.sea_water_heat_approximator import SeaWaterHeatApproximator
 
@@ -234,7 +233,6 @@ if __name__ == "__main__":
     # Configure logging and scenario
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # Get simulation snapshots
     snapshots: pd.DatetimeIndex = get_snapshots(
@@ -243,9 +241,9 @@ if __name__ == "__main__":
 
     # Load geographic data for processing
     # Load onshore regions (countries/NUTS regions) for sea water analysis
-    regions_onshore = gpd.read_file(snakemake.input["regions_onshore"])
-    regions_onshore.set_index("name", inplace=True)  # Use region name as index
-    regions_onshore.set_crs("EPSG:4326", inplace=True)  # Ensure WGS84 CRS
+    onshore_regions = gpd.read_file(snakemake.input["onshore_regions"])
+    onshore_regions.set_index("name", inplace=True)  # Use region name as index
+    onshore_regions.set_crs("EPSG:4326", inplace=True)  # Ensure WGS84 CRS
 
     # Load and preprocess district heating areas
     # These define where sea water heat pumps could be connected
@@ -257,11 +255,11 @@ if __name__ == "__main__":
 
     # Each region is processed independently to calculate its sea water temperature
     results = []
-    for region_name in regions_onshore.index:
+    for region_name in onshore_regions.index:
         logging.info(f"Processing region {region_name}")
 
         # Extract region geometry and create a copy to avoid modification conflicts
-        region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
+        region = gpd.GeoSeries(onshore_regions.loc[region_name].copy(deep=True))
 
         # Submit region processing task to Dask cluster
         # Each task will:
@@ -288,7 +286,7 @@ if __name__ == "__main__":
             [res["spatial aggregate"]["average_temperature"] for res in results],
             dim="name",
         )
-        .assign_coords(name=regions_onshore.index)
+        .assign_coords(name=onshore_regions.index)
         .dropna(dim="time")
     )  # Remove invalid time points
 
@@ -307,5 +305,5 @@ if __name__ == "__main__":
     # Used for analysis and plotting
     xr.concat(
         [res["temporal aggregate"]["average_temperature"] for res in results],
-        dim=regions_onshore.index,
+        dim=onshore_regions.index,
     ).to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)
