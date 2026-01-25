@@ -608,8 +608,6 @@ if __name__ == "__main__":
     simplified_busmap = pd.read_csv(
         snakemake.input.simplified_busmap, index_col=0
     ).squeeze()
-    if isinstance(simplified_busmap, pd.DataFrame):
-        simplified_busmap = simplified_busmap.iloc[:, 0]
     simplified_busmap = sanitize_busmap(simplified_busmap)
 
     n_clusters_value = params.n_clusters
@@ -701,7 +699,6 @@ if __name__ == "__main__":
 
     nc = clustering.n
     cluster_busmap = sanitize_busmap(clustering.busmap)
-    busmaps_for_regions = cluster_busmap
 
     if snakemake.params.copperplate_regions:
         copperplate_buses(nc, snakemake.params.copperplate_regions)
@@ -712,7 +709,7 @@ if __name__ == "__main__":
     # nc.shapes = n.shapes.copy()
     for which in ["onshore_regions", "offshore_regions"]:
         regions = gpd.read_file(snakemake.input[which])
-        clustered_regions = cluster_regions(busmaps_for_regions, regions)
+        clustered_regions = cluster_regions((cluster_busmap,), regions)
         clustered_regions.to_file(snakemake.output[which])
         # append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
 
