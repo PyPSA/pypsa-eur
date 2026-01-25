@@ -110,17 +110,11 @@ rule solve_sector_network_perfect:
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.yaml",
-<<<<<<< HEAD
-        model=output_model(
-            RESULTS
-            + "models/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
-=======
         model=lambda w: (
             RESULTS
             + f"models/base_s_{w.clusters}_{w.opts}_{w.sector_opts}_brownfield_all_years.nc"
             if config_provider("solving", "options", "store_model")(w)
             else []
->>>>>>> 5049060a (apply suggestion)
         ),
     threads: solver_threads
     resources:
