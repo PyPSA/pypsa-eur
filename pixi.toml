@@ -89,7 +89,6 @@ scipy = ">=1.16.3"
 seaborn = ">=0.13.2"
 shapely = ">=2.0"
 snakemake-executor-plugin-cluster-generic = ">=1.0.9"
-snakemake-executor-plugin-slurm = ">=1.9.2"
 snakemake-minimal = ">=9"
 snakemake-storage-plugin-http = ">=0.3"
 tenacity = ">=9.1.2"
@@ -102,6 +101,9 @@ snakemake-storage-plugin-cached-http = ">=0.1.0"
 pandera = ">=0.28.1"
 natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
+
+[target.unix.dependencies]
+snakemake-executor-plugin-slurm = ">=1.9.2"
 
 [feature.doc.tasks.build-docs]
 args = ["dir", {"arg" = "output", "default" = "html"}]
