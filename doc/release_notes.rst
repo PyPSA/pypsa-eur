@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Update snakemake-storage-plugin-cached-http to 0.2.1, supporting data.pypsa.org and its manifests (https://github.com/PyPSA/pypsa-eur/pull/2012).
+
 * Added Xpress solver configuration options (``xpress-default`` and ``xpress-gpu``) with barrier method settings optimized for large-scale linear programming problems.
 
 * Added missing bidding zone data sources to data layer (https://github.com/PyPSA/pypsa-eur/pull/1991).
