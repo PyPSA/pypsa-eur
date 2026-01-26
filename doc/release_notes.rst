@@ -168,6 +168,8 @@ Upcoming Release
 
 * Misc: Automatically update the DAGs shown in the documentation (https://github.com/PyPSA/pypsa-eur/pull/1880).
 
+* Fix the WDPA links to function on Windows (https://github.com/PyPSA/pypsa-eur/pull/2008).
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 
