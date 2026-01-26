@@ -69,8 +69,6 @@ jobs:
             - 'pixi.toml'
             - 'pixi.lock'
             - '.github/workflows/test.yaml'
-          versions:
-            - 'data/versions.csv'
 
     - name: Free up disk space
       run: |
@@ -99,12 +97,13 @@ jobs:
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       run: |
         echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
+        echo "VERSIONS_HASH=${{ hashFiles('data/versions.csv') }}" >> $GITHUB_ENV
 
     - uses: actions/cache@v5
-      if: (steps.filter.outputs.src == 'true' || github.event_name == 'schedule') && steps.filter.outputs.versions != 'true'
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       with:
         path: data
-        key: data-${{ env.WEEK }}
+        key: data-${{ env.WEEK }}-${{ env.VERSIONS_HASH }}
 
     - uses: actions/cache@v5
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
