@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Remove snakemake's slurm plugin from windows installations (https://github.com/PyPSA/pypsa-eur/pull/2009).
+
 * Added Xpress solver configuration options (``xpress-default`` and ``xpress-gpu``) with barrier method settings optimized for large-scale linear programming problems.
 
 * Added missing bidding zone data sources to data layer (https://github.com/PyPSA/pypsa-eur/pull/1991).
