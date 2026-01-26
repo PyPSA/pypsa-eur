@@ -323,13 +323,13 @@ if (
     BIDDING_ZONES_ELECTRICITYMAPS_DATASET := dataset_version(
         "bidding_zones_electricitymaps"
     )
-)["source"] in ["primary"]:
+)["source"] in ["primary", "archive"]:
 
     rule retrieve_bidding_zones_electricitymaps:
         input:
             geojson=storage(BIDDING_ZONES_ELECTRICITYMAPS_DATASET["url"]),
         output:
-            geojson=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET["folder"]}/bidding_zones_electricitymaps.geojson",
+            geojson=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET['folder']}/bidding_zones_electricitymaps.geojson",
         log:
             "logs/retrieve_bidding_zones_electricitymaps.log",
         resources:
@@ -341,7 +341,7 @@ if (
 
 if (BIDDING_ZONES_ENTSOEPY_DATASET := dataset_version("bidding_zones_entsoepy"))[
     "source"
-] in ["primary"]:
+] in ["primary", "archive"]:
 
     rule retrieve_bidding_zones_entsoepy:
         output:

@@ -136,8 +136,8 @@ rule build_bidding_zones:
             "clustering", "build_bidding_zones", "aggregate_to_tyndp"
         ),
     input:
-        bidding_zones_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
-        bidding_zones_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+        bidding_zones_entsoepy=f"{BIDDING_ZONES_ENTSOEPY_DATASET['folder']}/bidding_zones_entsoepy.geojson",
+        bidding_zones_electricitymaps=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET['folder']}/bidding_zones_electricitymaps.geojson",
     output:
         file=resources("bidding_zones.geojson"),
     log:
