@@ -858,6 +858,12 @@ if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(output["zip_file"], output_folder)
 
+            # Extract {bYYYY} from the input file / URL
+            bYYYY = re.search(
+                r"WDPA_(\w{3}\d{4})_Public_shp.zip",
+                input["zip_file"],
+            ).group(1)
+
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = (
@@ -888,6 +894,12 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
             output_folder = Path(output["zip_file"]).parent
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(output["zip_file"], output_folder)
+
+            # Extract {bYYYY} from the input file / URL
+            bYYYY = re.search(
+                r"WDPA_WDOECM_(\w{3}\d{4})_Public_marine_shp.zip",
+                input["zip_file"],
+            ).group(1)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
