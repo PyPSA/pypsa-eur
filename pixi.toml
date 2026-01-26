@@ -102,7 +102,7 @@ snakemake-storage-plugin-cached-http = ">=0.1.0"
 pandera = ">=0.28.1"
 natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
-zstandard = ">=0.25.0"
+zstandard = ">=0.25.0" # remove with snakemake-storage-plugin-http>=0.2.1
 
 [feature.doc.tasks.build-docs]
 args = ["dir", {"arg" = "output", "default" = "html"}]
