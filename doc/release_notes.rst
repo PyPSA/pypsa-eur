@@ -172,6 +172,8 @@ Upcoming Release
 
 * Fix the WDPA links to function on Windows (https://github.com/PyPSA/pypsa-eur/pull/2008).
 
+* Fix: An issue with the download and extraction of WDPA and WDPA Marine data (https://github.com/PyPSA/pypsa-eur/issues/2005).
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 
