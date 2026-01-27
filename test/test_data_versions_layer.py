@@ -80,7 +80,14 @@ VersionsSchema = pa.DataFrameSchema(
             default=date.today().isoformat(),
         ),
         "note": Column(str, nullable=True),
-        "url": Column(str, nullable=True),
+        "url": Column(
+            str,
+            Check.str_matches(
+                r'^(https?://[^:\s<>"|*]*)?$',
+                error='URL must start with http(s):// and not contain colons (use %3A), spaces, or Windows-invalid characters (<>"|*).',
+            ),
+            nullable=True,
+        ),
     },
     checks=[
         is_sorted,

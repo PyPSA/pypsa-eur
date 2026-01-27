@@ -96,15 +96,21 @@ jobs:
     - name: Setup cache keys
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       run: |
-        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
+        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data
+        echo "MONTH=$(date +'%Y%m')" >> $GITHUB_ENV # cutouts
+        echo "VERSIONS_HASH=${{ hashFiles('data/versions.csv') }}" >> $GITHUB_ENV
 
     - uses: actions/cache@v5
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       with:
-        path: |
-          data
-          cutouts
-        key: data-cutouts-${{ env.WEEK }}
+        path: data
+        key: data-${{ env.WEEK }}-${{ env.VERSIONS_HASH }}
+
+    - uses: actions/cache@v5
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      with:
+        path: cutouts
+        key: cutouts-${{ env.MONTH }}
 
     - name: Restore git-tracked files in data/
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'

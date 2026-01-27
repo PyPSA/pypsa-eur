@@ -323,13 +323,13 @@ if (
     BIDDING_ZONES_ELECTRICITYMAPS_DATASET := dataset_version(
         "bidding_zones_electricitymaps"
     )
-)["source"] in ["primary"]:
+)["source"] in ["primary", "archive"]:
 
     rule retrieve_bidding_zones_electricitymaps:
         input:
             geojson=storage(BIDDING_ZONES_ELECTRICITYMAPS_DATASET["url"]),
         output:
-            geojson=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET["folder"]}/bidding_zones_electricitymaps.geojson",
+            geojson=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET['folder']}/bidding_zones_electricitymaps.geojson",
         log:
             "logs/retrieve_bidding_zones_electricitymaps.log",
         resources:
@@ -341,7 +341,7 @@ if (
 
 if (BIDDING_ZONES_ENTSOEPY_DATASET := dataset_version("bidding_zones_entsoepy"))[
     "source"
-] in ["primary"]:
+] in ["primary", "archive"]:
 
     rule retrieve_bidding_zones_entsoepy:
         output:
@@ -858,6 +858,12 @@ if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(output["zip_file"], output_folder)
 
+            # Extract {bYYYY} from the input file / URL
+            bYYYY = re.search(
+                r"WDPA_(\w{3}\d{4})_Public_shp.zip",
+                input["zip_file"],
+            ).group(1)
+
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = (
@@ -888,6 +894,12 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
             output_folder = Path(output["zip_file"]).parent
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(output["zip_file"], output_folder)
+
+            # Extract {bYYYY} from the input file / URL
+            bYYYY = re.search(
+                r"WDPA_WDOECM_(\w{3}\d{4})_Public_marine_shp.zip",
+                input["zip_file"],
+            ).group(1)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
