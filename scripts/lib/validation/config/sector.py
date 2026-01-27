@@ -15,6 +15,31 @@ from pydantic import BaseModel, ConfigDict, Field
 from scripts.lib.validation.config._base import ConfigModel
 
 
+class _SubnodesConfig(BaseModel):
+    """Configuration for `sector.district_heating.subnodes` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Enable subnodes in district heating sector.",
+    )
+    n_subnodes: int = Field(
+        10,
+        description="Number of largest district heating subnodes that are explicitly represented in the network.",
+    )
+    countries: list[str] = Field(
+        [],
+        description="List of country codes to consider for district heating subnodes. If empty, all countries are considered.",
+    )
+    demand_column: str = Field(
+        "Dem_GWh",
+        description="Name of the column in the single-system level data to use for subnodes.",
+    )
+    label_column: str = Field(
+        "Label",
+        description="Name of the column in the single-system level data to use for subnode labels.",
+    )
+
+
 class _DistrictHeatingConfig(ConfigModel):
     """Configuration for `sector.district_heating` settings."""
 
@@ -116,6 +141,10 @@ class _DistrictHeatingConfig(ConfigModel):
     dh_areas: dict[str, Any] = Field(
         default_factory=lambda: {"buffer": 1000, "handle_missing_countries": "fill"},
         description="District heating areas settings.",
+    )
+    subnodes: _SubnodesConfig = Field(
+        default_factory=_SubnodesConfig,
+        description="Configuration options for explicit representation of largest district heating systems as subnodes.",
     )
 
 

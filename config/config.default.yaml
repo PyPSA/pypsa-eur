@@ -690,10 +690,10 @@ sector:
       handle_missing_countries: fill
     subnodes:
       enable: false
-      n_subnodes: 40
+      n_subnodes: 10
       countries: []
-      demand_column: "Dem_GWh"
-      label_column: "Label"
+      demand_column: Dem_GWh
+      label_column: Label
   heat_pump_sources:
     urban central:
     - air
