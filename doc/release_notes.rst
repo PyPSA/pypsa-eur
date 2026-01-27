@@ -9,6 +9,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Added option to model n largest district heating systems (according to demand in #1516) explicitly. Enable via ``sector: district_heating:
+  subnodes: enable: true``.
+  
 * Remove snakemake's slurm plugin from windows installations (https://github.com/PyPSA/pypsa-eur/pull/2009).
 
 * Added Xpress solver configuration options (``xpress-default`` and ``xpress-gpu``) with barrier method settings optimized for large-scale linear programming problems.

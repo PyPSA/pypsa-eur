@@ -3921,6 +3921,39 @@
               "additionalProperties": true,
               "description": "District heating areas settings.",
               "type": "object"
+            },
+            "subnodes": {
+              "description": "Configuration for `sector.district_heating.subnodes` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Enable subnodes in district heating sector.",
+                  "type": "boolean"
+                },
+                "n_subnodes": {
+                  "default": 10,
+                  "description": "Number of largest district heating subnodes that are explicitly represented in the network.",
+                  "type": "integer"
+                },
+                "countries": {
+                  "default": [],
+                  "description": "List of country codes to consider for district heating subnodes. If empty, all countries are considered.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "demand_column": {
+                  "default": "Dem_GWh",
+                  "description": "Name of the column in the single-system level data to use for subnodes.",
+                  "type": "string"
+                },
+                "label_column": {
+                  "default": "Label",
+                  "description": "Name of the column in the single-system level data to use for subnode labels.",
+                  "type": "string"
+                }
+              }
             }
           }
         },
@@ -5966,6 +5999,39 @@
           "additionalProperties": true,
           "description": "District heating areas settings.",
           "type": "object"
+        },
+        "subnodes": {
+          "description": "Configuration for `sector.district_heating.subnodes` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Enable subnodes in district heating sector.",
+              "type": "boolean"
+            },
+            "n_subnodes": {
+              "default": 10,
+              "description": "Number of largest district heating subnodes that are explicitly represented in the network.",
+              "type": "integer"
+            },
+            "countries": {
+              "default": [],
+              "description": "List of country codes to consider for district heating subnodes. If empty, all countries are considered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "demand_column": {
+              "default": "Dem_GWh",
+              "description": "Name of the column in the single-system level data to use for subnodes.",
+              "type": "string"
+            },
+            "label_column": {
+              "default": "Label",
+              "description": "Name of the column in the single-system level data to use for subnode labels.",
+              "type": "string"
+            }
+          }
         }
       }
     },
@@ -7480,6 +7546,39 @@
               "type": "string"
             }
           }
+        }
+      }
+    },
+    "_SubnodesConfig": {
+      "description": "Configuration for `sector.district_heating.subnodes` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Enable subnodes in district heating sector.",
+          "type": "boolean"
+        },
+        "n_subnodes": {
+          "default": 10,
+          "description": "Number of largest district heating subnodes that are explicitly represented in the network.",
+          "type": "integer"
+        },
+        "countries": {
+          "default": [],
+          "description": "List of country codes to consider for district heating subnodes. If empty, all countries are considered.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "demand_column": {
+          "default": "Dem_GWh",
+          "description": "Name of the column in the single-system level data to use for subnodes.",
+          "type": "string"
+        },
+        "label_column": {
+          "default": "Label",
+          "description": "Name of the column in the single-system level data to use for subnode labels.",
+          "type": "string"
         }
       }
     },
@@ -10031,6 +10130,39 @@
               "additionalProperties": true,
               "description": "District heating areas settings.",
               "type": "object"
+            },
+            "subnodes": {
+              "description": "Configuration for `sector.district_heating.subnodes` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Enable subnodes in district heating sector.",
+                  "type": "boolean"
+                },
+                "n_subnodes": {
+                  "default": 10,
+                  "description": "Number of largest district heating subnodes that are explicitly represented in the network.",
+                  "type": "integer"
+                },
+                "countries": {
+                  "default": [],
+                  "description": "List of country codes to consider for district heating subnodes. If empty, all countries are considered.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "demand_column": {
+                  "default": "Dem_GWh",
+                  "description": "Name of the column in the single-system level data to use for subnodes.",
+                  "type": "string"
+                },
+                "label_column": {
+                  "default": "Label",
+                  "description": "Name of the column in the single-system level data to use for subnode labels.",
+                  "type": "string"
+                }
+              }
             }
           }
         },

@@ -688,6 +688,12 @@ sector:
     dh_areas:
       buffer: 1000
       handle_missing_countries: fill
+    subnodes:
+      enable: false
+      n_subnodes: 10
+      countries: []
+      demand_column: Dem_GWh
+      label_column: Label
   heat_pump_sources:
     urban central:
     - air
