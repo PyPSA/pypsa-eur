@@ -379,6 +379,12 @@ plotting:
     hydro: "Reservoir & Dam"
     battery: "Battery Storage"
     H2: "Hydrogen Storage"
+    li-ion: "Lithium-Ion Storage"
+    lfp: "Lithium-Ion-LFP Storage"
+    vanadium: "Vanadium-Redox-Flow Storage"
+    lair: "Liquid-Air Storage"
+    pair: "Compressed-Air-Adiabatic Storage"
+    iron-air: "Iron-Air Storage"
     lines: "Transmission Lines"
     ror: "Run of River"
     load: "Load Shedding"
@@ -525,6 +531,25 @@ plotting:
     land transport EV: '#baf238'
     land transport demand: '#38baf2'
     EV battery: '#baf238'
+    # all battery variation:
+    li-ion: '#ace37f'
+    li-ion charger: '#ace37f'
+    li-ion discharger: '#ace37f'
+    lfp: '#ace37f'
+    lfp charger: '#ace37f'
+    lfp discharger: '#ace37f'
+    vanadium: '#9B111E'
+    vanadium charger: '#9B111E'
+    vanadium discharger: '#9B111E'
+    lair: '#87CEEB'
+    lair charger: '#87CEEB'
+    lair discharger: '#87CEEB'
+    pair: '#003366'
+    pair charger: '#003366'
+    pair discharger: '#003366'
+    iron-air: '#edba1c'
+    iron-air charger: '#edba1c'
+    iron-air discharger: '#edba1c'
     # hot water storage
     water tanks: '#e69487'
     residential rural water tanks: '#f7b7a3'
