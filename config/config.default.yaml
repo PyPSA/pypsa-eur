@@ -1243,6 +1243,18 @@ solving:
       GPUMode: 1
       PDLPTol: 1.0e-05
       Crossover: 0
+    "xpress-default":
+      threads: 8
+      lpflags: 4
+      crossover: 0
+      bargaptarget: 1.0e-05
+      baralg: 2
+    "xpress-gpu":
+      lpflags: 4
+      crossover: 0
+      baralg: 4
+      barhggpu: 1
+      barhgreltol: 1.0e-05
     "cbc-default": {}
     "glpk-default": {}
   check_objective:
@@ -1304,6 +1316,9 @@ data:
     version: latest
   scigrid_gas:
     source: primary
+    version: latest
+  seawater_temperature:
+    source: archive
     version: latest
   synthetic_electricity_demand:
     source: primary
@@ -1395,6 +1410,12 @@ data:
   jrc_ardeco:
     source: archive
     version: latest
+  bidding_zones_electricitymaps:
+    source: archive
+    version: latest
+  bidding_zones_entsoepy:
+    source: archive
+    version: latest
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
 overpass_api:
@@ -1405,7 +1426,3 @@ overpass_api:
     project_name: "PyPSA-Eur"
     email: "contact@pypsa.org"
     website: "https://github.com/PyPSA/pypsa-eur"
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#secrets
-secrets:
-  corine: ""

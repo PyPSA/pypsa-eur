@@ -1172,6 +1172,26 @@
             }
           }
         },
+        "seawater_temperature": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "synthetic_electricity_demand": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -1753,6 +1773,46 @@
           }
         },
         "jrc_ardeco": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "bidding_zones_electricitymaps": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "bidding_zones_entsoepy": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -3736,16 +3796,6 @@
             "type": "integer"
           },
           "type": "array"
-        }
-      }
-    },
-    "SecretsConfig": {
-      "description": "Configuration for top level `secrets` settings.",
-      "properties": {
-        "corine": {
-          "default": "",
-          "description": "API token for corine dataset retrieval. You can also pass the token by setting the environment variable \"CORINE_API_TOKEN\". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.",
-          "type": "string"
         }
       }
     },
@@ -12204,6 +12254,26 @@
             }
           }
         },
+        "seawater_temperature": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "synthetic_electricity_demand": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -12803,6 +12873,46 @@
               "type": "string"
             }
           }
+        },
+        "bidding_zones_electricitymaps": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "bidding_zones_entsoepy": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
         }
       }
     },
@@ -12844,16 +12954,6 @@
               "type": "string"
             }
           }
-        }
-      }
-    },
-    "secrets": {
-      "description": "Configuration for top level `secrets` settings.",
-      "properties": {
-        "corine": {
-          "default": "",
-          "description": "API token for corine dataset retrieval. You can also pass the token by setting the environment variable \"CORINE_API_TOKEN\". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.",
-          "type": "string"
         }
       }
     }

@@ -13,7 +13,7 @@ The json schema is also contributed to the schemastore.org and matches
 import re
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 from ruamel.yaml import YAML
 
 from scripts.lib.validation.config._base import ConfigModel
@@ -73,15 +73,6 @@ class RemoteConfig(ConfigModel):
     path: str = Field(
         "",
         description="Optionally specify the file path within the remote cluster to be synchronized.",
-    )
-
-
-class SecretsConfig(ConfigModel):
-    """Configuration for top level `secrets` settings."""
-
-    corine: str = Field(
-        "",
-        description='API token for corine dataset retrieval. You can also pass the token by setting the environment variable "CORINE_API_TOKEN". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.',
     )
 
 
@@ -228,10 +219,18 @@ class ConfigSchema(BaseModel):
         default_factory=OverpassApiConfig,
         description="Overpass API configuration for OSM data retrieval.",
     )
-    secrets: SecretsConfig = Field(
-        default_factory=SecretsConfig,
-        description="Secrets configuration for API tokens.",
-    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_no_secrets_section(cls, data):
+        """Prevent secrets from being stored in config."""
+        if isinstance(data, dict) and "secrets" in data:
+            raise ValueError(
+                "The 'secrets:' section is no longer supported in config to avoid "
+                "leaking credentials. Use environment variables instead (e.g., "
+                "CORINE_API_TOKEN). You can set these in a .env file in the project root."
+            )
+        return data
 
 
 def validate_config(config: dict) -> ConfigSchema:

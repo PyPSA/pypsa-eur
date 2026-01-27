@@ -95,6 +95,10 @@ class DataConfig(BaseModel):
         default_factory=lambda: _DataSourceConfig(source="primary"),
         description="SciGRID Gas data source configuration.",
     )
+    seawater_temperature: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="Seawater temperature data source configuration.",
+    )
     synthetic_electricity_demand: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
         description="Synthetic electricity demand data source configuration.",
@@ -214,4 +218,12 @@ class DataConfig(BaseModel):
     jrc_ardeco: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="JRC ARDECO data source configuration.",
+    )
+    bidding_zones_electricitymaps: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="Electricitymaps bidding zones data source configuration.",
+    )
+    bidding_zones_entsoepy: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="Entsoepy bidding zones data source configuration.",
     )

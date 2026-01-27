@@ -101,7 +101,7 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
         message:
             "Retrieving Corine land cover data"
         params:
-            apikey=os.environ.get("CORINE_API_TOKEN", config["secrets"]["corine"]),
+            apikey=os.environ.get("CORINE_API_TOKEN", ""),
         output:
             zip=f"{CORINE_DATASET['folder']}/corine.zip",
             tif_file=f"{CORINE_DATASET['folder']}/corine.tif",
@@ -319,19 +319,62 @@ if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
             unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
 
-rule retrieve_bidding_zones:
-    message:
-        "Retrieving bidding zones data from ENTSO-E and Electricity Maps"
-    output:
-        file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
-        file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
-    log:
-        "logs/retrieve_bidding_zones.log",
-    resources:
-        mem_mb=1000,
-    retries: 2
-    script:
-        "../scripts/retrieve_bidding_zones.py"
+if (
+    BIDDING_ZONES_ELECTRICITYMAPS_DATASET := dataset_version(
+        "bidding_zones_electricitymaps"
+    )
+)["source"] in ["primary", "archive"]:
+
+    rule retrieve_bidding_zones_electricitymaps:
+        input:
+            geojson=storage(BIDDING_ZONES_ELECTRICITYMAPS_DATASET["url"]),
+        output:
+            geojson=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET['folder']}/bidding_zones_electricitymaps.geojson",
+        log:
+            "logs/retrieve_bidding_zones_electricitymaps.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        run:
+            copy2(input["geojson"], output["geojson"])
+
+
+if (BIDDING_ZONES_ENTSOEPY_DATASET := dataset_version("bidding_zones_entsoepy"))[
+    "source"
+] in ["primary", "archive"]:
+
+    rule retrieve_bidding_zones_entsoepy:
+        output:
+            geojson=f"{BIDDING_ZONES_ENTSOEPY_DATASET['folder']}/bidding_zones_entsoepy.geojson",
+        log:
+            "logs/retrieve_bidding_zones_entsoepy.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        run:
+            import entsoe
+            import geopandas as gpd
+            from urllib.error import HTTPError, URLError
+
+            logger.info("Downloading entsoe-py zones...")
+            gdfs: list[gpd.GeoDataFrame] = []
+            url = f"{BIDDING_ZONES_ENTSOEPY_DATASET['url']}"
+            for area in entsoe.Area:
+                name = area.name
+                try:
+                    file_url = f"{url}/{name}.geojson"
+                    gdfs.append(gpd.read_file(file_url))
+                except HTTPError as e:
+                    logger.debug(f"Area file not available for {name}: {e}")
+                    continue
+                except (URLError, TimeoutError) as e:
+                    raise Exception(f"Network error retrieving {name}: {e}")
+            shapes = pd.concat(gdfs, ignore_index=True)  # type: ignore
+
+            logger.info("Downloading entsoe-py zones... Done")
+
+            shapes.to_file(output.geojson)
+
 
 
 if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
@@ -342,7 +385,7 @@ if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
         message:
             "Retrieving cutout data for {wildcards.cutout}"
         input:
-            storage(CUTOUT_DATASET["url"] + "/files/{cutout}.nc"),
+            storage(CUTOUT_DATASET["url"] + "/{cutout}.nc"),
         output:
             CUTOUT_DATASET["folder"] + "/{cutout}.nc",
         log:
@@ -815,6 +858,12 @@ if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(output["zip_file"], output_folder)
 
+            # Extract {bYYYY} from the input file / URL
+            bYYYY = re.search(
+                r"WDPA_(\w{3}\d{4})_Public_shp.zip",
+                input["zip_file"],
+            ).group(1)
+
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = (
@@ -845,6 +894,12 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
             output_folder = Path(output["zip_file"]).parent
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(output["zip_file"], output_folder)
+
+            # Extract {bYYYY} from the input file / URL
+            bYYYY = re.search(
+                r"WDPA_WDOECM_(\w{3}\d{4})_Public_marine_shp.zip",
+                input["zip_file"],
+            ).group(1)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
@@ -937,7 +992,7 @@ if OSM_DATASET["source"] in ["archive"]:
             "Retrieving OSM archive data"
         input:
             **{
-                file: storage(f"{OSM_DATASET['url']}/files/{file}")
+                file: storage(f"{OSM_DATASET['url']}/{file}")
                 for file in OSM_ARCHIVE_FILES
             },
         output:
@@ -1108,6 +1163,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
             "Retrieving seawater temperature data for {wildcards.year}"
         params:
             default_cutout=config_provider("atlite", "default_cutout"),
+            test_data_url=dataset_version("seawater_temperature")["url"],
         output:
             seawater_temperature="data/seawater_temperature_{year}.nc",
         log:
