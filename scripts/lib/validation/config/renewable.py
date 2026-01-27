@@ -85,7 +85,7 @@ class _OnwindConfig(BaseModel):
     correction_factor: float = Field(
         1.0, description="Correction factor for capacity factor time series."
     )
-    corine: _CorineConfig = Field(
+    corine: bool | _CorineConfig = Field(
         default_factory=lambda: _CorineConfig(
             grid_codes=[
                 12,
@@ -150,7 +150,7 @@ class _OffwindConfig(BaseModel):
     correction_factor: float = Field(
         0.8855, description="Correction factor for capacity factor time series."
     )
-    corine: list[int] = Field(
+    corine: bool | list[int] = Field(
         default_factory=lambda: [44, 255],
         description="Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
     )
@@ -212,7 +212,7 @@ class _SolarConfig(BaseModel):
         1.0,
         description="A correction factor for the capacity factor (availability) time series.",
     )
-    corine: list[int] = Field(
+    corine: bool | list[int] = Field(
         default_factory=lambda: [
             1,
             2,
