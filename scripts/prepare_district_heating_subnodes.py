@@ -681,7 +681,7 @@ if __name__ == "__main__":
             planning_horizons=2050,
         )
 
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     # Load configuration
