@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Fix `None` default config parameter from creating zero availability for offshore wind (#2019).
+
 * Remove snakemake's slurm plugin from windows installations (https://github.com/PyPSA/pypsa-eur/pull/2009).
 
 * Added Xpress solver configuration options (``xpress-default`` and ``xpress-gpu``) with barrier method settings optimized for large-scale linear programming problems.
