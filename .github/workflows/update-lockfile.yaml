@@ -45,7 +45,8 @@ jobs:
   update-locked-environment:
     if: |
       needs.check-diff.outputs.has_diff == 'true' &&
-      (github.event_name != 'schedule' || github.ref == 'refs/heads/master')
+      (github.event_name == 'schedule' && github.ref == 'refs/heads/master' || 
+       github.event_name != 'schedule' && github.ref != 'refs/heads/master')
     needs: check-diff
     name: Update lockfiles
     runs-on: ubuntu-latest
