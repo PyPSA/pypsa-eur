@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Added ``solving.options.store_model`` config option to store the linopy model as NetCDF file after solving. Not supported with rolling horizon.
+
 * Remove snakemake's slurm plugin from windows installations (https://github.com/PyPSA/pypsa-eur/pull/2009).
 
 * Added Xpress solver configuration options (``xpress-default`` and ``xpress-gpu``) with barrier method settings optimized for large-scale linear programming problems.
