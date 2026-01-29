@@ -1991,7 +1991,7 @@ def add_h2_gas_infrastructure(
             cf_industry=None,
         )
 
-        capture_rate = costs.at["biomass boiler capture"]["capture_rate"]
+        capture_rate = costs.at["biomass boiler capture", "capture_rate"]
         efficiency_penalty = options["gas_ccgt_cc"]["efficiency_penalty"]
         capex_uplift_factor = options["gas_ccgt_cc"]["capex_uplift_factor"]
         co2_captured = (
@@ -2025,12 +2025,12 @@ def add_h2_gas_infrastructure(
             bus3="co2 atmosphere",
             marginal_cost=marginal_cost_ccgt + marginal_cost_cc,  # (€/MWh_fuel)
             capital_cost=capital_cost_ccgt + capital_cost_cc,  # (€/MW_input)
-            efficiency=costs.at["ccgt", "efficiency"] - efficiency_penalty,
+            efficiency=costs.at["CCGT", "efficiency"] - efficiency_penalty,
             efficiency2=co2_captured,
             efficiency3=costs.at["gas", "CO2 intensity"] * (1 - capture_rate),
             carrier="gas_ccgt_cc",
             p_nom_extendable=True,
-            lifetime=costs.at["ccgt", "lifetime"],
+            lifetime=costs.at["CCGT", "lifetime"],
         )
 
     if options["SMR_cc"]:
