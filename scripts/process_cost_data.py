@@ -127,6 +127,10 @@ def prepare_costs(
 
         custom_costs = _convert_to_MW(custom_costs)
 
+        custom_costs = custom_costs.drop("planning_horizon", axis=1).value.unstack(
+            level=1
+        )
+
         prepared_attrs = ["marginal_cost", "capital_cost"]
         raw_attrs = list(set(custom_costs.columns) - set(prepared_attrs))
         custom_raw = custom_costs[raw_attrs].dropna(axis=0, how="all")
