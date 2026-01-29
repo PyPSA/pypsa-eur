@@ -1980,6 +1980,8 @@ def add_h2_gas_infrastructure(
         )
 
     if options["gas_ccgt_cc"]["enable"]:
+        logger.info("Add option for gas CCGTs with CC.")
+
         add_carrier_buses(
             n=n,
             carrier="gas",
