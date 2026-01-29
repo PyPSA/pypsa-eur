@@ -2001,10 +2001,11 @@ def add_h2_gas_infrastructure(
             costs.at["CCGT", "VOM"]  # (€/MWh_output)
             * costs.at["CCGT", "efficiency"]  # (MWh_output/MWh_fuel)
         )
-        marginal_cost_cc = (
-            costs.at["biomass boiler capture", "VOM"]  # (€/tCO2_captured)
-            * co2_captured  # (tCO2_captured/MWh_fuel)
-        )
+        marginal_cost_cc = 0  # TODO: calculate VOM?
+        # (
+        #     costs.at["biomass boiler capture", "VOM"]  # (€/tCO2_captured)
+        #     * co2_captured  # (tCO2_captured/MWh_fuel)
+        # )
         capital_cost_ccgt = (
             costs.at["CCGT", "capital_cost"]  # (€/MW_output)
             * costs.at["CCGT", "efficiency"]  # (MW_output/MW_input)
