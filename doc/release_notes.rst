@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Fix wildcards error in `clean_osm_data` rule message introduced in github.com/PyPSA/pypsa-eur/pull/1846 by replacing `wildcards.country` with expanded `config["countries"]` list (https://github.com/PyPSA/pypsa-eur/pull/2022).
+
 * Fix `None` default config parameter from creating zero availability for offshore wind (#2019).
 
 * Remove snakemake's slurm plugin from windows installations (https://github.com/PyPSA/pypsa-eur/pull/2009).

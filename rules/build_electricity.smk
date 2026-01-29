@@ -842,7 +842,7 @@ if (
 
     rule clean_osm_data:
         message:
-            "Cleaning raw OSM data for {wildcards.country}"
+            "Cleaning raw OSM data for countries: " + ", ".join(config["countries"])
         input:
             cables_way=expand(
                 f"{OSM_DATASET['folder']}/{{country}}/cables_way.json",
