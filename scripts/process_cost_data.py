@@ -105,6 +105,16 @@ def prepare_costs(
         DataFrame containing the prepared cost data
 
     """
+
+    def _convert_to_MW(cost_df: pd.DataFrame) -> pd.DataFrame:
+        # correct units to MW and EUR
+        cost_df.loc[cost_df.unit.str.contains("/kW"), "value"] *= 1e3
+        cost_df.loc[cost_df.unit.str.contains("/GW"), "value"] /= 1e3
+
+        cost_df.unit = cost_df.unit.str.replace("/kW", "/MW")
+        cost_df.unit = cost_df.unit.str.replace("/GW", "/MW")
+        return cost_df
+
     # Load custom costs and categorize into two sets:
     # - Raw attributes: overwritten before cost preparation
     # - Prepared attributes: overwritten after cost preparation
@@ -115,16 +125,8 @@ def prepare_costs(
             index_col=["technology", "parameter"],
         ).query("planning_horizon in [@planning_horizon, 'all']")
 
-        # correct units to MW and EUR
-        custom_costs.loc[custom_costs.unit.str.contains("/kW"), "value"] *= 1e3
-        custom_costs.loc[custom_costs.unit.str.contains("/GW"), "value"] /= 1e3
+        custom_costs = _convert_to_MW(custom_costs)
 
-        custom_costs.unit = custom_costs.unit.str.replace("/kW", "/MW")
-        custom_costs.unit = custom_costs.unit.str.replace("/GW", "/MW")
-
-        custom_costs = custom_costs.drop("planning_horizon", axis=1).value.unstack(
-            level=1
-        )
         prepared_attrs = ["marginal_cost", "capital_cost"]
         raw_attrs = list(set(custom_costs.columns) - set(prepared_attrs))
         custom_raw = custom_costs[raw_attrs].dropna(axis=0, how="all")
@@ -135,12 +137,7 @@ def prepare_costs(
         if key in config:
             config["overwrites"][key] = config[key]
 
-    # correct units to MW and EUR
-    costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
-    costs.loc[costs.unit.str.contains("/GW"), "value"] /= 1e3
-
-    costs.unit = costs.unit.str.replace("/kW", "/MW")
-    costs.unit = costs.unit.str.replace("/GW", "/MW")
+    costs = _convert_to_MW(costs)
 
     # min_count=1 is important to generate NaNs which are then filled by fillna
     costs = costs.value.unstack(level=1).groupby("technology").sum(min_count=1)
