@@ -676,13 +676,11 @@ rule cluster_network:
         ),
         load=resources("electricity_demand_simplified.nc"),
     output:
-        # TODO: change busmap mapping from base to clustered (currently only from simplified to clustered)
         network=resources("networks/clustered.nc"),
         onshore_regions=resources("onshore_regions.geojson"),
         offshore_regions=resources("offshore_regions.geojson"),
-        busmap_cluster_network=resources("busmap_cluster_network.csv"),
-        busmap=resources("busmap.csv"),  # base -> clustered
-        linemap=resources("linemap.csv"),  # base -> clustered
+        busmap=resources("busmap_cluster_network.csv"),
+        linemap=resources("linemap_cluster_network.csv"),
     log:
         logs("cluster_network.log"),
     benchmark:
@@ -692,6 +690,19 @@ rule cluster_network:
         mem_mb=10000,
     script:
         "../scripts/cluster_network.py"
+
+
+rule chain_busmaps:
+    input:
+        busmap_simplify_network=resources("busmap_simplify_network.csv"),
+        busmap_cluster_network=resources("busmap_cluster_network.csv"),
+    output:
+        busmap=resources("busmap.csv"),
+    log:
+        logs("chain_busmaps.log"),
+    threads: 1
+    script:
+        "../scripts/chain_busmaps.py"
 
 
 def input_profile_tech(w):

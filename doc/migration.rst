@@ -6,248 +6,306 @@
 Migration Guide
 ##########################################
 
-This guide summarises the changes introduced with the PR1838 workflow
-refactor and serves as the canonical reference for upgrading custom rules,
-scripts, and configs.
+This guide covers the workflow refactor introduced in version XXX. The refactoring
+aims to simplify and streamline the workflow by following the order
+``base → simplified → clustered → composed → solved`` while only keeping the
+``{run}`` and the ``{horizon}`` wildcard. All foresight modes, ``overnight``, ``myopic`` and ``perfect``,
+follow this principle and only differ in potential additional loops over the rules: ``myopic`` iterates
+``compose`` and ``solve`` for each horizon, ``perfect`` iterates over ``compose`` for each horizon and
+then solves the network.
 
-Overview
-========
-
-- The Snakemake pipeline now runs ``base → simplified → clustered → composed →
-  solved`` with one ``compose_network``/``solve_network`` pair instead of the
-  scattered ``add_*``/``prepare_*`` sequence.
-- File names now encode scenario information via configuration settings and the
-  ``{horizon}`` wildcard rather than embedding ``{clusters}``, ``{opts}``, and
-  ``{planning_horizons}`` inside every artefact.
-- Configuration options such as ``planning_horizons`` and CO₂ budgets moved to
-  the top level, so scenario sweeps reference config files directly instead of
-  wildcard combinations.
+The previous wildcards ``{clusters}``, ``{opts}``, ``{sector_opts}`` have been removed. Their configuration is not handled by the ``config.yaml`` file only. The wildcard `{planning_horizons}` was renamed to `{horizon}`. 
 
 
-Workflow changes
-================
+Major Changes
+=============
 
-The table below maps legacy targets to their equivalents in the refactored
-workflow.
+Rule Order Changes
+------------------
+
+The previous workflow used separate rules for network preparation: ``add_electricity``,
+``prepare_network``, ``prepare_sector_network``, ``add_existing_baseyear``, ``add_brownfield``,
+and ``prepare_perfect_foresight``. These have been consolidated into a single ``compose_network``
+rule that handles all composition steps. Similarly, the separate
+``solve_network`` (electricity-only) and ``solve_sector_network`` (sector-coupled) rules
+are unified into a single ``solve_network`` rule.
+
+The rule execution order depends on the foresight mode:
+
+- **Overnight**: Composes and solves a single horizon:
+  ``clustered.nc`` → ``composed_{horizon}.nc`` → ``solved_{horizon}.nc``
+
+- **Myopic**: After composing and solving the first horizon, cycles over ``compose_network`` and ``solve_network`` 
+  where `compose_network` reads the previous horizon's *solved* network to incorporate brownfield capacities.
+
+- **Perfect foresight**: First composes all horizons sequentially, where each
+  ``compose_network`` reads the previous horizon's *composed* network. 
+  Then solves all horizons together in a single optimization.
+
+All foresight modes and sector configurations (electricity-only and sector-coupled) support
+the summary rules (``make_summary`` + plotting rules) and the ``all`` target rule.
+
+
+File name changes
+-----------------
+
+With the removal of the wildcards, intermediate and final outputs were renamed as depicted in the following table.
+The ``{run}`` prefix is omitted for simplicity.
 
 .. list-table::
    :header-rows: 1
 
-   * - Legacy target
-     - New target
-     - Notes
-   * - ``networks/base_s.nc``
-     - ``networks/simplified.nc``
-     - Simplification outputs no longer embed cluster counts.
-   * - ``busmap_base_s_{clusters}.csv`` / ``linemap_base_s_{clusters}.csv``
-     - ``busmap.csv`` / ``linemap.csv``
-     - Cluster counts come from ``clustering.cluster_network.n_clusters``.
-   * - ``powerplants_s_{clusters}.csv``
-     - ``powerplants_s.csv``
-     - Produced once per clustered network.
-   * - ``networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc``
-     - ``networks/composed_{horizon}.nc``
-     - Single entry point handled by ``scripts/compose_network.py``.
-   * - ``RESULTS/networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc``
-     - ``RESULTS/networks/solved_{horizon}.nc``
-     - Solver logs live under ``results/{run}/logs/solve_network``.
-   * - ``RESULTS/maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf``
-     - ``RESULTS/maps/power_network_{horizon}.pdf`` (and matching carrier maps)
-     - Same naming for overnight, myopic, and perfect modes.
+   * - Legacy
+     - New
+   * - ``resources/networks/base_s.nc``
+     - ``resources/networks/simplified.nc``
+   * - ``resources/networks/base_s_{clusters}.nc``
+     - ``resources/networks/clustered.nc``
+   * - ``resources/busmap_base_s_{clusters}.csv``
+     - ``resources/busmap.csv``
+   * - ``resources/powerplants_s_{clusters}.csv``
+     - ``resources/powerplants.csv``
+   * - ``resources/regions_onshore_base_s_{clusters}.geojson``
+     - ``resources/onshore_regions.geojson``
+   * - ``resources/regions_offshore_base_s_{clusters}.geojson``
+     - ``resources/offshore_regions.geojson``
+   * - ``resources/pop_layout_base_s_{clusters}.csv``
+     - ``resources/pop_layout.csv``
+   * - ``resources/networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc``
+     - ``resources/networks/composed_{horizon}.nc``
+   * - ``results/networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc``
+     - ``results/networks/solved_{horizon}.nc``
+   * - ``results/maps/base_s_*-costs-all_{planning_horizons}.pdf``
+     - ``results/maps/power_network_{horizon}.pdf``
+     
+Configuration Changes
+---------------------
 
-``compose_network`` now orchestrates all per-horizon assembly steps, from
-merging simplified assets to applying brownfield capacities and warm-start data.
-Previous Snakemake workflows split these responsibilities across multiple
-``add_*`` and ``prepare_*`` rules. Custom injections should now extend the
-dedicated sections inside ``scripts/compose_network.py``.
+- **Scenario management**: The ``scenario`` configuration section, which previously defined wildcard values for
+  ``{clusters}``, ``{opts}``, and ``{sector_opts}``, has been removed. These settings are now
+  specified directly in the relevant configuration sections (e.g., ``clustering.cluster_network.n_clusters``).
+  To run multiple scenarios, use ``run.scenarios`` with separate scenario files
+  (see :doc:`configuration` and :doc:`tutorial`).
 
-Configuration changes
-=====================
+- **Planning horizons**: The ``scenario.planning_horizons`` setting has moved to ``planning_horizons`` at the top level.
+  This list defines the years for which the model is optimized and directly controls the ``{horizon}`` wildcard.
 
-1. Define ``planning_horizons`` at the top level. Provide a single value for
-   overnight studies or a list for myopic/perfect runs. The ``{horizon}``
-   wildcard is derived from this list.
-2. CO₂ budgets share a unified schema with ``values`` (``fraction`` vs
-   ``absolute``) and per-period ``upper``/``lower`` entries. Optional ``total``
-   + ``distribution`` fields distribute an aggregate cap across horizons.
-3. Transmission expansion limits use the ``transmission_limit: <metric><cap>``
-   syntax (e.g., ``vopt`` or ``c1.25``).
-4. ``existing_capacities.enabled`` gates brownfield injections; leave it
-   ``false`` for greenfield runs.
-5. Snakemake rules should access configuration through
-   ``config_provider(...)`` or ``get_config(w)`` to ensure merged scenario files
-   and wildcards are respected. Prior releases collected many of these knobs via
-   the ``scenario`` wildcard block, which is now ignored; encode them directly
-   in configuration files and rely on ``run.scenarios`` for sweeps.
-6. Temporal resolution settings ``clustering.temporal.resolution_elec`` and
-   ``clustering.temporal.resolution_sector`` have been unified into a single
-   ``clustering.temporal.resolution`` setting.
+- **CO₂ handling**: The ``electricity.co2limit_enable``, ``electricity.co2limit``, and
+  ``electricity.co2base`` settings are removed. CO₂ constraints are now exclusively
+  configured via ``co2_budget``, which has a new structure with ``emissions_scope``,
+  ``relative``, ``upper``, and ``lower`` keys.
 
-Foresight modes
-=======================
+- **Temporal resolution**: ``clustering.temporal.resolution_elec`` and ``resolution_sector``
+  are merged into a single ``clustering.temporal.resolution`` setting. A new
+  ``time_segmentation`` subsection provides ``enable``, ``resolution``, and ``segments``.
 
-- **Overnight**: Require a single horizon; ``compose_network`` never looks for
-  previous outputs.
-- **Myopic**: ``compose_network`` imports
-  ``results/{run}/networks/solved_{previous}.nc`` via the helper
-  ``solved_previous_horizon``. Ensure horizons are sorted ascendingly.
-- **Perfect**: ``compose_network`` uses ``resources/{run}/networks/composed_{previous}.nc`` as
-  the brownfield baseline to build the full multi-period optimisation.
+- **Line/link extensions**: ``lines.max_extension`` is renamed to ``lines.s_nom_max_extension``
+  and ``links.max_extension`` to ``links.p_nom_max_extension``.
+
+- **Sector toggle**: A new ``sector.enabled`` flag controls whether sector coupling is active.
 
 
-Migrating forked repositories
+**Before** (legacy)::
+
+    scenario:
+      clusters: [37]
+      opts: [Co2L-24h]
+      sector_opts: [Co2L0-1H-T-H-B-I]
+      planning_horizons: [2030, 2040]
+
+    clustering:
+      temporal:
+        resolution_elec: 24h
+        resolution_sector: 1h
+
+**Now** (new)::
+
+    planning_horizons: [2030, 2040]
+
+    clustering:
+      cluster_network:
+        n_clusters: 37
+      temporal:
+        resolution: 24h
+
+    co2_budget:
+      emissions_scope: CO2
+      relative: true
+      upper:
+        2030: 0.45
+        2040: 0.1
+
+    sector:
+      enabled: true
+
+      
+Snakemake Call Changes
+----------------------
+
+The streamlined workflow removes the sector-specific collection rules and replaces them with unified rules.
+
+**Collection rules mapping:**
+
+.. list-table::
+   :header-rows: 1
+
+   * - Legacy Rule
+     - New Rule
+   * - ``cluster_networks``
+     - ``cluster_networks`` (targets ``clustered.nc`` instead of ``base_s_{clusters}.nc``)
+   * - ``prepare_elec_networks``
+     - ``compose_networks``
+   * - ``prepare_sector_networks``
+     - ``compose_networks``
+   * - ``solve_elec_networks``
+     - ``solve_networks``
+   * - ``solve_sector_networks``
+     - ``solve_networks``
+   * - ``solve_sector_networks_perfect``
+     - ``solve_networks``
+
+Note all sector and foresight modes support the ``all`` rule. That is, you can **always** call::
+
+    snakemake --configfile <configfile>
+
+to trigger the whole workflow independently of the mode.
+
+
+**Direct file targeting:**
+
+When targeting individual files via Snakemake, use the new simplified paths:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Legacy
+     - New
+   * - ``snakemake resources/.../networks/base_s_37.nc``
+     - ``snakemake resources/.../networks/clustered.nc``
+   * - ``snakemake resources/.../networks/base_s_37_elec_Co2L-24h.nc``
+     - ``snakemake resources/.../networks/composed_2030.nc``
+   * - ``snakemake results/.../networks/base_s_37_elec_Co2L-24h.nc``
+     - ``snakemake results/.../networks/solved_2030.nc``
+   * - ``snakemake results/.../networks/base_s_37_Co2L-24h_Co2L0-1H-T-H-B-I_2030.nc``
+     - ``snakemake results/.../networks/solved_2030.nc``
+
+Note that the ``**config["scenario"]`` expansion pattern is no longer used. Collection rules now explicitly use ``horizon=config["planning_horizons"]`` for the ``{horizon}`` wildcard.
+
+      
+.. _fork-migration:
+
+Migrating Forked Repositories
 =============================
 
-If you maintain a fork of PyPSA-Eur with custom scripts or rules, the
-streamlined workflow consolidates previously scattered logic into
-``scripts/compose_network.py``. This section explains how to port your
-customizations.
+This section guides developers of forked PyPSA-Eur repositories through the migration process.
+The streamlined workflow consolidates multiple Snakemake rules and restructures Python scripts,
+which will likely cause merge conflicts when updating forks.
 
-Customization points mapping
-----------------------------
 
-The table below shows how previous customization points map to the new structure:
+Summary of Structural Changes
+-----------------------------
+
+**Removed Snakemake rule files and their rules:**
+
+- ``rules/solve_electricity.smk``: ``solve_network``, ``solve_operations_network``
+- ``rules/solve_myopic.smk``: ``add_existing_baseyear``, ``add_brownfield``, ``solve_sector_network_myopic``
+- ``rules/solve_overnight.smk``: ``solve_sector_network``
+- ``rules/solve_perfect.smk``: ``add_existing_baseyear``, ``prepare_perfect_foresight``, ``solve_sector_network_perfect``, ``make_summary_perfect``
+
+**Removed Snakemake rules** (from existing files):
+
+- ``add_electricity``
+- ``prepare_network``
+- ``prepare_sector_network``
+
+**New Snakemake rule files:**
+
+- ``rules/compose.smk`` - Composition rule ``compose_network`` for all sector and foresight modes
+- ``rules/solve.smk`` - Solve rule ``solve_network`` for all sector and foresight modes
+
+**Script changes:**
+
+The Python scripts ``add_electricity.py``, ``add_existing_baseyear.py``, ``add_brownfield.py``,
+``prepare_network.py``, ``prepare_sector_network.py``, and ``prepare_perfect_foresight.py`` are
+retained but refactored. Their main execution blocks are replaced by ``main()`` functions that
+are imported and called by ``compose_network.py``.
+
+
+Resolving Merge Conflicts in Python Scripts
+-------------------------------------------
+
+When merging the new structure into your fork, you will likely encounter conflicts in the
+``add_*`` and ``prepare_*`` scripts. The key change is that the ``if __name__ == "__main__"``
+block has been replaced by a ``main()`` function, looking like this:
+
+.. code-block:: python
+
+   def main(
+       n: pypsa.Network,
+       inputs,
+       params,
+       costs: pd.DataFrame,
+   ) -> None:
+
+(Some functions have additional parameters like ``nyears`` or ``current_horizon`` depending
+on their requirements.)
+
+In these main functions the previous ``snakemake.`` directives are replaced by the ``inputs``  and ``params`` arguments. 
+To port your changes to the previous main section, update it to take into account the new accessor as shown in the following table  
 
 .. list-table::
    :header-rows: 1
-   :widths: 35 35 30
 
-   * - Previous entry point
-     - New orchestration point
-     - Section marker in compose_network.py
-   * - ``add_electricity.py`` main section
-     - ``add_electricity_components()`` function
-     - ``ELECTRICITY COMPONENTS (from add_electricity.py)``
-   * - ``prepare_sector_network.py`` main section
-     - ``add_sector_components()`` function
-     - ``SECTOR COMPONENTS (from prepare_sector_network.py)``
-   * - ``add_existing_baseyear.py`` main section
-     - ``add_existing_capacities()`` function
-     - ``EXISTING CAPACITIES (from add_existing_baseyear.py)``
-   * - ``add_brownfield.py`` main section
-     - Inline brownfield block
-     - ``BROWNFIELD FOR MYOPIC (from add_brownfield.py)``
-   * - ``prepare_network.py`` main section
-     - ``prepare_network_for_solving()`` function
-     - ``NETWORK PREPARATION (from prepare_network.py)``
-   * - ``prepare_perfect_foresight.py`` main section
-     - ``concatenate_network_with_previous()`` + inline block
-     - ``PERFECT FORESIGHT CONCATENATION (from prepare_perfect_foresight.py)``
+   * - Legacy Pattern
+     - New Pattern
+   * - ``snakemake.input.network``
+     - ``inputs.network`` or ``inputs["network"]``
+   * - ``snakemake.input["powerplants"]``
+     - ``inputs["powerplants"]``
+   * - ``snakemake.params.costs``
+     - ``params.costs``
+   * - ``snakemake.config["sector"]["enabled"]``
+     - ``params.sector["enabled"]``
 
-Porting custom functions
-------------------------
+     
+Note that if your custom code accesses configuration via ``snakemake.config["key"]``, you must add
+the corresponding entry to the ``params`` section of the ``compose_network`` rule in
+``rules/compose.smk``:
 
-**Scenario 1: You added a function to a source script**
+.. code-block:: python
 
-If you added a helper function (e.g., ``attach_custom_generators()``) to
-``add_electricity.py``, keep the function in that file. The streamlined
-workflow imports functions from these scripts, so your function remains
-available::
+   rule compose_network:
+       params:
+           your_custom_param=config_provider("path", "to", "config"),
 
-    # In your fork's add_electricity.py, add your function:
-    def attach_custom_generators(n, costs, params):
-        """Add custom generator type."""
-        ...
 
-    # In compose_network.py, add the import and call:
-    from scripts.add_electricity import (
-        ...
-        attach_custom_generators,  # Add your import
-    )
+Resolving Merge Conflicts in Snakemake Rules
+--------------------------------------------
 
-    # Then call it in the ELECTRICITY COMPONENTS section:
-    attach_custom_generators(n, costs, params)
+If your fork modified any of the removed rules, keep the rules deleted and migrate the changes to ``rules/compose.smk``:
 
-**Scenario 2: You modified the main execution flow**
+1. Move custom ``input:`` entries to the ``get_compose_inputs()`` function. 
+2. Move custom ``params:`` entries to the ``compose_network`` rule's ``params:`` section
+3. Move custom logic from the associated script into its ``main()`` function
 
-If you inserted logic between existing steps (e.g., filtering buses after
-load attachment), locate the corresponding section in ``compose_network.py``
-and insert your code there. Each section is clearly marked with comments like::
+**File naming changes:**
 
-    # ========== ELECTRICITY COMPONENTS (from add_electricity.py) ==========
+Update any hardcoded file references to use the new naming convention. Remove all wildcard references except for ``{planning_horizons}`` which should be replaced with ``{horizon}``. See the examples in the following table:
 
-**Scenario 3: You added a custom Snakemake rule**
+.. list-table::
+   :header-rows: 1
 
-If you had a custom rule (e.g., ``add_custom_data``) that ran between
-``add_electricity`` and ``prepare_network``, you have two options:
+   * - Legacy
+     - New
+   * - ``profile_{clusters}_{technology}.nc``
+     - ``profile_{technology}.nc``
+   * - ``powerplants_s_{clusters}.csv``
+     - ``powerplants.csv``
+   * - ``costs_{planning_horizons}_processed.csv``
+     - ``costs_{horizon}_processed.csv``
+   * - ``regions_onshore_base_s_{clusters}.geojson``
+     - ``onshore_regions.geojson``
+   * - ``regions_offshore_base_s_{clusters}.geojson``
+     - ``offshore_regions.geojson``
 
-1. **Integrate into compose_network.py**: Add your logic as a function call
-   in the appropriate section. This is preferred for logic that modifies
-   the network.
-
-2. **Keep as separate rule**: If your rule produces independent data files,
-   keep it separate and add its outputs to ``get_compose_inputs()`` in
-   ``rules/compose.smk``.
-
-Adding custom inputs to compose_network
----------------------------------------
-
-To add custom data files as inputs to the compose rule, extend
-``get_compose_inputs()`` in ``rules/compose.smk``::
-
-    def get_compose_inputs(w):
-        cfg = get_config(w)
-        ...
-        inputs = dict(
-            ...existing inputs...
-        )
-
-        # Add your custom inputs
-        if cfg.get("my_custom_feature", {}).get("enabled", False):
-            inputs["custom_data"] = resources("my_custom_data.csv")
-            inputs["custom_profiles"] = resources("my_custom_profiles_{horizon}.nc")
-
-        return inputs
-
-Then access them in ``compose_network.py`` via ``snakemake.input.custom_data``.
-
-Example: Porting a custom carrier
----------------------------------
-
-Suppose your fork adds a "green ammonia" carrier in ``prepare_sector_network.py``.
-Here's how to port it:
-
-1. **Keep the function in the source script**::
-
-       # scripts/prepare_sector_network.py
-       def add_green_ammonia(n, costs, spatial, options):
-           ...
-
-2. **Add the import in compose_network.py**::
-
-       from scripts.prepare_sector_network import (
-           ...
-           add_green_ammonia,
-       )
-
-3. **Call it in the SECTOR COMPONENTS section**::
-
-       # In compose_network.py, after existing sector components:
-       if sector_opts.get("green_ammonia", False):
-           add_green_ammonia(n, costs, spatial, sector_opts)
-
-4. **Add any required inputs to get_compose_inputs()**::
-
-       # In rules/compose.smk
-       if cfg["sector"].get("green_ammonia", False):
-           inputs["green_ammonia_potentials"] = resources("green_ammonia_potentials.csv")
-
-Best practices for fork maintenance
------------------------------------
-
-1. **Minimize changes to compose_network.py**: Keep custom functions in the
-   source script files and only add imports and calls in ``compose_network.py``.
-   This reduces merge conflicts when pulling upstream changes.
-
-2. **Use config flags for custom features**: Gate your customizations with
-   configuration options so they can be disabled when testing against upstream.
-
-3. **Document your integration points**: Add comments indicating where your
-   custom code integrates, referencing any related issues or documentation.
-
-4. **Test incrementally**: After merging upstream changes, run the test suite
-   with your customizations disabled first, then enable them one by one.
-
-5. **Watch for function signature changes**: When upstream modifies a function
-   you import, check if the signature changed. The deprecation of main sections
-   means function signatures are now the stable API.
+Note the special case of ``regions_onshore_*.geojson``/``regions_offshore_*.geojson`` which are renamed to ``onshore_regions``/``offshore_regions`` (reverted order of words).

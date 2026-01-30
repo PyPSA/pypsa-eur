@@ -21,7 +21,7 @@ Outputs
     .. image:: img/offshore_regions_base_s  .png
             :scale: 33 %
 
-- ``resources/busmap_simplified.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/simplified.nc``;
+- ``resources/busmap_simplify_network.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/simplified.nc``;
 - ``networks/base.nc``:
 
     .. image:: img/base_s.png

@@ -50,7 +50,6 @@ def get_compose_inputs(w):
             if foresight == "overnight"
             else rules.retrieve_cost_data.output["costs"]
         ),
-        busmap_simplified=resources("busmap_simplified.csv"),
         busmap=resources("busmap.csv"),
         solar_rooftop_potentials=(
             resources("solar_rooftop_potentials.csv")
@@ -151,10 +150,8 @@ def get_compose_inputs(w):
                 if cfg["sector"]["district_heating"]["ates"]["enable"]
                 else []
             ),
-            eurostat=rules.retrieve_eurostat_balances.output["directory"],
-            co2=rules.retrieve_ghg_emissions.output["csv"],
         )
-    inputs.update(sector_inputs)
+        inputs.update(sector_inputs)
 
     # Add brownfield inputs for non-first horizons
     if foresight == "overnight" and len(horizons) > 1:
