@@ -75,13 +75,6 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
 
-def load_costs(fn: str) -> pd.DataFrame:
-    costs = pd.read_csv(fn, index_col=[0, 1])
-    costs = costs.loc[idx[:, "value"], :].droplevel(1)
-    costs.columns = costs.columns.str.replace("-", "_")
-    return costs
-
-
 def normed(s: pd.Series) -> pd.Series:
     """
     Normalize a pandas Series by dividing each element by the sum of all elements.

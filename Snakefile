@@ -92,7 +92,7 @@ include: "rules/development.smk"
 CORE_OUTPUTS = [
     RESULTS + "graphs/costs.svg",
     RESULTS + "graphs/energy.svg",
-    RESULTS + "graphs/balances-energy.svg",
+    RESULTS + "graphs/balances_energy.svg",
 ]
 
 # Network and timeseries plots (excluded for perfect foresight)

@@ -12,16 +12,16 @@ import pypsa
 
 from scripts._helpers import (
     configure_logging,
+    load_costs,
     sanitize_custom_columns,
     set_scenario_config,
 )
 from scripts.add_brownfield import main as apply_brownfield
+from scripts.add_electricity import main as add_electricity_components
 from scripts.add_electricity import (
-    load_costs,
     sanitize_carriers,
     sanitize_locations,
 )
-from scripts.add_electricity import main as add_electricity_components
 from scripts.add_existing_baseyear import main as add_existing_capacities
 from scripts.prepare_network import (
     apply_co2_budget_constraints,
@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
     apply_temporal_aggregation(n, inputs, params)
 
-    if params.existing_capacities["enabled"] and is_first_horizon:
+    if foresight != "overnight" and is_first_horizon:
         add_existing_capacities(n, inputs, params, costs)
 
     if foresight == "myopic" and not is_first_horizon:

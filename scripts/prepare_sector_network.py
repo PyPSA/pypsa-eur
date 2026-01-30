@@ -6171,8 +6171,8 @@ def main(
     spatial = define_spatial(pop_layout.index, options)
 
     if foresight in ["myopic", "perfect"]:
-        conventional = params.conventional_carriers
-        for carrier in conventional:
+        fuel_carriers = params.fuel_carriers
+        for carrier in fuel_carriers:
             add_carrier_buses(
                 n=n,
                 carrier=carrier,

@@ -43,6 +43,7 @@ def sanitize_busmap(busmap: pd.Series) -> pd.Series:
     series = busmap.map(strip_if_str)
     if series.name is None:
         series.name = "busmap"
+    series.index.name = "name"
     return series
 
 

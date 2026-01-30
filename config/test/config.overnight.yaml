@@ -12,7 +12,7 @@ run:
     policy: false
 
 foresight: overnight
-planning_horizons: 2040
+planning_horizons: 2030
 
 countries: ["BE"]
 

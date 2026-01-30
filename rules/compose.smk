@@ -18,8 +18,6 @@ def get_compose_inputs(w):
     foresight = cfg["foresight"]
     horizon = int(w.horizon)
     sector_enabled = cfg["sector"]["enabled"]
-    co2_budget_values = cfg["co2_budget"]["values"]
-
     horizons = cfg["planning_horizons"]
 
     # Electricity-only inputs (always included)
@@ -27,7 +25,6 @@ def get_compose_inputs(w):
         **input_profile_tech(w),
         **input_class_regions(w),
         **input_conventional(w),
-        **input_profile_offwind(w),
         base_network=resources("networks/simplified.nc"),
         tech_costs=resources(f"costs_{horizon}_processed.csv"),
         regions=resources("onshore_regions.geojson"),
@@ -210,6 +207,7 @@ rule compose_network:
         horizons=config_provider("planning_horizons"),
         renewable_carriers=config_provider("electricity", "renewable_carriers"),
         conventional_carriers=config_provider("electricity", "conventional_carriers"),
+        fuel_carriers=config_provider("existing_capacities", "conventional_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         h2_retrofit=config_provider("sector", "H2_retrofit"),
         h2_retrofit_capacity_per_ch4=config_provider(
