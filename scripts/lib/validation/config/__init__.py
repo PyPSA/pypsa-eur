@@ -127,7 +127,7 @@ class ConfigSchema(BaseModel):
         default_factory=EnableConfig,
         description="Flags to enable/disable workflow features.",
     )
-    co2_budget: Co2BudgetConfig = Field(
+    co2_budget: Co2BudgetConfig | None = Field(
         default_factory=Co2BudgetConfig,
         description="CO2 budget as fraction of 1990 emissions per planning horizon year.",
     )
