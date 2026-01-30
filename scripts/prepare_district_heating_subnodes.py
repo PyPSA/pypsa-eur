@@ -108,6 +108,11 @@ def extend_district_heat_share(
         extended_share["district fraction before subnodes"] = extended_share[
             "district fraction of node"
         ].copy()
+    # Keep a copy of the original urban fraction to re-balance after splitting out subnodes
+    if "urban fraction before subnodes" not in extended_share.columns:
+        extended_share["urban fraction before subnodes"] = extended_share[
+            "urban fraction"
+        ].copy()
 
     extended_share["parent_node"] = extended_share.index.to_series()
 
@@ -179,6 +184,9 @@ def extend_district_heat_share(
             scale_factor = 1.0
             remaining_cluster_demand_mwh = cluster_dh_demand_mwh - total_subnode_demand
 
+        # Track how much of the cluster's total heat is shifted to subnodes (fraction of useful heat incl. losses)
+        total_subnode_share = 0.0
+
         # Process each subnode in the cluster
         for _, subnode in cluster_subnodes.iterrows():
             name = subnode["name"]
@@ -196,6 +204,7 @@ def extend_district_heat_share(
             original_share = demand_mwh / (
                 total_useful_heat_mwh * (1 + district_heating_loss)
             )
+            total_subnode_share += original_share
 
             # Add entry for subnode with parent_node mapping for resource bus lookups
             extended_share.loc[name] = {
@@ -203,6 +212,7 @@ def extend_district_heat_share(
                 "district fraction of node": 1.0,  # Subnodes are 100% urban central
                 "urban fraction": 1.0,  # Subnodes are 100% urban by definition
                 "district fraction before subnodes": 0.0,  # New entry, no pre-subnode value
+                "urban fraction before subnodes": 0.0,
                 "parent_node": cluster,  # Parent cluster for resource bus lookups
             }
 
@@ -211,6 +221,20 @@ def extend_district_heat_share(
             total_useful_heat_mwh * (1 + district_heating_loss)
         )
         extended_share.loc[cluster, "district fraction of node"] = new_cluster_fraction
+
+        # Rebalance the parent's urban fraction so that total urban share (parent + subnodes)
+        # remains equal to the original value. Without this, reducing the district fraction
+        # while keeping the parent's urban fraction fixed inflates urban decentral demand.
+        original_urban_fraction = _to_scalar(
+            extended_share.loc[cluster, "urban fraction before subnodes"]
+        )
+        if total_subnode_share >= 1.0:
+            remaining_urban_fraction = 0.0
+        else:
+            remaining_urban_fraction = max(
+                0.0, (original_urban_fraction - total_subnode_share) / (1 - total_subnode_share)
+            )
+        extended_share.loc[cluster, "urban fraction"] = remaining_urban_fraction
 
     return extended_share
 
@@ -358,10 +382,10 @@ def extend_pop_weighted_heat_totals(
     pandas.DataFrame
         Extended heat totals with subnodes added
     """
-    if len(subnodes) == 0:
-        return pop_weighted_heat_totals.copy()
-
     extended_totals = pop_weighted_heat_totals.copy()
+
+    # Store subnode totals for later subtraction
+    subnode_totals_dict = {}
 
     for _, subnode in subnodes.iterrows():
         cluster = subnode["cluster"]
@@ -376,20 +400,13 @@ def extend_pop_weighted_heat_totals(
         # Copy cluster's heat profile
         subnode_totals = _get_row(extended_totals, cluster).copy()
 
-        # Calculate cluster's total useful heat demand using the SAME formula as
-        # extend_pop_weighted_energy_totals and prepare_sector_network.build_heat_demand
-        # This includes: (space * eff * (1-reduction) + water * eff)
+        # ...existing scaling code...
         cluster_useful_heat = 0.0
-
-        # Get energy totals for water heating (not in heat_totals)
         cluster_energy = _get_row(pop_weighted_energy_totals, cluster)
-
         for sector in ["residential", "services"]:
             for use in ["water", "space"]:
                 col = f"total {sector} {use}"
                 eff_col = f"total {sector} {use} efficiency"
-
-                # Get efficiency
                 if (
                     eff_col in heating_efficiencies.columns
                     and ct in heating_efficiencies.index
@@ -397,15 +414,13 @@ def extend_pop_weighted_heat_totals(
                     eff = _to_scalar(heating_efficiencies.loc[ct, eff_col])
                 else:
                     eff = 1.0
-
-                # Space comes from heat_totals, water from energy_totals
                 if use == "space":
                     if col in subnode_totals.index:
                         val = _to_scalar(subnode_totals[col])
                         cluster_useful_heat += (
                             val * eff * (1 - space_heat_reduction) * 1e6
                         )
-                else:  # water
+                else:
                     if col in cluster_energy.index:
                         val = _to_scalar(cluster_energy[col])
                         cluster_useful_heat += val * eff * 1e6
@@ -413,11 +428,8 @@ def extend_pop_weighted_heat_totals(
         if cluster_useful_heat == 0.0:
             continue
 
-        # Scale factor: subnode_useful_heat * (1 + dh_loss) = GIS_demand
-        # So: scale * cluster_useful_heat * (1 + dh_loss) = demand_mwh
         scale_factor = demand_mwh / (cluster_useful_heat * (1 + district_heating_loss))
 
-        # Scale all columns in heat_totals
         for col in subnode_totals.index:
             cluster_val = _to_scalar(extended_totals.loc[cluster, col])
             subnode_totals[col] = cluster_val * scale_factor
@@ -425,9 +437,16 @@ def extend_pop_weighted_heat_totals(
         # Add subnode entry
         extended_totals.loc[name] = subnode_totals
 
-        # NOTE: We do NOT reduce the cluster's values here!
-        # The cluster's district fraction is reduced in extend_district_heat_share
-        # to account for the demand moving to subnodes.
+        # Store for subtraction
+        if cluster not in subnode_totals_dict:
+            subnode_totals_dict[cluster] = []
+        subnode_totals_dict[cluster].append(subnode_totals)
+
+    # Now subtract subnode totals from parent clusters
+    for cluster, subnode_list in subnode_totals_dict.items():
+        for col in extended_totals.columns:
+            total_subnode = sum(subnode[col] for subnode in subnode_list)
+            extended_totals.loc[cluster, col] -= total_subnode
 
     return extended_totals
 
