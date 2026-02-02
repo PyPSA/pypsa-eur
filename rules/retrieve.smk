@@ -1019,7 +1019,7 @@ elif OSM_DATASET["source"] == "build":
 
     rule retrieve_osm_data_raw:
         message:
-            "Retrieving OSM raw data for {wildcards.country}"
+            "Retrieving OSM electricity grid raw data for {wildcards.country}"
         params:
             overpass_api=config_provider("overpass_api"),
         output:

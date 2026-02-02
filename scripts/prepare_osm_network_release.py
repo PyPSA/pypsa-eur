@@ -223,7 +223,10 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("prepare_osm_network_release")
+        snakemake = mock_snakemake(
+            "prepare_osm_network_release",
+            configfiles=["config/config.osm-release.yaml"],
+        )
 
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)

@@ -304,6 +304,51 @@ def _clean_rating(column):
     return column.astype(str)
 
 
+def _clean_date(column):
+    """
+    Function to clean the raw date column: manual fixing and drop nan values
+    Args:
+    - column: pandas Series, the column to be cleaned
+    Returns:
+    - column: pandas Series of datetime64, the cleaned column (with NaT for invalid dates)
+    """
+    logger.info("Cleaning dates.")
+    column = column.copy()
+    
+    # Replace NaN/None with empty string first
+    column = column.fillna("")
+    column = column.replace({pd.NA: "", None: ""})
+    
+    # Clean text indicators of uncertainty
+    column = (
+        column.astype(str)
+        .str.lower()
+        .str.replace("unknown", "", regex=False)
+        .str.replace("approx", "", regex=False)
+        .str.replace("c.", "", regex=False)
+        .str.replace("circa", "", regex=False)
+        .str.replace("about", "", regex=False)
+        .str.replace("?", "", regex=False)
+        .str.replace("<na>", "", regex=False)
+        .str.replace("nan", "", regex=False)
+        .str.replace("none", "", regex=False)
+        .str.strip()  # Remove leading/trailing whitespace
+    )
+    
+    # Remove all remaining non-numeric characters except for dashes
+    # Note: removed semicolons unless you have multi-date entries
+    column = column.apply(lambda x: re.sub(r"[^0-9-]", "", x))
+    
+    # Replace empty strings with NaN before datetime conversion
+    column = column.replace("", np.nan)
+    
+    # Convert to datetime (keeps NaT for invalid/missing dates)
+    column = pd.to_datetime(column, errors='coerce', format='mixed')
+    
+    # Return as datetime64, NOT string
+    return column
+
+
 def _split_cells(df, cols=["voltage"]):
     """
     Split semicolon separated cells i.e. [66000;220000] and create new
@@ -413,6 +458,9 @@ def _import_lines_and_cables(path_lines):
         "frequency",
         "voltage",
         "wires",
+        "construction",
+        "construction:power",
+        "start_date",
     ]
     df_lines = pd.DataFrame(columns=columns)
 
@@ -442,6 +490,9 @@ def _import_lines_and_cables(path_lines):
                     "frequency",
                     "voltage",
                     "wires",
+                    "construction",
+                    "construction:power",
+                    "start_date",
                 ]
 
                 tags = pd.json_normalize(df["tags"]).map(
@@ -483,6 +534,9 @@ def _import_routes_relation(path_relation):
         "cables",
         "frequency",
         "voltage",
+        "construction",
+        "construction:power",
+        "start_date",
     ]
     df_relation = pd.DataFrame(columns=columns)
 
@@ -512,6 +566,9 @@ def _import_routes_relation(path_relation):
                     "frequency",
                     "voltage",
                     "rating",
+                    "construction",
+                    "construction:power",
+                    "start_date",
                 ]
 
                 tags = pd.json_normalize(df["tags"]).map(
@@ -1108,6 +1165,8 @@ def _finalise_substations(df_substations):
             "voltage",
             "country",
             "x_node",
+            "under_construction",
+            "start_date",
             "geometry",
             "polygon",
             "contains",
@@ -1161,6 +1220,8 @@ def _finalise_lines(df_lines):
             "bus1",
             "length",
             "underground",
+            "under_construction",
+            "start_date",
             "geometry",
         ]
     ]
@@ -1209,6 +1270,8 @@ def _finalise_links(df_links):
             "bus1",
             "length",
             "underground",
+            "under_construction",
+            "start_date",
             "geometry",
         ]
     ]
@@ -1242,6 +1305,9 @@ def _import_substations(path_substations):
         "substation",
         "voltage",
         "frequency",
+        "construction",
+        "construction:power",
+        "start_date",
     ]
     cols_substations_relation = [
         "id",
@@ -1250,6 +1316,9 @@ def _import_substations(path_substations):
         "substation",
         "voltage",
         "frequency",
+        "construction",
+        "construction:power",
+        "start_date",
     ]
     df_substations_way = pd.DataFrame(columns=cols_substations_way)
     df_substations_relation = pd.DataFrame(columns=cols_substations_relation)
@@ -1278,7 +1347,7 @@ def _import_substations(path_substations):
                 )
                 df["country"] = country
 
-                col_tags = ["power", "substation", "voltage", "frequency"]
+                col_tags = ["power", "substation", "voltage", "frequency", "construction", "construction:power", "start_date"]
 
                 tags = pd.json_normalize(df["tags"]).map(
                     lambda x: str(x) if pd.notnull(x) else x
@@ -1585,7 +1654,10 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("clean_osm_data")
+        snakemake = mock_snakemake(
+            "clean_osm_data",
+            configfiles=["config/config.osm-release.yaml"],
+        )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1605,7 +1677,14 @@ if __name__ == "__main__":
 
     # Cleaning process
     df_substations = _import_substations(path_substations)
+
     df_substations["voltage"] = _clean_voltage(df_substations["voltage"])
+    # Clean dates and construction status
+    df_substations["under_construction"] = (
+        df_substations["construction"].notna() | 
+        df_substations["construction:power"].notna()
+    )
+    df_substations["start_date"] = _clean_date(df_substations["start_date"])
 
     # Extract converter subset
     df_substations.reset_index(drop=True, inplace=True)
@@ -1762,6 +1841,12 @@ if __name__ == "__main__":
 
     # Cleaning process
     df_lines.loc[:, "voltage"] = _clean_voltage(df_lines["voltage"])
+    # Clean dates and construction status
+    df_lines["under_construction"] = (
+        df_lines["construction"].notna() | 
+        df_lines["construction:power"].notna()
+    )
+    df_lines["start_date"] = _clean_date(df_lines["start_date"])
     df_lines, list_voltages = _filter_by_voltage(df_lines, min_voltage=min_voltage_ac)
     df_lines.loc[:, "circuits"] = _clean_circuits(df_lines["circuits"])
     df_lines.loc[:, "cables"] = _clean_cables(df_lines["cables"])
@@ -1820,6 +1905,14 @@ if __name__ == "__main__":
     )
 
     df_links = _drop_duplicate_lines(df_links)
+
+    # Clean dates and construction status
+    df_links["under_construction"] = (
+        df_links["construction"].notna() | 
+        df_links["construction:power"].notna()
+    )
+    df_links["start_date"] = _clean_date(df_links["start_date"])
+
     df_links.loc[:, "voltage"] = _clean_voltage(df_links["voltage"])
     df_links, list_voltages = _filter_by_voltage(df_links, min_voltage=min_voltage_dc)
     # Keep only highest voltage of split string
