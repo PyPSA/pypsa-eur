@@ -560,7 +560,7 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
         message:
             "Retrieving electricity demand data from ENTSO-E for {wildcards.country}"
         params:
-            entsoe_token=config["secrets"]["entsoe_token"],
+            entsoe_token=os.environ.get("ENTSOE_API_TOKEN", ""),
         output:
             csv=f"{ENTSOE_DEMAND_DATA['folder']}"
             + "/electricity_demand_entsoe_raw_{country}.csv",
