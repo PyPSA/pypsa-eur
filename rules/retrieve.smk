@@ -539,13 +539,16 @@ if (
     rule retrieve_desnz_electricity_consumption:
         message:
             "Retrieving DESNZ subnational electricity consumption data"
-        input:
-            xlsx=storage(DESNZ_ELECTRICITY_CONSUMPTION_DATASET["url"]),
         output:
             xlsx=f"{DESNZ_ELECTRICITY_CONSUMPTION_DATASET['folder']}/Subnational_electricity_consumption_statistics_2005-2024.xlsx",
-        retries: 2
         run:
-            copy2(input["xlsx"], output["xlsx"])
+            import requests
+
+            url = DESNZ_ELECTRICITY_CONSUMPTION_DATASET["url"]
+            response = requests.get(url)
+            with open(output["xlsx"], "wb") as f:
+                f.write(response.content)
+
 
 
 if (ONS_LAD_DATASET := dataset_version("ons_lad"))["source"] in ["primary"]:
