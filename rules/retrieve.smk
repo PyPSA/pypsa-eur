@@ -519,6 +519,8 @@ if (ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas"))["source"] in [
 ]:
 
     rule retrieve_electricity_demand_energy_atlas:
+        message:
+            "Retrieving JRC Energy Atlas electricity demand data raster"
         input:
             tif=storage(ENERGY_ATLAS_DATASET["url"]),
         output:
@@ -535,6 +537,8 @@ if (
 )["source"] in ["primary", "archive"]:
 
     rule retrieve_desnz_electricity_consumption:
+        message:
+            "Retrieving DESNZ subnational electricity consumption data"
         input:
             xlsx=storage(DESNZ_ELECTRICITY_CONSUMPTION_DATASET["url"]),
         output:
@@ -547,6 +551,8 @@ if (
 if (ONS_LAD_DATASET := dataset_version("ons_lad"))["source"] in ["primary"]:
 
     rule retrieve_ons_lad:
+        message:
+            "Retrieving UK ONS Local Authority Districts (LAD) Boundaries data"
         output:
             geojson=f"{ONS_LAD_DATASET['folder']}/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
         run:
