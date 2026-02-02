@@ -521,13 +521,15 @@ if (ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas"))["source"] in [
     rule retrieve_electricity_demand_energy_atlas:
         message:
             "Retrieving JRC Energy Atlas electricity demand data raster"
-        input:
-            tif=storage(ENERGY_ATLAS_DATASET["url"]),
         output:
             tif=f"{ENERGY_ATLAS_DATASET['folder']}/electricity_tot_demand_2019.tif",
-        retries: 2
         run:
-            copy2(input["tif"], output["tif"])
+            import requests
+
+            url = ENERGY_ATLAS_DATASET["url"]
+            response = requests.get(url)
+            with open(output["tif"], "wb") as f:
+                f.write(response.content)
 
 
 if (
