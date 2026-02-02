@@ -51,6 +51,10 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="GEM Europe Gas Tracker data source configuration.",
     )
+    gem_gcct: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="GEM Global Cement and Concrete Tracker data source configuration.",
+    )
     co2stop: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="CO2Stop data source configuration.",
