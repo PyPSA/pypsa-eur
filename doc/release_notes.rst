@@ -150,6 +150,8 @@ Upcoming Release
   Other non-EU countries still use NUTS3-based distribution keys from GDP and
   population.
 
+* Update GEM steel plant tracker and use initial release of GEM cement plant tracker.
+
 * Added integration with the OETC platform
 
 * Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)

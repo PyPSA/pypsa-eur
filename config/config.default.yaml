@@ -1279,6 +1279,9 @@ data:
   gem_europe_gas_tracker:
     source: archive
     version: latest
+  gem_gcct:
+    source: archive
+    version: latest
   co2stop:
     source: archive
     version: latest
