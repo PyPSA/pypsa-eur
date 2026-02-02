@@ -145,11 +145,11 @@ if __name__ == "__main__":
             snakemake.input.gebco, codes=func, crs=4326, nodata=-1000, invert=True
         )
 
-    if "min_shore_distance" in params:
+    if params.get("min_shore_distance") is not None:
         buffer = params["min_shore_distance"]
         excluder.add_geometry(snakemake.input.country_shapes, buffer=buffer)
 
-    if "max_shore_distance" in params:
+    if params.get("max_shore_distance") is not None:
         buffer = params["max_shore_distance"]
         excluder.add_geometry(
             snakemake.input.country_shapes, buffer=buffer, invert=True
