@@ -7938,11 +7938,19 @@
       }
     },
     "co2_budget": {
-      "additionalProperties": {
-        "type": "number"
-      },
-      "description": "Configuration for `co2_budget` settings.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Configuration for `co2_budget` settings.",
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "CO2 budget as fraction of 1990 emissions per planning horizon year."
     },
     "electricity": {
       "description": "Configuration for `electricity` settings.",
