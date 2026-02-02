@@ -229,10 +229,6 @@ rule make_summary:
         prices=RESULTS + "csvs/prices.csv",
         weighted_prices=RESULTS + "csvs/weighted_prices.csv",
         market_values=RESULTS + "csvs/market_values.csv",
-        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
-        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
-        nodal_energy_balance=RESULTS + "csvs/nodal_energy_balance.csv",
-        nodal_capacity_factors=RESULTS + "csvs/nodal_capacity_factors.csv",
         metrics=RESULTS + "csvs/metrics.csv",
         cumulative_costs=RESULTS + "csvs/cumulative_costs.csv",
     threads: 1

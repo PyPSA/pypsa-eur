@@ -177,7 +177,7 @@ def get_compose_inputs(w):
 # Main composition rule - combines all network building steps
 rule compose_network:
     message:
-        "Composing network for horizon {horizon}"
+        "Composing network for horizon {wildcards.horizon}"
     input:
         unpack(get_compose_inputs),
     output:
