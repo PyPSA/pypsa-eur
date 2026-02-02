@@ -27,6 +27,8 @@ rule process_costs:
 
 
 rule cluster_networks:
+    message:
+        "Collecting clustered network files"
     input:
         expand(
             resources("networks/clustered.nc"),
@@ -35,6 +37,8 @@ rule cluster_networks:
 
 
 rule compose_networks:
+    message:
+        "Collecting composed network files"
     input:
         expand(
             resources("networks/composed_{horizon}.nc"),
@@ -44,6 +48,8 @@ rule compose_networks:
 
 
 rule solve_networks:
+    message:
+        "Collecting solved network files"
     input:
         expand(
             RESULTS + "networks/solved_{horizon}.nc",
@@ -71,6 +77,8 @@ def balance_map_paths(kind, w):
 
 
 rule plot_balance_maps:
+    message:
+        "Plotting energy balance maps"
     input:
         static=lambda w: balance_map_paths("static", w),
         interactive=lambda w: balance_map_paths("interactive", w),
@@ -87,6 +95,8 @@ rule plot_balance_maps_interactive:
 
 
 rule plot_power_networks:
+    message:
+        "Plotting clustered power network topology"
     input:
         (
             expand(

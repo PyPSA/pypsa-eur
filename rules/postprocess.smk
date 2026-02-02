@@ -5,6 +5,8 @@
 if config["foresight"] != "perfect":
 
     rule plot_base_network:
+        message:
+            "Plotting base power network"
         params:
             plotting=config_provider("plotting"),
         input:
@@ -21,6 +23,8 @@ if config["foresight"] != "perfect":
             "../scripts/plot_base_network.py"
 
     rule plot_clustered_network:
+        message:
+            "Plotting clustered network clusters"
         params:
             plotting=config_provider("plotting"),
         input:
@@ -37,6 +41,8 @@ if config["foresight"] != "perfect":
             "../scripts/plot_power_network_clustered.py"
 
     rule plot_power_network:
+        message:
+            "Plotting power network for {wildcards.horizon} planning horizon"
         params:
             plotting=config_provider("plotting"),
             transmission_limit=config_provider("electricity", "transmission_limit"),
@@ -56,6 +62,8 @@ if config["foresight"] != "perfect":
             "../scripts/plot_power_network.py"
 
     rule plot_hydrogen_network:
+        message:
+            "Plotting hydrogen network for {wildcards.horizon} planning horizon"
         params:
             plotting=config_provider("plotting"),
             foresight=config_provider("foresight"),
@@ -75,6 +83,8 @@ if config["foresight"] != "perfect":
             "../scripts/plot_hydrogen_network.py"
 
     rule plot_gas_network:
+        message:
+            "Plotting methane network for {wildcards.horizon} planning horizon"
         params:
             plotting=config_provider("plotting"),
         input:
@@ -93,6 +103,8 @@ if config["foresight"] != "perfect":
             "../scripts/plot_gas_network.py"
 
     rule plot_balance_map:
+        message:
+            "Plotting balance map for {wildcards.horizon} planning horizon and {wildcards.carrier} carrier"
         params:
             plotting=config_provider("plotting"),
             settings=lambda w: config_provider("plotting", "balance_map", w.carrier),
@@ -172,6 +184,8 @@ if config["foresight"] == "perfect":
         }
 
     rule plot_power_network_perfect:
+        message:
+            "Plotting power network with perfect foresight"
         params:
             plotting=config_provider("plotting"),
         input:
@@ -187,6 +201,8 @@ if config["foresight"] == "perfect":
 
 
 rule make_summary:
+    message:
+        "Creating optimization results summary statistics"
     params:
         foresight=config_provider("foresight"),
         planning_horizons=config_provider("planning_horizons"),
@@ -213,6 +229,10 @@ rule make_summary:
         prices=RESULTS + "csvs/prices.csv",
         weighted_prices=RESULTS + "csvs/weighted_prices.csv",
         market_values=RESULTS + "csvs/market_values.csv",
+        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
+        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
+        nodal_energy_balance=RESULTS + "csvs/nodal_energy_balance.csv",
+        nodal_capacity_factors=RESULTS + "csvs/nodal_capacity_factors.csv",
         metrics=RESULTS + "csvs/metrics.csv",
         cumulative_costs=RESULTS + "csvs/cumulative_costs.csv",
     threads: 1
@@ -227,6 +247,8 @@ rule make_summary:
 
 
 rule plot_summary:
+    message:
+        "Plotting summary statistics and results"
     params:
         countries=config_provider("countries"),
         planning_horizons=config_provider("planning_horizons"),
@@ -256,6 +278,8 @@ rule plot_summary:
 
 
 rule plot_balance_timeseries:
+    message:
+        "Plotting energy balance time series for {wildcards.horizon} planning horizon"
     params:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
@@ -279,6 +303,8 @@ rule plot_balance_timeseries:
 
 
 rule plot_heatmap_timeseries:
+    message:
+        "Plotting heatmap time series visualization for {wildcards.horizon} planning horizon"
     params:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
@@ -316,6 +342,8 @@ STATISTICS_BARPLOTS = [
 
 
 rule plot_base_statistics:
+    message:
+        "Plotting base scenario statistics"
     params:
         plotting=config_provider("plotting"),
         barplots=STATISTICS_BARPLOTS,

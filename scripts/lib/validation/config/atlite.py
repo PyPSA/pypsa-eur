@@ -110,7 +110,7 @@ class AtliteConfig(BaseModel):
     """Configuration for `atlite` settings."""
 
     default_cutout: str | list[str] = Field(
-        "europe-1940-2024-era5",
+        "europe-2013-sarah3-era5",
         description="Defines a default cutout. Can refer to a single cutout or a list of cutouts.",
     )
     nprocesses: int = Field(
@@ -129,7 +129,7 @@ class AtliteConfig(BaseModel):
                 y=[33.0, 72.0],
                 dx=0.3,
                 dy=0.3,
-                time=["1940", "2024"],
+                time=["2013", "2013"],
                 chunks=_ChunksConfig(time=500),
                 prepare_kwargs=_PrepareKwargsConfig(
                     features=["temperature", "height", "runoff"],

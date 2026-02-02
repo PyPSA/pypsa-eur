@@ -63,6 +63,8 @@ d1gam3xoknrgr2.cloudfront.net/
 
 *~
 
+*.egg-info
+
 *.pyc
 
 *.xlsx
