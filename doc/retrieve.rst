@@ -48,7 +48,7 @@ The :ref:`tutorial` uses a smaller cutout than required for the full model (30 M
 
 .. seealso::
     Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`toplevel_cf`
+    :ref:`tutorial_cf` and :ref:`enable_cf`.
 
 **Outputs**
 
