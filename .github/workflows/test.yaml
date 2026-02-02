@@ -1,4 +1,4 @@
-name: Test workflows
+name: Test
 
 on:
   push:
@@ -18,8 +18,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  run-tests:
-    name: OS
+  unit-tests:
+    name: Unit
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.9.4
+      with:
+        pixi-version: v0.59.0
+        cache: true
+        cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
+
+    - name: Run unit tests
+      run: |
+        pixi run unit-tests
+
+  integration-tests:
+    name: Integration
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -44,7 +66,6 @@ jobs:
             - 'data/**'
             - 'Snakefile'
             - 'config/**'
-            - 'test/**'
             - 'pixi.toml'
             - 'pixi.lock'
             - '.github/workflows/test.yaml'
@@ -59,31 +80,41 @@ jobs:
         sudo docker builder prune -a --force
         echo "Final disk space"
         df -h
+
     - name: Skip - no source changes
       if: steps.filter.outputs.src != 'true' && github.event_name != 'schedule'
       run: echo "Skipping tests because no source code changes detected"
 
     - name: Setup Pixi
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
-      uses: prefix-dev/setup-pixi@v0.9.3
+      uses: prefix-dev/setup-pixi@v0.9.4
       with:
         pixi-version: v0.59.0
         cache: true
-        # Do not cache in branches
-        cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+        cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
 
     - name: Setup cache keys
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       run: |
-        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
+        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data
+        echo "MONTH=$(date +'%Y%m')" >> $GITHUB_ENV # cutouts
+        echo "VERSIONS_HASH=${{ hashFiles('data/versions.csv') }}" >> $GITHUB_ENV
 
     - uses: actions/cache@v5
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       with:
-        path: |
-          data
-          cutouts
-        key: data-cutouts-${{ env.WEEK }}
+        path: data
+        key: data-${{ env.WEEK }}-${{ env.VERSIONS_HASH }}
+
+    - uses: actions/cache@v5
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      with:
+        path: cutouts
+        key: cutouts-${{ env.MONTH }}
+
+    - name: Restore git-tracked files in data/
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      run: git checkout HEAD -- data/
 
     - name: Run pylint check on scripts
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
@@ -98,11 +129,6 @@ jobs:
         SNAKEMAKE_STORAGE_CACHED_HTTP_SKIP_REMOTE_CHECKS: "1"
       run: |
         pixi run integration-tests
-
-    - name: Run unit tests
-      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
-      run: |
-        pixi run unit-tests
 
     - name: Upload artifacts
       if: always()
