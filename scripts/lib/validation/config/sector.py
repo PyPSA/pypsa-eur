@@ -38,6 +38,10 @@ class _SubnodesConfig(BaseModel):
         "Label",
         description="Name of the column in the single-system level data to use for subnode labels.",
     )
+    link_data_assumptions: bool = Field(
+        False,
+        description="Scale dh_areas demand to match district heating shares derived from config (per country).",
+    )
 
 
 class _DistrictHeatingConfig(ConfigModel):

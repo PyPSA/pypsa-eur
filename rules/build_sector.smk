@@ -1469,6 +1469,7 @@ rule identify_district_heating_subnodes:
     input:
         dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        dh_city_lookup=resources("dh_city_lookup.csv"),
     output:
         dh_subnodes=resources("dh_subnodes_base_s_{clusters}.geojson"),
         regions_onshore_extended=resources(

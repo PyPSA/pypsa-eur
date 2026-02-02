@@ -18,6 +18,42 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
+def _compute_useful_heat_for_cluster(
+    cluster: str,
+    pop_weighted_energy_totals: pd.DataFrame,
+    pop_weighted_heat_totals: pd.DataFrame,
+    heating_efficiencies: pd.DataFrame,
+    space_heat_reduction: float = 0.0,
+) -> float:
+    """
+    Compute total useful heat demand (MWh) for a cluster using space heat from
+    heat_totals and water heat from energy_totals.
+    """
+    ct = cluster[:2]
+    cluster_heat = _get_row(pop_weighted_heat_totals, cluster)
+    cluster_energy = _get_row(pop_weighted_energy_totals, cluster)
+
+    total_useful_heat_mwh = 0.0
+    for sector in ["residential", "services"]:
+        for use in ["water", "space"]:
+            col = f"total {sector} {use}"
+            eff_col = f"total {sector} {use} efficiency"
+            eff = (
+                _to_scalar(heating_efficiencies.loc[ct, eff_col])
+                if eff_col in heating_efficiencies.columns and ct in heating_efficiencies.index
+                else 1.0
+            )
+            if use == "space":
+                if col in cluster_heat.index:
+                    val = _to_scalar(cluster_heat[col])
+                    total_useful_heat_mwh += val * eff * (1 - space_heat_reduction) * 1e6
+            else:
+                if col in cluster_energy.index:
+                    val = _to_scalar(cluster_energy[col])
+                    total_useful_heat_mwh += val * eff * 1e6
+    return total_useful_heat_mwh
+
+
 def _to_scalar(val):
     """
     Convert a pandas Series, DataFrame, or array-like to a scalar float.
@@ -201,10 +237,13 @@ def extend_district_heat_share(
             #
             # The "original district heat share" stores the proportion of parent's
             # district heating demand that this subnode represents
+            # Share of parent's district heating demand (includes losses)
             original_share = demand_mwh / (
                 total_useful_heat_mwh * (1 + district_heating_loss)
             )
-            total_subnode_share += original_share
+            # Share of total useful heat served via subnodes (exclude DH losses)
+            urban_share = demand_mwh / (1 + district_heating_loss) / total_useful_heat_mwh
+            total_subnode_share += urban_share
 
             # Add entry for subnode with parent_node mapping for resource bus lookups
             extended_share.loc[name] = {
@@ -228,12 +267,23 @@ def extend_district_heat_share(
         original_urban_fraction = _to_scalar(
             extended_share.loc[cluster, "urban fraction before subnodes"]
         )
+        original_dist_fraction = _to_scalar(
+            extended_share.loc[cluster, "district fraction before subnodes"]
+        )
         if total_subnode_share >= 1.0:
             remaining_urban_fraction = 0.0
         else:
-            remaining_urban_fraction = max(
-                0.0, (original_urban_fraction - total_subnode_share) / (1 - total_subnode_share)
+            # Preserve absolute urban decentral load:
+            # (urban_dec_after)*(parent_heat) = (urban_dec_before)*(total_heat)
+            # => (u_after - dist_after)*(1 - s) = (u_before - dist_before)
+            u_before = original_urban_fraction
+            d_before = original_dist_fraction
+            d_after = new_cluster_fraction
+            s = total_subnode_share
+            remaining_urban_fraction = d_after + (u_before - d_before) / max(
+                1e-9, (1 - s)
             )
+            remaining_urban_fraction = max(0.0, min(1.0, remaining_urban_fraction))
         extended_share.loc[cluster, "urban fraction"] = remaining_urban_fraction
 
     return extended_share
@@ -279,6 +329,13 @@ def extend_pop_weighted_energy_totals(
         return pop_weighted_energy_totals.copy()
 
     extended_totals = pop_weighted_energy_totals.copy()
+    subnode_totals_dict = {}
+    # Heat-related columns we scale and later conserve
+    heat_cols = [
+        col
+        for col in extended_totals.columns
+        if any(x in col for x in ["water", "space", "heat"])
+    ]
 
     for _, subnode in subnodes.iterrows():
         cluster = subnode["cluster"]
@@ -330,11 +387,6 @@ def extend_pop_weighted_energy_totals(
         scale_factor = demand_mwh / (cluster_useful_heat * (1 + district_heating_loss))
 
         # Scale all heat-related columns (water, space, heat)
-        heat_cols = [
-            col
-            for col in subnode_totals.index
-            if any(x in col for x in ["water", "space", "heat"])
-        ]
         for col in heat_cols:
             cluster_val = _to_scalar(extended_totals.loc[cluster, col])
             subnode_totals[col] = cluster_val * scale_factor
@@ -342,7 +394,16 @@ def extend_pop_weighted_energy_totals(
         # Add subnode entry
         extended_totals.loc[name] = subnode_totals
 
-        # District fraction is reduced in extend_district_heat_share, not here
+        # Store for subtraction from parent
+        subnode_totals_dict.setdefault(cluster, []).append(subnode_totals)
+
+    # Subtract subnode heat columns from parent clusters to conserve totals
+    for cluster, subnode_list in subnode_totals_dict.items():
+        for col in heat_cols:
+            total_subnode = sum(
+                _to_scalar(sub[col]) for sub in subnode_list if col in sub.index
+            )
+            extended_totals.loc[cluster, col] -= total_subnode
 
     return extended_totals
 
@@ -752,6 +813,59 @@ if __name__ == "__main__":
         snakemake.input.heating_efficiencies, index_col=[1, 0]
     ).loc[energy_totals_year]
     industrial_demand = pd.read_csv(snakemake.input.industrial_demand, index_col=0)
+
+    # Optional: link dh_areas demand assumptions to current district heating shares
+    link_data_assumptions = snakemake.params.get(
+        "link_data_assumptions",
+        snakemake.config.get("sector", {})
+        .get("district_heating", {})
+        .get("subnodes", {})
+        .get("link_data_assumptions", False),
+    )
+
+    if link_data_assumptions and len(subnodes) > 0:
+        logger.info("Scaling subnode demands to match district heating shares from config")
+        # Pre-compute useful heat per cluster (MWh)
+        useful_heat = {
+            cluster: _compute_useful_heat_for_cluster(
+                cluster,
+                pop_weighted_energy_totals,
+                pop_weighted_heat_totals,
+                heating_efficiencies,
+                space_heat_reduction,
+            )
+            for cluster in pop_weighted_energy_totals.index
+        }
+
+        # Target DH demand per country based on configured district fractions
+        target_dh_by_ct = {}
+        for cluster, total_useful in useful_heat.items():
+            if cluster not in district_heat_share.index or total_useful == 0:
+                continue
+            ct = cluster[:2]
+            dist_frac = _to_scalar(district_heat_share.loc[cluster, "district fraction of node"])
+            target_dh_by_ct.setdefault(ct, 0.0)
+            target_dh_by_ct[ct] += dist_frac * total_useful * (1 + district_heating_loss)
+
+        # Current subnode DH demand per country
+        subnodes["ct"] = subnodes["cluster"].str[:2]
+        current_subnode_dh = subnodes.groupby("ct")["yearly_heat_demand_MWh"].sum()
+
+        # Scale subnodes per country
+        for ct, target in target_dh_by_ct.items():
+            if ct not in current_subnode_dh.index:
+                continue
+            current = current_subnode_dh.loc[ct]
+            if current <= 0 or target <= 0:
+                continue
+            scale = target / current
+            subnodes.loc[subnodes["ct"] == ct, "yearly_heat_demand_MWh"] *= scale
+            logger.info(
+                f"Country {ct}: scaling subnode DH demand by {scale:.2f} "
+                f"to match configured district heat share (target {target/1e6:.2f} TWh/a)"
+            )
+
+        subnodes = subnodes.drop(columns=["ct"])
 
     # Load time-series data
     hourly_heat_demand = xr.open_dataset(snakemake.input.hourly_heat_demand)
