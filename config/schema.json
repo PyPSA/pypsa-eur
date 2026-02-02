@@ -1220,7 +1220,8 @@
               "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
               "enum": [
                 "archive",
-                "primary"
+                "primary",
+                "build"
               ],
               "type": "string"
             },
@@ -1239,7 +1240,8 @@
               "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
               "enum": [
                 "archive",
-                "primary"
+                "primary",
+                "build"
               ],
               "type": "string"
             },
@@ -1258,7 +1260,8 @@
               "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
               "enum": [
                 "archive",
-                "primary"
+                "primary",
+                "build"
               ],
               "type": "string"
             },
@@ -2575,7 +2578,7 @@
               "type": "boolean"
             },
             "interpolate_limit": {
-              "default": 3,
+              "default": 6,
               "description": "Maximum gap size (consecutive nans) which interpolated linearly.",
               "type": "integer"
             },
@@ -6243,7 +6246,7 @@
           "type": "boolean"
         },
         "interpolate_limit": {
-          "default": 3,
+          "default": 6,
           "description": "Maximum gap size (consecutive nans) which interpolated linearly.",
           "type": "integer"
         },
@@ -9716,7 +9719,7 @@
               "type": "boolean"
             },
             "interpolate_limit": {
-              "default": 3,
+              "default": 6,
               "description": "Maximum gap size (consecutive nans) which interpolated linearly.",
               "type": "integer"
             },

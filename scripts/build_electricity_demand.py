@@ -157,13 +157,13 @@ def manual_adjustment(load, fn_load, countries):
     copy_timeslice(load, "MK", "2024-09-02 00:00", "2024-09-02 23:00", Delta(days=-1))
 
     copy_timeslice(load, "GB", "2018-12-14 21:00", "2018-12-15 02:00", Delta(days=1))
+    copy_timeslice(load, "IE", "2025-11-17 23:00", "2025-11-19 09:00", Delta(weeks=-1))
 
     # is a WE, so take WE before
     copy_timeslice(load, "CH", "2010-10-08 13:00", "2010-10-10 21:00", Delta(weeks=1))
 
     # longer stretch
     copy_timeslice(load, "NL", "2014-12-01 00:00", "2014-12-19 23:00", Delta(weeks=-3))
-    load.loc["2025-08":"2025-09", "NL"] = np.nan
 
     def _safe_where(df, col, pred):
         if col in df.columns:
@@ -177,6 +177,7 @@ def manual_adjustment(load, fn_load, countries):
     _safe_where(load, "BA", lambda s: s < 2650)
     _safe_where(load, "DK", lambda s: s < 6400)
     _safe_where(load, "MK", lambda s: s < 2000)
+    _safe_where(load, "PT", lambda s: s < 11000)
 
     # remove erroneous drops
     _safe_where(load, "EE", lambda s: s > 300)
@@ -189,6 +190,9 @@ def manual_adjustment(load, fn_load, countries):
     _safe_where(load, "SE", lambda s: s > 6000)
     _safe_where(load, "SI", lambda s: s > 400)
     _safe_where(load, "XK", lambda s: s > 200)
+    _safe_where(load, "PT", lambda s: s > 3000)
+    _safe_where(load, "AT", lambda s: s > 3000)
+    _safe_where(load, "BG", lambda s: s > 2000)
 
     _safe_setna(load, "2019-04-03 01:00", "BG")
     _safe_setna(load, "2019-10-29 01:00", "BG")
@@ -229,7 +233,7 @@ if __name__ == "__main__":
     )
 
     # supported year ranges
-    years = slice("2010", "2024")
+    years = slice("2010", "2025")
 
     interpolate_limit = snakemake.params.load["fill_gaps"]["interpolate_limit"]
     countries = snakemake.params.countries
@@ -250,7 +254,7 @@ if __name__ == "__main__":
     if "UA" in countries:
         # use 2021 as template for filling missing years
         s = load.loc["2021", "UA"]
-        fill_values = repeat_years(s, range(2010, 2025))
+        fill_values = repeat_years(s, range(2010, 2026))
         load["UA"] = load["UA"].combine_first(fill_values)
 
     if "MD" in countries:
@@ -262,20 +266,26 @@ if __name__ == "__main__":
     if "AL" in countries:
         # use 2024 as template for filling missing and erroneous years
         s = load.loc["2024", "AL"]
-        fill_values = repeat_years(s, range(2010, 2025))
+        fill_values = repeat_years(s, range(2010, 2026))
         load.loc[fill_values.index, "AL"] = fill_values
 
     if "BA" in countries:
         # use 2024 as template for filling missing and erroneous years
         s = load.loc["2024", "BA"]
-        fill_values = repeat_years(s, range(2010, 2025))
+        fill_values = repeat_years(s, range(2010, 2026))
         load["BA"] = load["BA"].combine_first(fill_values)
 
     if "XK" in countries:
         # use 2024 as template for filling missing and erroneous years
         s = load.loc["2024", "XK"]
-        fill_values = repeat_years(s, range(2010, 2025))
+        fill_values = repeat_years(s, range(2010, 2024))
         load["XK"] = load["XK"].combine_first(fill_values)
+
+    if "MK" in countries:
+        # use 2024 as template for filling missing and erroneous years
+        s = load.loc["2024", "MK"]
+        fill_values = repeat_years(s, range(2025, 2026))
+        load["MK"] = load["MK"].combine_first(fill_values)
 
     if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], countries)

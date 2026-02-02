@@ -98,10 +98,6 @@ None.
 
 - ``data/electricity_demand_neso_raw.csv``
 
-Rule ``retrieve_tyndp_bundle``
-=========================================
-
-.. automodule:: retrieve_tyndp_bundle
 
 Rule ``retrieve_cost_data``
 ================================

@@ -108,11 +108,11 @@ class DataConfig(BaseModel):
         description="OPSD electricity demand data source configuration.",
     )
     entsoe_electricity_demand: _DataSourceConfig = Field(
-        default_factory=lambda: _DataSourceConfig(source="primary"),
+        default_factory=lambda: _DataSourceConfig(source="archive"),
         description="ENTSO-E electricity demand data source configuration.",
     )
     neso_electricity_demand: _DataSourceConfig = Field(
-        default_factory=lambda: _DataSourceConfig(source="primary"),
+        default_factory=lambda: _DataSourceConfig(source="archive"),
         description="NESO electricity demand data source configuration.",
     )
     copernicus_land_cover: _DataSourceConfig = Field(

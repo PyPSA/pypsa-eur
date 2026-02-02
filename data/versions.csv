@@ -130,4 +130,6 @@ worldbank_urban_population,unknown,primary,latest might-work,2025-12-02,"This is
 worldbank_urban_population,2025-08-14,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/worldbank_urban_population/2025-08-14/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_22447.zip
 opsd_electricity_demand,unknown,primary,latest supported,2026-02-02,"multiple versions concatenated",https://data.open-power-system-data.org/time_series/
 entsoe_electricity_demand,unknown,primary,latest supported,2026-02-02,"API request using entsoe-py package",https://transparency.entsoe.eu/load/total/dayAhead
+entsoe_electricity_demand,2026-02-02,archive,latest supported,2026-02-02,"TODO https://data.pypsa.org/workflows/eur/entsoe_electricity_demand/2026-02-02/electricity_demand_entsoe_raw.csv","https://tubcloud.tu-berlin.de/s/qKKdAiNeDxFscDH/download/electricity_demand_entsoe_raw.csv"
 neso_electricity_demand,unknown,primary,latest supported,2026-02-02,,https://www.neso.energy/data-portal/historic-demand-data
+neso_electricity_demand,2026-02-02,archive,latest supported,2026-02-02,TODO https://data.pypsa.org/workflows/eur/neso_electricity_demand/2026-02-02/electricity_demand_neso_raw.csv,"https://tubcloud.tu-berlin.de/s/FXqNyrbbiSEoH9a/download/electricity_demand_neso_raw.csv"

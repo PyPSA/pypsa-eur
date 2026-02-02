@@ -486,7 +486,7 @@ transformers:
 load:
   fill_gaps:
     enable: true
-    interpolate_limit: 3
+    interpolate_limit: 6
     time_shift_for_large_gaps: 1w
   manual_adjustments: true
   scaling_factor: 1.0
@@ -1321,10 +1321,10 @@ data:
     source: primary
     version: latest
   entsoe_electricity_demand:
-    source: primary
+    source: archive
     version: latest
   neso_electricity_demand:
-    source: primary
+    source: archive
     version: latest
   copernicus_land_cover:
     source: primary
