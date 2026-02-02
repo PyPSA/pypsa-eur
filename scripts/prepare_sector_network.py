@@ -3290,7 +3290,7 @@ def add_heat(
                         heat_source=heat_source.value, name=nodes
                     )
                     .to_pandas()
-                    .T.reindex(index=n.snapshots)
+                    .reindex(index=n.snapshots)
                 )
 
                 n.add(
@@ -3325,7 +3325,7 @@ def add_heat(
                         heat_source=heat_source.value, name=nodes
                     )
                     .to_pandas()
-                    .T.reindex(index=n.snapshots)
+                    .reindex(index=n.snapshots)
                 )
 
                 # add link for direct usage of heat source when source temperature exceeds forward temperature
