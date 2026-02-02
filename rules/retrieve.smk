@@ -513,7 +513,7 @@ if (
             copy2(input["csv"], output["csv"])
 
 
-if ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas")["source"] in [
+if (ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas"))["source"] in [
     "primary",
     "archive",
 ]:
@@ -528,11 +528,13 @@ if ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas")["source"] in [
             copy2(input["tif"], output["tif"])
 
 
-if DESNZ_ELECTRICITY_CONSUMPTION_DATASET := dataset_version(
-    "desnz_electricity_consumption"
+if (
+    DESNZ_ELECTRICITY_CONSUMPTION_DATASET := dataset_version(
+        "desnz_electricity_consumption"
+    )
 )["source"] in ["primary", "archive"]:
 
-    rule retrieve_electricity_demand_subnational_gb:
+    rule retrieve_desnz_electricity_consumption:
         input:
             xlsx=storage(DESNZ_ELECTRICITY_CONSUMPTION_DATASET["url"]),
         output:
@@ -542,9 +544,9 @@ if DESNZ_ELECTRICITY_CONSUMPTION_DATASET := dataset_version(
             copy2(input["xlsx"], output["xlsx"])
 
 
-if ONS_LAD_DATASET := dataset_version("ons_lad")["source"] in ["primary"]:
+if (ONS_LAD_DATASET := dataset_version("ons_lad"))["source"] in ["primary"]:
 
-    rule retrieve_local_authorities_uk:
+    rule retrieve_ons_lad:
         output:
             geojson=f"{ONS_LAD_DATASET['folder']}/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
         run:

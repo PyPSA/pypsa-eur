@@ -32,6 +32,7 @@ country_runoff,2025-08-13,primary,latest supported,2025-12-02,,https://zenodo.or
 country_runoff,2025-08-13,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/country_runoff/2025-08-13/era5-runoff-per-country.csv
 cutout,v1.0,archive,latest supported,2026-01-13,Pre-build cutouts for PyPSA-Eur,https://data.pypsa.org/workflows/cutout/v1.0
 cutout,unknown,build,latest supported,2025-12-02,Build latest cutouts using ERA5/SARAH3 data.,
+desnz_electricity_consumption,unknown,primary,latest supported,2026-02-02,,https://assets.publishing.service.gov.uk/media/6762951abe7b2c675de30705/Subnational_electricity_consumption_statistics_2005-2024.xlsx
 dh_areas,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg
 dh_areas,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/dh_areas/341.5/dh_areas.gpkg
 eez,v12_20231025,primary,latest supported,2025-12-02,API request used,https://www.marineregions.org/download_file.php
@@ -67,6 +68,7 @@ hotmaps_industrial_sites,version-1.0,primary,not-supported,2025-12-02,Required r
 hotmaps_industrial_sites,unknown,primary,latest supported,2025-12-02,,https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv
 jrc_ardeco,2021,primary,latest supported,2025-12-02,,https://territorial.ec.europa.eu/ardeco-api-v2/rest/export/
 jrc_ardeco,2021,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_ardeco/2021
+jrc_energy_atlas,unknown,primary,latest supported,2026-02-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EIGL-Data/RASTER/electricity_tot_demand_2019.tif
 jrc_idees,unknown,primary,latest supported,2025-12-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1/JRC-IDEES-2021.zip
 jrc_idees,2024-05-20,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_idees/2024-05-20/JRC-IDEES-2021.zip
 lau_regions,2019,primary,latest supported,2025-12-02,,https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip
@@ -88,6 +90,7 @@ nitrogen_statistics,2022,primary,latest supported,2025-12-02,,https://d9-wret.s3
 nitrogen_statistics,2022,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2022/nitro-ert.xlsx
 nuts3_population,13-03-2025,primary,latest supported,2025-12-02,,https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp?format=TSV&compressed=true
 nuts3_population,13-03-2025,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/nuts3_population/13-03-2025/nama_10r_3popgdp.tsv.gz
+ons_lad,may-2024,primary,latest supported,2026-02-02,API request used,https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Local_Authority_Districts_May_2024_Boundaries__UK_BSC/FeatureServer/0/query
 osm,unknown,build,latest supported,2025-12-02,Latest dataset built using OSM data. No single URL available to access the data. See the related scripts and documentation for details.,
 osm,0.6,primary,latest supported,2026-01-13,,https://zenodo.org/records/14144752/files
 osm,0.6,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.6
@@ -128,6 +131,3 @@ wdpa_marine,unknown,primary,latest supported,2025-12-02,"WDPA maritime changes i
 wdpa_marine,2025-07,archive,latest supported,2025-12-02,"We are legally not allowed to redistribute this dataset, luckily the web archive is keeping copies of it.",https://web.archive.org/web/20250715084308if_/https%3A//d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_Jul2025_Public_marine_shp.zip
 worldbank_urban_population,unknown,primary,latest might-work,2025-12-02,"This is the original World Bank API link, which is sometimes updated; it is not guaranteed to work with the current codebase and data changes without notice.",https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv
 worldbank_urban_population,2025-08-14,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/worldbank_urban_population/2025-08-14/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_22447.zip
-jrc_energy_atlas,primary,latest,latest supported,2026-02-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EIGL-Data/RASTER/electricity_tot_demand_2019.tif
-desnz_electricity_consumption,primary,unknown,latest supported,,http://assets.publishing.service.gov.uk/media/6762951abe7b2c675de30705/Subnational_electricity_consumption_statistics_2005-2024.xlsx
-ons_lad,primary,unknown,latest supported,2026-02-02,API request used,https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Local_Authority_Districts_May_2024_Boundaries__UK_BSC/FeatureServer/0/query"

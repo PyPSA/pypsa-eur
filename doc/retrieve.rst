@@ -58,32 +58,18 @@ The :ref:`tutorial` uses a smaller cutout than required for the full model (30 M
     For details see :mod:`build_cutout` and read the `atlite documentation <https://atlite.readthedocs.io>`__.
 
 
-
-Rule ``retrieve_electricity_demand``
-====================================
-
-This rule downloads hourly electric load data for each country from the `OPSD platform <https://data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv>`__.
-
-**Relevant Settings**
-
-None.
-
-**Outputs**
-
-- ``data/electricity_demand_raw.csv``
-
 Rule ``retrieve_electricity_demand_energy_atlas``
 =================================================
 
 This rule downloads 1km by 1km raster of estimated annual electricity demand from the `JRC Energy Atlas <https://energy-industry-geolab.jrc.ec.europa.eu/energy-atlas/>`__ .
 
-Rule ``retrieve_electricity_demand_subnational_gb``
-===================================================
+Rule ``retrieve_desnz_electricity_consumption``
+================================================
 
 This rule downloads subnational electricity consumption data for Great Britain from the `Department for Energy Security and Net Zero <https://www.gov.uk/government/statistics/regional-and-local-authority-electricity-consumption-statistics>`__ .
 
-Rule ``retrieve_local_authorities_uk``
-======================================
+Rule ``retrieve_ons_lad``
+=========================
 
 This rule downloads shapefiles of local authorities in the United Kingdom from the `Office for National Statistics <https://geoportal.statistics.gov.uk/datasets/ons::local-authority-districts-may-2024-boundaries-uk-bsc-2/about>`__ .
 
