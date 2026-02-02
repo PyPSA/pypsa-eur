@@ -1413,6 +1413,7 @@ data:
     version: latest
   ons_lad:
     source: primary
+    version: latest
   bidding_zones_electricitymaps:
     source: archive
     version: latest
