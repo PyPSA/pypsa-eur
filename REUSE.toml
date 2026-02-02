@@ -19,7 +19,9 @@ path = [
     "pixi.lock",
     "matplotlibrc",
     "envs/*.pin.txt",
-    "envs/environment.yaml"
+    "envs/environment.yaml",
+    "config/config.default.yaml",
+    "config/schema.json"
 ]
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
 SPDX-License-Identifier = "CC0-1.0"
