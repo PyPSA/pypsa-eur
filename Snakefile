@@ -6,7 +6,10 @@ from pathlib import Path
 import yaml
 from os.path import normpath, exists, join
 from shutil import copyfile, move, rmtree
+from dotenv import load_dotenv
 from snakemake.utils import min_version
+
+load_dotenv()
 
 min_version("8.11")
 
