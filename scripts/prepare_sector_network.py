@@ -4962,13 +4962,14 @@ def add_industry(
         industrial_loads = industrial_elec_profiles.rename(
             columns=lambda x: f"{x} industry electricity"
         )
+        industrial_loads = industrial_loads.reindex(columns=industrial_loads.columns)
 
         n.add(
             "Load",
             industrial_loads.columns,
-            bus=industrial_elec_profiles.columns.tolist(), 
+            bus=industrial_loads.columns.str.replace(" industry electricity", ""),
             carrier="industry electricity",
-            p_set=industrial_loads, 
+            p_set=industrial_loads,
         )
 
     else:

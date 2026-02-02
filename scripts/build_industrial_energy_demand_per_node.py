@@ -39,6 +39,29 @@ from scripts._helpers import (
 logger = logging.getLogger(__name__)
 
 # Industry category to FfE profile mapping dictionary
+# 
+# Note: FfE profiles missing "Industry (total)" (#0), "Chemical Industry" (#2) and "Non-ferrous Metals" (#3)
+# 
+# CHEMICAL SECTORS → "Paper, Pulp and Print"
+# Based on Ganz et al. (2021): "Sowohl Papier- als auch Chemieindustrie weisen verhältnismäßig 
+# konstante Verbräuche im Wochenverlauf auf, da ein Großteil der Prozesse in diesen Branchen im 
+# Dauervollbetrieb fährt" [Both paper and chemical industries show relatively constant weekly 
+# consumption due to continuous full-load operation of most processes].
+# Applies to: Ammonia (Haber-Bosch), Chlorine (chlor-alkali), Methanol (catalytic synthesis)
+# 
+# NON-FERROUS METALS → "Iron & steel industry"
+# Due to missing "Non-ferrous Metals" profile, all non-ferrous metal production mapped to 
+# "Iron & steel industry" based on shared continuous/semi-continuous metal production characteristics.
+# Includes: Aluminium (primary/secondary), Alumina, and other non-ferrous metals (Cu, Zn, Pb, etc.)
+#
+# PHARMACEUTICALS → "Food and Tobacco"
+# Mapped due to similar batch production, quality control requirements, climate-controlled 
+# environments, and reduced weekend production (not continuous 24/7 like paper/chemicals/metals).
+#
+# Reference: Ganz, K., Guminski, A., Kolb, M., & von Roon, S. (2021). Wie können europäische 
+# Branchen-Lastgänge die Energiewende im Industriesektor unterstützen? ew - Magazin für die 
+# Energiewirtschaft, 120(11), 42-45.
+
 INDUSTRY_CATEGORY_TO_PROFILE = {
     "Electric arc": "Iron & steel industry",
     "DRI + Electric arc": "Iron & steel industry",
@@ -46,7 +69,7 @@ INDUSTRY_CATEGORY_TO_PROFILE = {
     "HVC": "Non-metallic Minerals",
     "HVC (mechanical recycling)": "Non-metallic Minerals",
     "HVC (chemical recycling)": "Non-metallic Minerals",
-    "Ammonia": "Paper, Pulp and Print", # approx. profile
+    "Ammonia": "Paper, Pulp and Print",  
     "Chlorine": "Paper, Pulp and Print",
     "Methanol": "Paper, Pulp and Print",
     "Other chemicals": "Paper, Pulp and Print",
@@ -83,6 +106,8 @@ def load_ffe_load_profiles(json_file):
     id_to_profile = {
         # 0: "Industry (total)", # missing
         1: "Iron & steel industry",
+        # 2: "Chemical Industry", # missing
+        # 3: "Non-ferrous Metals", # missing
         4: "Non-metallic Minerals",
         5: "Transport Equipment",
         6: "Machinery",
@@ -112,7 +137,7 @@ def load_ffe_load_profiles(json_file):
 
 
 def create_nodal_electricity_profiles(
-    nodal_df, nodal_sector_df, snapshots, ffe_profiles, industry_category_to_profile=INDUSTRY_CATEGORY_TO_PROFILE
+    nodal_df, nodal_sector_df, snapshots, ffe_profiles
 ):
     """Create hourly electricity demand profiles for each node."""
 
@@ -134,13 +159,13 @@ def create_nodal_electricity_profiles(
         node_profile = pd.Series(0.0, index=ffe_profiles.index)
 
         for sector, demand in sector_demands.items():
-            profile_name = industry_category_to_profile[sector]
+            profile_name = INDUSTRY_CATEGORY_TO_PROFILE[sector]
             if profile_name not in ffe_profiles.columns:
                 raise ValueError(f"Profile '{profile_name}' for sector '{sector}' not in FfE data")
             node_profile += ffe_profiles[profile_name] * demand
 
         # Map profile to snapshots with correct day-of-week alignment
-        hourly_profile = map_profile_to_snapshots(node_profile, snapshots, node_country=node[:2], tol=0.02) # Tolerance increased to 2% to account for holiday replacement and date adjustments
+        hourly_profile = map_profile_to_snapshots(node_profile, snapshots, node_country=node[:2], tol=0.03) # Tolerance increased to 3% to account for holiday replacement and leap year
         # Save in MW
         nodal_profiles[node] = hourly_profile * 1e6 
 
@@ -155,126 +180,127 @@ def create_nodal_electricity_profiles(
     return nodal_profiles
 
 
-def map_profile_to_snapshots(reference_profile, snapshots, node_country='DE', tol=0.02):
+def map_profile_to_snapshots(reference_profile, snapshots, node_country='DE', tol=0.03):
     """
-    Map 2017 German reference profile to target snapshots by weekday rotation.
+    Map 2017 reference profile to target snapshots by weekday rotation.
     
     Process:
-    1. Remove German holidays from 2017 reference (replace with weekday-hour avg)
-    2. Rotate and map to target year
-    3. Replace target country's holidays with Sunday-hour averages (if available)
-    4. Scale once at the end
+    1. Compute average day profiles (by dayofweek and hour)
+    2. Replace German holidays in 2017 reference with weekday-hour averages
+    3. Shift by day drift and remap to target year
+    4. Handle leap year if needed
+    5. Replace target country holidays with Sunday profile
+    6. Optionally drop leap day if not in snapshots
+    7. Scale to preserve energy
+    
+    Parameters
+    ----------
+    reference_profile : pd.Series
+        Normalized load profile from 2017 with DatetimeIndex
+    snapshots : pd.DatetimeIndex
+        Target snapshots to map to
+    node_country : str
+        Two-letter country code for holiday replacement (default: 'DE')
+    tol : float
+        Tolerance for energy deviation (default: 0.03 = 3%)
+    
+    Returns
+    -------
+    pd.Series
+        Mapped profile with snapshots as index, scaled to preserve total energy
     """
-
+    
     original_energy = reference_profile.sum()
-    
     target_year = snapshots[0].year
-    is_target_leap = (target_year % 4 == 0 and target_year % 100 != 0) or (target_year % 400 == 0)
-    feb29_in_snapshots = any((snapshots.month == 2) & (snapshots.day == 29))
+    source_year = 2017
     
-    # Detect if Feb 29 was dropped from leap year
-    feb29_was_dropped = False
-    if is_target_leap and not feb29_in_snapshots:
-        feb28 = snapshots[(snapshots.month == 2) & (snapshots.day == 28)]
-        mar1 = snapshots[(snapshots.month == 3) & (snapshots.day == 1)]
-        if len(feb28) > 0 and len(mar1) > 0:
-            feb29_was_dropped = (feb28[0].dayofweek + 1) % 7 != mar1[0].dayofweek
+    s = reference_profile.copy()
     
-    # STEP 1: Replace GERMAN holidays in 2017 reference with weekday-hour averages
-    reference_profile = reference_profile.copy()
-    de_holidays = holidays.country_holidays('DE', years=2017)
+    # STEP 1: Compute average day profiles (dayofweek, hour)
+    average_days = s.groupby([s.index.dayofweek, s.index.hour]).mean()
+    
+    # STEP 2: Normalize German holidays in source data
+    de_holidays = holidays.country_holidays('DE', years=source_year)
     holiday_dates_de = pd.to_datetime(list(de_holidays.keys()))
-    holiday_mask_de = reference_profile.index.normalize().isin(holiday_dates_de)
+    is_holiday_source = s.index.normalize().isin(holiday_dates_de)
     
-    if holiday_mask_de.any():
-        non_holiday_mask_de = ~holiday_mask_de
-        weekday_hour_avg = reference_profile[non_holiday_mask_de].groupby(
-            [reference_profile[non_holiday_mask_de].index.dayofweek,
-            reference_profile[non_holiday_mask_de].index.hour]
-        ).mean()
-        
-        holiday_keys = pd.MultiIndex.from_arrays([
-            reference_profile[holiday_mask_de].index.dayofweek,
-            reference_profile[holiday_mask_de].index.hour
-        ])
-        reference_profile.loc[holiday_mask_de] = weekday_hour_avg.reindex(holiday_keys).values
+    if is_holiday_source.any():
+        s.loc[is_holiday_source] = (
+            s.loc[is_holiday_source]
+            .index.map(lambda i: average_days.loc[(i.dayofweek, i.hour)])
+            .to_numpy()
+        )
     
-    # STEP 2: Rotate reference by weekday offset
-    ref_jan1_dow = pd.Timestamp('2017-01-01').dayofweek 
-    target_jan1_dow = pd.Timestamp(f'{target_year}-01-01').dayofweek
-    offset_days = (target_jan1_dow - ref_jan1_dow) % 7
-    offset_hours = offset_days * 24
-    
-    rotated_values = np.roll(reference_profile.values, -offset_hours)
-    rotated = pd.Series(rotated_values, index=reference_profile.index)
-    
-    # Create (month, day, hour) lookup
-    ref_lookup = pd.Series(
-        rotated.values,
-        index=pd.MultiIndex.from_arrays([
-            rotated.index.month,
-            rotated.index.day,
-            rotated.index.hour
-        ])
+    # STEP 3: Add day drift
+    day_drift = (
+        pd.Timestamp(source_year, 1, 1).dayofweek
+        - pd.Timestamp(target_year, 1, 1).dayofweek
     )
     
-    # Build snapshot keys - adjust for dropped Feb 29 if needed
-    snap_dates = snapshots.to_series()
-    if feb29_was_dropped:
-        snap_dates = snap_dates.copy()
-        snap_dates[snap_dates.dt.month >= 3] -= pd.Timedelta(days=1)
+    ts = s.shift(day_drift, freq="D")
+    ts.index = ts.index.map(lambda t: t.replace(year=target_year))
+    ts = ts.sort_index()
     
-    snap_keys = pd.MultiIndex.from_arrays([
-        snap_dates.dt.month,
-        snap_dates.dt.day,
-        snap_dates.dt.hour
-    ])
+    # STEP 4: Handle leap year
+    is_target_leap = (target_year % 4 == 0 and target_year % 100 != 0) or (target_year % 400 == 0)
     
-    # Vectorized mapping
-    mapped = pd.Series(ref_lookup.reindex(snap_keys).values, index=snapshots)
-    
-    # Fill NaNs (Feb 29 if present) with weekday-hour averages
-    if mapped.isna().any():
-        fallback = reference_profile.groupby(
-            [reference_profile.index.dayofweek, reference_profile.index.hour]
-        ).mean()
+    if is_target_leap:
+        # Shift dates after March back by 1 day
+        ts.index = ts.index.where(ts.index.month < 3, ts.index - pd.Timedelta(days=1))
         
-        missing = mapped.isna()
-        mapped.loc[missing] = fallback.reindex(
-            pd.MultiIndex.from_arrays([
-                snapshots[missing].dayofweek,
-                snapshots[missing].hour
-            ])
-        ).values
+        # Add extra day at end of year using appropriate weekday profile
+        extra_day_i = pd.date_range(f"{target_year}-12-31", periods=24, freq="h")
+        extra_day_dow = extra_day_i[0].dayofweek
+        
+        extra_day = pd.Series(
+            [average_days.loc[(extra_day_dow, h)] for h in range(24)],
+            index=extra_day_i
+        )
+        ts = pd.concat([ts, extra_day]).sort_index()
     
-    # STEP 3: Replace TARGET COUNTRY holidays with Sunday-hour averages
+    # STEP 5: Impose target country holidays (replace with Sunday profile)
     try:
         target_holidays = holidays.country_holidays(node_country, years=target_year)
-        target_holiday_dates = pd.to_datetime(list(target_holidays.keys()))
-        target_holiday_mask = snapshots.normalize().isin(target_holiday_dates)
+        holiday_dates_target = pd.to_datetime(list(target_holidays.keys()))
+        is_holiday_target = ts.index.normalize().isin(holiday_dates_target)
         
-        if target_holiday_mask.any():
-            non_target_holiday = ~target_holiday_mask
-            sunday_mask = snapshots[non_target_holiday].dayofweek == 6
-            
-            if sunday_mask.any():
-                sunday_hour_avg = mapped[non_target_holiday][sunday_mask].groupby(
-                    snapshots[non_target_holiday][sunday_mask].hour
-                ).mean()
-                
-                target_holiday_hours = snapshots[target_holiday_mask].hour
-                mapped.loc[target_holiday_mask] = sunday_hour_avg.reindex(target_holiday_hours).values
-    
+        if is_holiday_target.any():
+            ts.loc[is_holiday_target] = (
+                ts.loc[is_holiday_target]
+                .index.map(lambda i: average_days.loc[(6, i.hour)])  # 6 = Sunday
+                .to_numpy()
+            )
     except NotImplementedError:
         logger.warning(f"Country '{node_country}' not available in holidays library - skipping holiday replacement")
     
-    # STEP 4: Energy preservation
-    scaling_factor = original_energy / mapped.sum()
+    # STEP 6: Drop leap day if not in snapshots
+    feb29_in_snapshots = any((snapshots.month == 2) & (snapshots.day == 29))
+    
+    if not feb29_in_snapshots and is_target_leap:
+        ts = ts[~((ts.index.month == 2) & (ts.index.day == 29))]
+    
+    # STEP 7: Align with provided snapshots (in case of partial year or different resolution)
+    # Reindex to match exact snapshots
+    ts = ts.reindex(snapshots, method=None)
+    
+    # Handle any remaining NaNs (shouldn't happen with full year data)
+    if ts.isna().any():
+        missing_mask = ts.isna()
+        ts.loc[missing_mask] = (
+            snapshots[missing_mask]
+            .map(lambda i: average_days.loc[(i.dayofweek, i.hour)])
+            .to_numpy()
+        )
+    
+    # STEP 8: Scale to preserve original energy
+    scaling_factor = original_energy / ts.sum()
+    
     assert abs(scaling_factor - 1.0) < tol, (
-        f"Energy deviation after mapping: {(scaling_factor - 1.0) * 100:.2f}%"
+        f"Energy deviation after mapping: {(scaling_factor - 1.0) * 100:.2f}% "
+        f"(tolerance: {tol*100:.1f}%)"
     )
     
-    return mapped * scaling_factor
+    return ts * scaling_factor
 
 
 if __name__ == "__main__":
