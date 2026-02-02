@@ -193,7 +193,6 @@ def input_custom_extra_functionality(w):
     return []
 
 
-<<<<<<< HEAD
 def output_model(path_template):
     def _output_model(w):
         if config_provider("solving", "options", "store_model")(w):
