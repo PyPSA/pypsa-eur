@@ -20,7 +20,7 @@ class _EmissionPricesConfig(ConfigModel):
         False,
         description="Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. Config setting can also be enabled with the keyword `Ep` in the `{opts}` wildcard for electricity-only runs.",
     )
-    co2: float | dict[str, float] = Field(
+    co2: float | dict[int, float] = Field(
         0.0,
         description="Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere.",
     )

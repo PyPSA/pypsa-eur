@@ -5,7 +5,6 @@ SPDX-PackageDownloadLocation = "https://github.com/pypsa/pypsa-eur"
 
 [[annotations]]
 path = [
-    "doc/configtables/*",
     "doc/data_inventory.csv",
     "doc/img/*",
     "test/test_data/*",
