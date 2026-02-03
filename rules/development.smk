@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 
-def get_osm_network_old(
+def get_osm_network_incumbent(
     version: str,
     float=0.6,
     source: str = "archive",
@@ -37,10 +37,10 @@ def get_osm_network_old(
     return dataset
 
 
-def input_base_network_to_compare(w):
+def input_base_network_incumbent(w):
     version = config_provider("osm_network_release", "compare_to", "version")(w)
     source = config_provider("osm_network_release", "compare_to", "source")(w)
-    osm_dataset = get_osm_network_old(version, source)
+    osm_dataset = get_osm_network_incumbent(version, source)
     osm_path = osm_dataset["folder"]
     components = {"buses", "lines", "links", "converters", "transformers"}
 
@@ -49,7 +49,7 @@ def input_base_network_to_compare(w):
     return inputs
 
 
-OSM_DATASET_OLD = get_osm_network_old(
+OSM_DATASET_INCUMBENT = get_osm_network_incumbent(
     version=config.get("osm_network_release", {})
     .get("compare_to", {})
     .get("version", "0.6"),
@@ -58,29 +58,29 @@ OSM_DATASET_OLD = get_osm_network_old(
     .get("source", "archive"),
 )
 
-OSM_ARCHIVE_FILES_OLD = [
+OSM_ARCHIVE_FILES_INCUMBENT = [
     "buses.csv",
     "converters.csv",
     "lines.csv",
     "links.csv",
     "transformers.csv",
     # Newer versions include the additional map.html file for visualisation
-    *(["map.html"] if float(OSM_DATASET_OLD["version"]) >= 0.6 else []),
+    *(["map.html"] if float(OSM_DATASET_INCUMBENT["version"]) >= 0.6 else []),
 ]
 
 
-rule retrieve_osm_archive_old:
+rule retrieve_osm_archive_incumbent:
     message:
         "Retrieving OSM archive data"
     input:
         **{
-            file: storage(f"{OSM_DATASET_OLD['url']}/{file}")
-            for file in OSM_ARCHIVE_FILES_OLD
+            file: storage(f"{OSM_DATASET_INCUMBENT['url']}/{file}")
+            for file in OSM_ARCHIVE_FILES_INCUMBENT
         },
     output:
         **{
-            file: f"{OSM_DATASET_OLD['folder']}/{file}"
-            for file in OSM_ARCHIVE_FILES_OLD
+            file: f"{OSM_DATASET_INCUMBENT['folder']}/{file}"
+            for file in OSM_ARCHIVE_FILES_INCUMBENT
         },
     log:
         "logs/retrieve_osm_archive.log",
@@ -92,7 +92,7 @@ rule retrieve_osm_archive_old:
             copy2(input[key], output[key])
 
 
-rule base_network_to_compare:
+rule base_network_incumbent:
     message:
         "Building base network to which to compare against."
     params:
@@ -105,7 +105,7 @@ rule base_network_to_compare:
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
     input:
-        unpack(input_base_network_to_compare),
+        unpack(input_base_network_incumbent),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
