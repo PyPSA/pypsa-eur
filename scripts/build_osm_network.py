@@ -1455,28 +1455,40 @@ def _closest_voltage(voltage, voltage_list):
     return min(voltage_list, key=lambda x: abs(x - voltage))
 
 
-def _remove_under_construction(df, bool):
+def _treat_under_construction(df, decision, remove_after): # decision is "keep" or "remove"
     """
-    Removes elements that are under construction based on the provided boolean flag.
+    Keep or remove elements that are under construction based on the provided boolean flag.
 
     Parameters
     ----------
     df (pandas.DataFrame): The input DataFrame containing the data.
-    bool (bool): A boolean flag indicating whether to remove under construction elements.
+    decision (str): A string indicating whether to "keep" or "remove" elements under construction.
+    remove_after (str): A date-time string in 'YYYY-MM-DD' format. Elements under construction with a date after this will be removed.
 
     Returns
     -------
     pandas.DataFrame: The DataFrame with under construction elements removed if the flag is True.
     """
-    if bool:
+    if decision == "keep":
+        logger.info("Keeping elements under construction.")
+
+    elif decision == "remove":
         logger.info("Removing elements under construction...")
         len_before = len(df)
-        idx_remove = df.index[
-            df["construction"].notna() | df["construction:power"].notna()
-        ]
+        idx_remove = df.index[df["under_construction"].notna()]
         df = df.drop(index=idx_remove)
         len_after = len(df)
         logger.info(f"Removed {len_before - len_after} elements under construction.")
+
+    if remove_after is not None:
+        logger.info(f"Removing elements with a start date after {remove_after}...")
+        df["start_date"] = pd.to_datetime(df["start_date"], errors="coerce")
+        len_before = len(df)
+        idx_remove = df.index[df["start_date"] > pd.to_datetime(remove_after)]
+        df = df.drop(index=idx_remove)
+        len_after = len(df)
+        logger.info(f"Removed {len_before - len_after} elements with start date after {remove_after}.")
+
     return df
 
 
@@ -1563,19 +1575,27 @@ def build_network(
     country_shapes,
     voltages,
     line_types,
+    under_construction,
+    remove_after,
 ):
     logger.info("Reading input data.")
 
     # Buses
     buses = gpd.read_file(inputs["substations"])
     buses.drop(columns=["country"], inplace=True)
+    buses = _treat_under_construction(buses, decision=under_construction, remove_after=remove_after).drop(columns=["start_date"])
+
     buses_polygon = gpd.read_file(inputs["substations_polygon"])
+    buses_polygon = buses_polygon[
+        buses_polygon["bus_id"].isin(buses["bus_id"])
+    ] # Only keep buses that are in buses
     buses_polygon["bus_id"] = buses_polygon["bus_id"].apply(lambda x: x.split("-")[0])
     buses_polygon.drop_duplicates(subset=["bus_id", "geometry"], inplace=True)
     buses_polygon.drop(columns=["voltage"], inplace=True)
 
     # Lines
     lines = gpd.read_file(inputs["lines"])
+    lines = _treat_under_construction(lines, decision=under_construction, remove_after=remove_after).drop(columns=["start_date"])
     lines = _merge_identical_lines(lines)
 
     # Floor voltages to 3 decimal places (e.g., 66600 becomes 66000, 220000 stays 220000)
@@ -1652,7 +1672,10 @@ def build_network(
 
     ### DATA PROCESSING (DC)
     links = gpd.read_file(inputs["links"])
+    links = _treat_under_construction(links, decision=under_construction, remove_after=remove_after).drop(columns=["start_date"])
+
     converters_polygon = gpd.read_file(inputs["converters_polygon"])
+    converters_polygon = _treat_under_construction(converters_polygon, decision=under_construction, remove_after=remove_after).drop(columns=["start_date"])
 
     # Create DC buses
     dc_buses = _add_dc_buses(converters_polygon, links, buses, country_shapes)
@@ -1732,17 +1755,22 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     # Parameters
+    inputs=snakemake.input
+    country_shapes = gpd.read_file(snakemake.input["country_shapes"]).set_index("name")
     voltages = snakemake.params.voltages
     line_types = snakemake.params.line_types
-    country_shapes = gpd.read_file(snakemake.input["country_shapes"]).set_index("name")
+    under_construction = snakemake.params.under_construction
+    remove_after = snakemake.params.remove_after
 
     # Build network
     buses, converters, lines, links, transformers, stations_polygon, buses_polygon = (
         build_network(
-            inputs=snakemake.input,
-            country_shapes=country_shapes,
-            voltages=voltages,
-            line_types=line_types,
+            inputs,
+            country_shapes,
+            voltages,
+            line_types,
+            under_construction,
+            remove_after,
         )
     )
 

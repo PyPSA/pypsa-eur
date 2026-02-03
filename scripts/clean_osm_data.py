@@ -1724,7 +1724,7 @@ if __name__ == "__main__":
     )
     df_converters.reset_index(drop=True, inplace=True)
     gdf_converters = gpd.GeoDataFrame(
-        df_converters[["id", "geometry"]], geometry="geometry", crs=crs
+        df_converters[["id", "under_construction", "start_date", "geometry"]], geometry="geometry", crs=crs
     )
 
     ### Lines/Cables relations
@@ -1738,6 +1738,12 @@ if __name__ == "__main__":
 
     df_lines_cables_relation = df_routes_relation.copy()
     df_lines_cables_relation = _drop_duplicate_lines(df_lines_cables_relation)
+    df_lines_cables_relation["under_construction"] = (
+        df_lines_cables_relation["construction"].notna() | 
+        df_lines_cables_relation["construction:power"].notna()
+    )
+    df_lines_cables_relation["start_date"] = _clean_date(df_lines_cables_relation["start_date"])
+
     df_lines_cables_relation.loc[:, "voltage"] = _clean_voltage(
         df_lines_cables_relation["voltage"]
     )
@@ -1807,7 +1813,7 @@ if __name__ == "__main__":
 
     df_lines_cables_relation.rename(columns={"id": "line_id"}, inplace=True)
     df_lines_cables_relation = df_lines_cables_relation[
-        ["line_id", "circuits", "voltage", "geometry", "contains"]
+        ["line_id", "circuits", "voltage", "under_construction", "start_date", "geometry", "contains"]
     ]
     df_lines_cables_relation["circuits"] = df_lines_cables_relation["circuits"].astype(
         int

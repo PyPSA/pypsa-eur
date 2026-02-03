@@ -885,7 +885,7 @@ rule build_osm_network:
         countries=config_provider("countries"),
         voltages=config_provider("electricity", "voltages"),
         line_types=config_provider("lines", "types"),
-        include_construction=config_provider("osm_network_release", "include_construction"),
+        under_construction=config_provider("osm_network_release", "under_construction"),
         remove_after=config_provider("osm_network_release", "remove_after"),
     input:
         substations=resources(f"osm-network/clean/substations.geojson"),
