@@ -29,7 +29,7 @@ The following pre-built cutouts are available for download under
 
 .. _available-cutouts-start:
 
-**v1.0** (`browse <https://data.pypsa.org/workflows/cutout/v1.0>`__)
+**v1.0**
 
 .. list-table::
    :header-rows: 1
