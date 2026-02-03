@@ -1276,6 +1276,9 @@ data:
   worldbank_urban_population:
     source: archive
     version: latest
+  worldbank_commodity_prices:
+    source: primary
+    version: latest
   gem_europe_gas_tracker:
     source: archive
     version: latest

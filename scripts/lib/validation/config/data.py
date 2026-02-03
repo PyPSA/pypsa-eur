@@ -47,6 +47,10 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="World Bank urban population data source configuration.",
     )
+    worldbank_commodity_prices: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="World Bank commodity prices data source configuration.",
+    )
     gem_europe_gas_tracker: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="GEM Europe Gas Tracker data source configuration.",

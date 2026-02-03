@@ -394,7 +394,7 @@ rule build_fossil_fuel_prices:
     message:
         "Building fossil fuel price time series"
     input:
-        fuel_price_raw="data/validation/energy-price-trends-xlsx-5619002.xlsx",
+        fuel_price_raw=rules.retrieve_worldbank_commodity_prices.output["xlsx"],
     output:
         fuel_price=resources("monthly_fuel_price.csv"),
     log:
