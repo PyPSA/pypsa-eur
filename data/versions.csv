@@ -56,9 +56,9 @@ gebco,2014,archive,latest supported,2026-01-13,Earlier part of databundle,https:
 gem_europe_gas_tracker,may-2024,primary,latest supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
 gem_europe_gas_tracker,may-2024,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_europe_gas_tracker/may-2024/Europe-Gas-Tracker-2024-05.xlsx
 gem_gcct,july-2025,primary,latest supported,2026-02-02,,https://globalenergymonitor.org/wp-content/uploads/2025/07/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
-gem_gcct,july-2025,archive,latest supported,2026-02-02,,https://tubcloud.tu-berlin.de/s/yye3wTrrZqTak6Z/download/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
+gem_gcct,july-2025,archive,latest supported,2026-02-02,,https://data.pypsa.org/workflows/eur/gem_gcct/july-2025/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
 gem_gspt,march-2025-v1.1,primary,latest supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
-gem_gspt,march-2025-v1.1,archive,latest supported,2026-02-02,TODO https://data.pypsa.org/workflows/eur/gem_gspt/march-2025-v1.1/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx,https://tubcloud.tu-berlin.de/s/DQ3qFWtpMATJWkg/download/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
+gem_gspt,march-2025-v1.1,archive,latest supported,2026-02-02,,https://data.pypsa.org/workflows/eur/gem_gspt/march-2025-v1.1/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
 gem_gspt,april-2024-v1,archive,not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_gspt/april-2024-v1/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
 geothermal_heat_utilisation_potentials,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx
 geothermal_heat_utilisation_potentials,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/geothermal_heat_utilisation_potentials/341.5/Results_DH_Matching_Cluster.xlsx
