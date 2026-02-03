@@ -949,7 +949,7 @@ def get_available_storage_carriers(carriers):
     if not_implemented:
         logger.warning(
             "The following carriers are not implemented as storage technologies in PyPSA-Eur and will be skipped:\n - "
-             + "\n - ".join(sorted(not_implemented))
+            + "\n - ".join(sorted(not_implemented))
         )
 
     available_carriers = sorted(input_carriers & implemented)
