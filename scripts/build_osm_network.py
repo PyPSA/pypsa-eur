@@ -1455,7 +1455,9 @@ def _closest_voltage(voltage, voltage_list):
     return min(voltage_list, key=lambda x: abs(x - voltage))
 
 
-def _treat_under_construction(df, decision, remove_after): # decision is "keep" or "remove"
+def _treat_under_construction(
+    df, decision, remove_after
+):  # decision is "keep" or "remove"
     """
     Keep or remove elements that are under construction based on the provided boolean flag.
 
@@ -1487,7 +1489,9 @@ def _treat_under_construction(df, decision, remove_after): # decision is "keep" 
         idx_remove = df.index[df["start_date"] > pd.to_datetime(remove_after)]
         df = df.drop(index=idx_remove)
         len_after = len(df)
-        logger.info(f"Removed {len_before - len_after} elements with start date after {remove_after}.")
+        logger.info(
+            f"Removed {len_before - len_after} elements with start date after {remove_after}."
+        )
 
     return df
 
@@ -1583,19 +1587,23 @@ def build_network(
     # Buses
     buses = gpd.read_file(inputs["substations"])
     buses.drop(columns=["country"], inplace=True)
-    buses = _treat_under_construction(buses, decision=under_construction, remove_after=remove_after).drop(columns=["start_date"])
+    buses = _treat_under_construction(
+        buses, decision=under_construction, remove_after=remove_after
+    ).drop(columns=["start_date"])
 
     buses_polygon = gpd.read_file(inputs["substations_polygon"])
     buses_polygon = buses_polygon[
         buses_polygon["bus_id"].isin(buses["bus_id"])
-    ] # Only keep buses that are in buses
+    ]  # Only keep buses that are in buses
     buses_polygon["bus_id"] = buses_polygon["bus_id"].apply(lambda x: x.split("-")[0])
     buses_polygon.drop_duplicates(subset=["bus_id", "geometry"], inplace=True)
     buses_polygon.drop(columns=["voltage"], inplace=True)
 
     # Lines
     lines = gpd.read_file(inputs["lines"])
-    lines = _treat_under_construction(lines, decision=under_construction, remove_after=remove_after).drop(columns=["start_date"])
+    lines = _treat_under_construction(
+        lines, decision=under_construction, remove_after=remove_after
+    ).drop(columns=["start_date"])
     lines = _merge_identical_lines(lines)
 
     # Floor voltages to 3 decimal places (e.g., 66600 becomes 66000, 220000 stays 220000)
@@ -1672,10 +1680,14 @@ def build_network(
 
     ### DATA PROCESSING (DC)
     links = gpd.read_file(inputs["links"])
-    links = _treat_under_construction(links, decision=under_construction, remove_after=remove_after).drop(columns=["start_date"])
+    links = _treat_under_construction(
+        links, decision=under_construction, remove_after=remove_after
+    ).drop(columns=["start_date"])
 
     converters_polygon = gpd.read_file(inputs["converters_polygon"])
-    converters_polygon = _treat_under_construction(converters_polygon, decision=under_construction, remove_after=remove_after).drop(columns=["start_date"])
+    converters_polygon = _treat_under_construction(
+        converters_polygon, decision=under_construction, remove_after=remove_after
+    ).drop(columns=["start_date"])
 
     # Create DC buses
     dc_buses = _add_dc_buses(converters_polygon, links, buses, country_shapes)
@@ -1755,7 +1767,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     # Parameters
-    inputs=snakemake.input
+    inputs = snakemake.input
     country_shapes = gpd.read_file(snakemake.input["country_shapes"]).set_index("name")
     voltages = snakemake.params.voltages
     line_types = snakemake.params.line_types

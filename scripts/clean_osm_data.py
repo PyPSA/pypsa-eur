@@ -314,11 +314,11 @@ def _clean_date(column):
     """
     logger.info("Cleaning dates.")
     column = column.copy()
-    
+
     # Replace NaN/None with empty string first
     column = column.fillna("")
     column = column.replace({pd.NA: "", None: ""})
-    
+
     # Clean text indicators of uncertainty
     column = (
         column.astype(str)
@@ -334,17 +334,17 @@ def _clean_date(column):
         .str.replace("none", "", regex=False)
         .str.strip()  # Remove leading/trailing whitespace
     )
-    
+
     # Remove all remaining non-numeric characters except for dashes
     # Note: removed semicolons unless you have multi-date entries
     column = column.apply(lambda x: re.sub(r"[^0-9-]", "", x))
-    
+
     # Replace empty strings with NaN before datetime conversion
     column = column.replace("", np.nan)
-    
+
     # Convert to datetime (keeps NaT for invalid/missing dates)
-    column = pd.to_datetime(column, errors='coerce', format='mixed')
-    
+    column = pd.to_datetime(column, errors="coerce", format="mixed")
+
     # Return as datetime64, NOT string
     return column
 
@@ -1347,7 +1347,15 @@ def _import_substations(path_substations):
                 )
                 df["country"] = country
 
-                col_tags = ["power", "substation", "voltage", "frequency", "construction", "construction:power", "start_date"]
+                col_tags = [
+                    "power",
+                    "substation",
+                    "voltage",
+                    "frequency",
+                    "construction",
+                    "construction:power",
+                    "start_date",
+                ]
 
                 tags = pd.json_normalize(df["tags"]).map(
                     lambda x: str(x) if pd.notnull(x) else x
@@ -1681,8 +1689,8 @@ if __name__ == "__main__":
     df_substations["voltage"] = _clean_voltage(df_substations["voltage"])
     # Clean dates and construction status
     df_substations["under_construction"] = (
-        df_substations["construction"].notna() | 
-        df_substations["construction:power"].notna()
+        df_substations["construction"].notna()
+        | df_substations["construction:power"].notna()
     )
     df_substations["start_date"] = _clean_date(df_substations["start_date"])
 
@@ -1724,7 +1732,9 @@ if __name__ == "__main__":
     )
     df_converters.reset_index(drop=True, inplace=True)
     gdf_converters = gpd.GeoDataFrame(
-        df_converters[["id", "under_construction", "start_date", "geometry"]], geometry="geometry", crs=crs
+        df_converters[["id", "under_construction", "start_date", "geometry"]],
+        geometry="geometry",
+        crs=crs,
     )
 
     ### Lines/Cables relations
@@ -1739,10 +1749,12 @@ if __name__ == "__main__":
     df_lines_cables_relation = df_routes_relation.copy()
     df_lines_cables_relation = _drop_duplicate_lines(df_lines_cables_relation)
     df_lines_cables_relation["under_construction"] = (
-        df_lines_cables_relation["construction"].notna() | 
-        df_lines_cables_relation["construction:power"].notna()
+        df_lines_cables_relation["construction"].notna()
+        | df_lines_cables_relation["construction:power"].notna()
     )
-    df_lines_cables_relation["start_date"] = _clean_date(df_lines_cables_relation["start_date"])
+    df_lines_cables_relation["start_date"] = _clean_date(
+        df_lines_cables_relation["start_date"]
+    )
 
     df_lines_cables_relation.loc[:, "voltage"] = _clean_voltage(
         df_lines_cables_relation["voltage"]
@@ -1813,7 +1825,15 @@ if __name__ == "__main__":
 
     df_lines_cables_relation.rename(columns={"id": "line_id"}, inplace=True)
     df_lines_cables_relation = df_lines_cables_relation[
-        ["line_id", "circuits", "voltage", "under_construction", "start_date", "geometry", "contains"]
+        [
+            "line_id",
+            "circuits",
+            "voltage",
+            "under_construction",
+            "start_date",
+            "geometry",
+            "contains",
+        ]
     ]
     df_lines_cables_relation["circuits"] = df_lines_cables_relation["circuits"].astype(
         int
@@ -1849,8 +1869,7 @@ if __name__ == "__main__":
     df_lines.loc[:, "voltage"] = _clean_voltage(df_lines["voltage"])
     # Clean dates and construction status
     df_lines["under_construction"] = (
-        df_lines["construction"].notna() | 
-        df_lines["construction:power"].notna()
+        df_lines["construction"].notna() | df_lines["construction:power"].notna()
     )
     df_lines["start_date"] = _clean_date(df_lines["start_date"])
     df_lines, list_voltages = _filter_by_voltage(df_lines, min_voltage=min_voltage_ac)
@@ -1914,8 +1933,7 @@ if __name__ == "__main__":
 
     # Clean dates and construction status
     df_links["under_construction"] = (
-        df_links["construction"].notna() | 
-        df_links["construction:power"].notna()
+        df_links["construction"].notna() | df_links["construction:power"].notna()
     )
     df_links["start_date"] = _clean_date(df_links["start_date"])
 

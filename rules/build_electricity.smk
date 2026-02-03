@@ -903,9 +903,13 @@ rule build_osm_network:
         lines_geojson=resources(f"osm-network/build/geojson/lines.geojson"),
         links_geojson=resources(f"osm-network/build/geojson/links.geojson"),
         converters_geojson=resources(f"osm-network/build/geojson/converters.geojson"),
-        transformers_geojson=resources(f"osm-network/build/geojson/transformers.geojson"),
+        transformers_geojson=resources(
+            f"osm-network/build/geojson/transformers.geojson"
+        ),
         substations_geojson=resources(f"osm-network/build/geojson/buses.geojson"),
-        stations_polygon=resources(f"osm-network/build/geojson/stations_polygon.geojson"),
+        stations_polygon=resources(
+            f"osm-network/build/geojson/stations_polygon.geojson"
+        ),
         buses_polygon=resources(f"osm-network/build/geojson/buses_polygon.geojson"),
     log:
         logs("build_osm_network.log"),

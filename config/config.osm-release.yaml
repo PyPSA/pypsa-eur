@@ -48,7 +48,7 @@ countries:
 # - UA
 
 electricity:
-  voltages: 
+  voltages:
   - 220.0
   - 300.0
   - 330.0
@@ -82,5 +82,5 @@ osm_network_release:
   compare_to:
     version: "0.6"
     source: archive
-  
-  
+
+

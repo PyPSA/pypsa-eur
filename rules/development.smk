@@ -4,7 +4,8 @@
 
 
 def get_osm_network_old(
-    version: str, float = 0.6,
+    version: str,
+    float=0.6,
     source: str = "archive",
 ) -> pd.Series:
 
@@ -16,11 +17,7 @@ def get_osm_network_old(
         (data_versions["dataset"] == name)
         & (data_versions["source"] == source)
         & (data_versions["supported"])  # Limit to supported versions only
-        & (
-            data_versions["version"] == version
-            if "latest" != version
-            else True
-        )
+        & (data_versions["version"] == version if "latest" != version else True)
         & (data_versions["latest"] if "latest" == version else True)
     ]
 
@@ -48,13 +45,17 @@ def input_base_network_old(w):
     components = {"buses", "lines", "links", "converters", "transformers"}
 
     inputs = {c: f"{osm_path}/{c}.csv" for c in components}
-    
+
     return inputs
 
 
 OSM_DATASET_OLD = get_osm_network_old(
-    version=config.get("osm_network_release", {}).get("compare_to", {}).get("version", "0.6"),
-    source=config.get("osm_network_release", {}).get("compare_to", {}).get("source", "archive"),
+    version=config.get("osm_network_release", {})
+    .get("compare_to", {})
+    .get("version", "0.6"),
+    source=config.get("osm_network_release", {})
+    .get("compare_to", {})
+    .get("source", "archive"),
 )
 
 OSM_ARCHIVE_FILES_OLD = [
@@ -67,6 +68,7 @@ OSM_ARCHIVE_FILES_OLD = [
     *(["map.html"] if float(OSM_DATASET_OLD["version"]) >= 0.6 else []),
 ]
 
+
 rule retrieve_osm_archive_old:
     message:
         "Retrieving OSM archive data"
@@ -76,7 +78,10 @@ rule retrieve_osm_archive_old:
             for file in OSM_ARCHIVE_FILES_OLD
         },
     output:
-        **{file: f"{OSM_DATASET_OLD['folder']}/{file}" for file in OSM_ARCHIVE_FILES_OLD},
+        **{
+            file: f"{OSM_DATASET_OLD['folder']}/{file}"
+            for file in OSM_ARCHIVE_FILES_OLD
+        },
     log:
         "logs/retrieve_osm_archive.log",
     threads: 1
@@ -127,7 +132,9 @@ rule make_network_comparison:
     params:
         countries=config_provider("countries"),
         base_network=config_provider("electricity", "base_network"),
-        compare_to_version=config_provider("osm_network_release", "compare_to", "version"),
+        compare_to_version=config_provider(
+            "osm_network_release", "compare_to", "version"
+        ),
         voltages=config_provider("electricity", "voltages"),
     input:
         n_release=resources("networks/base.nc"),
