@@ -121,7 +121,10 @@ def prepare_comparison_data(lines_incumbent, lines_release, countries, version):
     )
 
     # Single label mapping for all columns
-    label_map = {"incumbent": f"Incumbent network ({version})", "release": "New release"}
+    label_map = {
+        "incumbent": f"Incumbent network ({version})",
+        "release": "New release",
+    }
 
     def to_long_format(metric):
         """Convert wide format to long format for a given metric (routes or circuits)."""
