@@ -38,52 +38,6 @@ The :ref:`tutorial` uses a smaller cutout than required for the full model (30 M
     To download cutouts yourself from the `ECMWF ERA5 <https://software.ecmwf.int/wiki/display/CKB/ERA5+data+documentation>`__ you need to `set up the CDS API <https://cds.climate.copernicus.eu/api-how-to>`__.
 
 
-.. _available-cutouts-start:
-
-**Available pre-built cutouts**
-
-**v1.0** (`browse <https://data.pypsa.org/workflows/cutout/v1.0>`__)
-
-.. list-table::
-   :header-rows: 1
-   :widths: 70 30
-
-   * - Cutout
-     - Size
-   * - `be-03-2013-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/be-03-2013-era5.nc>`__
-     - 11.1 MB
-   * - `dach-03-2013-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/dach-03-2013-sarah3-era5.nc>`__
-     - 35.1 MB
-   * - `europe-1995-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-1995-sarah3-era5.nc>`__
-     - 6.2 GB
-   * - `europe-1996-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-1996-sarah3-era5.nc>`__
-     - 6.5 GB
-   * - `europe-2008-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2008-sarah3-era5.nc>`__
-     - 6.2 GB
-   * - `europe-2009-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2009-sarah3-era5.nc>`__
-     - 6.2 GB
-   * - `europe-2010-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2010-sarah3-era5.nc>`__
-     - 6.1 GB
-   * - `europe-2012-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2012-sarah3-era5.nc>`__
-     - 6.6 GB
-   * - `europe-2013-03-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2013-03-sarah3-era5.nc>`__
-     - 140.5 MB
-   * - `europe-2013-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2013-sarah3-era5.nc>`__
-     - 6.1 GB
-   * - `europe-2019-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2019-sarah3-era5.nc>`__
-     - 6.1 GB
-   * - `europe-2020-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2020-sarah3-era5.nc>`__
-     - 6.6 GB
-   * - `europe-2021-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2021-sarah3-era5.nc>`__
-     - 6.1 GB
-   * - `europe-2023-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2023-sarah3-era5.nc>`__
-     - 6.1 GB
-   * - `europe-2024-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2024-sarah3-era5.nc>`__
-     - 6.7 GB
-   * - `europe-2025-sarah3-era5.nc <https://data.pypsa.org/workflows/cutout/v1.0/europe-2025-sarah3-era5.nc>`__
-     - 6.7 GB
-.. _available-cutouts-end:
-
 **Relevant Settings**
 
 .. code:: yaml
