@@ -73,6 +73,45 @@ Rule ``retrieve_ons_lad``
 
 This rule downloads shapefiles of local authorities in the United Kingdom from the `Office for National Statistics <https://geoportal.statistics.gov.uk/datasets/ons::local-authority-districts-may-2024-boundaries-uk-bsc-2/about>`__ .
 
+Rule ``retrieve_electricity_demand_opsd``
+=========================================
+
+This rule downloads hourly electric load data for each country from the `OPSD platform <https://data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv>`__.
+
+**Relevant Settings**
+
+None.
+
+**Outputs**
+
+- ``data/electricity_demand_opsd_raw.csv``
+
+Rule ``retrieve_electricity_demand_entsoe``
+===========================================
+
+This rule downloads hourly electric load data for each country from the `ENTSOE Transparency Platform <https://transparency.entsoe.eu>`__.
+
+**Relevant Settings**
+
+None.
+
+**Outputs**
+
+- ``data/electricity_demand_entsoe_raw.csv``
+
+Rule ``retrieve_electricity_demand_neso``
+=========================================
+
+This rule downloads hourly electric load data for the United Kingdom from the `NESO Data Portal <https://www.neso.energy/data-portal/historic-demand-data>`__.
+
+**Relevant Settings**
+
+None.
+
+**Outputs**
+
+- ``data/electricity_demand_neso_raw.csv``
+
 
 Rule ``retrieve_cost_data``
 ================================
