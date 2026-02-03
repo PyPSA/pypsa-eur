@@ -186,7 +186,7 @@ def plot_comparison(routes_data, circuits_data, fontsize=10):
             values = country_data.set_index("parameter")["length"]
 
             # Get comparison and release values (order depends on label mapping)
-            comparison_label = [k for k in values.index if "Comparison" in k]
+            comparison_label = [k for k in values.index if "Incumbent network" in k]
             release_label = [k for k in values.index if "New release" in k]
 
             if comparison_label and release_label:
