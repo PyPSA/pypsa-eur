@@ -1697,18 +1697,24 @@ def build_network(
 
     if not dc_switching.empty:
         dc_switching = _treat_under_construction(
-            dc_switching, decision=under_construction, remove_after=remove_after,
+            dc_switching,
+            decision=under_construction,
+            remove_after=remove_after,
         ).drop(columns=["start_date"])
         dc_switching_polygon = gpd.read_file(inputs["dc_switching_polygon"])
         dc_switching_polygon = dc_switching_polygon[
             dc_switching_polygon["bus_id"].isin(dc_switching["bus_id"])
         ]
-        dc_switching["polygon"] = dc_switching_polygon.set_index("bus_id").loc[
-            dc_switching["bus_id"], "geometry"
-        ].values
+        dc_switching["polygon"] = (
+            dc_switching_polygon.set_index("bus_id")
+            .loc[dc_switching["bus_id"], "geometry"]
+            .values
+        )
         dc_switching["poi"] = dc_switching["geometry"]
         dc_switching["station_id"] = dc_switching["bus_id"]
-        dc_switching = dc_switching[[col for col in dc_switching.columns if col in dc_buses.columns]]
+        dc_switching = dc_switching[
+            [col for col in dc_switching.columns if col in dc_buses.columns]
+        ]
         dc_buses = pd.concat([dc_buses, dc_switching], ignore_index=True)
 
     links, dc_buses = _map_links_to_dc_buses(links, dc_buses)

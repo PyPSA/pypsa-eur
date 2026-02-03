@@ -865,7 +865,9 @@ rule clean_osm_data:
         substations=resources(f"osm-network/clean/substations.geojson"),
         substations_polygon=resources(f"osm-network/clean/substations_polygon.geojson"),
         dc_switching=resources(f"osm-network/clean/dc_switching.geojson"),
-        dc_switching_polygon=resources(f"osm-network/clean/dc_switching_polygon.geojson"),
+        dc_switching_polygon=resources(
+            f"osm-network/clean/dc_switching_polygon.geojson"
+        ),
         converters_polygon=resources(f"osm-network/clean/converters_polygon.geojson"),
         lines=resources(f"osm-network/clean/lines.geojson"),
         links=resources(f"osm-network/clean/links.geojson"),
@@ -893,7 +895,9 @@ rule build_osm_network:
         substations=resources(f"osm-network/clean/substations.geojson"),
         substations_polygon=resources(f"osm-network/clean/substations_polygon.geojson"),
         dc_switching=resources(f"osm-network/clean/dc_switching.geojson"),
-        dc_switching_polygon=resources(f"osm-network/clean/dc_switching_polygon.geojson"),
+        dc_switching_polygon=resources(
+            f"osm-network/clean/dc_switching_polygon.geojson"
+        ),
         converters_polygon=resources(f"osm-network/clean/converters_polygon.geojson"),
         lines=resources(f"osm-network/clean/lines.geojson"),
         links=resources(f"osm-network/clean/links.geojson"),

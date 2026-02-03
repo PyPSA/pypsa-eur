@@ -1714,7 +1714,9 @@ if __name__ == "__main__":
     df_substations = _create_substations_poi(df_substations)
 
     # Store DC switching stations
-    df_dc_switching = df_substations.query("frequency=='0' & substation=='switching'").copy()
+    df_dc_switching = df_substations.query(
+        "frequency=='0' & substation=='switching'"
+    ).copy()
 
     df_substations = _finalise_substations(df_substations)
     df_dc_switching = _finalise_substations(df_dc_switching)
@@ -1726,7 +1728,6 @@ if __name__ == "__main__":
         crs=crs,
     )
     gdf_substations_polygon["geometry"] = gdf_substations_polygon.polygon.copy()
-
 
     gdf_dc_switching = gpd.GeoDataFrame(
         df_dc_switching.drop(columns=["polygon"]),
@@ -2002,9 +2003,7 @@ if __name__ == "__main__":
         snakemake.output["dc_switching_polygon"], driver="GeoJSON"
     )
     logger.info("Exporting clean DC switching stations as subset of substations.")
-    gdf_dc_switching.to_file(
-        snakemake.output["dc_switching"], driver="GeoJSON"
-    )
+    gdf_dc_switching.to_file(snakemake.output["dc_switching"], driver="GeoJSON")
     logger.info(f"Exporting converter polygons to {output_converters_polygon}")
     gdf_converters.to_file(output_converters_polygon, driver="GeoJSON")
     logger.info(f"Exporting clean lines to {output_lines}")
