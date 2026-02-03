@@ -36,18 +36,57 @@ jobs:
         cache: true
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
 
+    - name: Run pylint check on scripts
+      if: (steps.filter.outputs.src == 'true' || github.event_name == 'schedule') && matrix.test == 'electricity'
+      run: |
+        pixi run pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
+
     - name: Run unit tests
       run: |
         pixi run unit-tests
 
   integration-tests:
-    name: Integration
+    name: Integration - ${{ matrix.test }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
-        # Run windows only on scheduled runs on Sundays, otherwise ignore
         os: ${{ github.event.schedule == '0 5 * * 0' && fromJson('["ubuntu", "macos", "windows"]') || fromJson('["ubuntu", "macos"]') }}
+        test: [electricity, scenarios, overnight, myopic, clusters, tyndp]
+        exclude:
+        - os: macos
+          test: scenarios
+        - os: macos
+          test: overnight
+        - os: macos
+          test: myopic
+        - os: macos
+          test: clusters
+        - os: macos
+          test: tyndp
+        - os: windows
+          test: scenarios
+        - os: windows
+          test: overnight
+        - os: windows
+          test: myopic
+        - os: windows
+          test: clusters
+        - os: windows
+          test: tyndp
+        include:
+        - test: electricity
+          snakemake_cmd: pixi run snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml
+        - test: scenarios
+          snakemake_cmd: pixi run snakemake -call --configfile config/test/config.scenarios.yaml -n
+        - test: overnight
+          snakemake_cmd: pixi run snakemake -call --configfile config/test/config.overnight.yaml
+        - test: myopic
+          snakemake_cmd: pixi run snakemake -call --configfile config/test/config.myopic.yaml
+        - test: clusters
+          snakemake_cmd: pixi run snakemake -call resources/test-elec-clusters/networks/base_s_adm.nc --configfile config/test/config.clusters.yaml
+        - test: tyndp
+          snakemake_cmd: pixi run snakemake -call plot_power_networks_clustered --configfile config/test/config.tyndp.yaml
 
     defaults:
       run:
@@ -70,7 +109,12 @@ jobs:
             - 'pixi.lock'
             - '.github/workflows/test.yaml'
 
+    - name: Skip - no source changes
+      if: steps.filter.outputs.src != 'true' && github.event_name != 'schedule'
+      run: echo "Skipping tests because no source code changes detected"
+
     - name: Free up disk space
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       run: |
         echo "Initial disk space"
         df -h
@@ -80,10 +124,6 @@ jobs:
         sudo docker builder prune -a --force
         echo "Final disk space"
         df -h
-
-    - name: Skip - no source changes
-      if: steps.filter.outputs.src != 'true' && github.event_name != 'schedule'
-      run: echo "Skipping tests because no source code changes detected"
 
     - name: Setup Pixi
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
@@ -116,25 +156,19 @@ jobs:
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       run: git checkout HEAD -- data/
 
-    - name: Run pylint check on scripts
-      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
-      # check for undefined variables to reuse functions across scripts
-      run: |
-        pixi run pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
-
     - name: Run snakemake test workflows
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       env:
         SNAKEMAKE_STORAGE_CACHED_HTTP_CACHE: ""
         SNAKEMAKE_STORAGE_CACHED_HTTP_SKIP_REMOTE_CHECKS: "1"
       run: |
-        pixi run integration-tests
+        ${{ matrix.snakemake_cmd }}
 
     - name: Upload artifacts
       if: always()
       uses: actions/upload-artifact@v6
       with:
-        name: results-${{ matrix.os }}
+        name: results-${{ matrix.test }}-${{ matrix.os }}
         path: |
           logs
           .snakemake/log
@@ -142,5 +176,5 @@ jobs:
         retention-days: 3
 
     - name: Show remaining disk space
-      if: always()
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       run: df -h
