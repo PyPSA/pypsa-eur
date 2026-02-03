@@ -912,6 +912,20 @@ if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
             copy2(input["xlsx"], output["xlsx"])
 
 
+if (GEM_GCCT_DATASET := dataset_version("gem_gcct"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_gem_cement_concrete_tracker:
+        input:
+            xlsx=storage(GEM_GCCT_DATASET["url"]),
+        output:
+            xlsx=f"{GEM_GCCT_DATASET['folder']}/Global-Cement-and-Concrete-Tracker.xlsx",
+        run:
+            copy2(input["xlsx"], output["xlsx"])
+
+
 if (BFS_ROAD_VEHICLE_STOCK_DATASET := dataset_version("bfs_road_vehicle_stock"))[
     "source"
 ] in [
