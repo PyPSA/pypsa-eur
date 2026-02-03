@@ -27,35 +27,48 @@ Rule ``retrieve_bidding_zones``
 Rule ``retrieve_cutout``
 ============================
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.6382570.svg
-   :target: https://doi.org/10.5281/zenodo.6382570
+See :ref:`cutouts`.
 
-Cutouts are spatio-temporal subsets of the European weather data from the `ECMWF ERA5 <https://software.ecmwf.int/wiki/display/CKB/ERA5+data+documentation>`__ reanalysis dataset and the `CMSAF SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`__ solar surface radiation dataset for the year 2013, 2019 or 2023.
-They have been prepared by and are for use with the `atlite <https://github.com/PyPSA/atlite>`__ tool. You can either generate them yourself using the ``build_cutouts`` rule or retrieve them directly from `zenodo <https://doi.org/10.5281/zenodo.6382570>`__ through the rule ``retrieve_cutout``.
-The :ref:`tutorial` uses a smaller cutout than required for the full model (30 MB), which is also automatically downloaded.
 
-.. note::
-    To download cutouts yourself from the `ECMWF ERA5 <https://software.ecmwf.int/wiki/display/CKB/ERA5+data+documentation>`__ you need to `set up the CDS API <https://cds.climate.copernicus.eu/api-how-to>`__.
 
+Rule ``retrieve_electricity_demand_opsd``
+=========================================
+
+This rule downloads hourly electric load data for each country from the `OPSD platform <https://data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv>`__.
 
 **Relevant Settings**
 
-.. code:: yaml
-
-    tutorial:
-    enable:
-        build_cutout:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`tutorial_cf` and :ref:`enable_cf`.
+None.
 
 **Outputs**
 
-- ``cutouts/{cutout}``: weather data from either the `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`__   reanalysis weather dataset and/or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewProduktSearch>`__ satellite-based historic weather data.
+- ``data/electricity_demand_opsd_raw.csv``
 
-.. seealso::
-    For details see :mod:`build_cutout` and read the `atlite documentation <https://atlite.readthedocs.io>`__.
+Rule ``retrieve_electricity_demand_entsoe``
+===========================================
+
+This rule downloads hourly electric load data for each country from the `ENTSOE Transparency Platform <https://transparency.entsoe.eu>`__.
+
+**Relevant Settings**
+
+None.
+
+**Outputs**
+
+- ``data/electricity_demand_entsoe_raw.csv``
+
+Rule ``retrieve_electricity_demand_neso``
+=========================================
+
+This rule downloads hourly electric load data for the United Kingdom from the `NESO Data Portal <https://www.neso.energy/data-portal/historic-demand-data>`__.
+
+**Relevant Settings**
+
+None.
+
+**Outputs**
+
+- ``data/electricity_demand_neso_raw.csv``
 
 
 Rule ``retrieve_cost_data``
