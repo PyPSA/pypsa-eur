@@ -171,8 +171,6 @@ if config["foresight"] != "perfect":
                 RESULTS
                 + "benchmarks/plot_interactive_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
             )
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_balance_map_interactive.py"
 
