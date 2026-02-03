@@ -73,6 +73,7 @@ rule add_brownfield:
         carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         ttes=config_provider("sector", "ttes"),
+        ptes=config_provider("sector", "district_heating", "ptes"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
