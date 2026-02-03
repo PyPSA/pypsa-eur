@@ -8,9 +8,6 @@
 Weather Data
 ############
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.6382570.svg
-   :target: https://doi.org/10.5281/zenodo.6382570
-
 Cutouts are spatio-temporal subsets of the European weather data from the `ECMWF ERA5 <https://software.ecmwf.int/wiki/display/CKB/ERA5+data+documentation>`__ reanalysis dataset and the `CMSAF SARAH-3 <https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002>`__ solar surface radiation dataset.
 They have been prepared by and are for use with the `atlite <https://github.com/PyPSA/atlite>`__ tool.
 The :ref:`tutorial` uses a smaller cutout than required for the full model (30 MB), which is also automatically downloaded.
