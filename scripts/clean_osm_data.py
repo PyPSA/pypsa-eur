@@ -1712,7 +1712,12 @@ if __name__ == "__main__":
     # Merge touching polygons
     df_substations = _merge_touching_polygons(df_substations)
     df_substations = _create_substations_poi(df_substations)
+
+    # Store DC switching stations
+    df_dc_switching = df_substations.query("frequency=='0' & substation=='switching'").copy()
+
     df_substations = _finalise_substations(df_substations)
+    df_dc_switching = _finalise_substations(df_dc_switching)
 
     # Create polygon GeoDataFrame to remove lines within substations
     gdf_substations_polygon = gpd.GeoDataFrame(
@@ -1720,8 +1725,20 @@ if __name__ == "__main__":
         geometry="polygon",
         crs=crs,
     )
-
     gdf_substations_polygon["geometry"] = gdf_substations_polygon.polygon.copy()
+
+
+    gdf_dc_switching = gpd.GeoDataFrame(
+        df_dc_switching.drop(columns=["polygon"]),
+        geometry="geometry",
+        crs=crs,
+    )
+    gdf_dc_switching_polygon = gpd.GeoDataFrame(
+        df_dc_switching[["bus_id", "polygon", "voltage"]],
+        geometry="polygon",
+        crs=crs,
+    )
+    gdf_dc_switching_polygon["geometry"] = gdf_dc_switching_polygon.polygon.copy()
 
     # Continue cleaning of converters
     logger.info("---")
@@ -1980,6 +1997,14 @@ if __name__ == "__main__":
     )
     logger.info(f"Exporting clean substations to {output_substations}")
     gdf_substations.to_file(output_substations, driver="GeoJSON")
+    logger.info("Exporting clean DC switching stations with polygon shapes.")
+    gdf_dc_switching_polygon.drop(columns=["geometry"]).to_file(
+        snakemake.output["dc_switching_polygon"], driver="GeoJSON"
+    )
+    logger.info("Exporting clean DC switching stations as subset of substations.")
+    gdf_dc_switching.to_file(
+        snakemake.output["dc_switching"], driver="GeoJSON"
+    )
     logger.info(f"Exporting converter polygons to {output_converters_polygon}")
     gdf_converters.to_file(output_converters_polygon, driver="GeoJSON")
     logger.info(f"Exporting clean lines to {output_lines}")

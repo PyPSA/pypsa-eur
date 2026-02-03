@@ -37,7 +37,7 @@ def get_osm_network_old(
     return dataset
 
 
-def input_base_network_old(w):
+def input_base_network_to_compare(w):
     version = config_provider("osm_network_release", "compare_to", "version")(w)
     source = config_provider("osm_network_release", "compare_to", "source")(w)
     osm_dataset = get_osm_network_old(version, source)
@@ -92,7 +92,7 @@ rule retrieve_osm_archive_old:
             copy2(input[key], output[key])
 
 
-rule base_network_old:
+rule base_network_to_compare:
     message:
         "Building base network to which to compare against."
     params:
@@ -105,7 +105,7 @@ rule base_network_old:
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
     input:
-        unpack(input_base_network_old),
+        unpack(input_base_network_to_compare),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -140,8 +140,7 @@ rule make_network_comparison:
         n_release=resources("networks/base.nc"),
         n_compare_to=resources("compare_to/networks/base.nc"),
     output:
-        circuit_length=resources("osm-network/comparison/circuit_length.pdf"),
-        route_length=resources("osm-network/comparison/route_length.pdf"),
+        lengths=resources("osm-network/comparison/lengths.pdf"),
     log:
         logs("make_network_comparison.log"),
     benchmark:
