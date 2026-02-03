@@ -21,7 +21,7 @@ class _FillGapsConfig(ConfigModel):
         description="Whether to fill gaps using interpolation for small gaps and time shift for large gaps.",
     )
     interpolate_limit: int = Field(
-        3,
+        6,
         description="Maximum gap size (consecutive nans) which interpolated linearly.",
     )
     time_shift_for_large_gaps: str = Field(

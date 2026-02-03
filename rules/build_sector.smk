@@ -827,8 +827,6 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"
             logs("build_country_hdd.log"),
         benchmark:
             benchmarks("build_country_hdd")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/build_country_hdd.py"
 
@@ -1340,8 +1338,6 @@ if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
             logs("build_mobility_profiles.log"),
         benchmark:
             benchmarks("build_mobility_profiles")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/build_mobility_profiles.py"
 
