@@ -77,14 +77,17 @@ STORE_LOOKUP = {
     "battery": {
         "store": "battery storage",
         "bicharger": "battery inverter",
+        "roundtrip_correction": 0.5,
     },
     "home battery": {
         "store": "home battery storage",
         "bicharger": "home battery inverter",
+        "roundtrip_correction": 0.5,
     },
     "li-ion": {
         "store": "battery storage",
         "bicharger": "battery inverter",
+        "roundtrip_correction": 0.5,
     },
     "lfp": {
         "store": "Lithium-Ion-LFP-store",
@@ -985,14 +988,14 @@ def attach_storageunits(
             logger.warning(f"No max_hours defined for carrier '{carrier}'. Skipping.")
             continue
 
-        roundtrip_correction = 0.5 if carrier in ["battery", "li-ion"] else 1
-
         lookup = STORE_LOOKUP[carrier]
         if "bicharger" in lookup:
             lookup_charge = lookup_discharge = lookup["bicharger"]
         else:
             lookup_charge = lookup["charger"]
             lookup_discharge = lookup["discharger"]
+
+        roundtrip_correction = lookup.get("roundtrip_correction", 1)
 
         n.add(
             "StorageUnit",
@@ -1042,8 +1045,6 @@ def attach_stores(
     n.add("Carrier", available_carriers)
 
     for carrier in available_carriers:
-        roundtrip_correction = 0.5 if carrier in ["battery", "li-ion"] else 1
-
         lookup = STORE_LOOKUP[carrier]
         lookup_store = lookup["store"]
         if "bicharger" in lookup:
@@ -1051,6 +1052,8 @@ def attach_stores(
         else:
             lookup_charge = lookup["charger"]
             lookup_discharge = lookup["discharger"]
+
+        roundtrip_correction = lookup.get("roundtrip_correction", 1)
 
         bus_names = buses_i + f" {carrier}"
         charge_name = "Electrolysis" if lookup_charge == "electrolysis" else "charger"
@@ -1108,7 +1111,7 @@ def attach_stores(
         )
 
     logger.info(
-        "Add the following technologies as stores and links:\n - "
+        "Add the following storage technologies as stores and links:\n - "
         + "\n - ".join(available_carriers)
     )
 
