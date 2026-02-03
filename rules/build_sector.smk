@@ -829,8 +829,6 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"
             logs("build_country_hdd.log"),
         benchmark:
             benchmarks("build_country_hdd")
-        conda:
-            "../envs/environment.yaml"
         script:
             scripts("build_country_hdd.py")
 
@@ -1109,8 +1107,8 @@ rule build_industrial_distribution_key:
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         hotmaps=rules.retrieve_hotmaps_industrial_sites.output["csv"],
         gem_gspt=rules.retrieve_gem_steel_plant_tracker.output["xlsx"],
+        gem_gcpt=rules.retrieve_gem_cement_concrete_tracker.output["xlsx"],
         ammonia="data/ammonia_plants.csv",
-        cement_supplement="data/cement-plants-noneu.csv",
         refineries_supplement="data/refineries-noneu.csv",
     output:
         industrial_distribution_key=resources(
@@ -1342,8 +1340,6 @@ if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
             logs("build_mobility_profiles.log"),
         benchmark:
             benchmarks("build_mobility_profiles")
-        conda:
-            "../envs/environment.yaml"
         script:
             scripts("build_mobility_profiles.py")
 

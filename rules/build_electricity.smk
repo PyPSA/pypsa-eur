@@ -12,7 +12,9 @@ rule build_electricity_demand:
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
-        reported=ancient("data/electricity_demand_raw.csv"),
+        opsd=rules.retrieve_electricity_demand_opsd.output["csv"],
+        neso=rules.retrieve_electricity_demand_neso.output["csv"],
+        entsoe=rules.retrieve_electricity_demand_entsoe.output["csv"],
         synthetic=lambda w: (
             ancient(rules.retrieve_synthetic_electricity_demand.output["csv"])
             if config_provider("load", "supplement_synthetic")(w)
@@ -404,8 +406,6 @@ if COUNTRY_RUNOFF_DATASET["source"] == "build":
             logs("build_country_runoff.log"),
         benchmark:
             benchmarks("build_country_runoff")
-        conda:
-            "../envs/environment.yaml"
         script:
             scripts("build_country_runoff.py")
 
