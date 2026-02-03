@@ -1321,7 +1321,7 @@ data:
     source: primary
     version: latest
   opsd_electricity_demand:
-    source: primary
+    source: archive
     version: latest
   entsoe_electricity_demand:
     source: archive

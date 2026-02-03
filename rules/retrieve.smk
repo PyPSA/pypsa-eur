@@ -477,12 +477,12 @@ if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
 
 
 if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in [
-    "primary"
+    "build"
 ]:
 
     rule retrieve_electricity_demand_opsd:
         message:
-            "Retrieving electricity demand data from OPSD from primary source"
+            "Retrieving electricity demand data from OPSD from build source"
         params:
             versions=["2019-06-05", "2020-10-06"],
         output:
@@ -513,7 +513,7 @@ if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in
 
 
 if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in [
-    "primary"
+    "build"
 ]:
 
     ENTSOE_COUNTRIES = [
@@ -574,7 +574,7 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
 
     rule retrieve_electricity_demand_entsoe:
         message:
-            "Retrieving electricity demand data from ENTSO-E from primary source"
+            "Retrieving electricity demand data from ENTSO-E from build source"
         input:
             csvs=expand(
                 f"{ENTSOE_DEMAND_DATA['folder']}"
@@ -608,12 +608,12 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
 
 
 if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in [
-    "primary"
+    "build"
 ]:
 
     rule retrieve_electricity_demand_neso:
         message:
-            "Retrieving electricity demand data from NESO from primary source"
+            "Retrieving electricity demand data from NESO from build source"
         output:
             csv=f"{NESO_DEMAND_DATA['folder']}/electricity_demand_neso_raw.csv",
         log:
