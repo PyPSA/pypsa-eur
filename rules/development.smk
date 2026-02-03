@@ -111,14 +111,14 @@ rule base_network_incumbent:
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
     output:
-        base_network=resources("compare_to/networks/base.nc"),
-        regions_onshore=resources("compare_to/regions_onshore.geojson"),
-        regions_offshore=resources("compare_to/regions_offshore.geojson"),
-        admin_shapes=resources("compare_to/admin_shapes.geojson"),
+        base_network=resources("osm-network/comparison/incumbent/networks/base.nc"),
+        regions_onshore=resources("osm-network/comparison/incumbent/regions_onshore.geojson"),
+        regions_offshore=resources("osm-network/comparison/incumbent/regions_offshore.geojson"),
+        admin_shapes=resources("osm-network/comparison/incumbent/admin_shapes.geojson"),
     log:
-        logs("base_network_compare_to.log"),
+        logs("base_network_incumbent.log"),
     benchmark:
-        benchmarks("base_network_compare_to")
+        benchmarks("base_network_incumbent")
     threads: 4
     resources:
         mem_mb=2000,
@@ -138,7 +138,7 @@ rule make_network_comparison:
         voltages=config_provider("electricity", "voltages"),
     input:
         n_release=resources("networks/base.nc"),
-        n_compare_to=resources("compare_to/networks/base.nc"),
+        n_incumbent=resources("osm-network/comparison/incumbent/networks/base.nc"),
     output:
         lengths=resources("osm-network/comparison/lengths.pdf"),
     log:

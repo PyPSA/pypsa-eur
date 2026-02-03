@@ -10,6 +10,7 @@ import logging
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
+import pandas as pd
 import pypsa
 import seaborn as sns
 
@@ -30,16 +31,16 @@ def get_lines_by_country(network):
     Parameters
     ----------
     network : pypsa.Network
-        PyPSA network to analyze
+        PyPSA network to analyze.
 
     Returns
     -------
     pd.DataFrame
-        DataFrame with route and circuit lengths indexed by country
+        DataFrame with route and circuit lengths indexed by country.
     """
-    # Get bus countries for both endpoints
+    # Get bus countries for both endpoints — lines
     lines = (
-        network.lines[["bus0", "bus1", "v_nom", "length", "num_parallel"]]
+        network.lines[["bus0", "bus1", "length", "num_parallel"]]
         .merge(network.buses[["country"]], left_on="bus0", right_index=True)
         .merge(
             network.buses[["country"]],
@@ -49,35 +50,51 @@ def get_lines_by_country(network):
         )
     )
 
-    # Aggregate parallel lines between same bus pairs
-    lines = (
-        lines.groupby(["bus0", "bus1", "v_nom", "country0", "country1"], observed=True)
+    # Get bus countries for both endpoints — links
+    links = (
+        network.links.loc[network.links["carrier"] == "DC", ["bus0", "bus1", "length"]]
+        .merge(network.buses[["country"]], left_on="bus0", right_index=True)
+        .merge(
+            network.buses[["country"]],
+            left_on="bus1",
+            right_index=True,
+            suffixes=("0", "1"),
+        )
+    )
+    links["num_parallel"] = 1  # Each link counts as one circuit
+
+    # Combine lines and links
+    combined = pd.concat([lines, links], ignore_index=True)
+
+    # Aggregate parallel lines/links between same bus pairs
+    combined = (
+        combined.groupby(["bus0", "bus1", "country0", "country1"], observed=True)
         .agg({"length": "max", "num_parallel": "sum"})
         .reset_index()
     )
 
-    # Keep only domestic lines (both endpoints in same country)
-    lines = lines[lines["country0"] == lines["country1"]].copy()
+    # Keep only domestic (both endpoints in same country)
+    combined = combined[combined["country0"] == combined["country1"]].copy()
 
     # Calculate route and circuit lengths
-    lines["length_routes"] = lines["length"]
-    lines["length_circuits"] = lines["num_parallel"] * lines["length"]
+    combined["length_routes"] = combined["length"]
+    combined["length_circuits"] = combined["num_parallel"] * combined["length"]
 
     # Sum by country
     return (
-        lines.groupby("country0", observed=True)
+        combined.groupby("country0", observed=True)
         .agg({"length_routes": "sum", "length_circuits": "sum"})
         .rename_axis("country")
     )
 
 
-def prepare_comparison_data(lines_compare_to, lines_release, countries, version):
+def prepare_comparison_data(lines_incumbent, lines_release, countries, version):
     """
     Merge and prepare line length data for plotting.
 
     Parameters
     ----------
-    lines_compare_to : pd.DataFrame
+    lines_incumbent : pd.DataFrame
         Line lengths from baseline network
     lines_release : pd.DataFrame
         Line lengths from new release network
@@ -92,8 +109,8 @@ def prepare_comparison_data(lines_compare_to, lines_release, countries, version)
         Long-format DataFrames for routes and circuits, and merged data
     """
     # Merge datasets
-    lines_merged = lines_compare_to.merge(
-        lines_release, on="country", how="outer", suffixes=("_compare_to", "_release")
+    lines_merged = lines_incumbent.merge(
+        lines_release, on="country", how="outer", suffixes=("_incumbent", "_release")
     )
 
     # Filter and sort by country
@@ -104,7 +121,7 @@ def prepare_comparison_data(lines_compare_to, lines_release, countries, version)
     )
 
     # Single label mapping for all columns
-    label_map = {"compare_to": f"Comparison ({version})", "release": "New release"}
+    label_map = {"incumbent": f"Comparison ({version})", "release": "New release"}
 
     def to_long_format(metric):
         """Convert wide format to long format for a given metric (routes or circuits)."""
@@ -113,7 +130,7 @@ def prepare_comparison_data(lines_compare_to, lines_release, countries, version)
             lines_merged.reset_index()
             .melt(
                 id_vars=["country"],
-                value_vars=[f"{col_prefix}compare_to", f"{col_prefix}release"],
+                value_vars=[f"{col_prefix}incumbent", f"{col_prefix}release"],
                 var_name="parameter",
                 value_name="length",
             )
@@ -239,26 +256,27 @@ if __name__ == "__main__":
 
     # Load networks
     n_release = pypsa.Network(snakemake.input.n_release)
-    n_compare_to = pypsa.Network(snakemake.input.n_compare_to)
-    compare_to_version = snakemake.params.compare_to_version
+    n_incumbent = pypsa.Network(snakemake.input.n_incumbent)
+    countries = snakemake.params.countries
+    version = snakemake.params.compare_to_version
 
     # Calculate line statistics
-    lines_compare_to = get_lines_by_country(n_compare_to)
+    lines_incumbent = get_lines_by_country(n_incumbent)
     lines_release = get_lines_by_country(n_release)
 
     # Prepare comparison data
     routes_long, circuits_long, lines_merged = prepare_comparison_data(
-        lines_compare_to,
+        lines_incumbent,
         lines_release,
-        snakemake.params.countries,
-        snakemake.params.compare_to_version,
+        countries,
+        version,
     )
 
     # Calculate and log correlations
-    pcc_routes = lines_merged["length_routes_compare_to"].corr(
+    pcc_routes = lines_merged["length_routes_incumbent"].corr(
         lines_merged["length_routes_release"]
     )
-    pcc_circuits = lines_merged["length_circuits_compare_to"].corr(
+    pcc_circuits = lines_merged["length_circuits_incumbent"].corr(
         lines_merged["length_circuits_release"]
     )
 
