@@ -40,6 +40,8 @@ emobility,28-08-2016,primary,latest supported,2025-12-02,,https://zenodo.org/rec
 emobility,28-08-2016,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/emobility/28-08-2016/emobility.zip
 enspreso_biomass,unknown,primary,latest supported,2025-12-02,"2019 version was changed in 2023 with negligible differences, but since the version is not frozen we label it as 'unknown'.",https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx
 enspreso_biomass,2019-06-20,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/enspreso_biomass/2019-06-20/ENSPRESO_BIOMASS.xlsx
+entsoe_electricity_demand,unknown,build,latest supported,2026-02-02,API request using entsoe-py package,https://transparency.entsoe.eu/load/total/dayAhead
+entsoe_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,API request using entsoe-py package,https://data.pypsa.org/workflows/eur/entsoe_electricity_demand/2026-02-02/electricity_demand_entsoe_raw.csv
 eu_nuts2013,2015-12-03,primary,latest supported,2025-12-02, ,https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip
 eu_nuts2013,2015-12-03,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eu_nuts2013/2015-12-03/ref-nuts-2013-03m.geojson.zip
 eu_nuts2021,2021-01-01,primary,latest supported,2025-12-02,,https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip
@@ -54,8 +56,11 @@ gebco,2014,primary,latest supported,2025-12-02,The dataset will be cut for the r
 gebco,2014,archive,latest supported,2026-01-13,Earlier part of databundle,https://data.pypsa.org/workflows/eur/gebco/2014/GEBCO_2014_2D.nc
 gem_europe_gas_tracker,may-2024,primary,latest supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
 gem_europe_gas_tracker,may-2024,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_europe_gas_tracker/may-2024/Europe-Gas-Tracker-2024-05.xlsx
-gem_gspt,march-2025-v1,primary,not-supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.xlsx
-gem_gspt,april-2024-v1,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_gspt/april-2024-v1/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
+gem_gcct,july-2025,primary,latest supported,2026-02-02,,https://globalenergymonitor.org/wp-content/uploads/2025/07/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
+gem_gcct,july-2025,archive,latest supported,2026-02-02,,https://data.pypsa.org/workflows/eur/gem_gcct/july-2025/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
+gem_gspt,march-2025-v1.1,primary,latest supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
+gem_gspt,march-2025-v1.1,archive,latest supported,2026-02-02,,https://data.pypsa.org/workflows/eur/gem_gspt/march-2025-v1.1/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
+gem_gspt,april-2024-v1,archive,not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_gspt/april-2024-v1/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
 geothermal_heat_utilisation_potentials,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx
 geothermal_heat_utilisation_potentials,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/geothermal_heat_utilisation_potentials/341.5/Results_DH_Matching_Cluster.xlsx
 ghg_emissions,v23,primary,latest supported,2025-12-02,,https://web.archive.org/web/20200622130401if_/https%3A//www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16/national-greenhouse-gas-inventories-ipcc-common-reporting-format-sector-classification/ascii-delimited-zip-2/at_download/file
@@ -83,11 +88,15 @@ natura,v0.8.2,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur
 natura,unknown,build,latest supported,2025-12-02,,https://sdi.eea.europa.eu/datashare/s/tWpGXaWdWGYcqsL/download
 natura,2025-08-15,primary,latest supported,2025-12-02,,https://zenodo.org/records/16881818/files/natura.tiff
 natura,2025-08-15,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/natura/2025-08-15/natura.tiff
+neso_electricity_demand,unknown,build,latest supported,2026-02-02,,https://www.neso.energy/data-portal/historic-demand-data
+neso_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,,https://data.pypsa.org/workflows/eur/neso_electricity_demand/2026-02-02/electricity_demand_neso_raw.csv
 nitrogen_statistics,2023,primary,not-tested,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2023-nitro-ERT.xlsx
 nitrogen_statistics,2022,primary,latest supported,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx
 nitrogen_statistics,2022,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2022/nitro-ert.xlsx
 nuts3_population,13-03-2025,primary,latest supported,2025-12-02,,https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp?format=TSV&compressed=true
 nuts3_population,13-03-2025,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/nuts3_population/13-03-2025/nama_10r_3popgdp.tsv.gz
+opsd_electricity_demand,unknown,build,latest supported,2026-02-02,multiple versions concatenated,https://data.open-power-system-data.org/time_series/
+opsd_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,,https://data.pypsa.org/workflows/eur/opsd_electricity_demand/2026-02-02/electricity_demand_opsd_raw.csv
 osm,unknown,build,latest supported,2025-12-02,Latest dataset built using OSM data. No single URL available to access the data. See the related scripts and documentation for details.,
 osm,0.6,primary,latest supported,2026-01-13,,https://zenodo.org/records/14144752/files
 osm,0.6,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.6
