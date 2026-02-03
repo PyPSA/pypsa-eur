@@ -919,7 +919,7 @@ rule build_osm_network:
     resources:
         mem_mb=4000,
     script:
-        "../scripts/build_osm_network_old.py"
+        "../scripts/build_osm_network.py"
 
 
 rule build_tyndp_network:
