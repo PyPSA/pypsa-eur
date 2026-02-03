@@ -6,7 +6,10 @@ from pathlib import Path
 import yaml
 from os.path import normpath, exists, join
 from shutil import copyfile, move, rmtree
+from dotenv import load_dotenv
 from snakemake.utils import min_version
+
+load_dotenv()
 
 min_version("8.11")
 
@@ -16,6 +19,7 @@ from scripts._helpers import (
     get_shadow,
     path_provider,
 )
+from scripts.lib.validation.config import validate_config
 
 
 configfile: "config/config.default.yaml"
@@ -26,6 +30,8 @@ if Path("config/config.yaml").exists():
 
     configfile: "config/config.yaml"
 
+
+validate_config(config)
 
 run = config["run"]
 scenarios = get_scenarios(run)
