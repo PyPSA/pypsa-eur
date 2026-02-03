@@ -70,6 +70,7 @@ h2_salt_caverns,16-10-2019,archive,latest supported,2026-01-13,,https://data.pyp
 hotmaps_industrial_sites,version-1.1,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/hotmaps_industrial_sites/version-1.1/Industrial_Database.csv
 hotmaps_industrial_sites,version-1.0,primary,not-supported,2025-12-02,Required renaming of country names to work with PyPSA-Eur. This was fixed in the latest version.,https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/1.0/data/Industrial_Database.csv
 hotmaps_industrial_sites,unknown,primary,latest supported,2025-12-02,,https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv
+instrat_co2_prices,unknown,primary,latest supported,2026-02-03,API endpoint provides latest data without versioning,https://energy-api.instrat.pl/api/prices/co2?all=1
 jrc_ardeco,2021,primary,latest supported,2025-12-02,,https://territorial.ec.europa.eu/ardeco-api-v2/rest/export/
 jrc_ardeco,2021,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_ardeco/2021
 jrc_idees,unknown,primary,latest supported,2025-12-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1/JRC-IDEES-2021.zip

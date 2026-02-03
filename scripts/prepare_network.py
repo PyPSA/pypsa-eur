@@ -129,14 +129,14 @@ def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
 
 
 def add_dynamic_emission_prices(n, fn):
-    co2_price = pd.read_csv(fn, index_col=0, parse_dates=True)
-    co2_price = co2_price[~co2_price.index.duplicated()]
-    co2_price = co2_price.reindex(n.snapshots).ffill().bfill()
+    co2_price = (
+        pd.read_csv(fn, index_col=0, parse_dates=True).squeeze().reindex(n.snapshots)
+    )
 
     emissions = (
         n.generators.carrier.map(n.carriers.co2_emissions) / n.generators.efficiency
     )
-    co2_cost = expand_series(emissions, n.snapshots).T.mul(co2_price.iloc[:, 0], axis=0)
+    co2_cost = expand_series(emissions, n.snapshots).T.mul(co2_price, axis=0)
 
     static = n.generators.marginal_cost
     dynamic = n.get_switchable_as_dense("Generator", "marginal_cost")
