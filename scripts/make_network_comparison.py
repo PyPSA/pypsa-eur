@@ -69,7 +69,7 @@ def get_lines_by_country(network):
     # Aggregate parallel lines/links between same bus pairs
     combined = (
         combined.groupby(["bus0", "bus1", "country0", "country1"], observed=True)
-        .agg({"length": "max", "num_parallel": "sum"})
+        .agg({"length": "mean", "num_parallel": "sum"})
         .reset_index()
     )
 
@@ -121,10 +121,7 @@ def prepare_comparison_data(lines_incumbent, lines_release, countries, version):
     )
 
     # Single label mapping for all columns
-    label_map = {
-        "incumbent": f"Incumbent network ({version})",
-        "release": "New release",
-    }
+    label_map = {"incumbent": f"Incumbent network ({version})", "release": "New release"}
 
     def to_long_format(metric):
         """Convert wide format to long format for a given metric (routes or circuits)."""
