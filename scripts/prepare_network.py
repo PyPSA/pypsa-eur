@@ -334,7 +334,7 @@ if __name__ == "__main__":
     maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
 
     emission_prices = snakemake.params.emission_prices
-    if emission_prices["co2_monthly_prices"]:
+    if emission_prices["dynamic"]:
         logger.info(
             "Setting time dependent emission prices according spot market price"
         )
