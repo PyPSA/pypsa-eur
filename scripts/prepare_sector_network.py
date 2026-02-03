@@ -452,13 +452,18 @@ def update_wind_solar_costs(
 
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
-    n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
-        "solar-utility", "capital_cost"
-    ]
+    carrier_cost_dict = {
+        "solar": "solar-utility",
+        "solar-hsat": "solar-hsat",
+        "onwind": "onwind",
+    }
 
-    n.generators.loc[n.generators.carrier == "onwind", "capital_cost"] = costs.at[
-        "onwind", "capital_cost"
-    ]
+    for carrier, cost_key in carrier_cost_dict.items():
+        if carrier not in n.generators.carrier.values:
+            continue
+        n.generators.loc[n.generators.carrier == carrier, "capital_cost"] = costs.at[
+            cost_key, "capital_cost"
+        ]
 
     # for offshore wind, need to calculated connection costs
     for key, fn in profiles.items():
@@ -1920,6 +1925,16 @@ def add_storage_and_grids(
         logger.info(
             "Add natural gas infrastructure, incl. LNG terminals, production, storage and entry-points."
         )
+
+        add_carrier_buses(
+            n=n,
+            carrier="gas",
+            costs=costs,
+            spatial=spatial,
+            options=options,
+            cf_industry=None,
+        )
+
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
         if options["H2_retrofit"]:
@@ -3314,28 +3329,27 @@ def add_heat(
 
                 n.add(
                     "Bus",
-                    heat_source.medium_temperature_bus(nodes, heat_system),
+                    heat_source.preheater_input_bus(nodes, heat_system),
                     location=nodes,
-                    carrier=heat_source.medium_temperature_carrier(heat_system),
+                    carrier=heat_source.preheater_input_carrier(heat_system),
                 )
 
                 n.add(
                     "Bus",
-                    heat_source.return_temperature_bus(nodes, heat_system),
+                    heat_source.get_heat_pump_input_bus(nodes, heat_system),
                     location=nodes,
-                    carrier=heat_source.return_temperature_carrier(heat_system),
+                    carrier=heat_source.heat_pump_input_carrier(heat_system),
                 )
 
                 n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat preheater",
-                    bus0=heat_source.medium_temperature_bus(nodes, heat_system),
+                    bus0=heat_source.preheater_input_bus(nodes, heat_system),
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=heat_source.return_temperature_bus(nodes, heat_system),
+                    bus2=heat_source.get_heat_pump_input_bus(nodes, heat_system),
                     efficiency=preheater_utilisation_profile,
                     efficiency2=1 - preheater_utilisation_profile,
-                    p_max_pu=(preheater_utilisation_profile > 0).astype(float),
                     carrier=f"{heat_system} {heat_source} heat preheater",
                     p_nom_extendable=True,
                 )
@@ -3356,7 +3370,7 @@ def add_heat(
                     suffix=f" {heat_system} {heat_source} heat utilisation",
                     bus0=heat_source.resource_bus(nodes, heat_system),
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=heat_source.medium_temperature_bus(nodes, heat_system),
+                    bus2=heat_source.preheater_input_bus(nodes, heat_system),
                     efficiency=direct_utilisation_profile,
                     efficiency2=1 - direct_utilisation_profile,
                     carrier=f"{heat_system} {heat_source} heat utilisation",
@@ -3395,9 +3409,6 @@ def add_heat(
                     p_max_pu=p_max_pu,
                 )
 
-            bus2_heat_pump = heat_source.get_heat_pump_bus2(nodes, heat_system)
-            efficiency2_heat_pump = heat_source.get_heat_pump_efficiency2(cop_heat_pump)
-
             if heat_source.requires_heat_pump(
                 ptes_discharge_resistive_boosting=params.sector["district_heating"][
                     "ptes"
@@ -3409,14 +3420,13 @@ def add_heat(
                     suffix=f" {heat_system} {heat_source} heat pump",
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
-                    bus2=bus2_heat_pump,
+                    bus2=heat_source.get_heat_pump_input_bus(nodes, heat_system),
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=1 / cop_heat_pump.clip(lower=0.001).squeeze(),
-                    efficiency2=efficiency2_heat_pump,
+                    efficiency2=heat_source.get_heat_pump_efficiency2(cop_heat_pump),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_min_pu=-(cop_heat_pump > 0).squeeze().astype(float),
-                    p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3455,7 +3465,7 @@ def add_heat(
                     suffix=f" {heat_system} water pits resistive booster",
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes + f" {heat_system} resistive heat",
-                    bus2=ptes_heat_source.medium_temperature_bus(nodes, heat_system),
+                    bus2=ptes_heat_source.preheater_input_bus(nodes, heat_system),
                     # eff = 1 - eff2 (energy conservation)
                     efficiency=ptes_boost_per_discharge_profiles
                     / (ptes_boost_per_discharge_profiles + 1),
@@ -4606,6 +4616,17 @@ def add_industry(
     - Process emission handling
     """
     logger.info("Add industrial demand")
+
+    # Ensure the gas carrier bus exists before adding any gas-for-industry links.
+    add_carrier_buses(
+        n=n,
+        carrier="gas",
+        costs=costs,
+        spatial=spatial,
+        options=options,
+        cf_industry=None,
+    )
+
     # add oil buses for shipping, aviation and naptha for industry
     add_carrier_buses(
         n,
@@ -4630,6 +4651,12 @@ def add_industry(
 
     # 1e6 to convert TWh to MWh
     industrial_demand = pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
+
+    if not options["biomass"]:
+        raise ValueError(
+            "Industry demand includes solid biomass, but `sector.biomass` is disabled. "
+            "Enable `sector: {biomass: true}` in config."
+        )
 
     n.add(
         "Bus",

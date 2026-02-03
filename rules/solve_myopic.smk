@@ -4,6 +4,8 @@
 
 
 rule add_existing_baseyear:
+    message:
+        "Adding existing infrastructure for base year for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     params:
         baseyear=config_provider("scenario", "planning_horizons", 0),
         sector=config_provider("sector"),
@@ -18,7 +20,7 @@ rule add_existing_baseyear:
         ),
         powerplants=resources("powerplants_s_{clusters}.csv"),
         costs=lambda w: resources(
-            f"costs_{config_provider("scenario", "planning_horizons",0)(w)}_processed.csv"
+            f"costs_{config_provider('scenario', 'planning_horizons',0)(w)}_processed.csv"
         ),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         existing_heating_distribution=resources(
@@ -58,6 +60,8 @@ def input_profile_tech_brownfield(w):
 
 
 rule add_brownfield:
+    message:
+        "Adding brownfield constraints for existing infrastructure for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     params:
         H2_retrofit=config_provider("sector", "H2_retrofit"),
         H2_retrofit_capacity_per_CH4=config_provider(
@@ -69,6 +73,7 @@ rule add_brownfield:
         carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         ttes=config_provider("sector", "ttes"),
+        ptes=config_provider("sector", "district_heating", "ptes"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
@@ -101,6 +106,8 @@ ruleorder: add_existing_baseyear > add_brownfield
 
 
 rule solve_sector_network_myopic:
+    message:
+        "Solving sector-coupled network with myopic foresight for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),

@@ -7,6 +7,7 @@ import logging
 import folium
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import pypsa
 from shapely.wkt import loads
 
@@ -78,7 +79,9 @@ CONVERTERS_COLUMNS = [
 ]
 
 
-def export_clean_csv(df, columns, output_file):
+def export_clean_csv(
+    df: pd.DataFrame, columns: list[str], output_file: str, rename_idx: str
+):
     """
     Export a cleaned DataFrame to a CSV file.
 
@@ -86,26 +89,19 @@ def export_clean_csv(df, columns, output_file):
         df (pandas.DataFrame): The DataFrame to be exported.
         columns (list): A list of column names to include in the exported CSV file.
         output_file (str): The path to the output CSV file.
+        rename_idx (str): The name to use for renaming the index column.
 
     Returns:
         None
     """
-    columns = [col for col in columns if col in df.columns]
     rename_dict = {
-        "Bus": "bus_id",
-        "Line": "line_id",
-        "Link": "link_id",
-        "Transformer": "transformer_id",
         "v_nom": "voltage",
         "num_parallel": "circuits",
     }
 
-    if "converter_id" in columns:
-        rename_dict["Link"] = "converter_id"
-
-    df.reset_index().rename(columns=rename_dict).loc[:, columns].replace(
-        {True: "t", False: "f"}
-    ).to_csv(output_file, index=False, quotechar="'")
+    df.rename_axis(index=rename_idx).reset_index().rename(columns=rename_dict).loc[
+        :, columns
+    ].replace({True: "t", False: "f"}).to_csv(output_file, index=False, quotechar="'")
 
     return None
 
@@ -131,7 +127,6 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
     """
 
     buses_cols = [
-        "Bus",
         "v_nom",
         "dc",
         "symbol",
@@ -139,14 +134,13 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
         "tags",
         "geometry",
     ]
-    buses = network.buses.reset_index()[
+    buses = network.buses[
         [c for c in buses_cols if c in network.buses.columns]
-    ]
+    ].reset_index()
     buses["geometry"] = buses.geometry.apply(lambda x: loads(x))
     buses = gpd.GeoDataFrame(buses, geometry="geometry", crs=crs)
 
     lines_cols = [
-        "Line",
         "bus0",
         "bus1",
         "v_nom",
@@ -163,15 +157,14 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
         "tags",
         "geometry",
     ]
-    lines = network.lines.reset_index()[
+    lines = network.lines[
         [c for c in lines_cols if c in network.lines.columns]
-    ]
+    ].reset_index()
     # Create shapely linestring from geometry column
     lines["geometry"] = lines.geometry.apply(lambda x: loads(x))
     lines = gpd.GeoDataFrame(lines, geometry="geometry", crs=crs)
 
     links_cols = [
-        "Link",
         "bus0",
         "bus1",
         "v_nom",
@@ -184,16 +177,15 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
     ]
     links = (
         network.links[~is_converter]
-        .reset_index()
         .rename(columns={"voltage": "v_nom"})[
             [c for c in links_cols if c in network.links.columns]
         ]
+        .reset_index()
     )
     links["geometry"] = links.geometry.apply(lambda x: loads(x))
     links = gpd.GeoDataFrame(links, geometry="geometry", crs=crs)
 
     converters_cols = [
-        "Link",
         "bus0",
         "bus1",
         "v_nom",
@@ -202,16 +194,15 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
     ]
     converters = (
         network.links[is_converter]
-        .reset_index()
         .rename(columns={"voltage": "v_nom"})[
             [c for c in converters_cols if c in network.links.columns]
         ]
+        .reset_index()
     )
     converters["geometry"] = converters.geometry.apply(lambda x: loads(x))
     converters = gpd.GeoDataFrame(converters, geometry="geometry", crs=crs)
 
     transformers_cols = [
-        "Transformer",
         "bus0",
         "bus1",
         "voltage_bus0",
@@ -219,9 +210,9 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
         "s_nom",
         "geometry",
     ]
-    transformers = network.transformers.reset_index()[
+    transformers = network.transformers[
         [c for c in transformers_cols if c in network.transformers.columns]
-    ]
+    ].reset_index()
     transformers["geometry"] = transformers.geometry.apply(lambda x: loads(x))
     transformers = gpd.GeoDataFrame(transformers, geometry="geometry", crs=crs)
 
@@ -287,19 +278,21 @@ if __name__ == "__main__":
 
     # Export to clean csv for release
     logger.info(f"Exporting {len(network.buses)} buses to %s", snakemake.output.buses)
-    export_clean_csv(network.buses, BUSES_COLUMNS, snakemake.output.buses)
+    export_clean_csv(network.buses, BUSES_COLUMNS, snakemake.output.buses, "bus_id")
 
     logger.info(
         f"Exporting {len(network.transformers)} transformers to %s",
         snakemake.output.transformers,
     )
     export_clean_csv(
-        network.transformers, TRANSFORMERS_COLUMNS, snakemake.output.transformers
+        network.transformers,
+        TRANSFORMERS_COLUMNS,
+        snakemake.output.transformers,
+        "transformer_id",
     )
 
     logger.info(f"Exporting {len(network.lines)} lines to %s", snakemake.output.lines)
-    export_clean_csv(network.lines, LINES_COLUMNS, snakemake.output.lines)
-
+    export_clean_csv(network.lines, LINES_COLUMNS, snakemake.output.lines, "line_id")
     # Boolean that specifies if link element is a converter
     is_converter = network.links.index.str.startswith("conv") == True
 
@@ -308,7 +301,7 @@ if __name__ == "__main__":
         snakemake.output.links,
     )
     export_clean_csv(
-        network.links[~is_converter], LINKS_COLUMNS, snakemake.output.links
+        network.links[~is_converter], LINKS_COLUMNS, snakemake.output.links, "link_id"
     )
 
     logger.info(
@@ -316,7 +309,10 @@ if __name__ == "__main__":
         snakemake.output.converters,
     )
     export_clean_csv(
-        network.links[is_converter], CONVERTERS_COLUMNS, snakemake.output.converters
+        network.links[is_converter],
+        CONVERTERS_COLUMNS,
+        snakemake.output.converters,
+        "converter_id",
     )
 
     ## Create interactive map

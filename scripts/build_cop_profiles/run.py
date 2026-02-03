@@ -182,7 +182,6 @@ def get_source_temperature(
 
 
 def get_source_inlet_temperature(
-    heat_source_name: str,
     source_temperature: float | xr.DataArray,
     central_heating_return_temperature: xr.DataArray,
 ) -> float | xr.DataArray:
@@ -213,21 +212,18 @@ def get_source_inlet_temperature(
     float | xr.DataArray
         Effective source inlet temperature for the heat pump in Celsius.
     """
-    heat_source = HeatSource(heat_source_name)
-    if heat_source.requires_preheater:
-        # When source temperature > return temperature, preheater is used:
-        # heat pump lifts from return temperature (after preheating).
-        # When source temperature <= return temperature, no preheating:
-        # heat pump draws directly from the source.
-        return central_heating_return_temperature.where(
-            central_heating_return_temperature < source_temperature, source_temperature
-        )
-    else:
-        return source_temperature
+    # When source temperature > return temperature, preheater is used:
+    # heat pump lifts from return temperature (after preheating).
+    # When source temperature <= return temperature, no preheating:
+    # heat pump draws directly from the source.
+    return xr.where(
+        source_temperature > central_heating_return_temperature,
+        central_heating_return_temperature,
+        source_temperature,
+    )
 
 
 def get_sink_inlet_temperature(
-    heat_source_name: str,
     source_temperature: float | xr.DataArray,
     central_heating_return_temperature: xr.DataArray,
     central_heating_forward_temperature: xr.DataArray,
@@ -260,14 +256,11 @@ def get_sink_inlet_temperature(
     float | xr.DataArray
         Effective sink inlet temperature for the heat pump in Celsius.
     """
-    heat_source = HeatSource(heat_source_name)
-    if heat_source.requires_preheater:
-        return central_heating_forward_temperature.where(
-            central_heating_return_temperature < source_temperature,
-            central_heating_return_temperature,
-        )
-    else:
-        return central_heating_return_temperature
+    return xr.where(
+        source_temperature > central_heating_return_temperature,
+        central_heating_forward_temperature,
+        central_heating_return_temperature,
+    )
 
 
 if __name__ == "__main__":
@@ -306,13 +299,11 @@ if __name__ == "__main__":
             )
 
             source_inlet_temperature_celsius = get_source_inlet_temperature(
-                heat_source_name=heat_source_name,
                 source_temperature=source_temperature_celsius,
                 central_heating_return_temperature=central_heating_return_temperature,
             )
 
             sink_inlet_temperature_celsius = get_sink_inlet_temperature(
-                heat_source_name=heat_source_name,
                 source_temperature=source_temperature_celsius,
                 central_heating_forward_temperature=central_heating_forward_temperature,
                 central_heating_return_temperature=central_heating_return_temperature,
