@@ -287,6 +287,12 @@ if __name__ == "__main__":
         fill_values = repeat_years(s, range(2025, 2026))
         load["MK"] = load["MK"].combine_first(fill_values)
 
+    if "CY" in countries:
+        # use 2021 as template for filling missing years
+        s = load.loc["2021", "CY"]
+        fill_values = repeat_years(s, range(2010, 2026))
+        load["CY"] = load["CY"].combine_first(fill_values)
+
     if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], countries)
 
