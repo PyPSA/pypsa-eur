@@ -112,8 +112,12 @@ rule base_network_incumbent:
         europe_shape=resources("europe_shape.geojson"),
     output:
         base_network=resources("osm-network/comparison/incumbent/networks/base.nc"),
-        regions_onshore=resources("osm-network/comparison/incumbent/regions_onshore.geojson"),
-        regions_offshore=resources("osm-network/comparison/incumbent/regions_offshore.geojson"),
+        regions_onshore=resources(
+            "osm-network/comparison/incumbent/regions_onshore.geojson"
+        ),
+        regions_offshore=resources(
+            "osm-network/comparison/incumbent/regions_offshore.geojson"
+        ),
         admin_shapes=resources("osm-network/comparison/incumbent/admin_shapes.geojson"),
     log:
         logs("base_network_incumbent.log"),
