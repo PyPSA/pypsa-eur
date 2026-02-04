@@ -12,7 +12,9 @@ rule build_electricity_demand:
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
-        reported=ancient("data/electricity_demand_raw.csv"),
+        opsd=rules.retrieve_electricity_demand_opsd.output["csv"],
+        neso=rules.retrieve_electricity_demand_neso.output["csv"],
+        entsoe=rules.retrieve_electricity_demand_entsoe.output["csv"],
         synthetic=lambda w: (
             ancient(rules.retrieve_synthetic_electricity_demand.output["csv"])
             if config_provider("load", "supplement_synthetic")(w)
@@ -136,8 +138,8 @@ rule build_bidding_zones:
             "clustering", "build_bidding_zones", "aggregate_to_tyndp"
         ),
     input:
-        bidding_zones_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
-        bidding_zones_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+        bidding_zones_entsoepy=f"{BIDDING_ZONES_ENTSOEPY_DATASET['folder']}/bidding_zones_entsoepy.geojson",
+        bidding_zones_electricitymaps=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET['folder']}/bidding_zones_electricitymaps.geojson",
     output:
         file=resources("bidding_zones.geojson"),
     log:
@@ -404,8 +406,6 @@ if COUNTRY_RUNOFF_DATASET["source"] == "build":
             logs("build_country_runoff.log"),
         benchmark:
             benchmarks("build_country_runoff")
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/build_country_runoff.py"
 
@@ -842,7 +842,7 @@ if (
 
     rule clean_osm_data:
         message:
-            "Cleaning raw OSM data for {wildcards.country}"
+            "Cleaning raw OSM data for countries: " + ", ".join(config["countries"])
         input:
             cables_way=expand(
                 f"{OSM_DATASET['folder']}/{{country}}/cables_way.json",

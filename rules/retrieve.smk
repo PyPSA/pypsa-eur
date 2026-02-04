@@ -99,7 +99,7 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
         message:
             "Retrieving Corine land cover data"
         params:
-            apikey=os.environ.get("CORINE_API_TOKEN", config["secrets"]["corine"]),
+            apikey=os.environ.get("CORINE_API_TOKEN", ""),
         output:
             zip=f"{CORINE_DATASET['folder']}/corine.zip",
             tif_file=f"{CORINE_DATASET['folder']}/corine.tif",
@@ -317,19 +317,62 @@ if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
             unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
 
-rule retrieve_bidding_zones:
-    message:
-        "Retrieving bidding zones data from ENTSO-E and Electricity Maps"
-    output:
-        file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
-        file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
-    log:
-        "logs/retrieve_bidding_zones.log",
-    resources:
-        mem_mb=1000,
-    retries: 2
-    script:
-        "../scripts/retrieve_bidding_zones.py"
+if (
+    BIDDING_ZONES_ELECTRICITYMAPS_DATASET := dataset_version(
+        "bidding_zones_electricitymaps"
+    )
+)["source"] in ["primary", "archive"]:
+
+    rule retrieve_bidding_zones_electricitymaps:
+        input:
+            geojson=storage(BIDDING_ZONES_ELECTRICITYMAPS_DATASET["url"]),
+        output:
+            geojson=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET['folder']}/bidding_zones_electricitymaps.geojson",
+        log:
+            "logs/retrieve_bidding_zones_electricitymaps.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        run:
+            copy2(input["geojson"], output["geojson"])
+
+
+if (BIDDING_ZONES_ENTSOEPY_DATASET := dataset_version("bidding_zones_entsoepy"))[
+    "source"
+] in ["primary", "archive"]:
+
+    rule retrieve_bidding_zones_entsoepy:
+        output:
+            geojson=f"{BIDDING_ZONES_ENTSOEPY_DATASET['folder']}/bidding_zones_entsoepy.geojson",
+        log:
+            "logs/retrieve_bidding_zones_entsoepy.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        run:
+            import entsoe
+            import geopandas as gpd
+            from urllib.error import HTTPError, URLError
+
+            logger.info("Downloading entsoe-py zones...")
+            gdfs: list[gpd.GeoDataFrame] = []
+            url = f"{BIDDING_ZONES_ENTSOEPY_DATASET['url']}"
+            for area in entsoe.Area:
+                name = area.name
+                try:
+                    file_url = f"{url}/{name}.geojson"
+                    gdfs.append(gpd.read_file(file_url))
+                except HTTPError as e:
+                    logger.debug(f"Area file not available for {name}: {e}")
+                    continue
+                except (URLError, TimeoutError) as e:
+                    raise Exception(f"Network error retrieving {name}: {e}")
+            shapes = pd.concat(gdfs, ignore_index=True)  # type: ignore
+
+            logger.info("Downloading entsoe-py zones... Done")
+
+            shapes.to_file(output.geojson)
+
 
 
 if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
@@ -340,7 +383,7 @@ if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
         message:
             "Retrieving cutout data for {wildcards.cutout}"
         input:
-            storage(CUTOUT_DATASET["url"] + "/files/{cutout}.nc"),
+            storage(CUTOUT_DATASET["url"] + "/{cutout}.nc"),
         output:
             CUTOUT_DATASET["folder"] + "/{cutout}.nc",
         log:
@@ -431,20 +474,169 @@ if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
             unpack_archive(output["zip_file"], output_folder)
 
 
-rule retrieve_electricity_demand:
-    message:
-        "Retrieving electricity demand data"
-    params:
-        versions=["2019-06-05", "2020-10-06"],
-    output:
-        "data/electricity_demand_raw.csv",
-    log:
-        "logs/retrieve_electricity_demand.log",
-    resources:
-        mem_mb=5000,
-    retries: 2
-    script:
-        "../scripts/retrieve_electricity_demand.py"
+if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in [
+    "build"
+]:
+
+    rule retrieve_electricity_demand_opsd:
+        message:
+            "Retrieving electricity demand data from OPSD from build source"
+        params:
+            versions=["2019-06-05", "2020-10-06"],
+        output:
+            csv=f"{OPSD_DEMAND_DATA['folder']}/electricity_demand_opsd_raw.csv",
+        log:
+            "logs/retrieve_electricity_demand_opsd.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        script:
+            "../scripts/retrieve_electricity_demand_opsd.py"
+
+
+if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in [
+    "archive"
+]:
+
+    rule retrieve_electricity_demand_opsd:
+        message:
+            "Retrieving electricity demand data from OPSD from archive"
+        input:
+            csv=storage(OPSD_DEMAND_DATA["url"]),
+        output:
+            csv=f"{OPSD_DEMAND_DATA['folder']}/electricity_demand_opsd_raw.csv",
+        retries: 2
+        run:
+            copy2(input["csv"], output["csv"])
+
+
+if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in [
+    "build"
+]:
+
+    ENTSOE_COUNTRIES = [
+        "AL",
+        "AT",
+        "BE",
+        "BA",
+        "BG",
+        "CH",
+        "CY",
+        "CZ",
+        "DE",
+        "DK",
+        "EE",
+        "ES",
+        "FI",
+        "FR",
+        "GB",
+        "GR",
+        "HR",
+        "HU",
+        "IE",
+        "IT",
+        "LT",
+        "LU",
+        "LV",
+        "MD",
+        "ME",
+        "MK",
+        "NL",
+        "NO",
+        "PL",
+        "PT",
+        "RO",
+        "RS",
+        "SE",
+        "SI",
+        "SK",
+        "UA",
+        "XK",
+    ]
+
+    rule retrieve_electricity_demand_entsoe_country:
+        message:
+            "Retrieving electricity demand data from ENTSO-E for {wildcards.country}"
+        params:
+            entsoe_token=os.environ.get("ENTSOE_API_TOKEN", ""),
+        output:
+            csv=f"{ENTSOE_DEMAND_DATA['folder']}"
+            + "/electricity_demand_entsoe_raw_{country}.csv",
+        log:
+            "logs/retrieve_electricity_demand_entsoe_{country}.log",
+        resources:
+            mem_mb=2000,
+        retries: 2
+        script:
+            "../scripts/retrieve_electricity_demand_entsoe.py"
+
+    rule retrieve_electricity_demand_entsoe:
+        message:
+            "Retrieving electricity demand data from ENTSO-E from build source"
+        input:
+            csvs=expand(
+                f"{ENTSOE_DEMAND_DATA['folder']}"
+                + "/electricity_demand_entsoe_raw_{country}.csv",
+                country=ENTSOE_COUNTRIES,
+            ),
+        output:
+            csv=f"{ENTSOE_DEMAND_DATA['folder']}/electricity_demand_entsoe_raw.csv",
+        run:
+            import pandas as pd
+
+            loads = [pd.read_csv(csv, index_col=0) for csv in input.csvs]
+            df = pd.concat(loads, axis=1, join="outer").sort_index()
+            df.to_csv(output.csv)
+
+
+if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"] in [
+    "archive"
+]:
+
+    rule retrieve_electricity_demand_entsoe:
+        message:
+            "Retrieving electricity demand data from ENTSO-E from archive"
+        input:
+            csv=storage(ENTSOE_DEMAND_DATA["url"]),
+        output:
+            csv=f"{ENTSOE_DEMAND_DATA['folder']}/electricity_demand_entsoe_raw.csv",
+        retries: 2
+        run:
+            copy2(input["csv"], output["csv"])
+
+
+if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in [
+    "build"
+]:
+
+    rule retrieve_electricity_demand_neso:
+        message:
+            "Retrieving electricity demand data from NESO from build source"
+        output:
+            csv=f"{NESO_DEMAND_DATA['folder']}/electricity_demand_neso_raw.csv",
+        log:
+            "logs/retrieve_electricity_demand_neso.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        script:
+            "../scripts/retrieve_electricity_demand_neso.py"
+
+
+if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in [
+    "archive"
+]:
+
+    rule retrieve_electricity_demand_neso:
+        message:
+            "Retrieving electricity demand data from NESO from archive"
+        input:
+            csv=storage(NESO_DEMAND_DATA["url"]),
+        output:
+            csv=f"{NESO_DEMAND_DATA['folder']}/electricity_demand_neso_raw.csv",
+        retries: 2
+        run:
+            copy2(input["csv"], output["csv"])
 
 
 if (
@@ -718,6 +910,20 @@ if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
             copy2(input["xlsx"], output["xlsx"])
 
 
+if (GEM_GCCT_DATASET := dataset_version("gem_gcct"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_gem_cement_concrete_tracker:
+        input:
+            xlsx=storage(GEM_GCCT_DATASET["url"]),
+        output:
+            xlsx=f"{GEM_GCCT_DATASET['folder']}/Global-Cement-and-Concrete-Tracker.xlsx",
+        run:
+            copy2(input["xlsx"], output["xlsx"])
+
+
 if (BFS_ROAD_VEHICLE_STOCK_DATASET := dataset_version("bfs_road_vehicle_stock"))[
     "source"
 ] in [
@@ -813,6 +1019,12 @@ if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(output["zip_file"], output_folder)
 
+            # Extract {bYYYY} from the input file / URL
+            bYYYY = re.search(
+                r"WDPA_(\w{3}\d{4})_Public_shp.zip",
+                input["zip_file"],
+            ).group(1)
+
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = (
@@ -843,6 +1055,12 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
             output_folder = Path(output["zip_file"]).parent
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(output["zip_file"], output_folder)
+
+            # Extract {bYYYY} from the input file / URL
+            bYYYY = re.search(
+                r"WDPA_WDOECM_(\w{3}\d{4})_Public_marine_shp.zip",
+                input["zip_file"],
+            ).group(1)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
@@ -935,7 +1153,7 @@ if OSM_DATASET["source"] in ["archive"]:
             "Retrieving OSM archive data"
         input:
             **{
-                file: storage(f"{OSM_DATASET['url']}/files/{file}")
+                file: storage(f"{OSM_DATASET['url']}/{file}")
                 for file in OSM_ARCHIVE_FILES
             },
         output:
@@ -1106,6 +1324,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
             "Retrieving seawater temperature data for {wildcards.year}"
         params:
             default_cutout=config_provider("atlite", "default_cutout"),
+            test_data_url=dataset_version("seawater_temperature")["url"],
         output:
             seawater_temperature="data/seawater_temperature_{year}.nc",
         log:

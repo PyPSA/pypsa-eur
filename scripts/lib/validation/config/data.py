@@ -51,6 +51,10 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="GEM Europe Gas Tracker data source configuration.",
     )
+    gem_gcct: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="GEM Global Cement and Concrete Tracker data source configuration.",
+    )
     co2stop: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="CO2Stop data source configuration.",
@@ -95,9 +99,25 @@ class DataConfig(BaseModel):
         default_factory=lambda: _DataSourceConfig(source="primary"),
         description="SciGRID Gas data source configuration.",
     )
+    seawater_temperature: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="Seawater temperature data source configuration.",
+    )
     synthetic_electricity_demand: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
         description="Synthetic electricity demand data source configuration.",
+    )
+    opsd_electricity_demand: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="archive"),
+        description="OPSD electricity demand data source configuration.",
+    )
+    entsoe_electricity_demand: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="archive"),
+        description="ENTSO-E electricity demand data source configuration.",
+    )
+    neso_electricity_demand: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="archive"),
+        description="NESO electricity demand data source configuration.",
     )
     copernicus_land_cover: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
@@ -214,4 +234,12 @@ class DataConfig(BaseModel):
     jrc_ardeco: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="JRC ARDECO data source configuration.",
+    )
+    bidding_zones_electricitymaps: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="Electricitymaps bidding zones data source configuration.",
+    )
+    bidding_zones_entsoepy: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="Entsoepy bidding zones data source configuration.",
     )
