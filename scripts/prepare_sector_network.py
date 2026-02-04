@@ -3197,7 +3197,6 @@ def add_heat(
                 / 100,  # convert %/hour into unit/hour
                 capital_cost=costs.at["central water pit storage", "capital_cost"],
                 lifetime=costs.at["central water pit storage", "lifetime"],
-                e_nom_min=100000,
             )
 
         if enable_ates and heat_system == HeatSystem.URBAN_CENTRAL:
