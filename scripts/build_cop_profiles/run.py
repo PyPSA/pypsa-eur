@@ -226,7 +226,6 @@ def get_source_inlet_temperature(
 def get_sink_inlet_temperature(
     source_temperature: float | xr.DataArray,
     central_heating_return_temperature: xr.DataArray,
-    central_heating_forward_temperature: xr.DataArray,
 ) -> float | xr.DataArray:
     """
     Determine the effective sink inlet temperature for the heat pump.
@@ -237,8 +236,8 @@ def get_sink_inlet_temperature(
     temperature. When preheating is not used (source <= return), the heat pump
     receives water at return temperature and heats it to forward temperature.
 
-    When source temperature > return temperature, preheater is used: preheater raises return flow, heat pump inlet is at forward temp.
-    When source temperature <= return temperature, no preheating: heat pump inlet is at return temperature.
+    When source temperature > return temperature, preheater is used: preheater raises return flow, heat pump inlet is at return temp.
+    When source temperature <= return temperature, no preheating: heat pump inlet is at source temperature.
 
     Parameters
     ----------
@@ -248,8 +247,6 @@ def get_sink_inlet_temperature(
         Temperature of the heat source in Celsius.
     central_heating_return_temperature : xr.DataArray
         District heating return temperature in Celsius.
-    central_heating_forward_temperature : xr.DataArray
-        District heating forward (supply) temperature in Celsius.
 
     Returns
     -------
@@ -258,8 +255,8 @@ def get_sink_inlet_temperature(
     """
     return xr.where(
         source_temperature > central_heating_return_temperature,
-        central_heating_forward_temperature,
         central_heating_return_temperature,
+        source_temperature,
     )
 
 
