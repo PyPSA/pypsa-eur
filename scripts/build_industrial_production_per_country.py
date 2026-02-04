@@ -327,7 +327,7 @@ if __name__ == "__main__":
 
     jrc_dir = snakemake.input.jrc
 
-    eurostat = eurostat = pd.read_csv(snakemake.input.eurostat)
+    eurostat = pd.read_csv(snakemake.input.eurostat)
 
     demand = industry_production(countries, year, eurostat, jrc_dir)
 
