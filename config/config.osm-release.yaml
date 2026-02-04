@@ -76,7 +76,7 @@ osm_network_release:
   under_construction: keep
   remove_after: "2025-12-31"
   compare_to:
-    version: "0.6"
+    version: latest
     source: archive
 
 

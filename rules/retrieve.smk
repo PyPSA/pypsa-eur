@@ -1137,19 +1137,63 @@ if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive
                 rmtree(macosx_dir, ignore_errors=True)
 
 
-
-if OSM_DATASET["source"] in ["archive"]:
-
-    OSM_ARCHIVE_FILES = [
+def get_osm_archive_files(version):
+    return [
         "buses.csv",
         "converters.csv",
         "lines.csv",
         "links.csv",
         "transformers.csv",
         # Newer versions include the additional map.html file for visualisation
-        *(["map.html"] if float(OSM_DATASET["version"]) >= 0.6 else []),
+        *(["map.html"] if float(version) >= 0.6 else []),
     ]
 
+
+def get_osm_network_incumbent(
+    version: str = "latest",
+    source: str = "archive",
+) -> pd.Series:
+    fp = workflow.source_path("../data/versions.csv")
+    data_versions = load_data_versions(fp)
+    name = "osm"
+
+    dataset = data_versions.loc[
+        (data_versions["dataset"] == name)
+        & (data_versions["source"] == source)
+        & (data_versions["supported"])  # Limit to supported versions only
+        & (data_versions["version"] == version if "latest" != version else True)
+        & (data_versions["latest"] if "latest" == version else True)
+    ]
+
+    if dataset.empty:
+        raise ValueError(
+            f"OSM network for version '{version}' not found in data/versions.csv."
+        )
+
+    # Return single-row DataFrame as a Series
+    dataset = dataset.squeeze()
+
+    # Generate output folder path in the `data` directory
+    dataset["folder"] = Path(
+        "data", name, dataset["source"], dataset["version"]
+    ).as_posix()
+
+    return dataset
+
+
+def input_base_network_incumbent(w):
+    version = config_provider("osm_network_release", "compare_to", "version")(w)
+    source = config_provider("osm_network_release", "compare_to", "source")(w)
+    osm_dataset = get_osm_network_incumbent(version, source)
+    osm_path = osm_dataset["folder"]
+    components = {"buses", "lines", "links", "converters", "transformers"}
+    inputs = {c: f"{osm_path}/{c}.csv" for c in components}
+    return inputs
+
+
+if OSM_DATASET["source"] in ["archive"]:
+    OSM_ARCHIVE_FILES = get_osm_archive_files(OSM_DATASET["version"])
+    
     rule retrieve_osm_archive:
         message:
             "Retrieving OSM archive data"
@@ -1170,8 +1214,45 @@ if OSM_DATASET["source"] in ["archive"]:
                 copy2(input[key], output[key])
 
 
-elif OSM_DATASET["source"] == "build":
+# Only create incumbent rule if it points to a different folder
+OSM_DATASET_INCUMBENT = get_osm_network_incumbent(
+    version=config.get("osm_network_release", {})
+    .get("compare_to", {})
+    .get("version", "latest"),
+    source=config.get("osm_network_release", {})
+    .get("compare_to", {})
+    .get("source", "archive"),
+)
 
+if (OSM_DATASET_INCUMBENT["source"] in ["archive"] and 
+    OSM_DATASET_INCUMBENT["folder"] != OSM_DATASET.get("folder")):
+    
+    OSM_ARCHIVE_FILES_INCUMBENT = get_osm_archive_files(OSM_DATASET_INCUMBENT["version"])
+    
+    rule retrieve_osm_archive_incumbent:
+        message:
+            "Retrieving OSM archive incumbent data"
+        input:
+            **{
+                file: storage(f"{OSM_DATASET_INCUMBENT['url']}/{file}")
+                for file in OSM_ARCHIVE_FILES_INCUMBENT
+            },
+        output:
+            **{
+                file: f"{OSM_DATASET_INCUMBENT['folder']}/{file}"
+                for file in OSM_ARCHIVE_FILES_INCUMBENT
+            },
+        log:
+            "logs/retrieve_osm_archive_incumbent.log",
+        threads: 1
+        resources:
+            mem_mb=500,
+        run:
+            for key in input.keys():
+                copy2(input[key], output[key])
+
+
+elif OSM_DATASET["source"] == "build":
     OSM_RAW_JSON = [
         "cables_way.json",
         "lines_way.json",
@@ -1179,7 +1260,7 @@ elif OSM_DATASET["source"] == "build":
         "substations_way.json",
         "substations_relation.json",
     ]
-
+    
     rule retrieve_osm_data_raw:
         message:
             "Retrieving OSM electricity grid raw data for {wildcards.country}"
@@ -1187,9 +1268,7 @@ elif OSM_DATASET["source"] == "build":
             overpass_api=config_provider("overpass_api"),
         output:
             **{
-                file.replace(
-                    ".json", ""
-                ): f"{OSM_DATASET['folder']}/{{country}}/{file}"
+                file.replace(".json", ""): f"{OSM_DATASET['folder']}/{{country}}/{file}"
                 for file in OSM_RAW_JSON
             },
         log:
@@ -1197,7 +1276,7 @@ elif OSM_DATASET["source"] == "build":
         threads: 1
         script:
             "../scripts/retrieve_osm_data.py"
-
+    
     rule retrieve_osm_data_raw_all:
         input:
             expand(
