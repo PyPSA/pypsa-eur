@@ -171,7 +171,7 @@
               "type": "array"
             }
           ],
-          "default": "europe-1940-2024-era5",
+          "default": "europe-2013-sarah3-era5",
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
         },
         "nprocesses": {
@@ -952,6 +952,26 @@
             }
           }
         },
+        "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "co2stop": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -1172,7 +1192,87 @@
             }
           }
         },
+        "seawater_temperature": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "synthetic_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "opsd_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "entsoe_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "neso_electricity_demand": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -1753,6 +1853,46 @@
           }
         },
         "jrc_ardeco": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "bidding_zones_electricitymaps": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "bidding_zones_entsoepy": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -2458,7 +2598,7 @@
               "type": "boolean"
             },
             "interpolate_limit": {
-              "default": 3,
+              "default": 6,
               "description": "Maximum gap size (consecutive nans) which interpolated linearly.",
               "type": "integer"
             },
@@ -3736,16 +3876,6 @@
             "type": "integer"
           },
           "type": "array"
-        }
-      }
-    },
-    "SecretsConfig": {
-      "description": "Configuration for top level `secrets` settings.",
-      "properties": {
-        "corine": {
-          "default": "",
-          "description": "API token for corine dataset retrieval. You can also pass the token by setting the environment variable \"CORINE_API_TOKEN\". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.",
-          "type": "string"
         }
       }
     },
@@ -6136,7 +6266,7 @@
           "type": "boolean"
         },
         "interpolate_limit": {
-          "default": 3,
+          "default": 6,
           "description": "Maximum gap size (consecutive nans) which interpolated linearly.",
           "type": "integer"
         },
@@ -7878,11 +8008,19 @@
       }
     },
     "co2_budget": {
-      "additionalProperties": {
-        "type": "number"
-      },
-      "description": "Configuration for `co2_budget` settings.",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Configuration for `co2_budget` settings.",
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "CO2 budget as fraction of 1990 emissions per planning horizon year."
     },
     "electricity": {
       "description": "Configuration for `electricity` settings.",
@@ -8146,7 +8284,7 @@
               "type": "array"
             }
           ],
-          "default": "europe-1940-2024-era5",
+          "default": "europe-2013-sarah3-era5",
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
         },
         "nprocesses": {
@@ -9601,7 +9739,7 @@
               "type": "boolean"
             },
             "interpolate_limit": {
-              "default": 3,
+              "default": 6,
               "description": "Maximum gap size (consecutive nans) which interpolated linearly.",
               "type": "integer"
             },
@@ -11984,6 +12122,26 @@
             }
           }
         },
+        "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "co2stop": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -12204,7 +12362,87 @@
             }
           }
         },
+        "seawater_temperature": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "synthetic_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "opsd_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "entsoe_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "neso_electricity_demand": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -12803,6 +13041,46 @@
               "type": "string"
             }
           }
+        },
+        "bidding_zones_electricitymaps": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "bidding_zones_entsoepy": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
         }
       }
     },
@@ -12844,16 +13122,6 @@
               "type": "string"
             }
           }
-        }
-      }
-    },
-    "secrets": {
-      "description": "Configuration for top level `secrets` settings.",
-      "properties": {
-        "corine": {
-          "default": "",
-          "description": "API token for corine dataset retrieval. You can also pass the token by setting the environment variable \"CORINE_API_TOKEN\". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.",
-          "type": "string"
         }
       }
     }
