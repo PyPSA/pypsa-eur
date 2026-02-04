@@ -393,6 +393,8 @@ rule build_co2_prices:
 rule build_fossil_fuel_prices:
     message:
         "Building fossil fuel price time series"
+    params:
+        rolling_window=config_provider("conventional", "fuel_price_rolling_window"),
     input:
         fuel_price_raw=rules.retrieve_worldbank_commodity_prices.output["xlsx"],
     output:

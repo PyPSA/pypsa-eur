@@ -419,6 +419,7 @@ renewable:
 conventional:
   unit_commitment: false
   dynamic_fuel_price: false
+  fuel_price_rolling_window: 6
   nuclear:
     p_max_pu: data/nuclear_p_max_pu.csv
 

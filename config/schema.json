@@ -659,6 +659,12 @@
           "description": "Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file 'data/validation/monthly_fuel_price.csv'.",
           "type": "boolean"
         },
+        "fuel_price_rolling_window": {
+          "default": 6,
+          "description": "Monthly rolling mean window for fossil fuel prices smoothing.",
+          "minimum": 1,
+          "type": "integer"
+        },
         "nuclear": {
           "additionalProperties": {
             "anyOf": [
@@ -9531,6 +9537,12 @@
           "default": false,
           "description": "Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file 'data/validation/monthly_fuel_price.csv'.",
           "type": "boolean"
+        },
+        "fuel_price_rolling_window": {
+          "default": 6,
+          "description": "Monthly rolling mean window for fossil fuel prices smoothing.",
+          "minimum": 1,
+          "type": "integer"
         },
         "nuclear": {
           "additionalProperties": {

@@ -167,3 +167,6 @@ pytest = ">=8.4.2"
 [environments]
 doc = { features = ["doc"], no-default-feature = true }
 test = ["test"]
+
+[pypi-dependencies]
+pydeflate = ">=2.3.3"
