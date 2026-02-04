@@ -119,7 +119,7 @@ fuels_eurostat = {
     "N900H": "heat",  # Nuclear heat
     "H8000": "heat",  # Heat
     "RA000": "biomass",  # Renewables and biofuels
-    "NW6100_6220": "waste",  # Non-renewable waste
+    "W6100_6220": "waste",  # Non-renewable waste
     "E7000": "electricity",  # Electricity
 }
 
@@ -276,6 +276,7 @@ def add_coke_ovens(demand, fn, year, factor=0.75):
     pd.DataFrame: The updated `demand` DataFrame with the coke ovens energy
     consumption added to the integrated steelworks energy demand.
     """
+
 
     df = pd.read_csv(fn, index_col=[0, 1]).xs(year, level=1)
     df = (
