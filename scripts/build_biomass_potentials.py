@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 
 from scripts._helpers import configure_logging, set_scenario_config
-from scripts.build_energy_totals import build_eurostat
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
@@ -271,7 +270,7 @@ def add_unsustainable_potentials(df, input_eurostat):
     idees_rename = {"GR": "EL", "GB": "UK"}
     year = max(min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990)  # noqa: F841
     df_unsustainable = (
-        build_eurostat(input_eurostat)
+        pd.read_csv(input_eurostat)
         .query("year == @year and nrg_bal == 'PPRD'")  # Primary production
         .set_index(["country", "siec"])
         .value.unstack("siec")

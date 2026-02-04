@@ -51,7 +51,6 @@ import pandas as pd
 from tqdm import tqdm
 
 from scripts._helpers import configure_logging, mute_print, set_scenario_config
-from scripts.build_energy_totals import build_eurostat
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -326,9 +325,8 @@ if __name__ == "__main__":
     params = snakemake.params.industry
 
     jrc_dir = snakemake.input.jrc
-    input_eurostat = snakemake.input.eurostat
 
-    eurostat = build_eurostat(input_eurostat)
+    eurostat = eurostat = pd.read_csv(snakemake.input.eurostat)
 
     demand = industry_production(countries, year, eurostat, jrc_dir)
 

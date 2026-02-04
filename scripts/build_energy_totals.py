@@ -5,7 +5,7 @@
 Build total energy demands and carbon emissions per country using JRC IDEES,
 eurostat, and EEA data.
 
-- Country-specific data is read in :func:`build_eurostat`, :func:`build_idees` and `build_swiss`.
+- Country-specific data is read in :func:`build_idees` and `build_swiss` and read in from :mod:`scripts/build_eurostat_balances`.
 - :func:`build_energy_totals` then combines energy data from Eurostat, Swiss, and IDEES data.
 - :func:`build_district_heat_share` calculates the share of district heating for each country from IDEES data.
 - Historical CO2 emissions are calculated in :func:`build_eea_co2` and :func:`build_eurostat_co2` and combined in :func:`build_co2_totals`.
@@ -117,62 +117,6 @@ to_ipcc = {
     "total wL": "Total (with LULUCF)",
     "total woL": "Total (without LULUCF)",
 }
-
-
-def build_eurostat(
-    input_eurostat: str,
-) -> pd.DataFrame:
-    """
-    Return long-format energy balances for all countries in TWh/a.
-
-    Parameters
-    ----------
-    input_eurostat : str
-        Path to the Eurostat database.
-
-    Returns
-    -------
-    pd.DataFrame
-        Long-format DataFrame containing energy data for all countries in TWh/a.
-    """
-
-    raw = pd.read_csv(
-        input_eurostat,
-        sep=",|\t| [^ ]?\t",
-        engine="python",
-        na_values=[":", ": m", 0.0],
-    ).rename(columns={"geo\\TIME_PERIOD": "country"})
-
-    df = raw.melt(
-        id_vars=["freq", "nrg_bal", "siec", "unit", "country"],
-        var_name="year",
-        value_name="value",
-    ).query("unit == 'GWH'")
-
-    # Clean up formatting
-    df["year"] = df["year"].astype(int)
-    df.drop(["freq", "unit"], axis=1, inplace=True)
-
-    # For total and fossil energy, fill in missing values with
-    # closest non-missing value in year index
-    for country in df.country.unique():
-        mask = (
-            (df["country"] == country)
-            & (df["nrg_bal"] == "FC_TRA_DAVI_E")
-            & (df["siec"].isin(["TOTAL", "FE"]))
-        )
-
-        df.loc[mask, "value"] = (
-            df[mask].groupby("siec")["value"].transform(lambda x: x.ffill().bfill())
-        )
-
-    # Follow JRC-IDEES country code convention
-    df["country"] = df["country"].replace({"UK": "GB", "EL": "GR"})
-
-    # Convert from GWh to TWh
-    df["value"] = df["value"] / 1000
-
-    return df
 
 
 def build_swiss() -> pd.DataFrame:
@@ -1353,8 +1297,7 @@ if __name__ == "__main__":
     countries = snakemake.params.countries
     idees_countries = pd.Index(countries).intersection(eu27)
 
-    input_eurostat = snakemake.input.eurostat
-    eurostat = build_eurostat(input_eurostat)
+    eurostat = pd.read_csv(snakemake.input.eurostat)
 
     build_transformation_output_coke(
         eurostat, snakemake.output.transformation_output_coke
