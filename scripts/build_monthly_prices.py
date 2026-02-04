@@ -67,7 +67,7 @@ if __name__ == "__main__":
             target_currency="EUR",
             base_year=2020,
         )["value"].values
-    df = df[df.index.year >= 1999] # only available from 1999 onwards
+    df = df[df.index.year >= 1999]  # only available from 1999 onwards
     df = df.drop(columns=["year", "iso_code"])
 
     df["oil"] *= BBL_PER_MWH
