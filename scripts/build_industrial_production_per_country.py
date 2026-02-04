@@ -188,6 +188,7 @@ def get_energy_ratio(country, eurostat, jrc_dir, year, snakemake):
             )
             .set_index("nrg_bal")
             .value.rename(eb_sectors)
+            .div(ktoe_to_twh)
         )
 
     fn = f"{jrc_dir}/EU27/JRC-IDEES-2021_Industry_EU27.xlsx"
