@@ -185,7 +185,7 @@ def get_energy_ratio(country, eurostat, jrc_dir, year, snakemake):
         e_country = (
             eurostat.query(
                 "year == @year and country == @country and "
-                "siec == 'TOTAL' and nrg_bal == @eb_sectors.keys()"
+                "siec == 'TOTAL' and nrg_bal in @eb_sectors.keys()"
             )
             .set_index("nrg_bal")
             .value.rename(eb_sectors)
