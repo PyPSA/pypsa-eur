@@ -277,7 +277,6 @@ def add_coke_ovens(demand, fn, year, factor=0.75):
     consumption added to the integrated steelworks energy demand.
     """
 
-
     df = pd.read_csv(fn, index_col=[0, 1]).xs(year, level=1)
     df = (
         df[fuels_eurostat.keys()]
