@@ -174,10 +174,6 @@ def get_source_temperature(
                 f"Constant temperature for heat source '{heat_source_name}' not specified in heat_source_temperatures."
             )
     else:
-        if f"temp_{heat_source_name}" not in snakemake_input.keys():
-            raise ValueError(
-                f"Missing input temperature for heat source {heat_source_name}."
-            )
         return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
 
 
