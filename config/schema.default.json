@@ -5414,6 +5414,7 @@
               "description": "Since we model the CC retrofit using data from the DEA's large biomass boiler, there is an increase in Capex per unit CO2 captured due to a gas CCGT's lower flue gas CO2 concentration; source: DEA (2024) https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage, Figure 12",
               "type": "number"
             }
+          }
         },
         "dac": {
           "default": true,
