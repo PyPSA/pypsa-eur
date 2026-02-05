@@ -70,6 +70,7 @@ rule make_network_comparison:
 rule prepare_osm_network_release:
     params:
         line_types=config["lines"]["types"],
+        release_version=config_provider("osm_network_release", "release_version"),
     input:
         base_network=resources("networks/base.nc"),
         stations_polygon=resources("osm-network/build/geojson/stations_polygon.geojson"),

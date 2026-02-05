@@ -221,7 +221,7 @@ def get_line_colors(voltages: pd.Series) -> list:
     return colors.tolist()
 
 
-def inject_custom_controls(deck: pdk.Deck) -> str:
+def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
     """
     Inject custom layer visibility controls into a pydeck object.
     
@@ -232,6 +232,8 @@ def inject_custom_controls(deck: pdk.Deck) -> str:
     ----------
     deck : pdk.Deck
         pydeck Deck instance to export with custom controls.
+    release_version : str
+        Release version string to include in HTML title.
     
     Returns
     -------
@@ -252,7 +254,7 @@ def inject_custom_controls(deck: pdk.Deck) -> str:
         <style>
         .voltage-tag {
             display: inline-block;
-            background: #007bff;
+            background: #6c757d;
             color: white;
             padding: 4px 8px;
             margin: 2px;
@@ -303,7 +305,6 @@ def inject_custom_controls(deck: pdk.Deck) -> str:
                    font-family:sans-serif;z-index:1000;
                    border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);
                    display:none;margin-top:50px;min-width:250px;max-width:300px">
-            <div style="font-weight:bold;margin-bottom:12px;font-size:14px">Layers</div>
             
             <!-- Voltage Filter -->
             <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #ddd">
@@ -319,7 +320,7 @@ def inject_custom_controls(deck: pdk.Deck) -> str:
                     style="width:100%;margin-top:8px;padding:6px;background:#6c757d;
                            color:white;border:none;border-radius:3px;cursor:pointer;
                            font-size:13px">
-                    Clear Filter
+                    Clear filter
                 </button>
             </div>
             
@@ -571,7 +572,7 @@ def inject_custom_controls(deck: pdk.Deck) -> str:
     # Inject custom title
     html = html.replace(
         "<title>pydeck</title>",
-        "<title>PyPSA-Eur OSM Network Visualization</title>",
+        "<title>PyPSA network (OSM " + release_version + ")</title>",
     )
     
     return html
@@ -662,6 +663,7 @@ if __name__ == "__main__":
 
     # Params and import
     line_types = snakemake.params.line_types
+    release_version = snakemake.params.release_version
     n = pypsa.Network(snakemake.input.base_network)
 
     #############
@@ -953,12 +955,12 @@ if __name__ == "__main__":
             latitude=center_lat,
             longitude=center_lon,
             zoom=5,
-            pitch=0,
+            pitch=30,
         ),
     )
     
     logger.info("Injecting custom layer controls into map HTML.")
-    map_ctrl = inject_custom_controls(map)
+    map_ctrl = inject_custom_controls(map, release_version)
 
     # logger.info("Compressing map HTML to reduce file size.")
     map_ctrl = compress_html(map_ctrl)
