@@ -2,19 +2,19 @@
 #
 # SPDX-License-Identifier: MIT
 
+import json
 import logging
+import re
+from pathlib import Path
 
 import geopandas as gpd
-import json
 import numpy as np
 import pandas as pd
 import pydeck as pdk
 import pypsa
-import re
-
-from pathlib import Path
 from shapely import wkt
 from shapely.geometry import LineString, Polygon
+
 from scripts._helpers import configure_logging, set_scenario_config
 from scripts.base_network import _get_linetype_by_voltage
 
@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 DISTANCE_CRS = "EPSG:3035"
 GEO_CRS = "EPSG:4326"
-LINE_SIMPLIFY = 100 # meters
-STATIONS_SIMPLIFY = 100 # meters
-BUSES_POLYGON_SIMPLIFY = 5 # meters
+LINE_SIMPLIFY = 100  # meters
+STATIONS_SIMPLIFY = 100  # meters
+BUSES_POLYGON_SIMPLIFY = 5  # meters
 BUSES_COLUMNS = [
     "bus_id",
     "voltage",
@@ -86,9 +86,9 @@ CONVERTERS_COLUMNS = [
     "geometry",
 ]
 ROUNDING_DECIMALS = {
-    "s_nom": 3, 
-    "r": 6, 
-    "x": 6, 
+    "s_nom": 3,
+    "r": 6,
+    "x": 6,
     "b": 8,
 }
 
@@ -99,7 +99,8 @@ def export_clean_csv(
     output_file: str | Path,
     rename_idx: str,
 ) -> pd.DataFrame:
-    """Export a cleaned DataFrame to a CSV file.
+    """
+    Export a cleaned DataFrame to a CSV file.
 
     This function renames the DataFrame index, applies column renaming,
     selects specified columns, converts boolean values to 't'/'f', and
@@ -128,9 +129,13 @@ def export_clean_csv(
         "num_parallel": "circuits",
     }
 
-    df = df.rename_axis(index=rename_idx).reset_index().rename(columns=rename_dict).loc[
-        :, columns
-    ].replace({True: "t", False: "f"})
+    df = (
+        df.rename_axis(index=rename_idx)
+        .reset_index()
+        .rename(columns=rename_dict)
+        .loc[:, columns]
+        .replace({True: "t", False: "f"})
+    )
 
     df.to_csv(output_file, index=False, quotechar="'")
 
@@ -140,17 +145,17 @@ def export_clean_csv(
 def linestring_to_coords(linestring: LineString) -> list[list[float]]:
     """
     Convert shapely LineString to list of [lon, lat] coordinates.
-    
+
     Parameters
     ----------
     linestring : LineString
         A shapely LineString geometry object.
-    
+
     Returns
     -------
     list[list[float]]
         List of [longitude, latitude] coordinate pairs.
-    
+
     """
     return [[coord[0], coord[1]] for coord in linestring.coords]
 
@@ -158,17 +163,17 @@ def linestring_to_coords(linestring: LineString) -> list[list[float]]:
 def polygon_to_coords(polygon: Polygon) -> list[list[float]]:
     """
     Convert shapely Polygon to coordinate list for PyDeck.
-    
+
     Parameters
     ----------
     polygon : Polygon
         A shapely Polygon geometry object.
-    
+
     Returns
     -------
     list[list[float]]
         List of [longitude, latitude] coordinate pairs from exterior ring.
-    
+
     """
     return [[coord[0], coord[1]] for coord in polygon.exterior.coords]
 
@@ -176,40 +181,40 @@ def polygon_to_coords(polygon: Polygon) -> list[list[float]]:
 def get_line_colors(voltages: pd.Series) -> list:
     """
     Get RGB colors for transmission lines based on voltage level ranges (vectorized).
-    
+
     Uses discrete color ranges: yellow (low) → orange → red (high) → magenta (ultra-high).
     DC lines are colored neon green regardless of voltage.
-    
+
     Parameters
     ----------
     voltages : pd.Series
         Voltage levels in kV.
-    
+
     Returns
     -------
     list
         List of RGBA colors as [R, G, B, A] arrays.
-    
+
     """
     voltages = voltages.to_numpy()
     n = len(voltages)
     colors = np.zeros((n, 4), dtype=int)
     colors[:, 3] = 200  # Alpha channel
-    
+
     # Define voltage ranges and their colors [R, G, B]
     # Format: (min_voltage, max_voltage, [R, G, B])
     voltage_ranges = [
-        (0, 110, [255, 255, 0]),        # < 110 kV: Bright yellow
-        (110, 150, [255, 235, 0]),      # 110-150 kV: Light yellow
-        (151, 240, [255, 200, 0]),      # 151-240 kV: Gold/Orange-yellow
-        (241, 280, [255, 165, 0]),      # 241-280 kV: Orange
-        (281, 330, [255, 120, 0]),      # 281-330 kV: Dark orange
-        (331, 350, [255, 69, 0]),       # 331-350 kV: Orange-red
-        (351, 420, [255, 40, 0]),       # 351-420 kV: Red-orange
-        (421, 520, [220, 20, 60]),      # 421-520 kV: Crimson
-        (521, np.inf, [255, 0, 255]),   # > 520 kV: Magenta
+        (0, 110, [255, 255, 0]),  # < 110 kV: Bright yellow
+        (110, 150, [255, 235, 0]),  # 110-150 kV: Light yellow
+        (151, 240, [255, 200, 0]),  # 151-240 kV: Gold/Orange-yellow
+        (241, 280, [255, 165, 0]),  # 241-280 kV: Orange
+        (281, 330, [255, 120, 0]),  # 281-330 kV: Dark orange
+        (331, 350, [255, 69, 0]),  # 331-350 kV: Orange-red
+        (351, 420, [255, 40, 0]),  # 351-420 kV: Red-orange
+        (421, 520, [220, 20, 60]),  # 421-520 kV: Crimson
+        (521, np.inf, [255, 0, 255]),  # > 520 kV: Magenta
     ]
-    
+
     # Apply colors based on voltage ranges
     for v_min, v_max, rgb in voltage_ranges:
         if v_max == np.inf:
@@ -217,38 +222,38 @@ def get_line_colors(voltages: pd.Series) -> list:
         else:
             mask = (voltages >= v_min) & (voltages <= v_max)
         colors[mask, :3] = rgb
-    
+
     return colors.tolist()
 
 
 def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
     """
     Inject custom layer visibility controls into a pydeck object.
-    
+
     Adds interactive checkboxes to toggle visibility of different network
     component layers and voltage filtering with tag-based selection.
-    
+
     Parameters
     ----------
     deck : pdk.Deck
         pydeck Deck instance to export with custom controls.
     release_version : str
         Release version string to include in HTML title.
-    
+
     Returns
     -------
     str
         Updated html file in string format with injected controls.
-    
+
     """
     html = deck.to_html(as_string=True)
-    
+
     # Expose deck instance to window for JavaScript access
     html = html.replace(
         "});\n\n  </script>",
         "});\nwindow.deck = deckInstance;\n\n  </script>",
     )
-    
+
     # HTML/JavaScript for collapsible layer visibility controls
     controls = """
         <style>
@@ -562,43 +567,43 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
         });
         </script>
     """
-    
+
     # Inject controls before deck container
     html = html.replace(
         '<div id="deck-container">',
         controls + '<div id="deck-container">',
     )
-    
+
     # Inject custom title
     html = html.replace(
         "<title>pydeck</title>",
         "<title>PyPSA network (OSM " + release_version + ")</title>",
     )
-    
+
     return html
 
 
 def compress_html(html: str) -> str:
     """
     Compress HTML by removing unnecessary whitespace and comments.
-    
+
     Reduces file size by minifying HTML, CSS, and JavaScript content
     while preserving functionality. Aggressively compresses JSON data.
-    
+
     Parameters
     ----------
     html : str
         HTML string to compress.
-    
+
     Returns
     -------
     str
         Compressed HTML string.
-    
+
     """
     # Remove HTML comments
     html = re.sub(r"<!--.*?-->", "", html, flags=re.DOTALL)
-    
+
     # Minify CSS only
     def minify_css(match):
         css = match.group(1)
@@ -606,18 +611,18 @@ def compress_html(html: str) -> str:
         css = re.sub(r"\s*([{};:,])\s*", r"\1", css)
         css = css.strip()
         return f"<style>{css}</style>"
-    
+
     html = re.sub(r"<style>(.*?)</style>", minify_css, html, flags=re.DOTALL)
-    
+
     # Compress JSON data in the main script tag
     def compress_json_in_script(match):
         script_content = match.group(0)  # Get the entire match including <script> tags
-        
+
         # Find the jsonInput declaration
         json_match = re.search(r"const jsonInput = ({.*?});", script_content, re.DOTALL)
         if json_match:
             json_str = json_match.group(1)
-            
+
             # Parse and re-serialize without whitespace
             try:
                 json_obj = json.loads(json_str)
@@ -625,27 +630,27 @@ def compress_html(html: str) -> str:
                 script_content = script_content.replace(json_str, compact_json)
             except json.JSONDecodeError:
                 pass  # If parsing fails, leave as is
-        
+
         return script_content
-    
+
     # Apply to the main script (not the controls script)
     html = re.sub(
         r"<script>\s*const container = document\.getElementById.*?</script>",
         compress_json_in_script,
         html,
-        flags=re.DOTALL
+        flags=re.DOTALL,
     )
-    
+
     # Remove extra whitespace in HTML (but NOT in script tags)
     parts = re.split(r"(<script>.*?</script>)", html, flags=re.DOTALL)
-    
+
     for i in range(len(parts)):
         if not parts[i].startswith("<script>"):
             parts[i] = re.sub(r">\s+<", "><", parts[i])
             parts[i] = re.sub(r"\n\s+", "\n", parts[i])
-    
+
     html = "".join(parts)
-    
+
     return html
 
 
@@ -687,17 +692,17 @@ if __name__ == "__main__":
     n.lines.loc[:, "type"] = n.lines.v_nom.apply(
         lambda x: _get_linetype_by_voltage(x, line_types)
     )
-    n.calculate_dependent_values() # Calculate dependent variables (r, x)
+    n.calculate_dependent_values()  # Calculate dependent variables (r, x)
     lines = n.lines.copy()
     lines["i_nom"] = (
-        (lines.s_nom / lines.v_nom / lines.num_parallel)
-        .div(np.sqrt(3))
-        .round(3)
-    ) # kA
+        (lines.s_nom / lines.v_nom / lines.num_parallel).div(np.sqrt(3)).round(3)
+    )  # kA
     lines.v_nom = lines.v_nom.astype(int)
     lines.num_parallel = lines.num_parallel.astype(int)
     lines.length = lines.length * 1e3
-    lines[list(ROUNDING_DECIMALS.keys())] = lines[list(ROUNDING_DECIMALS.keys())].round(ROUNDING_DECIMALS)
+    lines[list(ROUNDING_DECIMALS.keys())] = lines[list(ROUNDING_DECIMALS.keys())].round(
+        ROUNDING_DECIMALS
+    )
     lines.sort_index(inplace=True)
 
     logger.info(f"Exporting {len(lines)} lines to %s", snakemake.output.lines)
@@ -706,7 +711,7 @@ if __name__ == "__main__":
     ##########################
     ### Links + Converters ###
     ##########################
-    
+
     logger.info("Cleaning and formatting link and converter data for release.")
     links = n.links.copy()
     links.voltage = links.voltage.astype(int)
@@ -758,7 +763,7 @@ if __name__ == "__main__":
         TRANSFORMERS_COLUMNS,
         snakemake.output.transformers,
         "transformer_id",
-    )    
+    )
 
     ######################################
     ### Pydeck map with layer controls ###
@@ -776,21 +781,26 @@ if __name__ == "__main__":
     )
     stations_polygon = stations_polygon[stations_polygon.index_right.notnull()]
     stations_polygon = stations_polygon.drop_duplicates(subset=["station_id"])
-    stations_polygon = stations_polygon[["station_id", "geometry"]]    
+    stations_polygon = stations_polygon[["station_id", "geometry"]]
 
     # Simplify
     stations_polygon = stations_polygon.to_crs(DISTANCE_CRS)
-    stations_polygon["geometry"] = stations_polygon["geometry"].simplify(STATIONS_SIMPLIFY)
+    stations_polygon["geometry"] = stations_polygon["geometry"].simplify(
+        STATIONS_SIMPLIFY
+    )
     stations_polygon = stations_polygon.to_crs(GEO_CRS)
 
     stations_polygon["poly"] = stations_polygon["geometry"].apply(polygon_to_coords)
 
     # Import bus polygons
     buses_polygon = gpd.read_file(snakemake.input.buses_polygon).to_crs(GEO_CRS)
-    
+
     # Only keep bus polygons that contain buses points
     buses_polygon = gpd.sjoin(
-        buses_polygon, buses, how="left", predicate="contains",
+        buses_polygon,
+        buses,
+        how="left",
+        predicate="contains",
     )
     buses_polygon = buses_polygon[buses_polygon.index_right.notnull()]
     buses_polygon = buses_polygon.drop_duplicates(subset=["bus_id_left"])
@@ -798,7 +808,9 @@ if __name__ == "__main__":
 
     # Simplify
     buses_polygon = buses_polygon.to_crs(DISTANCE_CRS)
-    buses_polygon["geometry"] = buses_polygon["geometry"].simplify(BUSES_POLYGON_SIMPLIFY)
+    buses_polygon["geometry"] = buses_polygon["geometry"].simplify(
+        BUSES_POLYGON_SIMPLIFY
+    )
     buses_polygon = buses_polygon.to_crs(GEO_CRS)
 
     buses_polygon["poly"] = buses_polygon["geometry"].apply(polygon_to_coords)
@@ -811,7 +823,7 @@ if __name__ == "__main__":
     lines["geometry"] = lines["geometry"].simplify(LINE_SIMPLIFY)
     lines = lines.to_crs(GEO_CRS)
     lines["path"] = lines["geometry"].apply(lambda line: linestring_to_coords(line))
-    lines['color'] = get_line_colors(lines['voltage'])
+    lines["color"] = get_line_colors(lines["voltage"])
 
     # Links
     links_dc["path"] = links_dc["geometry"].apply(
@@ -839,9 +851,7 @@ if __name__ == "__main__":
         pickable=True,
         auto_highlight=True,
         id="Stations",
-        parameters={
-            "depthTest": False
-        },
+        parameters={"depthTest": False},
     )
 
     # Buses PolygonLayer
@@ -857,9 +867,7 @@ if __name__ == "__main__":
         pickable=True,
         auto_highlight=True,
         id="Buses (Polygons)",
-        parameters={
-            "depthTest": False
-        },
+        parameters={"depthTest": False},
     )
 
     # Lines PathLayer
@@ -872,9 +880,7 @@ if __name__ == "__main__":
         width_min_pixels=2,
         pickable=True,
         auto_highlight=True,
-        parameters={
-            "depthTest": False
-        },
+        parameters={"depthTest": False},
         id="Lines",
     )
 
@@ -888,9 +894,7 @@ if __name__ == "__main__":
         width_min_pixels=2,
         pickable=True,
         auto_highlight=True,
-        parameters={
-            "depthTest": False
-        },
+        parameters={"depthTest": False},
         id="Links",
     )
 
@@ -904,9 +908,7 @@ if __name__ == "__main__":
         width_min_pixels=2,
         pickable=True,
         auto_highlight=True,
-        parameters={
-            "depthTest": False
-        },
+        parameters={"depthTest": False},
         id="Converters",
     )
 
@@ -920,9 +922,7 @@ if __name__ == "__main__":
         width_min_pixels=2,
         pickable=True,
         auto_highlight=True,
-        parameters={
-            "depthTest": False
-        },
+        parameters={"depthTest": False},
         id="Transformers",
     )
 
@@ -936,12 +936,9 @@ if __name__ == "__main__":
         get_elevation=195,
         pickable=True,
         auto_highlight=True,
-        parameters={
-            "depthTest": False
-        },
+        parameters={"depthTest": False},
         id="Buses",
     )
-
 
     # Calculate center point for initial view
     all_coords = [coord for path in lines["path"] for coord in path]
@@ -950,7 +947,15 @@ if __name__ == "__main__":
 
     # Create the deck
     map = pdk.Deck(
-        layers=[stations_polygon_layer, buses_polygon_layer, lines_layer, links_layer, converters_layer, transformers_layer, buses_layer],
+        layers=[
+            stations_polygon_layer,
+            buses_polygon_layer,
+            lines_layer,
+            links_layer,
+            converters_layer,
+            transformers_layer,
+            buses_layer,
+        ],
         initial_view_state=pdk.ViewState(
             latitude=center_lat,
             longitude=center_lon,
@@ -958,7 +963,7 @@ if __name__ == "__main__":
             pitch=30,
         ),
     )
-    
+
     logger.info("Injecting custom layer controls into map HTML.")
     map_ctrl = inject_custom_controls(map, release_version)
 
@@ -966,6 +971,6 @@ if __name__ == "__main__":
     map_ctrl = compress_html(map_ctrl)
 
     # Export to HTML
-    logger.info(f"Exporting interactive map to %s", snakemake.output.map)
+    logger.info("Exporting interactive map to %s", snakemake.output.map)
     with open(snakemake.output.map, "w") as f:
         f.write(map_ctrl)
