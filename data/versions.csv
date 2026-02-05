@@ -114,8 +114,9 @@ osm_boundaries,unknown,primary,latest supported,2025-12-02,Overpass API is used 
 osm_boundaries,unknown,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm_boundaries/unknown/osm_boundaries.zip
 population_count,2018-11-01,primary,latest supported,2025-12-02,,https://data.worldpop.org/GIS/Population/Global_2000_2020/2019/0_Mosaicked/ppp_2019_1km_Aggregated.tif
 population_count,2018-11-01,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/population_count/2018-11-01/ppp_2019_1km_Aggregated.tif
-powerplants,0.7.1,primary,latest supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv
-powerplants,0.7.1,archive,latest supported,2026-01-20,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/powerplants/0.7.1
+powerplants,0.8.0,primary,latest supported,2026-02-05,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.0/powerplants.csv
+powerplants,0.7.1,primary,supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv
+powerplants,0.7.1,archive,supported,2026-01-20,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/powerplants/0.7.1
 powerplants,0.7.0,primary,supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.0/powerplants.csv
 powerplants,0.7.0,archive,supported,2026-01-20,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/powerplants/0.7.0
 scigrid_gas,1.1.2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/4767098/files/IGGIELGN.zip
