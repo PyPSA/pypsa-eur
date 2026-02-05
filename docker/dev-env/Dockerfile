@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-FROM ghcr.io/prefix-dev/pixi:0.40.0 AS build
+FROM ghcr.io/prefix-dev/pixi:0.63.2 AS build
 
-LABEL org.opencontainers.image.source https://github.com/PyPSA/pypsa-eur
+LABEL org.opencontainers.image.source=https://github.com/PyPSA/pypsa-eur
 
 RUN pixi self-update
 
@@ -16,7 +16,7 @@ WORKDIR /pypsa-eur
 
 COPY pixi.toml pixi.lock ./
 
-RUN pixi install -e default && pixi clean cache
+RUN pixi install -e default && pixi clean cache --yes
 RUN pixi shell-hook -e default > /shell-hook.sh
 
 # extend the shell-hook script to run the command passed to the container
