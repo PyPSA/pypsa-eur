@@ -29,6 +29,8 @@ from scripts._helpers import (
     update_config_from_wildcards,
 )
 from scripts.add_electricity import (
+    attach_storageunits,
+    attach_stores,
     calculate_annuity,
     flatten,
     sanitize_carriers,
@@ -1744,7 +1746,7 @@ def add_electricity_grid_connection(n, costs):
     ]
 
 
-def add_storage_and_grids(
+def add_h2_gas_infrastructure(
     n,
     costs,
     pop_layout,
@@ -1756,7 +1758,7 @@ def add_storage_and_grids(
     options,
 ):
     """
-    Add storage and grid infrastructure to the network including hydrogen, gas, and battery systems.
+    Add hydrogen and gas infrastructure to the network.
 
     Parameters
     ----------
@@ -1805,7 +1807,6 @@ def add_storage_and_grids(
     This function adds multiple types of storage and grid infrastructure:
     - Hydrogen infrastructure (electrolysis, fuel cells, storage)
     - Gas network infrastructure
-    - Battery storage systems
     - Carbon capture and conversion facilities (if enabled in options)
     """
     # Set defaults
@@ -2090,44 +2091,6 @@ def add_storage_and_grids(
             carrier="H2 pipeline",
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
         )
-
-    n.add("Carrier", "battery")
-
-    n.add("Bus", nodes + " battery", location=nodes, carrier="battery", unit="MWh_el")
-
-    n.add(
-        "Store",
-        nodes + " battery",
-        bus=nodes + " battery",
-        e_cyclic=True,
-        e_nom_extendable=True,
-        carrier="battery",
-        capital_cost=costs.at["battery storage", "capital_cost"],
-        lifetime=costs.at["battery storage", "lifetime"],
-    )
-
-    n.add(
-        "Link",
-        nodes + " battery charger",
-        bus0=nodes,
-        bus1=nodes + " battery",
-        carrier="battery charger",
-        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        capital_cost=costs.at["battery inverter", "capital_cost"],
-        p_nom_extendable=True,
-        lifetime=costs.at["battery inverter", "lifetime"],
-    )
-
-    n.add(
-        "Link",
-        nodes + " battery discharger",
-        bus0=nodes + " battery",
-        bus1=nodes,
-        carrier="battery discharger",
-        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        p_nom_extendable=True,
-        lifetime=costs.at["battery inverter", "lifetime"],
-    )
 
     if options["methanation"]:
         n.add(
@@ -6288,6 +6251,7 @@ if __name__ == "__main__":
 
     options = snakemake.params.sector
     cf_industry = snakemake.params.industry
+    ext_carriers = snakemake.params.electricity.get("extendable_carriers", dict())
 
     investment_year = int(snakemake.wildcards.planning_horizons)
 
@@ -6296,6 +6260,7 @@ if __name__ == "__main__":
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
+    max_hours = snakemake.params.electricity["max_hours"]
 
     costs = load_costs(snakemake.input.costs)
 
@@ -6369,7 +6334,7 @@ if __name__ == "__main__":
         cf_industry=cf_industry,
     )
 
-    add_storage_and_grids(
+    add_h2_gas_infrastructure(
         n=n,
         costs=costs,
         pop_layout=pop_layout,
@@ -6379,6 +6344,25 @@ if __name__ == "__main__":
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
+    )
+
+    # Hydrogen already implemented in add_h2_gas_infrastructure
+    extendable_storageunits = list(set(ext_carriers.get("StorageUnit", [])) - {"H2"})
+    extendable_stores = list(set(ext_carriers.get("Store", [])) - {"H2"})
+
+    attach_storageunits(
+        n=n,
+        costs=costs,
+        buses_i=pop_layout.index,
+        extendable_carriers=extendable_storageunits,
+        max_hours=max_hours,
+    )
+
+    attach_stores(
+        n=n,
+        costs=costs,
+        buses_i=pop_layout.index,
+        extendable_carriers=extendable_stores,
     )
 
     if options["transport"]:
