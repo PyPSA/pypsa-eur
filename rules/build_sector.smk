@@ -22,7 +22,7 @@ rule build_population_layouts:
         benchmarks("build_population_layouts")
     threads: 8
     script:
-        "../scripts/build_population_layouts.py"
+        scripts("build_population_layouts.py")
 
 
 rule build_clustered_population_layouts:
@@ -43,7 +43,7 @@ rule build_clustered_population_layouts:
     benchmark:
         benchmarks("build_clustered_population_layouts/s_{clusters}")
     script:
-        "../scripts/build_clustered_population_layouts.py"
+        scripts("build_clustered_population_layouts.py")
 
 
 rule build_clustered_solar_rooftop_potentials:
@@ -62,7 +62,7 @@ rule build_clustered_solar_rooftop_potentials:
     benchmark:
         benchmarks("build_clustered_solar_rooftop_potentials/s_{clusters}")
     script:
-        "../scripts/build_clustered_solar_rooftop_potentials.py"
+        scripts("build_clustered_solar_rooftop_potentials.py")
 
 
 rule build_simplified_population_layouts:
@@ -83,7 +83,7 @@ rule build_simplified_population_layouts:
     benchmark:
         benchmarks("build_simplified_population_layouts/s")
     script:
-        "../scripts/build_clustered_population_layouts.py"
+        scripts("build_clustered_population_layouts.py")
 
 
 rule build_gas_network:
@@ -100,7 +100,7 @@ rule build_gas_network:
     benchmark:
         benchmarks("build_gas_network")
     script:
-        "../scripts/build_gas_network.py"
+        scripts("build_gas_network.py")
 
 
 rule build_gas_input_locations:
@@ -124,7 +124,7 @@ rule build_gas_input_locations:
     benchmark:
         benchmarks("build_gas_input_locations/s_{clusters}")
     script:
-        "../scripts/build_gas_input_locations.py"
+        scripts("build_gas_input_locations.py")
 
 
 rule cluster_gas_network:
@@ -143,7 +143,7 @@ rule cluster_gas_network:
     benchmark:
         benchmarks("cluster_gas_network/s_{clusters}")
     script:
-        "../scripts/cluster_gas_network.py"
+        scripts("cluster_gas_network.py")
 
 
 rule build_daily_heat_demand:
@@ -168,7 +168,7 @@ rule build_daily_heat_demand:
     benchmark:
         benchmarks("build_daily_heat_demand/total_s_{clusters}")
     script:
-        "../scripts/build_daily_heat_demand.py"
+        scripts("build_daily_heat_demand.py")
 
 
 rule build_hourly_heat_demand:
@@ -194,7 +194,7 @@ rule build_hourly_heat_demand:
     benchmark:
         benchmarks("build_hourly_heat_demand/total_s_{clusters}")
     script:
-        "../scripts/build_hourly_heat_demand.py"
+        scripts("build_hourly_heat_demand.py")
 
 
 rule build_temperature_profiles:
@@ -220,7 +220,7 @@ rule build_temperature_profiles:
     benchmark:
         benchmarks("build_temperature_profiles/total_{clusters}")
     script:
-        "../scripts/build_temperature_profiles.py"
+        scripts("build_temperature_profiles.py")
 
 
 rule build_central_heating_temperature_profiles:
@@ -293,7 +293,7 @@ rule build_central_heating_temperature_profiles:
             "build_central_heating_temperature_profiles/s_{clusters}_{planning_horizons}"
         )
     script:
-        "../scripts/build_central_heating_temperature_profiles/run.py"
+        scripts("build_central_heating_temperature_profiles/run.py")
 
 
 rule build_dh_areas:
@@ -314,7 +314,7 @@ rule build_dh_areas:
     benchmark:
         benchmarks("build_dh_areas_s/s_{clusters}")
     script:
-        "../scripts/build_dh_areas.py"
+        scripts("build_dh_areas.py")
 
 
 rule build_geothermal_heat_potential:
@@ -366,7 +366,7 @@ rule build_geothermal_heat_potential:
             "build_heat_source_potentials/geothermal_s_{clusters}_{planning_horizons}"
         )
     script:
-        "../scripts/build_geothermal_heat_potential.py"
+        scripts("build_geothermal_heat_potential.py")
 
 
 rule build_ates_potentials:
@@ -443,7 +443,7 @@ rule build_ates_potentials:
     benchmark:
         benchmarks("build_ates_potentials_geothermal_s_{clusters}_{planning_horizons}")
     script:
-        "../scripts/build_ates_potentials.py"
+        scripts("build_ates_potentials.py")
 
 
 def input_hera_data(w) -> dict[str, str]:
@@ -519,7 +519,9 @@ rule build_river_heat_potential:
         benchmarks("build_river_water_heat_potential_base_s_{clusters}")
     threads: 1
     script:
-        "../scripts/build_surface_water_heat_potentials/build_river_water_heat_potential.py"
+        scripts(
+            "build_surface_water_heat_potentials/build_river_water_heat_potential.py"
+        )
 
 
 def input_heat_source_temperature(
@@ -656,7 +658,7 @@ rule build_sea_heat_potential:
         benchmarks("build_sea_water_heat_potential_base_s_{clusters}")
     threads: config["atlite"].get("nprocesses", 4)
     script:
-        "../scripts/build_surface_water_heat_potentials/build_sea_water_heat_potential.py"
+        scripts("build_surface_water_heat_potentials/build_sea_water_heat_potential.py")
 
 
 rule build_cop_profiles:
@@ -695,7 +697,7 @@ rule build_cop_profiles:
     benchmark:
         benchmarks("build_cop_profiles/s_{clusters}_{planning_horizons}")
     script:
-        "../scripts/build_cop_profiles/run.py"
+        scripts("build_cop_profiles/run.py")
 
 
 rule build_ptes_operations:
@@ -764,7 +766,7 @@ rule build_ptes_operations:
     benchmark:
         benchmarks("build_ptes_operations_s_{clusters}_{planning_horizons}")
     script:
-        "../scripts/build_ptes_operations/run.py"
+        scripts("build_ptes_operations/run.py")
 
 
 rule build_direct_heat_source_utilisation_profiles:
@@ -807,7 +809,7 @@ rule build_direct_heat_source_utilisation_profiles:
             "build_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}"
         )
     script:
-        "../scripts/build_heat_source_utilisation_profiles.py"
+        scripts("build_direct_heat_source_utilisation_profiles.py")
 
 
 rule build_solar_thermal_profiles:
@@ -831,7 +833,7 @@ rule build_solar_thermal_profiles:
     benchmark:
         benchmarks("build_solar_thermal_profiles/total_{clusters}")
     script:
-        "../scripts/build_solar_thermal_profiles.py"
+        scripts("build_solar_thermal_profiles.py")
 
 
 rule build_energy_totals:
@@ -864,7 +866,7 @@ rule build_energy_totals:
     benchmark:
         benchmarks("build_energy_totals")
     script:
-        "../scripts/build_energy_totals.py"
+        scripts("build_energy_totals.py")
 
 
 if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"]:
@@ -884,7 +886,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"
         benchmark:
             benchmarks("build_country_hdd")
         script:
-            "../scripts/build_country_hdd.py"
+            scripts("build_country_hdd.py")
 
 
 rule build_heat_totals:
@@ -903,7 +905,7 @@ rule build_heat_totals:
     benchmark:
         benchmarks("build_heat_totals")
     script:
-        "../scripts/build_heat_totals.py"
+        scripts("build_heat_totals.py")
 
 
 rule build_biomass_potentials:
@@ -935,7 +937,7 @@ rule build_biomass_potentials:
     benchmark:
         benchmarks("build_biomass_potentials_s_{clusters}_{planning_horizons}")
     script:
-        "../scripts/build_biomass_potentials.py"
+        scripts("build_biomass_potentials.py")
 
 
 rule build_biomass_transport_costs:
@@ -954,7 +956,7 @@ rule build_biomass_transport_costs:
     benchmark:
         benchmarks("build_biomass_transport_costs")
     script:
-        "../scripts/build_biomass_transport_costs.py"
+        scripts("build_biomass_transport_costs.py")
 
 
 rule build_co2_sequestration_potentials:
@@ -977,7 +979,7 @@ rule build_co2_sequestration_potentials:
     benchmark:
         benchmarks("build_co2_sequestration_potentials")
     script:
-        "../scripts/build_co2_sequestration_potentials.py"
+        scripts("build_co2_sequestration_potentials.py")
 
 
 rule build_clustered_co2_sequestration_potentials:
@@ -1003,7 +1005,7 @@ rule build_clustered_co2_sequestration_potentials:
     benchmark:
         benchmarks("build_clustered_co2_sequestration_potentials_{clusters}")
     script:
-        "../scripts/build_clustered_co2_sequestration_potentials.py"
+        scripts("build_clustered_co2_sequestration_potentials.py")
 
 
 rule build_salt_cavern_potentials:
@@ -1023,7 +1025,7 @@ rule build_salt_cavern_potentials:
     benchmark:
         benchmarks("build_salt_cavern_potentials_s_{clusters}")
     script:
-        "../scripts/build_salt_cavern_potentials.py"
+        scripts("build_salt_cavern_potentials.py")
 
 
 rule build_ammonia_production:
@@ -1041,7 +1043,7 @@ rule build_ammonia_production:
     benchmark:
         benchmarks("build_ammonia_production")
     script:
-        "../scripts/build_ammonia_production.py"
+        scripts("build_ammonia_production.py")
 
 
 rule build_industry_sector_ratios:
@@ -1063,7 +1065,7 @@ rule build_industry_sector_ratios:
     benchmark:
         benchmarks("build_industry_sector_ratios")
     script:
-        "../scripts/build_industry_sector_ratios.py"
+        scripts("build_industry_sector_ratios.py")
 
 
 rule build_industry_sector_ratios_intermediate:
@@ -1091,7 +1093,7 @@ rule build_industry_sector_ratios_intermediate:
     benchmark:
         benchmarks("build_industry_sector_ratios_{planning_horizons}")
     script:
-        "../scripts/build_industry_sector_ratios_intermediate.py"
+        scripts("build_industry_sector_ratios_intermediate.py")
 
 
 rule build_industrial_production_per_country:
@@ -1117,7 +1119,7 @@ rule build_industrial_production_per_country:
     benchmark:
         benchmarks("build_industrial_production_per_country")
     script:
-        "../scripts/build_industrial_production_per_country.py"
+        scripts("build_industrial_production_per_country.py")
 
 
 rule build_industrial_production_per_country_tomorrow:
@@ -1145,7 +1147,7 @@ rule build_industrial_production_per_country_tomorrow:
             )
         )
     script:
-        "../scripts/build_industrial_production_per_country_tomorrow.py"
+        scripts("build_industrial_production_per_country_tomorrow.py")
 
 
 rule build_industrial_distribution_key:
@@ -1176,7 +1178,7 @@ rule build_industrial_distribution_key:
     benchmark:
         benchmarks("build_industrial_distribution_key/s_{clusters}")
     script:
-        "../scripts/build_industrial_distribution_key.py"
+        scripts("build_industrial_distribution_key.py")
 
 
 rule build_industrial_production_per_node:
@@ -1205,7 +1207,7 @@ rule build_industrial_production_per_node:
             )
         )
     script:
-        "../scripts/build_industrial_production_per_node.py"
+        scripts("build_industrial_production_per_node.py")
 
 
 rule build_industrial_energy_demand_per_node:
@@ -1239,7 +1241,7 @@ rule build_industrial_energy_demand_per_node:
             )
         )
     script:
-        "../scripts/build_industrial_energy_demand_per_node.py"
+        scripts("build_industrial_energy_demand_per_node.py")
 
 
 rule build_industrial_energy_demand_per_country_today:
@@ -1267,7 +1269,7 @@ rule build_industrial_energy_demand_per_country_today:
     benchmark:
         benchmarks("build_industrial_energy_demand_per_country_today")
     script:
-        "../scripts/build_industrial_energy_demand_per_country_today.py"
+        scripts("build_industrial_energy_demand_per_country_today.py")
 
 
 rule build_industrial_energy_demand_per_node_today:
@@ -1292,7 +1294,7 @@ rule build_industrial_energy_demand_per_node_today:
     benchmark:
         benchmarks("build_industrial_energy_demand_per_node_today/s_{clusters}")
     script:
-        "../scripts/build_industrial_energy_demand_per_node_today.py"
+        scripts("build_industrial_energy_demand_per_node_today.py")
 
 
 rule build_retro_cost:
@@ -1322,7 +1324,7 @@ rule build_retro_cost:
     benchmark:
         benchmarks("build_retro_cost/s_{clusters}")
     script:
-        "../scripts/build_retro_cost.py"
+        scripts("build_retro_cost.py")
 
 
 rule build_population_weighted_energy_totals:
@@ -1344,7 +1346,7 @@ rule build_population_weighted_energy_totals:
     benchmark:
         benchmarks("build_population_weighted_{kind}_totals_{clusters}")
     script:
-        "../scripts/build_population_weighted_energy_totals.py"
+        scripts("build_population_weighted_energy_totals.py")
 
 
 rule build_shipping_demand:
@@ -1367,7 +1369,7 @@ rule build_shipping_demand:
     benchmark:
         benchmarks("build_shipping_demand/s_{clusters}")
     script:
-        "../scripts/build_shipping_demand.py"
+        scripts("build_shipping_demand.py")
 
 
 if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
@@ -1395,7 +1397,7 @@ if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
         benchmark:
             benchmarks("build_mobility_profiles")
         script:
-            "../scripts/build_mobility_profiles.py"
+            scripts("build_mobility_profiles.py")
 
 
 rule build_transport_demand:
@@ -1429,7 +1431,7 @@ rule build_transport_demand:
     benchmark:
         benchmarks("build_transport_demand/s_{clusters}")
     script:
-        "../scripts/build_transport_demand.py"
+        scripts("build_transport_demand.py")
 
 
 rule build_district_heat_share:
@@ -1453,7 +1455,7 @@ rule build_district_heat_share:
     benchmark:
         benchmarks("build_district_heat_share_{clusters}_{planning_horizons}")
     script:
-        "../scripts/build_district_heat_share.py"
+        scripts("build_district_heat_share.py")
 
 
 rule build_existing_heating_distribution:
@@ -1488,7 +1490,7 @@ rule build_existing_heating_distribution:
             "build_existing_heating_distribution/base_s_{clusters}_{planning_horizons}"
         )
     script:
-        "../scripts/build_existing_heating_distribution.py"
+        scripts("build_existing_heating_distribution.py")
 
 
 rule time_aggregation:
@@ -1522,7 +1524,7 @@ rule time_aggregation:
     benchmark:
         benchmarks("time_aggregation_base_s_{clusters}_elec_{opts}_{sector_opts}")
     script:
-        "../scripts/time_aggregation.py"
+        scripts("time_aggregation.py")
 
 
 def input_profile_offwind(w):
@@ -1561,7 +1563,7 @@ rule build_egs_potentials:
     benchmark:
         benchmarks("build_egs_potentials_{clusters}")
     script:
-        "../scripts/build_egs_potentials.py"
+        scripts("build_egs_potentials.py")
 
 
 def input_heat_source_power(w):
@@ -1770,4 +1772,4 @@ rule prepare_sector_network:
             "prepare_sector_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
     script:
-        "../scripts/prepare_sector_network.py"
+        scripts("prepare_sector_network.py")

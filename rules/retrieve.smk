@@ -111,7 +111,7 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
             mem_mb=1000,
         retries: 2
         script:
-            "../scripts/retrieve_corine_dataset_primary.py"
+            scripts("retrieve_corine_dataset_primary.py")
 
 
 if (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in [
@@ -493,7 +493,7 @@ if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in
             mem_mb=5000,
         retries: 2
         script:
-            "../scripts/retrieve_electricity_demand_opsd.py"
+            scripts("retrieve_electricity_demand_opsd.py")
 
 
 if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in [
@@ -570,7 +570,7 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
             mem_mb=2000,
         retries: 2
         script:
-            "../scripts/retrieve_electricity_demand_entsoe.py"
+            scripts("retrieve_electricity_demand_entsoe.py")
 
     rule retrieve_electricity_demand_entsoe:
         message:
@@ -622,7 +622,7 @@ if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in
             mem_mb=5000,
         retries: 2
         script:
-            "../scripts/retrieve_electricity_demand_neso.py"
+            scripts("retrieve_electricity_demand_neso.py")
 
 
 if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in [
@@ -1105,7 +1105,7 @@ rule retrieve_monthly_fuel_prices:
         mem_mb=5000,
     retries: 2
     script:
-        "../scripts/retrieve_monthly_fuel_prices.py"
+        scripts("retrieve_monthly_fuel_prices.py")
 
 
 if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive"]:
@@ -1196,7 +1196,7 @@ elif OSM_DATASET["source"] == "build":
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
         script:
-            "../scripts/retrieve_osm_data.py"
+            scripts("retrieve_osm_data.py")
 
     rule retrieve_osm_data_raw_all:
         input:
@@ -1238,7 +1238,7 @@ elif NATURA_DATASET["source"] == "build":
         log:
             "logs/build_natura.log",
         script:
-            "../scripts/build_natura.py"
+            scripts("build_natura.py")
 
 
 if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in [
@@ -1254,7 +1254,7 @@ if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in [
             "logs/retrieve_osm_boundaries_{country}_adm1.log",
         threads: 1
         script:
-            "../scripts/retrieve_osm_boundaries.py"
+            scripts("retrieve_osm_boundaries.py")
 
 elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in [
     "archive"
@@ -1334,7 +1334,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
         resources:
             mem_mb=10000,
         script:
-            "../scripts/retrieve_seawater_temperature.py"
+            scripts("retrieve_seawater_temperature.py")
 
     rule retrieve_hera_data_test_cutout:
         message:
