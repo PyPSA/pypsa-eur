@@ -3165,7 +3165,7 @@ def add_heat(
 
             n.add(
                 "Bus",
-                nodes + f" {heat_system} ptes heat",
+                HeatSource.PTES.resource_bus(nodes, heat_system),
                 location=nodes,
                 carrier=f"{heat_system} ptes heat",
                 unit="MWh_th",
