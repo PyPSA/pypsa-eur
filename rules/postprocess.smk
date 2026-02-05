@@ -21,7 +21,7 @@ if config["foresight"] != "perfect":
         benchmark:
             benchmarks("plot_base_network/base")
         script:
-            "../scripts/plot_base_network.py"
+            scripts("plot_base_network.py")
 
     rule plot_power_network_clustered:
         message:
@@ -39,7 +39,7 @@ if config["foresight"] != "perfect":
         benchmark:
             benchmarks("plot_power_network_clustered/base_s_{clusters}")
         script:
-            "../scripts/plot_power_network_clustered.py"
+            scripts("plot_power_network_clustered.py")
 
     rule plot_power_network:
         message:
@@ -66,7 +66,7 @@ if config["foresight"] != "perfect":
                 + "benchmarks/plot_power_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
             )
         script:
-            "../scripts/plot_power_network.py"
+            scripts("plot_power_network.py")
 
     rule plot_hydrogen_network:
         message:
@@ -93,7 +93,7 @@ if config["foresight"] != "perfect":
                 + "benchmarks/plot_hydrogen_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
             )
         script:
-            "../scripts/plot_hydrogen_network.py"
+            scripts("plot_hydrogen_network.py")
 
     rule plot_gas_network:
         message:
@@ -119,7 +119,7 @@ if config["foresight"] != "perfect":
                 + "benchmarks/plot_gas_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
             )
         script:
-            "../scripts/plot_gas_network.py"
+            scripts("plot_gas_network.py")
 
     rule plot_balance_map:
         message:
@@ -146,7 +146,7 @@ if config["foresight"] != "perfect":
                 + "benchmarks/plot_balance_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
             )
         script:
-            "../scripts/plot_balance_map.py"
+            scripts("plot_balance_map.py")
 
     rule plot_balance_map_interactive:
         params:
@@ -172,7 +172,7 @@ if config["foresight"] != "perfect":
                 + "benchmarks/plot_interactive_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
             )
         script:
-            "../scripts/plot_balance_map_interactive.py"
+            scripts("plot_balance_map_interactive.py")
 
     rule plot_heat_source_map:
         params:
@@ -213,7 +213,7 @@ if config["foresight"] != "perfect":
                 + "benchmarks/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
             )
         script:
-            "../scripts/plot_heat_source_map.py"
+            scripts("plot_heat_source_map.py")
 
 
 if config["foresight"] == "perfect":
@@ -241,7 +241,7 @@ if config["foresight"] == "perfect":
         resources:
             mem_mb=10000,
         script:
-            "../scripts/plot_power_network_perfect.py"
+            scripts("plot_power_network_perfect.py")
 
 
 rule make_summary:
@@ -291,7 +291,7 @@ rule make_summary:
             + "benchmarks/make_summary_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
     script:
-        "../scripts/make_summary.py"
+        scripts("make_summary.py")
 
 
 rule make_global_summary:
@@ -408,7 +408,7 @@ rule make_global_summary:
     benchmark:
         RESULTS + "benchmarks/make_global_summary"
     script:
-        "../scripts/make_global_summary.py"
+        scripts("make_global_summary.py")
 
 
 rule make_cumulative_costs:
@@ -428,7 +428,7 @@ rule make_cumulative_costs:
     benchmark:
         RESULTS + "benchmarks/make_cumulative_costs"
     script:
-        "../scripts/make_cumulative_costs.py"
+        scripts("make_cumulative_costs.py")
 
 
 rule plot_summary:
@@ -459,7 +459,7 @@ rule plot_summary:
     log:
         RESULTS + "logs/plot_summary.log",
     script:
-        "../scripts/plot_summary.py"
+        scripts("plot_summary.py")
 
 
 rule plot_balance_timeseries:
@@ -488,7 +488,7 @@ rule plot_balance_timeseries:
             + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         ),
     script:
-        "../scripts/plot_balance_timeseries.py"
+        scripts("plot_balance_timeseries.py")
 
 
 rule plot_heatmap_timeseries:
@@ -517,7 +517,7 @@ rule plot_heatmap_timeseries:
             + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         ),
     script:
-        "../scripts/plot_heatmap_timeseries.py"
+        scripts("plot_heatmap_timeseries.py")
 
 
 STATISTICS_BARPLOTS = [
@@ -550,7 +550,7 @@ rule plot_base_statistics:
         barplots_touch=RESULTS
         + "figures/.statistics_plots_base_s_{clusters}_elec_{opts}",
     script:
-        "../scripts/plot_statistics.py"
+        scripts("plot_statistics.py")
 
 
 rule build_ambient_air_temperature_yearly_average:
@@ -572,7 +572,7 @@ rule build_ambient_air_temperature_yearly_average:
             + "benchmarks/build_ambient_air_temperature_yearly_average/base_s_{clusters}"
         )
     script:
-        "../scripts/build_ambient_air_temperature_yearly_average.py"
+        scripts("build_ambient_air_temperature_yearly_average.py")
 
 
 rule plot_cop_profiles:
@@ -587,7 +587,7 @@ rule plot_cop_profiles:
     resources:
         mem_mb=10000,
     script:
-        "../scripts/plot_cop_profiles/plot_cop_profiles.py"
+        scripts("plot_cop_profiles/plot_cop_profiles.py")
 
 
 rule plot_interactive_bus_balance:
@@ -616,4 +616,4 @@ rule plot_interactive_bus_balance:
     resources:
         mem_mb=20000,
     script:
-        "../scripts/plot_interactive_bus_balance.py"
+        scripts("plot_interactive_bus_balance.py")
