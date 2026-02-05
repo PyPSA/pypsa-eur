@@ -375,7 +375,7 @@ class HeatSource(Enum):
 
     def resource_bus(self, nodes, heat_system) -> str:
         """
-        Get the primary resource bus for heat from this source.
+        Get the primary resource bus for heat from this source, e.g. `DE0 0 urban central geothermal heat` or `DE0 0 urban central ptes heat`.
 
         This is where heat enters the system from generators or storage
         discharge, at the source's native temperature.
