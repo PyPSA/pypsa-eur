@@ -15,13 +15,13 @@ Manz et al. (2024) assume a design temperature difference of 15 K when computing
 geothermal heat potentials. This script scales the potentials based on the actual
 temperature delta achievable in the district heating system:
 
-a) If source_temperature > forward_temperature (direct utilisation):
+a) If source_temperature > forward_temperature (direct utilisation), potentials simply scale linearly in both directions, depending on the actual temperature difference (source_temperature - return_temperature):
    scale_factor = (source_temperature - return_temperature) / 15 K
 
-b) If forward_temperature >= source_temperature > return_temperature (preheating):
+b) If forward_temperature >= source_temperature > return_temperature (preheating), the actual temperature difference is increased by the additional cooling through the geothermal-sourced heat pump `heat_source_cooling`:
    scale_factor = (source_temperature - return_temperature + heat_source_cooling) / 15 K
 
-c) If source_temperature <= return_temperature (heat pump only):
+c) If source_temperature <= return_temperature (heat pump only), the actual temperature difference is only the exploitation induced by the heat pump:
    scale_factor = heat_source_cooling / 15 K
 
 This results in time-varying heat source power profiles that reflect the actual
