@@ -78,5 +78,3 @@ osm_network_release:
   compare_to:
     version: latest
     source: archive
-
-
