@@ -1137,6 +1137,7 @@ if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive
                 rmtree(macosx_dir, ignore_errors=True)
 
 
+
 def get_osm_archive_files(version):
     return [
         "buses.csv",
@@ -1193,7 +1194,7 @@ def input_base_network_incumbent(w):
 
 if OSM_DATASET["source"] in ["archive"]:
     OSM_ARCHIVE_FILES = get_osm_archive_files(OSM_DATASET["version"])
-    
+
     rule retrieve_osm_archive:
         message:
             "Retrieving OSM archive data"
@@ -1214,6 +1215,7 @@ if OSM_DATASET["source"] in ["archive"]:
                 copy2(input[key], output[key])
 
 
+
 # Only create incumbent rule if it points to a different folder
 OSM_DATASET_INCUMBENT = get_osm_network_incumbent(
     version=config.get("osm_network_release", {})
@@ -1224,11 +1226,14 @@ OSM_DATASET_INCUMBENT = get_osm_network_incumbent(
     .get("source", "archive"),
 )
 
-if (OSM_DATASET_INCUMBENT["source"] in ["archive"] and 
-    OSM_DATASET_INCUMBENT["folder"] != OSM_DATASET.get("folder")):
-    
-    OSM_ARCHIVE_FILES_INCUMBENT = get_osm_archive_files(OSM_DATASET_INCUMBENT["version"])
-    
+if OSM_DATASET_INCUMBENT["source"] in ["archive"] and OSM_DATASET_INCUMBENT[
+    "folder"
+] != OSM_DATASET.get("folder"):
+
+    OSM_ARCHIVE_FILES_INCUMBENT = get_osm_archive_files(
+        OSM_DATASET_INCUMBENT["version"]
+    )
+
     rule retrieve_osm_archive_incumbent:
         message:
             "Retrieving OSM archive incumbent data"
@@ -1260,7 +1265,7 @@ elif OSM_DATASET["source"] == "build":
         "substations_way.json",
         "substations_relation.json",
     ]
-    
+
     rule retrieve_osm_data_raw:
         message:
             "Retrieving OSM electricity grid raw data for {wildcards.country}"
@@ -1268,7 +1273,9 @@ elif OSM_DATASET["source"] == "build":
             overpass_api=config_provider("overpass_api"),
         output:
             **{
-                file.replace(".json", ""): f"{OSM_DATASET['folder']}/{{country}}/{file}"
+                file.replace(
+                    ".json", ""
+                ): f"{OSM_DATASET['folder']}/{{country}}/{file}"
                 for file in OSM_RAW_JSON
             },
         log:
@@ -1276,7 +1283,7 @@ elif OSM_DATASET["source"] == "build":
         threads: 1
         script:
             "../scripts/retrieve_osm_data.py"
-    
+
     rule retrieve_osm_data_raw_all:
         input:
             expand(
