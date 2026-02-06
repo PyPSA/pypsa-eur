@@ -226,7 +226,7 @@ def get_line_colors(voltages: pd.Series) -> list:
     return colors.tolist()
 
 
-def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str: # noqa: W291, W293
+def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa: W291, W293
     """
     Inject custom layer visibility controls into a pydeck object.
 
