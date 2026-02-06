@@ -3244,8 +3244,8 @@ def add_heat(
                     heat_source=heat_source.value,
                     name=nodes,
                 )
+                .transpose("time", "name")
                 .to_pandas()
-                .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
                 else costs.loc[[costs_name_heat_pump], ["efficiency"]]
             )
@@ -3285,8 +3285,8 @@ def add_heat(
                     heat_source_preheater_utilisation_profile.sel(
                         heat_source=heat_source.value, name=nodes
                     )
+                    .transpose("time", "name")
                     .to_pandas()
-                    .reindex(index=n.snapshots)
                 )
 
                 n.add(
@@ -3320,8 +3320,8 @@ def add_heat(
                     heat_source_direct_utilisation_profile.sel(
                         heat_source=heat_source.value, name=nodes
                     )
+                    .transpose("time", "name")
                     .to_pandas()
-                    .reindex(index=n.snapshots)
                 )
 
                 # add link for direct usage of heat source when source temperature exceeds forward temperature
@@ -3389,6 +3389,7 @@ def add_heat(
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_min_pu=-(cop_heat_pump > 0).squeeze().astype(float),
+                    p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
