@@ -163,6 +163,10 @@ def add_land_use_constraint(n: pypsa.Network, planning_horizons: str) -> None:
         "offwind-ac",
         "offwind-dc",
         "offwind-float",
+        "offsolar",
+        "wave-shallow",
+        "wave-nearshore",
+        "wave-farshore",
     ]:
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         grouper = n.generators.loc[ext_i].index.str.replace(
@@ -1186,6 +1190,7 @@ def extra_functionality(
     """
     config = n.config
     constraints = config["solving"].get("constraints", {})
+
     if constraints["BAU"] and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
     if constraints["SAFE"] and n.generators.p_nom_extendable.any():
@@ -1200,9 +1205,9 @@ def extra_functionality(
     if EQ_o := constraints["EQ"]:
         add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
-    if {"solar-hsat", "solar"}.issubset(
+    if {"solar-hsat", "solar", "offsolar"}.issubset(
         config["electricity"]["renewable_carriers"]
-    ) and {"solar-hsat", "solar"}.issubset(
+    ) and {"solar-hsat", "solar", "offsolar"}.issubset(
         config["electricity"]["extendable_carriers"]["Generator"]
     ):
         add_solar_potential_constraints(n, config)

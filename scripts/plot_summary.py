@@ -19,7 +19,6 @@ plt.style.use("bmh")
 
 
 # consolidate and rename
-
 preferred_order = pd.Index(
     [
         "transmission lines",
@@ -33,10 +32,15 @@ preferred_order = pd.Index(
         "offshore wind",
         "offshore wind (AC)",
         "offshore wind (DC)",
+        "offshore floating wind",
+        "wave farshore",
+        "wave nearshore",
+        "wave shallow",
         "solar PV",
         "solar thermal",
         "solar rooftop",
         "solar",
+        "floating solar",
         "building retrofitting",
         "ground heat pump",
         "air heat pump",

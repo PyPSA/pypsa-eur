@@ -356,7 +356,7 @@ def add_lifetime_wind_solar(n, costs):
     """
     Add lifetime for solar and wind generators.
     """
-    for carrier in ["solar", "onwind", "offwind"]:
+    for carrier in ["solar", "onwind", "offwind", "wave", "offsolar"]:
         gen_i = n.generators.index.str.contains(carrier)
         n.generators.loc[gen_i, "lifetime"] = costs.at[carrier, "lifetime"]
 
@@ -493,18 +493,50 @@ def update_wind_solar_costs(
 
             # Take 'offwind-float' capital cost for 'float', and 'offwind' capital cost for the rest ('ac' and 'dc')
             midtech = tech.split("-", 2)[1]
-            if midtech == "float":
-                capital_cost = (
-                    costs.at[tech, "capital_cost"]
-                    + costs.at[tech + "-station", "capital_cost"]
-                    + connection_cost
-                )
-            else:
+            if tech == "offwind" and midtech != "float":
                 capital_cost = (
                     costs.at["offwind", "capital_cost"]
                     + costs.at[tech + "-station", "capital_cost"]
                     + connection_cost
                 )
+            else:
+                capital_cost = (
+                    costs.at[tech, "capital_cost"]
+                    + costs.at[tech + "-station", "capital_cost"]
+                    + connection_cost
+                )
+
+            logger.info(
+                f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {tech}"
+            )
+
+            n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
+                capital_cost.rename(index=lambda node: node + " " + tech)
+            )
+
+    for connection in ["farshore", "nearshore", "shallow"]:
+        tech = "wave-" + connection
+        landfall_length = landfall_lengths.get(tech, 0.0)
+        if tech not in n.generators.carrier.values:
+            continue
+        profile = snakemake.input["profile_wave-" + connection]
+        with xr.open_dataset(profile) as ds:
+            # if-statement for compatibility with old profiles
+            if "year" in ds.indexes:
+                ds = ds.sel(year=ds.year.min(), drop=True)
+
+            distance = ds["average_distance"].to_pandas()
+            submarine_cost = costs.at[tech + "-connection-submarine", "fixed"]
+            underground_cost = costs.at[tech + "-connection-underground", "fixed"]
+            connection_cost = line_length_factor * (
+                distance * submarine_cost + landfall_length * underground_cost
+            )
+
+            capital_cost = (
+                costs.at["wave", "fixed"]
+                + costs.at[tech + "-station", "fixed"]
+                + connection_cost
+            )
 
             logger.info(
                 f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {tech}"
