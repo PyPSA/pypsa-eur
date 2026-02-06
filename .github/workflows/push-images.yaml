@@ -2,14 +2,12 @@ name: Push images
 
 on:
   push:
-
     branches:
     - master
   workflow_dispatch:
 
 env:
   IMAGE_NAME: pypsa/eur-dev-env
-  BASE_ENV: envs/linux-64.lock.yaml
 
 jobs:
   push-image:
@@ -20,9 +18,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: 'Get relevant env'
+    - name: 'Get last commit that changed pixi env'
       run: |
-        hash_last_changed=$(git log -1 --pretty=format:%H -- ${{ env.BASE_ENV }})
+        hash_last_changed=$(git log -1 --pretty=format:%H -- pixi.toml pixi.lock)
         echo "hash_last_changed=$hash_last_changed" >> $GITHUB_ENV
 
     - name: 'Login to GitHub Container Registry'
