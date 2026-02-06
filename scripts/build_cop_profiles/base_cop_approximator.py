@@ -123,10 +123,12 @@ class BaseCopApproximator(ABC):
         Union[float, xr.DataArray, np.ndarray]
             Logarithmic mean temperature difference.
         """
-        if (np.asarray(t_hot < t_cold)).any():
-            raise ValueError("t_hot must be greater than t_cold")
         return xr.where(
-            t_hot == t_cold,
-            t_hot,
-            (t_hot - t_cold) / np.log(t_hot / t_cold),
+            t_hot < t_cold,
+            np.nan,
+            xr.where(
+                t_hot == t_cold,
+                t_hot,
+                (t_hot - t_cold) / np.log(t_hot / t_cold),
+            ),
         )
