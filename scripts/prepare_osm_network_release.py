@@ -646,7 +646,9 @@ def compress_html(html: str) -> str:
     parts = re.split(r"(<script>.*?</script>)", html, flags=re.DOTALL | re.IGNORECASE)
 
     for i in range(len(parts)):
-        if not parts[i].startswith("<script>") and not parts[i].lower().startswith("<script>"):
+        if not parts[i].startswith("<script>") and not parts[i].lower().startswith(
+            "<script>"
+        ):
             parts[i] = re.sub(r">\s+<", "><", parts[i])
             parts[i] = re.sub(r"\n\s+", "\n", parts[i])
 
