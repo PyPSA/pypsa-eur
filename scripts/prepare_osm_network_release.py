@@ -825,7 +825,7 @@ if __name__ == "__main__":
     lines = lines.to_crs(DISTANCE_CRS)
     lines["geometry"] = lines["geometry"].simplify(LINE_SIMPLIFY)
     lines = lines.to_crs(GEO_CRS)
-    lines["path"] = lines["geometry"].apply(lambda line: linestring_to_coords(line))
+    lines["path"] = lines["geometry"].apply(linestring_to_coords)
     lines["color"] = get_line_colors(lines["voltage"])
 
     # Links
