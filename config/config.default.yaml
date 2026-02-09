@@ -1300,7 +1300,7 @@ data:
     source: archive
     version: latest
   eurostat_balances:
-    source: primary
+    source: archive
     version: latest
   eurostat_household_balances:
     source: archive

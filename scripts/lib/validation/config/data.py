@@ -72,7 +72,7 @@ class DataConfig(BaseModel):
         description="EU NUTS 2021 data source configuration.",
     )
     eurostat_balances: _DataSourceConfig = Field(
-        default_factory=lambda: _DataSourceConfig(source="primary"),
+        default_factory=_DataSourceConfig,
         description="Eurostat balances data source configuration.",
     )
     eurostat_household_balances: _DataSourceConfig = Field(

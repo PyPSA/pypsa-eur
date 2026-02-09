@@ -47,8 +47,9 @@ eu_nuts2013,2015-12-03,archive,latest supported,2026-01-13,,https://data.pypsa.o
 eu_nuts2021,2021-01-01,primary,latest supported,2025-12-02,,https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip
 eu_nuts2021,2021-01-01,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eu_nuts2021/2021-01-01/ref-nuts-2021-01m.geojson.zip
 eurostat_balances,unknown,primary,latest supported,2026-02-04,,https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nrg_bal_c?format=TSV&compressed=true
-eurostat_balances,2023-04,primary,latest not-supported,2025-12-02,"The link is broken, use the archived versions instead.",https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip
-eurostat_balances,2023-04,archive,latest not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eurostat_balances/2023-04/balances.zip
+eurostat_balances,2026-02,archive,latest supported,2026-02-09,,https://data.pypsa.org/workflows/eur/eurostat_balances/2026-02/nrg_bal_c
+eurostat_balances,2023-04,primary,not-supported,2025-12-02,"The link is broken, use the archived versions instead.",https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip
+eurostat_balances,2023-04,archive,not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eurostat_balances/2023-04/balances.zip
 eurostat_household_balances,unknown,primary,latest supported,2025-12-02,"URL limits the period to 2013-2022, but the data is updated regularly.",https://ec.europa.eu/eurostat/databrowser-backend/api/extraction/1.0/LIVE/false/sdmx/csv/nrg_d_hhq__custom_11480365?startPeriod=2013&endPeriod=2022
 eurostat_household_balances,2025-07-09,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eurostat_household_balances/2025-07-09/nrg_d_hhq.csv
 gdp_per_capita,2018-02-06,primary,latest supported,2025-12-02,"Primary link is a direct download, earlier part of zenodo bundle",https://zenodo.org/records/16556029/files/GDP_per_capita_PPP_1990_2015_v2.nc
