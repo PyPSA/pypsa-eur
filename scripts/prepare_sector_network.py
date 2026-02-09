@@ -1007,9 +1007,9 @@ def add_biomass_to_methanol(n, costs):
         + costs.at["biomass-to-methanol", "CO2 stored"],
         p_nom_extendable=True,
         capital_cost=costs.at["biomass-to-methanol", "capital_cost"]
-        / costs.at["biomass-to-methanol", "efficiency"],
+        * costs.at["biomass-to-methanol", "efficiency"],
         marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
-        / costs.at["biomass-to-methanol", "efficiency"],
+        * costs.at["biomass-to-methanol", "efficiency"],
     )
 
 
@@ -1032,11 +1032,11 @@ def add_biomass_to_methanol_cc(n, costs):
         * costs.at["biomass-to-methanol", "capture rate"],
         p_nom_extendable=True,
         capital_cost=costs.at["biomass-to-methanol", "capital_cost"]
-        / costs.at["biomass-to-methanol", "efficiency"]
+        * costs.at["biomass-to-methanol", "efficiency"]
         + costs.at["biomass CHP capture", "capital_cost"]
         * costs.at["biomass-to-methanol", "CO2 stored"],
         marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
-        / costs.at["biomass-to-methanol", "efficiency"],
+        * costs.at["biomass-to-methanol", "efficiency"],
     )
 
 
@@ -1583,6 +1583,26 @@ def insert_electricity_distribution_grid(
     # "agriculture machinery electric" and "agriculture electricity"
     loads = n.loads.index[n.loads.carrier.str.contains("electric")]
     n.loads.loc[loads, "bus"] += " low voltage"
+
+    # Move industry DSR components to low voltage buses
+    # 1. Move stores (on flexibility buses) - flexibility buses stay as-is
+    # 2. Move charge/discharge links' bus0/bus1 to low voltage
+    industry_dsr_stores = n.stores.index[n.stores.carrier == "industry dsr"]
+    if len(industry_dsr_stores) > 0:
+        # Stores are on flexibility buses, which don't need "low voltage" suffix
+        # But we need to update the links' buses
+        industry_dsr_charge_links = n.links.index[n.links.carrier == "industry dsr charge"]
+        industry_dsr_discharge_links = n.links.index[n.links.carrier == "industry dsr discharge"]
+        
+        # Charge links: bus0 (load bus) needs "low voltage", bus1 (flexibility bus) stays as-is
+        if len(industry_dsr_charge_links) > 0:
+            n.links.loc[industry_dsr_charge_links, "bus0"] += " low voltage"
+        
+        # Discharge links: bus0 (flexibility bus) stays as-is, bus1 (load bus) needs "low voltage"
+        if len(industry_dsr_discharge_links) > 0:
+            n.links.loc[industry_dsr_discharge_links, "bus1"] += " low voltage"
+        
+        logger.info(f"Moved {len(industry_dsr_charge_links)} charge links and {len(industry_dsr_discharge_links)} discharge links to low voltage buses")
 
     bevs = n.links.index[n.links.carrier == "BEV charger"]
     n.links.loc[bevs, "bus0"] += " low voltage"
@@ -4499,6 +4519,7 @@ def add_industry(
     spatial: SimpleNamespace,
     cf_industry: dict,
     investment_year: int,
+    snakemake,
 ):
     """
     Add industry and their corresponding carrier buses to the network.
@@ -5003,14 +5024,437 @@ def add_industry(
         )
         n.loads_t.p_set[loads_i] *= factor
 
-    n.add(
-        "Load",
-        nodes,
-        suffix=" industry electricity",
-        bus=nodes,
-        carrier="industry electricity",
-        p_set=industrial_demand.loc[nodes, "electricity"] / nhours,
+    # Check if temporal profiles should be used
+    use_temporal = snakemake.params.industry.get(
+        "temporal_electricity_industry_load", False
     )
+
+    if use_temporal and snakemake.input.industrial_electricity_profiles:
+        logger.info("Using temporal industrial electricity demand profiles")
+
+        # Load hourly profiles (MW)
+        industrial_elec_profiles = pd.read_csv(
+            snakemake.input.industrial_electricity_profiles,
+            index_col=0,
+            parse_dates=True,
+        )
+
+        industrial_loads = industrial_elec_profiles.rename(
+            columns=lambda x: f"{x} industry electricity"
+        )
+
+        # Create a Series with load names as index and bus names as values
+        # This ensures index alignment instead of relying on positional matching
+        bus_series = pd.Series(
+            industrial_elec_profiles.columns.values,
+            index=industrial_loads.columns,
+        )
+
+        n.add(
+            "Load",
+            industrial_loads.columns,
+            bus=bus_series,
+            carrier="industry electricity",
+            p_set=industrial_loads,
+        )
+
+    else:
+        logger.info("Using constant industrial electricity demand")
+        n.add(
+            "Load",
+            nodes,
+            suffix=" industry electricity",
+            bus=nodes,
+            carrier="industry electricity",
+            p_set=industrial_demand.loc[nodes, "electricity"] / nhours,
+        )
+
+    # Industry electricity DSR (Option B): one Store per FfE profile per node
+    # DSR config lives under main config industry.dsr; options["industry"] is sector_opts (bool)
+    industry_config = snakemake.config.get("industry", {})
+    industry_config = industry_config if isinstance(industry_config, dict) else {}
+    dsr_config = industry_config.get("dsr", {})
+    if (
+        use_temporal
+        and dsr_config.get("enable")
+        and getattr(
+            snakemake.input, "industrial_electricity_profiles_per_profile", None
+        )
+    ):
+        per_profile_path = snakemake.input.industrial_electricity_profiles_per_profile
+        path = (
+            per_profile_path[0]
+            if isinstance(per_profile_path, list) and len(per_profile_path) > 0
+            else per_profile_path
+        )
+        if path:
+            logger.info("Adding industry electricity DSR (per-profile Stores)")
+            per_profile_df = pd.read_csv(
+                path, index_col=0, parse_dates=True
+            ).reindex(n.snapshots)
+            # Columns are "node|profile"
+            node_profile = [c.split("|", 1) for c in per_profile_df.columns]
+            nodes_per_profile = {}
+            for n_, p_ in node_profile:
+                nodes_per_profile.setdefault(p_, []).append(n_)
+            flexibility_fraction = dsr_config.get("flexibility_fraction", {})
+            shift_hours = dsr_config.get("shift_hours", {})
+            restriction_value = float(dsr_config.get("restriction_value", 1.0))
+            technology_breakdown = dsr_config.get("technology_breakdown", {})
+            min_load_config = dsr_config.get("min_load", {})  # New: minimum load constraint (fraction of baseline)
+            # Optional DSR checkpoint profile (snapshots x profiles): 0 at checkpoint hours, else restriction_value
+            dsr_profile_df = None
+            dsr_profile_path = getattr(
+                snakemake.input, "industrial_dsr_profile", None
+            )
+            if dsr_profile_path:
+                dsr_path = (
+                    dsr_profile_path[0]
+                    if isinstance(dsr_profile_path, list)
+                    and len(dsr_profile_path) > 0
+                    else dsr_profile_path
+                )
+                if dsr_path:
+                    dsr_profile_df = pd.read_csv(
+                        dsr_path, index_col=0, parse_dates=True
+                    ).reindex(n.snapshots).ffill().bfill()
+            else:
+                logger.warning(
+                    "DSR profile file not found. Using constant constraints (no checkpoints). "
+                    "This means e_cyclic may not enforce periodic balancing correctly."
+                )
+            if "industry dsr" not in n.carriers.index:
+                n.add("Carrier", "industry dsr")
+            
+            # Check if technology breakdown is provided
+            use_technology_breakdown = bool(technology_breakdown)
+            
+            if use_technology_breakdown:
+                # Technology-specific DSR: split profiles by technology
+                logger.info("Using technology-specific industry DSR")
+                logger.info(f"DSR will only be applied to profiles with technology_breakdown: {list(technology_breakdown.keys())}")
+                
+                # Auto-calculate technology shares from production data if needed
+                # Mapping from technology names (in config) to PyPSA sector names (in production data)
+                technology_to_sector = {
+                    # Steel technologies
+                    "Scrap-EAF": "Electric arc",
+                    "H2-DRI-EAF": "DRI + Electric arc",
+                    "BF-BOF-CCUS": "Integrated steelworks",
+                    "Manufacturing": None,  # Not a specific sector, will use remaining share
+                    # Aluminium technologies
+                    "Aluminium-primary": "Aluminium - primary production",
+                    "Aluminium-secondary": "Aluminium - secondary production",
+                    "Alumina": "Alumina production",
+                }
+                
+                # Try to auto-calculate shares from production data
+                auto_calc_shares = {}
+                try:
+                    industrial_production_file = getattr(snakemake.input, "industrial_production", None)
+                    if industrial_production_file and os.path.exists(industrial_production_file):
+                        industrial_production = pd.read_csv(industrial_production_file, index_col=0)  # kt/a per node
+                        
+                        # Calculate shares for "Iron & steel industry" profile
+                        if "Iron & steel industry" in technology_breakdown:
+                            profile_tech_shares = technology_breakdown["Iron & steel industry"]
+                            if isinstance(profile_tech_shares, dict):
+                                # Check if any shares need auto-calculation
+                                needs_auto = any(
+                                    v == "auto" or (isinstance(v, str) and v.lower() == "auto")
+                                    for v in profile_tech_shares.values()
+                                )
+                                
+                                if needs_auto:
+                                    logger.info("Auto-calculating technology shares for 'Iron & steel industry' from production data")
+                                    # Get nodes for this profile
+                                    profile_nodes = nodes_per_profile.get("Iron & steel industry", [])
+                                    if profile_nodes:
+                                        # Calculate total production per sector across all nodes
+                                        sector_production = {}
+                                        for tech_name, sector_name in technology_to_sector.items():
+                                            if sector_name and tech_name in profile_tech_shares:
+                                                if sector_name in industrial_production.columns:
+                                                    # Sum production across all nodes (kt/a)
+                                                    sector_production[tech_name] = industrial_production[sector_name].sum()
+                                                else:
+                                                    sector_production[tech_name] = 0.0
+                                        
+                                        # Calculate shares based on production (assuming similar electricity intensity)
+                                        # For more accuracy, we'd need sector ratios, but production is a good proxy
+                                        total_production = sum(sector_production.values())
+                                        if total_production > 0:
+                                            auto_shares = {tech: prod / total_production for tech, prod in sector_production.items()}
+                                            
+                                            # Merge with user-provided shares (user values take precedence)
+                                            final_shares = {}
+                                            for tech, user_share in profile_tech_shares.items():
+                                                if user_share == "auto" or (isinstance(user_share, str) and user_share.lower() == "auto"):
+                                                    final_shares[tech] = auto_shares.get(tech, 0.0)
+                                                    logger.info(f"  Auto-calculated share for '{tech}': {final_shares[tech]:.3f}")
+                                                else:
+                                                    final_shares[tech] = user_share
+                                            
+                                            # Handle "Manufacturing" or other technologies not in production data
+                                            # Distribute remaining share proportionally
+                                            remaining_techs = [t for t in profile_tech_shares.keys() if t not in technology_to_sector or technology_to_sector[t] is None]
+                                            if remaining_techs:
+                                                remaining_share = 1.0 - sum(v for k, v in final_shares.items() if k not in remaining_techs)
+                                                if remaining_share > 0:
+                                                    for tech in remaining_techs:
+                                                        if tech in profile_tech_shares and (profile_tech_shares[tech] == "auto" or (isinstance(profile_tech_shares[tech], str) and profile_tech_shares[tech].lower() == "auto")):
+                                                            # Distribute remaining share equally (or use user-provided if not auto)
+                                                            final_shares[tech] = remaining_share / len(remaining_techs)
+                                                        elif tech in profile_tech_shares:
+                                                            final_shares[tech] = profile_tech_shares[tech]
+                                            
+                                            auto_calc_shares["Iron & steel industry"] = final_shares
+                                            logger.info(f"Auto-calculated technology shares for 'Iron & steel industry': {final_shares}")
+                except Exception as e:
+                    logger.warning(f"Could not auto-calculate technology shares from production data: {e}")
+                    logger.warning("Falling back to user-provided shares")
+                
+                for profile in nodes_per_profile.keys():
+                    if profile not in technology_breakdown:
+                        # Profile without technology breakdown: skip (no DSR for this profile)
+                        logger.debug(f"Profile '{profile}' has no technology breakdown, skipping DSR")
+                        continue
+                    
+                    # Get technology shares for this profile (use auto-calculated if available)
+                    if profile in auto_calc_shares:
+                        tech_shares = auto_calc_shares[profile]
+                    else:
+                        tech_shares = technology_breakdown[profile]
+                    
+                    if not isinstance(tech_shares, dict):
+                        logger.warning(f"Technology breakdown for '{profile}' is not a dict, skipping")
+                        continue
+                    
+                    # Verify shares sum to ~1.0
+                    total_share = sum(tech_shares.values())
+                    if not np.isclose(total_share, 1.0, rtol=0.01):
+                        logger.warning(
+                            f"Technology shares for '{profile}' sum to {total_share:.3f}, not 1.0. "
+                            f"Normalizing to 1.0."
+                        )
+                        tech_shares = {k: v / total_share for k, v in tech_shares.items()}
+                    
+                    # Get profile load columns
+                    cols_profile = [
+                        c for c in per_profile_df.columns if c.split("|", 1)[1] == profile
+                    ]
+                    if not cols_profile:
+                        continue
+                    load_profile = per_profile_df[cols_profile]
+                    
+                    # Process each technology
+                    for technology, share in tech_shares.items():
+                        if share <= 0:
+                            continue
+                        
+                        # Technology-specific key: "profile|technology"
+                        tech_key = f"{profile}|{technology}"
+                        
+                        # Get technology-specific flexibility (default to 0 if not specified)
+                        tech_flex = flexibility_fraction.get(tech_key, 0.0)
+                        if tech_flex <= 0:
+                            # Technology not flexible, skip
+                            continue
+                        
+                        # Get technology-specific shift_hours (default to profile-level if available)
+                        tech_shift_hours = shift_hours.get(tech_key, shift_hours.get(profile, 4))
+                        
+                        # Check if this technology is "negative only" (can only discharge, not charge)
+                        # Format: "profile|technology": true/false in dsr_config.get("negative_only", {})
+                        negative_only_config = dsr_config.get("negative_only", {})
+                        tech_negative_only_key = tech_key
+                        is_negative_only = negative_only_config.get(tech_negative_only_key, False)
+                        
+                        # Check for minimum load constraint (fraction of baseline, e.g. 0.70 = 70% minimum)
+                        # Format: "profile|technology": fraction in dsr_config.get("min_load", {})
+                        tech_min_load = min_load_config.get(tech_negative_only_key, None)
+                        if tech_min_load is not None:
+                            # min_load: 0.70 means load can only be reduced to 70% of baseline
+                            # Maximum reduction = 1.0 - min_load = 1.0 - 0.70 = 0.30 (30%)
+                            # But flexibility_fraction might be smaller (e.g., 0.10 = 10%)
+                            # So the actual maximum reduction is min(flexibility_fraction, 1.0 - min_load)
+                            max_reduction = min(tech_flex, 1.0 - tech_min_load)
+                            logger.debug(f"Technology {tech_key}: min_load={tech_min_load}, flexibility={tech_flex}, max_reduction={max_reduction}")
+                        else:
+                            max_reduction = tech_flex  # No min_load constraint, use full flexibility
+                        
+                        # Split load by technology share
+                        tech_load = load_profile * share
+                        P_flex = tech_load * tech_flex
+                        e_nom_per_col = P_flex.max() * tech_shift_hours
+                        
+                        # Column names are "node|profile"; index e_nom by node
+                        e_nom_series = pd.Series(
+                            e_nom_per_col.values,
+                            index=[c.split("|", 1)[0] for c in cols_profile],
+                        )
+                        e_nom_series = e_nom_series[e_nom_series > 0]
+                        if e_nom_series.empty:
+                            continue
+                        
+                        store_names = [
+                            f"{node} industry dsr {profile} {technology}" for node in e_nom_series.index
+                        ]
+                        e_nom = e_nom_series.values
+                        
+                        # Calculate P_flex per store (max power per node)
+                        # P_flex is a DataFrame with columns "node|profile", need to extract per node
+                        P_flex_per_store = []
+                        for node in e_nom_series.index:
+                            col_name = f"{node}|{profile}"
+                            if col_name in P_flex.columns:
+                                P_flex_per_store.append(P_flex[col_name].max())
+                            else:
+                                # Fallback: use e_nom / shift_hours
+                                P_flex_per_store.append(e_nom_series[node] / tech_shift_hours)
+                        P_flex_per_store = np.array(P_flex_per_store)
+                        
+                        # Get restriction_time: try technology-specific first, then profile-level
+                        restriction_time_tech = dsr_config.get("restriction_time", {}).get(tech_key)
+                        if restriction_time_tech is None:
+                            restriction_time_tech = dsr_config.get("restriction_time", {}).get(profile)
+                        
+                        # Use DSR profile if available
+                        if dsr_profile_df is not None:
+                            # Try technology-specific profile column first, then profile-level
+                            if tech_key in dsr_profile_df.columns:
+                                profile_vals = (
+                                    dsr_profile_df[tech_key].values * tech_flex * restriction_value
+                                )
+                            elif profile in dsr_profile_df.columns:
+                                profile_vals = (
+                                    dsr_profile_df[profile].values * tech_flex * restriction_value
+                                )
+                            else:
+                                profile_vals = None
+                            
+                            if profile_vals is not None:
+                                if is_negative_only:
+                                    # Negative only: can only discharge (reduce load), not charge (increase load)
+                                    # At checkpoint hours (profile_vals = 0): e_max_pu = 0, e_min_pu = 0 (must be at 0)
+                                    # At other hours (profile_vals = 1.0): e_max_pu = 0 (can't charge), e_min_pu = -flexibility (can discharge)
+                                    # Note: With e_cyclic=True, the store must return to 0 at checkpoints.
+                                    # The store can only discharge, so it must plan discharge to naturally return to 0
+                                    # by the checkpoint (e.g., by not discharging near the checkpoint, or by having
+                                    # the energy balance constraint force it back to 0)
+                                    e_max_pu = pd.DataFrame(
+                                        index=n.snapshots,
+                                        columns=store_names,
+                                        data=0.0,  # Can't charge at any hour (negative only)
+                                    )
+                                    # For negative_only: e_min_pu controls maximum discharge (load reduction)
+                                    # If min_load is set (e.g., 0.70), max reduction = min(flexibility, 1.0 - min_load)
+                                    # e_min_pu = -max_reduction at non-checkpoint hours
+                                    e_min_pu_vals = -max_reduction * profile_vals.reshape(-1, 1) * np.ones((len(n.snapshots), len(store_names)))
+                                    e_min_pu = pd.DataFrame(
+                                        index=n.snapshots,
+                                        columns=store_names,
+                                        data=e_min_pu_vals,
+                                    )
+                                    # At checkpoint hours, profile_vals = 0, so e_min_pu = 0, forcing store to 0
+                                    # At other hours, e_min_pu = -max_reduction, allowing discharge up to max_reduction
+                                else:
+                                    # Bidirectional: can charge and discharge
+                                    e_max_pu = pd.DataFrame(
+                                        index=n.snapshots,
+                                        columns=store_names,
+                                        data=profile_vals.reshape(-1, 1) * np.ones((len(n.snapshots), len(store_names))),
+                                    )
+                                    e_min_pu = -e_max_pu
+                            else:
+                                if is_negative_only:
+                                    e_max_pu = 0.0  # Can't charge
+                                    e_min_pu = -max_reduction * restriction_value  # Can discharge up to max_reduction
+                                else:
+                                    e_max_pu = tech_flex * restriction_value
+                                    e_min_pu = -e_max_pu
+                        else:
+                            if is_negative_only:
+                                e_max_pu = 0.0  # Can't charge
+                                e_min_pu = -max_reduction * restriction_value  # Can discharge up to max_reduction
+                            else:
+                                e_max_pu = tech_flex * restriction_value
+                                e_min_pu = -e_max_pu
+                        
+                        # Create flexibility buses and unidirectional links for each store
+                        # This allows for ramp limits and efficiencies to prevent rapid cycling
+                        flexibility_buses = [f"{node} industry dsr flexibility {profile} {technology}" 
+                                            for node in e_nom_series.index]
+                        load_buses = e_nom_series.index.tolist()  # Will be moved to "low voltage" later
+                        
+                        # Add flexibility buses
+                        n.add(
+                            "Bus",
+                            flexibility_buses,
+                            carrier="industry dsr flexibility",
+                        )
+                        
+                        # Charge links: load bus -> flexibility bus (increasing load)
+                        # When this link flows, store charges, load increases
+                        # For negative_only DSR, disable charge links (set p_nom=0 or p_max_pu=0)
+                        charge_link_names = [f"{store_name} charge" for store_name in store_names]
+                        if is_negative_only:
+                            # Negative only: can't charge, so set p_nom to 0
+                            charge_p_nom = np.zeros_like(P_flex_per_store)
+                        else:
+                            charge_p_nom = P_flex_per_store
+                        
+                        n.add(
+                            "Link",
+                            charge_link_names,
+                            bus0=load_buses,
+                            bus1=flexibility_buses,
+                            carrier="industry dsr charge",
+                            p_nom=charge_p_nom,
+                            p_min_pu=0.0,  # Unidirectional: only positive flow (charging)
+                            p_max_pu=1.0,
+                            efficiency=1.0,  # Can be configured later for losses
+                        )
+                        
+                        # Discharge links: flexibility bus -> load bus (decreasing load)
+                        # When this link flows, store discharges, load decreases
+                        discharge_link_names = [f"{store_name} discharge" for store_name in store_names]
+                        n.add(
+                            "Link",
+                            discharge_link_names,
+                            bus0=flexibility_buses,
+                            bus1=load_buses,
+                            carrier="industry dsr discharge",
+                            p_nom=P_flex_per_store,
+                            p_min_pu=0.0,  # Unidirectional: only positive flow (discharging)
+                            p_max_pu=1.0,
+                            efficiency=1.0,  # Can be configured later for losses
+                        )
+                        
+                        # Add store on flexibility bus
+                        # Store energy balance: e[t] = e[t-1] + charge_link[t] - discharge_link[t]
+                        # This means charge_link increases store energy, discharge_link decreases it
+                        n.add(
+                            "Store",
+                            store_names,
+                            bus=flexibility_buses,
+                            carrier="industry dsr",
+                            standing_loss=0.0,
+                            e_cyclic=True,
+                            e_initial=0.0,
+                            e_nom=e_nom,
+                            e_max_pu=e_max_pu,
+                            e_min_pu=e_min_pu,
+                        )
+                        
+                        # Add constraint: charge_link - discharge_link = store_p
+                        # This couples the links to the store dispatch
+                        # We'll add this constraint in solve_network.py after the model is created
+            else:
+                # No technology_breakdown provided: no DSR stores created
+                logger.info("No technology_breakdown provided. Industry DSR requires technology_breakdown to be defined.")
+                logger.info("No industry DSR stores will be created. Profiles will use baseline (fixed) load only.")
+            logger.info("Industry DSR Stores added.")
 
     n.add(
         "Bus",
@@ -6433,6 +6877,7 @@ if __name__ == "__main__":
             spatial=spatial,
             cf_industry=cf_industry,
             investment_year=investment_year,
+            snakemake=snakemake,
         )
 
     if options["shipping"]:

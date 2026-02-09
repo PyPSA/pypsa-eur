@@ -17,7 +17,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: ""
+  name: "Test_2030"
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -34,50 +34,54 @@ foresight: overnight
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
   clusters:
-  - 50
+  - 5
   opts:
   - ''
   sector_opts:
   - ''
   planning_horizons:
-  - 2050
+  - 2030
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
-- AL
-- AT
-- BA
+# - DE
+# - NL
 - BE
-- BG
-- CH
-- CZ
-- DE
-- DK
-- EE
-- ES
-- FI
-- FR
-- GB
-- GR
-- HR
-- HU
-- IE
-- IT
-- LT
-- LU
-- LV
-- ME
-- MK
-- NL
-- 'NO'
-- PL
-- PT
-- RO
-- RS
-- SE
-- SI
-- SK
-- XK
+# - FR
+# - AL
+# - AT
+# - BA
+# - BE
+# - BG
+# - CH
+# - CZ
+# - DE
+# - DK
+# - EE
+# - ES
+# - FI
+# - FR
+# - GB
+# - GR
+# - HR
+# - HU
+# - IE
+# - IT
+# - LT
+# - LU
+# - LV
+# - ME
+# - MK
+# - NL
+# - 'NO'
+# - PL
+# - PT
+# - RO
+# - RS
+# - SE
+# - SI
+# - SK
+# - XK
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
@@ -88,6 +92,7 @@ snapshots:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   drop_leap_day: true
+  retrieve: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
@@ -939,53 +944,97 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2019
   oil_refining_emissions: 0.013
+  temporal_electricity_industry_load: true
 
-  # Industry electricity demand-side response (DSR): virtual storage for load shifting.
-  # Config keys use FfE profile names (e.g. "Iron & steel industry"), not PyPSA industry categories
-  # (e.g. Electric arc, Cement). See INDUSTRY_CATEGORY_TO_PROFILE in build_industrial_energy_demand_per_node.py.
+  # Industry electricity DSR: virtual storage for load shifting (mirrors residential_heat.dsm).
+  # Technology-specific DSR implementation requires technology_breakdown to be defined.
   dsr:
-    enable: false
-    # Fraction of load that can be shifted (0..1) per FfE profile.
+    enable: true
+    
+    # Technology breakdown: defines how each FfE profile is split into technologies
+    # Only profiles with technology_breakdown will get DSR stores
+    # Profiles without technology_breakdown will NOT get DSR stores
+    technology_breakdown:
+      "Iron & steel industry":
+        "Scrap-EAF": "auto"           # Auto-calculate from production data
+        "H2-DRI-EAF": "auto"          # Auto-calculate from production data
+        "BF-BOF-CCUS": "auto"         # Auto-calculate from production data
+        "Manufacturing": 0.05          # Fixed share for inflexible processes
+        "Aluminium-primary": "auto"    # Auto-calculate from production data
+        "Aluminium-secondary": "auto"  # Auto-calculate from production data
+        "Alumina": "auto"              # Auto-calculate from production data
+      "Non-metallic Minerals":  # Cement
+        "Cement mills": 0.40    # 40% of cement load
+        "Raw mills": 0.26       # 26% of cement load
+        "Kiln": 0.27           # 27% of cement load (NOT flexible)
+        "Other": 0.07          # 7% other processes
+      "Paper, Pulp and Print":
+        "Pulp production": 0.30  # 30% of load
+        "Paper machines": 0.50   # 50% of load (NOT flexible)
+        "Printing": 0.20         # 20% of load
+    
+    # Technology-specific flexibility parameters
+    # Format: "profile|technology": value
     flexibility_fraction:
-      "Iron & steel industry": 0.15
-      "Non-metallic Minerals": 0.20
-      "Paper, Pulp and Print": 0.10
-      "Food and Tobacco": 0.10
-      "Non-specified (Industry)": 0.10
-      "Textile and Leather": 0.10
-      "Wood and Wood Products": 0.10
-      "Transport Equipment": 0.10
-      "Machinery": 0.10
-    # Maximum shift duration in hours per FfE profile (e.g. cement/NMM: 2h, pulp: 8h).
+      # Iron & steel industry technologies
+      "Iron & steel industry|Scrap-EAF": 0.85     # 85% flexible
+      "Iron & steel industry|H2-DRI-EAF": 0.20    # 20% flexible (coupled to H2 storage)
+      "Iron & steel industry|BF-BOF-CCUS": 0.05   # 5% flexible
+      "Iron & steel industry|Manufacturing": 0.0  # Not flexible
+      # Aluminium technologies
+      "Iron & steel industry|Aluminium-primary": 0.125   # Conservative: 12.5% flexible
+      "Iron & steel industry|Aluminium-secondary": 0.125 # Conservative: 12.5% flexible
+      "Iron & steel industry|Alumina": 0.0               # Not flexible
+      # Non-metallic Minerals (Cement) technologies
+      "Non-metallic Minerals|Cement mills": 0.42  # ~42% of cement mills load is flexible
+      "Non-metallic Minerals|Raw mills": 0.42     # ~42% of raw mills load is flexible
+      "Non-metallic Minerals|Kiln": 0.0           # Not flexible (continuous 24h operation)
+      "Non-metallic Minerals|Other": 0.0          # Not flexible
+      # Paper, Pulp and Print technologies
+      "Paper, Pulp and Print|Pulp production": 0.60  # ~60% of pulp production load is flexible
+      "Paper, Pulp and Print|Paper machines": 0.0    # NOT flexible (~50% of total load)
+      "Paper, Pulp and Print|Printing": 0.60         # ~60% of printing load is flexible
+    
     shift_hours:
-      "Iron & steel industry": 4
-      "Non-metallic Minerals": 2
-      "Paper, Pulp and Print": 8
-      "Food and Tobacco": 4
-      "Non-specified (Industry)": 4
-      "Textile and Leather": 4
-      "Wood and Wood Products": 4
-      "Transport Equipment": 4
-      "Machinery": 4
-    # Checkpoint hours (0-23) per FfE profile at which the DSR store must be empty; demand is balanced per period.
-    # Different sectors have different operating times (e.g. 24/7 vs day shift).
+      # Iron & steel industry technologies
+      "Iron & steel industry|Scrap-EAF": 2        # 2h shift window
+      "Iron & steel industry|H2-DRI-EAF": 6       # 6h shift window
+      "Iron & steel industry|BF-BOF-CCUS": 1      # 1h shift window
+      # Aluminium technologies
+      "Iron & steel industry|Aluminium-primary": 3     # 3h shift window
+      "Iron & steel industry|Aluminium-secondary": 3   # 3h shift window
+      # Non-metallic Minerals (Cement) technologies
+      "Non-metallic Minerals|Cement mills": 4     # 4h shiftable
+      "Non-metallic Minerals|Raw mills": 4        # 4h shiftable
+      # Paper, Pulp and Print technologies
+      "Paper, Pulp and Print|Pulp production": 6  # 6h shift window
+      "Paper, Pulp and Print|Printing": 6         # 6h shift window
+    
     restriction_time:
-      "Iron & steel industry": [6, 18]
-      "Non-metallic Minerals": [0, 12]
-      "Paper, Pulp and Print": [6, 22]
-      "Food and Tobacco": [8, 20]
-      "Non-specified (Industry)": [6, 18]
-      "Textile and Leather": [8, 20]
-      "Wood and Wood Products": [8, 20]
-      "Transport Equipment": [6, 18]
-      "Machinery": [6, 18]
-    # Scale factor (0..1) for DSR profile; 1.0 = full flexibility between checkpoints.
+      # Iron & steel industry technologies
+      "Iron & steel industry|Scrap-EAF": [6, 18]      # Checkpoints at 6:00 and 18:00
+      "Iron & steel industry|H2-DRI-EAF": [0, 12]     # Checkpoints at midnight and noon
+      "Iron & steel industry|BF-BOF-CCUS": [6, 18]     # Same as Scrap-EAF
+      # Aluminium technologies
+      "Iron & steel industry|Aluminium-primary": [0]    # Daily checkpoint at midnight
+      "Iron & steel industry|Aluminium-secondary": [0]   # Daily checkpoint at midnight
+      # Non-metallic Minerals (Cement) technologies
+      "Non-metallic Minerals|Cement mills": [0]    # Daily checkpoint at midnight
+      "Non-metallic Minerals|Raw mills": [0]       # Daily checkpoint at midnight
+      # Paper, Pulp and Print technologies
+      "Paper, Pulp and Print|Pulp production": [0]  # Daily checkpoint at midnight
+      "Paper, Pulp and Print|Printing": [0]         # Daily checkpoint at midnight
+    
     restriction_value: 1.0
+    
     # Ramp rate constraints to prevent rapid cycling (fraction of p_nom per hour)
     # Default: 0.5 means link dispatch can change by max 50% of capacity per hour
-    # Technology-specific values override the default (format: "profile|technology": value)
+    # Technology-specific values override the default
     ramp_rate:
       default: 0.5  # 50% per hour (prevents rapid charge/discharge switching)
+      # Technology-specific ramp rates (optional)
+      # "Iron & steel industry|Scrap-EAF": 0.3  # 30% per hour for EAF
+      # "Iron & steel industry|H2-DRI-EAF": 0.2  # 20% per hour for DRI (slower due to H2 storage)
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
@@ -1037,7 +1086,7 @@ clustering:
       ramp_limit_down: max
   temporal:
     resolution_elec: false
-    resolution_sector: false
+    resolution_sector: 6h
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
@@ -1190,16 +1239,6 @@ data:
     source: archive
     version: latest
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
-overpass_api:
-  url: https://overpass-api.de/api/interpreter
-  max_tries: 5
-  timeout: 600
-  user_agent:
-    project_name: PyPSA-Eur
-    email: contact@pypsa.org
-    website: https://github.com/PyPSA/pypsa-eur
-
 secrets:
   corine: '' #Add API key here if primary source is used for retrieving corine dataset after registering in https://land.copernicus.eu/user/login
 
@@ -1222,6 +1261,7 @@ solving:
     transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
+    nhours: 168  # Limit to first 168 hours (1 week) for testing
     post_discretization:
       enable: false
       line_unit_size: 1700
@@ -1252,8 +1292,8 @@ solving:
     SAFE: false
 
   solver:
-    name: gurobi
-    options: gurobi-default
+    name: highs
+    options: highs-default
 
   solver_options:
     highs-default:

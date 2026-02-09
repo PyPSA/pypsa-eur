@@ -1,0 +1,248 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# Example configuration for technology-specific industry DSR
+# This extends the base industry DSR configuration with technology breakdowns
+#
+# IMPORTANT: When technology_breakdown is provided, DSR is ONLY applied to profiles
+# that have a technology breakdown defined. Other profiles will NOT get DSR stores,
+# even if they have profile-level flexibility_fraction/shift_hours defined.
+#
+# This config should be merged with a base config that has industry.dsr.enable: true
+
+industry:
+  dsr:
+    enable: true
+    
+    # Technology breakdown: defines how each FfE profile is split into technologies
+    # Shares must sum to 1.0 per profile
+    # You can define breakdowns for any profile, or leave profiles without breakdown to use profile-level flexibility
+    technology_breakdown:
+      "Iron & steel industry":
+        # ⚠️ IMPORTANT: "Iron & steel industry" FfE profile includes BOTH steel AND aluminium
+        # 
+        # OPTION 1: Auto-calculate shares from production data (recommended)
+        # Set shares to "auto" and the model will calculate them from production data:
+        "Scrap-EAF": "auto"           # Auto-calculate from "Electric arc" production
+        "H2-DRI-EAF": "auto"          # Auto-calculate from "DRI + Electric arc" production
+        "BF-BOF-CCUS": "auto"         # Auto-calculate from "Integrated steelworks" production
+        "Aluminium-primary": "auto"    # Auto-calculate from "Aluminium - primary production" production
+        "Aluminium-secondary": "auto" # Auto-calculate from "Aluminium - secondary production" production
+        "Alumina": "auto"             # Auto-calculate from "Alumina production" production
+        "Manufacturing": 0.05         # Fixed share for inflexible manufacturing (not in production data)
+        #
+        # OPTION 2: Manual shares (if you want to override auto-calculation)
+        # Calculate the actual shares from your production data:
+        # - Steel load = sum of (Electric arc, DRI + Electric arc, Integrated steelworks) electricity
+        # - Aluminium load = sum of (Aluminium - primary, Aluminium - secondary, Alumina) electricity
+        # - Total = Steel load + Aluminium load
+        # - Steel share = Steel load / Total
+        # - Aluminium share = Aluminium load / Total
+        #
+        # Example manual shares:
+        # "Scrap-EAF": 0.25
+        # "H2-DRI-EAF": 0.40
+        # "BF-BOF-CCUS": 0.10
+        # "Aluminium-primary": 0.10
+        # "Aluminium-secondary": 0.08
+        # "Alumina": 0.02
+        # "Manufacturing": 0.05
+        # Total should sum to 1.0
+      "Non-metallic Minerals":
+        "Cement mills": 0.40    # 40% of cement load is cement mills (grinding, 4h shiftable)
+        "Raw mills": 0.26       # 26% is raw mills (grinding, 4h shiftable)
+        "Kiln": 0.27           # 27% is kiln (NOT flexible, continuous 24h operation)
+        "Other": 0.07          # 7% other processes (not flexible)
+      "Paper, Pulp and Print":
+        "Pulp production": 0.30  # 30% of load is pulp production (flexible)
+        "Paper machines": 0.50   # 50% of load is paper machines (NOT flexible)
+        "Printing": 0.20         # 20% of load is printing (flexible)
+      "Non-specified (Industry)":
+        # ⚠️ IMPORTANT: "Non-specified (Industry)" includes MANY sectors:
+        # - HVC (High Value Chemicals)
+        # - HVC (mechanical recycling)
+        # - HVC (chemical recycling)
+        # - Ammonia
+        # - Chlorine (chlor-alkali)
+        # - Methanol
+        # - Other chemicals
+        # - Pharmaceutical products etc.
+        # - Other non-ferrous metals
+        # - Other industrial sectors
+        #
+        # The shares below represent the FRACTION of total "Non-specified (Industry)" load
+        # that each technology represents. They MUST sum to 1.0.
+        #
+        # You MUST calculate the actual shares from your production data:
+        # Example for chlor-alkali:
+        #   chlorine_electricity = chlorine_production_today × MWh_elec_per_tCl
+        #   total_non_specified_electricity = sum of all "Non-specified (Industry)" electricity
+        #   chlor_alkali_share = chlorine_electricity / total_non_specified_electricity
+        #
+        # The values below are EXAMPLES - adjust based on your actual data!
+        "Chlor-alkali": 0.10      # EXAMPLE: Adjust based on actual chlorine production share!
+        "Other chemicals": 0.90   # EXAMPLE: Should include HVC, Ammonia, Methanol, etc.
+    
+    # Technology-specific flexibility_fraction
+    # Format: "profile|technology": fraction
+    # For profiles WITH technology_breakdown: use "profile|technology" keys
+    # For profiles WITHOUT technology_breakdown: use "profile" keys (profile-level)
+    flexibility_fraction:
+      # Iron & steel industry technologies (has technology_breakdown)
+      # Based on EU context study (2.1 MtCS/yr plants), EU-derived price scenarios:
+      # - EAF: highly flexible (>80%) - differentiated approach recommended
+      # - H2-DRI: depends on electrolyser sizing
+      # - BF-BOF: minimal flexibility (expected phase-out)
+      # Steel technologies:
+      "Iron & steel industry|Scrap-EAF": 0.85     # >80% flexible (study recommendation), 1.5-2.5h shift
+      "Iron & steel industry|H2-DRI-EAF": 0.20    # 20% flexible (depends on electrolyser sizing), 4-8h shift
+      # ✓ NOTE: H2-DRI-EAF flexibility is now coupled to H2 storage capacity via constraints.
+      # The constraint limits DRI load shifting based on available H2 storage:
+      # |DRI_DSR_dispatch| ≤ H2_storage_capacity / (H2_DRI / elec_DRI)
+      # Where H2_DRI = 1.7 MWh_H2/t_steel and elec_DRI = 0.322 MWh_el/t_steel
+      # This means: |DRI_DSR_dispatch| ≤ H2_storage_capacity / 5.28
+      # If H2 storage is extendable, the optimizer can build more storage to enable more flexibility.
+      # The flexibility_fraction (0.20) sets the maximum potential, but actual flexibility
+      # will be limited by H2 storage capacity at each node.
+      "Iron & steel industry|BF-BOF-CCUS": 0.05   # 5% flexible (minimal, expected phase-out), waste heat recovery only
+      "Iron & steel industry|Manufacturing": 0.0  # Not flexible
+      # Aluminium technologies:
+      # Conservative scenario (pot on/off): 10-15% flexible, 2-4h shift
+      # Optimistic scenario (voltage control): 5-10% flexible, real-time capable
+      # Note: 34.2% mentioned in literature is economic flexibility, not physical. We model physical limits.
+      # Values below use conservative scenario. For optimistic, use 0.075 (7.5%) and consider shorter shift_hours (1-2h).
+      "Iron & steel industry|Aluminium-primary": 0.125   # Conservative: 12.5% flexible (midpoint of 10-15%)
+      "Iron & steel industry|Aluminium-secondary": 0.125 # Conservative: 12.5% flexible (same as primary)
+      "Iron & steel industry|Alumina": 0.0              # Alumina production: not flexible (continuous process)
+      # Non-metallic Minerals technologies (has technology_breakdown)
+      # Note: flexible_share 0.28 applies to grinding loads only (cement + raw mills = 66% of total)
+      # This means ~42% of cement mills load and ~42% of raw mills load is flexible (0.28/0.66 ≈ 0.42)
+      "Non-metallic Minerals|Cement mills": 0.42  # ~42% of cement mills load is flexible (4h shiftable)
+      "Non-metallic Minerals|Raw mills": 0.42     # ~42% of raw mills load is flexible (4h shiftable)
+      "Non-metallic Minerals|Kiln": 0.0           # Not flexible (continuous 24h operation)
+      "Non-metallic Minerals|Other": 0.0          # Not flexible
+      # Paper, Pulp and Print technologies (has technology_breakdown)
+      # flexible_share 0.30 applies to flexible processes (pulp + printing = 50% of total)
+      # This means ~60% of pulp production and ~60% of printing load is flexible (0.30/0.50 = 0.60)
+      "Paper, Pulp and Print|Pulp production": 0.60  # ~60% of pulp production load is flexible (0.30/0.50)
+      "Paper, Pulp and Print|Paper machines": 0.0    # NOT flexible (~50% of total load)
+      "Paper, Pulp and Print|Printing": 0.60         # ~60% of printing load is flexible (0.30/0.50)
+      # Non-specified (Industry) technologies (has technology_breakdown)
+      # IMPORTANT: The technology_breakdown shares below represent the FRACTION of the total
+      # "Non-specified (Industry)" load that each technology represents (must sum to 1.0).
+      # "Non-specified (Industry)" includes: HVC, Ammonia, Chlorine, Methanol, Other chemicals,
+      # Pharmaceutical products, Other non-ferrous metals, Other industrial sectors.
+      # You need to calculate the actual share of chlor-alkali based on your production data.
+      # Example calculation: chlorine_electricity = chlorine_production × MWh_elec_per_tCl
+      #                     chlor_alkali_share = chlorine_electricity / total_non_specified_electricity
+      # Chlor-alkali flexibility parameters (from literature):
+      # - flexible_share: 0.10 (10% flexible, negative only - load shedding, not upward)
+      # - min_load: 0.70 (hard operational constraint from column stability)
+      # - Applies to ~30% of Cl? (EDC/PVC route only)
+      # - Response time: hours (day-ahead compatible based on 24h simulation)
+      "Non-specified (Industry)|Chlor-alkali": 0.10   # 10% flexible, negative only (adjust share based on your data!)
+      # Other profiles WITHOUT technology_breakdown (use profile-level)
+      "Food and Tobacco": 0.10
+      "Non-specified (Industry)": 0.10
+      "Textile and Leather": 0.10
+      "Wood and Wood Products": 0.10
+      "Transport Equipment": 0.10
+      "Machinery": 0.10
+    
+    # Technology-specific shift_hours
+    # Format: "profile|technology": hours
+    # For profiles WITH technology_breakdown: use "profile|technology" keys
+    # For profiles WITHOUT technology_breakdown: use "profile" keys (profile-level)
+    shift_hours:
+      # Iron & steel industry technologies (has technology_breakdown)
+      # Steel technologies:
+      "Iron & steel industry|Scrap-EAF": 2        # 1.5-2.5h shift window
+      "Iron & steel industry|H2-DRI-EAF": 6       # 4-8h shift window (with H2 storage)
+      "Iron & steel industry|BF-BOF-CCUS": 1      # 1h shift window
+      # Aluminium technologies:
+      "Iron & steel industry|Aluminium-primary": 3     # Conservative: 3h shift window (midpoint of 2-4h)
+      "Iron & steel industry|Aluminium-secondary": 3   # Conservative: 3h shift window (same as primary)
+      "Iron & steel industry|Alumina": 0              # Alumina: not flexible (no shift hours)
+      # Non-metallic Minerals technologies (has technology_breakdown)
+      "Non-metallic Minerals|Cement mills": 4     # 4h shiftable (max hours can be off)
+      "Non-metallic Minerals|Raw mills": 4        # 4h shiftable (max hours can be off)
+      # Paper, Pulp and Print technologies (has technology_breakdown)
+      # shift_time: 24h, delay_time: 3-6h optimal (diminishing returns beyond 6h)
+      "Paper, Pulp and Print|Pulp production": 6  # 6h shift window (optimal delay_time)
+      "Paper, Pulp and Print|Printing": 6         # 6h shift window (optimal delay_time)
+      # Non-specified (Industry) technologies (has technology_breakdown)
+      "Non-specified (Industry)|Chlor-alkali": 4   # 4h shift window (example)
+      # Other profiles WITHOUT technology_breakdown (use profile-level)
+      "Food and Tobacco": 4
+      "Non-specified (Industry)": 4
+      "Textile and Leather": 4
+      "Wood and Wood Products": 4
+      "Transport Equipment": 4
+      "Machinery": 4
+    
+    # Technology-specific restriction_time (checkpoint hours)
+    # Format: "profile|technology": [hours] for technologies WITH breakdown
+    # Format: "profile": [hours] for profiles WITHOUT breakdown
+    # If not specified for a technology, inherits from profile-level
+    restriction_time:
+      # Iron & steel industry technologies (has technology_breakdown)
+      # Steel technologies:
+      "Iron & steel industry|Scrap-EAF": [6, 18]      # Checkpoints at 6:00 and 18:00
+      "Iron & steel industry|H2-DRI-EAF": [0, 12]     # Checkpoints at midnight and noon
+      "Iron & steel industry|BF-BOF-CCUS": [6, 18]     # Same as Scrap-EAF
+      # Aluminium technologies:
+      # Conservative (pot on/off): daily checkpoints to balance load
+      # Optimistic (voltage control): could use shorter/no checkpoints for real-time capability
+      "Iron & steel industry|Aluminium-primary": [0]    # Daily checkpoint at midnight (conservative scenario)
+      "Iron & steel industry|Aluminium-secondary": [0]   # Daily checkpoint at midnight (same as primary)
+      "Iron & steel industry|Alumina": [0]              # Alumina: checkpoint (though not flexible)
+      # Non-metallic Minerals technologies (has technology_breakdown)
+      # Daily energy balance: checkpoints ensure energy-neutral shifting within 24h
+      "Non-metallic Minerals|Cement mills": [0]         # Daily checkpoint at midnight (24h cycle)
+      "Non-metallic Minerals|Raw mills": [0]          # Daily checkpoint at midnight (24h cycle)
+      # Paper, Pulp and Print technologies (has technology_breakdown)
+      # shift_time: 24h, so daily checkpoint ensures energy-neutral shifting
+      "Paper, Pulp and Print|Pulp production": [0]     # Daily checkpoint at midnight (24h cycle)
+      "Paper, Pulp and Print|Printing": [0]           # Daily checkpoint at midnight (24h cycle)
+      # Non-specified (Industry) technologies (has technology_breakdown)
+      "Non-specified (Industry)|Chlor-alkali": [0]     # Daily checkpoint at midnight (24h cycle)
+      # Profile-level (used as fallback for technologies without specific restriction_time)
+      # Also used for profiles WITHOUT technology_breakdown
+      "Iron & steel industry": [6, 18]                 # Fallback for technologies without specific times
+      "Non-metallic Minerals": [0, 12]                 # Fallback for technologies without specific times
+      "Paper, Pulp and Print": [0]                     # Fallback for technologies without specific times (24h cycle)
+      "Non-specified (Industry)": [0]                  # Fallback for technologies without specific times
+      "Food and Tobacco": [8, 20]                      # Profile-level (no technology_breakdown)
+      "Non-specified (Industry)": [6, 18]              # Profile-level (no technology_breakdown)
+      "Textile and Leather": [8, 20]                   # Profile-level (no technology_breakdown)
+      "Wood and Wood Products": [8, 20]                # Profile-level (no technology_breakdown)
+      "Transport Equipment": [6, 18]                   # Profile-level (no technology_breakdown)
+      "Machinery": [6, 18]                             # Profile-level (no technology_breakdown)
+    
+    restriction_value: 1.0
+    
+    # Negative-only DSR: technologies that can only REDUCE load (discharge), not increase it (charge)
+    # Format: "profile|technology": true/false
+    # When true: e_max_pu = 0 (can't charge), e_min_pu = -max_reduction (can discharge)
+    # Note: With e_cyclic=True, the store must return to 0 at checkpoint hours, which may require
+    # allowing e_max_pu > 0 at checkpoints to enable return to zero state
+    negative_only:
+      "Non-specified (Industry)|Chlor-alkali": true   # Chlor-alkali: can only reduce load, not increase
+      # All other technologies default to false (bidirectional: can charge and discharge)
+    
+    # Minimum load constraint: hard operational constraint (fraction of baseline load)
+    # Format: "profile|technology": fraction (e.g., 0.70 = 70% minimum load)
+    # Example: min_load: 0.70 means load can only be reduced to 70% of baseline (max reduction = 30%)
+    # The actual maximum reduction is min(flexibility_fraction, 1.0 - min_load)
+    # Example: If flexibility_fraction = 0.10 and min_load = 0.70:
+    #   - max_reduction = min(0.10, 1.0 - 0.70) = min(0.10, 0.30) = 0.10 (10% reduction)
+    #   - Load can be reduced from 100% to 90% (not to 70%, because flexibility is only 10%)
+    # Example: If flexibility_fraction = 0.50 and min_load = 0.70:
+    #   - max_reduction = min(0.50, 1.0 - 0.70) = min(0.50, 0.30) = 0.30 (30% reduction)
+    #   - Load can be reduced from 100% to 70% (limited by min_load constraint)
+    min_load:
+      "Non-specified (Industry)|Chlor-alkali": 0.70   # Chlor-alkali: hard operational constraint (column stability)
+      # Load can only be reduced to 70% of baseline (max reduction = 30%)
+      # Applies to ~30% of Cl? (EDC/PVC route only)
+      # All other technologies default to None (no min_load constraint)

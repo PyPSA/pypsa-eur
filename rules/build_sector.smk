@@ -1093,6 +1093,9 @@ rule build_industrial_production_per_node:
 
 
 rule build_industrial_energy_demand_per_node:
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         industry_sector_ratios=resources(
             "industry_sector_ratios_{planning_horizons}.csv"
@@ -1103,9 +1106,17 @@ rule build_industrial_energy_demand_per_node:
         industrial_energy_demand_per_node_today=resources(
             "industrial_energy_demand_today_base_s_{clusters}.csv"
         ),
+        ffe_profiles="data/ffe_industry_load_profiles.json",
+        
     output:
         industrial_energy_demand_per_node=resources(
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+        industrial_electricity_demand_per_node_temporal=resources(
+            "industrial_electricity_demand_temporal_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+        industrial_electricity_demand_per_profile_temporal=resources(
+            "industrial_electricity_demand_per_profile_temporal_base_s_{clusters}_{planning_horizons}.csv"
         ),
     threads: 1
     resources:
@@ -1122,6 +1133,29 @@ rule build_industrial_energy_demand_per_node:
         )
     script:
         "../scripts/build_industrial_energy_demand_per_node.py"
+
+
+rule build_industry_dsr_profile:
+    params:
+        restriction_time=config_provider("industry", "dsr", "restriction_time"),
+        technology_breakdown=config_provider("industry", "dsr", "technology_breakdown", default={}),
+    input:
+        industrial_electricity_demand_per_profile_temporal=resources(
+            "industrial_electricity_demand_per_profile_temporal_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+    output:
+        industrial_dsr_profile=resources(
+            "industrial_dsr_profile_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+    threads: 1
+    resources:
+        mem_mb=500,
+    log:
+        logs("build_industry_dsr_profile_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_industry_dsr_profile/s_{clusters}_{planning_horizons}")
+    script:
+        "../scripts/build_industry_dsr_profile.py"
 
 
 rule build_industrial_energy_demand_per_country_today:
@@ -1538,6 +1572,24 @@ rule prepare_sector_network:
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         industrial_demand=resources(
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+        industrial_electricity_profiles=resources(
+            "industrial_electricity_demand_temporal_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+        industrial_electricity_profiles_per_profile=lambda w: (
+            resources(
+                "industrial_electricity_demand_per_profile_temporal_base_s_{clusters}_{planning_horizons}.csv"
+            )
+            if config_provider("industry", "temporal_electricity_industry_load")(w)
+            and config_provider("industry", "dsr", "enable")(w)
+            else []
+        ),
+        industrial_dsr_profile=lambda w: (
+            resources(
+                "industrial_dsr_profile_base_s_{clusters}_{planning_horizons}.csv"
+            )
+            if config_provider("industry", "dsr", "enable")(w)
+            else []
         ),
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_base_s_{clusters}.nc"
