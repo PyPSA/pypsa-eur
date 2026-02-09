@@ -36,7 +36,9 @@ logger = logging.getLogger(__name__)
 def sanitize_label(label: str) -> str:
     """Mirror the label cleaning used in identify_district_heating_subnodes."""
     return (
-        pd.Series([label]).fillna("DH").astype(str)
+        pd.Series([label])
+        .fillna("DH")
+        .astype(str)
         .str.replace(r"[^\w\s-]", "", regex=True)
         .str.strip()
         .str.replace(r"\s+", "_", regex=True)
@@ -70,9 +72,25 @@ def load_geonames(path: str, countries: set[str]) -> gpd.GeoDataFrame:
         sep="\t",
         header=None,
         names=cols,
-        usecols=["geonameid", "asciiname", "country_code", "latitude", "longitude", "population"],
+        usecols=[
+            "geonameid",
+            "asciiname",
+            "country_code",
+            "latitude",
+            "longitude",
+            "population",
+            "feature_code",
+        ],
     )
+    # Filter to requested countries
     df = df[df["country_code"].isin(countries)].copy()
+
+    # Filter to actual cities only (PPL* but not PPLX which are districts/neighborhoods)
+    # PPL = populated place, PPLA-PPLA4 = admin capitals at various levels
+    # PPLX = section of populated place (district), PPLL = populated locality
+    city_codes = ["PPL", "PPLA", "PPLA2", "PPLA3", "PPLA4", "PPLA5", "PPLC"]
+    df = df[df["feature_code"].isin(city_codes)].copy()
+
     gdf = gpd.GeoDataFrame(
         df,
         geometry=gpd.points_from_xy(df["longitude"], df["latitude"]),
@@ -121,16 +139,69 @@ def main(snakemake):
         cities["distance"] = pd.NA
         cities["asciiname"] = pd.NA
 
-    # Nearest city per system
-    joined = gpd.sjoin_nearest(
-        dh_areas.set_geometry("centroid"),
-        cities,
-        how="left",
-        distance_col="distance_m",
-    )
+    # Strategy: Find the LARGEST city associated with each DH area.
+    # 1. Check cities within a buffered DH area polygon (10 km buffer in EPSG:3857)
+    # 2. Among candidates, pick the one with the highest population
+    # 3. Fall back to nearest city if no candidates found
+    #
+    # The buffer ensures we capture the primary city even when its centre-point
+    # lies just outside the DH network polygon boundary (common for suburban
+    # DH systems like Leverkusen vs Cologne).
+    BUFFER_M = 10_000  # 10 km buffer in metres (EPSG:3857)
+    results = []
 
-    joined["distance_km"] = joined["distance_m"] / 1000
-    joined = joined.rename(columns={"asciiname": "city", "geonameid": "geonames_id"})
+    for idx, dh_row in dh_areas.iterrows():
+        dh_geom = dh_row.geometry
+        dh_centroid = dh_row["centroid"]
+
+        # Find cities within the buffered DH area polygon
+        buffered_geom = dh_geom.buffer(BUFFER_M)
+        cities_nearby = cities[cities.geometry.within(buffered_geom)]
+
+        if not cities_nearby.empty:
+            # Select the largest city by population within the buffered polygon
+            largest_city = cities_nearby.loc[cities_nearby["population"].idxmax()]
+            distance_m = dh_centroid.distance(largest_city.geometry)
+            city_name = largest_city["asciiname"]
+            geonames_id = largest_city["geonameid"]
+            population = largest_city["population"]
+            lat = largest_city["latitude"]
+            lon = largest_city["longitude"]
+        else:
+            # Fall back to nearest city
+            distances = cities.geometry.distance(dh_centroid)
+            if distances.empty:
+                city_name = None
+                geonames_id = None
+                population = None
+                distance_m = None
+                lat = None
+                lon = None
+            else:
+                nearest_idx = distances.idxmin()
+                nearest_city = cities.loc[nearest_idx]
+                distance_m = distances.loc[nearest_idx]
+                city_name = nearest_city["asciiname"]
+                geonames_id = nearest_city["geonameid"]
+                population = nearest_city["population"]
+                lat = nearest_city["latitude"]
+                lon = nearest_city["longitude"]
+
+        results.append(
+            {
+                "Label": dh_row["Label"],
+                "subnode_label": dh_row["subnode_label"],
+                "country": dh_row["country"],
+                "city": city_name,
+                "geonames_id": geonames_id,
+                "population": population,
+                "distance_km": distance_m / 1000 if distance_m is not None else None,
+                "latitude": lat,
+                "longitude": lon,
+            }
+        )
+
+    joined = pd.DataFrame(results)
 
     out_cols = [
         "Label",
@@ -143,9 +214,6 @@ def main(snakemake):
         "latitude",
         "longitude",
     ]
-    joined[["latitude", "longitude"]] = joined.to_crs("EPSG:4326").geometry.apply(
-        lambda p: pd.Series({"latitude": p.y, "longitude": p.x})
-    )
 
     joined[out_cols].rename(columns={"Label": "label_original"}).to_csv(
         out_path, index=False

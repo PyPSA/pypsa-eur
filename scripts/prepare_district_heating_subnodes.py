@@ -40,13 +40,16 @@ def _compute_useful_heat_for_cluster(
             eff_col = f"total {sector} {use} efficiency"
             eff = (
                 _to_scalar(heating_efficiencies.loc[ct, eff_col])
-                if eff_col in heating_efficiencies.columns and ct in heating_efficiencies.index
+                if eff_col in heating_efficiencies.columns
+                and ct in heating_efficiencies.index
                 else 1.0
             )
             if use == "space":
                 if col in cluster_heat.index:
                     val = _to_scalar(cluster_heat[col])
-                    total_useful_heat_mwh += val * eff * (1 - space_heat_reduction) * 1e6
+                    total_useful_heat_mwh += (
+                        val * eff * (1 - space_heat_reduction) * 1e6
+                    )
             else:
                 if col in cluster_energy.index:
                     val = _to_scalar(cluster_energy[col])
@@ -242,7 +245,9 @@ def extend_district_heat_share(
                 total_useful_heat_mwh * (1 + district_heating_loss)
             )
             # Share of total useful heat served via subnodes (exclude DH losses)
-            urban_share = demand_mwh / (1 + district_heating_loss) / total_useful_heat_mwh
+            urban_share = (
+                demand_mwh / (1 + district_heating_loss) / total_useful_heat_mwh
+            )
             total_subnode_share += urban_share
 
             # Add entry for subnode with parent_node mapping for resource bus lookups
@@ -255,35 +260,44 @@ def extend_district_heat_share(
                 "parent_node": cluster,  # Parent cluster for resource bus lookups
             }
 
-        # Update parent cluster's district fraction
-        new_cluster_fraction = remaining_cluster_demand_mwh / (
-            total_useful_heat_mwh * (1 + district_heating_loss)
-        )
-        extended_share.loc[cluster, "district fraction of node"] = new_cluster_fraction
-
-        # Rebalance the parent's urban fraction so that total urban share (parent + subnodes)
-        # remains equal to the original value. Without this, reducing the district fraction
-        # while keeping the parent's urban fraction fixed inflates urban decentral demand.
+        # Rebalance the parent's district fraction and urban fraction to preserve
+        # ALL three heat demand categories (rural, urban decentral, urban central).
+        #
+        # In prepare_sector_network, heat demand weighting is:
+        #   rural       = (1 - u) * H
+        #   urban_dec   = (u - d) * H
+        #   urban_cen   = d * H * (1 + loss)
+        #
+        # After subnodes, parent energy totals are reduced: H_new = H * (1 - s)
+        # where s = total_subnode_share (fraction of parent's useful heat).
+        #
+        # To preserve all three demands simultaneously:
+        #   (1 - u_new) * H_new = (1 - u_old) * H          [rural]
+        #   (u_new - d_new) * H_new = (u_old - d_old) * H  [urban_dec]
+        #   d_new * H_new * (1+loss) + subnode_UCH = d_old * H * (1+loss)  [urban_cen]
+        #
+        # Solving:
+        #   u_new = 1 - (1 - u_old) / (1 - s)
+        #   d_new = (d_old - s) / (1 - s)
+        #
+        # These satisfy all three constraints exactly.
         original_urban_fraction = _to_scalar(
             extended_share.loc[cluster, "urban fraction before subnodes"]
         )
         original_dist_fraction = _to_scalar(
             extended_share.loc[cluster, "district fraction before subnodes"]
         )
-        if total_subnode_share >= 1.0:
-            remaining_urban_fraction = 0.0
+        s = total_subnode_share
+        if s >= 1.0:
+            new_cluster_fraction = 0.0
+            remaining_urban_fraction = 1.0
         else:
-            # Preserve absolute urban decentral load:
-            # (urban_dec_after)*(parent_heat) = (urban_dec_before)*(total_heat)
-            # => (u_after - dist_after)*(1 - s) = (u_before - dist_before)
-            u_before = original_urban_fraction
-            d_before = original_dist_fraction
-            d_after = new_cluster_fraction
-            s = total_subnode_share
-            remaining_urban_fraction = d_after + (u_before - d_before) / max(
-                1e-9, (1 - s)
-            )
+            new_cluster_fraction = (original_dist_fraction - s) / (1.0 - s)
+            new_cluster_fraction = max(0.0, new_cluster_fraction)
+            remaining_urban_fraction = 1.0 - (1.0 - original_urban_fraction) / (1.0 - s)
             remaining_urban_fraction = max(0.0, min(1.0, remaining_urban_fraction))
+
+        extended_share.loc[cluster, "district fraction of node"] = new_cluster_fraction
         extended_share.loc[cluster, "urban fraction"] = remaining_urban_fraction
 
     return extended_share
@@ -824,7 +838,9 @@ if __name__ == "__main__":
     )
 
     if link_data_assumptions and len(subnodes) > 0:
-        logger.info("Scaling subnode demands to match district heating shares from config")
+        logger.info(
+            "Scaling subnode demands to match district heating shares from config"
+        )
         # Pre-compute useful heat per cluster (MWh)
         useful_heat = {
             cluster: _compute_useful_heat_for_cluster(
@@ -843,9 +859,13 @@ if __name__ == "__main__":
             if cluster not in district_heat_share.index or total_useful == 0:
                 continue
             ct = cluster[:2]
-            dist_frac = _to_scalar(district_heat_share.loc[cluster, "district fraction of node"])
+            dist_frac = _to_scalar(
+                district_heat_share.loc[cluster, "district fraction of node"]
+            )
             target_dh_by_ct.setdefault(ct, 0.0)
-            target_dh_by_ct[ct] += dist_frac * total_useful * (1 + district_heating_loss)
+            target_dh_by_ct[ct] += (
+                dist_frac * total_useful * (1 + district_heating_loss)
+            )
 
         # Current subnode DH demand per country
         subnodes["ct"] = subnodes["cluster"].str[:2]

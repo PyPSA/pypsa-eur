@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
 
 def _sanitize_label(label):
     return (
-        pd.Series([label]).fillna("DH").astype(str)
+        pd.Series([label])
+        .fillna("DH")
+        .astype(str)
         .str.replace(r"[^\w\s-]", "", regex=True)
         .str.strip()
         .str.replace(r"\s+", "_", regex=True)
@@ -97,8 +99,12 @@ def identify_largest_district_heating_systems(
                 raise ValueError(msg)
             logger.warning(msg)
         # Placeholder: if future fill logic exists, hook in here.
-        dh_areas = dh_areas[dh_areas["country"].isin(present_countries & set(countries))].copy()
-        logger.info(f"Filtered to {len(dh_areas)} DH areas in {present_countries & set(countries)}")
+        dh_areas = dh_areas[
+            dh_areas["country"].isin(present_countries & set(countries))
+        ].copy()
+        logger.info(
+            f"Filtered to {len(dh_areas)} DH areas in {present_countries & set(countries)}"
+        )
     else:
         logger.warning("No 'country' column in dh_areas")
 
@@ -244,24 +250,31 @@ if __name__ == "__main__":
     )
 
     # Attach city names from static lookup
+    # Merge on both subnode_label AND country since labels are only unique within a country
     if city_lookup is not None:
-        city_lookup["subnode_label"] = city_lookup["subnode_label"].apply(_sanitize_label)
+        city_lookup["subnode_label"] = city_lookup["subnode_label"].apply(
+            _sanitize_label
+        )
         subnodes = subnodes.merge(
-            city_lookup[["subnode_label", "city"]],
+            city_lookup[["subnode_label", "country", "city"]],
             how="left",
-            on="subnode_label",
+            on=["subnode_label", "country"],
         )
 
     # Prefer city name in subnode identifier when available
+    # Use the raw city name (with spaces) for readable node names
     if "city" in subnodes.columns:
-        city_label = subnodes["city"].fillna("").apply(_sanitize_label)
-        use_city = city_label != ""
+        # Clean city names: remove special chars but KEEP spaces
+        city_clean = (
+            subnodes["city"]
+            .fillna("")
+            .astype(str)
+            .str.replace(r"[^\w\s-]", "", regex=True)
+            .str.strip()
+        )
+        use_city = city_clean != ""
         subnodes.loc[use_city, "name"] = (
-            subnodes.loc[use_city, "cluster"]
-            + " "
-            + city_label[use_city]
-            + " "
-            + subnodes.loc[use_city, "subnode_label"]
+            subnodes.loc[use_city, "cluster"] + " " + city_clean[use_city]
         )
 
     # Handle duplicate names
