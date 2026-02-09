@@ -92,7 +92,7 @@ class DataConfig(BaseModel):
         description="LUISA land cover data source configuration.",
     )
     jrc_idees: _DataSourceConfig = Field(
-        default_factory=lambda: _DataSourceConfig(source="primary"),
+        default_factory=_DataSourceConfig,
         description="JRC IDEES data source configuration.",
     )
     scigrid_gas: _DataSourceConfig = Field(
