@@ -867,9 +867,7 @@ rule clean_osm_data:
         substations=resources(f"osm/clean/substations.geojson"),
         substations_polygon=resources(f"osm/clean/substations_polygon.geojson"),
         dc_switching=resources(f"osm/clean/dc_switching.geojson"),
-        dc_switching_polygon=resources(
-            f"osm/clean/dc_switching_polygon.geojson"
-        ),
+        dc_switching_polygon=resources(f"osm/clean/dc_switching_polygon.geojson"),
         converters_polygon=resources(f"osm/clean/converters_polygon.geojson"),
         lines=resources(f"osm/clean/lines.geojson"),
         links=resources(f"osm/clean/links.geojson"),
@@ -897,9 +895,7 @@ rule build_osm_network:
         substations=resources(f"osm/clean/substations.geojson"),
         substations_polygon=resources(f"osm/clean/substations_polygon.geojson"),
         dc_switching=resources(f"osm/clean/dc_switching.geojson"),
-        dc_switching_polygon=resources(
-            f"osm/clean/dc_switching_polygon.geojson"
-        ),
+        dc_switching_polygon=resources(f"osm/clean/dc_switching_polygon.geojson"),
         converters_polygon=resources(f"osm/clean/converters_polygon.geojson"),
         lines=resources(f"osm/clean/lines.geojson"),
         links=resources(f"osm/clean/links.geojson"),
@@ -913,13 +909,9 @@ rule build_osm_network:
         lines_geojson=resources(f"osm/build/geojson/lines.geojson"),
         links_geojson=resources(f"osm/build/geojson/links.geojson"),
         converters_geojson=resources(f"osm/build/geojson/converters.geojson"),
-        transformers_geojson=resources(
-            f"osm/build/geojson/transformers.geojson"
-        ),
+        transformers_geojson=resources(f"osm/build/geojson/transformers.geojson"),
         substations_geojson=resources(f"osm/build/geojson/buses.geojson"),
-        stations_polygon=resources(
-            f"osm/build/geojson/stations_polygon.geojson"
-        ),
+        stations_polygon=resources(f"osm/build/geojson/stations_polygon.geojson"),
         buses_polygon=resources(f"osm/build/geojson/buses_polygon.geojson"),
     log:
         logs("build_osm_network.log"),

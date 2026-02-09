@@ -1129,17 +1129,19 @@ def _add_bus_poi_to_line(linestring, point):
 def _finalise_substations(df_substations):
     """
     Finalises the substations column types.
+
     Args:
         df_substations (pandas.DataFrame): The input DataFrame
         containing substations data.
+
     Returns:
         df_substations (pandas.DataFrame): The DataFrame with finalised column
         types and transformed data.
     """
     logger.info("Finalising substations column types.")
-    
+
     df_substations = df_substations.copy()
-    
+
     # Rename columns
     df_substations.rename(
         columns={
@@ -1149,7 +1151,7 @@ def _finalise_substations(df_substations):
         },
         inplace=True,
     )
-    
+
     # Handle empty DataFrame early - after rename so column names are correct
     if df_substations.empty:
         logger.warning("Empty substations DataFrame provided.")
@@ -1163,7 +1165,7 @@ def _finalise_substations(df_substations):
         )
         # Initialise x_node column to False
         df_substations.loc[:, "x_node"] = False
-    
+
     # Only include needed columns (works for both empty and non-empty)
     df_substations = df_substations[
         [
@@ -1178,11 +1180,11 @@ def _finalise_substations(df_substations):
             "contains",
         ]
     ]
-    
+
     # Substation data types (skip for empty to avoid errors)
     if not df_substations.empty:
         df_substations["voltage"] = df_substations["voltage"].astype(int)
-    
+
     return df_substations
 
 
@@ -1681,7 +1683,9 @@ if __name__ == "__main__":
     crs = "EPSG:4326"  # Correct crs for OSM data
     voltages = snakemake.params.voltages
 
-    min_voltage_ac =  min(voltages)*1e3 # [unit: V] Minimum voltage value to filter AC lines.
+    min_voltage_ac = (
+        min(voltages) * 1e3
+    )  # [unit: V] Minimum voltage value to filter AC lines.
     min_voltage_dc = 150000  #  [unit: V] Minimum voltage value to filter DC links.
 
     logger.info("---")

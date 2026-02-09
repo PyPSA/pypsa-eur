@@ -17,8 +17,8 @@ import pandas as pd
 import pypsa
 import seaborn as sns
 from matplotlib.figure import Figure
-from shapely.geometry import LineString
 from shapely import wkt
+from shapely.geometry import LineString
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -30,7 +30,9 @@ def thousands_formatter(x: float, pos: int) -> str:
     return f"{x * 1e-3:.0f}k"
 
 
-def prepare_line_geometries(network: pypsa.Network, carrier: str = "AC") -> gpd.GeoDataFrame:
+def prepare_line_geometries(
+    network: pypsa.Network, carrier: str = "AC"
+) -> gpd.GeoDataFrame:
     """
     Prepare line geometries from PyPSA network.
 
@@ -52,11 +54,13 @@ def prepare_line_geometries(network: pypsa.Network, carrier: str = "AC") -> gpd.
     else:  # DC
         df = network.links[network.links["carrier"] == "DC"].copy()
         if len(df) == 0:
-            return gpd.GeoDataFrame(columns=["length", "num_parallel", "geometry"], crs="EPSG:4326")
+            return gpd.GeoDataFrame(
+                columns=["length", "num_parallel", "geometry"], crs="EPSG:4326"
+            )
         df = df[["bus0", "bus1", "length"]].copy()
         df["num_parallel"] = 1
         geom_source = network.links[network.links["carrier"] == "DC"]
-    
+
     # Use existing geometry if available
     if "geometry" in geom_source.columns and len(geom_source) > 0:
         geoms = geom_source["geometry"]
@@ -67,23 +71,28 @@ def prepare_line_geometries(network: pypsa.Network, carrier: str = "AC") -> gpd.
             df["geometry"] = geoms.values
     else:
         # Fallback to straight line between buses
-        logger.warning(f"No geometry column found for {carrier}, using straight-line approximation")
+        logger.warning(
+            f"No geometry column found for {carrier}, using straight-line approximation"
+        )
         bus_coords = network.buses[["x", "y"]]
         df["geometry"] = df.apply(
-            lambda row: LineString([
-                (bus_coords.loc[row.bus0, "x"], bus_coords.loc[row.bus0, "y"]),
-                (bus_coords.loc[row.bus1, "x"], bus_coords.loc[row.bus1, "y"])
-            ]), axis=1
+            lambda row: LineString(
+                [
+                    (bus_coords.loc[row.bus0, "x"], bus_coords.loc[row.bus0, "y"]),
+                    (bus_coords.loc[row.bus1, "x"], bus_coords.loc[row.bus1, "y"]),
+                ]
+            ),
+            axis=1,
         )
-    
+
     return gpd.GeoDataFrame(
-        df[["length", "num_parallel"]], 
-        geometry=df["geometry"],
-        crs="EPSG:4326"
+        df[["length", "num_parallel"]], geometry=df["geometry"], crs="EPSG:4326"
     )
 
 
-def get_lines_by_country(network: pypsa.Network, country_shapes: gpd.GeoDataFrame) -> pd.DataFrame:
+def get_lines_by_country(
+    network: pypsa.Network, country_shapes: gpd.GeoDataFrame
+) -> pd.DataFrame:
     """
     Calculate transmission line route and circuit lengths by country using spatial intersection.
 
@@ -107,7 +116,7 @@ def get_lines_by_country(network: pypsa.Network, country_shapes: gpd.GeoDataFram
     # Prepare AC lines and DC links
     gdf_ac = prepare_line_geometries(network, carrier="AC")
     gdf_dc = prepare_line_geometries(network, carrier="DC")
-    
+
     # Combine if both exist
     if len(gdf_ac) > 0 and len(gdf_dc) > 0:
         gdf_lines = pd.concat([gdf_ac, gdf_dc], ignore_index=True)
@@ -117,46 +126,47 @@ def get_lines_by_country(network: pypsa.Network, country_shapes: gpd.GeoDataFram
         gdf_lines = gdf_dc
     else:
         logger.warning("No lines or links found in network")
-        return pd.DataFrame(columns=['length_routes', 'length_circuits']).rename_axis('country')
-    
-    
-    # Project to EPSG:3035 for accurate length calculations 
+        return pd.DataFrame(columns=["length_routes", "length_circuits"]).rename_axis(
+            "country"
+        )
+
+    # Project to EPSG:3035 for accurate length calculations
     gdf_lines_proj = gdf_lines.to_crs("EPSG:3035")
     country_shapes_proj = country_shapes.to_crs("EPSG:3035")
-    
+
     overlay = gpd.overlay(
-        gdf_lines_proj, 
-        country_shapes_proj[['name', 'geometry']], 
-        how='intersection',
-        keep_geom_type=True  # Keep only LineString/MultiLineString
+        gdf_lines_proj,
+        country_shapes_proj[["name", "geometry"]],
+        how="intersection",
+        keep_geom_type=True,  # Keep only LineString/MultiLineString
     )
-    
+
     # Calculate lengths of clipped geometries
-    overlay['clipped_length_km'] = overlay.geometry.length / 1000
-    
+    overlay["clipped_length_km"] = overlay.geometry.length / 1000
+
     # Calculate route and circuit lengths
-    overlay['length_routes'] = overlay['clipped_length_km']
-    overlay['length_circuits'] = overlay['clipped_length_km'] * overlay['num_parallel']
-    
+    overlay["length_routes"] = overlay["clipped_length_km"]
+    overlay["length_circuits"] = overlay["clipped_length_km"] * overlay["num_parallel"]
+
     # Aggregate by country
     result = (
-        overlay.groupby('name', observed=True)
-        .agg({'length_routes': 'sum', 'length_circuits': 'sum'})
-        .rename_axis('country')
+        overlay.groupby("name", observed=True)
+        .agg({"length_routes": "sum", "length_circuits": "sum"})
+        .rename_axis("country")
     )
-    
+
     logger.info(f"Calculated line statistics for {len(result)} countries")
     logger.info(f"Total route length: {result['length_routes'].sum():.0f} km")
     logger.info(f"Total circuit length: {result['length_circuits'].sum():.0f} km")
-    
+
     return result
 
 
 def prepare_comparison_data(
-    lines_incumbent: pd.DataFrame, 
-    lines_release: pd.DataFrame, 
-    countries: list, 
-    version: str
+    lines_incumbent: pd.DataFrame,
+    lines_release: pd.DataFrame,
+    countries: list,
+    version: str,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Merge and prepare line length data for plotting.
@@ -218,7 +228,9 @@ def prepare_comparison_data(
     return to_long_format("routes"), to_long_format("circuits"), lines_merged
 
 
-def plot_comparison(routes_data: pd.DataFrame, circuits_data: pd.DataFrame, fontsize: int = 10) -> Figure:
+def plot_comparison(
+    routes_data: pd.DataFrame, circuits_data: pd.DataFrame, fontsize: int = 10
+) -> Figure:
     """
     Create comparison bar plots for route and circuit lengths.
 
@@ -333,42 +345,40 @@ if __name__ == "__main__":
     # Load and prepare country shapes
     logger.info(f"Loading country shapes from {snakemake.input.country_shapes}")
     country_shapes = gpd.read_file(snakemake.input.country_shapes)
-    
+
     logger.info(f"Loading offshore regions from {snakemake.input.regions_offshore}")
-    regions_offshore = gpd.read_file(snakemake.input.regions_offshore)[["country", "geometry"]]
-    
+    regions_offshore = gpd.read_file(snakemake.input.regions_offshore)[
+        ["country", "geometry"]
+    ]
+
     # Prepare offshore regions
-    regions_offshore = (
-        regions_offshore
-        .dissolve(by="country", as_index=False)
-        .rename(columns={"country": "name"})
+    regions_offshore = regions_offshore.dissolve(by="country", as_index=False).rename(
+        columns={"country": "name"}
     )
-    regions_offshore = gpd.GeoDataFrame(
-        regions_offshore
-    )
+    regions_offshore = gpd.GeoDataFrame(regions_offshore)
 
     # Ensure country_shapes has the right columns
     country_shapes = gpd.GeoDataFrame(
-        country_shapes[["name"]], 
+        country_shapes[["name"]],
         geometry=country_shapes.geometry,
-        crs=country_shapes.crs
+        crs=country_shapes.crs,
     )
 
     # Combine onshore and offshore regions
     regions = gpd.GeoDataFrame(
         pd.concat([country_shapes, regions_offshore], ignore_index=True),
-        crs=country_shapes.crs
+        crs=country_shapes.crs,
     ).dissolve(by="name", as_index=False)
-    
+
     # Filter to countries of interest
     if countries:
-        regions = regions[regions['name'].isin(countries)]
+        regions = regions[regions["name"].isin(countries)]
         logger.info(f"Filtered to {len(regions)} countries/regions")
 
     # Calculate line statistics using spatial intersection
     logger.info("Calculating line statistics for incumbent network...")
     lines_incumbent = get_lines_by_country(n_incumbent, regions)
-    
+
     logger.info("Calculating line statistics for release network...")
     lines_release = get_lines_by_country(n_release, regions)
 

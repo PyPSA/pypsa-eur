@@ -23,12 +23,8 @@ rule base_network_incumbent:
         europe_shape=resources("europe_shape.geojson"),
     output:
         base_network=resources("osm/comparison/incumbent/networks/base.nc"),
-        regions_onshore=resources(
-            "osm/comparison/incumbent/regions_onshore.geojson"
-        ),
-        regions_offshore=resources(
-            "osm/comparison/incumbent/regions_offshore.geojson"
-        ),
+        regions_onshore=resources("osm/comparison/incumbent/regions_onshore.geojson"),
+        regions_offshore=resources("osm/comparison/incumbent/regions_offshore.geojson"),
         admin_shapes=resources("osm/comparison/incumbent/admin_shapes.geojson"),
     log:
         logs("base_network_incumbent.log"),
@@ -102,7 +98,7 @@ rule map_incumbent:
         line_types=config["lines"]["types"],
         release_version="Incumbent",
         include_polygons=False,
-        export=False
+        export=False,
     input:
         base_network=resources("osm/comparison/incumbent/networks/base.nc"),
     output:
