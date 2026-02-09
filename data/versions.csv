@@ -18,12 +18,12 @@ copernicus_land_cover,v3.0.1,archive,latest supported,2026-01-20,"The primary is
 copernicus_land_cover,v2.0.2,archive,deprecated supported,2026-01-13,,https://data.pypsa.org/workflows/eur/copernicus_land_cover/v2.0.2/PROBAV_LC100_global_v3.0.1_2015-base_Discrete-Classification-map_EPSG-4326.tif
 corine,v18_5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/corine/v18_5/corine.zip
 corine,unknown,primary,latest supported,2025-12-02,Need to register with CLMS API and create an access token. The download URL is dynamic,
-costs,v0.13.4,primary,latest supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.4/outputs
-costs,v0.13.4,archive,supported,2026-01-21,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/costs/v0.13.4
-costs,v0.13.3,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.3/outputs
-costs,v0.13.3,archive,supported,2026-01-20,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/costs/v0.13.3
-costs,v0.13.2,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.2/outputs
-costs,v0.13.2,archive,supported,2026-01-20,"Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/costs/v0.13.2
+costs,v0.13.4,primary,latest supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.4/outputs
+costs,v0.13.4,archive,supported,2026-01-21,"Part of the `technologydata` repository and versioned on GitHub.",https://data.pypsa.org/workflows/eur/costs/v0.13.4
+costs,v0.13.3,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.3/outputs
+costs,v0.13.3,archive,supported,2026-01-20,"Part of the `technologydata` repository and versioned on GitHub.",https://data.pypsa.org/workflows/eur/costs/v0.13.3
+costs,v0.13.2,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.2/outputs
+costs,v0.13.2,archive,supported,2026-01-20,"Part of the `technologydata` repository and versioned on GitHub.",https://data.pypsa.org/workflows/eur/costs/v0.13.2
 country_hdd,unknown,build,latest supported,2025-12-02,Latest dataset built using ERA5 runoff data. This takes a very long time to build.,
 country_hdd,2025-08-13,primary,latest supported,2025-12-02,,https://zenodo.org/records/16849356/files/era5-HDD-per-country.csv
 country_hdd,2025-08-13,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/country_hdd/2025-08-13/era5-HDD-per-country.csv
@@ -114,11 +114,12 @@ osm_boundaries,unknown,primary,latest supported,2025-12-02,Overpass API is used 
 osm_boundaries,unknown,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm_boundaries/unknown/osm_boundaries.zip
 population_count,2018-11-01,primary,latest supported,2025-12-02,,https://data.worldpop.org/GIS/Population/Global_2000_2020/2019/0_Mosaicked/ppp_2019_1km_Aggregated.tif
 population_count,2018-11-01,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/population_count/2018-11-01/ppp_2019_1km_Aggregated.tif
-powerplants,0.8.0,primary,latest supported,2026-02-05,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.0/powerplants.csv
-powerplants,0.7.1,primary,supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv
-powerplants,0.7.1,archive,supported,2026-01-20,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/powerplants/0.7.1
-powerplants,0.7.0,primary,supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.0/powerplants.csv
-powerplants,0.7.0,archive,supported,2026-01-20,"Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry.",https://data.pypsa.org/workflows/eur/powerplants/0.7.0
+powerplants,0.8.0,primary,latest supported,2026-02-05,"Part of the `powerplantmatching` package and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.0/powerplants.csv
+powerplants,0.8.0,archive,latest supported,2026-02-09,"Part of the `powerplantmatching` package and versioned on GitHub.",https://data.pypsa.org/workflows/eur/powerplants/0.8.0/powerplants.csv
+powerplants,0.7.1,primary,supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv
+powerplants,0.7.1,archive,supported,2026-01-20,"Part of the `powerplantmatching` package and versioned on GitHub.",https://data.pypsa.org/workflows/eur/powerplants/0.7.1
+powerplants,0.7.0,primary,supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.0/powerplants.csv
+powerplants,0.7.0,archive,supported,2026-01-20,"Part of the `powerplantmatching` package and versioned on GitHub.",https://data.pypsa.org/workflows/eur/powerplants/0.7.0
 scigrid_gas,1.1.2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/4767098/files/IGGIELGN.zip
 scigrid_gas,1.1.2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.2
 scigrid_gas,1.1.1,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.1/IGGIELGN.zip
