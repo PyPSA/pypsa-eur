@@ -98,6 +98,7 @@ def export_clean_csv(
     columns: list[str],
     output_file: str | Path,
     rename_idx: str,
+    export: bool = True,
 ) -> pd.DataFrame:
     """
     Export a cleaned DataFrame to a CSV file.
@@ -116,6 +117,8 @@ def export_clean_csv(
         Path to the output CSV file.
     rename_idx : str
         Name to use for the renamed index column.
+    export : bool, optional
+        Whether to perform store the cleaned CSV in the output directory, by default True.
 
     Returns
     -------
@@ -137,7 +140,8 @@ def export_clean_csv(
         .replace({True: "t", False: "f"})
     )
 
-    df.to_csv(output_file, index=False, quotechar="'")
+    if export:
+        df.to_csv(output_file, index=False, quotechar="'")
 
     return df
 
@@ -199,14 +203,13 @@ def get_line_colors(voltages: pd.Series) -> list:
     voltages = voltages.to_numpy()
     n = len(voltages)
     colors = np.zeros((n, 4), dtype=int)
-    colors[:, 3] = 200  # Alpha channel
+    colors[:, 3] = 150  # Alpha channel
 
-    # Define voltage ranges and their colors [R, G, B]
     # Format: (min_voltage, max_voltage, [R, G, B])
     voltage_ranges = [
         (0, 110, [255, 255, 0]),  # < 110 kV: Bright yellow
         (110, 150, [255, 235, 0]),  # 110-150 kV: Light yellow
-        (151, 240, [255, 200, 0]),  # 151-240 kV: Gold/Orange-yellow
+        (151, 240, [0, 250, 0]),  # 151-240 kV: Green
         (241, 280, [255, 165, 0]),  # 241-280 kV: Orange
         (281, 330, [255, 120, 0]),  # 281-330 kV: Dark orange
         (331, 350, [255, 69, 0]),  # 331-350 kV: Orange-red
@@ -300,17 +303,36 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
         </style>
         <button id="menu-toggle" 
             style="position:absolute;top:10px;left:10px;
-                   background:rgba(255,255,255,0.9);border:none;
-                   padding:10px;cursor:pointer;font-size:20px;
-                   border-radius:4px;z-index:1001;box-shadow:0 2px 4px rgba(0,0,0,0.2)">
+                background:rgba(255,255,255,0.9);border:none;
+                padding:10px;cursor:pointer;font-size:20px;
+                border-radius:4px;z-index:1001;box-shadow:0 2px 4px rgba(0,0,0,0.2)">
             ☰
         </button>
         <div id="layer-controls"
             style="position:absolute;top:10px;left:10px;
-                   background:rgba(255,255,255,0.95);padding:12px;
-                   font-family:sans-serif;z-index:1000;
-                   border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);
-                   display:none;margin-top:50px;min-width:250px;max-width:300px">
+                background:rgba(255,255,255,0.95);padding:12px;
+                font-family:sans-serif;z-index:1000;
+                border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);
+                display:none;margin-top:50px;min-width:250px;max-width:300px">
+            
+            <!-- Text Search Filter -->
+            <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #ddd">
+                <label style="display:block;margin-bottom:4px;font-size:13px">
+                    Search all fields:
+                </label>
+                <input type="text" id="text-search-filter" placeholder="term1 & term2 | term3"
+                    style="width:100%;padding:6px;border:1px solid #ccc;border-radius:3px;
+                        font-size:13px;box-sizing:border-box">
+                <div style="font-size:11px;color:#666;margin-top:4px">
+                    Use & for AND, | for OR (e.g., "dc & 500" or "380 | 400")
+                </div>
+                <button onclick="clearTextSearchFilter()"
+                    style="width:100%;margin-top:8px;padding:6px;background:#6c757d;
+                        color:white;border:none;border-radius:3px;cursor:pointer;
+                        font-size:13px">
+                    Clear search
+                </button>
+            </div>
             
             <!-- Voltage Filter -->
             <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #ddd">
@@ -320,12 +342,12 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
                 <div id="selected-voltages" style="min-height:20px;margin-bottom:4px"></div>
                 <input type="text" id="voltage-filter" placeholder="Type to search..."
                     style="width:100%;padding:6px;border:1px solid #ccc;border-radius:3px;
-                           font-size:13px;box-sizing:border-box">
+                        font-size:13px;box-sizing:border-box">
                 <div id="voltage-suggestions"></div>
                 <button onclick="clearVoltageFilter()"
                     style="width:100%;margin-top:8px;padding:6px;background:#6c757d;
-                           color:white;border:none;border-radius:3px;cursor:pointer;
-                           font-size:13px">
+                        color:white;border:none;border-radius:3px;cursor:pointer;
+                        font-size:13px">
                     Clear filter
                 </button>
             </div>
@@ -393,6 +415,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
         let originalLayerData = {};
         let availableVoltages = new Set();
         let selectedVoltages = new Set();
+        let currentTextSearch = '';
         
         // Extract all unique voltages from dataset
         function initializeVoltages() {
@@ -454,7 +477,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
             selectedVoltages.add(voltage);
             updateSelectedDisplay();
             updateSuggestions();
-            applyVoltageFilter();
+            applyAllFilters();
             document.getElementById('voltage-filter').value = '';
         }
         
@@ -463,7 +486,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
             selectedVoltages.delete(voltage);
             updateSelectedDisplay();
             updateSuggestions();
-            applyVoltageFilter();
+            applyAllFilters();
         }
         
         function updateSelectedDisplay() {
@@ -493,12 +516,50 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
             deck.setProps({ layers });
         }
         
-        function applyVoltageFilter() {
+        function matchesTextSearch(item, searchTerm) {
+            if (!searchTerm) return true;
+            
+            // Parse the search query for & (AND) and | (OR) operators
+            // Split by | first (OR has lower precedence)
+            const orGroups = searchTerm.split('|').map(s => s.trim());
+            
+            // If any OR group matches, the item matches
+            return orGroups.some(orGroup => {
+                // Within each OR group, split by & (AND)
+                const andTerms = orGroup.split('&').map(s => s.trim()).filter(s => s.length > 0);
+                
+                // All AND terms must match
+                return andTerms.every(term => {
+                    const lowerTerm = term.toLowerCase();
+                    
+                    // Check if any field contains this term
+                    for (const [key, value] of Object.entries(item)) {
+                        // Skip geometry fields and arrays/objects
+                        if (key === 'geometry' || key === 'path' || key === 'poly' || key === 'color') {
+                            continue;
+                        }
+                        
+                        // Convert value to string and search
+                        const stringValue = String(value).toLowerCase();
+                        if (stringValue.includes(lowerTerm)) {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
+                });
+            });
+        }
+        
+        function applyAllFilters() {
             const deck = window.deck;
             if (!deck) return;
             
-            if (selectedVoltages.size === 0) {
-                // No filter - show all data
+            const hasVoltageFilter = selectedVoltages.size > 0;
+            const hasTextFilter = currentTextSearch.length > 0;
+            
+            if (!hasVoltageFilter && !hasTextFilter) {
+                // No filters - show all data
                 const layers = deck.props.layers.map(layer => {
                     if (originalLayerData[layer.id]) {
                         return layer.clone({ data: originalLayerData[layer.id] });
@@ -514,14 +575,23 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
             const layers = deck.props.layers.map(layer => {
                 const originalData = originalLayerData[layer.id];
                 const filteredData = originalData.filter(item => {
-                    if (item.voltage !== undefined) {
-                        return voltages.includes(item.voltage);
+                    // Apply voltage filter
+                    let passesVoltageFilter = !hasVoltageFilter;
+                    if (hasVoltageFilter) {
+                        if (item.voltage !== undefined) {
+                            passesVoltageFilter = voltages.includes(item.voltage);
+                        } else if (item.voltage_bus0 !== undefined || item.voltage_bus1 !== undefined) {
+                            passesVoltageFilter = voltages.includes(item.voltage_bus0) || 
+                                voltages.includes(item.voltage_bus1);
+                        } else {
+                            passesVoltageFilter = true;
+                        }
                     }
-                    if (item.voltage_bus0 !== undefined || item.voltage_bus1 !== undefined) {
-                        return voltages.includes(item.voltage_bus0) || 
-                               voltages.includes(item.voltage_bus1);
-                    }
-                    return true;
+                    
+                    // Apply text search filter
+                    const passesTextFilter = matchesTextSearch(item, currentTextSearch);
+                    
+                    return passesVoltageFilter && passesTextFilter;
                 });
                 
                 return layer.clone({ data: filteredData });
@@ -534,24 +604,135 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
             selectedVoltages.clear();
             updateSelectedDisplay();
             updateSuggestions();
-            applyVoltageFilter();
+            applyAllFilters();
             document.getElementById('voltage-filter').value = '';
         }
         
-        // Search input handler
+        function clearTextSearchFilter() {
+            currentTextSearch = '';
+            document.getElementById('text-search-filter').value = '';
+            applyAllFilters();
+        }
+        
+        // Search input handlers
         document.addEventListener('DOMContentLoaded', function() {
             initializeVoltages();
             
-            const input = document.getElementById('voltage-filter');
-            if (input) {
-                input.addEventListener('input', function(e) {
+            const voltageInput = document.getElementById('voltage-filter');
+            if (voltageInput) {
+                voltageInput.addEventListener('input', function(e) {
                     updateSuggestions(e.target.value);
                 });
+            }
+            
+            const textSearchInput = document.getElementById('text-search-filter');
+            if (textSearchInput) {
+                textSearchInput.addEventListener('input', function(e) {
+                    currentTextSearch = e.target.value;
+                    applyAllFilters();
+                });
+            }
+            
+            // Enable click for tooltip instead of hover
+            let currentTooltip = null;
+            
+            // Remove default hover tooltip
+            if (window.deck) {
+                window.deck.setProps({
+                    getTooltip: null
+                });
+                
+                // Add click handler to the deck canvas
+                const deckContainer = document.getElementById('deck-container');
+                if (deckContainer) {
+                    deckContainer.addEventListener('click', function(event) {
+                        // Remove existing tooltip if any
+                        if (currentTooltip) {
+                            currentTooltip.remove();
+                            currentTooltip = null;
+                        }
+                        
+                        // Get pick info from deck
+                        const deck = window.deck;
+                        const pickInfo = deck.pickObject({
+                            x: event.clientX,
+                            y: event.clientY,
+                            radius: 4
+                        });
+                        
+                        if (pickInfo && pickInfo.object) {
+                            // Build tooltip content as table for better formatting
+                            let html = '<table style="border-collapse:collapse;font-size:12px;line-height:1.4">';
+                            let hasContent = false;
+                            for (const [key, value] of Object.entries(pickInfo.object)) {
+                                if (key !== 'geometry' && key !== 'path' && key !== 'poly' && key !== 'color') {
+                                    html += `<tr>
+                                        <td style="padding:3px 8px 3px 0;font-weight:600;vertical-align:top;color:#aaa">${key}</td>
+                                        <td style="padding:3px 0;vertical-align:top;color:#fff">${value}</td>
+                                    </tr>`;
+                                    hasContent = true;
+                                }
+                            }
+                            html += '</table>';
+                            
+                            // Only create tooltip if there's actual content to show
+                            if (!hasContent) {
+                                return;
+                            }
+                            
+                            // Create tooltip element
+                            const tooltip = document.createElement('div');
+                            tooltip.innerHTML = html;
+                            tooltip.style.position = 'absolute';
+                            tooltip.style.left = event.clientX + 10 + 'px';
+                            tooltip.style.top = event.clientY + 10 + 'px';
+                            tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                            tooltip.style.color = 'white';
+                            tooltip.style.padding = '8px 12px';
+                            tooltip.style.borderRadius = '4px';
+                            tooltip.style.zIndex = '10000';
+                            tooltip.style.pointerEvents = 'auto';  // Allow interaction
+                            tooltip.style.maxWidth = '400px';
+                            tooltip.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                            tooltip.style.fontFamily = 'sans-serif';
+                            tooltip.style.userSelect = 'text';  // Make text selectable
+                            tooltip.style.cursor = 'text';  // Show text cursor
+                            
+                            // Add close button
+                            const closeBtn = document.createElement('div');
+                            closeBtn.innerHTML = '×';
+                            closeBtn.style.position = 'absolute';
+                            closeBtn.style.top = '4px';
+                            closeBtn.style.right = '8px';
+                            closeBtn.style.cursor = 'pointer';
+                            closeBtn.style.fontSize = '18px';
+                            closeBtn.style.fontWeight = 'bold';
+                            closeBtn.style.color = '#ccc';
+                            closeBtn.style.lineHeight = '1';
+                            closeBtn.onclick = function(e) {
+                                e.stopPropagation();
+                                tooltip.remove();
+                                currentTooltip = null;
+                            };
+                            closeBtn.onmouseover = function() {
+                                closeBtn.style.color = '#fff';
+                            };
+                            closeBtn.onmouseout = function() {
+                                closeBtn.style.color = '#ccc';
+                            };
+                            tooltip.appendChild(closeBtn);
+                            
+                            document.body.appendChild(tooltip);
+                            currentTooltip = tooltip;
+                        }
+                    });
+                }
             }
         });
         
         // Toggle menu visibility
-        document.getElementById('menu-toggle').addEventListener('click', function() {
+        document.getElementById('menu-toggle').addEventListener('click', function(event) {
+            event.stopPropagation();  // Prevent deck click
             const menu = document.getElementById('layer-controls');
             menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
         });
@@ -663,7 +844,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_osm_network_release",
-            configfiles=["config/config.osm-release.yaml"],
+            configfiles=["config/examples/config.osm-release.yaml"],
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
@@ -673,6 +854,8 @@ if __name__ == "__main__":
     line_types = snakemake.params.line_types
     release_version = snakemake.params.release_version
     n = pypsa.Network(snakemake.input.base_network)
+    include_polygons = snakemake.params.include_polygons
+    export = snakemake.params.export
 
     #############
     ### Buses ###
@@ -685,7 +868,7 @@ if __name__ == "__main__":
     buses.sort_index(inplace=True)
 
     logger.info(f"Exporting {len(buses)} buses to %s", snakemake.output.buses)
-    buses = export_clean_csv(buses, BUSES_COLUMNS, snakemake.output.buses, "bus_id")
+    buses = export_clean_csv(buses, BUSES_COLUMNS, snakemake.output.buses, "bus_id", export)
 
     #############
     ### Lines ###
@@ -709,7 +892,7 @@ if __name__ == "__main__":
     lines.sort_index(inplace=True)
 
     logger.info(f"Exporting {len(lines)} lines to %s", snakemake.output.lines)
-    lines = export_clean_csv(lines, LINES_COLUMNS, snakemake.output.lines, "line_id")
+    lines = export_clean_csv(lines, LINES_COLUMNS, snakemake.output.lines, "line_id", export)
 
     ##########################
     ### Links + Converters ###
@@ -732,7 +915,7 @@ if __name__ == "__main__":
         snakemake.output.links,
     )
     links_dc = export_clean_csv(
-        links_dc, LINKS_COLUMNS, snakemake.output.links, "link_id"
+        links_dc, LINKS_COLUMNS, snakemake.output.links, "link_id", export,
     )
 
     logger.info(
@@ -744,6 +927,7 @@ if __name__ == "__main__":
         CONVERTERS_COLUMNS,
         snakemake.output.converters,
         "converter_id",
+        export,
     )
 
     ####################
@@ -766,6 +950,7 @@ if __name__ == "__main__":
         TRANSFORMERS_COLUMNS,
         snakemake.output.transformers,
         "transformer_id",
+        export,
     )
 
     ######################################
@@ -775,48 +960,49 @@ if __name__ == "__main__":
     buses["geometry"] = buses["geometry"].apply(wkt.loads)
     buses = gpd.GeoDataFrame(buses, geometry="geometry", crs=GEO_CRS)
 
-    # Import stations
-    stations_polygon = gpd.read_file(snakemake.input.stations_polygon).to_crs(GEO_CRS)
+    if include_polygons:
+        # Import stations
+        stations_polygon = gpd.read_file(snakemake.input.stations_polygon).to_crs(GEO_CRS)
 
-    # Only keep stations_polygon that contain buses points
-    stations_polygon = gpd.sjoin(
-        stations_polygon, buses, how="left", predicate="contains"
-    )
-    stations_polygon = stations_polygon[stations_polygon.index_right.notnull()]
-    stations_polygon = stations_polygon.drop_duplicates(subset=["station_id"])
-    stations_polygon = stations_polygon[["station_id", "geometry"]]
+        # Only keep stations_polygon that contain buses points
+        stations_polygon = gpd.sjoin(
+            stations_polygon, buses, how="left", predicate="contains"
+        )
+        stations_polygon = stations_polygon[stations_polygon.index_right.notnull()]
+        stations_polygon = stations_polygon.drop_duplicates(subset=["station_id"])
+        stations_polygon = stations_polygon[["station_id", "geometry"]]
 
-    # Simplify
-    stations_polygon = stations_polygon.to_crs(DISTANCE_CRS)
-    stations_polygon["geometry"] = stations_polygon["geometry"].simplify(
-        STATIONS_SIMPLIFY
-    )
-    stations_polygon = stations_polygon.to_crs(GEO_CRS)
+        # Simplify
+        stations_polygon = stations_polygon.to_crs(DISTANCE_CRS)
+        stations_polygon["geometry"] = stations_polygon["geometry"].simplify(
+            STATIONS_SIMPLIFY
+        )
+        stations_polygon = stations_polygon.to_crs(GEO_CRS)
 
-    stations_polygon["poly"] = stations_polygon["geometry"].apply(polygon_to_coords)
+        stations_polygon["poly"] = stations_polygon["geometry"].apply(polygon_to_coords)
 
-    # Import bus polygons
-    buses_polygon = gpd.read_file(snakemake.input.buses_polygon).to_crs(GEO_CRS)
+        # Import bus polygons
+        buses_polygon = gpd.read_file(snakemake.input.buses_polygon).to_crs(GEO_CRS)
 
-    # Only keep bus polygons that contain buses points
-    buses_polygon = gpd.sjoin(
-        buses_polygon,
-        buses,
-        how="left",
-        predicate="contains",
-    )
-    buses_polygon = buses_polygon[buses_polygon.index_right.notnull()]
-    buses_polygon = buses_polygon.drop_duplicates(subset=["bus_id_left"])
-    buses_polygon = buses_polygon[["geometry"]]
+        # Only keep bus polygons that contain buses points
+        buses_polygon = gpd.sjoin(
+            buses_polygon,
+            buses,
+            how="left",
+            predicate="contains",
+        )
+        buses_polygon = buses_polygon[buses_polygon.index_right.notnull()]
+        buses_polygon = buses_polygon.drop_duplicates(subset=["bus_id_left"])
+        buses_polygon = buses_polygon[["geometry"]]
 
-    # Simplify
-    buses_polygon = buses_polygon.to_crs(DISTANCE_CRS)
-    buses_polygon["geometry"] = buses_polygon["geometry"].simplify(
-        BUSES_POLYGON_SIMPLIFY
-    )
-    buses_polygon = buses_polygon.to_crs(GEO_CRS)
+        # Simplify
+        buses_polygon = buses_polygon.to_crs(DISTANCE_CRS)
+        buses_polygon["geometry"] = buses_polygon["geometry"].simplify(
+            BUSES_POLYGON_SIMPLIFY
+        )
+        buses_polygon = buses_polygon.to_crs(GEO_CRS)
 
-    buses_polygon["poly"] = buses_polygon["geometry"].apply(polygon_to_coords)
+        buses_polygon["poly"] = buses_polygon["geometry"].apply(polygon_to_coords)
 
     # Prepare geometries for pydeck
     # Lines
@@ -845,34 +1031,6 @@ if __name__ == "__main__":
 
     logger.info("Creating interactive map with pydeck.")
 
-    # Stations PolygonLayer
-    stations_polygon_layer = pdk.Layer(
-        "PolygonLayer",
-        data=stations_polygon.drop(columns=["geometry"]),
-        get_polygon="poly",
-        get_fill_color=[0, 0, 255, 100],
-        pickable=True,
-        auto_highlight=True,
-        id="Stations",
-        parameters={"depthTest": False},
-    )
-
-    # Buses PolygonLayer
-    buses_polygon_layer = pdk.Layer(
-        "PolygonLayer",
-        data=buses_polygon.drop(columns=["geometry"]),
-        get_polygon="poly",
-        get_fill_color=[255, 0, 255, 100],
-        get_line_color=[255, 255, 255],
-        extruded=True,
-        wireframe=True,
-        get_elevation=200,
-        pickable=True,
-        auto_highlight=True,
-        id="Buses (Polygons)",
-        parameters={"depthTest": False},
-    )
-
     # Lines PathLayer
     lines_layer = pdk.Layer(
         "PathLayer",
@@ -892,7 +1050,7 @@ if __name__ == "__main__":
         "PathLayer",
         data=links_dc.drop(columns=["geometry"]),
         get_path="path",
-        get_color=[0, 255, 0, 160],
+        get_color=[0, 191, 255, 200],
         width_scale=1,
         width_min_pixels=2,
         pickable=True,
@@ -943,22 +1101,54 @@ if __name__ == "__main__":
         id="Buses",
     )
 
+    if include_polygons:
+        # Stations PolygonLayer
+        stations_polygon_layer = pdk.Layer(
+            "PolygonLayer",
+            data=stations_polygon.drop(columns=["geometry"]),
+            get_polygon="poly",
+            get_fill_color=[0, 0, 255, 100],
+            pickable=True,
+            auto_highlight=True,
+            id="Stations",
+            parameters={"depthTest": False},
+        )
+
+        # Buses PolygonLayer
+        buses_polygon_layer = pdk.Layer(
+            "PolygonLayer",
+            data=buses_polygon.drop(columns=["geometry"]),
+            get_polygon="poly",
+            get_fill_color=[255, 0, 255, 100],
+            get_line_color=[255, 255, 255],
+            extruded=True,
+            wireframe=True,
+            get_elevation=200,
+            pickable=True,
+            auto_highlight=True,
+            id="Buses (Polygons)",
+            parameters={"depthTest": False},
+        )
+
     # Calculate center point for initial view
     all_coords = [coord for path in lines["path"] for coord in path]
     center_lon = sum(c[0] for c in all_coords) / len(all_coords)
     center_lat = sum(c[1] for c in all_coords) / len(all_coords)
 
+    layers = [
+        lines_layer,
+        links_layer,
+        converters_layer,
+        transformers_layer,
+        buses_layer,
+    ]
+
+    if include_polygons:
+        layers = [stations_polygon_layer, buses_polygon_layer] + layers
+
     # Create the deck
     map = pdk.Deck(
-        layers=[
-            stations_polygon_layer,
-            buses_polygon_layer,
-            lines_layer,
-            links_layer,
-            converters_layer,
-            transformers_layer,
-            buses_layer,
-        ],
+        layers=layers,
         initial_view_state=pdk.ViewState(
             latitude=center_lat,
             longitude=center_lon,

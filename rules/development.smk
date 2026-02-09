@@ -22,14 +22,14 @@ rule base_network_incumbent:
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
     output:
-        base_network=resources("osm-network/comparison/incumbent/networks/base.nc"),
+        base_network=resources("osm/comparison/incumbent/networks/base.nc"),
         regions_onshore=resources(
-            "osm-network/comparison/incumbent/regions_onshore.geojson"
+            "osm/comparison/incumbent/regions_onshore.geojson"
         ),
         regions_offshore=resources(
-            "osm-network/comparison/incumbent/regions_offshore.geojson"
+            "osm/comparison/incumbent/regions_offshore.geojson"
         ),
-        admin_shapes=resources("osm-network/comparison/incumbent/admin_shapes.geojson"),
+        admin_shapes=resources("osm/comparison/incumbent/admin_shapes.geojson"),
     log:
         logs("base_network_incumbent.log"),
     benchmark:
@@ -53,9 +53,11 @@ rule make_network_comparison:
         voltages=config_provider("electricity", "voltages"),
     input:
         n_release=resources("networks/base.nc"),
-        n_incumbent=resources("osm-network/comparison/incumbent/networks/base.nc"),
+        n_incumbent=resources("osm/comparison/incumbent/networks/base.nc"),
+        country_shapes=resources("country_shapes.geojson"),
+        regions_offshore=resources("regions_offshore.geojson"),
     output:
-        lengths=resources("osm-network/comparison/lengths.pdf"),
+        lengths=resources("osm/comparison/lengths.pdf"),
     log:
         logs("make_network_comparison.log"),
     benchmark:
@@ -71,17 +73,19 @@ rule prepare_osm_network_release:
     params:
         line_types=config["lines"]["types"],
         release_version=config_provider("osm_network_release", "release_version"),
+        include_polygons=True,
+        export=True,
     input:
         base_network=resources("networks/base.nc"),
-        stations_polygon=resources("osm-network/build/geojson/stations_polygon.geojson"),
-        buses_polygon=resources("osm-network/build/geojson/buses_polygon.geojson"),
+        stations_polygon=resources("osm/build/geojson/stations_polygon.geojson"),
+        buses_polygon=resources("osm/build/geojson/buses_polygon.geojson"),
     output:
-        buses=resources("osm-network/release/buses.csv"),
-        converters=resources("osm-network/release/converters.csv"),
-        lines=resources("osm-network/release/lines.csv"),
-        links=resources("osm-network/release/links.csv"),
-        transformers=resources("osm-network/release/transformers.csv"),
-        map=resources("osm-network/release/map.html"),
+        buses=resources("osm/release/buses.csv"),
+        converters=resources("osm/release/converters.csv"),
+        lines=resources("osm/release/lines.csv"),
+        links=resources("osm/release/links.csv"),
+        transformers=resources("osm/release/transformers.csv"),
+        map=resources("osm/release/map.html"),
     log:
         logs("prepare_osm_network_release.log"),
     benchmark:
@@ -91,3 +95,41 @@ rule prepare_osm_network_release:
         mem_mb=1000,
     script:
         "../scripts/prepare_osm_network_release.py"
+
+
+rule map_incumbent:
+    params:
+        line_types=config["lines"]["types"],
+        release_version="Incumbent",
+        include_polygons=False,
+        export=False
+    input:
+        base_network=resources("osm/comparison/incumbent/networks/base.nc"),
+    output:
+        buses=[],
+        converters=[],
+        lines=[],
+        links=[],
+        transformers=[],
+        map=resources("osm/comparison/map_incumbent.html"),
+    log:
+        logs("prepare_osm_network_release.log"),
+    benchmark:
+        benchmarks("prepare_osm_network_release")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    script:
+        "../scripts/prepare_osm_network_release.py"
+
+
+rule osm_release:
+    input:
+        resources("osm/release/buses.csv"),
+        resources("osm/release/converters.csv"),
+        resources("osm/release/lines.csv"),
+        resources("osm/release/links.csv"),
+        resources("osm/release/transformers.csv"),
+        resources("osm/release/map.html"),
+        resources("osm/comparison/map_incumbent.html"),
+        resources("osm/comparison/lengths.pdf"),

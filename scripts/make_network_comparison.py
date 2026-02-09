@@ -4,109 +4,180 @@
 
 """
 Creates plots to compare transmission line lengths between two PyPSA networks.
+Uses spatial intersection with country shapes for accurate country attribution.
+
 """
 
 import logging
 
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import pandas as pd
 import pypsa
 import seaborn as sns
+from matplotlib.figure import Figure
+from shapely.geometry import LineString
+from shapely import wkt
 
 from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 
-def thousands_formatter(x, pos):
+def thousands_formatter(x: float, pos: int) -> str:
     """Format axis values as thousands with 'k' suffix."""
     return f"{x * 1e-3:.0f}k"
 
 
-def get_lines_by_country(network):
+def prepare_line_geometries(network: pypsa.Network, carrier: str = "AC") -> gpd.GeoDataFrame:
     """
-    Calculate domestic transmission line route and circuit lengths by country.
+    Prepare line geometries from PyPSA network.
+
+    Parameters
+    ----------
+    network : pypsa.Network
+        PyPSA network to extract lines from.
+    carrier : str, default "AC"
+        Carrier type - "AC" for lines, "DC" for links.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        GeoDataFrame with line geometries and attributes.
+    """
+    if carrier == "AC":
+        df = network.lines[["bus0", "bus1", "length", "num_parallel"]].copy()
+        geom_source = network.lines
+    else:  # DC
+        df = network.links[network.links["carrier"] == "DC"].copy()
+        if len(df) == 0:
+            return gpd.GeoDataFrame(columns=["length", "num_parallel", "geometry"], crs="EPSG:4326")
+        df = df[["bus0", "bus1", "length"]].copy()
+        df["num_parallel"] = 1
+        geom_source = network.links[network.links["carrier"] == "DC"]
+    
+    # Use existing geometry if available
+    if "geometry" in geom_source.columns and len(geom_source) > 0:
+        geoms = geom_source["geometry"]
+        # Handle WKT strings
+        if isinstance(geoms.iloc[0], str):
+            df["geometry"] = geoms.apply(wkt.loads)
+        else:
+            df["geometry"] = geoms.values
+    else:
+        # Fallback to straight line between buses
+        logger.warning(f"No geometry column found for {carrier}, using straight-line approximation")
+        bus_coords = network.buses[["x", "y"]]
+        df["geometry"] = df.apply(
+            lambda row: LineString([
+                (bus_coords.loc[row.bus0, "x"], bus_coords.loc[row.bus0, "y"]),
+                (bus_coords.loc[row.bus1, "x"], bus_coords.loc[row.bus1, "y"])
+            ]), axis=1
+        )
+    
+    return gpd.GeoDataFrame(
+        df[["length", "num_parallel"]], 
+        geometry=df["geometry"],
+        crs="EPSG:4326"
+    )
+
+
+def get_lines_by_country(network: pypsa.Network, country_shapes: gpd.GeoDataFrame) -> pd.DataFrame:
+    """
+    Calculate transmission line route and circuit lengths by country using spatial intersection.
+
+    This function clips transmission lines at country boundaries to accurately attribute
+    line lengths to countries, including cross-border lines. Uses spatial indexing and
+    vectorized operations for performance.
 
     Parameters
     ----------
     network : pypsa.Network
         PyPSA network to analyze.
+    country_shapes : gpd.GeoDataFrame
+        GeoDataFrame with country geometries and 'name' column containing country codes.
 
     Returns
     -------
     pd.DataFrame
-        DataFrame with route and circuit lengths indexed by country.
+        DataFrame with columns ['length_routes', 'length_circuits'] indexed by country.
     """
-    # Get bus countries for both endpoints — lines
-    lines = (
-        network.lines[["bus0", "bus1", "length", "num_parallel"]]
-        .merge(network.buses[["country"]], left_on="bus0", right_index=True)
-        .merge(
-            network.buses[["country"]],
-            left_on="bus1",
-            right_index=True,
-            suffixes=("0", "1"),
-        )
+
+    # Prepare AC lines and DC links
+    gdf_ac = prepare_line_geometries(network, carrier="AC")
+    gdf_dc = prepare_line_geometries(network, carrier="DC")
+    
+    # Combine if both exist
+    if len(gdf_ac) > 0 and len(gdf_dc) > 0:
+        gdf_lines = pd.concat([gdf_ac, gdf_dc], ignore_index=True)
+    elif len(gdf_ac) > 0:
+        gdf_lines = gdf_ac
+    elif len(gdf_dc) > 0:
+        gdf_lines = gdf_dc
+    else:
+        logger.warning("No lines or links found in network")
+        return pd.DataFrame(columns=['length_routes', 'length_circuits']).rename_axis('country')
+    
+    
+    # Project to EPSG:3035 for accurate length calculations 
+    gdf_lines_proj = gdf_lines.to_crs("EPSG:3035")
+    country_shapes_proj = country_shapes.to_crs("EPSG:3035")
+    
+    overlay = gpd.overlay(
+        gdf_lines_proj, 
+        country_shapes_proj[['name', 'geometry']], 
+        how='intersection',
+        keep_geom_type=True  # Keep only LineString/MultiLineString
     )
-
-    # Get bus countries for both endpoints — links
-    links = (
-        network.links.loc[network.links["carrier"] == "DC", ["bus0", "bus1", "length"]]
-        .merge(network.buses[["country"]], left_on="bus0", right_index=True)
-        .merge(
-            network.buses[["country"]],
-            left_on="bus1",
-            right_index=True,
-            suffixes=("0", "1"),
-        )
-    )
-    links["num_parallel"] = 1  # Each link counts as one circuit
-
-    # Combine lines and links
-    combined = pd.concat([lines, links], ignore_index=True)
-
-    # Aggregate parallel lines/links between same bus pairs
-    combined = (
-        combined.groupby(["bus0", "bus1", "country0", "country1"], observed=True)
-        .agg({"length": "mean", "num_parallel": "sum"})
-        .reset_index()
-    )
-
-    # Keep only domestic (both endpoints in same country)
-    combined = combined[combined["country0"] == combined["country1"]].copy()
-
+    
+    # Calculate lengths of clipped geometries
+    overlay['clipped_length_km'] = overlay.geometry.length / 1000
+    
     # Calculate route and circuit lengths
-    combined["length_routes"] = combined["length"]
-    combined["length_circuits"] = combined["num_parallel"] * combined["length"]
-
-    # Sum by country
-    return (
-        combined.groupby("country0", observed=True)
-        .agg({"length_routes": "sum", "length_circuits": "sum"})
-        .rename_axis("country")
+    overlay['length_routes'] = overlay['clipped_length_km']
+    overlay['length_circuits'] = overlay['clipped_length_km'] * overlay['num_parallel']
+    
+    # Aggregate by country
+    result = (
+        overlay.groupby('name', observed=True)
+        .agg({'length_routes': 'sum', 'length_circuits': 'sum'})
+        .rename_axis('country')
     )
+    
+    logger.info(f"Calculated line statistics for {len(result)} countries")
+    logger.info(f"Total route length: {result['length_routes'].sum():.0f} km")
+    logger.info(f"Total circuit length: {result['length_circuits'].sum():.0f} km")
+    
+    return result
 
 
-def prepare_comparison_data(lines_incumbent, lines_release, countries, version):
+def prepare_comparison_data(
+    lines_incumbent: pd.DataFrame, 
+    lines_release: pd.DataFrame, 
+    countries: list, 
+    version: str
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Merge and prepare line length data for plotting.
 
     Parameters
     ----------
     lines_incumbent : pd.DataFrame
-        Line lengths from baseline network
+        Line lengths from baseline network, indexed by country.
     lines_release : pd.DataFrame
-        Line lengths from new release network
+        Line lengths from new release network, indexed by country.
     countries : list
-        Countries to include in comparison
+        Countries to include in comparison.
     version : str
-        Version label for baseline network
+        Version label for baseline network.
 
     Returns
     -------
     tuple of (pd.DataFrame, pd.DataFrame, pd.DataFrame)
-        Long-format DataFrames for routes and circuits, and merged data
+        - routes_long: Long-format DataFrame for route lengths
+        - circuits_long: Long-format DataFrame for circuit lengths
+        - lines_merged: Wide-format merged DataFrame
     """
     # Merge datasets
     lines_merged = lines_incumbent.merge(
@@ -120,14 +191,14 @@ def prepare_comparison_data(lines_incumbent, lines_release, countries, version):
         .fillna(0)
     )
 
-    # Single label mapping for all columns
+    # Label mapping
     label_map = {
         "incumbent": f"Incumbent network ({version})",
         "release": "New release",
     }
 
-    def to_long_format(metric):
-        """Convert wide format to long format for a given metric (routes or circuits)."""
+    def to_long_format(metric: str) -> pd.DataFrame:
+        """Convert wide format to long format for a given metric."""
         col_prefix = f"length_{metric}_"
         return (
             lines_merged.reset_index()
@@ -139,7 +210,7 @@ def prepare_comparison_data(lines_incumbent, lines_release, countries, version):
             )
             .assign(
                 parameter=lambda df: df["parameter"]
-                .str.replace(col_prefix, "")
+                .str.replace(col_prefix, "", regex=False)
                 .map(label_map)
             )
         )
@@ -147,23 +218,23 @@ def prepare_comparison_data(lines_incumbent, lines_release, countries, version):
     return to_long_format("routes"), to_long_format("circuits"), lines_merged
 
 
-def plot_comparison(routes_data, circuits_data, fontsize=10):
+def plot_comparison(routes_data: pd.DataFrame, circuits_data: pd.DataFrame, fontsize: int = 10) -> Figure:
     """
     Create comparison bar plots for route and circuit lengths.
 
     Parameters
     ----------
     routes_data : pd.DataFrame
-        Long-format route length data
+        Long-format route length data with columns ['country', 'length', 'parameter'].
     circuits_data : pd.DataFrame
-        Long-format circuit length data
-    fontsize : int
-        Font size for labels
+        Long-format circuit length data with columns ['country', 'length', 'parameter'].
+    fontsize : int, default 10
+        Font size for labels.
 
     Returns
     -------
     matplotlib.figure.Figure
-        The created figure
+        The created figure.
     """
     palette = sns.color_palette("flare", n_colors=2)[::-1]
 
@@ -188,45 +259,40 @@ def plot_comparison(routes_data, circuits_data, fontsize=10):
             country_data = data[data["country"] == country]
             values = country_data.set_index("parameter")["length"]
 
-            # Get comparison and release values (order depends on label mapping)
-            comparison_label = [k for k in values.index if "Incumbent network" in k]
-            release_label = [k for k in values.index if "New release" in k]
+            # Get comparison and release values
+            incumbent_vals = values[values.index.str.contains("Incumbent")]
+            release_vals = values[values.index.str.contains("New release")]
 
-            if comparison_label and release_label:
-                comparison_val = values[comparison_label[0]]
-                release_val = values[release_label[0]]
+            if len(incumbent_vals) > 0 and len(release_vals) > 0:
+                incumbent_val = incumbent_vals.iloc[0]
+                release_val = release_vals.iloc[0]
 
                 # Calculate percentage change
-                if comparison_val > 0:
-                    pct_change = ((release_val - comparison_val) / comparison_val) * 100
-
-                    # Position label at top of the taller bar
-                    y_pos = max(comparison_val, release_val)
-
-                    # Format with sign
-                    label = f"{pct_change:+.1f}%"
+                if incumbent_val > 0:
+                    pct_change = ((release_val - incumbent_val) / incumbent_val) * 100
+                    y_pos = max(incumbent_val, release_val)
 
                     # Add text annotation
                     ax.text(
                         i,
                         y_pos,
-                        label,
+                        f"{pct_change:+.1f}%",
                         ha="center",
                         va="bottom",
                         fontsize=fontsize - 2,
                         rotation=90,
                     )
 
-    # Format x-axis only on bottom plot
+    # Format x-axis
     axes[1].set_xlabel("Country", fontsize=fontsize)
     axes[1].tick_params(axis="x", rotation=45)
 
-    ymin = 0
+    # Adjust y-limits
     for ax in axes:
         ymax = ax.get_ylim()[1]
-        ax.set_ylim(ymin, ymax * 1.15)
+        ax.set_ylim(0, ymax * 1.15)
 
-    # Add single legend below figure
+    # Add legend
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(
         handles,
@@ -251,21 +317,60 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "make_network_comparison",
-            configfiles="config/config.osm-release.yaml",
+            configfiles="config/examples/config.osm-release.yaml",
         )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     # Load networks
+    logger.info("Loading networks...")
     n_release = pypsa.Network(snakemake.input.n_release)
     n_incumbent = pypsa.Network(snakemake.input.n_incumbent)
     countries = snakemake.params.countries
     version = snakemake.params.compare_to_version
 
-    # Calculate line statistics
-    lines_incumbent = get_lines_by_country(n_incumbent)
-    lines_release = get_lines_by_country(n_release)
+    # Load and prepare country shapes
+    logger.info(f"Loading country shapes from {snakemake.input.country_shapes}")
+    country_shapes = gpd.read_file(snakemake.input.country_shapes)
+    
+    logger.info(f"Loading offshore regions from {snakemake.input.regions_offshore}")
+    regions_offshore = gpd.read_file(snakemake.input.regions_offshore)[["country", "geometry"]]
+    
+    # Prepare offshore regions
+    regions_offshore = (
+        regions_offshore
+        .dissolve(by="country", as_index=False)
+        .rename(columns={"country": "name"})
+    )
+    regions_offshore = gpd.GeoDataFrame(
+        regions_offshore
+    )
+
+    # Ensure country_shapes has the right columns
+    country_shapes = gpd.GeoDataFrame(
+        country_shapes[["name"]], 
+        geometry=country_shapes.geometry,
+        crs=country_shapes.crs
+    )
+
+    # Combine onshore and offshore regions
+    regions = gpd.GeoDataFrame(
+        pd.concat([country_shapes, regions_offshore], ignore_index=True),
+        crs=country_shapes.crs
+    ).dissolve(by="name", as_index=False)
+    
+    # Filter to countries of interest
+    if countries:
+        regions = regions[regions['name'].isin(countries)]
+        logger.info(f"Filtered to {len(regions)} countries/regions")
+
+    # Calculate line statistics using spatial intersection
+    logger.info("Calculating line statistics for incumbent network...")
+    lines_incumbent = get_lines_by_country(n_incumbent, regions)
+    
+    logger.info("Calculating line statistics for release network...")
+    lines_release = get_lines_by_country(n_release, regions)
 
     # Prepare comparison data
     routes_long, circuits_long, lines_merged = prepare_comparison_data(
@@ -287,6 +392,7 @@ if __name__ == "__main__":
     logger.info(f"Pearson correlation (circuit length): {pcc_circuits:.4f}")
 
     # Create and save plot
+    logger.info("Creating comparison plot...")
     fig = plot_comparison(routes_long, circuits_long, fontsize=10)
 
     logger.info(f"Exporting figure to {snakemake.output.lengths}")

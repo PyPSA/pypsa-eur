@@ -1129,18 +1129,18 @@ def _add_bus_poi_to_line(linestring, point):
 def _finalise_substations(df_substations):
     """
     Finalises the substations column types.
-
     Args:
         df_substations (pandas.DataFrame): The input DataFrame
         containing substations data.
-
     Returns:
-        df_substations (pandas.DataFrame(): The DataFrame with finalised column
+        df_substations (pandas.DataFrame): The DataFrame with finalised column
         types and transformed data.
     """
     logger.info("Finalising substations column types.")
+    
     df_substations = df_substations.copy()
-    # rename columns
+    
+    # Rename columns
     df_substations.rename(
         columns={
             "id": "bus_id",
@@ -1149,16 +1149,22 @@ def _finalise_substations(df_substations):
         },
         inplace=True,
     )
-
-    # Initiate new columns for subsequent build_osm_network step
-    df_substations.loc[:, "contains"] = df_substations["bus_id"].apply(
-        lambda x: x.split("-")[0]
-    )
-
-    # Initialise x_node column (if the bus is part of an interconnector) to False, will be set later
-    df_substations.loc[:, "x_node"] = False
-
-    # Only included needed columns
+    
+    # Handle empty DataFrame early - after rename so column names are correct
+    if df_substations.empty:
+        logger.warning("Empty substations DataFrame provided.")
+        # Add the new columns that would be created below
+        df_substations["contains"] = pd.Series(dtype=object)
+        df_substations["x_node"] = pd.Series(dtype=bool)
+    else:
+        # Initiate new columns for subsequent build_osm_network step
+        df_substations.loc[:, "contains"] = df_substations["bus_id"].apply(
+            lambda x: x.split("-")[0]
+        )
+        # Initialise x_node column to False
+        df_substations.loc[:, "x_node"] = False
+    
+    # Only include needed columns (works for both empty and non-empty)
     df_substations = df_substations[
         [
             "bus_id",
@@ -1172,10 +1178,11 @@ def _finalise_substations(df_substations):
             "contains",
         ]
     ]
-
-    # Substation data types
-    df_substations["voltage"] = df_substations["voltage"].astype(int)
-
+    
+    # Substation data types (skip for empty to avoid errors)
+    if not df_substations.empty:
+        df_substations["voltage"] = df_substations["voltage"].astype(int)
+    
     return df_substations
 
 
@@ -1664,7 +1671,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "clean_osm_data",
-            configfiles=["config/config.osm-release.yaml"],
+            configfiles=["config/examples/config.osm-release.yaml"],
         )
 
     configure_logging(snakemake)
@@ -1672,7 +1679,9 @@ if __name__ == "__main__":
 
     # Parameters
     crs = "EPSG:4326"  # Correct crs for OSM data
-    min_voltage_ac = 60000  # [unit: V] Minimum voltage value to filter AC lines.
+    voltages = snakemake.params.voltages
+
+    min_voltage_ac =  min(voltages)*1e3 # [unit: V] Minimum voltage value to filter AC lines.
     min_voltage_dc = 150000  #  [unit: V] Minimum voltage value to filter DC links.
 
     logger.info("---")
