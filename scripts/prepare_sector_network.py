@@ -4742,11 +4742,14 @@ def add_industry(
         p_min_pu=options["min_part_load_methanolisation"],
         capital_cost=costs.at["methanolisation", "capital_cost"]
         / costs.at["methanolisation", "hydrogen-input"],  # EUR/MW_H2/a
-        marginal_cost=costs.at["methanolisation", "VOM"] / costs.at["methanolisation", "hydrogen-input"],
+        marginal_cost=costs.at["methanolisation", "VOM"]
+        / costs.at["methanolisation", "hydrogen-input"],
         lifetime=costs.at["methanolisation", "lifetime"],
         efficiency=1 / costs.at["methanolisation", "hydrogen-input"],
-        efficiency2=-costs.at["methanolisation", "electricity-input"] / costs.at["methanolisation", "hydrogen-input"],
-        efficiency3=-costs.at["methanolisation", "carbondioxide-input"] / costs.at["methanolisation", "hydrogen-input"],
+        efficiency2=-costs.at["methanolisation", "electricity-input"]
+        / costs.at["methanolisation", "hydrogen-input"],
+        efficiency3=-costs.at["methanolisation", "carbondioxide-input"]
+        / costs.at["methanolisation", "hydrogen-input"],
     )
 
     if options["oil_boilers"]:
