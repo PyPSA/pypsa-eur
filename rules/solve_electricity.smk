@@ -33,7 +33,7 @@ rule solve_network:
     shadow:
         shadow_config
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")
 
 
 rule solve_operations_network:
@@ -67,4 +67,4 @@ rule solve_operations_network:
     shadow:
         shadow_config
     script:
-        "../scripts/solve_operations_network.py"
+        scripts("solve_operations_network.py")
