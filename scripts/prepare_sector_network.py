@@ -4727,7 +4727,7 @@ def add_industry(
         bus2="co2 atmosphere",
         carrier="industry methanol",
         p_nom_extendable=True,
-        efficiency2=1 / costs.at["methanolisation", "carbondioxide-input"],
+        efficiency2=costs.at["methanolisation", "carbondioxide-input"],
     )
 
     n.add(
@@ -4746,7 +4746,7 @@ def add_industry(
         lifetime=costs.at["methanolisation", "lifetime"],
         efficiency=1 / costs.at["methanolisation", "hydrogen-input"],
         efficiency2=-costs.at["methanolisation", "electricity-input"] / costs.at["methanolisation", "hydrogen-input"],
-        efficiency3=-1 / costs.at["methanolisation", "hydrogen-input"] / costs.at["methanolisation", "carbondioxide-input"],
+        efficiency3=-costs.at["methanolisation", "carbondioxide-input"] / costs.at["methanolisation", "hydrogen-input"],
     )
 
     if options["oil_boilers"]:
@@ -5333,8 +5333,7 @@ def add_shipping(
             bus2="co2 atmosphere",
             carrier="shipping methanol",
             p_nom_extendable=True,
-            efficiency2=1
-            / costs.at["methanolisation", "carbondioxide-input"],
+            efficiency2=costs.at["methanolisation", "carbondioxide-input"],
         )
 
     if shipping_oil_share:
