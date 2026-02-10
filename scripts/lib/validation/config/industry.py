@@ -186,11 +186,11 @@ class IndustryConfig(ConfigModel):
     )
     MWh_elec_per_tMeOH: float = Field(
         0.167,
-        description="The energy amount of electricity needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+        description="The energy amount of electricity needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
     )
     MWh_CH4_per_tMeOH: float = Field(
         10.25,
-        description="The energy amount of methane needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+        description="The energy amount of methane needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
     )
     MWh_MeOH_per_tMeOH: float = Field(
         5.528,
