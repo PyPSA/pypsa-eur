@@ -819,21 +819,12 @@ def voronoi(points, outline, crs=4326):
     """
     Create Voronoi polygons from a set of points within an outline.
     """
-    # Defensive fix: ensure outline is valid (no warning suppression)
-    outline = shapely.make_valid(outline)
-
     pts = gpd.GeoSeries(
         gpd.points_from_xy(points.x, points.y),
         index=points.index,
         crs=crs,
     )
-
-    voronoi = pts.voronoi_polygons(extend_to=outline)
-
-    # Drop problematic cells before clip (avoids GEOS TopologyException)
-    voronoi = voronoi[voronoi.is_valid & ~voronoi.is_empty]
-
-    voronoi = voronoi.clip(outline)
+    voronoi = pts.voronoi_polygons(extend_to=outline).clip(outline)
 
     # can be removed with shapely 2.1 where order is preserved
     # https://github.com/shapely/shapely/issues/2020
