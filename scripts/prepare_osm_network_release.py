@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 DISTANCE_CRS = "EPSG:3035"
 GEO_CRS = "EPSG:4326"
-LINE_SIMPLIFY = 100  # meters
+LINE_SIMPLIFY = 30  # meters
 STATIONS_SIMPLIFY = 100  # meters
 BUSES_POLYGON_SIMPLIFY = 5  # meters
 BUSES_COLUMNS = [
@@ -229,36 +229,33 @@ def get_line_colors(voltages: pd.Series) -> list:
     return colors.tolist()
 
 
-def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa: W291, W293
+def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
     """
-    Inject custom layer visibility controls into a pydeck object.
+    Inject interactive controls and URL-based state management into PyDeck HTML.
 
-    Adds interactive checkboxes to toggle visibility of different network
-    component layers and voltage filtering with tag-based selection.
+    Adds layer toggles, voltage/text filtering, theme switching, click-based
+    tooltips with OSM links, and URL hash synchronization for map state.
 
     Parameters
     ----------
     deck : pdk.Deck
-        pydeck Deck instance to export with custom controls.
+        PyDeck Deck instance to export with custom controls.
     release_version : str
         Release version string to include in HTML title.
 
     Returns
     -------
     str
-        Updated html file in string format with injected controls.
+        HTML string with injected interactive controls and state management.
 
     """
     html = deck.to_html(as_string=True)
 
-    # Expose deck instance to window for JavaScript access
     html = html.replace(
         "});\n\n  </script>",
         "});\nwindow.deck = deckInstance;\n\n  </script>",
     )
 
-    # HTML/JavaScript for collapsible layer visibility controls
-    # ruff: noqa
     controls = """
         <style>
         .voltage-tag {
@@ -273,9 +270,6 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
         }
         .voltage-tag:hover {
             background: #0056b3;
-        }
-        .voltage-tag.selected {
-            background: #28a745;
         }
         .selected-voltage-tag {
             display: inline-block;
@@ -303,19 +297,27 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
         </style>
         <button id="menu-toggle" 
             style="position:absolute;top:10px;left:10px;
-                background:rgba(255,255,255,0.9);border:none;
-                padding:10px;cursor:pointer;font-size:20px;
-                border-radius:4px;z-index:1001;box-shadow:0 2px 4px rgba(0,0,0,0.2)">
+                background:rgba(255,255,255,0.7);border:none;
+                padding:10px 12px;cursor:pointer;font-size:16px;
+                border-radius:4px;z-index:1001;box-shadow:0 2px 4px rgba(0,0,0,0.2);
+                line-height:1;height:40px;width:40px;display:flex;align-items:center;justify-content:center">
             ☰
+        </button>
+        <button id="theme-toggle" 
+            style="position:absolute;top:10px;left:60px;
+                background:rgba(255,255,255,0.7);border:none;
+                padding:10px 12px;cursor:pointer;font-size:16px;
+                border-radius:4px;z-index:1001;box-shadow:0 2px 4px rgba(0,0,0,0.2);
+                line-height:1;height:40px;width:40px;display:flex;align-items:center;justify-content:center">
+            ◐
         </button>
         <div id="layer-controls"
             style="position:absolute;top:10px;left:10px;
-                background:rgba(255,255,255,0.95);padding:12px;
+                background:rgba(255,255,255,0.75);padding:12px;
                 font-family:sans-serif;z-index:1000;
                 border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);
                 display:none;margin-top:50px;min-width:250px;max-width:300px">
             
-            <!-- Text Search Filter -->
             <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #ddd">
                 <label style="display:block;margin-bottom:4px;font-size:13px">
                     Search all fields:
@@ -324,7 +326,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
                     style="width:100%;padding:6px;border:1px solid #ccc;border-radius:3px;
                         font-size:13px;box-sizing:border-box">
                 <div style="font-size:11px;color:#666;margin-top:4px">
-                    Use & for AND, | for OR (e.g., "dc & 500" or "380 | 400")
+                    Use & for AND, | for OR (e.g., "DE & 380" or "bus | line")
                 </div>
                 <button onclick="clearTextSearchFilter()"
                     style="width:100%;margin-top:8px;padding:6px;background:#6c757d;
@@ -334,7 +336,6 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
                 </button>
             </div>
             
-            <!-- Voltage Filter -->
             <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #ddd">
                 <label style="display:block;margin-bottom:4px;font-size:13px">
                     Filter by voltage (kV):
@@ -352,7 +353,6 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
                 </button>
             </div>
             
-            <!-- Layer Toggles -->
             <div style="margin:6px 0">
                 <label style="cursor:pointer;display:flex;align-items:center">
                     <input type="checkbox" checked
@@ -411,62 +411,111 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
             </div>
         </div>
         <script>
-        // Store original data and available voltages
         let originalLayerData = {};
         let availableVoltages = new Set();
         let selectedVoltages = new Set();
         let currentTextSearch = '';
+        let isDarkMode = true;
         
-        // Extract all unique voltages from dataset
+        const MAP_STYLES = {
+            light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+        };
+        
+        function parseHash() {
+            const hash = window.location.hash.substring(1);
+            if (!hash) return null;
+            
+            const parts = hash.split('/');
+            if (parts.length >= 4) {
+                return {
+                    theme: parts[0],
+                    zoom: parseFloat(parts[1]),
+                    latitude: parseFloat(parts[2]),
+                    longitude: parseFloat(parts[3])
+                };
+            }
+            return null;
+        }
+        
+        function updateHash(viewState) {
+            const theme = isDarkMode ? 'dark' : 'light';
+            const hash = `#${theme}/${viewState.zoom.toFixed(2)}/${viewState.latitude.toFixed(4)}/${viewState.longitude.toFixed(4)}`;
+            window.history.replaceState(null, '', hash);
+        }
+        
+        function applyHashToMap() {
+            const hashParams = parseHash();
+            if (!hashParams || !window.deck) return;
+            
+            window.deck.setProps({
+                initialViewState: {
+                    latitude: hashParams.latitude,
+                    longitude: hashParams.longitude,
+                    zoom: hashParams.zoom,
+                    pitch: 30,
+                    transitionDuration: 500,
+                }
+            });
+            
+            if (hashParams.theme && hashParams.theme !== (isDarkMode ? 'dark' : 'light')) {
+                isDarkMode = hashParams.theme === 'dark';
+                document.getElementById('theme-toggle').textContent = isDarkMode ? '◐' : '○';
+                window.deck.setProps({
+                    mapStyle: isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light
+                });
+            }
+        }
+        
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            const deck = window.deck;
+            if (!deck) return;
+            
+            document.getElementById('theme-toggle').textContent = isDarkMode ? '◐' : '○';
+            deck.setProps({
+                mapStyle: isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light
+            });
+            
+            const viewState = deck.viewManager.getViewports()[0];
+            if (viewState) updateHash(viewState);
+        }
+        
         function initializeVoltages() {
             const deck = window.deck;
             if (!deck) return;
             
             deck.props.layers.forEach(layer => {
                 originalLayerData[layer.id] = layer.props.data;
-                
                 layer.props.data.forEach(item => {
-                    if (item.voltage !== undefined) {
-                        availableVoltages.add(item.voltage);
-                    }
-                    if (item.voltage_bus0 !== undefined) {
-                        availableVoltages.add(item.voltage_bus0);
-                    }
-                    if (item.voltage_bus1 !== undefined) {
-                        availableVoltages.add(item.voltage_bus1);
-                    }
+                    if (item.voltage !== undefined) availableVoltages.add(item.voltage);
+                    if (item.voltage_bus0 !== undefined) availableVoltages.add(item.voltage_bus0);
+                    if (item.voltage_bus1 !== undefined) availableVoltages.add(item.voltage_bus1);
                 });
             });
             
-            // Sort voltages in descending order
             availableVoltages = new Set([...availableVoltages].sort((a, b) => b - a));
             updateSuggestions();
         }
         
         function updateSuggestions(searchTerm = '') {
             const container = document.getElementById('voltage-suggestions');
-            container.innerHTML = '';
-            
             const filteredVoltages = [...availableVoltages].filter(v => 
                 String(v).includes(searchTerm) && !selectedVoltages.has(v)
             );
             
-            if (filteredVoltages.length === 0 && searchTerm === '') {
-                container.innerHTML = '<div style="color:#999;font-size:12px">No more voltages available</div>';
-                return;
-            }
-            
             if (filteredVoltages.length === 0) {
-                container.innerHTML = '<div style="color:#999;font-size:12px">No matches</div>';
+                container.innerHTML = `<div style="color:#999;font-size:12px">${searchTerm === '' ? 'No more voltages available' : 'No matches'}</div>`;
                 return;
             }
             
+            container.innerHTML = '';
             filteredVoltages.forEach(voltage => {
                 const tag = document.createElement('span');
                 tag.className = 'voltage-tag';
                 tag.textContent = voltage;
                 tag.onclick = (e) => {
-                    e.stopPropagation();  // Prevent menu from closing
+                    e.stopPropagation();
                     addVoltage(voltage);
                 };
                 container.appendChild(tag);
@@ -482,7 +531,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
         }
         
         function removeVoltage(voltage, event) {
-            if (event) event.stopPropagation();  // Prevent menu from closing
+            if (event) event.stopPropagation();
             selectedVoltages.delete(voltage);
             updateSelectedDisplay();
             updateSuggestions();
@@ -496,12 +545,13 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
             [...selectedVoltages].sort((a, b) => b - a).forEach(voltage => {
                 const tag = document.createElement('span');
                 tag.className = 'selected-voltage-tag';
+                tag.textContent = voltage;
+                
                 const removeBtn = document.createElement('span');
                 removeBtn.className = 'remove';
                 removeBtn.textContent = '×';
                 removeBtn.onclick = (e) => removeVoltage(voltage, e);
                 
-                tag.textContent = voltage;
                 tag.appendChild(removeBtn);
                 container.appendChild(tag);
             });
@@ -510,6 +560,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
         function setLayerVisibility(layerId, visible) {
             const deck = window.deck;
             if (!deck) return;
+            
             const layers = deck.props.layers.map(l =>
                 l.id === layerId ? l.clone({ visible }) : l
             );
@@ -519,33 +570,15 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
         function matchesTextSearch(item, searchTerm) {
             if (!searchTerm) return true;
             
-            // Parse the search query for & (AND) and | (OR) operators
-            // Split by | first (OR has lower precedence)
             const orGroups = searchTerm.split('|').map(s => s.trim());
-            
-            // If any OR group matches, the item matches
             return orGroups.some(orGroup => {
-                // Within each OR group, split by & (AND)
                 const andTerms = orGroup.split('&').map(s => s.trim()).filter(s => s.length > 0);
-                
-                // All AND terms must match
                 return andTerms.every(term => {
                     const lowerTerm = term.toLowerCase();
-                    
-                    // Check if any field contains this term
                     for (const [key, value] of Object.entries(item)) {
-                        // Skip geometry fields and arrays/objects
-                        if (key === 'geometry' || key === 'path' || key === 'poly' || key === 'color') {
-                            continue;
-                        }
-                        
-                        // Convert value to string and search
-                        const stringValue = String(value).toLowerCase();
-                        if (stringValue.includes(lowerTerm)) {
-                            return true;
-                        }
+                        if (key === 'geometry' || key === 'path' || key === 'poly' || key === 'color') continue;
+                        if (String(value).toLowerCase().includes(lowerTerm)) return true;
                     }
-                    
                     return false;
                 });
             });
@@ -559,23 +592,17 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
             const hasTextFilter = currentTextSearch.length > 0;
             
             if (!hasVoltageFilter && !hasTextFilter) {
-                // No filters - show all data
-                const layers = deck.props.layers.map(layer => {
-                    if (originalLayerData[layer.id]) {
-                        return layer.clone({ data: originalLayerData[layer.id] });
-                    }
-                    return layer;
-                });
+                const layers = deck.props.layers.map(layer => 
+                    originalLayerData[layer.id] ? layer.clone({ data: originalLayerData[layer.id] }) : layer
+                );
                 deck.setProps({ layers });
                 return;
             }
             
             const voltages = [...selectedVoltages];
-            
             const layers = deck.props.layers.map(layer => {
                 const originalData = originalLayerData[layer.id];
                 const filteredData = originalData.filter(item => {
-                    // Apply voltage filter
                     let passesVoltageFilter = !hasVoltageFilter;
                     if (hasVoltageFilter) {
                         if (item.voltage !== undefined) {
@@ -588,10 +615,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
                         }
                     }
                     
-                    // Apply text search filter
-                    const passesTextFilter = matchesTextSearch(item, currentTextSearch);
-                    
-                    return passesVoltageFilter && passesTextFilter;
+                    return passesVoltageFilter && matchesTextSearch(item, currentTextSearch);
                 });
                 
                 return layer.clone({ data: filteredData });
@@ -614,9 +638,13 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
             applyAllFilters();
         }
         
-        // Search input handlers
         document.addEventListener('DOMContentLoaded', function() {
             initializeVoltages();
+            applyHashToMap();
+            
+            window.addEventListener('hashchange', function() {
+                applyHashToMap();
+            });
             
             const voltageInput = document.getElementById('voltage-filter');
             if (voltageInput) {
@@ -633,26 +661,63 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
                 });
             }
             
-            // Enable click for tooltip instead of hover
             let currentTooltip = null;
+            let currentTooltipCoords = null;
+            let animationFrameId = null;
             
-            // Remove default hover tooltip
+            const updateTooltipPosition = () => {
+                if (!currentTooltip || !currentTooltipCoords) {
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    return;
+                }
+                
+                const deck = window.deck;
+                if (deck && deck.viewManager) {
+                    try {
+                        const viewport = deck.viewManager.getViewports()[0];
+                        if (viewport && viewport.project) {
+                            const screenCoords = viewport.project(currentTooltipCoords);
+                            if (screenCoords && currentTooltip) {
+                                currentTooltip.style.left = (screenCoords[0] + 5) + 'px';
+                                currentTooltip.style.top = (screenCoords[1] + 5) + 'px';
+                            }
+                        }
+                    } catch (e) {}
+                }
+                
+                animationFrameId = requestAnimationFrame(updateTooltipPosition);
+            };
+            
             if (window.deck) {
+                const originalOnViewStateChange = window.deck.props.onViewStateChange;
+                
                 window.deck.setProps({
-                    getTooltip: null
+                    getTooltip: null,
+                    onViewStateChange: ({viewState}) => {
+                        if (originalOnViewStateChange) {
+                            originalOnViewStateChange({viewState});
+                        }
+                        updateHash(viewState);
+                        return viewState;
+                    }
                 });
                 
-                // Add click handler to the deck canvas
                 const deckContainer = document.getElementById('deck-container');
                 if (deckContainer) {
                     deckContainer.addEventListener('click', function(event) {
-                        // Remove existing tooltip if any
                         if (currentTooltip) {
                             currentTooltip.remove();
                             currentTooltip = null;
+                            currentTooltipCoords = null;
+                            if (animationFrameId) {
+                                cancelAnimationFrame(animationFrameId);
+                                animationFrameId = null;
+                            }
                         }
                         
-                        // Get pick info from deck
                         const deck = window.deck;
                         const pickInfo = deck.pickObject({
                             x: event.clientX,
@@ -661,83 +726,75 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
                         });
                         
                         if (pickInfo && pickInfo.object) {
-                            // Build tooltip content as table for better formatting
                             let html = '<table style="border-collapse:collapse;font-size:12px;line-height:1.4">';
                             let hasContent = false;
+                            
                             for (const [key, value] of Object.entries(pickInfo.object)) {
-                                if (key !== 'geometry' && key !== 'path' && key !== 'poly' && key !== 'color') {
-                                    html += `<tr>
-                                        <td style="padding:3px 8px 3px 0;font-weight:600;vertical-align:top;color:#aaa">${key}</td>
-                                        <td style="padding:3px 0;vertical-align:top;color:#fff">${value}</td>
-                                    </tr>`;
-                                    hasContent = true;
+                                if (key === 'geometry' || key === 'path' || key === 'poly' || key === 'color') continue;
+                                
+                                let displayValue = value;
+                                if (key === 'tags' && value) {
+                                    const ids = String(value).split(';');
+                                    const links = ids.map(id => {
+                                        const trimmedId = id.trim();
+                                        return `<a href="https://openstreetmap.org/${trimmedId}" target="_blank" rel="noopener noreferrer" style="color:#4a9eff;text-decoration:underline">${trimmedId}</a>`;
+                                    }).join('; ');
+                                    displayValue = links;
                                 }
+                                
+                                html += `<tr>
+                                    <td style="padding:3px 8px 3px 0;font-weight:600;vertical-align:top;color:#aaa;white-space:nowrap">${key}</td>
+                                    <td style="padding:3px 0;vertical-align:top;color:#fff;word-break:break-all;max-width:300px">${displayValue}</td>
+                                </tr>`;
+                                hasContent = true;
                             }
                             html += '</table>';
                             
-                            // Only create tooltip if there's actual content to show
-                            if (!hasContent) {
-                                return;
-                            }
+                            if (!hasContent) return;
                             
-                            // Create tooltip element
+                            currentTooltipCoords = pickInfo.coordinate;
+                            
                             const tooltip = document.createElement('div');
                             tooltip.innerHTML = html;
-                            tooltip.style.position = 'absolute';
-                            tooltip.style.left = event.clientX + 10 + 'px';
-                            tooltip.style.top = event.clientY + 10 + 'px';
-                            tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-                            tooltip.style.color = 'white';
-                            tooltip.style.padding = '8px 12px';
-                            tooltip.style.borderRadius = '4px';
-                            tooltip.style.zIndex = '10000';
-                            tooltip.style.pointerEvents = 'auto';  // Allow interaction
-                            tooltip.style.maxWidth = '400px';
-                            tooltip.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-                            tooltip.style.fontFamily = 'sans-serif';
-                            tooltip.style.userSelect = 'text';  // Make text selectable
-                            tooltip.style.cursor = 'text';  // Show text cursor
+                            tooltip.style.cssText = 'position:absolute;background:rgba(0,0,0,0.8);color:white;padding:8px 12px;border-radius:4px;z-index:10000;pointer-events:auto;max-width:400px;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-family:sans-serif;user-select:text;cursor:text;will-change:transform';
                             
-                            // Add close button
                             const closeBtn = document.createElement('div');
                             closeBtn.innerHTML = '×';
-                            closeBtn.style.position = 'absolute';
-                            closeBtn.style.top = '4px';
-                            closeBtn.style.right = '8px';
-                            closeBtn.style.cursor = 'pointer';
-                            closeBtn.style.fontSize = '18px';
-                            closeBtn.style.fontWeight = 'bold';
-                            closeBtn.style.color = '#ccc';
-                            closeBtn.style.lineHeight = '1';
+                            closeBtn.style.cssText = 'position:absolute;top:4px;right:8px;cursor:pointer;font-size:18px;font-weight:bold;color:#ccc;line-height:1';
                             closeBtn.onclick = function(e) {
                                 e.stopPropagation();
                                 tooltip.remove();
                                 currentTooltip = null;
+                                currentTooltipCoords = null;
+                                if (animationFrameId) {
+                                    cancelAnimationFrame(animationFrameId);
+                                    animationFrameId = null;
+                                }
                             };
-                            closeBtn.onmouseover = function() {
-                                closeBtn.style.color = '#fff';
-                            };
-                            closeBtn.onmouseout = function() {
-                                closeBtn.style.color = '#ccc';
-                            };
-                            tooltip.appendChild(closeBtn);
+                            closeBtn.onmouseover = () => closeBtn.style.color = '#fff';
+                            closeBtn.onmouseout = () => closeBtn.style.color = '#ccc';
                             
-                            document.body.appendChild(tooltip);
+                            tooltip.appendChild(closeBtn);
                             currentTooltip = tooltip;
+                            document.body.appendChild(tooltip);
+                            updateTooltipPosition();
                         }
                     });
                 }
             }
         });
         
-        // Toggle menu visibility
         document.getElementById('menu-toggle').addEventListener('click', function(event) {
-            event.stopPropagation();  // Prevent deck click
+            event.stopPropagation();
             const menu = document.getElementById('layer-controls');
             menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
         });
         
-        // Close menu when clicking outside
+        document.getElementById('theme-toggle').addEventListener('click', function(event) {
+            event.stopPropagation();
+            toggleTheme();
+        });
+        
         document.addEventListener('click', function(event) {
             const menu = document.getElementById('layer-controls');
             const toggle = document.getElementById('menu-toggle');
@@ -750,13 +807,11 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:  # noqa
         </script>
     """
 
-    # Inject controls before deck container
     html = html.replace(
         '<div id="deck-container">',
         controls + '<div id="deck-container">',
     )
 
-    # Inject custom title
     html = html.replace(
         "<title>pydeck</title>",
         "<title>PyPSA network (OSM " + release_version + ")</title>",
@@ -842,10 +897,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "prepare_osm_network_release",
-            configfiles=["config/examples/config.osm-release.yaml"],
-        )
+        snakemake = mock_snakemake("map_incumbent")
 
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
@@ -868,9 +920,7 @@ if __name__ == "__main__":
     buses.sort_index(inplace=True)
 
     logger.info(f"Exporting {len(buses)} buses to %s", snakemake.output.buses)
-    buses = export_clean_csv(
-        buses, BUSES_COLUMNS, snakemake.output.buses, "bus_id", export
-    )
+    buses = export_clean_csv(buses, BUSES_COLUMNS, snakemake.output.buses, "bus_id", export)
 
     #############
     ### Lines ###
@@ -894,9 +944,7 @@ if __name__ == "__main__":
     lines.sort_index(inplace=True)
 
     logger.info(f"Exporting {len(lines)} lines to %s", snakemake.output.lines)
-    lines = export_clean_csv(
-        lines, LINES_COLUMNS, snakemake.output.lines, "line_id", export
-    )
+    lines = export_clean_csv(lines, LINES_COLUMNS, snakemake.output.lines, "line_id", export)
 
     ##########################
     ### Links + Converters ###
@@ -919,11 +967,7 @@ if __name__ == "__main__":
         snakemake.output.links,
     )
     links_dc = export_clean_csv(
-        links_dc,
-        LINKS_COLUMNS,
-        snakemake.output.links,
-        "link_id",
-        export,
+        links_dc, LINKS_COLUMNS, snakemake.output.links, "link_id", export,
     )
 
     logger.info(
@@ -970,9 +1014,7 @@ if __name__ == "__main__":
 
     if include_polygons:
         # Import stations
-        stations_polygon = gpd.read_file(snakemake.input.stations_polygon).to_crs(
-            GEO_CRS
-        )
+        stations_polygon = gpd.read_file(snakemake.input.stations_polygon).to_crs(GEO_CRS)
 
         # Only keep stations_polygon that contain buses points
         stations_polygon = gpd.sjoin(
@@ -1003,7 +1045,7 @@ if __name__ == "__main__":
         )
         buses_polygon = buses_polygon[buses_polygon.index_right.notnull()]
         buses_polygon = buses_polygon.drop_duplicates(subset=["bus_id_left"])
-        buses_polygon = buses_polygon[["geometry"]]
+        buses_polygon = buses_polygon[["tags", "geometry"]]
 
         # Simplify
         buses_polygon = buses_polygon.to_crs(DISTANCE_CRS)
@@ -1156,7 +1198,7 @@ if __name__ == "__main__":
     if include_polygons:
         layers = [stations_polygon_layer, buses_polygon_layer] + layers
 
-    # Create the deck
+    # Create the deck with onViewStateChange callback
     map = pdk.Deck(
         layers=layers,
         initial_view_state=pdk.ViewState(
@@ -1165,6 +1207,7 @@ if __name__ == "__main__":
             zoom=5,
             pitch=30,
         ),
+        map_style='https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
     )
 
     logger.info("Injecting custom layer controls into map HTML.")

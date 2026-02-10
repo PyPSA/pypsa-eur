@@ -327,10 +327,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "make_network_comparison",
-            configfiles="config/examples/config.osm-release.yaml",
-        )
+        snakemake = mock_snakemake("make_network_comparison")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

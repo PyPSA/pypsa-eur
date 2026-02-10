@@ -1537,7 +1537,9 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
     lines_all["voltage"] = lines_all["voltage"] / 1000
     lines_all["length"] = lines_all["length"].round(2)
     lines_all["under_construction"] = False
-    lines_all["tags"] = lines_all["contains_lines"].apply(lambda x: ";".join(x))
+    lines_all["tags"] = lines_all["contains_lines"].apply(
+        lambda x: ";".join(set(line.split("-")[0] for line in x))
+    ) # Extract OSM ids
     lines_all["underground"] = lines_all["underground"].replace({True: "t", False: "f"})
     lines_all["under_construction"] = lines_all["under_construction"].replace(
         {True: "t", False: "f"}
@@ -1784,10 +1786,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_osm_network",
-            configfiles=["config/config.osm-release.yaml"],
-        )
+        snakemake = mock_snakemake("build_osm_network")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
