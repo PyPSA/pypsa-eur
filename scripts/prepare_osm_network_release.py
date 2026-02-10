@@ -295,7 +295,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             background: white;
         }
         </style>
-        <button id="menu-toggle" 
+        <button id="menu-toggle"
             style="position:absolute;top:10px;left:10px;
                 background:rgba(255,255,255,0.7);border:none;
                 padding:10px 12px;cursor:pointer;font-size:16px;
@@ -303,7 +303,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 line-height:1;height:40px;width:40px;display:flex;align-items:center;justify-content:center">
             ☰
         </button>
-        <button id="theme-toggle" 
+        <button id="theme-toggle"
             style="position:absolute;top:10px;left:60px;
                 background:rgba(255,255,255,0.7);border:none;
                 padding:10px 12px;cursor:pointer;font-size:16px;
@@ -317,7 +317,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 font-family:sans-serif;z-index:1000;
                 border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);
                 display:none;margin-top:50px;min-width:250px;max-width:300px">
-            
+
             <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #ddd">
                 <label style="display:block;margin-bottom:4px;font-size:13px">
                     Search all fields:
@@ -335,7 +335,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     Clear search
                 </button>
             </div>
-            
+
             <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #ddd">
                 <label style="display:block;margin-bottom:4px;font-size:13px">
                     Filter by voltage (kV):
@@ -352,7 +352,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     Clear filter
                 </button>
             </div>
-            
+
             <div style="margin:6px 0">
                 <label style="cursor:pointer;display:flex;align-items:center">
                     <input type="checkbox" checked
@@ -417,16 +417,16 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
         let currentTextSearch = '';
         let isDarkMode = true;
         let hashUpdateTimeout = null;
-        
+
         const MAP_STYLES = {
             light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
             dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
         };
-        
+
         function parseHash() {
             const hash = window.location.hash.substring(1);
             if (!hash) return null;
-            
+
             const parts = hash.split('/');
             if (parts.length >= 4) {
                 return {
@@ -438,29 +438,29 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             }
             return null;
         }
-        
+
         function updateHash(viewState, immediate = false) {
             if (hashUpdateTimeout) {
                 clearTimeout(hashUpdateTimeout);
             }
-            
+
             const doUpdate = () => {
                 const theme = isDarkMode ? 'dark' : 'light';
                 const hash = `#${theme}/${viewState.zoom.toFixed(2)}/${viewState.latitude.toFixed(4)}/${viewState.longitude.toFixed(4)}`;
                 window.history.replaceState(null, '', hash);
             };
-            
+
             if (immediate) {
                 doUpdate();
             } else {
                 hashUpdateTimeout = setTimeout(doUpdate, 150);
             }
         }
-        
+
         function applyHashToMap() {
             const hashParams = parseHash();
             if (!hashParams || !window.deck) return;
-            
+
             window.deck.setProps({
                 initialViewState: {
                     latitude: hashParams.latitude,
@@ -470,7 +470,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     transitionDuration: 500,
                 }
             });
-            
+
             if (hashParams.theme && hashParams.theme !== (isDarkMode ? 'dark' : 'light')) {
                 isDarkMode = hashParams.theme === 'dark';
                 document.getElementById('theme-toggle').textContent = isDarkMode ? '◐' : '○';
@@ -479,25 +479,25 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 });
             }
         }
-        
+
         function toggleTheme() {
             isDarkMode = !isDarkMode;
             const deck = window.deck;
             if (!deck) return;
-            
+
             document.getElementById('theme-toggle').textContent = isDarkMode ? '◐' : '○';
             deck.setProps({
                 mapStyle: isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light
             });
-            
+
             const viewState = deck.viewManager.getViewports()[0];
             if (viewState) updateHash(viewState, true);
         }
-        
+
         function initializeVoltages() {
             const deck = window.deck;
             if (!deck) return;
-            
+
             deck.props.layers.forEach(layer => {
                 originalLayerData[layer.id] = layer.props.data;
                 layer.props.data.forEach(item => {
@@ -506,22 +506,22 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     if (item.voltage_bus1 !== undefined) availableVoltages.add(item.voltage_bus1);
                 });
             });
-            
+
             availableVoltages = new Set([...availableVoltages].sort((a, b) => b - a));
             updateSuggestions();
         }
-        
+
         function updateSuggestions(searchTerm = '') {
             const container = document.getElementById('voltage-suggestions');
-            const filteredVoltages = [...availableVoltages].filter(v => 
+            const filteredVoltages = [...availableVoltages].filter(v =>
                 String(v).includes(searchTerm) && !selectedVoltages.has(v)
             );
-            
+
             if (filteredVoltages.length === 0) {
                 container.innerHTML = `<div style="color:#999;font-size:12px">${searchTerm === '' ? 'No more voltages available' : 'No matches'}</div>`;
                 return;
             }
-            
+
             container.innerHTML = '';
             filteredVoltages.forEach(voltage => {
                 const tag = document.createElement('span');
@@ -534,7 +534,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 container.appendChild(tag);
             });
         }
-        
+
         function addVoltage(voltage) {
             selectedVoltages.add(voltage);
             updateSelectedDisplay();
@@ -542,7 +542,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             applyAllFilters();
             document.getElementById('voltage-filter').value = '';
         }
-        
+
         function removeVoltage(voltage, event) {
             if (event) event.stopPropagation();
             selectedVoltages.delete(voltage);
@@ -550,39 +550,39 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             updateSuggestions();
             applyAllFilters();
         }
-        
+
         function updateSelectedDisplay() {
             const container = document.getElementById('selected-voltages');
             container.innerHTML = '';
-            
+
             [...selectedVoltages].sort((a, b) => b - a).forEach(voltage => {
                 const tag = document.createElement('span');
                 tag.className = 'selected-voltage-tag';
                 tag.textContent = voltage;
-                
+
                 const removeBtn = document.createElement('span');
                 removeBtn.className = 'remove';
                 removeBtn.textContent = '×';
                 removeBtn.onclick = (e) => removeVoltage(voltage, e);
-                
+
                 tag.appendChild(removeBtn);
                 container.appendChild(tag);
             });
         }
-        
+
         function setLayerVisibility(layerId, visible) {
             const deck = window.deck;
             if (!deck) return;
-            
+
             const layers = deck.props.layers.map(l =>
                 l.id === layerId ? l.clone({ visible }) : l
             );
             deck.setProps({ layers });
         }
-        
+
         function matchesTextSearch(item, searchTerm) {
             if (!searchTerm) return true;
-            
+
             const orGroups = searchTerm.split('|').map(s => s.trim());
             return orGroups.some(orGroup => {
                 const andTerms = orGroup.split('&').map(s => s.trim()).filter(s => s.length > 0);
@@ -596,22 +596,22 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 });
             });
         }
-        
+
         function applyAllFilters() {
             const deck = window.deck;
             if (!deck) return;
-            
+
             const hasVoltageFilter = selectedVoltages.size > 0;
             const hasTextFilter = currentTextSearch.length > 0;
-            
+
             if (!hasVoltageFilter && !hasTextFilter) {
-                const layers = deck.props.layers.map(layer => 
+                const layers = deck.props.layers.map(layer =>
                     originalLayerData[layer.id] ? layer.clone({ data: originalLayerData[layer.id] }) : layer
                 );
                 deck.setProps({ layers });
                 return;
             }
-            
+
             const voltages = [...selectedVoltages];
             const layers = deck.props.layers.map(layer => {
                 const originalData = originalLayerData[layer.id];
@@ -621,22 +621,22 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                         if (item.voltage !== undefined) {
                             passesVoltageFilter = voltages.includes(item.voltage);
                         } else if (item.voltage_bus0 !== undefined || item.voltage_bus1 !== undefined) {
-                            passesVoltageFilter = voltages.includes(item.voltage_bus0) || 
+                            passesVoltageFilter = voltages.includes(item.voltage_bus0) ||
                                 voltages.includes(item.voltage_bus1);
                         } else {
                             passesVoltageFilter = true;
                         }
                     }
-                    
+
                     return passesVoltageFilter && matchesTextSearch(item, currentTextSearch);
                 });
-                
+
                 return layer.clone({ data: filteredData });
             });
-            
+
             deck.setProps({ layers });
         }
-        
+
         function clearVoltageFilter() {
             selectedVoltages.clear();
             updateSelectedDisplay();
@@ -644,28 +644,28 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             applyAllFilters();
             document.getElementById('voltage-filter').value = '';
         }
-        
+
         function clearTextSearchFilter() {
             currentTextSearch = '';
             document.getElementById('text-search-filter').value = '';
             applyAllFilters();
         }
-        
+
         document.addEventListener('DOMContentLoaded', function() {
             initializeVoltages();
             applyHashToMap();
-            
+
             window.addEventListener('hashchange', function() {
                 applyHashToMap();
             });
-            
+
             const voltageInput = document.getElementById('voltage-filter');
             if (voltageInput) {
                 voltageInput.addEventListener('input', function(e) {
                     updateSuggestions(e.target.value);
                 });
             }
-            
+
             const textSearchInput = document.getElementById('text-search-filter');
             if (textSearchInput) {
                 textSearchInput.addEventListener('input', function(e) {
@@ -673,11 +673,11 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     applyAllFilters();
                 });
             }
-            
+
             let currentTooltip = null;
             let currentTooltipCoords = null;
             let animationFrameId = null;
-            
+
             const updateTooltipPosition = () => {
                 if (!currentTooltip || !currentTooltipCoords) {
                     if (animationFrameId) {
@@ -686,7 +686,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     }
                     return;
                 }
-                
+
                 const deck = window.deck;
                 if (deck && deck.viewManager) {
                     try {
@@ -700,13 +700,13 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                         }
                     } catch (e) {}
                 }
-                
+
                 animationFrameId = requestAnimationFrame(updateTooltipPosition);
             };
-            
+
             if (window.deck) {
                 const originalOnViewStateChange = window.deck.props.onViewStateChange;
-                
+
                 window.deck.setProps({
                     getTooltip: null,
                     onViewStateChange: ({viewState}) => {
@@ -717,7 +717,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                         return viewState;
                     }
                 });
-                
+
                 const deckContainer = document.getElementById('deck-container');
                 if (deckContainer) {
                     deckContainer.addEventListener('click', function(event) {
@@ -730,21 +730,21 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                                 animationFrameId = null;
                             }
                         }
-                        
+
                         const deck = window.deck;
                         const pickInfo = deck.pickObject({
                             x: event.clientX,
                             y: event.clientY,
                             radius: 4
                         });
-                        
+
                         if (pickInfo && pickInfo.object) {
                             let html = '<table style="border-collapse:collapse;font-size:12px;line-height:1.4">';
                             let hasContent = false;
-                            
+
                             for (const [key, value] of Object.entries(pickInfo.object)) {
                                 if (key === 'geometry' || key === 'path' || key === 'poly' || key === 'color') continue;
-                                
+
                                 let displayValue = value;
                                 if (key === 'tags' && value) {
                                     const ids = String(value).split(';');
@@ -754,7 +754,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                                     }).join('; ');
                                     displayValue = links;
                                 }
-                                
+
                                 html += `<tr>
                                     <td style="padding:3px 8px 3px 0;font-weight:600;vertical-align:top;color:#aaa;white-space:nowrap">${key}</td>
                                     <td style="padding:3px 0;vertical-align:top;color:#fff;word-break:break-all;max-width:300px">${displayValue}</td>
@@ -762,15 +762,15 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                                 hasContent = true;
                             }
                             html += '</table>';
-                            
+
                             if (!hasContent) return;
-                            
+
                             currentTooltipCoords = pickInfo.coordinate;
-                            
+
                             const tooltip = document.createElement('div');
                             tooltip.innerHTML = html;
                             tooltip.style.cssText = 'position:absolute;background:rgba(0,0,0,0.8);color:white;padding:8px 28px 8px 12px;border-radius:4px;z-index:10000;pointer-events:auto;max-width:400px;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-family:sans-serif;user-select:text;cursor:text;will-change:transform';
-                            
+
                             const closeBtn = document.createElement('div');
                             closeBtn.innerHTML = '×';
                             closeBtn.style.cssText = 'position:absolute;top:4px;right:8px;cursor:pointer;font-size:18px;font-weight:bold;color:#ccc;line-height:1';
@@ -786,7 +786,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                             };
                             closeBtn.onmouseover = () => closeBtn.style.color = '#fff';
                             closeBtn.onmouseout = () => closeBtn.style.color = '#ccc';
-                            
+
                             tooltip.appendChild(closeBtn);
                             currentTooltip = tooltip;
                             document.body.appendChild(tooltip);
@@ -796,23 +796,23 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 }
             }
         });
-        
+
         document.getElementById('menu-toggle').addEventListener('click', function(event) {
             event.stopPropagation();
             const menu = document.getElementById('layer-controls');
             menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
         });
-        
+
         document.getElementById('theme-toggle').addEventListener('click', function(event) {
             event.stopPropagation();
             toggleTheme();
         });
-        
+
         document.addEventListener('click', function(event) {
             const menu = document.getElementById('layer-controls');
             const toggle = document.getElementById('menu-toggle');
-            if (menu.style.display === 'block' && 
-                !menu.contains(event.target) && 
+            if (menu.style.display === 'block' &&
+                !menu.contains(event.target) &&
                 !toggle.contains(event.target)) {
                 menu.style.display = 'none';
             }
