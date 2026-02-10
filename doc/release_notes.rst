@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Removed config options `sector:MWh_MeOH_per_tCO2`, `MWh_MeOH_per_MWh_H2`, and `MWh_MeOH_per_MWh_elec` in favour of corresponding data points from technology-data.
+
 * Add script path getter helper method to allow for rule inheritance in nested snakefiles.
 
 * Include new storage technologies such as li-ion, vanadium, lfp, lair, pair and iron-air. These technologies can now be configured as either store-link combinations or standalone storage units.
