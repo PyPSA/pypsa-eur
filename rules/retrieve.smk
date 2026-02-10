@@ -442,6 +442,7 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
 
 if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
     "primary",
+    "archive",
 ]:
 
     rule retrieve_powerplants:

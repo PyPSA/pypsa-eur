@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Add powerplantmatching v0.8.0 to data versions.
+
 * Add script path getter helper method to allow for rule inheritance in nested snakefiles.
 
 * Include new storage technologies such as li-ion, vanadium, lfp, lair, pair and iron-air. These technologies can now be configured as either store-link combinations or standalone storage units.
