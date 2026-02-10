@@ -750,11 +750,15 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                                     const ids = String(value).split(';');
                                     const links = ids.map(id => {
                                         const trimmedId = id.trim();
-                                        return `<a href="https://openstreetmap.org/${trimmedId}" target="_blank" rel="noopener noreferrer" style="color:#4a9eff;text-decoration:underline">${trimmedId}</a>`;
+                                        // Only create link if it starts with 'way' or 'relation'
+                                        if (trimmedId.startsWith('way/') || trimmedId.startsWith('relation/')) {
+                                            return `<a href="https://openstreetmap.org/${trimmedId}" target="_blank" rel="noopener noreferrer" style="color:#4a9eff;text-decoration:underline">${trimmedId}</a>`;
+                                        } else {
+                                            return trimmedId;
+                                        }
                                     }).join('; ');
                                     displayValue = links;
                                 }
-
                                 html += `<tr>
                                     <td style="padding:3px 8px 3px 0;font-weight:600;vertical-align:top;color:#aaa;white-space:nowrap">${key}</td>
                                     <td style="padding:3px 0;vertical-align:top;color:#fff;word-break:break-all;max-width:300px">${displayValue}</td>
