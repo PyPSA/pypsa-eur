@@ -4745,7 +4745,7 @@ def add_industry(
         marginal_cost=costs.at["methanolisation", "VOM"] / costs.at["methanolisation", "hydrogen-input"],
         lifetime=costs.at["methanolisation", "lifetime"],
         efficiency=1 / costs.at["methanolisation", "hydrogen-input"],
-        efficiency2=-1 / costs.at["methanolisation", "hydrogen-input"] / options["MWh_MeOH_per_MWh_e"],
+        efficiency2=-costs.at["methanolisation", "electricity-input"] / costs.at["methanolisation", "hydrogen-input"],
         efficiency3=-1 / costs.at["methanolisation", "hydrogen-input"] / costs.at["methanolisation", "carbondioxide-input"],
     )
 
