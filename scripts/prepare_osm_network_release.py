@@ -958,6 +958,11 @@ if __name__ == "__main__":
     )
     lines.sort_index(inplace=True)
 
+    # Legacy: Old tag column (<= 0.6) contained voltage and circuit info, so we need to clean it up for the release. Not relevant for newer versions.
+    lines["tags"] = lines["tags"].apply(
+        lambda x: ";".join(set(tag.split("-")[0] for tag in x.split(";")))
+    )
+
     logger.info(f"Exporting {len(lines)} lines to %s", snakemake.output.lines)
     lines = export_clean_csv(
         lines, LINES_COLUMNS, snakemake.output.lines, "line_id", export
