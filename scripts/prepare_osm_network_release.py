@@ -416,6 +416,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
         let selectedVoltages = new Set();
         let currentTextSearch = '';
         let isDarkMode = true;
+        let hashUpdateTimeout = null;
         
         const MAP_STYLES = {
             light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -438,10 +439,22 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             return null;
         }
         
-        function updateHash(viewState) {
-            const theme = isDarkMode ? 'dark' : 'light';
-            const hash = `#${theme}/${viewState.zoom.toFixed(2)}/${viewState.latitude.toFixed(4)}/${viewState.longitude.toFixed(4)}`;
-            window.history.replaceState(null, '', hash);
+        function updateHash(viewState, immediate = false) {
+            if (hashUpdateTimeout) {
+                clearTimeout(hashUpdateTimeout);
+            }
+            
+            const doUpdate = () => {
+                const theme = isDarkMode ? 'dark' : 'light';
+                const hash = `#${theme}/${viewState.zoom.toFixed(2)}/${viewState.latitude.toFixed(4)}/${viewState.longitude.toFixed(4)}`;
+                window.history.replaceState(null, '', hash);
+            };
+            
+            if (immediate) {
+                doUpdate();
+            } else {
+                hashUpdateTimeout = setTimeout(doUpdate, 150);
+            }
         }
         
         function applyHashToMap() {
@@ -478,7 +491,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             });
             
             const viewState = deck.viewManager.getViewports()[0];
-            if (viewState) updateHash(viewState);
+            if (viewState) updateHash(viewState, true);
         }
         
         function initializeVoltages() {
@@ -756,7 +769,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                             
                             const tooltip = document.createElement('div');
                             tooltip.innerHTML = html;
-                            tooltip.style.cssText = 'position:absolute;background:rgba(0,0,0,0.8);color:white;padding:8px 12px;border-radius:4px;z-index:10000;pointer-events:auto;max-width:400px;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-family:sans-serif;user-select:text;cursor:text;will-change:transform';
+                            tooltip.style.cssText = 'position:absolute;background:rgba(0,0,0,0.8);color:white;padding:8px 28px 8px 12px;border-radius:4px;z-index:10000;pointer-events:auto;max-width:400px;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-family:sans-serif;user-select:text;cursor:text;will-change:transform';
                             
                             const closeBtn = document.createElement('div');
                             closeBtn.innerHTML = '×';
@@ -897,7 +910,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("map_incumbent")
+        snakemake = mock_snakemake("prepare_osm_network_release")
 
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
