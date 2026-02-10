@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 GEO_CRS = "EPSG:4326"
 DISTANCE_CRS = "EPSG:3035"
 BUS_TOL = 500  # meters
-COORD_PRECISION = 8 # decimals to round coordinates to, avoiding potential errors in voronoi calculations
+COORD_PRECISION = 8  # decimals to round coordinates to, avoiding potential errors in voronoi calculations
 BUSES_COLUMNS = [
     "station_id",
     "voltage",
@@ -1643,16 +1643,16 @@ def build_network(
 
     # Round stations to 8 decimals to avoid floating point errors (e.g. voronoi creation)
     # Round POINT in "geometry" and "poi"
-    buses['geometry'] = gpd.points_from_xy(
-        buses.geometry.x.round(COORD_PRECISION), 
+    buses["geometry"] = gpd.points_from_xy(
+        buses.geometry.x.round(COORD_PRECISION),
         buses.geometry.y.round(COORD_PRECISION),
-        crs=buses.crs
+        crs=buses.crs,
     )
 
-    buses['poi'] = gpd.points_from_xy(
-        buses.poi.x.round(COORD_PRECISION), 
+    buses["poi"] = gpd.points_from_xy(
+        buses.poi.x.round(COORD_PRECISION),
         buses.poi.y.round(COORD_PRECISION),
-        crs=buses.crs
+        crs=buses.crs,
     )
 
     # Drop lines that are fully within stations.polygon
