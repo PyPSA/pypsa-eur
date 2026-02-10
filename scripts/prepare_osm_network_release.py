@@ -933,7 +933,9 @@ if __name__ == "__main__":
     buses.sort_index(inplace=True)
 
     logger.info(f"Exporting {len(buses)} buses to %s", snakemake.output.buses)
-    buses = export_clean_csv(buses, BUSES_COLUMNS, snakemake.output.buses, "bus_id", export)
+    buses = export_clean_csv(
+        buses, BUSES_COLUMNS, snakemake.output.buses, "bus_id", export
+    )
 
     #############
     ### Lines ###
@@ -957,7 +959,9 @@ if __name__ == "__main__":
     lines.sort_index(inplace=True)
 
     logger.info(f"Exporting {len(lines)} lines to %s", snakemake.output.lines)
-    lines = export_clean_csv(lines, LINES_COLUMNS, snakemake.output.lines, "line_id", export)
+    lines = export_clean_csv(
+        lines, LINES_COLUMNS, snakemake.output.lines, "line_id", export
+    )
 
     ##########################
     ### Links + Converters ###
@@ -980,7 +984,11 @@ if __name__ == "__main__":
         snakemake.output.links,
     )
     links_dc = export_clean_csv(
-        links_dc, LINKS_COLUMNS, snakemake.output.links, "link_id", export,
+        links_dc,
+        LINKS_COLUMNS,
+        snakemake.output.links,
+        "link_id",
+        export,
     )
 
     logger.info(
@@ -1027,7 +1035,9 @@ if __name__ == "__main__":
 
     if include_polygons:
         # Import stations
-        stations_polygon = gpd.read_file(snakemake.input.stations_polygon).to_crs(GEO_CRS)
+        stations_polygon = gpd.read_file(snakemake.input.stations_polygon).to_crs(
+            GEO_CRS
+        )
 
         # Only keep stations_polygon that contain buses points
         stations_polygon = gpd.sjoin(
@@ -1220,7 +1230,7 @@ if __name__ == "__main__":
             zoom=5,
             pitch=30,
         ),
-        map_style='https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        map_style="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
     )
 
     logger.info("Injecting custom layer controls into map HTML.")
