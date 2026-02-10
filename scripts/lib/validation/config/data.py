@@ -188,7 +188,7 @@ class DataConfig(BaseModel):
         description="TYNDP data source configuration.",
     )
     powerplants: _DataSourceConfig = Field(
-        default_factory=lambda: _DataSourceConfig(source="primary"),
+        default_factory=_DataSourceConfig,
         description="Powerplants data source configuration.",
     )
     costs: _DataSourceConfig = Field(
