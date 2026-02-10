@@ -4727,8 +4727,7 @@ def add_industry(
         bus2="co2 atmosphere",
         carrier="industry methanol",
         p_nom_extendable=True,
-        efficiency2=1 / options["MWh_MeOH_per_tCO2"],
-        # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+        efficiency2=1 / costs.at["methanolisation", "carbondioxide-input"],
     )
 
     n.add(
@@ -4748,7 +4747,7 @@ def add_industry(
         lifetime=costs.at["methanolisation", "lifetime"],
         efficiency=options["MWh_MeOH_per_MWh_H2"],
         efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
-        efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
+        efficiency3=-options["MWh_MeOH_per_MWh_H2"] / costs.at["methanolisation", "carbondioxide-input"],
     )
 
     if options["oil_boilers"]:
@@ -5336,9 +5335,7 @@ def add_shipping(
             carrier="shipping methanol",
             p_nom_extendable=True,
             efficiency2=1
-            / options[
-                "MWh_MeOH_per_tCO2"
-            ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+            / costs.at["methanolisation", "carbondioxide-input"],
         )
 
     if shipping_oil_share:
