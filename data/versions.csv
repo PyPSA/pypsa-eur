@@ -119,6 +119,7 @@ osm_boundaries,unknown,primary,latest supported,2025-12-02,Overpass API is used 
 osm_boundaries,unknown,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm_boundaries/unknown/osm_boundaries.zip
 population_count,2018-11-01,primary,latest supported,2025-12-02,,https://data.worldpop.org/GIS/Population/Global_2000_2020/2019/0_Mosaicked/ppp_2019_1km_Aggregated.tif
 population_count,2018-11-01,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/population_count/2018-11-01/ppp_2019_1km_Aggregated.tif
+powerplants,0.8.1,primary,latest supported,2026-02-11,"Part of the `powerplantmatching` package and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.1/powerplants.csv
 powerplants,0.8.0,primary,latest supported,2026-02-05,"Part of the `powerplantmatching` package and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.0/powerplants.csv
 powerplants,0.8.0,archive,latest supported,2026-02-09,"Part of the `powerplantmatching` package and versioned on GitHub.",https://data.pypsa.org/workflows/eur/powerplants/0.8.0/powerplants.csv
 powerplants,0.7.1,primary,supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv
