@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Fix unit commitment compatibility with PyPSA ≥ 1.0 component API to allow usage of unit commitment (https://github.com/PyPSA/pypsa-eur/pull/2049).
+
 * Update energy balances from JRC-IDEES-2021 to `JRC-IDEES-2023
   <https://publications.jrc.ec.europa.eu/repository/handle/JRC138195>`__. The
   default reference year was changed from 2019 to 2023.
