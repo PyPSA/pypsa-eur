@@ -44,6 +44,7 @@ The following subcategories [kton/a] are considered:
 import logging
 import multiprocessing as mp
 from functools import partial
+from pathlib import Path
 
 import country_converter as coco
 import numpy as np
@@ -191,7 +192,12 @@ def get_energy_ratio(country, eurostat, jrc_dir, year, snakemake):
             .div(ktoe_to_twh)
         )
 
-    fn = f"{jrc_dir}/EU27/JRC-IDEES-2021_Industry_EU27.xlsx"
+    root = Path(jrc_dir, "EU27")
+    fn = next(
+        p
+        for y in ("2023", "2021")
+        if (p := root / f"JRC-IDEES-{y}_Industry_EU27.xlsx").exists()
+    )
 
     with mute_print():
         df = pd.read_excel(fn, sheet_name="Ind_Summary", index_col=0, header=0).squeeze(
@@ -211,7 +217,12 @@ def get_energy_ratio(country, eurostat, jrc_dir, year, snakemake):
 def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake):
     def get_sector_data(sector, country):
         jrc_country = jrc_names.get(country, country)
-        fn = f"{jrc_dir}/{jrc_country}/JRC-IDEES-2021_Industry_{jrc_country}.xlsx"
+        root = Path(jrc_dir, jrc_country)
+        fn = next(
+            p
+            for y in ("2023", "2021")
+            if (p := root / f"JRC-IDEES-{y}_Industry_{jrc_country}.xlsx").exists()
+        )
         sheet = sub_sheet_name_dict[sector]
         with mute_print():
             df = pd.read_excel(fn, sheet_name=sheet, index_col=0, header=0).squeeze(

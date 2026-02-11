@@ -75,8 +75,10 @@ hotmaps_industrial_sites,unknown,primary,latest supported,2025-12-02,,https://gi
 instrat_co2_prices,unknown,primary,latest supported,2026-02-03,API endpoint provides latest data without versioning,https://energy-api.instrat.pl/api/prices/co2?all=1
 jrc_ardeco,2021,primary,latest supported,2025-12-02,,https://territorial.ec.europa.eu/ardeco-api-v2/rest/export/
 jrc_ardeco,2021,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_ardeco/2021
-jrc_idees,unknown,primary,latest supported,2025-12-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1/JRC-IDEES-2021.zip
-jrc_idees,2024-05-20,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_idees/2024-05-20/JRC-IDEES-2021.zip
+jrc_idees,2023-v1,primary,latest supported,2026-02-04,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2023_v1/JRC-IDEES-2023.zip
+jrc_idees,2023-v1,archive,latest supported,2026-02-09,,https://data.pypsa.org/workflows/eur/jrc_idees/2023-v1/JRC-IDEES-2023.zip
+jrc_idees,2021-v1,primary,supported,2025-12-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1/JRC-IDEES-2021.zip
+jrc_idees,2021-v1,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_idees/2024-05-20/JRC-IDEES-2021.zip
 lau_regions,2019,primary,latest supported,2025-12-02,,https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip
 lau_regions,2019,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/lau_regions/2019/ref-lau-2019-01m.geojson.zip
 luisa_land_cover,unknown,primary,latest supported,2025-12-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif
