@@ -1087,7 +1087,8 @@ costs:
   emission_prices:
     enable: false
     co2: 0.0
-    co2_monthly_prices: false
+    dynamic: false
+    rolling_window: 90
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
@@ -1286,6 +1287,9 @@ data:
     version: latest
   gem_gcct:
     source: archive
+    version: latest
+  instrat_co2_prices:
+    source: primary
     version: latest
   co2stop:
     source: archive

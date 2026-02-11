@@ -370,14 +370,32 @@ rule build_renewable_profiles:
         scripts("build_renewable_profiles.py")
 
 
-rule build_monthly_prices:
+rule build_co2_prices:
     message:
-        "Building monthly fuel and CO2 prices"
+        "Building CO2 price time series"
+    params:
+        rolling_window=config_provider("costs", "emission_prices", "rolling_window"),
     input:
-        co2_price_raw="data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
+        csv=rules.retrieve_co2_prices.output["csv"],
+    output:
+        csv=resources("co2_price.csv"),
+    log:
+        logs("build_co2_prices.log"),
+    benchmark:
+        benchmarks("build_co2_prices")
+    threads: 1
+    resources:
+        mem_mb=5000,
+    script:
+        "../scripts/build_co2_prices.py"
+
+
+rule build_fossil_fuel_prices:
+    message:
+        "Building fossil fuel price time series"
+    input:
         fuel_price_raw="data/validation/energy-price-trends-xlsx-5619002.xlsx",
     output:
-        co2_price=resources("co2_price.csv"),
         fuel_price=resources("monthly_fuel_price.csv"),
     log:
         logs("build_monthly_prices.log"),
@@ -821,7 +839,11 @@ rule prepare_network:
         costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}_processed.csv"
         ),
-        co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
+        co2_price=lambda w: (
+            resources("co2_price.csv")
+            if config_provider("costs", "emission_prices", "dynamic")(w)
+            else []
+        ),
     output:
         resources("networks/base_s_{clusters}_elec_{opts}.nc"),
     log:

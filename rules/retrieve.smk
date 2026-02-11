@@ -1073,24 +1073,35 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
 
 
 
-# Versioning not implemented as the dataset is used only for validation
-# License - (c) EEX AG, all rights reserved. Personal copy for non-commercial use permitted
-rule retrieve_monthly_co2_prices:
-    message:
-        "Retrieving monthly CO2 prices data for validation"
-    input:
-        storage(
-            "https://public.eex-group.com/eex/eua-auction-report/emission-spot-primary-market-auction-report-2019-data.xls",
-        ),
-    output:
-        "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
-    log:
-        "logs/retrieve_monthly_co2_prices.log",
-    resources:
-        mem_mb=5000,
-    retries: 2
-    run:
-        copy2(input[0], output[0])
+if (INSTRAT_CO2_PRICES_DATASET := dataset_version("instrat_co2_prices"))["source"] in [
+    "primary",
+]:
+
+    rule retrieve_co2_prices:
+        message:
+            "Retrieving CO2 emission allowances price in EU ETS system"
+        output:
+            csv=f"{INSTRAT_CO2_PRICES_DATASET['folder']}/prices_eu_ets_all.csv",
+        log:
+            "logs/retrieve_co2_prices.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            import pandas as pd
+
+            url = "https://energy-api.instrat.pl/api/prices/co2?all=1"
+            headers = {
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json",
+                "Referer": "https://energy.instrat.pl/",
+            }
+
+            r = requests.get(url, headers=headers)
+            r.raise_for_status()
+
+            df = pd.read_json(r.text)
+            df.to_csv(output["csv"], index=False)
 
 
 # Versioning not implemented as the dataset is used only for validation
