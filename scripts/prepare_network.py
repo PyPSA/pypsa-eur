@@ -144,6 +144,9 @@ def add_dynamic_emission_prices(n, fn):
     marginal_cost = dynamic + co2_cost.reindex(columns=dynamic.columns, fill_value=0)
     n.generators_t.marginal_cost = marginal_cost.loc[:, marginal_cost.ne(static).any()]
 
+    # remove the static marginal cost from generators with dynamic marginal cost
+    affected = co2_cost.where(co2_cost > 0).dropna(axis=1).columns
+    n.generators.loc[affected, "marginal_cost"] = 0.0
 
 def set_line_s_max_pu(n, s_max_pu=0.7):
     n.lines["s_max_pu"] = s_max_pu
@@ -300,8 +303,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_network",
-            clusters="37",
-            opts="Co2L-4H",
+            clusters="50",
+            opts="",
         )
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
