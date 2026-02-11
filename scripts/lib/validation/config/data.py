@@ -55,6 +55,10 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="GEM Global Cement and Concrete Tracker data source configuration.",
     )
+    instrat_co2_prices: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="Instrat CO2 prices data source configuration.",
+    )
     co2stop: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="CO2Stop data source configuration.",
@@ -188,7 +192,7 @@ class DataConfig(BaseModel):
         description="TYNDP data source configuration.",
     )
     powerplants: _DataSourceConfig = Field(
-        default_factory=lambda: _DataSourceConfig(source="primary"),
+        default_factory=_DataSourceConfig,
         description="Powerplants data source configuration.",
     )
     costs: _DataSourceConfig = Field(

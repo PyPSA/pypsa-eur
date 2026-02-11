@@ -440,6 +440,7 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
 
 if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
     "primary",
+    "archive",
 ]:
 
     rule retrieve_powerplants:
@@ -1070,24 +1071,35 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
 
 
 
-# Versioning not implemented as the dataset is used only for validation
-# License - (c) EEX AG, all rights reserved. Personal copy for non-commercial use permitted
-rule retrieve_monthly_co2_prices:
-    message:
-        "Retrieving monthly CO2 prices data for validation"
-    input:
-        storage(
-            "https://public.eex-group.com/eex/eua-auction-report/emission-spot-primary-market-auction-report-2019-data.xls",
-        ),
-    output:
-        "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
-    log:
-        "logs/retrieve_monthly_co2_prices.log",
-    resources:
-        mem_mb=5000,
-    retries: 2
-    run:
-        copy2(input[0], output[0])
+if (INSTRAT_CO2_PRICES_DATASET := dataset_version("instrat_co2_prices"))["source"] in [
+    "primary",
+]:
+
+    rule retrieve_co2_prices:
+        message:
+            "Retrieving CO2 emission allowances price in EU ETS system"
+        output:
+            csv=f"{INSTRAT_CO2_PRICES_DATASET['folder']}/prices_eu_ets_all.csv",
+        log:
+            "logs/retrieve_co2_prices.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            import pandas as pd
+
+            url = "https://energy-api.instrat.pl/api/prices/co2?all=1"
+            headers = {
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json",
+                "Referer": "https://energy.instrat.pl/",
+            }
+
+            r = requests.get(url, headers=headers)
+            r.raise_for_status()
+
+            df = pd.read_json(r.text)
+            df.to_csv(output["csv"], index=False)
 
 
 # Versioning not implemented as the dataset is used only for validation
@@ -1136,17 +1148,62 @@ if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive
 
 
 
-if OSM_DATASET["source"] in ["archive"]:
-
-    OSM_ARCHIVE_FILES = [
+def get_osm_archive_files(version):
+    return [
         "buses.csv",
         "converters.csv",
         "lines.csv",
         "links.csv",
         "transformers.csv",
         # Newer versions include the additional map.html file for visualisation
-        *(["map.html"] if float(OSM_DATASET["version"]) >= 0.6 else []),
+        *(["map.html"] if float(version) >= 0.6 else []),
     ]
+
+
+def get_osm_network_incumbent(
+    version: str = "latest",
+    source: str = "archive",
+) -> pd.Series:
+    fp = workflow.source_path("../data/versions.csv")
+    data_versions = load_data_versions(fp)
+    name = "osm"
+
+    dataset = data_versions.loc[
+        (data_versions["dataset"] == name)
+        & (data_versions["source"] == source)
+        & (data_versions["supported"])  # Limit to supported versions only
+        & (data_versions["version"] == version if "latest" != version else True)
+        & (data_versions["latest"] if "latest" == version else True)
+    ]
+
+    if dataset.empty:
+        raise ValueError(
+            f"OSM network for version '{version}' not found in data/versions.csv."
+        )
+
+    # Return single-row DataFrame as a Series
+    dataset = dataset.squeeze()
+
+    # Generate output folder path in the `data` directory
+    dataset["folder"] = Path(
+        "data", name, dataset["source"], dataset["version"]
+    ).as_posix()
+
+    return dataset
+
+
+def input_base_network_incumbent(w):
+    version = config_provider("osm_network_release", "compare_to", "version")(w)
+    source = config_provider("osm_network_release", "compare_to", "source")(w)
+    osm_dataset = get_osm_network_incumbent(version, source)
+    osm_path = osm_dataset["folder"]
+    components = {"buses", "lines", "links", "converters", "transformers"}
+    inputs = {c: f"{osm_path}/{c}.csv" for c in components}
+    return inputs
+
+
+if OSM_DATASET["source"] in ["archive"]:
+    OSM_ARCHIVE_FILES = get_osm_archive_files(OSM_DATASET["version"])
 
     rule retrieve_osm_archive:
         message:
@@ -1168,8 +1225,49 @@ if OSM_DATASET["source"] in ["archive"]:
                 copy2(input[key], output[key])
 
 
-elif OSM_DATASET["source"] == "build":
 
+# Only create incumbent rule if it points to a different folder
+OSM_DATASET_INCUMBENT = get_osm_network_incumbent(
+    version=config.get("osm_network_release", {})
+    .get("compare_to", {})
+    .get("version", "latest"),
+    source=config.get("osm_network_release", {})
+    .get("compare_to", {})
+    .get("source", "archive"),
+)
+
+if OSM_DATASET_INCUMBENT["source"] in ["archive"] and OSM_DATASET_INCUMBENT[
+    "folder"
+] != OSM_DATASET.get("folder"):
+
+    OSM_ARCHIVE_FILES_INCUMBENT = get_osm_archive_files(
+        OSM_DATASET_INCUMBENT["version"]
+    )
+
+    rule retrieve_osm_archive_incumbent:
+        message:
+            "Retrieving OSM archive incumbent data"
+        input:
+            **{
+                file: storage(f"{OSM_DATASET_INCUMBENT['url']}/{file}")
+                for file in OSM_ARCHIVE_FILES_INCUMBENT
+            },
+        output:
+            **{
+                file: f"{OSM_DATASET_INCUMBENT['folder']}/{file}"
+                for file in OSM_ARCHIVE_FILES_INCUMBENT
+            },
+        log:
+            "logs/retrieve_osm_archive_incumbent.log",
+        threads: 1
+        resources:
+            mem_mb=500,
+        run:
+            for key in input.keys():
+                copy2(input[key], output[key])
+
+
+elif OSM_DATASET["source"] == "build":
     OSM_RAW_JSON = [
         "cables_way.json",
         "lines_way.json",
@@ -1180,7 +1278,7 @@ elif OSM_DATASET["source"] == "build":
 
     rule retrieve_osm_data_raw:
         message:
-            "Retrieving OSM raw data for {wildcards.country}"
+            "Retrieving OSM electricity grid raw data for {wildcards.country}"
         params:
             overpass_api=config_provider("overpass_api"),
         output:
