@@ -39,7 +39,6 @@ from scripts.add_electricity import (
 from scripts.build_energy_totals import (
     build_co2_totals,
     build_eea_co2,
-    build_eurostat,
     build_eurostat_co2,
 )
 from scripts.build_transport_demand import transport_degree_factor
@@ -257,7 +256,7 @@ def co2_emissions_year(
     """
     eea_co2 = build_eea_co2(input_co2, year, emissions_scope)
 
-    eurostat = build_eurostat(input_eurostat, countries)
+    eurostat = pd.read_csv(input_eurostat)
 
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK, XK
     eurostat_co2 = build_eurostat_co2(eurostat, year)

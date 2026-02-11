@@ -10,6 +10,12 @@ Upcoming Release
 ================
 
 * Removed config options `sector:MWh_MeOH_per_tCO2`, `MWh_MeOH_per_MWh_H2`, and `MWh_MeOH_per_MWh_elec` in favour of corresponding data points from technology-data.
+* Download and process Eurostat energy balances from API. This replaces the discontinued ZIP bulk download.
+
+* The function `rescale_idees_from_eurostat` was removed.
+
+* New rule `build_eurostat_balances` to build energy balances from Eurostat data. Outsourced from `build_energy_totals`
+* Updated CO2 emission allowance prices data source to Instrat API for real-time pricing data.
 * Improved OSM network building process (https://github.com/PyPSA/pypsa-eur/pull/2030): Introducing support for temporal attributes (start_date, construction tags) and pure DC buses (switching stations). The interactive network map has been completely rebuilt using PyDeck/deck.gl with GPU acceleration and includes custom JS controls, offering fuzzy search, clickable OSM references, URL-based view sharing (#theme/zoom/lat/lon), and substantially improved performance. Additionally, a generalised plot from https://www.nature.com/articles/s41597-025-04550-7 enables systematic comparison of network topology changes over time.
 
 * Add powerplantmatching v0.8.0 to data versions.

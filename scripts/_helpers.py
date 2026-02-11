@@ -712,7 +712,7 @@ def update_config_from_wildcards(config, w, inplace=True):
                 config["electricity"]["gaslimit"] = gasl_value * 1e6
 
         if "Ept" in opts:
-            config["costs"]["emission_prices"]["co2_monthly_prices"] = True
+            config["costs"]["emission_prices"]["dynamic"] = True
 
         ep_enable, ep_value = find_opt(opts, "Ep")
         if ep_enable:

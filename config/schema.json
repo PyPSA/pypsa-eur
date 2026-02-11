@@ -797,10 +797,15 @@
               "default": 0.0,
               "description": "Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere."
             },
-            "co2_monthly_prices": {
+            "dynamic": {
               "default": false,
-              "description": "Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+              "description": "Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
               "type": "boolean"
+            },
+            "rolling_window": {
+              "default": 90,
+              "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
+              "type": "integer"
             }
           }
         }
@@ -953,6 +958,26 @@
           }
         },
         "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "instrat_co2_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -6189,10 +6214,15 @@
           "default": 0.0,
           "description": "Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere."
         },
-        "co2_monthly_prices": {
+        "dynamic": {
           "default": false,
-          "description": "Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+          "description": "Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
           "type": "boolean"
+        },
+        "rolling_window": {
+          "default": 90,
+          "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
+          "type": "integer"
         }
       }
     },
@@ -11516,10 +11546,15 @@
               "default": 0.0,
               "description": "Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere."
             },
-            "co2_monthly_prices": {
+            "dynamic": {
               "default": false,
-              "description": "Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+              "description": "Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
               "type": "boolean"
+            },
+            "rolling_window": {
+              "default": 90,
+              "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
+              "type": "integer"
             }
           }
         }
@@ -12303,6 +12338,26 @@
           }
         },
         "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "instrat_co2_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
