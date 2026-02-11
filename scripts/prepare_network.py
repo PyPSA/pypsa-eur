@@ -148,6 +148,7 @@ def add_dynamic_emission_prices(n, fn):
     affected = co2_cost.where(co2_cost > 0).dropna(axis=1).columns
     n.generators.loc[affected, "marginal_cost"] = 0.0
 
+
 def set_line_s_max_pu(n, s_max_pu=0.7):
     n.lines["s_max_pu"] = s_max_pu
     logger.info(f"N-1 security margin of lines set to {s_max_pu}")
