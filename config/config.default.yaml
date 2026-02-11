@@ -1319,7 +1319,7 @@ data:
     source: archive
     version: latest
   jrc_idees:
-    source: primary
+    source: archive
     version: latest
   scigrid_gas:
     source: primary
