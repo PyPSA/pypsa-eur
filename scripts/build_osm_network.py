@@ -2,15 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
-import itertools
 import logging
-import string
 
 import geopandas as gpd
+import itertools
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pypsa
+import re
+import string
 from pyproj import Transformer
 from shapely import get_point, prepare
 from shapely.algorithms.polylabel import polylabel
@@ -1179,7 +1180,9 @@ def _add_transformers(buses, geo_crs=GEO_CRS):
 
     for g_name, g_value in buses_all.groupby("station_id"):
         if g_value["voltage"].nunique() > 1:
-            combinations = list(itertools.combinations(sorted(g_value.index), 2))
+            combinations = list(itertools.combinations(
+                g_value.sort_values("voltage", ascending=False).index, 2
+            ))
 
             station_transformers = pd.DataFrame(combinations, columns=["bus0", "bus1"])
             station_transformers["voltage_bus0"] = station_transformers["bus0"].map(
@@ -1522,7 +1525,12 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
             return x.split("-")[0]
         else:
             return ""  # handles NaN / float from concat of AC+DC buses
-        
+
+    def _tags_to_osm_ids(tags: str) -> str:
+        if not isinstance(tags, str) or not tags:
+            return ""
+        return ";".join(sorted(set(re.findall(r"(?:way|relation)/\d+", tags))))
+            
     logger.info("Finalising network components and preparing for export.")
     buses_all = all_buses.copy()
     converters_all = converters.copy()
@@ -1534,7 +1542,8 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
     logger.info("- buses")
     buses_all["symbol"] = "Substation"
     buses_all["under_construction"] = False
-    buses_all["tags"] = buses_all["bus_id"].apply(_contains_to_tags)
+    buses_all["tags"] = buses_all["contains"].apply(_contains_to_tags)
+    buses_all["tags"] = buses_all["tags"].apply(_tags_to_osm_ids)
     buses_all["voltage"] = buses_all["voltage"] / 1000
     buses_all["x"] = buses_all["geometry"].x
     buses_all["y"] = buses_all["geometry"].y
@@ -1549,6 +1558,7 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
     lines_all["length"] = lines_all["length"].round(2)
     lines_all["under_construction"] = False
     lines_all["tags"] = lines_all["contains_lines"].apply(_contains_to_tags)
+    lines_all["tags"] = lines_all["tags"].apply(_tags_to_osm_ids)
     lines_all["underground"] = lines_all["underground"].replace({True: "t", False: "f"})
     lines_all["under_construction"] = lines_all["under_construction"].replace(
         {True: "t", False: "f"}
@@ -1570,6 +1580,7 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
         links_all["length"] = links_all["length"].round(2)
         links_all["under_construction"] = False
         links_all["tags"] = links_all["link_id"].str.split("-").str[0]
+        links_all["tags"] = links_all["tags"].apply(_tags_to_osm_ids)
         links_all = links_all.replace({True: "t", False: "f"})
         links_all = links_all[["link_id"] + LINKS_COLUMNS]
         links_all.set_index("link_id", inplace=True)
@@ -1756,6 +1767,7 @@ def build_network(
     # Concatenate AC and DC buses
     buses["dc"] = False
     dc_buses["dc"] = True
+    dc_buses["contains"] = dc_buses["bus_id"].str.split("-").str[0]
     all_buses = pd.concat([buses, dc_buses], ignore_index=True)
 
     if not links.empty:
