@@ -56,54 +56,42 @@ def identify_largest_district_heating_systems(
     regions_onshore: gpd.GeoDataFrame,
     n_subnodes: int,
     countries: list[str],
-    handle_missing_countries: str = "ignore",
     demand_column: str = "Dem_GWh",
     label_column: str = "Label",
 ) -> gpd.GeoDataFrame:
     """
-    Selects the largest DH systems from dh_areas based on demand, filters by
-    country, and maps each system to its containing onshore region. If a
-    'city' column exists in dh_areas it is preserved for easier reporting.
+    Select the n largest DH systems by demand, filter by country, and map
+    each to its containing onshore region.
 
     Parameters
     ----------
     dh_areas : geopandas.GeoDataFrame
-        District heating areas with geometry and demand data
+        District heating areas with geometry and demand data.
     regions_onshore : geopandas.GeoDataFrame
-        Onshore regions indexed by cluster name
+        Onshore regions indexed by cluster name.
     n_subnodes : int
-        Number of largest DH systems to select
+        Number of largest DH systems to select.
     countries : list[str]
-        List of country codes to filter DH areas
-    handle_missing_countries : {"ignore","fill","raise"}, optional
-        Behaviour if requested countries are missing in dh_areas. "ignore" logs a
-        warning and proceeds with available data; "fill" currently falls back to
-        ignoring (placeholder for future enrichment); "raise" stops with an error.
+        Country codes to filter DH areas.
     demand_column : str, optional
-        Column name containing demand values in GWh/a, by default "Dem_GWh"
+        Column with demand values in GWh/a.
     label_column : str, optional
-        Column name containing DH system labels, by default "Label"
+        Column with DH system labels.
 
     Returns
     -------
     geopandas.GeoDataFrame
-        Selected subnodes with columns: name, cluster, subnode_label,
-        yearly_heat_demand_MWh, country, geometry, and optional city
+        Subnodes with columns: name, cluster, subnode_label,
+        yearly_heat_demand_MWh, country, geometry (and city if present).
     """
     if "country" in dh_areas.columns:
-        present_countries = set(dh_areas["country"].unique())
-        missing = set(countries) - present_countries
+        available = set(dh_areas["country"].unique())
+        missing = set(countries) - available
         if missing:
-            msg = f"DH areas missing for countries {sorted(missing)}"
-            if handle_missing_countries == "raise":
-                raise ValueError(msg)
-            logger.warning(msg)
-        # Placeholder: if future fill logic exists, hook in here.
-        dh_areas = dh_areas[
-            dh_areas["country"].isin(present_countries & set(countries))
-        ].copy()
+            logger.warning(f"DH areas missing for countries {sorted(missing)}")
+        dh_areas = dh_areas[dh_areas["country"].isin(available & set(countries))].copy()
         logger.info(
-            f"Filtered to {len(dh_areas)} DH areas in {present_countries & set(countries)}"
+            f"Filtered to {len(dh_areas)} DH areas in {available & set(countries)}"
         )
     else:
         logger.warning("No 'country' column in dh_areas")
@@ -192,7 +180,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "identify_district_heating_subnodes",
+            "build_district_heating_subnodes",
             clusters=48,
         )
 
@@ -204,16 +192,6 @@ if __name__ == "__main__":
     n_subnodes = snakemake.params.get("n_subnodes", 40)
     demand_column = snakemake.params.get("demand_column", "Dem_GWh")
     label_column = snakemake.params.get("label_column", "Label")
-    handle_missing_countries = (
-        snakemake.params.get(
-            "handle_missing_countries",
-            snakemake.config.get("sector", {})
-            .get("district_heating", {})
-            .get("dh_areas", {})
-            .get("handle_missing_countries", "ignore"),
-        )
-        or "ignore"
-    )
 
     if subnode_countries:
         invalid = set(subnode_countries) - set(countries)
@@ -244,13 +222,11 @@ if __name__ == "__main__":
         regions_onshore,
         n_subnodes,
         effective_subnode_countries,
-        handle_missing_countries,
         demand_column,
         label_column,
     )
 
-    # Attach city names from static lookup
-    # Merge on both subnode_label AND country since labels are only unique within a country
+    # Attach city names from lookup (merge on label + country for uniqueness)
     if city_lookup is not None:
         city_lookup["subnode_label"] = city_lookup["subnode_label"].apply(
             _sanitize_label
@@ -260,9 +236,14 @@ if __name__ == "__main__":
             how="left",
             on=["subnode_label", "country"],
         )
+        n_missing = subnodes["city"].isna().sum()
+        if n_missing > 0:
+            logger.warning(
+                f"{n_missing}/{len(subnodes)} subnodes have no city match. "
+                "The dh_city_lookup may be outdated; re-run map_dh_systems_to_cities."
+            )
 
-    # Prefer city name in subnode identifier when available
-    # Use the raw city name (with spaces) for readable node names
+    # Use city name for readable node names when available
     if "city" in subnodes.columns:
         # Clean city names: remove special chars but KEEP spaces
         city_clean = (

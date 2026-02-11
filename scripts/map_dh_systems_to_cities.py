@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 def sanitize_label(label: str) -> str:
-    """Mirror the label cleaning used in identify_district_heating_subnodes."""
+    """Mirror the label cleaning used in build_district_heating_subnodes."""
     return (
         pd.Series([label])
         .fillna("DH")

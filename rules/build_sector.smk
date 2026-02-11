@@ -1449,9 +1449,9 @@ rule build_existing_heating_distribution:
         "../scripts/build_existing_heating_distribution.py"
 
 
-rule identify_district_heating_subnodes:
+rule build_district_heating_subnodes:
     message:
-        "Identifying district heating subnodes and extending onshore regions for {wildcards.clusters} clusters"
+        "Building district heating subnodes and extending onshore regions for {wildcards.clusters} clusters"
     params:
         countries=config_provider("countries"),
         subnode_countries=config_provider(
@@ -1478,16 +1478,16 @@ rule identify_district_heating_subnodes:
     resources:
         mem_mb=2000,
     log:
-        logs("identify_district_heating_subnodes_s_{clusters}.log"),
+        logs("build_district_heating_subnodes_s_{clusters}.log"),
     benchmark:
-        benchmarks("identify_district_heating_subnodes/s_{clusters}")
+        benchmarks("build_district_heating_subnodes/s_{clusters}")
     script:
-        "../scripts/identify_district_heating_subnodes.py"
+        "../scripts/build_district_heating_subnodes.py"
 
 
-rule prepare_district_heating_subnodes:
+rule build_district_heating_subnode_demands:
     message:
-        "Preparing district heating subnode demand data for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+        "Building district heating subnode demand data for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         district_heating_loss=config_provider(
             "sector", "district_heating", "district_heating_loss"
@@ -1501,7 +1501,6 @@ rule prepare_district_heating_subnodes:
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         dh_subnodes=resources("dh_subnodes_base_s_{clusters}.geojson"),
-        pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         district_heat_share=resources(
             "district_heat_share_base_s_{clusters}_{planning_horizons}.csv"
         ),
@@ -1540,11 +1539,11 @@ rule prepare_district_heating_subnodes:
     resources:
         mem_mb=4000,
     log:
-        logs("prepare_district_heating_subnodes_{clusters}_{planning_horizons}.log"),
+        logs("build_district_heating_subnode_demands_{clusters}_{planning_horizons}.log"),
     benchmark:
-        benchmarks("prepare_district_heating_subnodes/s_{clusters}_{planning_horizons}")
+        benchmarks("build_district_heating_subnode_demands/s_{clusters}_{planning_horizons}")
     script:
-        "../scripts/prepare_district_heating_subnodes.py"
+        "../scripts/build_district_heating_subnode_demands.py"
 
 
 rule time_aggregation:

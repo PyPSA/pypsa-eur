@@ -56,22 +56,18 @@ def define_spatial(nodes, options, district_heating_nodes=None):
     Parameters
     ----------
     nodes : pd.Index
-        Base/parent nodes (from pop_layout.index). These are the main cluster nodes
-        where resource buses (gas, biomass, etc.) and generation are located.
+        Base/parent nodes (cluster nodes where resource buses are located).
     options : dict
-        Sector options dictionary
+        Sector options dictionary.
     district_heating_nodes : pd.Index, optional
-        Extended nodes including subnodes for district heating (from district_heat_info.index).
-        If None, defaults to nodes (no subnodes case).
+        Extended nodes including subnodes for district heating.
+        If None, defaults to nodes.
     """
-    # If no subnodes provided, district_heating_nodes equals nodes
     if district_heating_nodes is None:
         district_heating_nodes = nodes
 
-    spatial.nodes = nodes  # Parent/base nodes only
-    spatial.district_heating_nodes = (
-        district_heating_nodes  # Includes subnodes if enabled
-    )
+    spatial.nodes = nodes
+    spatial.district_heating_nodes = district_heating_nodes
 
     # biomass
 
@@ -1230,7 +1226,6 @@ def add_dac(n, costs, pop_layout, district_heat_info):
     heat_buses = n.buses.index[n.buses.carrier.isin(heat_carriers)]
     locations_incl_subnodes = n.buses.location[heat_buses]
     # Map to parent clusters for CO2 bus lookup
-    # Use parent_node from district_heat_info if available; otherwise nodes are their own parent
     if "parent_node" in district_heat_info.columns:
         locations = pd.Index(
             [
@@ -3406,53 +3401,54 @@ def add_heat(
                     "'booster_heat_pump' is true, but 'enable' is false in 'supplemental_heating'."
                 )
 
-            if (
-                heat_source in params.temperature_limited_stores
-                and options["district_heating"]["ptes"]["supplemental_heating"][
-                    "enable"
-                ]
-                and options["district_heating"]["ptes"]["supplemental_heating"][
-                    "booster_heat_pump"
-                ]
-            ):
-                n.add(
-                    "Link",
-                    heat_nodes,
-                    suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=heat_nodes + f" {heat_system} heat",
-                    bus1=parent_of_subnode.values,
-                    bus2=heat_nodes + f" {heat_system} water pits",
-                    carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / (cop_heat_pump - 1).clip(lower=0.001)).squeeze(),
-                    efficiency2=(1 - 1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
-                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
-                    * overdim_factor,
-                    p_nom_extendable=True,
-                    p_min_pu=(
-                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
-                    ).squeeze(),
-                    p_max_pu=0,
-                    lifetime=costs.at[costs_name_heat_pump, "lifetime"],
-                )
+            if heat_source not in params.limited_heat_sources:
+                if (
+                    heat_source in params.temperature_limited_stores
+                    and options["district_heating"]["ptes"]["supplemental_heating"][
+                        "enable"
+                    ]
+                    and options["district_heating"]["ptes"]["supplemental_heating"][
+                        "booster_heat_pump"
+                    ]
+                ):
+                    n.add(
+                        "Link",
+                        heat_nodes,
+                        suffix=f" {heat_system} {heat_source} heat pump",
+                        bus0=heat_nodes + f" {heat_system} heat",
+                        bus1=parent_of_subnode.values,
+                        bus2=heat_nodes + f" {heat_system} water pits",
+                        carrier=f"{heat_system} {heat_source} heat pump",
+                        efficiency=(1 / (cop_heat_pump - 1).clip(lower=0.001)).squeeze(),
+                        efficiency2=(1 - 1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                        capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
+                        * overdim_factor,
+                        p_nom_extendable=True,
+                        p_min_pu=(
+                            -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
+                        ).squeeze(),
+                        p_max_pu=0,
+                        lifetime=costs.at[costs_name_heat_pump, "lifetime"],
+                    )
 
-            else:
-                n.add(
-                    "Link",
-                    heat_nodes,
-                    suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=heat_nodes + f" {heat_system} heat",
-                    bus1=parent_of_subnode.values,
-                    carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
-                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
-                    * overdim_factor,
-                    p_min_pu=(
-                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
-                    ).squeeze(),
-                    p_max_pu=0,
-                    p_nom_extendable=True,
-                    lifetime=costs.at[costs_name_heat_pump, "lifetime"],
-                )
+                else:
+                    n.add(
+                        "Link",
+                        heat_nodes,
+                        suffix=f" {heat_system} {heat_source} heat pump",
+                        bus0=heat_nodes + f" {heat_system} heat",
+                        bus1=parent_of_subnode.values,
+                        carrier=f"{heat_system} {heat_source} heat pump",
+                        efficiency=(1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                        capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
+                        * overdim_factor,
+                        p_min_pu=(
+                            -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
+                        ).squeeze(),
+                        p_max_pu=0,
+                        p_nom_extendable=True,
+                        lifetime=costs.at[costs_name_heat_pump, "lifetime"],
+                    )
 
         if options["resistive_heaters"]:
             key = f"{heat_system.central_or_decentral} resistive heater"
@@ -5026,8 +5022,7 @@ def add_industry(
             )
 
     # TODO simplify bus expression
-    # For LT industry heat, we need to use all nodes that have urban central heat buses
-    # This includes subnodes when subnodes are enabled
+    # LT industry heat uses all nodes with urban central heat buses (incl. subnodes)
     lt_heat_nodes = [
         node
         for node in industrial_demand.index

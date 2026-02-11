@@ -2,9 +2,10 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Prepare district heating subnode demand data for prepare_sector_network.
+Build district heating subnode demand data for prepare_sector_network.
 
-Extends energy/heat totals, district heat shares, and time-series data for subnodes.
+Extends energy/heat totals, district heat shares, industrial demand, and
+time-series data to include subnodes.
 """
 
 import logging
@@ -64,12 +65,12 @@ def _to_scalar(val):
     Parameters
     ----------
     val : scalar, pandas.Series, pandas.DataFrame, or array-like
-        Value to convert
+        Value to convert.
 
     Returns
     -------
     float
-        Scalar float value, or 0.0 if input is None
+        Scalar float value, or 0.0 if input is None.
     """
     if isinstance(val, pd.Series):
         val = val.iloc[0]
@@ -87,9 +88,9 @@ def _get_row(df, idx):
     Parameters
     ----------
     df : pandas.DataFrame
-        DataFrame to extract row from
+        DataFrame to extract row from.
     idx : hashable
-        Index label of the row to extract
+        Index label of the row to extract.
 
     Returns
     -------
@@ -112,31 +113,30 @@ def extend_district_heat_share(
     """
     Extend district heat share DataFrame to include subnodes.
 
-    Scales subnode demands to match GIS data. If the sum of subnode demands
-    exceeds the cluster's district heating demand, subnodes are scaled
-    proportionally and the parent cluster's demand is set to zero.
+    Caps subnode demands at the cluster's total DH demand and rebalances
+    parent fractions to preserve rural/urban-decentral/urban-central splits.
 
     Parameters
     ----------
     district_heat_share : pandas.DataFrame
-        District heat shares indexed by cluster name
+        District heat shares indexed by cluster name.
     subnodes : geopandas.GeoDataFrame
-        Subnodes with cluster, name, and yearly_heat_demand_MWh columns
+        Subnodes with cluster, name, and yearly_heat_demand_MWh columns.
     pop_weighted_energy_totals : pandas.DataFrame
-        Population-weighted energy totals by cluster
+        Population-weighted energy totals by cluster.
     pop_weighted_heat_totals : pandas.DataFrame
-        Population-weighted heat totals by cluster
+        Population-weighted heat totals by cluster.
     heating_efficiencies : pandas.DataFrame
-        Heating efficiencies by country code
+        Heating efficiencies by country code.
     district_heating_loss : float
-        District heating network loss factor (e.g., 0.15 for 15% loss)
+        District heating network loss factor (e.g. 0.15 for 15% loss).
     space_heat_reduction : float, optional
-        Fraction of space heating demand reduction, by default 0.0
+        Fraction of space heating demand reduction, by default 0.0.
 
     Returns
     -------
     pandas.DataFrame
-        Extended district heat share with subnodes added
+        Extended district heat share with subnodes added.
     """
     if len(subnodes) == 0:
         return district_heat_share.copy()
@@ -231,20 +231,12 @@ def extend_district_heat_share(
             name = subnode["name"]
             demand_mwh = subnode["yearly_heat_demand_MWh"] * scale_factor
 
-            # Calculate district fraction for subnode
-            # Note: For subnodes, district fraction should be 1.0 because:
-            # 1. Subnodes are 100% urban central heat (no rural or decentral portion)
-            # 2. The subnode's demand is already embedded in pop_weighted_energy_totals
-            #    (scaled by extend_pop_weighted_energy_totals)
-            # 3. Using dist_fraction < 1.0 would double-scale the demand
-            #
-            # The "original district heat share" stores the proportion of parent's
-            # district heating demand that this subnode represents
-            # Share of parent's district heating demand (includes losses)
+            # Subnode district fraction = 1.0 (100% urban central heat)
+            # Share of parent's DH demand (includes losses)
             original_share = demand_mwh / (
                 total_useful_heat_mwh * (1 + district_heating_loss)
             )
-            # Share of total useful heat served via subnodes (exclude DH losses)
+            # Share of total useful heat shifted to subnode
             urban_share = (
                 demand_mwh / (1 + district_heating_loss) / total_useful_heat_mwh
             )
@@ -260,27 +252,11 @@ def extend_district_heat_share(
                 "parent_node": cluster,  # Parent cluster for resource bus lookups
             }
 
-        # Rebalance the parent's district fraction and urban fraction to preserve
-        # ALL three heat demand categories (rural, urban decentral, urban central).
-        #
-        # In prepare_sector_network, heat demand weighting is:
-        #   rural       = (1 - u) * H
-        #   urban_dec   = (u - d) * H
-        #   urban_cen   = d * H * (1 + loss)
-        #
-        # After subnodes, parent energy totals are reduced: H_new = H * (1 - s)
-        # where s = total_subnode_share (fraction of parent's useful heat).
-        #
-        # To preserve all three demands simultaneously:
-        #   (1 - u_new) * H_new = (1 - u_old) * H          [rural]
-        #   (u_new - d_new) * H_new = (u_old - d_old) * H  [urban_dec]
-        #   d_new * H_new * (1+loss) + subnode_UCH = d_old * H * (1+loss)  [urban_cen]
-        #
-        # Solving:
+        # Rebalance parent's district and urban fractions to preserve
+        # rural, urban-decentral, and urban-central heat demands.
+        # With s = total_subnode_share and H_new = H*(1-s):
         #   u_new = 1 - (1 - u_old) / (1 - s)
         #   d_new = (d_old - s) / (1 - s)
-        #
-        # These satisfy all three constraints exactly.
         original_urban_fraction = _to_scalar(
             extended_share.loc[cluster, "urban fraction before subnodes"]
         )
@@ -315,29 +291,27 @@ def extend_pop_weighted_energy_totals(
     Extend population-weighted energy totals to include subnodes.
 
     Creates entries for each subnode by scaling the parent cluster's energy
-    profile based on the subnode's GIS demand data. Uses heat_totals for space
-    heating (due to .update() in prepare_sector_network) and energy_totals for
-    water heating when computing useful heat.
+    profile based on GIS demand data.
 
     Parameters
     ----------
     pop_weighted_energy_totals : pandas.DataFrame
-        Population-weighted energy totals indexed by cluster name
+        Population-weighted energy totals indexed by cluster name.
     pop_weighted_heat_totals : pandas.DataFrame
-        Population-weighted heat totals indexed by cluster name
+        Population-weighted heat totals indexed by cluster name.
     subnodes : geopandas.GeoDataFrame
-        Subnodes with cluster, name, and yearly_heat_demand_MWh columns
+        Subnodes with cluster, name, and yearly_heat_demand_MWh columns.
     heating_efficiencies : pandas.DataFrame
-        Heating efficiencies by country code
+        Heating efficiencies by country code.
     district_heating_loss : float
-        District heating network loss factor
+        District heating network loss factor.
     space_heat_reduction : float, optional
-        Fraction of space heating demand reduction, by default 0.0
+        Fraction of space heating demand reduction, by default 0.0.
 
     Returns
     -------
     pandas.DataFrame
-        Extended energy totals with subnodes added
+        Extended energy totals with subnodes added.
     """
     if len(subnodes) == 0:
         return pop_weighted_energy_totals.copy()
@@ -433,29 +407,27 @@ def extend_pop_weighted_heat_totals(
     """
     Extend population-weighted heat totals to include subnodes.
 
-    Creates entries for each subnode by scaling the parent cluster's heat
-    profile. Uses the same scaling methodology as extend_pop_weighted_energy_totals
-    since heat_totals.update() overwrites space columns in energy_totals.
+    Uses the same scaling methodology as extend_pop_weighted_energy_totals.
 
     Parameters
     ----------
     pop_weighted_heat_totals : pandas.DataFrame
-        Population-weighted heat totals indexed by cluster name
+        Population-weighted heat totals indexed by cluster name.
     pop_weighted_energy_totals : pandas.DataFrame
-        Population-weighted energy totals indexed by cluster name
+        Population-weighted energy totals indexed by cluster name.
     subnodes : geopandas.GeoDataFrame
-        Subnodes with cluster, name, and yearly_heat_demand_MWh columns
+        Subnodes with cluster, name, and yearly_heat_demand_MWh columns.
     heating_efficiencies : pandas.DataFrame
-        Heating efficiencies by country code
+        Heating efficiencies by country code.
     district_heating_loss : float
-        District heating network loss factor
+        District heating network loss factor.
     space_heat_reduction : float, optional
-        Fraction of space heating demand reduction, by default 0.0
+        Fraction of space heating demand reduction, by default 0.0.
 
     Returns
     -------
     pandas.DataFrame
-        Extended heat totals with subnodes added
+        Extended heat totals with subnodes added.
     """
     extended_totals = pop_weighted_heat_totals.copy()
 
@@ -475,7 +447,6 @@ def extend_pop_weighted_heat_totals(
         # Copy cluster's heat profile
         subnode_totals = _get_row(extended_totals, cluster).copy()
 
-        # ...existing scaling code...
         cluster_useful_heat = 0.0
         cluster_energy = _get_row(pop_weighted_energy_totals, cluster)
         for sector in ["residential", "services"]:
@@ -535,30 +506,30 @@ def extend_industrial_demand(
     district_heating_loss: float,
 ) -> pd.DataFrame:
     """
-    Extend industrial demand to include subnodes based on parent cluster's LT heat ratio.
+    Extend industrial demand to include subnodes.
 
-    Allocates low-temperature heat for industry to subnodes proportionally based on
-    the ratio of LT industry heat to total district heating demand in the parent cluster.
+    Allocates low-temperature heat for industry to subnodes proportionally
+    based on the LT-to-DH ratio in the parent cluster.
 
     Parameters
     ----------
     industrial_demand : pandas.DataFrame
-        Industrial demand by sector indexed by cluster name
+        Industrial demand by sector indexed by cluster name.
     subnodes : geopandas.GeoDataFrame
-        Subnodes with cluster, name, and yearly_heat_demand_MWh columns
+        Subnodes with cluster, name, and yearly_heat_demand_MWh columns.
     district_heat_share : pandas.DataFrame
-        District heat shares indexed by cluster name
+        District heat shares indexed by cluster name.
     pop_weighted_energy_totals : pandas.DataFrame
-        Population-weighted energy totals indexed by cluster name
+        Population-weighted energy totals indexed by cluster name.
     heating_efficiencies : pandas.DataFrame
-        Heating efficiencies by country code
+        Heating efficiencies by country code.
     district_heating_loss : float
-        District heating network loss factor
+        District heating network loss factor.
 
     Returns
     -------
     pandas.DataFrame
-        Extended industrial demand with subnodes added and parent values reduced
+        Extended industrial demand with subnodes added and parent values reduced.
     """
     if len(subnodes) == 0:
         return industrial_demand.copy()
@@ -690,14 +661,14 @@ def extend_hourly_heat_demand(
     Parameters
     ----------
     hourly_heat_demand : xarray.Dataset
-        Hourly heat demand profiles with 'node' coordinate
+        Hourly heat demand profiles with 'node' coordinate.
     subnodes : geopandas.GeoDataFrame
-        Subnodes with name and cluster columns
+        Subnodes with name and cluster columns.
 
     Returns
     -------
     xarray.Dataset
-        Extended hourly heat demand with subnodes added
+        Extended hourly heat demand with subnodes added.
     """
     if len(subnodes) == 0:
         return hourly_heat_demand
@@ -741,14 +712,14 @@ def extend_heat_dsm_profile(
     Parameters
     ----------
     dsm_profile : pandas.DataFrame
-        Heat DSM profiles with cluster names as columns
+        Heat DSM profiles with cluster names as columns.
     subnodes : geopandas.GeoDataFrame
-        Subnodes with name and cluster columns
+        Subnodes with name and cluster columns.
 
     Returns
     -------
     pandas.DataFrame
-        Extended DSM profile with subnodes added as new columns
+        Extended DSM profile with subnodes added as new columns.
     """
     if len(subnodes) == 0:
         return dsm_profile.copy()
@@ -770,7 +741,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "prepare_district_heating_subnodes",
+            "build_district_heating_subnode_demands",
             clusters=48,
             planning_horizons=2050,
         )
@@ -814,7 +785,6 @@ if __name__ == "__main__":
     else:
         logger.info(f"Processing {len(subnodes)} subnodes")
 
-    pop_layout = pd.read_csv(snakemake.input.pop_layout, index_col=0)
     district_heat_share = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
     pop_weighted_energy_totals = pd.read_csv(
         snakemake.input.pop_weighted_energy_totals, index_col=0
@@ -942,36 +912,18 @@ if __name__ == "__main__":
 
     # Save outputs
     district_heat_share_extended.to_csv(snakemake.output.district_heat_share_subnodes)
-    logger.info(
-        f"Saved extended district heat share to {snakemake.output.district_heat_share_subnodes}"
-    )
-
     pop_weighted_energy_totals_extended.to_csv(
         snakemake.output.pop_weighted_energy_totals_subnodes
     )
     pop_weighted_heat_totals_extended.to_csv(
         snakemake.output.pop_weighted_heat_totals_subnodes
     )
-
     industrial_demand_extended.to_csv(snakemake.output.industrial_demand_subnodes)
-    logger.info(
-        f"Saved extended industrial demand to {snakemake.output.industrial_demand_subnodes}"
-    )
-
-    # Save extended time-series
     hourly_heat_demand_extended.to_netcdf(snakemake.output.hourly_heat_demand_subnodes)
-    logger.info(
-        f"Saved extended hourly heat demand to {snakemake.output.hourly_heat_demand_subnodes}"
-    )
-
     dsm_profile_extended.to_csv(snakemake.output.heat_dsm_profile_subnodes)
-    logger.info(
-        f"Saved extended DSM profile to {snakemake.output.heat_dsm_profile_subnodes}"
-    )
 
-    # Log summary
     if len(subnodes) > 0:
         total_subnode_demand = subnodes["yearly_heat_demand_MWh"].sum()
         logger.info(
-            f"Processed {len(subnodes)} subnodes with total demand of {total_subnode_demand / 1e6:.2f} TWh/a"
+            f"Extended {len(subnodes)} subnodes ({total_subnode_demand / 1e6:.2f} TWh/a)"
         )
