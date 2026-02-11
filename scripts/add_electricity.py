@@ -607,8 +607,8 @@ def attach_conventional_generators(
         committable_attrs = ppl.carrier.isin(unit_commitment).to_frame("committable")
         for attr in unit_commitment.index:
             default = n.components["Generator"].defaults.loc[attr, "default"]
-            committable_attrs[attr] = (
-                ppl.carrier.map(unit_commitment.loc[attr]).fillna(default)
+            committable_attrs[attr] = ppl.carrier.map(unit_commitment.loc[attr]).fillna(
+                default
             )
     else:
         committable_attrs = {}
