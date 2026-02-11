@@ -797,10 +797,15 @@
               "default": 0.0,
               "description": "Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere."
             },
-            "co2_monthly_prices": {
+            "dynamic": {
               "default": false,
-              "description": "Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+              "description": "Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
               "type": "boolean"
+            },
+            "rolling_window": {
+              "default": 90,
+              "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
+              "type": "integer"
             }
           }
         }
@@ -953,6 +958,26 @@
           }
         },
         "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "instrat_co2_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -2883,31 +2908,39 @@
               "type": "number"
             },
             "corine": {
-              "description": "Configuration for CORINE land cover settings.",
-              "properties": {
-                "grid_codes": {
-                  "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
-                  "items": {
-                    "type": "integer"
-                  },
-                  "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
                 },
-                "distance": {
-                  "default": 1000,
-                  "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
-                  "type": "number"
-                },
-                "distance_grid_codes": {
-                  "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
-                  "items": {
-                    "type": "integer"
+                {
+                  "description": "Configuration for CORINE land cover settings.",
+                  "properties": {
+                    "grid_codes": {
+                      "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "type": "array"
+                    },
+                    "distance": {
+                      "default": 1000,
+                      "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
+                      "type": "number"
+                    },
+                    "distance_grid_codes": {
+                      "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "type": "array"
+                    }
                   },
-                  "type": "array"
+                  "required": [
+                    "grid_codes"
+                  ]
                 }
-              },
-              "required": [
-                "grid_codes"
-              ]
+              ],
+              "description": "CORINE land cover configuration."
             },
             "luisa": {
               "anyOf": [
@@ -3011,11 +3044,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -3186,11 +3226,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -3361,11 +3408,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -3543,11 +3597,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
             },
             "luisa": {
               "anyOf": [
@@ -3660,11 +3721,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
             },
             "luisa": {
               "anyOf": [
@@ -6164,10 +6232,15 @@
           "default": 0.0,
           "description": "Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere."
         },
-        "co2_monthly_prices": {
+        "dynamic": {
           "default": false,
-          "description": "Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+          "description": "Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
           "type": "boolean"
+        },
+        "rolling_window": {
+          "default": 90,
+          "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
+          "type": "integer"
         }
       }
     },
@@ -6733,11 +6806,18 @@
           "type": "number"
         },
         "corine": {
-          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-          "items": {
-            "type": "integer"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
         },
         "luisa": {
           "anyOf": [
@@ -6908,31 +6988,39 @@
           "type": "number"
         },
         "corine": {
-          "description": "Configuration for CORINE land cover settings.",
-          "properties": {
-            "grid_codes": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+          "anyOf": [
+            {
+              "type": "boolean"
             },
-            "distance": {
-              "default": 1000,
-              "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
-              "type": "number"
-            },
-            "distance_grid_codes": {
-              "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
-              "items": {
-                "type": "integer"
+            {
+              "description": "Configuration for CORINE land cover settings.",
+              "properties": {
+                "grid_codes": {
+                  "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                },
+                "distance": {
+                  "default": 1000,
+                  "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
+                  "type": "number"
+                },
+                "distance_grid_codes": {
+                  "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
               },
-              "type": "array"
+              "required": [
+                "grid_codes"
+              ]
             }
-          },
-          "required": [
-            "grid_codes"
-          ]
+          ],
+          "description": "CORINE land cover configuration."
         },
         "luisa": {
           "anyOf": [
@@ -7357,11 +7445,18 @@
           "type": "number"
         },
         "corine": {
-          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-          "items": {
-            "type": "integer"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
         },
         "luisa": {
           "anyOf": [
@@ -8675,31 +8770,39 @@
               "type": "number"
             },
             "corine": {
-              "description": "Configuration for CORINE land cover settings.",
-              "properties": {
-                "grid_codes": {
-                  "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
-                  "items": {
-                    "type": "integer"
-                  },
-                  "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
                 },
-                "distance": {
-                  "default": 1000,
-                  "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
-                  "type": "number"
-                },
-                "distance_grid_codes": {
-                  "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
-                  "items": {
-                    "type": "integer"
+                {
+                  "description": "Configuration for CORINE land cover settings.",
+                  "properties": {
+                    "grid_codes": {
+                      "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "type": "array"
+                    },
+                    "distance": {
+                      "default": 1000,
+                      "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
+                      "type": "number"
+                    },
+                    "distance_grid_codes": {
+                      "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "type": "array"
+                    }
                   },
-                  "type": "array"
+                  "required": [
+                    "grid_codes"
+                  ]
                 }
-              },
-              "required": [
-                "grid_codes"
-              ]
+              ],
+              "description": "CORINE land cover configuration."
             },
             "luisa": {
               "anyOf": [
@@ -8803,11 +8906,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -8978,11 +9088,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -9153,11 +9270,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -9335,11 +9459,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
             },
             "luisa": {
               "anyOf": [
@@ -9452,11 +9583,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
             },
             "luisa": {
               "anyOf": [
@@ -11444,10 +11582,15 @@
               "default": 0.0,
               "description": "Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere."
             },
-            "co2_monthly_prices": {
+            "dynamic": {
               "default": false,
-              "description": "Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+              "description": "Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
               "type": "boolean"
+            },
+            "rolling_window": {
+              "default": 90,
+              "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
+              "type": "integer"
             }
           }
         }
@@ -12231,6 +12374,26 @@
           }
         },
         "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "instrat_co2_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

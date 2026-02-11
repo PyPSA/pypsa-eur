@@ -153,6 +153,27 @@ def path_provider(dir, rdir, shared_resources, exclude_from_shared):
     )
 
 
+def script_path_provider(project_dir: Path) -> Callable[[str], Path]:
+    """
+    Returns a function that provides the full path to a script given its name.
+
+    Parameters
+    ----------
+    project_dir : Path
+        The root directory of the project (where the script directory is located).
+
+    Returns
+    -------
+    Callable[[str], Path]
+        A function that takes a script name as input and returns the full path to the script.
+    """
+
+    def _get_script_path(script: str) -> Path:
+        return Path("file://") / project_dir / "scripts" / script
+
+    return _get_script_path
+
+
 def get_shadow(run):
     """
     Returns 'shallow' or None depending on the user setting.
@@ -691,7 +712,7 @@ def update_config_from_wildcards(config, w, inplace=True):
                 config["electricity"]["gaslimit"] = gasl_value * 1e6
 
         if "Ept" in opts:
-            config["costs"]["emission_prices"]["co2_monthly_prices"] = True
+            config["costs"]["emission_prices"]["dynamic"] = True
 
         ep_enable, ep_value = find_opt(opts, "Ep")
         if ep_enable:

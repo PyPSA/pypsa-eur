@@ -5,13 +5,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-This script extracts monthly fuel prices of oil, gas, coal and lignite, as well
-as CO2 prices.
+This script extracts monthly fuel prices of oil, gas, coal and lignite.
 
 Description
 -----------
 
-The rule :mod:`build_monthly_prices` collects monthly fuel prices and CO2 prices
+The rule :mod:`build_monthly_prices` collects monthly fuel prices
 and translates them from different input sources to pypsa syntax
 
 Data sources:
@@ -19,8 +18,6 @@ Data sources:
     https://www.destatis.de/EN/Home/_node.html
     [2] average annual fuel price lignite, ENTSO-E
     https://2020.entsos-tyndp-scenarios.eu/fuel-commodities-and-carbon-prices/
-    [3] CO2 Prices, Emission spot primary auction, EEX
-    https://www.eex.com/en/market-data/environmental-markets/eua-primary-auction-spot-download
 
 
 Data was accessed at 16.5.2023
@@ -85,12 +82,6 @@ def get_fuel_price():
     return pd.concat(price, axis=1)
 
 
-def get_co2_price():
-    # emission price
-    co2_price = pd.read_excel(snakemake.input.co2_price_raw, index_col=1, header=5)
-    return co2_price["Auction Price €/tCO2"]
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -102,6 +93,3 @@ if __name__ == "__main__":
 
     fuel_price = get_fuel_price()
     fuel_price.to_csv(snakemake.output.fuel_price)
-
-    co2_price = get_co2_price()
-    co2_price.to_csv(snakemake.output.co2_price)

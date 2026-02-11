@@ -135,17 +135,17 @@ fields = {
 }
 
 eb_sectors = {
-    "Iron & steel": "Iron and steel",
-    "Chemical & petrochemical": "Chemical industry",
-    "Non-ferrous metals": "Non-metallic mineral products",
-    "Paper, pulp & printing": "Pulp, paper and printing",
-    "Food, beverages & tobacco": "Food, beverages and tobacco",
-    "Non-metallic minerals": "Non Ferrous Metals",
-    "Transport equipment": "Transport equipment",
-    "Machinery": "Machinery equipment",
-    "Textile & leather": "Textiles and leather",
-    "Wood & wood products": "Wood and wood products",
-    "Not elsewhere specified (industry)": "Other industrial sectors",
+    "FC_IND_IS_E": "Iron and steel",
+    "FC_IND_CPC_E": "Chemical industry",
+    "FC_IND_NFM_E": "Non Ferrous Metals",
+    "FC_IND_NMM_E": "Non-metallic mineral products",
+    "FC_IND_TE_E": "Transport equipment",
+    "FC_IND_MAC_E": "Machinery equipment",
+    "FC_IND_FBT_E": "Food, beverages and tobacco",
+    "FC_IND_PPP_E": "Pulp, paper and printing",
+    "FC_IND_WP_E": "Wood and wood products",
+    "FC_IND_TL_E": "Textiles and leather",
+    "FC_IND_NSP_E": "Other industrial sectors",
 }
 
 
@@ -171,27 +171,26 @@ def find_physical_output(df):
     return slice(start, end)
 
 
-def get_energy_ratio(country, eurostat_dir, jrc_dir, year, snakemake):
+def get_energy_ratio(country, eurostat, jrc_dir, year, snakemake):
     if country == "CH":
         # data ranges between 2014-2023
         e_country = pd.read_csv(
             snakemake.input.ch_industrial_production, index_col=0
         ).dropna()
         e_country = e_country.rename(index=ch_mapping).groupby(level=0).sum()
-        e_country = e_country[str(min(2019, year))]
+        e_country = e_country[str(year)]
         e_country *= tj_to_ktoe
     else:
-        ct_eurostat = country.replace("GB", "UK")
         # estimate physical output, energy consumption in the sector and country
-        fn = f"{eurostat_dir}/{ct_eurostat}-Energy-balance-sheets-April-2023-edition.xlsb"
-        df = pd.read_excel(
-            fn,
-            sheet_name=str(min(2019, year)),
-            index_col=2,
-            header=0,
-            skiprows=4,
+        e_country = (
+            eurostat.query(
+                "year == @year and country == @country and "
+                "siec == 'TOTAL' and nrg_bal in @eb_sectors.keys()"
+            )
+            .set_index("nrg_bal")
+            .value.rename(eb_sectors)
+            .div(ktoe_to_twh)
         )
-        e_country = df.loc[eb_sectors.keys(), "Total"].rename(eb_sectors)
 
     root = Path(jrc_dir, "EU27")
     fn = next(
@@ -215,7 +214,7 @@ def get_energy_ratio(country, eurostat_dir, jrc_dir, year, snakemake):
     return pd.Series({k: e_ratio[v] for k, v in sub2sect.items()})
 
 
-def industry_production_per_country(country, year, eurostat_dir, jrc_dir, snakemake):
+def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake):
     def get_sector_data(sector, country):
         jrc_country = jrc_names.get(country, country)
         root = Path(jrc_dir, jrc_country)
@@ -244,7 +243,7 @@ def industry_production_per_country(country, year, eurostat_dir, jrc_dir, snakem
     if country not in eu27:
         demand *= get_energy_ratio(
             country,
-            eurostat_dir,
+            eurostat,
             jrc_dir,
             year,
             snakemake,
@@ -255,14 +254,14 @@ def industry_production_per_country(country, year, eurostat_dir, jrc_dir, snakem
     return demand
 
 
-def industry_production(countries, year, eurostat_dir, jrc_dir):
+def industry_production(countries, year, eurostat, jrc_dir):
     nprocesses = snakemake.threads
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
 
     func = partial(
         industry_production_per_country,
         year=year,
-        eurostat_dir=eurostat_dir,
+        eurostat=eurostat,
         jrc_dir=jrc_dir,
         snakemake=snakemake,
     )
@@ -338,9 +337,10 @@ if __name__ == "__main__":
     params = snakemake.params.industry
 
     jrc_dir = snakemake.input.jrc
-    eurostat_dir = snakemake.input.eurostat
 
-    demand = industry_production(countries, year, eurostat_dir, jrc_dir)
+    eurostat = pd.read_csv(snakemake.input.eurostat)
+
+    demand = industry_production(countries, year, eurostat, jrc_dir)
 
     separate_basic_chemicals(demand, year)
 
