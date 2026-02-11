@@ -9,6 +9,7 @@ Release Notes
 Upcoming Release
 ================
 
+* Removed config options `sector:MWh_MeOH_per_tCO2`, `MWh_MeOH_per_MWh_H2`, and `MWh_MeOH_per_MWh_elec` in favour of corresponding data points from technology-data.
 * Download and process Eurostat energy balances from API. This replaces the discontinued ZIP bulk download.
 
 * The function `rescale_idees_from_eurostat` was removed.
