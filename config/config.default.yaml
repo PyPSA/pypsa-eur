@@ -1395,7 +1395,7 @@ data:
     source: archive
     version: latest
   powerplants:
-    source: primary
+    source: archive
     version: latest
   costs:
     source: primary

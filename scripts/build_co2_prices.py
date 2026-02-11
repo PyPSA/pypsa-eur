@@ -36,4 +36,6 @@ if __name__ == "__main__":
         .ffill()
     )
 
+    df_smoothed.index = df_smoothed.index.tz_localize(None)
+
     df_smoothed.to_csv(snakemake.output["csv"])

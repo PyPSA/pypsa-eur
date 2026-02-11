@@ -7,7 +7,7 @@ authors = ["Contributors to PyPSA-Eur"]
 channels = ["conda-forge", "bioconda", "gurobi"]
 name = "pypsa-eur"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
-version = "0.1.0"
+version = "2025.07.0"
 
 [tasks]
 
