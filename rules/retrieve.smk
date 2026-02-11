@@ -1266,7 +1266,7 @@ if OSM_DATASET_INCUMBENT["source"] in ["archive"] and OSM_DATASET_INCUMBENT[
                 copy2(input[key], output[key])
 
 
-elif OSM_DATASET["source"] == "build":
+if OSM_DATASET["source"] == "build":
     OSM_RAW_JSON = [
         "cables_way.json",
         "lines_way.json",
