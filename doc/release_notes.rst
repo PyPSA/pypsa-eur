@@ -9,6 +9,22 @@ Release Notes
 Upcoming Release
 ================
 
+* Adjust ``powerplants_filter`` to include power plants operational in 2025.
+
+* Rewrite mapping of power plant sites to model regions / buses. Previously, power plants were mapped to the nearest bus in the same country.
+  Now, power plants are mapped using a spatial join to the onshore and offshore regions.
+  This change is necessary as the administrative clustering does not conform to the previous nearest-bus mapping.
+
+* Removed some outdated hotfixes in `build_powerplants.py`.
+
+* Estimate renewable capacities using plant-level data from Powerplantmatching, instead of only Global Energy Monitor (GEM) data. The setting ``from_gem`` is renamed to ``from_powerplantmatching``.
+
+* New setting ``from_irenastat`` to use IRENASTAT data to supplement potential plant-level data from Powerplantmatching for renewable capacity estimation. This step can now be skipped if sufficient plant-level data is available from Powerplantmatching.
+
+* Update default year for renewable capacity estimation to 2024 (latest available).
+
+* Include waste-to-energy plants in electricity-only networks.
+
 * Download and process Eurostat energy balances from API. This replaces the discontinued ZIP bulk download.
 
 * The function `rescale_idees_from_eurostat` was removed.
