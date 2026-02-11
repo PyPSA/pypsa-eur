@@ -4,15 +4,14 @@
 
 import contextlib
 import copy
-import hashlib
 import logging
 import os
 import re
 import time
+from collections.abc import Callable
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable, Union
 
 import atlite
 import fiona
@@ -23,14 +22,6 @@ import requests
 import xarray as xr
 import yaml
 from snakemake.utils import update_config
-from tenacity import (
-    retry as tenacity_retry,
-)
-from tenacity import (
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -160,6 +151,27 @@ def path_provider(dir, rdir, shared_resources, exclude_from_shared):
         shared_resources=shared_resources,
         exclude_from_shared=exclude_from_shared,
     )
+
+
+def script_path_provider(project_dir: Path) -> Callable[[str], Path]:
+    """
+    Returns a function that provides the full path to a script given its name.
+
+    Parameters
+    ----------
+    project_dir : Path
+        The root directory of the project (where the script directory is located).
+
+    Returns
+    -------
+    Callable[[str], Path]
+        A function that takes a script name as input and returns the full path to the script.
+    """
+
+    def _get_script_path(script: str) -> Path:
+        return Path("file://") / project_dir / "scripts" / script
+
+    return _get_script_path
 
 
 def get_shadow(run):
@@ -415,45 +427,32 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
     return costs
 
 
-@tenacity_retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type(
-        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
-    ),
-)
 def progress_retrieve(url, file, disable=False):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    # Hotfix - Bug, tqdm not working with disable=False
-    disable = True
+
+    Path(file).parent.mkdir(parents=True, exist_ok=True)
 
     # Raise HTTPError for transient errors
     # 429: Too Many Requests (rate limiting)
     # 500, 502, 503, 504: Server errors
-    if disable:
-        response = requests.get(url, headers=headers, stream=True)
-        if response.status_code in (429, 500, 502, 503, 504):
-            response.raise_for_status()
-        with open(file, "wb") as f:
-            f.write(response.content)
-    else:
-        response = requests.get(url, headers=headers, stream=True)
-        if response.status_code in (429, 500, 502, 503, 504):
-            response.raise_for_status()
-        total_size = int(response.headers.get("content-length", 0))
-        chunk_size = 1024
+    response = requests.get(url, headers=headers, stream=True)
+    if response.status_code in (429, 500, 502, 503, 504):
+        response.raise_for_status()
+    total_size = int(response.headers.get("content-length", 0))
+    chunk_size = 1024
 
-        with tqdm(
-            total=total_size,
-            unit="B",
-            unit_scale=True,
-            unit_divisor=1024,
-            desc=str(file),
-        ) as t:
-            with open(file, "wb") as f:
-                for data in response.iter_content(chunk_size=chunk_size):
-                    f.write(data)
-                    t.update(len(data))
+    with tqdm(
+        total=total_size,
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+        desc=str(file),
+        disable=disable,
+    ) as t:
+        with open(file, "wb") as f:
+            for data in response.iter_content(chunk_size=chunk_size):
+                f.write(data)
+                t.update(len(data))
 
 
 def retry(func: Callable) -> Callable:
@@ -529,13 +528,17 @@ def mock_snakemake(
     import os
 
     import snakemake as sm
+    from packaging import version
     from pypsa.definitions.structures import Dict
+    from snakemake import __version__ as sm_version
     from snakemake.api import Workflow
     from snakemake.common import SNAKEFILE_CHOICES
+    from snakemake.logging import LoggerManager
     from snakemake.script import Snakemake
     from snakemake.settings.types import (
         ConfigSettings,
         DAGSettings,
+        OutputSettings,
         ResourceSettings,
         StorageSettings,
         WorkflowSettings,
@@ -576,15 +579,25 @@ def mock_snakemake(
         workflow_settings = WorkflowSettings()
         storage_settings = StorageSettings()
         dag_settings = DAGSettings(rerun_triggers=[])
-        workflow = Workflow(
-            config_settings,
-            resource_settings,
-            workflow_settings,
-            storage_settings,
-            dag_settings,
+
+        workflow_kwargs = dict(
+            config_settings=config_settings,
+            resource_settings=resource_settings,
+            workflow_settings=workflow_settings,
+            storage_settings=storage_settings,
+            dag_settings=dag_settings,
             storage_provider_settings=dict(),
             overwrite_workdir=workdir,
         )
+
+        # Snakemake version-dependent logger handling
+        if version.parse(sm_version) >= version.parse("9.14.6"):
+            output_settings = OutputSettings()
+            workflow_kwargs["logger_manager"] = LoggerManager(
+                logger=logger, settings=output_settings
+            )
+
+        workflow = Workflow(**workflow_kwargs)
         workflow.include(snakefile)
 
         if configfiles:
@@ -699,7 +712,7 @@ def update_config_from_wildcards(config, w, inplace=True):
                 config["electricity"]["gaslimit"] = gasl_value * 1e6
 
         if "Ept" in opts:
-            config["costs"]["emission_prices"]["co2_monthly_prices"] = True
+            config["costs"]["emission_prices"]["dynamic"] = True
 
         ep_enable, ep_value = find_opt(opts, "Ep")
         if ep_enable:
@@ -854,78 +867,6 @@ def update_config_from_wildcards(config, w, inplace=True):
 
     if not inplace:
         return config
-
-
-@tenacity_retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type(
-        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
-    ),
-)
-def get_checksum_from_zenodo(file_url):
-    parts = file_url.split("/")
-    record_id = parts[parts.index("records") + 1]
-    filename = parts[-1]
-
-    response = requests.get(f"https://zenodo.org/api/records/{record_id}", timeout=30)
-    # Raise HTTPError for transient errors
-    # 429: Too Many Requests (rate limiting)
-    # 500, 502, 503, 504: Server errors
-    if response.status_code in (429, 500, 502, 503, 504):
-        response.raise_for_status()
-    response.raise_for_status()
-    data = response.json()
-
-    for file in data["files"]:
-        if file["key"] == filename:
-            return file["checksum"]
-    return None
-
-
-def validate_checksum(file_path, zenodo_url=None, checksum=None):
-    """
-    Validate file checksum against provided or Zenodo-retrieved checksum.
-    Calculates the hash of a file using 64KB chunks. Compares it against a
-    given checksum or one from a Zenodo URL.
-
-    Parameters
-    ----------
-    file_path : str
-        Path to the file for checksum validation.
-    zenodo_url : str, optional
-        URL of the file on Zenodo to fetch the checksum.
-    checksum : str, optional
-        Checksum (format 'hash_type:checksum_value') for validation.
-
-    Raises
-    ------
-    AssertionError
-        If the checksum does not match, or if neither `checksum` nor `zenodo_url` is provided.
-
-
-    Examples
-    --------
-    >>> validate_checksum("/path/to/file", checksum="md5:abc123...")
-    >>> validate_checksum(
-    ...     "/path/to/file",
-    ...     zenodo_url="https://zenodo.org/records/12345/files/example.txt",
-    ... )
-
-    If the checksum is invalid, an AssertionError will be raised.
-    """
-    assert checksum or zenodo_url, "Either checksum or zenodo_url must be provided"
-    if zenodo_url:
-        checksum = get_checksum_from_zenodo(zenodo_url)
-    hash_type, checksum = checksum.split(":")
-    hasher = hashlib.new(hash_type)
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(65536), b""):  # 64kb chunks
-            hasher.update(chunk)
-    calculated_checksum = hasher.hexdigest()
-    assert calculated_checksum == checksum, (
-        "Checksum is invalid. This may be due to an incomplete download. Delete the file and re-execute the rule."
-    )
 
 
 def get_snapshots(
@@ -1084,7 +1025,7 @@ def rename_techs(label: str) -> str:
 
 
 def load_cutout(
-    cutout_files: Union[str, list[str]], time: Union[None, pd.DatetimeIndex] = None
+    cutout_files: str | list[str], time: None | pd.DatetimeIndex = None
 ) -> atlite.Cutout:
     """
     Load and optionally combine multiple cutout files.

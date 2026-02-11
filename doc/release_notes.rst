@@ -9,6 +9,99 @@ Release Notes
 Upcoming Release
 ================
 
+* Download and process Eurostat energy balances from API. This replaces the discontinued ZIP bulk download.
+
+* The function `rescale_idees_from_eurostat` was removed.
+
+* New rule `build_eurostat_balances` to build energy balances from Eurostat data. Outsourced from `build_energy_totals`
+* Updated CO2 emission allowance prices data source to Instrat API for real-time pricing data.
+* Improved OSM network building process (https://github.com/PyPSA/pypsa-eur/pull/2030): Introducing support for temporal attributes (start_date, construction tags) and pure DC buses (switching stations). The interactive network map has been completely rebuilt using PyDeck/deck.gl with GPU acceleration and includes custom JS controls, offering fuzzy search, clickable OSM references, URL-based view sharing (#theme/zoom/lat/lon), and substantially improved performance. Additionally, a generalised plot from https://www.nature.com/articles/s41597-025-04550-7 enables systematic comparison of network topology changes over time.
+
+* Add powerplantmatching v0.8.0 to data versions.
+
+* Add script path getter helper method to allow for rule inheritance in nested snakefiles.
+
+* Include new storage technologies such as li-ion, vanadium, lfp, lair, pair and iron-air. These technologies can now be configured as either store-link combinations or standalone storage units.
+  Implemented in both `add_electricity.py` and `prepare_sector_network.py` (https://github.com/PyPSA/pypsa-eur/pull/1961).
+  
+* Updated data sources for country-level electricity demand time series. In addition to the OPSD data (``retrieve_electricity_demand_opsd``, demand time series
+  are now downloaded via the ENTSO-E Transparency Platform API (``retrieve_electricity_demand_entsoe`` environment variable ``ENTSOE_API_KEY`` required)
+  and from the NESO data portal for Great Britain and Northern Ireland (``retrieve_electricity_demand_neso``).
+  Manual corrections and gap filling methods have been applied and checked for data until the end of 2025.
+  (https://github.com/PyPSA/pypsa-eur/pull/1828).
+
+* Applied scaling of kW and GW to MW for custom_costs as well (https://github.com/PyPSA/pypsa-eur/pull/2023).
+
+* Fix wildcards error in `clean_osm_data` rule message introduced in github.com/PyPSA/pypsa-eur/pull/1846 by replacing `wildcards.country` with expanded `config["countries"]` list (https://github.com/PyPSA/pypsa-eur/pull/2022).
+
+* Fix `None` default config parameter from creating zero availability for offshore wind (#2019).
+
+* Remove snakemake's slurm plugin from windows installations (https://github.com/PyPSA/pypsa-eur/pull/2009).
+
+* Added Xpress solver configuration options (``xpress-default`` and ``xpress-gpu``) with barrier method settings optimized for large-scale linear programming problems.
+
+* Added missing bidding zone data sources to data layer (https://github.com/PyPSA/pypsa-eur/pull/1991).
+
+* Fix virtual bus naming when building the transmission network from raw OSM data to use persistent names (https://github.com/PyPSA/pypsa-eur/pull/1956).
+
+* Fix column selection when preparing OSM pre-built releases (https://github.com/PyPSA/pypsa-eur/pull/1956).
+
+* Fix: capital-cost of solar-hsat did not get adjusted to current planning_horizon in myopic optimization
+
+* Removed the ``secrets`` configuration section and disallow setting Gurobi license credentials (WLSACCESSID, WLSSECRET, LICENSEID) in config files to prevent accidental exposure of sensitive credentials. Use environment variables or license files instead (https://github.com/PyPSA/pypsa-eur/pull/1989).
+
+* Fix ConsistencyError for Links without buses when `gas_network: true`, but no `conventional_generation` (https://github.com/PyPSA/pypsa-eur/pull/1971)
+
+* Fix ConsistencyError for Links without buses when `industry: true`, but no `conventional_generation` or `biomass` (https://github.com/PyPSA/pypsa-eur/pull/1971)
+
+* Fix `mock_snakemake` due to breaking `snakemake` upstream API changes, i.e., requiring passing a `LoggerManager` instance (https://github.com/PyPSA/pypsa-eur/pull/1984).
+
+* Added technology-data v0.13.4 (https://github.com/PyPSA/technology-data/releases/tag/v0.13.4) to data versions (https://github.com/PyPSA/pypsa-eur/pull/1985).
+
+* Important: PyPSA-Eur now uses a validation schema for configuration files. The schema
+  also contains the default values for all known configuration options, which means
+  `config/config.default.yaml` still exists and can be used, but will be automatically
+  exported from the schema. Changes to the default config, therefore now require the
+  schema to be updated. Find a detailed explanation in the contributors documentation
+  (https://github.com/PyPSA/pypsa-eur/pull/1912).
+
+* Fix bugs when using PyPSA-Eur as a Snakemake module by making sure that all file paths are defined relative to a rule's input or an output (https://github.com/PyPSA/pypsa-eur/pull/1967).
+
+* Fix compatibility of rules `build_gas_input_locations` and `build_gas_network` with pyogrio >=0.12.0 (https://github.com/PyPSA/pypsa-eur/pull/1955).
+
+* Added interactive (html) balance maps `results/maps/interactive/` (https://github.com/PyPSA/pypsa-eur/pull/1935) based on https://docs.pypsa.org/latest/user-guide/plotting/explore/. Settings for interactive maps can be found in `plotting.default.yaml` under `plotting["balance_map_interactive"]`.
+
+* Relocated and modified static (pdf) balance maps to `results/maps/static/` (https://github.com/PyPSA/pypsa-eur/pull/1935) for better organization.
+
+* With https://github.com/PyPSA/pypsa-eur/pull/1935, note that bus carriers for balance maps containing spaces need to be specified with underscores `_` in the configuration file, e.g., `co2_stored` instead of `co2 stored`. This is to ensure compatibility with queue managers like slurm.
+
+* Fix building osm network using overpass API (https://github.com/PyPSA/pypsa-eur/pull/1940).
+
+* Added configuration option to set overpass API URL, maximum retries, timeout and user agent information (https://github.com/PyPSA/pypsa-eur/pull/1940 and https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api). For a list of public overpass APIs see `here <https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances>`_.
+
+* Refactored `solve_network.py` and `solve_operations_network.py` to separate optimization problem preparation from solving, enabling inspection of optimization problems before solve execution.
+
+* Added example configurations for rolling horizon and iterative optimization modes in `config/examples/`.
+
+* Added existing biomass decentral/rural residential and services heating capacity.
+
+* Fix parsing in Swiss passenger cars data (https://github.com/PyPSA/pypsa-eur/pull/1934 and https://github.com/PyPSA/pypsa-eur/pull/1936).
+
+* Fix: ValueError with `cop_heat_pump` in `prepare_sector_network.py` if `tim_dep_hp_cop` is `false`.
+
+* Fixed OSM raw data cleaning to include `section` line relation role.
+
+* Fixed missing raw OSM HVDC links defined using the ``power=circuit`` tag (NOTE: ``type=route``+``route=power`` is `deprecated <https://wiki.openstreetmap.org/wiki/Tag%3Aroute%3Dpower>`_).
+
+* Fixed bugs with load shedding due to incorrect use of `sign` argument in `n.add` and `np.isscalar` (https://github.com/PyPSA/pypsa-eur/pull/1908).
+
+* chore: disable PTES dynamic capacity by default
+
+* Add CO2 emission prices configurable per planning horizon for sector-coupled models.
+  The CO2 price is added as a marginal cost on the `co2 atmosphere` Store.
+
+* Add `custom storage plugin <https://github.com/PyPSA/snakemake-storage-plugin-cached-http>`_ to handle retrievals from zenodo to address recurring failures.
+
 * Move to [pixi](https://pixi.sh/latest/) for robust cross-platform dependency management.
 
 * Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
@@ -67,20 +160,48 @@ Upcoming Release
 * Fix `retrieve_eurostat_data` and `retrieve_eurostat_household_data` on Windows by avoiding a double access to a temporary file.
   (https://github.com/PyPSA/pypsa-eur/pull/1825)
 
+* Update GEM steel plant tracker and use initial release of GEM cement plant tracker.
+
 * Added integration with the OETC platform
 
 * Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)
+
+* Add user-readable messages to each rule (https://github.com/PyPSA/pypsa-eur/pull/1846)
 
 * Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
 
 * Running perfect foresight is now marked as unstable and may not work as expected.
 
+* Add residential heat demand-side management (DSM) based on `smartEn study <https://smarten.eu/wp-content/uploads/2022/10/SmartEN-DSF-benefits-2030-Report_DIGITAL-1.pdf>`_ methodology. See new settings under `sector: residential_heat`.
+
+* Remove the hotfix in `progress_retrieve` and check that the directory exists (https://github.com/PyPSA/pypsa-eur/pull/1840).
+
 * Added minimum unit dispatch setting option for electrolysis
+
+* Feature: All input data to the model is now version controlled. The data versions are listed in `data/versions.csv` and can be configured in the configfile. (https://github.com/PyPSA/pypsa-eur/pull/1675)
+
+* Deprecate `shared_cutouts`: This configuration entry is no longer supported. Cutouts are always shared.
+  To use scenario specific cutouts with different time or spatial resolution, make sure to name those cutouts differently in the `atlite:` configuration entry.
+
+* Move cutouts into `data/cutouts/` directory for consistency. Note: This will trigger all cutouts to be re-downloaded or rebuild. If you need to retain downloaded cutouts, move them manually into `data/cutouts/`.
+
+* Deprecate the ability to determine ``cutout`` bounds based on ``regions_onshore`` and ``regions_offshore``.
+  Instead ``cutouts`` need to have their bounds explicitly defined in the configuration file.
+
+* Moved configuration for ``cutout`` preparation into a nested dictionary ``prepare_kwargs``.
+  This allows to pass any keyword argument supported by ``atlite.Cutout.prepare()`` like ``tmpdir``.
+
+* Deprecate the configuration options ``enable: retrieve``, ``enable: retrieve_databundle``, and ``enable: retrieve_cost_data``.
+  Instead, the rules are always included in the workflow. If no internet connection is available, the rules will fail.
 
 * Misc: Empty folders that are automatically generated by ``snakemake`` have been added to the repository, e.g. ``resources/`` and ``results/``.
   The ``purge`` rule now removes their contents but keeps the folders (https://github.com/PyPSA/pypsa-eur/pull/1764).
 
 * Misc: Automatically update the DAGs shown in the documentation (https://github.com/PyPSA/pypsa-eur/pull/1880).
+
+* Fix the WDPA links to function on Windows (https://github.com/PyPSA/pypsa-eur/pull/2008).
+
+* Fix: An issue with the download and extraction of WDPA and WDPA Marine data (https://github.com/PyPSA/pypsa-eur/issues/2005).
 
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
@@ -772,7 +893,6 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
   (https://github.com/PyPSA/pypsa-eur/pull/1474)
 
 * Updating all base shapes (country_shapes, europe_shape, nuts3_shapes, ...). The workflow has been modified to use higher resolution and more harmonised shapes (NUTS3 2021 01M data and OSM administration level 1 for non-NUTS3 countries, such as BA, MD, UA, and XK). Data sources for population and GDP p.c. have been updated to JRC ARDECO https://urban.jrc.ec.europa.eu/ardeco/ -- 2019 values are used. `build_gdp_pop_non_nuts3` (originally created to build regional GDP p.c. and population data for MD and UA) is now integrated into `build_shapes` and extended to build regional values for all non-NUTS3 countries using cutouts of the updated datasets `GDP_per_capita_PPP_1990_2015_v2.nc` and `ppp_2019_1km_Aggregated.tif`,
-
 
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================

@@ -1,4 +1,4 @@
-name: Test workflows
+name: Test
 
 on:
   push:
@@ -18,8 +18,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  run-tests:
-    name: OS
+  unit-tests:
+    name: Unit
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.9.4
+      with:
+        pixi-version: v0.59.0
+        cache: true
+        cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
+
+    - name: Run unit tests
+      run: |
+        pixi run unit-tests
+
+  integration-tests:
+    name: Integration
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -32,43 +54,85 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
+
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          src:
+            - 'scripts/**'
+            - 'rules/**'
+            - 'data/**'
+            - 'Snakefile'
+            - 'config/**'
+            - 'pixi.toml'
+            - 'pixi.lock'
+            - '.github/workflows/test.yaml'
+
+    - name: Free up disk space
+      run: |
+        echo "Initial disk space"
+        df -h
+        echo "Free up disk space"
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force
+        sudo docker builder prune -a --force
+        echo "Final disk space"
+        df -h
+
+    - name: Skip - no source changes
+      if: steps.filter.outputs.src != 'true' && github.event_name != 'schedule'
+      run: echo "Skipping tests because no source code changes detected"
 
     - name: Setup Pixi
-      uses: prefix-dev/setup-pixi@v0.9.1
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      uses: prefix-dev/setup-pixi@v0.9.4
       with:
         pixi-version: v0.59.0
         cache: true
-        # Do not cache in branches
-        cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+        cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
 
     - name: Setup cache keys
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       run: |
-        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
+        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data
+        echo "MONTH=$(date +'%Y%m')" >> $GITHUB_ENV # cutouts
+        echo "VERSIONS_HASH=${{ hashFiles('data/versions.csv') }}" >> $GITHUB_ENV
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       with:
-        path: |
-          data
-          cutouts
-        key: data-cutouts-${{ env.WEEK }}
+        path: data
+        key: data-${{ env.WEEK }}-${{ env.VERSIONS_HASH }}
+
+    - uses: actions/cache@v5
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      with:
+        path: cutouts
+        key: cutouts-${{ env.MONTH }}
+
+    - name: Restore git-tracked files in data/
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      run: git checkout HEAD -- data/
 
     - name: Run pylint check on scripts
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
       # check for undefined variables to reuse functions across scripts
       run: |
         pixi run pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
 
     - name: Run snakemake test workflows
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      env:
+        SNAKEMAKE_STORAGE_CACHED_HTTP_CACHE: ""
+        SNAKEMAKE_STORAGE_CACHED_HTTP_SKIP_REMOTE_CHECKS: "1"
       run: |
         pixi run integration-tests
 
-    - name: Run unit tests
-      run: |
-        pixi run unit-test
-
     - name: Upload artifacts
       if: always()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: results-${{ matrix.os }}
         path: |
@@ -76,3 +140,7 @@ jobs:
           .snakemake/log
           results
         retention-days: 3
+
+    - name: Show remaining disk space
+      if: always()
+      run: df -h

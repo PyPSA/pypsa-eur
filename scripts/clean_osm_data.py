@@ -304,6 +304,51 @@ def _clean_rating(column):
     return column.astype(str)
 
 
+def _clean_date(column):
+    """
+    Function to clean the raw date column: manual fixing and drop nan values
+    Args:
+    - column: pandas Series, the column to be cleaned
+    Returns:
+    - column: pandas Series of datetime64, the cleaned column (with NaT for invalid dates)
+    """
+    logger.info("Cleaning dates.")
+    column = column.copy()
+
+    # Replace NaN/None with empty string first
+    column = column.fillna("")
+    column = column.replace({pd.NA: "", None: ""})
+
+    # Clean text indicators of uncertainty
+    column = (
+        column.astype(str)
+        .str.lower()
+        .str.replace("unknown", "", regex=False)
+        .str.replace("approx", "", regex=False)
+        .str.replace("c.", "", regex=False)
+        .str.replace("circa", "", regex=False)
+        .str.replace("about", "", regex=False)
+        .str.replace("?", "", regex=False)
+        .str.replace("<na>", "", regex=False)
+        .str.replace("nan", "", regex=False)
+        .str.replace("none", "", regex=False)
+        .str.strip()  # Remove leading/trailing whitespace
+    )
+
+    # Remove all remaining non-numeric characters except for dashes
+    # Note: removed semicolons unless you have multi-date entries
+    column = column.apply(lambda x: re.sub(r"[^0-9-]", "", x))
+
+    # Replace empty strings with NaN before datetime conversion
+    column = column.replace("", np.nan)
+
+    # Convert to datetime (keeps NaT for invalid/missing dates)
+    column = pd.to_datetime(column, errors="coerce", format="mixed")
+
+    # Return as datetime64, NOT string
+    return column
+
+
 def _split_cells(df, cols=["voltage"]):
     """
     Split semicolon separated cells i.e. [66000;220000] and create new
@@ -413,6 +458,9 @@ def _import_lines_and_cables(path_lines):
         "frequency",
         "voltage",
         "wires",
+        "construction",
+        "construction:power",
+        "start_date",
     ]
     df_lines = pd.DataFrame(columns=columns)
 
@@ -442,6 +490,9 @@ def _import_lines_and_cables(path_lines):
                     "frequency",
                     "voltage",
                     "wires",
+                    "construction",
+                    "construction:power",
+                    "start_date",
                 ]
 
                 tags = pd.json_normalize(df["tags"]).map(
@@ -483,6 +534,9 @@ def _import_routes_relation(path_relation):
         "cables",
         "frequency",
         "voltage",
+        "construction",
+        "construction:power",
+        "start_date",
     ]
     df_relation = pd.DataFrame(columns=columns)
 
@@ -512,6 +566,9 @@ def _import_routes_relation(path_relation):
                     "frequency",
                     "voltage",
                     "rating",
+                    "construction",
+                    "construction:power",
+                    "start_date",
                 ]
 
                 tags = pd.json_normalize(df["tags"]).map(
@@ -556,7 +613,7 @@ def _create_single_link(row):
     If the longest link is a MultiLineString, it extracts the longest
     linestring from it. The resulting single link is returned.
     """
-    valid_roles = ["line", "cable"]
+    valid_roles = ["line", "cable", "section"]
     df = pd.json_normalize(row["members"])
     df = df[df["role"].isin(valid_roles)]
     df.loc[:, "geometry"] = df.apply(_create_linestring, axis=1)
@@ -1078,12 +1135,14 @@ def _finalise_substations(df_substations):
         containing substations data.
 
     Returns:
-        df_substations (pandas.DataFrame(): The DataFrame with finalised column
+        df_substations (pandas.DataFrame): The DataFrame with finalised column
         types and transformed data.
     """
     logger.info("Finalising substations column types.")
+
     df_substations = df_substations.copy()
-    # rename columns
+
+    # Rename columns
     df_substations.rename(
         columns={
             "id": "bus_id",
@@ -1093,29 +1152,38 @@ def _finalise_substations(df_substations):
         inplace=True,
     )
 
-    # Initiate new columns for subsequent build_osm_network step
-    df_substations.loc[:, "contains"] = df_substations["bus_id"].apply(
-        lambda x: x.split("-")[0]
-    )
+    # Handle empty DataFrame early - after rename so column names are correct
+    if df_substations.empty:
+        logger.warning("Empty substations DataFrame provided.")
+        # Add the new columns that would be created below
+        df_substations["contains"] = pd.Series(dtype=object)
+        df_substations["x_node"] = pd.Series(dtype=bool)
+    else:
+        # Initiate new columns for subsequent build_osm_network step
+        df_substations.loc[:, "contains"] = df_substations["bus_id"].apply(
+            lambda x: x.split("-")[0]
+        )
+        # Initialise x_node column to False
+        df_substations.loc[:, "x_node"] = False
 
-    # Initialise x_node column (if the bus is part of an interconnector) to False, will be set later
-    df_substations.loc[:, "x_node"] = False
-
-    # Only included needed columns
+    # Only include needed columns (works for both empty and non-empty)
     df_substations = df_substations[
         [
             "bus_id",
             "voltage",
             "country",
             "x_node",
+            "under_construction",
+            "start_date",
             "geometry",
             "polygon",
             "contains",
         ]
     ]
 
-    # Substation data types
-    df_substations["voltage"] = df_substations["voltage"].astype(int)
+    # Substation data types (skip for empty to avoid errors)
+    if not df_substations.empty:
+        df_substations["voltage"] = df_substations["voltage"].astype(int)
 
     return df_substations
 
@@ -1161,6 +1229,8 @@ def _finalise_lines(df_lines):
             "bus1",
             "length",
             "underground",
+            "under_construction",
+            "start_date",
             "geometry",
         ]
     ]
@@ -1209,6 +1279,8 @@ def _finalise_links(df_links):
             "bus1",
             "length",
             "underground",
+            "under_construction",
+            "start_date",
             "geometry",
         ]
     ]
@@ -1242,6 +1314,9 @@ def _import_substations(path_substations):
         "substation",
         "voltage",
         "frequency",
+        "construction",
+        "construction:power",
+        "start_date",
     ]
     cols_substations_relation = [
         "id",
@@ -1250,6 +1325,9 @@ def _import_substations(path_substations):
         "substation",
         "voltage",
         "frequency",
+        "construction",
+        "construction:power",
+        "start_date",
     ]
     df_substations_way = pd.DataFrame(columns=cols_substations_way)
     df_substations_relation = pd.DataFrame(columns=cols_substations_relation)
@@ -1278,7 +1356,15 @@ def _import_substations(path_substations):
                 )
                 df["country"] = country
 
-                col_tags = ["power", "substation", "voltage", "frequency"]
+                col_tags = [
+                    "power",
+                    "substation",
+                    "voltage",
+                    "frequency",
+                    "construction",
+                    "construction:power",
+                    "start_date",
+                ]
 
                 tags = pd.json_normalize(df["tags"]).map(
                     lambda x: str(x) if pd.notnull(x) else x
@@ -1592,7 +1678,11 @@ if __name__ == "__main__":
 
     # Parameters
     crs = "EPSG:4326"  # Correct crs for OSM data
-    min_voltage_ac = 60000  # [unit: V] Minimum voltage value to filter AC lines.
+    voltages = snakemake.params.voltages
+
+    min_voltage_ac = (
+        min(voltages) * 1e3
+    )  # [unit: V] Minimum voltage value to filter AC lines.
     min_voltage_dc = 150000  #  [unit: V] Minimum voltage value to filter DC links.
 
     logger.info("---")
@@ -1605,7 +1695,14 @@ if __name__ == "__main__":
 
     # Cleaning process
     df_substations = _import_substations(path_substations)
+
     df_substations["voltage"] = _clean_voltage(df_substations["voltage"])
+    # Clean dates and construction status
+    df_substations["under_construction"] = (
+        df_substations["construction"].notna()
+        | df_substations["construction:power"].notna()
+    )
+    df_substations["start_date"] = _clean_date(df_substations["start_date"])
 
     # Extract converter subset
     df_substations.reset_index(drop=True, inplace=True)
@@ -1625,7 +1722,14 @@ if __name__ == "__main__":
     # Merge touching polygons
     df_substations = _merge_touching_polygons(df_substations)
     df_substations = _create_substations_poi(df_substations)
+
+    # Store DC switching stations
+    df_dc_switching = df_substations.query(
+        "frequency=='0' & substation=='switching'"
+    ).copy()
+
     df_substations = _finalise_substations(df_substations)
+    df_dc_switching = _finalise_substations(df_dc_switching)
 
     # Create polygon GeoDataFrame to remove lines within substations
     gdf_substations_polygon = gpd.GeoDataFrame(
@@ -1633,8 +1737,19 @@ if __name__ == "__main__":
         geometry="polygon",
         crs=crs,
     )
-
     gdf_substations_polygon["geometry"] = gdf_substations_polygon.polygon.copy()
+
+    gdf_dc_switching = gpd.GeoDataFrame(
+        df_dc_switching.drop(columns=["polygon"]),
+        geometry="geometry",
+        crs=crs,
+    )
+    gdf_dc_switching_polygon = gpd.GeoDataFrame(
+        df_dc_switching[["bus_id", "polygon", "voltage"]],
+        geometry="polygon",
+        crs=crs,
+    )
+    gdf_dc_switching_polygon["geometry"] = gdf_dc_switching_polygon.polygon.copy()
 
     # Continue cleaning of converters
     logger.info("---")
@@ -1645,7 +1760,9 @@ if __name__ == "__main__":
     )
     df_converters.reset_index(drop=True, inplace=True)
     gdf_converters = gpd.GeoDataFrame(
-        df_converters[["id", "geometry"]], geometry="geometry", crs=crs
+        df_converters[["id", "under_construction", "start_date", "geometry"]],
+        geometry="geometry",
+        crs=crs,
     )
 
     ### Lines/Cables relations
@@ -1659,6 +1776,14 @@ if __name__ == "__main__":
 
     df_lines_cables_relation = df_routes_relation.copy()
     df_lines_cables_relation = _drop_duplicate_lines(df_lines_cables_relation)
+    df_lines_cables_relation["under_construction"] = (
+        df_lines_cables_relation["construction"].notna()
+        | df_lines_cables_relation["construction:power"].notna()
+    )
+    df_lines_cables_relation["start_date"] = _clean_date(
+        df_lines_cables_relation["start_date"]
+    )
+
     df_lines_cables_relation.loc[:, "voltage"] = _clean_voltage(
         df_lines_cables_relation["voltage"]
     )
@@ -1728,7 +1853,15 @@ if __name__ == "__main__":
 
     df_lines_cables_relation.rename(columns={"id": "line_id"}, inplace=True)
     df_lines_cables_relation = df_lines_cables_relation[
-        ["line_id", "circuits", "voltage", "geometry", "contains"]
+        [
+            "line_id",
+            "circuits",
+            "voltage",
+            "under_construction",
+            "start_date",
+            "geometry",
+            "contains",
+        ]
     ]
     df_lines_cables_relation["circuits"] = df_lines_cables_relation["circuits"].astype(
         int
@@ -1762,6 +1895,11 @@ if __name__ == "__main__":
 
     # Cleaning process
     df_lines.loc[:, "voltage"] = _clean_voltage(df_lines["voltage"])
+    # Clean dates and construction status
+    df_lines["under_construction"] = (
+        df_lines["construction"].notna() | df_lines["construction:power"].notna()
+    )
+    df_lines["start_date"] = _clean_date(df_lines["start_date"])
     df_lines, list_voltages = _filter_by_voltage(df_lines, min_voltage=min_voltage_ac)
     df_lines.loc[:, "circuits"] = _clean_circuits(df_lines["circuits"])
     df_lines.loc[:, "cables"] = _clean_cables(df_lines["cables"])
@@ -1820,6 +1958,13 @@ if __name__ == "__main__":
     )
 
     df_links = _drop_duplicate_lines(df_links)
+
+    # Clean dates and construction status
+    df_links["under_construction"] = (
+        df_links["construction"].notna() | df_links["construction:power"].notna()
+    )
+    df_links["start_date"] = _clean_date(df_links["start_date"])
+
     df_links.loc[:, "voltage"] = _clean_voltage(df_links["voltage"])
     df_links, list_voltages = _filter_by_voltage(df_links, min_voltage=min_voltage_dc)
     # Keep only highest voltage of split string
@@ -1863,6 +2008,12 @@ if __name__ == "__main__":
     )
     logger.info(f"Exporting clean substations to {output_substations}")
     gdf_substations.to_file(output_substations, driver="GeoJSON")
+    logger.info("Exporting clean DC switching stations with polygon shapes.")
+    gdf_dc_switching_polygon.drop(columns=["geometry"]).to_file(
+        snakemake.output["dc_switching_polygon"], driver="GeoJSON"
+    )
+    logger.info("Exporting clean DC switching stations as subset of substations.")
+    gdf_dc_switching.to_file(snakemake.output["dc_switching"], driver="GeoJSON")
     logger.info(f"Exporting converter polygons to {output_converters_polygon}")
     gdf_converters.to_file(output_converters_polygon, driver="GeoJSON")
     logger.info(f"Exporting clean lines to {output_lines}")

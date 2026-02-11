@@ -6,16 +6,21 @@ from pathlib import Path
 import yaml
 from os.path import normpath, exists, join
 from shutil import copyfile, move, rmtree
+from dotenv import load_dotenv
 from snakemake.utils import min_version
+
+load_dotenv()
 
 min_version("8.11")
 
 from scripts._helpers import (
-    path_provider,
-    get_scenarios,
     get_rdir,
+    get_scenarios,
     get_shadow,
+    path_provider,
+    script_path_provider,
 )
+from scripts.lib.validation.config import validate_config
 
 
 configfile: "config/config.default.yaml"
@@ -27,6 +32,8 @@ if Path("config/config.yaml").exists():
     configfile: "config/config.yaml"
 
 
+validate_config(config)
+
 run = config["run"]
 scenarios = get_scenarios(run)
 RDIR = get_rdir(run)
@@ -37,9 +44,8 @@ exclude_from_shared = run["shared_resources"]["exclude"]
 logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
 benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
 resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
+scripts = script_path_provider(Path(workflow.snakefile).parent)
 
-cutout_dir = config["atlite"]["cutout_directory"]
-CDIR = Path(cutout_dir).joinpath("" if run["shared_cutouts"] else RDIR)
 RESULTS = "results/" + RDIR
 
 
@@ -55,6 +61,12 @@ wildcard_constraints:
 
 
 include: "rules/common.smk"
+
+
+# Data constants
+OSM_DATASET = dataset_version("osm")
+
+
 include: "rules/collect.smk"
 include: "rules/retrieve.smk"
 include: "rules/build_electricity.smk"
@@ -90,7 +102,7 @@ rule all:
         ),
         expand(
             RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             run=config["run"]["name"],
             **config["scenario"],
         ),
@@ -103,7 +115,7 @@ rule all:
         lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
                 if config_provider("sector", "H2_network")(w)
                 else []
             ),
@@ -113,7 +125,7 @@ rule all:
         lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
                 if config_provider("sector", "gas_network")(w)
                 else []
             ),
@@ -127,15 +139,6 @@ rule all:
                 else []
             ),
             run=config["run"]["name"],
-        ),
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
         ),
         expand(
             RESULTS
@@ -153,7 +156,7 @@ rule all:
         lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_river_water.html"
+                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_river_water.html"
                 if config_provider("plotting", "enable_heat_source_maps")(w)
                 and "river_water"
                 in config_provider("sector", "heat_pump_sources", "urban central")(w)
@@ -165,7 +168,7 @@ rule all:
         lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_sea_water.html"
+                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_sea_water.html"
                 if config_provider("plotting", "enable_heat_source_maps")(w)
                 and "sea_water"
                 in config_provider("sector", "heat_pump_sources", "urban central")(w)
@@ -177,7 +180,7 @@ rule all:
         lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_ambient_air.html"
+                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_ambient_air.html"
                 if config_provider("plotting", "enable_heat_source_maps")(w)
                 and "air"
                 in config_provider("sector", "heat_pump_sources", "urban central")(w)
@@ -190,7 +193,7 @@ rule all:
         lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_river_water.html"
+                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_river_water.html"
                 if config_provider("plotting", "enable_heat_source_maps")(w)
                 and "river_water"
                 in config_provider("sector", "heat_pump_sources", "urban central")(w)
@@ -217,6 +220,8 @@ rule all:
             run=config["run"]["name"],
             **config["scenario"],
         ),
+        lambda w: balance_map_paths("static", w),
+        lambda w: balance_map_paths("interactive", w),
     default_target: True
 
 

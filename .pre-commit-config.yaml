@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
-exclude: "^LICENSES"
+exclude: "^LICENSES|^config/schema\\.json$|^config/config\\.default\\.yaml$"
 
 ci:
   autoupdate_schedule: quarterly
@@ -10,14 +10,13 @@ repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0
   hooks:
-  - id: check-merge-conflict
   - id: check-added-large-files
     args: ["--maxkb=2000"]
 
 # Run ruff to lint and format
 - repo: https://github.com/astral-sh/ruff-pre-commit
   # Ruff version.
-  rev: v0.13.3
+  rev: v0.14.10
   hooks:
     # Run the linter.
   - id: ruff
@@ -58,6 +57,6 @@ repos:
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
-  rev: v6.0.0
+  rev: v6.2.0
   hooks:
   - id: reuse-lint-file

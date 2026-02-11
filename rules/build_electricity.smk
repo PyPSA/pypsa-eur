@@ -4,15 +4,19 @@
 
 
 rule build_electricity_demand:
+    message:
+        "Building electricity demand time series"
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
-        reported=ancient("data/electricity_demand_raw.csv"),
+        opsd=rules.retrieve_electricity_demand_opsd.output["csv"],
+        neso=rules.retrieve_electricity_demand_neso.output["csv"],
+        entsoe=rules.retrieve_electricity_demand_entsoe.output["csv"],
         synthetic=lambda w: (
-            ancient("data/load_synthetic_raw.csv")
+            ancient(rules.retrieve_synthetic_electricity_demand.output["csv"])
             if config_provider("load", "supplement_synthetic")(w)
             else []
         ),
@@ -25,10 +29,12 @@ rule build_electricity_demand:
     resources:
         mem_mb=5000,
     script:
-        "../scripts/build_electricity_demand.py"
+        scripts("build_electricity_demand.py")
 
 
 rule build_powerplants:
+    message:
+        "Building powerplant list for {wildcards.clusters} clusters"
     params:
         powerplants_filter=config_provider("electricity", "powerplants_filter"),
         custom_powerplants=config_provider("electricity", "custom_powerplants"),
@@ -36,6 +42,7 @@ rule build_powerplants:
         countries=config_provider("countries"),
     input:
         network=resources("networks/base_s_{clusters}.nc"),
+        powerplants=rules.retrieve_powerplants.output["powerplants"],
         custom_powerplants="data/custom_powerplants.csv",
     output:
         resources("powerplants_s_{clusters}.csv"),
@@ -47,29 +54,30 @@ rule build_powerplants:
     resources:
         mem_mb=7000,
     script:
-        "../scripts/build_powerplants.py"
+        scripts("build_powerplants.py")
 
 
 def input_base_network(w):
     base_network = config_provider("electricity", "base_network")(w)
-    osm_prebuilt_version = config_provider("electricity", "osm-prebuilt-version")(w)
+    source = config_provider("data", "osm", "source")(w)
     components = {"buses", "lines", "links", "converters", "transformers"}
-    if base_network == "osm-raw":
-        inputs = {c: resources(f"osm-raw/build/{c}.csv") for c in components}
+    if (base_network == "osm") and (source == "archive"):
+        OSM_DATASET = dataset_version("osm")
+        inputs = {c: f"{OSM_DATASET['folder']}/{c}.csv" for c in components}
+    elif base_network == "osm" and (source == "build"):
+        inputs = {c: resources(f"osm/build/{c}.csv") for c in components}
     elif base_network == "tyndp":
         inputs = {c: resources(f"tyndp/build/{c}.csv") for c in components}
-    elif base_network == "osm-prebuilt":
-        inputs = {
-            c: f"data/{base_network}/{osm_prebuilt_version}/{c}.csv" for c in components
-        }
     elif base_network == "entsoegridkit":
-        inputs = {c: f"data/{base_network}/{c}.csv" for c in components}
+        inputs = {c: f"data/entsoegridkit/{c}.csv" for c in components}
         inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
         inputs["links_p_nom"] = "data/links_p_nom.csv"
     return inputs
 
 
 rule base_network:
+    message:
+        "Building base network"
     params:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
@@ -98,25 +106,29 @@ rule base_network:
     resources:
         mem_mb=2000,
     script:
-        "../scripts/base_network.py"
+        scripts("base_network.py")
 
 
 rule build_osm_boundaries:
+    message:
+        "Building OSM boundaries for {wildcards.country}"
     input:
-        json="data/osm-boundaries/json/{country}_adm1.json",
-        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
+        json=f"{OSM_BOUNDARIES_DATASET['folder']}/{{country}}_adm1.json",
+        eez=ancient(rules.retrieve_eez.output["gpkg"]),
     output:
-        boundary="data/osm-boundaries/build/{country}_adm1.geojson",
+        boundary=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/{{country}}_adm1.geojson",
     log:
         "logs/build_osm_boundaries_{country}.log",
     threads: 1
     resources:
         mem_mb=1500,
     script:
-        "../scripts/build_osm_boundaries.py"
+        scripts("build_osm_boundaries.py")
 
 
 rule build_bidding_zones:
+    message:
+        "Building bidding zones"
     params:
         countries=config_provider("countries"),
         remove_islands=config_provider(
@@ -126,8 +138,8 @@ rule build_bidding_zones:
             "clustering", "build_bidding_zones", "aggregate_to_tyndp"
         ),
     input:
-        bidding_zones_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
-        bidding_zones_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+        bidding_zones_entsoepy=f"{BIDDING_ZONES_ENTSOEPY_DATASET['folder']}/bidding_zones_entsoepy.geojson",
+        bidding_zones_electricitymaps=f"{BIDDING_ZONES_ELECTRICITYMAPS_DATASET['folder']}/bidding_zones_electricitymaps.geojson",
     output:
         file=resources("bidding_zones.geojson"),
     log:
@@ -136,29 +148,31 @@ rule build_bidding_zones:
     resources:
         mem_mb=1500,
     script:
-        "../scripts/build_bidding_zones.py"
+        scripts("build_bidding_zones.py")
 
 
 rule build_shapes:
+    message:
+        "Building geographical shapes"
     params:
         config_provider("clustering", "mode"),
         countries=config_provider("countries"),
     input:
-        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
-        nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-        ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
-        md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
-        ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
-        xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
-        nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
-        nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
+        eez=ancient(rules.retrieve_eez.output["gpkg"]),
+        nuts3_2021=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
+        ba_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/BA_adm1.geojson",
+        md_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/MD_adm1.geojson",
+        ua_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/UA_adm1.geojson",
+        xk_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/XK_adm1.geojson",
+        nuts3_gdp=rules.retrieve_jrc_ardeco.output["ardeco_gdp"],
+        nuts3_pop=rules.retrieve_jrc_ardeco.output["ardeco_pop"],
         bidding_zones=lambda w: (
             resources("bidding_zones.geojson")
             if config_provider("clustering", "mode")(w) == "administrative"
             else []
         ),
-        other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
-        other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
+        other_gdp=rules.retrieve_gdp_per_capita.output["gdp"],
+        other_pop=rules.retrieve_population_count.output["tif"],
     output:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -172,33 +186,34 @@ rule build_shapes:
     resources:
         mem_mb=1500,
     script:
-        "../scripts/build_shapes.py"
+        scripts("build_shapes.py")
 
 
-if config["enable"].get("build_cutout", False):
+if CUTOUT_DATASET["source"] in ["build"]:
 
     rule build_cutout:
+        message:
+            "Building cutout data for {wildcards.cutout}"
         params:
             cutouts=config_provider("atlite", "cutouts"),
-        input:
-            regions_onshore=resources("regions_onshore.geojson"),
-            regions_offshore=resources("regions_offshore.geojson"),
         output:
-            protected(CDIR.joinpath("{cutout}.nc").as_posix()),
+            cutout=CUTOUT_DATASET["folder"] / "{cutout}.nc",
         log:
-            logs(CDIR.joinpath("build_cutout", "{cutout}.log").as_posix()),
+            "logs/build_cutout/{cutout}.log",
         benchmark:
-            Path("benchmarks").joinpath(CDIR, "build_cutout_{cutout}").as_posix()
+            "benchmarks/build_cutout/{cutout}"
         threads: config["atlite"].get("nprocesses", 4)
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
         script:
-            "../scripts/build_cutout.py"
+            scripts("build_cutout.py")
 
 
 rule build_ship_raster:
+    message:
+        "Building ship density raster"
     input:
-        ship_density="data/shipdensity_global.zip",
+        ship_density=rules.retrieve_ship_raster.output["zip_file"],
         cutout=lambda w: input_cutout(w),
     output:
         resources("shipdensity_raster.tif"),
@@ -209,18 +224,20 @@ rule build_ship_raster:
     benchmark:
         benchmarks("build_ship_raster")
     script:
-        "../scripts/build_ship_raster.py"
+        scripts("build_ship_raster.py")
 
 
 rule determine_availability_matrix_MD_UA:
+    message:
+        "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} technology"
     params:
         renewable=config_provider("renewable"),
     input:
-        copernicus="data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
-        wdpa="data/WDPA.gpkg",
-        wdpa_marine="data/WDPA_WDOECM_marine.gpkg",
+        copernicus=rules.download_copernicus_land_cover.output["tif"],
+        wdpa=rules.retrieve_wdpa.output["gpkg"],
+        wdpa_marine=rules.retrieve_wdpa_marine.output["gpkg"],
         gebco=lambda w: (
-            "data/bundle/gebco/GEBCO_2014_2D.nc"
+            rules.retrieve_gebco.output["gebco"]
             if config_provider("renewable", w.technology)(w).get("max_depth")
             else []
         ),
@@ -251,7 +268,7 @@ rule determine_availability_matrix_MD_UA:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     script:
-        "../scripts/determine_availability_matrix_MD_UA.py"
+        scripts("determine_availability_matrix_MD_UA.py")
 
 
 # Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
@@ -267,24 +284,22 @@ def input_ua_md_availability_matrix(w):
 
 
 rule determine_availability_matrix:
+    message:
+        "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} technology"
     params:
         renewable=config_provider("renewable"),
     input:
         unpack(input_ua_md_availability_matrix),
-        corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
+        corine=ancient(rules.retrieve_corine.output["tif_file"]),
         natura=lambda w: (
-            "data/bundle/natura/natura.tiff"
+            f"{NATURA_DATASET['folder']}/natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),
-        luisa=lambda w: (
-            "data/LUISA_basemap_020321_50m.tif"
-            if config_provider("renewable", w.technology, "luisa")(w)
-            else []
-        ),
+        luisa=rules.retrieve_luisa_land_cover.output["tif"],
         gebco=ancient(
             lambda w: (
-                "data/bundle/gebco/GEBCO_2014_2D.nc"
+                rules.retrieve_gebco.output["gebco"]
                 if (
                     config_provider("renewable", w.technology)(w).get("max_depth")
                     or config_provider("renewable", w.technology)(w).get("min_depth")
@@ -317,10 +332,12 @@ rule determine_availability_matrix:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     script:
-        "../scripts/determine_availability_matrix.py"
+        scripts("determine_availability_matrix.py")
 
 
 rule build_renewable_profiles:
+    message:
+        "Building renewable profiles for {wildcards.clusters} clusters and {wildcards.technology} technology"
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -350,15 +367,35 @@ rule build_renewable_profiles:
     wildcard_constraints:
         technology="(?!hydro).*",  # Any technology other than hydro
     script:
-        "../scripts/build_renewable_profiles.py"
+        scripts("build_renewable_profiles.py")
 
 
-rule build_monthly_prices:
+rule build_co2_prices:
+    message:
+        "Building CO2 price time series"
+    params:
+        rolling_window=config_provider("costs", "emission_prices", "rolling_window"),
     input:
-        co2_price_raw="data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
+        csv=rules.retrieve_co2_prices.output["csv"],
+    output:
+        csv=resources("co2_price.csv"),
+    log:
+        logs("build_co2_prices.log"),
+    benchmark:
+        benchmarks("build_co2_prices")
+    threads: 1
+    resources:
+        mem_mb=5000,
+    script:
+        "../scripts/build_co2_prices.py"
+
+
+rule build_fossil_fuel_prices:
+    message:
+        "Building fossil fuel price time series"
+    input:
         fuel_price_raw="data/validation/energy-price-trends-xlsx-5619002.xlsx",
     output:
-        co2_price=resources("co2_price.csv"),
         fuel_price=resources("monthly_fuel_price.csv"),
     log:
         logs("build_monthly_prices.log"),
@@ -368,10 +405,32 @@ rule build_monthly_prices:
     resources:
         mem_mb=5000,
     script:
-        "../scripts/build_monthly_prices.py"
+        scripts("build_monthly_prices.py")
+
+
+if COUNTRY_RUNOFF_DATASET["source"] == "build":
+
+    # This rule uses one or multiple cutouts.
+    # To update the output files to include a new year, e.g. 2025 using an existing cutout,
+    # either create a new cutout covering the whole timespan or add another cutout that covers the additional year(s).
+    # E.g. cutouts=[<cutout for 1940-2024>, <cutout for 2025-2025>]
+    rule build_country_runoff:
+        input:
+            cutouts=["cutouts/europe-1940-2024-era5.nc"],
+            country_shapes=resources("country_shapes.geojson"),
+        output:
+            era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
+        log:
+            logs("build_country_runoff.log"),
+        benchmark:
+            benchmarks("build_country_runoff")
+        script:
+            scripts("build_country_runoff.py")
 
 
 rule build_hydro_profile:
+    message:
+        "Building hydropower profile"
     params:
         hydro=config_provider("renewable", "hydro"),
         countries=config_provider("countries"),
@@ -381,7 +440,7 @@ rule build_hydro_profile:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
         eia_hydro_capacity="data/eia_hydro_annual_capacity.csv",
-        era5_runoff="data/bundle/era5-runoff-per-country.csv",
+        era5_runoff=f"{COUNTRY_RUNOFF_DATASET['folder']}/era5-runoff-per-country.csv",
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", "hydro", "cutout")(w)
         ),
@@ -394,10 +453,12 @@ rule build_hydro_profile:
     resources:
         mem_mb=5000,
     script:
-        "../scripts/build_hydro_profile.py"
+        scripts("build_hydro_profile.py")
 
 
 rule build_line_rating:
+    message:
+        "Building dynamic line ratings"
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -416,10 +477,12 @@ rule build_line_rating:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
     script:
-        "../scripts/build_line_rating.py"
+        scripts("build_line_rating.py")
 
 
 rule build_transmission_projects:
+    message:
+        "Building transmission projects"
     params:
         transmission_projects=config_provider("transmission_projects"),
         line_factor=config_provider("lines", "length_factor"),
@@ -449,10 +512,12 @@ rule build_transmission_projects:
         mem_mb=4000,
     threads: 1
     script:
-        "../scripts/build_transmission_projects.py"
+        scripts("build_transmission_projects.py")
 
 
 rule add_transmission_projects_and_dlr:
+    message:
+        "Adding transmission projects and dynamic line ratings"
     params:
         transmission_projects=config_provider("transmission_projects"),
         dlr=config_provider("lines", "dynamic_line_rating"),
@@ -485,7 +550,7 @@ rule add_transmission_projects_and_dlr:
     resources:
         mem_mb=4000,
     script:
-        "../scripts/add_transmission_projects_and_dlr.py"
+        scripts("add_transmission_projects_and_dlr.py")
 
 
 def input_class_regions(w):
@@ -499,6 +564,8 @@ def input_class_regions(w):
 
 
 rule build_electricity_demand_base:
+    message:
+        "Building electricity demand time series for base network"
     params:
         distribution_key=config_provider("load", "distribution_key"),
     input:
@@ -515,10 +582,12 @@ rule build_electricity_demand_base:
     resources:
         mem_mb=5000,
     script:
-        "../scripts/build_electricity_demand_base.py"
+        scripts("build_electricity_demand_base.py")
 
 
 rule build_hac_features:
+    message:
+        "Aggregate all rastered cutout data to base regions Voronoi cells."
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -536,7 +605,7 @@ rule build_hac_features:
     resources:
         mem_mb=10000,
     script:
-        "../scripts/build_hac_features.py"
+        scripts("build_hac_features.py")
 
 
 rule process_cost_data:
@@ -545,7 +614,7 @@ rule process_cost_data:
         max_hours=config_provider("electricity", "max_hours"),
     input:
         network=resources("networks/base_s.nc"),
-        costs=resources("costs_{planning_horizons}.csv"),
+        costs=rules.retrieve_cost_data.output["costs"],
         custom_costs=config_provider("costs", "custom_cost_fn"),
     output:
         resources("costs_{planning_horizons}_processed.csv"),
@@ -557,10 +626,12 @@ rule process_cost_data:
     resources:
         mem_mb=4000,
     script:
-        "../scripts/process_cost_data.py"
+        scripts("process_cost_data.py")
 
 
 rule simplify_network:
+    message:
+        "Simplifying network"
     params:
         countries=config_provider("countries"),
         mode=config_provider("clustering", "mode"),
@@ -590,7 +661,7 @@ rule simplify_network:
     resources:
         mem_mb=12000,
     script:
-        "../scripts/simplify_network.py"
+        scripts("simplify_network.py")
 
 
 # Optional input when using custom busmaps - Needs to be tailored to selected base_network
@@ -616,6 +687,8 @@ def input_custom_busmap(w):
 
 
 rule cluster_network:
+    message:
+        "Clustering network to {wildcards.clusters} clusters"
     params:
         countries=config_provider("countries"),
         mode=config_provider("clustering", "mode"),
@@ -665,7 +738,7 @@ rule cluster_network:
     resources:
         mem_mb=10000,
     script:
-        "../scripts/cluster_network.py"
+        scripts("cluster_network.py")
 
 
 def input_profile_tech(w):
@@ -694,6 +767,8 @@ def input_conventional(w):
 
 
 rule add_electricity:
+    message:
+        "Adding electricity to network with {wildcards.clusters} clusters"
     params:
         line_length_factor=config_provider("lines", "length_factor"),
         link_length_factor=config_provider("links", "length_factor"),
@@ -739,10 +814,12 @@ rule add_electricity:
     resources:
         mem_mb=10000,
     script:
-        "../scripts/add_electricity.py"
+        scripts("add_electricity.py")
 
 
 rule prepare_network:
+    message:
+        "Preparing network for model with {wildcards.clusters} clusters and options {wildcards.opts}"
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_elec"),
         links=config_provider("links"),
@@ -762,7 +839,11 @@ rule prepare_network:
         costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}_processed.csv"
         ),
-        co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
+        co2_price=lambda w: (
+            resources("co2_price.csv")
+            if config_provider("costs", "emission_prices", "dynamic")(w)
+            else []
+        ),
     output:
         resources("networks/base_s_{clusters}_elec_{opts}.nc"),
     log:
@@ -773,118 +854,126 @@ rule prepare_network:
     resources:
         mem_mb=4000,
     script:
-        "../scripts/prepare_network.py"
+        scripts("prepare_network.py")
 
 
-if config["electricity"]["base_network"] == "osm-raw":
-
-    rule clean_osm_data:
-        input:
-            cables_way=expand(
-                "data/osm-raw/{country}/cables_way.json",
-                country=config_provider("countries"),
-            ),
-            lines_way=expand(
-                "data/osm-raw/{country}/lines_way.json",
-                country=config_provider("countries"),
-            ),
-            routes_relation=expand(
-                "data/osm-raw/{country}/routes_relation.json",
-                country=config_provider("countries"),
-            ),
-            substations_way=expand(
-                "data/osm-raw/{country}/substations_way.json",
-                country=config_provider("countries"),
-            ),
-            substations_relation=expand(
-                "data/osm-raw/{country}/substations_relation.json",
-                country=config_provider("countries"),
-            ),
-            offshore_shapes=resources("offshore_shapes.geojson"),
-            country_shapes=resources("country_shapes.geojson"),
-        output:
-            substations=resources("osm-raw/clean/substations.geojson"),
-            substations_polygon=resources("osm-raw/clean/substations_polygon.geojson"),
-            converters_polygon=resources("osm-raw/clean/converters_polygon.geojson"),
-            lines=resources("osm-raw/clean/lines.geojson"),
-            links=resources("osm-raw/clean/links.geojson"),
-        log:
-            logs("clean_osm_data.log"),
-        benchmark:
-            benchmarks("clean_osm_data")
-        threads: 1
-        resources:
-            mem_mb=4000,
-        script:
-            "../scripts/clean_osm_data.py"
-
-
-if config["electricity"]["base_network"] == "osm-raw":
-
-    rule build_osm_network:
-        params:
-            countries=config_provider("countries"),
-            voltages=config_provider("electricity", "voltages"),
-            line_types=config_provider("lines", "types"),
-        input:
-            substations=resources("osm-raw/clean/substations.geojson"),
-            substations_polygon=resources("osm-raw/clean/substations_polygon.geojson"),
-            converters_polygon=resources("osm-raw/clean/converters_polygon.geojson"),
-            lines=resources("osm-raw/clean/lines.geojson"),
-            links=resources("osm-raw/clean/links.geojson"),
-            country_shapes=resources("country_shapes.geojson"),
-        output:
-            lines=resources("osm-raw/build/lines.csv"),
-            links=resources("osm-raw/build/links.csv"),
-            converters=resources("osm-raw/build/converters.csv"),
-            transformers=resources("osm-raw/build/transformers.csv"),
-            substations=resources("osm-raw/build/buses.csv"),
-            lines_geojson=resources("osm-raw/build/geojson/lines.geojson"),
-            links_geojson=resources("osm-raw/build/geojson/links.geojson"),
-            converters_geojson=resources("osm-raw/build/geojson/converters.geojson"),
-            transformers_geojson=resources("osm-raw/build/geojson/transformers.geojson"),
-            substations_geojson=resources("osm-raw/build/geojson/buses.geojson"),
-            stations_polygon=resources("osm-raw/build/geojson/stations_polygon.geojson"),
-            buses_polygon=resources("osm-raw/build/geojson/buses_polygon.geojson"),
-        log:
-            logs("build_osm_network.log"),
-        benchmark:
-            benchmarks("build_osm_network")
-        threads: 1
-        resources:
-            mem_mb=4000,
-        script:
-            "../scripts/build_osm_network.py"
+rule clean_osm_data:
+    message:
+        "Cleaning raw OSM data for countries: " + ", ".join(config["countries"])
+    params:
+        voltages=config_provider("electricity", "voltages"),
+    input:
+        cables_way=expand(
+            f"{OSM_DATASET['folder']}/{{country}}/cables_way.json",
+            country=config_provider("countries"),
+        ),
+        lines_way=expand(
+            f"{OSM_DATASET['folder']}/{{country}}/lines_way.json",
+            country=config_provider("countries"),
+        ),
+        routes_relation=expand(
+            f"{OSM_DATASET['folder']}/{{country}}/routes_relation.json",
+            country=config_provider("countries"),
+        ),
+        substations_way=expand(
+            f"{OSM_DATASET['folder']}/{{country}}/substations_way.json",
+            country=config_provider("countries"),
+        ),
+        substations_relation=expand(
+            f"{OSM_DATASET['folder']}/{{country}}/substations_relation.json",
+            country=config_provider("countries"),
+        ),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+        country_shapes=resources("country_shapes.geojson"),
+    output:
+        substations=resources(f"osm/clean/substations.geojson"),
+        substations_polygon=resources(f"osm/clean/substations_polygon.geojson"),
+        dc_switching=resources(f"osm/clean/dc_switching.geojson"),
+        dc_switching_polygon=resources(f"osm/clean/dc_switching_polygon.geojson"),
+        converters_polygon=resources(f"osm/clean/converters_polygon.geojson"),
+        lines=resources(f"osm/clean/lines.geojson"),
+        links=resources(f"osm/clean/links.geojson"),
+    log:
+        logs("clean_osm_data.log"),
+    benchmark:
+        benchmarks("clean_osm_data")
+    threads: 1
+    resources:
+        mem_mb=4000,
+    script:
+        "../scripts/clean_osm_data.py"
 
 
-if config["electricity"]["base_network"] == "tyndp":
+rule build_osm_network:
+    message:
+        "Building OSM network"
+    params:
+        countries=config_provider("countries"),
+        voltages=config_provider("electricity", "voltages"),
+        line_types=config_provider("lines", "types"),
+        under_construction=config_provider("osm_network_release", "under_construction"),
+        remove_after=config_provider("osm_network_release", "remove_after"),
+    input:
+        substations=resources(f"osm/clean/substations.geojson"),
+        substations_polygon=resources(f"osm/clean/substations_polygon.geojson"),
+        dc_switching=resources(f"osm/clean/dc_switching.geojson"),
+        dc_switching_polygon=resources(f"osm/clean/dc_switching_polygon.geojson"),
+        converters_polygon=resources(f"osm/clean/converters_polygon.geojson"),
+        lines=resources(f"osm/clean/lines.geojson"),
+        links=resources(f"osm/clean/links.geojson"),
+        country_shapes=resources("country_shapes.geojson"),
+    output:
+        lines=resources(f"osm/build/lines.csv"),
+        links=resources(f"osm/build/links.csv"),
+        converters=resources(f"osm/build/converters.csv"),
+        transformers=resources(f"osm/build/transformers.csv"),
+        substations=resources(f"osm/build/buses.csv"),
+        lines_geojson=resources(f"osm/build/geojson/lines.geojson"),
+        links_geojson=resources(f"osm/build/geojson/links.geojson"),
+        converters_geojson=resources(f"osm/build/geojson/converters.geojson"),
+        transformers_geojson=resources(f"osm/build/geojson/transformers.geojson"),
+        substations_geojson=resources(f"osm/build/geojson/buses.geojson"),
+        stations_polygon=resources(f"osm/build/geojson/stations_polygon.geojson"),
+        buses_polygon=resources(f"osm/build/geojson/buses_polygon.geojson"),
+    log:
+        logs("build_osm_network.log"),
+    benchmark:
+        benchmarks("build_osm_network")
+    threads: 1
+    resources:
+        mem_mb=4000,
+    script:
+        "../scripts/build_osm_network.py"
 
-    rule build_tyndp_network:
-        params:
-            countries=config_provider("countries"),
-        input:
-            reference_grid="data/tyndp_2024_bundle/Line data/ReferenceGrid_Electricity.xlsx",
-            buses="data/tyndp_2024_bundle/Nodes/LIST OF NODES.xlsx",
-            bidding_shapes=resources("bidding_zones.geojson"),
-        output:
-            lines=resources("tyndp/build/lines.csv"),
-            links=resources("tyndp/build/links.csv"),
-            converters=resources("tyndp/build/converters.csv"),
-            transformers=resources("tyndp/build/transformers.csv"),
-            substations=resources("tyndp/build/buses.csv"),
-            substations_h2=resources("tyndp/build/buses_h2.csv"),
-            lines_geojson=resources("tyndp/build/geojson/lines.geojson"),
-            links_geojson=resources("tyndp/build/geojson/links.geojson"),
-            converters_geojson=resources("tyndp/build/geojson/converters.geojson"),
-            transformers_geojson=resources("tyndp/build/geojson/transformers.geojson"),
-            substations_geojson=resources("tyndp/build/geojson/buses.geojson"),
-            substations_h2_geojson=resources("tyndp/build/geojson/buses_h2.geojson"),
-        log:
-            logs("build_tyndp_network.log"),
-        benchmark:
-            benchmarks("build_tyndp_network")
-        threads: 1
-        resources:
-            mem_mb=4000,
-        script:
-            "../scripts/build_tyndp_network.py"
+
+rule build_tyndp_network:
+    message:
+        "Building TYNDP network"
+    params:
+        countries=config_provider("countries"),
+    input:
+        reference_grid=rules.retrieve_tyndp.output.reference_grid,
+        buses=rules.retrieve_tyndp.output.nodes,
+        bidding_shapes=resources("bidding_zones.geojson"),
+    output:
+        lines=resources("tyndp/build/lines.csv"),
+        links=resources("tyndp/build/links.csv"),
+        converters=resources("tyndp/build/converters.csv"),
+        transformers=resources("tyndp/build/transformers.csv"),
+        substations=resources("tyndp/build/buses.csv"),
+        substations_h2=resources("tyndp/build/buses_h2.csv"),
+        lines_geojson=resources("tyndp/build/geojson/lines.geojson"),
+        links_geojson=resources("tyndp/build/geojson/links.geojson"),
+        converters_geojson=resources("tyndp/build/geojson/converters.geojson"),
+        transformers_geojson=resources("tyndp/build/geojson/transformers.geojson"),
+        substations_geojson=resources("tyndp/build/geojson/buses.geojson"),
+        substations_h2_geojson=resources("tyndp/build/geojson/buses_h2.geojson"),
+    log:
+        logs("build_tyndp_network.log"),
+    benchmark:
+        benchmarks("build_tyndp_network")
+    threads: 1
+    resources:
+        mem_mb=4000,
+    script:
+        "../scripts/build_tyndp_network.py"
