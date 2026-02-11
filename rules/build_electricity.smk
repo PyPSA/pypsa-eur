@@ -38,6 +38,7 @@ rule build_powerplants:
     params:
         powerplants_filter=config_provider("electricity", "powerplants_filter"),
         custom_powerplants=config_provider("electricity", "custom_powerplants"),
+        everywhere_powerplants=config_provider("electricity", "everywhere_powerplants"),
         countries=config_provider("countries"),
     input:
         network=resources("networks/base_s_{clusters}.nc"),
