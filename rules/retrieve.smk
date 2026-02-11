@@ -1102,20 +1102,19 @@ if (INSTRAT_CO2_PRICES_DATASET := dataset_version("instrat_co2_prices"))["source
             df.to_csv(output["csv"], index=False)
 
 
-# Versioning not implemented as the dataset is used only for validation
-# License - custom; no restrictions on use and redistribution, attribution required
-rule retrieve_monthly_fuel_prices:
-    message:
-        "Retrieving monthly fuel prices data for validation"
-    output:
-        "data/validation/energy-price-trends-xlsx-5619002.xlsx",
-    log:
-        "logs/retrieve_monthly_fuel_prices.log",
-    resources:
-        mem_mb=5000,
-    retries: 2
-    script:
-        scripts("retrieve_monthly_fuel_prices.py")
+if (
+    WORLD_BANK_COMMODITY_PRICES_DATASET := dataset_version("worldbank_commodity_prices")
+)["source"] in ["primary", "archive"]:
+
+    rule retrieve_worldbank_commodity_prices:
+        message:
+            "Retrieving monthly commodity price time series (including fossil fuels)"
+        input:
+            xlsx=storage(WORLD_BANK_COMMODITY_PRICES_DATASET["url"]),
+        output:
+            xlsx=f"{WORLD_BANK_COMMODITY_PRICES_DATASET['folder']}/CMO-Historical-Data-Monthly.xlsx",
+        run:
+            copy2(input["xlsx"], output["xlsx"])
 
 
 if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive"]:

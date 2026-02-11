@@ -425,6 +425,7 @@ renewable:
 conventional:
   unit_commitment: false
   dynamic_fuel_price: false
+  fuel_price_rolling_window: 6
   nuclear:
     p_max_pu: data/nuclear_p_max_pu.csv
 
@@ -1281,6 +1282,9 @@ data:
     version: latest
   worldbank_urban_population:
     source: archive
+    version: latest
+  worldbank_commodity_prices:
+    source: primary
     version: latest
   gem_europe_gas_tracker:
     source: archive

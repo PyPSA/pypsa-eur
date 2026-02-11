@@ -659,6 +659,12 @@
           "description": "Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file 'data/validation/monthly_fuel_price.csv'.",
           "type": "boolean"
         },
+        "fuel_price_rolling_window": {
+          "default": 6,
+          "description": "Monthly rolling mean window for fossil fuel prices smoothing.",
+          "minimum": 1,
+          "type": "integer"
+        },
         "nuclear": {
           "additionalProperties": {
             "anyOf": [
@@ -918,6 +924,26 @@
           }
         },
         "worldbank_urban_population": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "worldbank_commodity_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -9728,6 +9754,12 @@
           "description": "Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file 'data/validation/monthly_fuel_price.csv'.",
           "type": "boolean"
         },
+        "fuel_price_rolling_window": {
+          "default": 6,
+          "description": "Monthly rolling mean window for fossil fuel prices smoothing.",
+          "minimum": 1,
+          "type": "integer"
+        },
         "nuclear": {
           "additionalProperties": {
             "anyOf": [
@@ -12334,6 +12366,26 @@
           }
         },
         "worldbank_urban_population": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "worldbank_commodity_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
