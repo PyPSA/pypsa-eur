@@ -1555,7 +1555,6 @@ if __name__ == "__main__":
             zoom=5,
             pitch=30,
         ),
-        map_style="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
     )
 
     logger.info("Injecting custom layer controls into map HTML.")
