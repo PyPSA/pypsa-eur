@@ -2,16 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
+import itertools
 import logging
+import re
+import string
 
 import geopandas as gpd
-import itertools
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pypsa
-import re
-import string
 from pyproj import Transformer
 from shapely import get_point, prepare
 from shapely.algorithms.polylabel import polylabel
@@ -162,35 +162,50 @@ def _add_line_endings(lines):
 
     # Clean line_id (remove voltage suffix)
     endpoints["line_id"] = endpoints["line_id"].str.split("-").str[0]
-    endpoints["osm_id"] = endpoints["line_id"].str.extract(r'((?:way|relation)/\d+)', expand=False)
+    endpoints["osm_id"] = endpoints["line_id"].str.extract(
+        r"((?:way|relation)/\d+)", expand=False
+    )
     # Create endpoint names: line_id + endpoint number
-    endpoints["endpoint_name"] = endpoints["line_id"] + ":" + endpoints["endpoint"].astype(str)
+    endpoints["endpoint_name"] = (
+        endpoints["line_id"] + ":" + endpoints["endpoint"].astype(str)
+    )
 
-    # Create deterministic bus ids and tags 
+    # Create deterministic bus ids and tags
     def create_bus_data(group):
-        endpoint_names = group['endpoint_name']
-        
+        endpoint_names = group["endpoint_name"]
+
         # Extract numeric parts
-        numeric_parts = endpoint_names.str.extract(r'/(\d+)', expand=False).astype(int)
-        
+        numeric_parts = endpoint_names.str.extract(r"/(\d+)", expand=False).astype(int)
+
         # Find all with minimum numeric value
         min_numeric = numeric_parts.min()
         candidates = endpoint_names[numeric_parts == min_numeric]
-        
+
         # Among those, sort alphabetically and take first
         bus_id = candidates.sort_values().iloc[0]
-        osm_ids = list(set(group['osm_id'].tolist()))
-        
-        return pd.Series({
-            'bus_id': bus_id,
-            'contains': osm_ids,
-        })
+        osm_ids = list(set(group["osm_id"].tolist()))
+
+        return pd.Series(
+            {
+                "bus_id": bus_id,
+                "contains": osm_ids,
+            }
+        )
 
     # Group by voltage and geometry, and apply create_bus_data to get bus_id and tags
-    endpoints = endpoints.groupby(['voltage', 'geometry']).apply(create_bus_data, include_groups=False).reset_index()
+    endpoints = (
+        endpoints.groupby(["voltage", "geometry"])
+        .apply(create_bus_data, include_groups=False)
+        .reset_index()
+    )
 
     # Now add voltage prefix, now bus_ids are persistent and unique
-    endpoints['bus_id'] = 'virtual_' + endpoints['bus_id'] + '-' + (endpoints['voltage'] / 1000).astype(int).astype(str) 
+    endpoints["bus_id"] = (
+        "virtual_"
+        + endpoints["bus_id"]
+        + "-"
+        + (endpoints["voltage"] / 1000).astype(int).astype(str)
+    )
 
     return endpoints[["bus_id", "voltage", "geometry", "contains"]]
 
@@ -1180,9 +1195,11 @@ def _add_transformers(buses, geo_crs=GEO_CRS):
 
     for g_name, g_value in buses_all.groupby("station_id"):
         if g_value["voltage"].nunique() > 1:
-            combinations = list(itertools.combinations(
-                g_value.sort_values("voltage", ascending=False).index, 2
-            ))
+            combinations = list(
+                itertools.combinations(
+                    g_value.sort_values("voltage", ascending=False).index, 2
+                )
+            )
 
             station_transformers = pd.DataFrame(combinations, columns=["bus0", "bus1"])
             station_transformers["voltage_bus0"] = station_transformers["bus0"].map(
@@ -1520,7 +1537,9 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
 
     def _contains_to_tags(x):
         if isinstance(x, list):
-            return ";".join(set(item.split("-")[0] for item in x if isinstance(item, str)))
+            return ";".join(
+                set(item.split("-")[0] for item in x if isinstance(item, str))
+            )
         elif isinstance(x, str):
             return x.split("-")[0]
         else:
@@ -1530,7 +1549,7 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
         if not isinstance(tags, str) or not tags:
             return ""
         return ";".join(sorted(set(re.findall(r"(?:way|relation)/\d+", tags))))
-            
+
     logger.info("Finalising network components and preparing for export.")
     buses_all = all_buses.copy()
     converters_all = converters.copy()

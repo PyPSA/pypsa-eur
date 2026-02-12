@@ -942,9 +942,7 @@ if __name__ == "__main__":
     buses.v_nom = buses.v_nom.astype(int)
     buses.sort_index(inplace=True)
 
-    buses = export_clean_csv(
-        buses, BUSES_COLUMNS, out_buses, "bus_id", export
-    )
+    buses = export_clean_csv(buses, BUSES_COLUMNS, out_buses, "bus_id", export)
 
     #############
     ### Lines ###
@@ -972,9 +970,7 @@ if __name__ == "__main__":
         lambda x: ";".join(set(tag.split("-")[0] for tag in x.split(";")))
     )
 
-    lines = export_clean_csv(
-        lines, LINES_COLUMNS, out_lines, "line_id", export
-    )
+    lines = export_clean_csv(lines, LINES_COLUMNS, out_lines, "line_id", export)
 
     ##########################
     ### Links + Converters ###
