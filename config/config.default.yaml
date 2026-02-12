@@ -1437,6 +1437,9 @@ data:
   bidding_zones_entsoepy:
     source: archive
     version: latest
+  lake_data:
+    source: archive
+    version: latest
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
 overpass_api:

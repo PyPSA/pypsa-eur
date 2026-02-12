@@ -243,3 +243,7 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="Entsoepy bidding zones data source configuration.",
     )
+    lake_data: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="Lake data source configuration.",
+    )

@@ -524,6 +524,41 @@ rule build_river_heat_potential:
         )
 
 
+rule build_lake_heat_potential:
+    params:
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        snapshots=config_provider("snapshots"),
+        dh_area_buffer=config_provider(
+            "sector", "district_heating", "dh_areas", "buffer"
+        ),
+        enable_heat_source_maps=config_provider("plotting", "enable_heat_source_maps"),
+    input:
+        unpack(input_hera_data),
+        lake_data=rules.retrieve_lake_data.output["lake_data"],
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
+    output:
+        heat_source_power=resources(
+            "heat_source_power_lake_water_base_s_{clusters}.csv"
+        ),
+        heat_source_temperature=resources("temp_lake_water_base_s_{clusters}.nc"),
+        heat_source_temperature_temporal_aggregate=resources(
+            "temp_lake_water_base_s_{clusters}_temporal_aggregate.nc"
+        ),
+        heat_source_energy_temporal_aggregate=resources(
+            "heat_source_energy_lake_water_base_s_{clusters}_temporal_aggregate.nc"
+        ),
+    resources:
+        mem_mb=20000,
+    log:
+        logs("build_lake_water_heat_potential_base_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_lake_water_heat_potential_base_s_{clusters}")
+    threads: 1
+    script:
+        "../scripts/build_surface_water_heat_potentials/build_lake_water_heat_potential.py"
+
+
 def input_heat_source_temperature(
     w,
     replace_names: dict[str, str] = {
