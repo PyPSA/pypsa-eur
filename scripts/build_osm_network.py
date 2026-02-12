@@ -148,7 +148,7 @@ def _add_line_endings(lines):
     -------
         - pd.DataFrame: DataFrame containing the virtual bus endpoints with columns 'bus_id', 'voltage', 'geometry', and 'contains'.
     """
-    line_data = lines.copy()
+
     line_data = lines[["voltage", "geometry", "line_id"]]
     line_geoms = line_data["geometry"].apply(_remove_loops_from_multiline)
 
