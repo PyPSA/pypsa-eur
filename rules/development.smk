@@ -66,6 +66,8 @@ rule make_network_comparison:
 
 
 rule prepare_osm_network_release:
+    message:
+        "Preparing OSM network release files and map."
     params:
         line_types=config["lines"]["types"],
         release_version=config_provider("osm_network_release", "release_version"),
@@ -94,6 +96,8 @@ rule prepare_osm_network_release:
 
 
 rule map_incumbent:
+    message:
+        "Preparing map of incumbent network for comparison with OSM release."
     params:
         line_types=config["lines"]["types"],
         release_version="Incumbent",
@@ -102,11 +106,6 @@ rule map_incumbent:
     input:
         base_network=resources("osm/comparison/incumbent/networks/base.nc"),
     output:
-        buses=[],
-        converters=[],
-        lines=[],
-        links=[],
-        transformers=[],
         map=resources("osm/comparison/map_incumbent.html"),
     log:
         logs("prepare_osm_network_release.log"),
@@ -120,6 +119,8 @@ rule map_incumbent:
 
 
 rule osm_release:
+    message:
+        "Creating OSM network release files, map and comparison with incumbent network."
     input:
         resources("osm/release/buses.csv"),
         resources("osm/release/converters.csv"),
