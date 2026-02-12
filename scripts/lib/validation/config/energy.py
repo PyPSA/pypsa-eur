@@ -17,7 +17,7 @@ class EnergyConfig(ConfigModel):
     """Configuration for `energy` settings."""
 
     energy_totals_year: int = Field(
-        2023,
+        2019,
         description="The year for the sector energy use. The year must be available in the Eurostat report.",
     )
     base_emissions_year: int = Field(

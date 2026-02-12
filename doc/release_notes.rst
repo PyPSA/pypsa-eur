@@ -11,6 +11,8 @@ Upcoming Release
 
 * Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
 
+* Added prebuilt OSM network v0.7 (https://zenodo.org/records/18619025) using updated workflow.
+
 * Fix unit commitment compatibility with PyPSA ≥ 1.0 component API to allow usage of unit commitment (https://github.com/PyPSA/pypsa-eur/pull/2049).
 
 * Update energy balances from JRC-IDEES-2021 to `JRC-IDEES-2023
