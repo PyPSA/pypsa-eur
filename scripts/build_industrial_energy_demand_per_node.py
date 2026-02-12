@@ -22,11 +22,6 @@ For each bus, the following carriers are considered:
 
 which can later be used as values for the industry load.
 """
-import requests
-
-from datetime import datetime
-
-
 import logging
 
 import numpy as np

@@ -1224,9 +1224,8 @@ def add_dri_h2_coupling_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex
     dri_store_to_h2_store = {}
     
     for dri_store_name in dri_stores.index:
-        dri_bus = n.stores.loc[dri_store_name, "bus"]
-        # Extract node name from bus (e.g., "BE0 0 low voltage" -> "BE0 0")
-        node_name = dri_bus.replace(" low voltage", "").replace(" H2", "")
+        # Extract node name from store name (e.g., "BE0 0 industry dsr Iron & steel industry H2-DRI-EAF" -> "BE0 0")
+        node_name = dri_store_name.split(" industry dsr ")[0]
         
         # Find H2 store at the same node
         h2_bus = f"{node_name} H2"
@@ -1356,7 +1355,7 @@ def add_dsr_link_store_coupling_constraint(n: pypsa.Network, snapshots: pd.Datet
         discharge_flow = link_p.loc[:, discharge_link_name]
         
         n.model.add_constraints(
-            store_dispatch == charge_flow - discharge_flow,
+            store_dispatch == discharge_flow - charge_flow,
             name=f"DSR_link_store_coupling_{store_name}"
         )
         constraints_added += 1

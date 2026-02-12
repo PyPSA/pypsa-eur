@@ -214,7 +214,6 @@ industry:
       "Paper, Pulp and Print": [0]                     # Fallback for technologies without specific times (24h cycle)
       "Non-specified (Industry)": [0]                  # Fallback for technologies without specific times
       "Food and Tobacco": [8, 20]                      # Profile-level (no technology_breakdown)
-      "Non-specified (Industry)": [6, 18]              # Profile-level (no technology_breakdown)
       "Textile and Leather": [8, 20]                   # Profile-level (no technology_breakdown)
       "Wood and Wood Products": [8, 20]                # Profile-level (no technology_breakdown)
       "Transport Equipment": [6, 18]                   # Profile-level (no technology_breakdown)
