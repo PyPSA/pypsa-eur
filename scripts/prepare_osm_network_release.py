@@ -257,6 +257,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
     )
 
     controls = """
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <style>
         .voltage-tag {
             display: inline-block;
@@ -417,6 +418,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
         let currentTextSearch = '';
         let isDarkMode = true;
         let hashUpdateTimeout = null;
+        let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         const MAP_STYLES = {
             light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -493,6 +495,200 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             const viewState = deck.viewManager.getViewports()[0];
             if (viewState) updateHash(viewState, true);
         }
+
+        const CIRCUIT_OFFSET_METERS = 0.0003;
+        const CIRCUIT_ZOOM_THRESHOLD = 12;
+        const TAPER_DEGREES = 0.00025;  // ~20 meters at European latitudes
+        let circuitsExpanded = false;
+        let hoveredLineId = null;
+
+        function pathLength(path) {
+            let total = 0;
+            for (let i = 1; i < path.length; i++) {
+                const dx = path[i][0] - path[i-1][0];
+                const dy = path[i][1] - path[i-1][1];
+                total += Math.sqrt(dx*dx + dy*dy);
+            }
+            return total;
+        }
+
+        function interpCoord(a, b, t) {
+            return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+        }
+
+        // Returns [densePath, totalLength] so callers avoid recomputing pathLength.
+        function insertTaperPoints(path, taper, total) {
+            if (total <= taper * 2) return [path, total];
+            const result = [];
+            let cumDist = 0;
+            const startT = taper, endT = total - taper;
+            let startIns = false, endIns = false;
+            for (let i = 0; i < path.length; i++) {
+                if (i > 0) {
+                    const dx = path[i][0] - path[i-1][0];
+                    const dy = path[i][1] - path[i-1][1];
+                    const seg = Math.sqrt(dx*dx + dy*dy);
+                    if (!startIns && cumDist + seg >= startT) {
+                        result.push(interpCoord(path[i-1], path[i], (startT - cumDist) / seg));
+                        startIns = true;
+                    }
+                    if (!endIns && cumDist + seg >= endT) {
+                        result.push(interpCoord(path[i-1], path[i], (endT - cumDist) / seg));
+                        endIns = true;
+                    }
+                    cumDist += seg;
+                    // Early exit: both taper points inserted and we've passed endT
+                    if (startIns && endIns && cumDist >= endT) {
+                        result.push(path[i]);
+                        for (let j = i + 1; j < path.length; j++) result.push(path[j]);
+                        return [result, total];
+                    }
+                }
+                result.push(path[i]);
+            }
+            return [result, total];
+        }
+
+        function miterOffset(path, shiftDeg) {
+            // Offset in metric space so all segment directions get equal
+            // perpendicular distance regardless of lat/lon distortion.
+            const n = path.length;
+            if (n < 2) return path;
+            const latRad = path[0][1] * Math.PI / 180;
+            const Mlat = 111320.0;
+            const Mlon = Mlat * Math.cos(latRad);
+            const shiftM = shiftDeg * Mlat;
+            const ox0 = path[0][0], oy0 = path[0][1];
+
+            // Compute metric segment normals in one pass (no intermediate pm[] array)
+            const ns = new Array(n - 1);
+            let px = 0, py = 0;
+            for (let i = 0; i < n - 1; i++) {
+                const qx = (path[i+1][0] - ox0) * Mlon;
+                const qy = (path[i+1][1] - oy0) * Mlat;
+                const dx = qx - px, dy = qy - py;
+                const ln = Math.sqrt(dx*dx + dy*dy) || 1;
+                ns[i] = [-dy/ln, dx/ln];
+                px = qx; py = qy;
+            }
+
+            // Apply miter and convert back to degrees
+            const result = new Array(n);
+            for (let i = 0; i < n; i++) {
+                let nx, ny;
+                if (i === 0) {
+                    [nx, ny] = ns[0];
+                } else if (i === n - 1) {
+                    [nx, ny] = ns[n - 2];
+                } else {
+                    const [n1x, n1y] = ns[i - 1];
+                    const [n2x, n2y] = ns[i];
+                    let bx = n1x + n2x, by = n1y + n2y;
+                    const bl = Math.sqrt(bx*bx + by*by);
+                    if (bl < 1e-10) {
+                        nx = n1x; ny = n1y;
+                    } else {
+                        bx /= bl; by /= bl;
+                        const dot = bx*n1x + by*n1y;
+                        const scale = Math.min(Math.abs(dot) > 1e-10 ? 1.0/dot : 4.0, 4.0);
+                        nx = bx * scale; ny = by * scale;
+                    }
+                }
+                const pmx = (path[i][0] - ox0) * Mlon + nx * shiftM;
+                const pmy = (path[i][1] - oy0) * Mlat + ny * shiftM;
+                result[i] = [ox0 + pmx / Mlon, oy0 + pmy / Mlat];
+            }
+            return result;
+        }
+
+        function offsetPath(path, offsetIndex, totalCircuits) {
+            if (totalCircuits <= 1) return path;
+            const center = (totalCircuits - 1) / 2;
+            const shift = (offsetIndex - center) * CIRCUIT_OFFSET_METERS;
+            const total = pathLength(path);
+            const taper = Math.min(TAPER_DEGREES, total * 0.45);
+            const [dense, denseTotal] = insertTaperPoints(path, taper, total);
+            const mitered = miterOffset(dense, shift);
+            let cumDist = 0;
+            return mitered.map((coord, i) => {
+                if (i > 0) {
+                    const dx = dense[i][0] - dense[i-1][0];
+                    const dy = dense[i][1] - dense[i-1][1];
+                    cumDist += Math.sqrt(dx*dx + dy*dy);
+                }
+                const t = taper > 0
+                    ? Math.min(cumDist, denseTotal - cumDist, taper) / taper
+                    : 1;
+                const ox = coord[0] - dense[i][0];
+                const oy = coord[1] - dense[i][1];
+                return [dense[i][0] + ox*t, dense[i][1] + oy*t];
+            });
+        }
+
+        function buildCircuitIndex(data) {
+            if (!data || !data.length || data[0].circuits === undefined) return null;
+            const index = [];
+            data.forEach((item, dataIdx) => {
+                const circuits = parseInt(item.circuits) || 1;
+                for (let i = 0; i < circuits; i++) {
+                    index.push({ dataIdx, circuitIdx: i, circuits });
+                }
+            });
+            return index;
+        }
+
+        function buildLinesView(data) {
+            const index = buildCircuitIndex(data);
+            if (!index) return data;
+            return index.map(({ dataIdx, circuitIdx, circuits }) => {
+                const item = data[dataIdx];
+                return {
+                    ...item,
+                    path: offsetPath(item.path, circuitIdx, circuits),
+                };
+            });
+        }
+
+        function updateCircuitExpansion(zoom) {
+            const deck = window.deck;
+            if (!deck) return;
+
+            const shouldExpand = zoom >= CIRCUIT_ZOOM_THRESHOLD;
+            if (shouldExpand === circuitsExpanded) return;
+
+            circuitsExpanded = shouldExpand;
+            const originalData = originalLayerData['Lines'];
+            if (!originalData) return;
+
+            deck.setProps({
+                layers: deck.props.layers.map(l =>
+                    l.id === 'Lines'
+                        ? l.clone({ data: shouldExpand ? buildLinesView(originalData) : originalData })
+                        : l
+                )
+            });
+        }
+
+        function updateHoveredLine(lineId) {
+            if (lineId === hoveredLineId) return;
+            hoveredLineId = lineId;
+
+            const deck = window.deck;
+            if (!deck) return;
+
+            const hoverColor = isDarkMode ? [255, 255, 255, 255] : [255, 20, 147, 255];
+
+            deck.setProps({
+                layers: deck.props.layers.map(l => {
+                    if (l.id !== 'Lines') return l;
+                    return l.clone({
+                        getColor: d => d.line_id === hoveredLineId ? hoverColor : d.color,
+                        updateTriggers: { getColor: hoveredLineId }
+                    });
+                })
+            });
+        }
+
 
         function initializeVoltages() {
             const deck = window.deck;
@@ -603,35 +799,30 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
 
             const hasVoltageFilter = selectedVoltages.size > 0;
             const hasTextFilter = currentTextSearch.length > 0;
-
-            if (!hasVoltageFilter && !hasTextFilter) {
-                const layers = deck.props.layers.map(layer =>
-                    originalLayerData[layer.id] ? layer.clone({ data: originalLayerData[layer.id] }) : layer
-                );
-                deck.setProps({ layers });
-                return;
-            }
-
             const voltages = [...selectedVoltages];
+
             const layers = deck.props.layers.map(layer => {
                 const originalData = originalLayerData[layer.id];
-                const filteredData = originalData.filter(item => {
-                    let passesVoltageFilter = !hasVoltageFilter;
-                    if (hasVoltageFilter) {
-                        if (item.voltage !== undefined) {
-                            passesVoltageFilter = voltages.includes(item.voltage);
-                        } else if (item.voltage_bus0 !== undefined || item.voltage_bus1 !== undefined) {
-                            passesVoltageFilter = voltages.includes(item.voltage_bus0) ||
-                                voltages.includes(item.voltage_bus1);
-                        } else {
-                            passesVoltageFilter = true;
+
+                const filteredData = (hasVoltageFilter || hasTextFilter)
+                    ? originalData.filter(item => {
+                        let passesVoltageFilter = !hasVoltageFilter;
+                        if (hasVoltageFilter) {
+                            if (item.voltage !== undefined) {
+                                passesVoltageFilter = voltages.includes(item.voltage);
+                            } else if (item.voltage_bus0 !== undefined || item.voltage_bus1 !== undefined) {
+                                passesVoltageFilter = voltages.includes(item.voltage_bus0) ||
+                                    voltages.includes(item.voltage_bus1);
+                            } else {
+                                passesVoltageFilter = true;
+                            }
                         }
-                    }
+                        return passesVoltageFilter && matchesTextSearch(item, currentTextSearch);
+                    })
+                    : originalData;
 
-                    return passesVoltageFilter && matchesTextSearch(item, currentTextSearch);
-                });
-
-                return layer.clone({ data: filteredData });
+                const data = (layer.id === 'Lines' && circuitsExpanded) ? buildLinesView(filteredData) : filteredData;
+                return layer.clone({ data });
             });
 
             deck.setProps({ layers });
@@ -709,18 +900,27 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
 
                 window.deck.setProps({
                     getTooltip: null,
+                    pickingRadius: isMobile ? 20 : 10,
+                    onHover: ({object}) => {
+                        updateHoveredLine(object ? object.line_id : null);
+                    },
                     onViewStateChange: ({viewState}) => {
                         if (originalOnViewStateChange) {
                             originalOnViewStateChange({viewState});
                         }
                         updateHash(viewState);
+                        updateCircuitExpansion(viewState.zoom);
                         return viewState;
                     }
                 });
 
                 const deckContainer = document.getElementById('deck-container');
                 if (deckContainer) {
-                    deckContainer.addEventListener('click', function(event) {
+                    const eventType = isMobile ? 'touchend' : 'click';
+                    deckContainer.addEventListener(eventType, function(event) {
+                        const clientX = isMobile && event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
+                        const clientY = isMobile && event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
+
                         if (currentTooltip) {
                             currentTooltip.remove();
                             currentTooltip = null;
@@ -733,9 +933,9 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
 
                         const deck = window.deck;
                         const pickInfo = deck.pickObject({
-                            x: event.clientX,
-                            y: event.clientY,
-                            radius: 4
+                            x: clientX,
+                            y: clientY,
+                            radius: isMobile ? 20 : 10
                         });
 
                         if (pickInfo && pickInfo.object) {
@@ -750,15 +950,11 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                                     const ids = String(value).split(';');
                                     const links = ids.map(id => {
                                         const trimmedId = id.trim();
-                                        // Only create link if it starts with 'way' or 'relation'
-                                        if (trimmedId.startsWith('way/') || trimmedId.startsWith('relation/')) {
-                                            return `<a href="https://openstreetmap.org/${trimmedId}" target="_blank" rel="noopener noreferrer" style="color:#4a9eff;text-decoration:underline">${trimmedId}</a>`;
-                                        } else {
-                                            return trimmedId;
-                                        }
+                                        return `<a href="https://openstreetmap.org/${trimmedId}" target="_blank" rel="noopener noreferrer" style="color:#4a9eff;text-decoration:underline">${trimmedId}</a>`;
                                     }).join('; ');
                                     displayValue = links;
                                 }
+
                                 html += `<tr>
                                     <td style="padding:3px 8px 3px 0;font-weight:600;vertical-align:top;color:#aaa;white-space:nowrap">${key}</td>
                                     <td style="padding:3px 0;vertical-align:top;color:#fff;word-break:break-all;max-width:300px">${displayValue}</td>
@@ -1112,7 +1308,7 @@ if __name__ == "__main__":
         width_scale=1,
         width_min_pixels=2,
         pickable=True,
-        auto_highlight=True,
+        auto_highlight=False,
         parameters={"depthTest": False},
         id="Lines",
     )
