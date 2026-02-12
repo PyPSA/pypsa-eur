@@ -1281,7 +1281,7 @@ data:
     source: archive
     version: latest
   worldbank_commodity_prices:
-    source: primary
+    source: archive
     version: latest
   gem_europe_gas_tracker:
     source: archive
