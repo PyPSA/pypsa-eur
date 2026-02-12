@@ -78,6 +78,8 @@ autodoc_mock_imports = [
     "powerplantmatching",
     "rasterio",
     "dask.distributed",
+    "pydantic",
+    "ruamel",
 ]
 
 autodoc_default_flags = ["members"]

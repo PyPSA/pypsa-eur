@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
+
 * Fix unit commitment compatibility with PyPSA ≥ 1.0 component API to allow usage of unit commitment (https://github.com/PyPSA/pypsa-eur/pull/2049).
 
 * Update energy balances from JRC-IDEES-2021 to `JRC-IDEES-2023
@@ -29,7 +31,7 @@ Upcoming Release
 
 * Include new storage technologies such as li-ion, vanadium, lfp, lair, pair and iron-air. These technologies can now be configured as either store-link combinations or standalone storage units.
   Implemented in both `add_electricity.py` and `prepare_sector_network.py` (https://github.com/PyPSA/pypsa-eur/pull/1961).
-  
+
 * Updated data sources for country-level electricity demand time series. In addition to the OPSD data (``retrieve_electricity_demand_opsd``, demand time series
   are now downloaded via the ENTSO-E Transparency Platform API (``retrieve_electricity_demand_entsoe`` environment variable ``ENTSOE_API_KEY`` required)
   and from the NESO data portal for Great Britain and Northern Ireland (``retrieve_electricity_demand_neso``).
