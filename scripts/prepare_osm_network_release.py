@@ -259,6 +259,23 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
     controls = """
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        #deck-container {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        #deck-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
         .voltage-tag {
             display: inline-block;
             background: #6c757d;
@@ -295,27 +312,76 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             margin-top: 4px;
             background: white;
         }
+        .map-btn {
+            position: absolute;
+            top: 10px;
+            background: rgba(255,255,255,0.7);
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 10001;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            line-height: 1;
+            height: 40px;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+        }
+        .map-btn:hover {
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        .map-btn:active {
+            background: rgba(220,220,220,0.9);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transform: scale(0.93);
+        }
+        .ctrl-btn {
+            width: 100%;
+            margin-top: 8px;
+            padding: 6px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+        }
+        .ctrl-btn:hover {
+            background: #5a6268;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        }
+        .ctrl-btn:active {
+            background: #4e555b;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transform: scale(0.97);
+        }
         </style>
-        <button id="menu-toggle"
-            style="position:absolute;top:10px;left:10px;
-                background:rgba(255,255,255,0.7);border:none;
-                padding:10px 12px;cursor:pointer;font-size:16px;
-                border-radius:4px;z-index:1001;box-shadow:0 2px 4px rgba(0,0,0,0.2);
-                line-height:1;height:40px;width:40px;display:flex;align-items:center;justify-content:center">
+        <button id="menu-toggle" class="map-btn"
+            style="left:10px;font-size:16px;padding:10px 12px">
             ☰
         </button>
-        <button id="theme-toggle"
-            style="position:absolute;top:10px;left:60px;
-                background:rgba(255,255,255,0.7);border:none;
-                padding:10px 12px;cursor:pointer;font-size:16px;
-                border-radius:4px;z-index:1001;box-shadow:0 2px 4px rgba(0,0,0,0.2);
-                line-height:1;height:40px;width:40px;display:flex;align-items:center;justify-content:center">
+        <button id="theme-toggle" class="map-btn"
+            style="left:60px;font-size:16px;padding:10px 12px">
             ◐
+        </button>
+        <button id="zoom-in" class="map-btn"
+            onclick="zoomIn()"
+            style="left:110px;font-size:18px;padding:10px 12px">
+            +
+        </button>
+        <button id="zoom-out" class="map-btn"
+            onclick="zoomOut()"
+            style="left:160px;font-size:18px;padding:10px 12px">
+            −
         </button>
         <div id="layer-controls"
             style="position:absolute;top:10px;left:10px;
                 background:rgba(255,255,255,0.75);padding:12px;
-                font-family:sans-serif;z-index:1000;
+                font-family:sans-serif;z-index:10001;
                 border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);
                 display:none;margin-top:50px;min-width:250px;max-width:300px">
 
@@ -329,10 +395,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 <div style="font-size:11px;color:#666;margin-top:4px">
                     Use & for AND, | for OR (e.g., "DE & 380" or "bus | line")
                 </div>
-                <button onclick="clearTextSearchFilter()"
-                    style="width:100%;margin-top:8px;padding:6px;background:#6c757d;
-                        color:white;border:none;border-radius:3px;cursor:pointer;
-                        font-size:13px">
+                <button class="ctrl-btn" onclick="clearTextSearchFilter()">
                     Clear search
                 </button>
             </div>
@@ -346,16 +409,13 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     style="width:100%;padding:6px;border:1px solid #ccc;border-radius:3px;
                         font-size:13px;box-sizing:border-box">
                 <div id="voltage-suggestions"></div>
-                <button onclick="clearVoltageFilter()"
-                    style="width:100%;margin-top:8px;padding:6px;background:#6c757d;
-                        color:white;border:none;border-radius:3px;cursor:pointer;
-                        font-size:13px">
+                <button class="ctrl-btn" onclick="clearVoltageFilter()">
                     Clear filter
                 </button>
             </div>
 
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Lines', this.checked)"
                         style="margin-right:8px">
@@ -363,7 +423,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Links', this.checked)"
                         style="margin-right:8px">
@@ -371,7 +431,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Converters', this.checked)"
                         style="margin-right:8px">
@@ -379,7 +439,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Transformers', this.checked)"
                         style="margin-right:8px">
@@ -387,7 +447,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Buses', this.checked)"
                         style="margin-right:8px">
@@ -395,7 +455,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Buses (Polygons)', this.checked)"
                         style="margin-right:8px">
@@ -403,7 +463,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Stations', this.checked)"
                         style="margin-right:8px">
@@ -494,6 +554,38 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
 
             const viewState = deck.viewManager.getViewports()[0];
             if (viewState) updateHash(viewState, true);
+        }
+
+        function zoomIn() {
+            const deck = window.deck;
+            if (!deck) return;
+            const vp = deck.viewManager.getViewports()[0];
+            if (!vp) return;
+            deck.setProps({
+                initialViewState: {
+                    latitude: vp.latitude,
+                    longitude: vp.longitude,
+                    zoom: Math.min(vp.zoom + 1, 20),
+                    pitch: vp.pitch || 30,
+                    transitionDuration: 300,
+                }
+            });
+        }
+
+        function zoomOut() {
+            const deck = window.deck;
+            if (!deck) return;
+            const vp = deck.viewManager.getViewports()[0];
+            if (!vp) return;
+            deck.setProps({
+                initialViewState: {
+                    latitude: vp.latitude,
+                    longitude: vp.longitude,
+                    zoom: Math.max(vp.zoom - 1, 1),
+                    pitch: vp.pitch || 30,
+                    transitionDuration: 300,
+                }
+            });
         }
 
         const CIRCUIT_OFFSET_METERS = 0.0003;
@@ -916,8 +1008,48 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
 
                 const deckContainer = document.getElementById('deck-container');
                 if (deckContainer) {
+                    let touchStartInfo = null;
+                    const TAP_MAX_MOVE = 15;
+                    const TAP_MAX_DURATION = 300;
+
+                    if (isMobile) {
+                        deckContainer.addEventListener('touchstart', function(event) {
+                            if (event.touches.length > 1) {
+                                touchStartInfo = null;
+                                return;
+                            }
+                            touchStartInfo = {
+                                x: event.touches[0].clientX,
+                                y: event.touches[0].clientY,
+                                time: Date.now(),
+                                wasSingleTouch: true
+                            };
+                        }, { passive: true });
+
+                        deckContainer.addEventListener('touchmove', function(event) {
+                            if (event.touches.length > 1 || !touchStartInfo) {
+                                touchStartInfo = null;
+                            }
+                        }, { passive: true });
+                    }
+
                     const eventType = isMobile ? 'touchend' : 'click';
                     deckContainer.addEventListener(eventType, function(event) {
+                        if (isMobile) {
+                            if (!touchStartInfo || !touchStartInfo.wasSingleTouch) {
+                                touchStartInfo = null;
+                                return;
+                            }
+                            const touch = event.changedTouches ? event.changedTouches[0] : null;
+                            if (!touch) return;
+                            const dx = touch.clientX - touchStartInfo.x;
+                            const dy = touch.clientY - touchStartInfo.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            const duration = Date.now() - touchStartInfo.time;
+                            touchStartInfo = null;
+                            if (dist > TAP_MAX_MOVE || duration > TAP_MAX_DURATION) return;
+                        }
+
                         const clientX = isMobile && event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
                         const clientY = isMobile && event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
 
