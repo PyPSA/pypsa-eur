@@ -323,11 +323,11 @@ rule build_geothermal_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
-        constant_temperature_celsius=config_provider(
+        source_temperature=config_provider(
             "sector",
             "district_heating",
+            "heat_source_temperatures",
             "geothermal",
-            "constant_temperature_celsius",
         ),
         ignore_missing_regions=config_provider(
             "sector",
@@ -769,9 +769,9 @@ rule build_ptes_operations:
         scripts("build_ptes_operations/run.py")
 
 
-rule build_direct_heat_source_utilisation_profiles:
+rule build_heat_source_utilisation_profiles:
     message:
-        "Building direct heat source utilization profiles for industrial applications for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+        "Building heat source utilization profiles for district heating for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         heat_sources=config_provider("sector", "heat_sources", "urban central"),
         heat_source_cooling=config_provider(
@@ -809,7 +809,7 @@ rule build_direct_heat_source_utilisation_profiles:
             "build_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}"
         )
     script:
-        scripts("build_direct_heat_source_utilisation_profiles.py")
+        scripts("build_heat_source_utilisation_profiles.py")
 
 
 rule build_solar_thermal_profiles:
