@@ -1880,12 +1880,8 @@ if __name__ == "__main__":
     df_lines_cables_relation = df_routes_relation.copy()
     df_lines_cables_relation = _drop_duplicate_lines(df_lines_cables_relation)
     df_lines_cables_relation["under_construction"] = (
-        (df_lines_cables_relation["construction"].isin(["line", "cable", "circuit"]))
-        | (
-            df_lines_cables_relation["construction:power"].isin(
-                ["line", "cable", "circuit"]
-            )
-        )
+        (df_lines_cables_relation["construction"].isin(["line", "cable"]))
+        | (df_lines_cables_relation["construction:power"].isin(["line", "cable"]))
         | (df_lines_cables_relation["power"] == "construction")
     )
     df_lines_cables_relation["start_date"] = _clean_date(
@@ -2073,7 +2069,9 @@ if __name__ == "__main__":
 
     # Clean dates and construction status
     df_links["under_construction"] = (
-        df_links["construction"].notna() | df_links["construction:power"].notna()
+        (df_links["construction"].isin(["line", "cable"]))
+        | (df_links["construction:power"].isin(["line", "cable"]))
+        | (df_links["power"] == "construction")
     )
     df_links["start_date"] = _clean_date(df_links["start_date"])
 

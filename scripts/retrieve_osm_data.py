@@ -81,6 +81,9 @@ def retrieve_osm_data(
         "routes_relation": [
             'relation["route"="power"]',
             'relation["power"="circuit"]',
+            'relation["construction:power"="line"]',
+            'relation["construction:power"="cable"]',
+            'relation["power"="construction"]',
         ],
         "substations_way": [
             'way["power"="substation"]',
