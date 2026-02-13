@@ -172,6 +172,9 @@ def prepare_costs(
     annuity_factor_fom = annuity_factor + costs["FOM"] / 100.0
     costs["capital_cost"] = annuity_factor_fom * costs["investment"] * nyears
 
+    costs.loc["waste"] = costs.loc["waste CHP"]
+    costs.at["waste", "CO2 intensity"] = costs.at["oil", "CO2 intensity"]
+
     costs.at["OCGT", "fuel"] = costs.at["gas", "fuel"]
     costs.at["CCGT", "fuel"] = costs.at["gas", "fuel"]
 

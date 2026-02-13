@@ -42,6 +42,8 @@ rule build_powerplants:
         countries=config_provider("countries"),
     input:
         network=resources("networks/base_s_{clusters}.nc"),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
         powerplants=rules.retrieve_powerplants.output["powerplants"],
         custom_powerplants="data/custom_powerplants.csv",
     output:
