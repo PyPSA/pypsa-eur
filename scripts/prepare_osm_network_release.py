@@ -393,7 +393,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     style="width:100%;padding:6px;border:1px solid #ccc;border-radius:3px;
                         font-size:13px;box-sizing:border-box">
                 <div style="font-size:11px;color:#666;margin-top:4px">
-                    Use & for AND, | for OR (e.g., "DE & 380" or "bus | line")
+                    Use & for AND, | for OR
                 </div>
                 <button class="ctrl-btn" onclick="clearTextSearchFilter()">
                     Clear search
