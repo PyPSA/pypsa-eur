@@ -103,18 +103,20 @@ nuts3_population,13-03-2025,archive,latest supported,2026-01-13,earlier part of 
 opsd_electricity_demand,unknown,build,latest supported,2026-02-02,multiple versions concatenated,https://data.open-power-system-data.org/time_series/
 opsd_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,,https://data.pypsa.org/workflows/eur/opsd_electricity_demand/2026-02-02/electricity_demand_opsd_raw.csv
 osm,unknown,build,latest supported,2025-12-02,Latest dataset built using OSM data. No single URL available to access the data. See the related scripts and documentation for details.,
-osm,0.6,primary,latest supported,2026-01-13,,https://zenodo.org/records/14144752/files
-osm,0.6,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.6
-osm,0.5,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/13981528/files
-osm,0.5,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.5
-osm,0.4,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/13759222/files
-osm,0.4,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.4
-osm,0.3,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/13358976/files
-osm,0.3,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.3
-osm,0.2,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/13342577/files
-osm,0.2,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.2
-osm,0.1,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/12799202/files
-osm,0.1,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.1
+osm,0.7,primary,latest supported,2026-02-12,,https://zenodo.org/records/18619025/files
+osm,0.7,archive,latest supported,2026-02-12,,https://data.pypsa.org/workflows/eur/osm/0.7
+osm,0.6,primary,supported,2026-01-13,,https://zenodo.org/records/14144752/files
+osm,0.6,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.6
+osm,0.5,primary,supported,2026-01-13,,https://zenodo.org/records/13981528/files
+osm,0.5,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.5
+osm,0.4,primary,supported,2026-01-13,,https://zenodo.org/records/13759222/files
+osm,0.4,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.4
+osm,0.3,primary,supported,2026-01-13,,https://zenodo.org/records/13358976/files
+osm,0.3,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.3
+osm,0.2,primary,supported,2026-01-13,,https://zenodo.org/records/13342577/files
+osm,0.2,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.2
+osm,0.1,primary,supported,2026-01-13,,https://zenodo.org/records/12799202/files
+osm,0.1,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.1
 osm_boundaries,unknown,primary,latest supported,2025-12-02,Overpass API is used to fetch the latest available data,
 osm_boundaries,unknown,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm_boundaries/unknown/osm_boundaries.zip
 population_count,2018-11-01,primary,latest supported,2025-12-02,,https://data.worldpop.org/GIS/Population/Global_2000_2020/2019/0_Mosaicked/ppp_2019_1km_Aggregated.tif
