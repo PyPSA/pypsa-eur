@@ -240,6 +240,16 @@ This is sufficient for both updates to be imported.
 .. note::
     Several separate update scripts can exist and be used to create chained updates of the schema.
     They will be used to update the schema in the order they appear in `scripts.lib.validation.config_updates.py`.
+    this means that you can update the same config item multiple times.
+    If you are importing config changes from a submodule and you want to catch cases where you are both updating the same config item, you can add a check in your `update` method, such as:
+
+    .. code:: python
+
+        if clustering_config != ClusteringConfig:
+            raise ValueError(
+                "You are trying to update the clustering config item after it has already been updated by another config updater."
+                " This could have unexpected consequences."
+            )
 
 .. autoclass:: lib.validation.config._base::ConfigUpdater
     :members: NAME, update, _apply_updates
