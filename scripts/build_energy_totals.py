@@ -1299,7 +1299,7 @@ if __name__ == "__main__":
         eurostat, snakemake.output.transformation_output_coke
     )
 
-    swiss = pd.read_csv(snakemake.input.swiss, index_col=[0,1])
+    swiss = pd.read_csv(snakemake.input.swiss, index_col=[0, 1])
 
     idees = build_idees(idees_countries)
 

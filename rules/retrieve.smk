@@ -70,13 +70,14 @@ if (SWISS_BALANCES_DATASET := dataset_version("swiss_balances"))["source"] in [
         output:
             excel=f"{SWISS_BALANCES_DATASET['folder']}/12361-VWZ_Webtabellen_2024.xlsx",
         run:
-            headers = {'User-Agent': 'Mozilla/5.0'}
+            headers = {"User-Agent": "Mozilla/5.0"}
 
             r = requests.get(params.url, headers=headers)
             r.raise_for_status()
 
-            with open(output["excel"], 'wb') as f:
+            with open(output["excel"], "wb") as f:
                 f.write(r.content)
+
 
 
 if (NUTS3_POPULATION_DATASET := dataset_version("nuts3_population"))["source"] in [

@@ -14,9 +14,7 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def load_sheet(
-    xlsx: pd.ExcelFile, sheet_name: str, index_col: str
-) -> pd.DataFrame:
+def load_sheet(xlsx: pd.ExcelFile, sheet_name: str, index_col: str) -> pd.DataFrame:
     df = xlsx.parse(sheet_name, skiprows=5, index_col=index_col)
     year_columns = [col for col in df.columns if isinstance(col, int)]
     df = df[year_columns].dropna(how="all", axis=0)
