@@ -589,7 +589,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
         }
 
         const CIRCUIT_OFFSET_METERS = 0.0003;
-        const CIRCUIT_ZOOM_THRESHOLD = 11;
+        const CIRCUIT_ZOOM_THRESHOLD = 11.5;
         const TAPER_DEGREES = 0.00025;  // ~20 meters at European latitudes
         let circuitsExpanded = false;
         let hoveredLineId = null;
