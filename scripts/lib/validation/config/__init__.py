@@ -69,9 +69,8 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
     data = CommentedMap()
 
     # Add yaml-language-server comment at the very top (before first key)
-    schema_dir = path.replace("config/config.", "./schema.").replace(".yaml", ".json")
     data.yaml_set_start_comment(
-        f"yaml-language-server: $schema={schema_dir.format(configname=config._name)}"
+        f"yaml-language-server: $schema=./schema.{config._name}.json"
     )
 
     for key, value in defaults.items():
