@@ -1494,7 +1494,7 @@ if __name__ == "__main__":
         get_position=["x", "y"],
         get_fill_color=[255, 0, 155, 160],
         radius=20,
-        get_elevation=195,
+        get_elevation=10,
         pickable=True,
         auto_highlight=True,
         parameters={"depthTest": False},
