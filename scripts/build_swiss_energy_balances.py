@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create Swiss energy balances in TWh/a.
+Extract historic Swiss energy balances in TWh/a from Excel file.
 """
 
 import logging
