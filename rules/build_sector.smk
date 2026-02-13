@@ -798,7 +798,7 @@ rule build_eurostat_balances:
         "../scripts/build_eurostat_balances.py"
 
 
-rule build_swiss_balances:
+rule build_swiss_energy_balances:
     message:
         "Building BFE Swiss energy balances"
     input:
@@ -809,11 +809,11 @@ rule build_swiss_balances:
     resources:
         mem_mb=4000,
     log:
-        logs("build_swiss_balances.log"),
+        logs("build_swiss_energy_balances.log"),
     benchmark:
-        benchmarks("build_swiss_balances")
+        benchmarks("build_swiss_energy_balances")
     script:
-        scripts("build_swiss_balances.py")
+        scripts("build_swiss_energy_balances.py")
 
 
 rule build_energy_totals:
