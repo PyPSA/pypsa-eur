@@ -798,6 +798,24 @@ rule build_eurostat_balances:
         "../scripts/build_eurostat_balances.py"
 
 
+rule build_swiss_balances:
+    message:
+        "Building BFE Swiss energy balances"
+    input:
+        excel=rules.retrieve_swiss_balances.output["excel"]
+    output:
+        csv=resources("switzerland_energy_balances.csv"),
+    threads: 1
+    resources:
+        mem_mb=4000,
+    log:
+        logs("build_swiss_balances.log")
+    benchmark:
+        benchmarks("build_swiss_balances")
+    script:
+        scripts("build_swiss_balances.py")
+
+
 rule build_energy_totals:
     message:
         "Building energy totals"
@@ -807,7 +825,7 @@ rule build_energy_totals:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         co2=rules.retrieve_ghg_emissions.output["csv"],
-        swiss="data/switzerland-new_format-all_years.csv",
+        swiss=resources("switzerland_energy_balances.csv"),
         swiss_transport=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         idees=rules.retrieve_jrc_idees.output["directory"],
         district_heat_share="data/district_heat_share.csv",

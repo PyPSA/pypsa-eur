@@ -5,7 +5,7 @@
 Build total energy demands and carbon emissions per country using JRC IDEES,
 eurostat, and EEA data.
 
-- Country-specific data is read in :func:`build_idees` and `build_swiss` and read in from :mod:`scripts/build_eurostat_balances`.
+- Country-specific data is read in :func:`build_idees` and read in from :mod:`scripts/build_eurostat_balances` and :mod:`scripts/build_swiss_balances`.
 - :func:`build_energy_totals` then combines energy data from Eurostat, Swiss, and IDEES data.
 - :func:`build_district_heat_share` calculates the share of district heating for each country from IDEES data.
 - Historical CO2 emissions are calculated in :func:`build_eea_co2` and :func:`build_eurostat_co2` and combined in :func:`build_co2_totals`.
@@ -118,39 +118,6 @@ to_ipcc = {
     "total wL": "Total (with LULUCF)",
     "total woL": "Total (without LULUCF)",
 }
-
-
-def build_swiss() -> pd.DataFrame:
-    """
-    Return a pd.DataFrame of Swiss energy data in TWh/a.
-
-    Returns
-    -------
-    pd.DataFrame
-        Swiss energy data in TWh/a.
-
-    Notes
-    -----
-    - Reads Swiss energy data from `data/switzerland-new_format-all_years.csv`.
-    - Reshapes and renames data.
-    - Converts energy units from PJ/a to TWh/a.
-    """
-    fn = snakemake.input.swiss
-
-    df = pd.read_csv(fn, index_col=[0, 1])
-
-    df.columns = df.columns.astype(int)
-
-    df.columns.name = "year"
-
-    df = df.stack().unstack("item")
-
-    df.columns.name = None
-
-    # convert PJ/a to TWh/a
-    df /= 3.6
-
-    return df
 
 
 def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
@@ -1332,7 +1299,8 @@ if __name__ == "__main__":
         eurostat, snakemake.output.transformation_output_coke
     )
 
-    swiss = build_swiss()
+    swiss = pd.read_csv(snakemake.input.swiss, index_col=[0,1])
+
     idees = build_idees(idees_countries)
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)

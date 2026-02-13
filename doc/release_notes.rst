@@ -9,6 +9,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Update Swiss energy balances from the Swiss Federal Office of Energy (SFOE) to the latest version (October 2025).
+  The data is no longer stored in the repository, but directly retrieved from the SFOE website and processed in the ``build_swiss_balances`` rule.
+
 * Fix unit commitment compatibility with PyPSA ≥ 1.0 component API to allow usage of unit commitment (https://github.com/PyPSA/pypsa-eur/pull/2049).
 
 * Update energy balances from JRC-IDEES-2021 to `JRC-IDEES-2023
