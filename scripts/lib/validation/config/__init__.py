@@ -22,12 +22,18 @@ from scripts.lib.validation.config._schema import ConfigSchema
 def validate_config(config: dict) -> ConfigSchema:
     """Validate config dict against schema."""
     config_schema = ConfigSchema
+    name = config_schema._name.default
     for item in _registry:
-        config_schema = item(config_schema).update()
-    return config_schema(**config)
+        updater_config = item(config_schema)
+        config_schema = updater_config.update()
+        if updater_config.name:
+            name += f".{updater_config.name}"
+    validated_config = config_schema(**config)
+    validated_config._name = name
+    return validated_config
 
 
-def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
+def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
     """Generate config defaults YAML file and return the defaults dict."""
     from ruamel.yaml.comments import CommentedMap
 
@@ -37,7 +43,8 @@ def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
 
     # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
     # the goal should be to use snake_case consistently
-    defaults = validate_config({}).model_dump(by_alias=True)
+    config = validate_config({})
+    defaults = config.model_dump(by_alias=True)
 
     # Create YAML instance with custom settings
     yaml_writer = YAML()
@@ -62,7 +69,10 @@ def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
     data = CommentedMap()
 
     # Add yaml-language-server comment at the very top (before first key)
-    data.yaml_set_start_comment("yaml-language-server: $schema=./schema.json")
+    schema_dir = path.replace("config/config.", "./schema.").replace(".yaml", ".json")
+    data.yaml_set_start_comment(
+        f"yaml-language-server: $schema={schema_dir.format(configname=config._name)}"
+    )
 
     for key, value in defaults.items():
         data[key] = value
@@ -72,13 +82,13 @@ def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
         data.yaml_set_comment_before_after_key(key, before=f"\ndocs in {docs_url}")
 
     # Write to file
-    with open(path, "w") as f:
+    with open(path.format(configname=config._name), "w") as f:
         yaml_writer.dump(data, f)
 
     return defaults
 
 
-def generate_config_schema(path: str = "config/schema.json") -> dict:
+def generate_config_schema(path: str = "config/schema.{configname}.json") -> dict:
     """Generate JSON schema file and return the schema dict."""
     import json
     import math
@@ -165,14 +175,15 @@ def generate_config_schema(path: str = "config/schema.json") -> dict:
             return [convert_rst_to_markdown(item) for item in obj]
         return obj
 
-    schema = validate_config({}).model_json_schema()
+    config = validate_config({})
+    schema = config.model_json_schema()
     defs = schema.get("$defs", {})
     schema = resolve_refs(schema, defs)
     schema = sanitize_for_json(schema)
     schema = remove_nested_titles(schema)
     schema = remove_object_type(schema)
     schema = convert_rst_to_markdown(schema)
-    with open(path, "w") as f:
+    with open(path.format(configname=config._name), "w") as f:
         json.dump(schema, f, indent=2)
         f.write("\n")
     return schema

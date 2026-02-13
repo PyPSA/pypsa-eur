@@ -77,6 +77,11 @@ class ConfigSchema(BaseModel):
     # coverage or allow extra fields with extra='allow'
     model_config = ConfigDict(extra="allow", title="PyPSA-Eur Configuration")
 
+    _name: str = Field(
+        "default",
+        description="internal attribute to track the config filename following the application of config updates",
+    )
+
     # Top-level fields (from TopLevelConfig)
     version: str = Field(
         "v2025.07.0", description="Version of PyPSA-Eur. Descriptive only."

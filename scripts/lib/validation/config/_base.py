@@ -58,9 +58,13 @@ class ConfigUpdater(ABC):
 
     @property
     @abstractmethod
-    def NAME(self) -> str:
-        """Name of custom config file generated following application of the updates."""
-        # not sure how I'd use this yet, but it's a way to keep the information close to the updater
+    def name(self) -> str:
+        """
+        Name of custom config.
+        If not an empty string, this name will be appended to the default config filename when the config file is saved, i.e.:
+
+        `config.default.<prior-update-names>.{self.name}.<post-update-names>.yaml`
+        """
 
     @abstractmethod
     def update(self) -> type["ConfigSchema"]:
@@ -86,15 +90,19 @@ class ConfigUpdater(ABC):
         **updates: tuple[Any, Any],
     ) -> T:
         """
-        Function to apply the updates to the base config and save the new config file.
+        Helper function to apply updates to a pydantic model.
 
-        Updates should come in the form of a type (incl. another pydantic model) and a Field with at least a default value.
+        Updates should come in the form of a type (can be another pydantic model) and a pydantic.Field with at least a default value.
 
         Parameters
         ----------
-        __base__ : Optional base model to use instead of the class-level base config.
-        __doc__ : Optional docstring for the new config model. If not provided, the docstring of the base model will be used.
-        **updates : The actual updates to apply, in the form of field_name=(type, Field(...)).
+        __base__ : type[pydantic.BaseModel] | None, optional
+            Optional base model to use instead of the class-level base config.
+        __doc__ : str, optional
+            Optional docstring for the new config model.
+            If not provided, the docstring of the base model will be used.
+        **updates : tuple[Any, Any]
+            The actual updates to apply, in the form of field_name=(type, Field(...)).
 
         Returns
         -------

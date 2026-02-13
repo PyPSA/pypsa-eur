@@ -194,7 +194,7 @@ In the below example, two updates are made to the default config.
 
 
     class ClusteringConfigUpdater(ConfigUpdater):
-        NAME: str = "default.clustering.yaml"
+        name: str = "update_clustering"
 
         def update(self) -> type[ConfigSchema]:
             # To update and existing config item, we need it's most recent state, as defined in `self.base_config`
@@ -221,7 +221,7 @@ In the below example, two updates are made to the default config.
 
 
     class NewConfigItem(ConfigUpdater):
-        NAME: str = "default.new_section.yaml"
+        name: str = "new_section"
 
         def update(self) -> type[ConfigSchema]:
             new_schema = self._apply_updates(
@@ -229,7 +229,7 @@ In the below example, two updates are made to the default config.
             )
             return new_schema
 
-If this code were stored in the script `scripts/_my_config_updates.py` then `scripts.lib.validation.config_updates.py` would now include:
+If this code were stored in the script ``scripts/_my_config_updates.py`` then ``scripts.lib.validation.config_updates.py`` would now include:
 
 .. code-block:: python
 
@@ -237,11 +237,18 @@ If this code were stored in the script `scripts/_my_config_updates.py` then `scr
 
 This is sufficient for both updates to be imported.
 
-.. note::
+.. admonition:: Config filename
+
+    When generating the config files with the above example (``pixi run generate-config``),
+    you would now generate ``config/config.default.update_clustering.new_section.yaml``.
+    To override the base ``config/config.default.yaml``, you can set the ``name`` property of your updater classes to empty strings: ``""``.
+
+.. admonition:: Chaining updates
+
     Several separate update scripts can exist and be used to create chained updates of the schema.
-    They will be used to update the schema in the order they appear in `scripts.lib.validation.config_updates.py`.
+    They will be used to update the schema in the order they appear in ``scripts.lib.validation.config_updates.py``.
     this means that you can update the same config item multiple times.
-    If you are importing config changes from a submodule and you want to catch cases where you are both updating the same config item, you can add a check in your `update` method, such as:
+    If you are importing config changes from a submodule and you want to catch cases where you are both updating the same config item, you can add a check in your ``update`` method, such as:
 
     .. code:: python
 
@@ -252,4 +259,4 @@ This is sufficient for both updates to be imported.
             )
 
 .. autoclass:: lib.validation.config._base::ConfigUpdater
-    :members: NAME, update, _apply_updates
+    :members: name, update, _apply_updates
