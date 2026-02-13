@@ -1395,7 +1395,7 @@ data:
     source: archive
     version: latest
   costs:
-    source: primary
+    source: archive
     version: latest
   country_runoff:
     source: archive

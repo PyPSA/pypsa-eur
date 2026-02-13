@@ -200,7 +200,7 @@ class DataConfig(BaseModel):
         description="Powerplants data source configuration.",
     )
     costs: _DataSourceConfig = Field(
-        default_factory=lambda: _DataSourceConfig(source="primary"),
+        default_factory=_DataSourceConfig,
         description="Costs data source configuration.",
     )
     country_runoff: _DataSourceConfig = Field(
