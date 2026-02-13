@@ -802,7 +802,7 @@ rule build_swiss_energy_balances:
     message:
         "Building BFE Swiss energy balances"
     input:
-        excel=rules.retrieve_swiss_balances.output["excel"],
+        xlsx=rules.retrieve_swiss_energy_balances.output["xlsx"],
     output:
         csv=resources("switzerland_energy_balances.csv"),
     threads: 1

@@ -25,12 +25,12 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_swiss_balances")
+        snakemake = mock_snakemake("build_swiss_energy_balances")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    xlsx = pd.ExcelFile(snakemake.input.excel)
+    xlsx = pd.ExcelFile(snakemake.input.xlsx)
 
     tab1 = load_sheet(xlsx, "Tabelle1", index_col="Verwendungszweck")
 

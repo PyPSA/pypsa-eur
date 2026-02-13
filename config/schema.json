@@ -1263,7 +1263,7 @@
             }
           }
         },
-        "swiss_balances": {
+        "swiss_energy_balances": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -12689,7 +12689,7 @@
             }
           }
         },
-        "swiss_balances": {
+        "swiss_energy_balances": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

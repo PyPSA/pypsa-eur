@@ -1328,7 +1328,7 @@ data:
   seawater_temperature:
     source: archive
     version: latest
-  swiss_balances:
+  swiss_energy_balances:
     source: primary
     version: latest
   synthetic_electricity_demand:
