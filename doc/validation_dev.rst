@@ -15,7 +15,7 @@ Configuration
 The configuration validation system consists of:
 
 - **Pydantic models** in ``scripts/lib/validation/config/`` that define all options and validates the snakemake config.
-- **Auto-generated files**: ``config/config.default.yaml`` and ``config/schema.json``.
+- **Auto-generated files**: ``config/config.default.yaml`` and ``config/schema.default.json``.
 
 Adding a New Config Option
 --------------------------
@@ -97,7 +97,7 @@ schema:
 
    $ pixi run generate-config
 
-This updates ``config/config.default.yaml`` and ``config/schema.json``.
+This updates ``config/config.default.yaml`` and ``config/schema.default.json``.
 For example, the two examples above would now generate:
 
 .. code-block:: yaml

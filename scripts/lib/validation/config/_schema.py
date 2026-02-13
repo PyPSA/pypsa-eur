@@ -77,10 +77,8 @@ class ConfigSchema(BaseModel):
     # coverage or allow extra fields with extra='allow'
     model_config = ConfigDict(extra="allow", title="PyPSA-Eur Configuration")
 
-    _name: str = Field(
-        "default",
-        description="internal attribute to track the config filename following the application of config updates",
-    )
+    _name: str = "default"
+    """internal attribute to track the config filename following the application of config updates"""
 
     # Top-level fields (from TopLevelConfig)
     version: str = Field(
