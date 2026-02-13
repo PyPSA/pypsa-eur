@@ -8,6 +8,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Added Frequently Asked Questions (FAQ) and Troubleshooting guide to the documentation: https://pypsa-eur.readthedocs.io/en/latest/faq_troubleshooting.html (https://github.com/PyPSA/pypsa-eur/pull/1939)
 
 * Added prebuilt OSM network v0.7 (https://zenodo.org/records/18619025) using updated workflow. 
 
