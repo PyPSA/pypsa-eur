@@ -926,6 +926,12 @@ if __name__ == "__main__":
     include_polygons = snakemake.params.include_polygons
     export = snakemake.params.export
 
+    out_buses = snakemake.output.buses if export else ""
+    out_lines = snakemake.output.lines if export else ""
+    out_links = snakemake.output.links if export else ""
+    out_converters = snakemake.output.converters if export else ""
+    out_transformers = snakemake.output.transformers if export else ""
+
     #############
     ### Buses ###
     #############
@@ -936,10 +942,7 @@ if __name__ == "__main__":
     buses.v_nom = buses.v_nom.astype(int)
     buses.sort_index(inplace=True)
 
-    logger.info(f"Exporting {len(buses)} buses to %s", snakemake.output.buses)
-    buses = export_clean_csv(
-        buses, BUSES_COLUMNS, snakemake.output.buses, "bus_id", export
-    )
+    buses = export_clean_csv(buses, BUSES_COLUMNS, out_buses, "bus_id", export)
 
     #############
     ### Lines ###
@@ -967,10 +970,7 @@ if __name__ == "__main__":
         lambda x: ";".join(set(tag.split("-")[0] for tag in x.split(";")))
     )
 
-    logger.info(f"Exporting {len(lines)} lines to %s", snakemake.output.lines)
-    lines = export_clean_csv(
-        lines, LINES_COLUMNS, snakemake.output.lines, "line_id", export
-    )
+    lines = export_clean_csv(lines, LINES_COLUMNS, out_lines, "line_id", export)
 
     ##########################
     ### Links + Converters ###
@@ -988,26 +988,18 @@ if __name__ == "__main__":
     links_dc = links[~is_converter].copy()
     converters = links[is_converter].copy()
 
-    logger.info(
-        f"Exporting {len(links_dc)} links to %s",
-        snakemake.output.links,
-    )
     links_dc = export_clean_csv(
         links_dc,
         LINKS_COLUMNS,
-        snakemake.output.links,
+        out_links,
         "link_id",
         export,
     )
 
-    logger.info(
-        f"Exporting {len(converters)} converters to %s",
-        snakemake.output.converters,
-    )
     converters = export_clean_csv(
         converters,
         CONVERTERS_COLUMNS,
-        snakemake.output.converters,
+        out_converters,
         "converter_id",
         export,
     )
@@ -1023,14 +1015,10 @@ if __name__ == "__main__":
     transformers.s_nom = transformers.s_nom.astype(int)
     transformers.sort_index(inplace=True)
 
-    logger.info(
-        f"Exporting {len(transformers)} transformers to %s",
-        snakemake.output.transformers,
-    )
     transformers = export_clean_csv(
         transformers,
         TRANSFORMERS_COLUMNS,
-        snakemake.output.transformers,
+        out_transformers,
         "transformer_id",
         export,
     )
