@@ -72,7 +72,7 @@ class ConfigUpdater(ABC):
         __base__: None = None,
         __doc__: str | None = None,
         **updates: tuple[Any, Any],
-    ) -> type[ConfigModel]: ...
+    ) -> type["ConfigSchema"]: ...
 
     @overload
     def _apply_updates(
@@ -100,7 +100,7 @@ class ConfigUpdater(ABC):
         -------
         Updated config model with the new fields included.
         """
-        base: T | type[ConfigModel]
+        base: T | type[ConfigSchema]
         if __base__ is None:
             base = self.base_config
         else:

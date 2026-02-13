@@ -179,7 +179,7 @@ YAML, which is currently enforced via an upstream CI job.
 **Extend the schema**: It is better to add full validation of your additional
 configuration.
 The cleanest way to do this is to use the config updater base class that we make available.
-You impose config changes in subclasses of the base class and by importing those into `scripts.lib.validation.__init__.py` they will be used to automatically overwrite the configuration.
+You impose config changes in subclasses of the base class and by importing those into `scripts.lib.validation.config_updates.py` they will be used to automatically overwrite the configuration.
 
 In the below example, two updates are made to the default config.
 
@@ -191,43 +191,37 @@ In the below example, two updates are made to the default config.
 
     from scripts.lib.validation.config._base import ConfigUpdater
     from scripts.lib.validation.config._schema import ConfigSchema
-    from scripts.lib.validation.config.clustering import ClusteringConfig
 
 
     class ClusteringConfigUpdater(ConfigUpdater):
-        """
-        Update an existing config item (in this case, to add `foobar` as an option to the `clustering.mode` key).
-        """
-        NAME: str = "default.clustering.yaml" # Currently has no effect
+        NAME: str = "default.clustering.yaml"
 
         def update(self) -> type[ConfigSchema]:
-            new_description = ClusteringConfig.model_fields["mode"].description + "(extra) foobar: new item."
-            new_list = Literal[ClusteringConfig.model_fields["mode"].annotation, "foobar"]
-            # You could feasibly add a custom validator at this point, too,
-            # using `new_list = typing.Annotated[new_list, pydantic.AfterValidator(func)]`
+            # To update and existing config item, we need it's most recent state, as defined in `self.base_config`
+            clustering_config = self.base_config().clustering.__class__
+            mode_config = clustering_config.model_fields["mode"]
+
+            current_description = mode_config.description or ""
+            new_description = current_description + " (extra) foobar: new item."
+            new_list = Literal[mode_config.annotation, "foobar"]
 
             clustering_schema = self._apply_updates(
-                __base__=ClusteringConfig,
-                mode=(new_list, Field("busmap", description=new_description)),
+                __base__=clustering_config,
+                mode=(new_list, Field(mode_config.default, description=new_description)),
             )
             new_schema = self._apply_updates(
                 clustering=(clustering_schema, Field(default_factory=clustering_schema))
             )
+
             return new_schema
 
 
     class MyNewConfigSection(BaseModel):
-        """
-        New section of the config.
-        """
         my_new_field: str = Field("foo")
 
 
     class NewConfigItem(ConfigUpdater):
-        """
-        Add a new config item (in this case, to add `new_section.my_new_field` as an option).
-        """
-        NAME: str = "default.new_section.yaml" # Currently has no effect
+        NAME: str = "default.new_section.yaml"
 
         def update(self) -> type[ConfigSchema]:
             new_schema = self._apply_updates(
@@ -235,14 +229,17 @@ In the below example, two updates are made to the default config.
             )
             return new_schema
 
-If this code were stored in the script `scripts/_my_config_updates.py` then `scripts.lib.validation.__init__.py` would now include:
+If this code were stored in the script `scripts/_my_config_updates.py` then `scripts.lib.validation.config_updates.py` would now include:
 
 .. code-block:: python
 
     import scripts._my_config_updates
 
 This is sufficient for both updates to be imported.
-Several separate update scripts can exist and be imported into the schema as desired.
+
+.. note::
+    Several separate update scripts can exist and be used to create chained updates of the schema.
+    They will be used to update the schema in the order they appear in `scripts.lib.validation.config_updates.py`.
 
 .. autoclass:: lib.validation.config._base::ConfigUpdater
     :members: NAME, update, _apply_updates
