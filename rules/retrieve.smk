@@ -425,6 +425,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["archiv
 
 if (COSTS_DATASET := dataset_version("costs"))["source"] in [
     "primary",
+    "archive",
 ]:
 
     rule retrieve_cost_data:
