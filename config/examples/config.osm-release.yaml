@@ -74,7 +74,7 @@ overpass_api:
 
 osm_network_release:
   release_version: "0.7"
-  under_construction: keep
+  under_construction: remove
   remove_after: "2025-12-31"
   compare_to:
     version: latest

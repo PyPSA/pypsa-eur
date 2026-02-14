@@ -139,6 +139,7 @@ seawater_temperature,v1.0,primary,latest supported,2026-01-21,Test cutout seawat
 seawater_temperature,v1.0,archive,latest supported,2026-01-21,Test cutout seawater temperature,https://data.pypsa.org/workflows/eur/seawater_temperature/v1.0/seawater_temperature.nc
 ship_raster,v5,primary,latest supported,2025-12-02,,https://datacatalogfiles.worldbank.org/ddh-published/0037580/5/DR0045406/shipdensity_global.zip
 ship_raster,v5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/ship_raster/v5/shipdensity_global.zip
+swiss_energy_balances,2025-10-01,primary,latest supported,2026-02-12,,https://pubdb.bfe.admin.ch/de/publication/download/12361
 synthetic_electricity_demand,v2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/10820928/files/demand_hourly.csv
 synthetic_electricity_demand,v2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/v2
 synthetic_electricity_demand,0.1.0,archive,deprecated might-work,2026-01-13,,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/0.1.0/demand_hourly.csv

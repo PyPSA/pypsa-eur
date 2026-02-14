@@ -68,11 +68,33 @@ def retrieve_osm_data(
     """
 
     features_dict = {
-        "cables_way": ['way["power"="cable"]'],
-        "lines_way": ['way["power"="line"]'],
-        "routes_relation": ['relation["route"="power"]', 'relation["power"="circuit"]'],
-        "substations_way": ['way["power"="substation"]'],
-        "substations_relation": ['relation["power"="substation"]'],
+        "cables_way": [
+            'way["power"="cable"]',
+            'way["construction:power"="cable"]',
+            'way["power"="construction"]["construction"="cable"]',
+        ],
+        "lines_way": [
+            'way["power"="line"]',
+            'way["construction:power"="line"]',
+            'way["power"="construction"]["construction"="line"]',
+        ],
+        "routes_relation": [
+            'relation["route"="power"]',
+            'relation["power"="circuit"]',
+            'relation["construction:power"="line"]',
+            'relation["construction:power"="cable"]',
+            'relation["power"="construction"]',
+        ],
+        "substations_way": [
+            'way["power"="substation"]',
+            'way["construction:power"="substation"]',
+            'way["power"="construction"]["construction"="substation"]',
+        ],
+        "substations_relation": [
+            'relation["power"="substation"]',
+            'relation["construction:power"="substation"]',
+            'relation["power"="construction"]["construction"="substation"]',
+        ],
     }
 
     wait_time = 5

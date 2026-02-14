@@ -58,6 +58,23 @@ if (
             copy2(input["csv"], output["csv"])
 
 
+if (SWISS_ENERGY_BALANCES_DATASET := dataset_version("swiss_energy_balances"))[
+    "source"
+] in [
+    "primary",
+]:
+
+    rule retrieve_swiss_energy_balances:
+        message:
+            "Retrieving Swiss energy balances data"
+        input:
+            xlsx=storage(SWISS_ENERGY_BALANCES_DATASET["url"]),
+        output:
+            xlsx=f"{SWISS_ENERGY_BALANCES_DATASET['folder']}/12361-VWZ_Webtabellen_2024.xlsx",
+        run:
+            copy2(input["xlsx"], output["xlsx"])
+
+
 if (NUTS3_POPULATION_DATASET := dataset_version("nuts3_population"))["source"] in [
     "primary",
     "archive",
