@@ -258,7 +258,7 @@ def add_power_capacities_installed_before_baseyear(
         bins=grouping_years,
         labels=grouping_years[1:],
         right=True,
-        include_lowest=True
+        include_lowest=True,
     ).astype(int)
 
     # calculate (adjusted) remaining lifetime before phase-out (+1 because assuming
