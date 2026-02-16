@@ -1540,6 +1540,9 @@ if __name__ == "__main__":
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
 
+    if snakemake.output.get("model"):
+        n.model.to_netcdf(snakemake.output.model)
+
     with open(snakemake.output.config, "w") as file:
         yaml.dump(
             n.meta,

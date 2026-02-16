@@ -7,7 +7,7 @@ authors = ["Contributors to PyPSA-Eur"]
 channels = ["conda-forge", "bioconda", "gurobi"]
 name = "pypsa-eur"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
-version = "0.1.0"
+version = "2025.07.0"
 
 [tasks]
 
@@ -102,6 +102,7 @@ snakemake-storage-plugin-cached-http = ">=0.2.1"
 pandera = ">=0.28.1"
 natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
+pydeflate = ">=2.3.4"
 
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"

@@ -22,6 +22,12 @@ rule solve_sector_network:
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.yaml",
+        model=(
+            RESULTS
+            + "models/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+            if config["solving"]["options"]["store_model"]
+            else []
+        ),
     shadow:
         shadow_config
     log:
@@ -41,4 +47,4 @@ rule solve_sector_network:
             + "benchmarks/solve_sector_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")

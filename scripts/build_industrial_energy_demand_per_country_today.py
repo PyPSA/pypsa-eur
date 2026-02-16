@@ -51,6 +51,7 @@ the output file contains the energy demand in TWh/a for the following carriers
 import logging
 import multiprocessing as mp
 from functools import partial
+from pathlib import Path
 
 import country_converter as coco
 import pandas as pd
@@ -108,6 +109,21 @@ fuels = {
     "Electricity": "electricity",
 }
 
+fuels_eurostat = {
+    "TOTAL": "all",  # Total
+    "C0000X0350-0370": "solid",  # Solid fossil fuels
+    "P1000": "solid",  # Peat and peat products
+    "S2000": "solid",  # Oil shale and oil sands
+    "O4000XBIO": "liquid",  # Oil and petroleum products
+    "C0350-0370": "gas",  # Manufactured gases
+    "G3000": "gas",  # Natural gas
+    "N900H": "heat",  # Nuclear heat
+    "H8000": "heat",  # Heat
+    "RA000": "biomass",  # Renewables and biofuels
+    "W6100_6220": "waste",  # Non-renewable waste
+    "E7000": "electricity",  # Electricity
+}
+
 eu27 = cc.EU27as("ISO2").ISO2.tolist()
 
 jrc_names = {"GR": "EL", "GB": "UK"}
@@ -115,7 +131,13 @@ jrc_names = {"GR": "EL", "GB": "UK"}
 
 def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammonia):
     jrc_country = jrc_names.get(country, country)
-    fn = f"{jrc_dir}/{jrc_country}/JRC-IDEES-2021_EnergyBalance_{jrc_country}.xlsx"
+
+    root = Path(jrc_dir, jrc_country)
+    fn = next(
+        p
+        for y in ("2023", "2021")
+        if (p := root / f"JRC-IDEES-{y}_EnergyBalance_{jrc_country}.xlsx").exists()
+    )
 
     sheets = list(sector_sheets.values())
     df_dict = pd.read_excel(fn, sheet_name=sheets, index_col=0)
@@ -263,8 +285,13 @@ def add_coke_ovens(demand, fn, year, factor=0.75):
     """
 
     df = pd.read_csv(fn, index_col=[0, 1]).xs(year, level=1)
-    df = df.rename(columns={"Total all products": "Total"})[fuels.keys()]
-    df = df.rename(columns=fuels).T.groupby(level=0).sum().T
+    df = (
+        df[fuels_eurostat.keys()]
+        .rename(columns=fuels_eurostat)
+        .T.groupby(level=0)
+        .sum()
+        .T
+    )
     df["other"] = df["all"] - df.loc[:, df.columns != "all"].sum(axis=1)
     df = df.T.reindex_like(demand.xs("Integrated steelworks", axis=1, level=1)).fillna(
         0

@@ -18,6 +18,11 @@ rule solve_network:
     output:
         network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
         config=RESULTS + "configs/config.base_s_{clusters}_elec_{opts}.yaml",
+        model=(
+            RESULTS + "models/base_s_{clusters}_elec_{opts}.nc"
+            if config["solving"]["options"]["store_model"]
+            else []
+        ),
     log:
         solver=normpath(
             RESULTS + "logs/solve_network/base_s_{clusters}_elec_{opts}_solver.log"
@@ -33,7 +38,7 @@ rule solve_network:
     shadow:
         shadow_config
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")
 
 
 rule solve_operations_network:
@@ -67,4 +72,4 @@ rule solve_operations_network:
     shadow:
         shadow_config
     script:
-        "../scripts/solve_operations_network.py"
+        scripts("solve_operations_network.py")

@@ -183,13 +183,6 @@ New data should generally not be added to the data, but externally retrieved in 
 - **License:** CC0 (`reference <https://www.eia.gov/about/copyrights_reuse.php>`__)
 - **Description:** Contains locations and capacities of oil refineries in Europe.
 
-``data/switzerland-new_format-all_years.csv``
-
-- **Source:** Swiss Federal Office of Energy (SFOE)
-- **Link:** https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken/energieverbrauch-nach-verwendungszweck.html/
-- **License:** `custom <https://www.admin.ch/gov/de/start/rechtliches.html>`__
-- **Description:** Contains energy consumption by sector / application for Switzerland.
-
 ``data/unit_commitment.csv``
 
 - **Source:** `DIW

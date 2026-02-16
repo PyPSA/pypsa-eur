@@ -24,9 +24,13 @@ class _EmissionPricesConfig(ConfigModel):
         0.0,
         description="Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere.",
     )
-    co2_monthly_prices: bool = Field(
+    dynamic: bool = Field(
         False,
-        description="Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+        description="Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
+    )
+    rolling_window: int = Field(
+        90,
+        description="Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
     )
 
 

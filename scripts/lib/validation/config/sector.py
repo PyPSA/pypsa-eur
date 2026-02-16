@@ -530,19 +530,6 @@ class SectorConfig(BaseModel):
         description="The efficiency of oil-powered machinery in the conversion of oil to meet agricultural needs.",
     )
 
-    MWh_MeOH_per_MWh_H2: float = Field(
-        0.8787,
-        description="The energy amount of the produced methanol per energy amount of hydrogen. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
-    )
-    MWh_MeOH_per_tCO2: float = Field(
-        4.0321,
-        description="The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 66.",
-    )
-    MWh_MeOH_per_MWh_e: float = Field(
-        3.6907,
-        description="The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
-    )
-
     shipping_hydrogen_liquefaction: bool = Field(
         False,
         description="Whether to include liquefaction costs for hydrogen demand in shipping.",
