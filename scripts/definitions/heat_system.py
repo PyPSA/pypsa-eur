@@ -234,6 +234,12 @@ class HeatSystem(Enum):
             HeatSource.GEOTHERMAL,
             HeatSource.SEA_WATER,
             HeatSource.RIVER_WATER,
+            HeatSource.ELECTROLYSIS_waste,
+            HeatSource.FISCHER_TROPSCH_waste,
+            HeatSource.SABATIER_waste,
+            HeatSource.HABER_BOSCH_waste,
+            HeatSource.METHANOLISATION_waste,
+            HeatSource.FUEL_CELL_waste,
         ]:
             return f"{self.central_or_decentral} excess-heat-sourced heat pump"
         else:

@@ -355,7 +355,7 @@ if __name__ == "__main__":
 
     # temperature scenario that was assumed by Manz et al. when computing potentials is 65C (default) or 85C
     this_temperature_scenario = ISI_TEMPERATURE_SCENARIOS[
-        snakemake.params.constant_temperature_celsius
+        snakemake.params.source_temperature
     ]
 
     # get heat potentials, index them by LAU-ID and get the geothermal potentials
@@ -406,7 +406,7 @@ if __name__ == "__main__":
         heat_source_power=heat_source_power,
         forward_temperature=forward_temperature,
         return_temperature=return_temperature,
-        source_temperature=snakemake.params.constant_temperature_celsius,
+        source_temperature=snakemake.params.source_temperature,
         heat_source_cooling=snakemake.params.heat_source_cooling,
     )
 

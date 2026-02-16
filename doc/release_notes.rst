@@ -75,6 +75,10 @@ Upcoming Release
 
 * Added example configurations for rolling horizon and iterative optimization modes in `config/examples/`.
 
+* Refactor: Integrated excess heat from Power-to-X processes into the new heat-source structure and moved some code from `scripts/prepare_sector_network.py` to `scripts/def/heat_source.py`. Also updated PtX excess heat efficiencies (https://github.com/PyPSA/pypsa-eur/pull/1944).
+
+* Update heat source handling in `prepare_sector_network` and introduce preheating of heat sources for more realistic system integrations (https://github.com/PyPSA/pypsa-eur/pull/1893).
+
 * Added existing biomass decentral/rural residential and services heating capacity.
 
 * Fix parsing in Swiss passenger cars data (https://github.com/PyPSA/pypsa-eur/pull/1934 and https://github.com/PyPSA/pypsa-eur/pull/1936).
