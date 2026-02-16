@@ -61,6 +61,7 @@ if (
 if (SWISS_ENERGY_BALANCES_DATASET := dataset_version("swiss_energy_balances"))[
     "source"
 ] in [
+    "archive",
     "primary",
 ]:
 
@@ -722,7 +723,7 @@ if (
 
 
 
-if (ONS_LAD_DATASET := dataset_version("ons_lad"))["source"] in ["primary"]:
+if (ONS_LAD_DATASET := dataset_version("ons_lad"))["source"] in ["archive", "primary"]:
 
     rule retrieve_ons_lad:
         message:
