@@ -1263,6 +1263,26 @@
             }
           }
         },
+        "swiss_energy_balances": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "synthetic_electricity_demand": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -2266,7 +2286,7 @@
       "description": "Configuration for `energy` settings.",
       "properties": {
         "energy_totals_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
           "type": "integer"
         },
@@ -10111,7 +10131,7 @@
       "description": "Configuration for `energy` settings.",
       "properties": {
         "energy_totals_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
           "type": "integer"
         },
@@ -12662,6 +12682,26 @@
           }
         },
         "seawater_temperature": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "swiss_energy_balances": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

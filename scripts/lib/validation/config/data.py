@@ -111,6 +111,10 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="Seawater temperature data source configuration.",
     )
+    swiss_energy_balances: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="Swiss energy balances data source configuration.",
+    )
     synthetic_electricity_demand: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
         description="Synthetic electricity demand data source configuration.",
@@ -200,7 +204,7 @@ class DataConfig(BaseModel):
         description="Powerplants data source configuration.",
     )
     costs: _DataSourceConfig = Field(
-        default_factory=lambda: _DataSourceConfig(source="primary"),
+        default_factory=_DataSourceConfig,
         description="Costs data source configuration.",
     )
     country_runoff: _DataSourceConfig = Field(

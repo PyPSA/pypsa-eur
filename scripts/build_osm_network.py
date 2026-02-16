@@ -1499,7 +1499,7 @@ def _treat_under_construction(
     elif decision == "remove":
         logger.info("Removing elements under construction...")
         len_before = len(df)
-        idx_remove = df.index[df["under_construction"].notna()]
+        idx_remove = df.index[df["under_construction"]]
         df = df.drop(index=idx_remove)
         len_after = len(df)
         logger.info(f"Removed {len_before - len_after} elements under construction.")

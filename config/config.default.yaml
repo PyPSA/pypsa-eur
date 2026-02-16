@@ -527,7 +527,7 @@ pypsa_eur:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
-  energy_totals_year: 2019
+  energy_totals_year: 2023
   base_emissions_year: 1990
   emissions: CO2
 
@@ -1330,6 +1330,9 @@ data:
   seawater_temperature:
     source: archive
     version: latest
+  swiss_energy_balances:
+    source: primary
+    version: latest
   synthetic_electricity_demand:
     source: primary
     version: latest
@@ -1397,7 +1400,7 @@ data:
     source: archive
     version: latest
   costs:
-    source: primary
+    source: archive
     version: latest
   country_runoff:
     source: archive
