@@ -121,6 +121,8 @@ def add_year_to_constraints(n: pypsa.Network, baseyear: int) -> None:
     """
 
     for c in n.components[["GlobalConstraint"]]:
+        if c.static.empty:
+            continue
         c.static["investment_period"] = baseyear
         c.static.rename(index=lambda x: x + "-" + str(baseyear), inplace=True)
 
@@ -232,6 +234,8 @@ def concat_networks(
                 "StorageUnit",
             ]
         ]:
+            if component.static.empty:
+                continue
             df_year = component.static.copy()
             missing = get_missing(df_year, n, component.list_name)
 
@@ -278,6 +282,8 @@ def concat_networks(
 
         # (3) global constraints
         for component in network.components[["GlobalConstraint"]]:
+            if component.static.empty:
+                continue
             add_year_to_constraints(network, year)
             n.add(component.name, component.static.index, **component.static)
 

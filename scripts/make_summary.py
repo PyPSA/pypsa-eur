@@ -41,9 +41,13 @@ def assign_carriers(n: pypsa.Network) -> None:
 
 def assign_locations(n: pypsa.Network) -> None:
     for c in n.components[n.one_port_components]:
+        if c.static.empty:
+            continue
         c.static["location"] = c.static.bus.map(n.buses.location)
 
     for c in n.components[n.branch_components]:
+        if c.static.empty:
+            continue
         c_bus_cols = c.static.filter(regex="^bus")
         locs = c_bus_cols.apply(lambda c: c.map(n.buses.location)).sort_index(axis=1)
         # Use first location that is not "EU"; take "EU" if nothing else available

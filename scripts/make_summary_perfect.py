@@ -56,6 +56,8 @@ def calculate_costs(n, label, costs):
     for c in n.components[
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
     ]:
+        if c.static.empty:
+            continue
         capital_costs = (
             c.static.capital_cost * c.static[opt_name.get(c.name, "p") + "_nom_opt"]
         )
@@ -166,6 +168,8 @@ def calculate_nodal_capacities(n, label, nodal_capacities):
     for c in n.components[
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
     ]:
+        if c.static.empty:
+            continue
         nodal_capacities_c = c.static.groupby(["location", "carrier"])[
             opt_name.get(c.name, "p") + "_nom_opt"
         ].sum()
@@ -193,6 +197,8 @@ def calculate_capacities(n, label, capacities):
     for c in n.components[
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
     ]:
+        if c.static.empty:
+            continue
         active = pd.concat(
             [
                 get_active_assets(n, c.name, inv_p).rename(inv_p)
@@ -243,6 +249,8 @@ def calculate_energy(n, label, energy):
     energy = reindex_columns(energy, cols)
 
     for c in n.components[n.one_port_components | n.branch_components]:
+        if c.static.empty:
+            continue
         if c.name in n.one_port_components:
             c_energies = (
                 c.dynamic.p.multiply(n.snapshot_weightings.generators, axis=0)
@@ -293,6 +301,8 @@ def calculate_supply(n, label, supply):
         bus_map.at[""] = False
 
         for c in n.components[n.one_port_components]:
+            if c.static.empty:
+                continue
             items = c.static.index[c.static.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
@@ -312,6 +322,8 @@ def calculate_supply(n, label, supply):
             supply.loc[s.index, label] = s
 
         for c in n.components[n.branch_components]:
+            if c.static.empty:
+                continue
             for end in [col[3:] for col in c.static.columns if col[:3] == "bus"]:
                 items = c.static.index[c.static["bus" + end].map(bus_map).fillna(False)]
 
@@ -356,6 +368,8 @@ def calculate_supply_energy(n, label, supply_energy):
         bus_map.at[""] = False
 
         for c in n.components[n.one_port_components]:
+            if c.static.empty:
+                continue
             items = c.static.index[c.static.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
@@ -391,6 +405,8 @@ def calculate_supply_energy(n, label, supply_energy):
             supply_energy.loc[s.index, label] = s.values
 
         for c in n.components[n.branch_components]:
+            if c.static.empty:
+                continue
             for end in [col[3:] for col in c.static.columns if col[:3] == "bus"]:
                 items = c.static.index[
                     c.static[f"bus{str(end)}"].map(bus_map).fillna(False)

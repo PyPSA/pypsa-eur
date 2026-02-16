@@ -48,6 +48,8 @@ def add_build_year_to_new_assets(n: pypsa.Network, baseyear: int) -> None:
     """
     # Give assets with lifetimes and no build year the build year baseyear
     for c in n.components[["Link", "Generator", "Store"]]:
+        if c.static.empty:
+            continue
         assets = c.static.index[
             (c.static.lifetime != np.inf) & (c.static.build_year == 0)
         ]

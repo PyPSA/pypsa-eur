@@ -667,6 +667,8 @@ def remove_elec_base_techs(n: pypsa.Network, carriers_to_keep: dict) -> None:
         e.g. {'Generator': ['hydro'], 'StorageUnit': ['PHS']}
     """
     for c in n.components[list(carriers_to_keep.keys())]:
+        if c.static.empty:
+            continue
         to_keep = carriers_to_keep[c.name]
         to_remove = pd.Index(c.static.carrier.unique()).symmetric_difference(to_keep)
         if to_remove.empty:
@@ -5741,6 +5743,8 @@ def cluster_heat_buses(n):
     components = ["Bus", "Carrier", "Generator", "Link", "Load", "Store"]
 
     for c in n.components[components]:
+        if c.static.empty:
+            continue
         df = c.static
         cols = df.columns[df.columns.str.contains("bus") | (df.columns == "carrier")]
 

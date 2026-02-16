@@ -503,6 +503,8 @@ def prepare_network(
                 )
 
         for t in n.components[["Line", "Link"]]:
+            if t.static.empty:
+                continue
             t.static["capital_cost"] += (
                 1e-1 + 2e-2 * (np.random.random(len(t.static)) - 0.5)
             ) * t.static["length"]
