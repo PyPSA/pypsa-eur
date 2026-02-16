@@ -35,6 +35,7 @@ country_runoff,2025-08-13,archive,latest supported,2026-01-13,,https://data.pyps
 cutout,v1.0,archive,latest supported,2026-01-13,Pre-build cutouts for PyPSA-Eur,https://data.pypsa.org/workflows/cutout/v1.0
 cutout,unknown,build,latest supported,2025-12-02,Build latest cutouts using ERA5/SARAH3 data.,
 desnz_electricity_consumption,unknown,primary,latest supported,2026-02-02,,https://assets.publishing.service.gov.uk/media/6762951abe7b2c675de30705/Subnational_electricity_consumption_statistics_2005-2024.xlsx
+desnz_electricity_consumption,2026-02-16,archive,latest supported,2026-02-16,,https://data.pypsa.org/workflows/eur/desnz_electricity_consumption/2026-02-16/Subnational_electricity_consumption_statistics_2005-2024.xlsx
 dh_areas,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg
 dh_areas,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/dh_areas/341.5/dh_areas.gpkg
 eez,v12_20231025,primary,latest supported,2025-12-02,API request used,https://www.marineregions.org/download_file.php
@@ -79,6 +80,7 @@ instrat_co2_prices,unknown,primary,latest supported,2026-02-03,API endpoint prov
 jrc_ardeco,2021,primary,latest supported,2025-12-02,,https://territorial.ec.europa.eu/ardeco-api-v2/rest/export/
 jrc_ardeco,2021,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_ardeco/2021
 jrc_energy_atlas,unknown,primary,latest supported,2026-02-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EIGL-Data/RASTER/electricity_tot_demand_2019.tif
+jrc_energy_atlas,2026-02-16,archive,latest supported,2026-02-16,,https://data.pypsa.org/workflows/eur/jrc_energy_atlas/2026-02-16/electricity_tot_demand_2019.tif
 jrc_idees,2023-v1,primary,latest supported,2026-02-04,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2023_v1/JRC-IDEES-2023.zip
 jrc_idees,2023-v1,archive,latest supported,2026-02-09,,https://data.pypsa.org/workflows/eur/jrc_idees/2023-v1/JRC-IDEES-2023.zip
 jrc_idees,2021-v1,primary,supported,2025-12-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1/JRC-IDEES-2021.zip
