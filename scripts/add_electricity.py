@@ -565,6 +565,7 @@ def attach_conventional_generators(
     ppl: pd.DataFrame,
     conventional_carriers: list,
     extendable_carriers: dict,
+    renewable_carriers: set,
     conventional_params: dict,
     conventional_inputs: dict,
     unit_commitment: pd.DataFrame = None,
@@ -585,6 +586,8 @@ def attach_conventional_generators(
         List of conventional energy carriers.
     extendable_carriers : dict
         Dictionary of extendable energy carriers.
+    renewable_carriers : set
+        Set of carriers added separately in attach_wind_and_solar().
     conventional_params : dict
         Dictionary of conventional generator parameters.
     conventional_inputs : dict
@@ -594,7 +597,10 @@ def attach_conventional_generators(
     fuel_price : pd.DataFrame, optional
         DataFrame containing fuel price data, by default None.
     """
-    carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
+    carriers = list(
+        set(conventional_carriers)
+        | set(extendable_carriers["Generator"]) - set(renewable_carriers)
+    )
 
     ppl = ppl.query("carrier in @carriers")
 
@@ -1190,8 +1196,9 @@ if __name__ == "__main__":
         ppl,
         conventional_carriers,
         extendable_carriers,
-        params.conventional,
-        conventional_inputs,
+        renewable_carriers,
+        conventional_params=params.conventional,
+        conventional_inputs=conventional_inputs,
         unit_commitment=unit_commitment,
         fuel_price=fuel_price,
     )
