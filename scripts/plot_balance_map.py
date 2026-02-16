@@ -80,7 +80,7 @@ if __name__ == "__main__":
     n.buses["x"] = n.buses.location.map(n.buses.x)
     n.buses["y"] = n.buses.location.map(n.buses.y)
 
-    # bus_sizes according to energy balance of bus carrier
+    # bus_size according to energy balance of bus carrier
     eb = n.statistics.energy_balance(bus_carrier=carrier, groupby=["bus", "carrier"])
 
     # remove energy balance of transmission carriers which relate to losses
@@ -95,15 +95,15 @@ if __name__ == "__main__":
 
     eb.loc[components] = eb.loc[components].drop(index=carriers_in_eb, level="carrier")
     eb = eb.dropna()
-    bus_sizes = eb.groupby(level=["bus", "carrier"]).sum().div(unit_conversion)
-    bus_sizes = bus_sizes.sort_values(ascending=False)
+    bus_size = eb.groupby(level=["bus", "carrier"]).sum().div(unit_conversion)
+    bus_size = bus_size.sort_values(ascending=False)
 
     # Get colors for carriers
     n.carriers.update({"color": snakemake.params.plotting["tech_colors"]})
     carrier_colors = n.carriers.color.copy().replace("", "grey")
 
     colors = (
-        bus_sizes.index.get_level_values("carrier")
+        bus_size.index.get_level_values("carrier")
         .unique()
         .to_series()
         .map(carrier_colors)
@@ -123,8 +123,8 @@ if __name__ == "__main__":
 
     # if there are not lines or links for the bus carrier, use fallback for plotting
     fallback = pd.Series()
-    line_widths = flow.get("Line", fallback).abs()
-    link_widths = flow.get("Link", fallback).abs()
+    line_width = flow.get("Line", fallback).abs()
+    link_width = flow.get("Link", fallback).abs()
 
     # define maximal size of buses and branch width
     bus_size_factor = settings["bus_factor"]
@@ -169,11 +169,11 @@ if __name__ == "__main__":
     transformer_flow = flow.get("Transformer")
 
     n.plot(
-        bus_sizes=bus_sizes * bus_size_factor,
-        bus_colors=colors,
-        bus_split_circles=True,
-        line_widths=line_widths * branch_width_factor,
-        link_widths=link_widths * branch_width_factor,
+        bus_size=bus_size * bus_size_factor,
+        bus_color=colors,
+        bus_split_circle=True,
+        line_width=line_width * branch_width_factor,
+        link_width=link_width * branch_width_factor,
         line_flow=line_flow * flow_size_factor if line_flow is not None else None,
         link_flow=link_flow * flow_size_factor if link_flow is not None else None,
         link_color=branch_color,
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         else None,
         ax=ax,
         margin=0.2,
-        geomap_colors={"border": "darkgrey", "coastline": "darkgrey"},
+        geomap_color={"border": "darkgrey", "coastline": "darkgrey"},
         geomap=True,
         boundaries=boundaries,
     )
@@ -226,14 +226,14 @@ if __name__ == "__main__":
     n.carriers.loc["", "color"] = "None"
 
     # Get lists for supply and consumption carriers
-    pos_carriers = bus_sizes[bus_sizes > 0].index.unique("carrier")
-    neg_carriers = bus_sizes[bus_sizes < 0].index.unique("carrier")
+    pos_carriers = bus_size[bus_size > 0].index.unique("carrier")
+    neg_carriers = bus_size[bus_size < 0].index.unique("carrier")
 
     # Determine larger total absolute value for supply and consumption for a carrier if carrier exists as both supply and consumption
     common_carriers = pos_carriers.intersection(neg_carriers)
 
     def get_total_abs(carrier, sign):
-        values = bus_sizes.loc[:, carrier]
+        values = bus_size.loc[:, carrier]
         return values[values * sign > 0].abs().sum()
 
     supp_carriers = sorted(
@@ -272,16 +272,16 @@ if __name__ == "__main__":
     )
 
     # Add bus legend
-    legend_bus_sizes = settings["bus_sizes"]
-    unit = settings["unit"]
-    if legend_bus_sizes is not None:
+    legend_bus_size = settings["bus_sizes"]
+    carrier_unit = settings["unit"]
+    if legend_bus_size is not None:
         add_legend_semicircles(
             ax,
             [
                 s * bus_size_factor * SEMICIRCLE_CORRECTION_FACTOR
-                for s in legend_bus_sizes
+                for s in legend_bus_size
             ],
-            [f"{s} {unit}" for s in legend_bus_sizes],
+            [f"{s} {carrier_unit}" for s in legend_bus_size],
             patch_kw={"color": "#666"},
             legend_kw={
                 "bbox_to_anchor": (0, 1),
@@ -295,7 +295,7 @@ if __name__ == "__main__":
         add_legend_lines(
             ax,
             [s * branch_width_factor for s in legend_branch_sizes],
-            [f"{s} {unit}" for s in legend_branch_sizes],
+            [f"{s} {carrier_unit}" for s in legend_branch_sizes],
             patch_kw={"color": "#666"},
             legend_kw={"bbox_to_anchor": (0.25, 1), **legend_kwargs},
         )

@@ -47,21 +47,25 @@ def add_build_year_to_new_assets(n: pypsa.Network, baseyear: int) -> None:
         Year in which optimized assets are built
     """
     # Give assets with lifetimes and no build year the build year baseyear
-    for c in n.iterate_components(["Link", "Generator", "Store"]):
-        assets = c.df.index[(c.df.lifetime != np.inf) & (c.df.build_year == 0)]
-        c.df.loc[assets, "build_year"] = baseyear
+    for c in n.components[["Link", "Generator", "Store"]]:
+        if c.static.empty:
+            continue
+        assets = c.static.index[
+            (c.static.lifetime != np.inf) & (c.static.build_year == 0)
+        ]
+        c.static.loc[assets, "build_year"] = baseyear
 
         # add -baseyear to name
-        rename = pd.Series(c.df.index, c.df.index)
+        rename = pd.Series(c.static.index, c.static.index)
         rename[assets] += f"-{str(baseyear)}"
-        c.df.rename(index=rename, inplace=True)
+        c.static.rename(index=rename, inplace=True)
 
         # rename time-dependent
         selection = n.component_attrs[c.name].type.str.contains(
             "series"
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for attr in n.component_attrs[c.name].index[selection]:
-            c.pnl[attr] = c.pnl[attr].rename(columns=rename)
+            c.dynamic[attr] = c.dynamic[attr].rename(columns=rename)
 
 
 def add_existing_renewables(

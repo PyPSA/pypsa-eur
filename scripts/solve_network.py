@@ -494,18 +494,20 @@ def prepare_network(
         )
 
     if solve_opts.get("noisy_costs"):
-        for t in n.iterate_components():
-            # if 'capital_cost' in t.df:
-            #    t.df['capital_cost'] += 1e1 + 2.*(np.random.random(len(t.df)) - 0.5)
-            if "marginal_cost" in t.df:
-                t.df["marginal_cost"] += 1e-2 + 2e-3 * (
-                    np.random.random(len(t.df)) - 0.5
+        for t in n.components:
+            # if 'capital_cost' in t.static:
+            #    t.static['capital_cost'] += 1e1 + 2.*(np.random.random(len(t.static)) - 0.5)
+            if "marginal_cost" in t.static:
+                t.static["marginal_cost"] += 1e-2 + 2e-3 * (
+                    np.random.random(len(t.static)) - 0.5
                 )
 
-        for t in n.iterate_components(["Line", "Link"]):
-            t.df["capital_cost"] += (
-                1e-1 + 2e-2 * (np.random.random(len(t.df)) - 0.5)
-            ) * t.df["length"]
+        for t in n.components[["Line", "Link"]]:
+            if t.static.empty:
+                continue
+            t.static["capital_cost"] += (
+                1e-1 + 2e-2 * (np.random.random(len(t.static)) - 0.5)
+            ) * t.static["length"]
 
     if solve_opts.get("nhours"):
         nhours = solve_opts["nhours"]
