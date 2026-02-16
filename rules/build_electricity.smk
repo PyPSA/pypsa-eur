@@ -236,8 +236,16 @@ rule determine_availability_matrix_MD_UA:
         renewable=config_provider("renewable"),
     input:
         copernicus=rules.download_copernicus_land_cover.output["tif"],
-        wdpa=rules.retrieve_wdpa.output["gpkg"],
-        wdpa_marine=rules.retrieve_wdpa_marine.output["gpkg"],
+        wdpa=lambda w: (
+            rules.retrieve_wdpa.output["gpkg"]
+            if config_provider("renewable", w.technology, "natura")(w)
+            else []
+        ),
+        wdpa_marine=lambda w: (
+            rules.retrieve_wdpa_marine.output["gpkg"]
+            if config_provider("renewable", w.technology, "natura")(w)
+            else []
+        ),
         gebco=lambda w: (
             rules.retrieve_gebco.output["gebco"]
             if config_provider("renewable", w.technology)(w).get("max_depth")
