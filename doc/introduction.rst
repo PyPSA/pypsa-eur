@@ -10,10 +10,10 @@
 
 .. raw:: html
 
-    <iframe width="832" height="468" src="https://www.youtube.com/embed/ty47YU1_eeQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <iframe width="832" height="468" src="https://www.youtube.com/embed/nnAmOqJlGmk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 .. note::
-    Find the introductory slides `here <https://docs.google.com/presentation/d/e/2PACX-1vQGQZD7KIVdocRZzRVu8Uk-JC_ltEow5zjtIarhyws46IMJpaqGuux695yincmJA_i5bVEibEs7z2eo/pub?start=false&loop=true&delayms=3000>`__.
+    Find the introductory slides `here <https://docs.google.com/presentation/d/1s4xkeGfR_IqArmceRaYgZUl0UFLymGXwjz6SRWBtNnE/edit>`__.
 
 .. warning::
     The video only introduces the electricity-only part of PyPSA-Eur.
