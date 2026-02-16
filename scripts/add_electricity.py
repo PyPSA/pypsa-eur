@@ -565,6 +565,7 @@ def attach_conventional_generators(
     ppl: pd.DataFrame,
     conventional_carriers: list,
     extendable_carriers: dict,
+    renewable_carriers: set,
     conventional_params: dict,
     conventional_inputs: dict,
     unit_commitment: pd.DataFrame = None,
@@ -585,6 +586,8 @@ def attach_conventional_generators(
         List of conventional energy carriers.
     extendable_carriers : dict
         Dictionary of extendable energy carriers.
+    renewable_carriers : set
+        Set of carriers added separately in attach_wind_and_solar().
     conventional_params : dict
         Dictionary of conventional generator parameters.
     conventional_inputs : dict
@@ -594,7 +597,10 @@ def attach_conventional_generators(
     fuel_price : pd.DataFrame, optional
         DataFrame containing fuel price data, by default None.
     """
-    carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
+    carriers = list(
+        set(conventional_carriers)
+        | set(extendable_carriers["Generator"]) - set(renewable_carriers)
+    )
 
     ppl = ppl.query("carrier in @carriers")
 
@@ -834,7 +840,7 @@ def attach_hydro(
         )
 
 
-def attach_GEM_renewables(
+def attach_renewable_powerplants(
     n: pypsa.Network, tech_map: dict[str, list[str]], smk_inputs: list[str]
 ) -> None:
     """
@@ -848,9 +854,11 @@ def attach_GEM_renewables(
     - None
     """
     tech_string = ", ".join(tech_map.values())
-    logger.info(f"Using GEM renewable capacities for carriers {tech_string}.")
+    logger.info(
+        f"Using powerplantmatching renewable capacities for carriers {tech_string}."
+    )
 
-    df = pm.data.GEM().powerplant.convert_country_to_alpha2()
+    df = pd.read_csv(smk_inputs["powerplants"], index_col=0).drop("bus", axis=1)
     technology_b = ~df.Technology.isin(["Onshore", "Offshore"])
     df["Fueltype"] = df.Fueltype.where(technology_b, df.Technology).replace(
         {"Solar": "PV"}
@@ -1121,7 +1129,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("add_electricity", clusters=100)
+        snakemake = mock_snakemake("add_electricity", clusters=60)
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
@@ -1188,8 +1196,9 @@ if __name__ == "__main__":
         ppl,
         conventional_carriers,
         extendable_carriers,
-        params.conventional,
-        conventional_inputs,
+        renewable_carriers,
+        conventional_params=params.conventional,
+        conventional_inputs=conventional_inputs,
         unit_commitment=unit_commitment,
         fuel_price=fuel_price,
     )
@@ -1229,12 +1238,13 @@ if __name__ == "__main__":
             expansion_limit = estimate_renewable_caps["expansion_limit"]
             year = estimate_renewable_caps["year"]
 
-            if estimate_renewable_caps["from_gem"]:
-                attach_GEM_renewables(n, tech_map, snakemake.input)
+            if estimate_renewable_caps["from_powerplantmatching"]:
+                attach_renewable_powerplants(n, tech_map, snakemake.input)
 
-            estimate_renewable_capacities(
-                n, year, tech_map, expansion_limit, params.countries
-            )
+            if estimate_renewable_caps["from_irenastat"]:
+                estimate_renewable_capacities(
+                    n, year, tech_map, expansion_limit, params.countries
+                )
 
     update_p_nom_max(n)
 

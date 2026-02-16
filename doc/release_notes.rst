@@ -9,6 +9,30 @@ Release Notes
 Upcoming Release
 ================
 
+* Adjust ``powerplants_filter`` to include power plants operational in 2025.
+
+* Rewrite mapping of power plant sites to model regions / buses. Previously, power plants were mapped to the nearest bus in the same country.
+  Now, power plants are mapped using a spatial join to the onshore and offshore regions.
+  This change is necessary as the administrative clustering does not conform to the previous nearest-bus mapping.
+
+* Removed some outdated hotfixes in `build_powerplants.py`.
+
+* Estimate renewable capacities using plant-level data from Powerplantmatching, instead of only Global Energy Monitor (GEM) data. The setting ``from_gem`` is renamed to ``from_powerplantmatching``.
+
+* New setting ``from_irenastat`` to use IRENASTAT data to supplement potential plant-level data from Powerplantmatching for renewable capacity estimation. This step can now be skipped if sufficient plant-level data is available from Powerplantmatching.
+
+* Update default year for renewable capacity estimation to 2024 (latest available).
+
+* Include waste-to-energy plants in electricity-only networks.
+
+* Add 2030 to power plant grouping years by default.
+
+* Do not apply ``powerplantmatching`` phase-out heuristic in :mod:`build_powerplants`.
+
+* Bugfix: Ensure renewable carriers are not added as conventional power plants (if included in ``powerplants.csv``)
+
+* Bugfix: Improved handling of grouping years in :mod:`add_existing_baseyear`.
+
 * Added ``solving.options.store_model`` config option to store the linopy model as NetCDF file after solving. Not supported with rolling horizon. Configuration setting can not be set per scenario, only globally.
 * Update Swiss energy balances from the Swiss Federal Office of Energy (SFOE) to the latest version (October 2025).
   The data is no longer stored in the repository, but directly retrieved from the SFOE website and processed in the ``build_swiss_energy_balances`` rule.
