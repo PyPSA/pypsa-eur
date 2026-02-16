@@ -229,8 +229,7 @@ if __name__ == "__main__":
         .pipe(pm.collection.set_column_name, "Matched Data")
     )
     ppl = (
-        ppl.powerplant.fill_missing_decommissioning_years()
-        .powerplant.convert_country_to_alpha2()
+        ppl.powerplant.convert_country_to_alpha2()
         .query("Country in @countries")
         .assign(Technology=replace_natural_gas_technology)
         .assign(Fueltype=replace_natural_gas_fueltype)
