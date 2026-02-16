@@ -212,6 +212,8 @@ def add_power_capacities_installed_before_baseyear(
         "Waste",
         "Other",
         "CCGT, Thermal",
+        "Battery",
+        "Heat Storage",
     ]
 
     technology_to_drop = ["Pv", "Storage Technologies"]
@@ -221,14 +223,16 @@ def add_power_capacities_installed_before_baseyear(
     df_agg.drop(df_agg.index[df_agg.Technology.isin(technology_to_drop)], inplace=True)
     df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
 
-    # Intermediate fix for DateIn & DateOut
     # Fill missing DateIn
-    biomass_i = df_agg.loc[df_agg.Fueltype == "urban central solid biomass CHP"].index
-    mean = df_agg.loc[biomass_i, "DateIn"].mean()
-    df_agg.loc[biomass_i, "DateIn"] = df_agg.loc[biomass_i, "DateIn"].fillna(int(mean))
-    # Fill missing DateOut
-    dateout = df_agg.loc[biomass_i, "DateIn"] + lifetime_values["lifetime"]
-    df_agg.loc[biomass_i, "DateOut"] = df_agg.loc[biomass_i, "DateOut"].fillna(dateout)
+    df_agg["DateIn"] = df_agg.groupby("Fueltype")["DateIn"].transform(
+        lambda x: x.fillna(x.mean() // 1)
+    )
+    df_agg.dropna(subset="DateIn", inplace=True)
+
+    # Estimate missing DateOut
+    df_agg["DateOut"] = df_agg.DateOut.combine_first(
+        df_agg.DateIn + df_agg.Fueltype.map(costs.lifetime).fillna(30)
+    )
 
     # include renewables in df_agg
     add_existing_renewables(
@@ -253,9 +257,13 @@ def add_power_capacities_installed_before_baseyear(
         to_drop = df_agg[df_agg.DateIn > max(grouping_years)].index
         df_agg.drop(to_drop, inplace=True)
 
-    df_agg["grouping_year"] = np.take(
-        grouping_years, np.digitize(df_agg.DateIn, grouping_years, right=True)
-    )
+    df_agg["grouping_year"] = pd.cut(
+        df_agg.DateIn,
+        bins=grouping_years,
+        labels=grouping_years[1:],
+        right=True,
+        include_lowest=True,
+    ).astype(int)
 
     # calculate (adjusted) remaining lifetime before phase-out (+1 because assuming
     # phase out date at the end of the year)

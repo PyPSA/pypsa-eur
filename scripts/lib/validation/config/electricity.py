@@ -129,12 +129,16 @@ class _EstimateRenewableCapacitiesConfig(BaseModel):
         True,
         description="Activate routine to estimate renewable capacities in rule `add_electricity`. This option should not be used in combination with pathway planning `foresight: myopic` or `foresight: perfect` as renewable capacities are added differently in `add_existing_baseyear`.",
     )
-    from_gem: bool = Field(
+    from_powerplantmatching: bool = Field(
         True,
-        description="Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.",
+        description="Add renewable capacities from powerplantmatching dataset.",
+    )
+    from_irenastat: bool = Field(
+        False,
+        description="Supplement powerplantmatching dataset with heuristics based on country-level renewable capacities from IRENA (IRENASTAT).",
     )
     year: int = Field(
-        2020,
+        2024,
         description="Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year.",
     )
     expansion_limit: float | bool = Field(
@@ -204,7 +208,7 @@ class ElectricityConfig(BaseModel):
         description="Defines which carriers are extendable during optimization.",
     )
     powerplants_filter: str | bool = Field(
-        "(DateOut >= 2024 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')",
+        "(DateOut > 2025 or DateOut != DateOut) and (DateIn < 2026 or DateIn != DateIn)",
         description="Filter query for the default powerplant database.",
     )
     custom_powerplants: str | bool = Field(
@@ -224,6 +228,7 @@ class ElectricityConfig(BaseModel):
             "coal",
             "lignite",
             "geothermal",
+            "waste",
             "biomass",
         ],
         description="List of conventional power plants to include in the model from `resources/powerplants_s_{clusters}.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
