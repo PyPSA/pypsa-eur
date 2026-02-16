@@ -9,6 +9,7 @@ Release Notes
 Upcoming Release
 ================
 
+* Added ``solving.options.store_model`` config option to store the linopy model as NetCDF file after solving. Not supported with rolling horizon. Configuration setting can not be set per scenario, only globally.
 * Update Swiss energy balances from the Swiss Federal Office of Energy (SFOE) to the latest version (October 2025).
   The data is no longer stored in the repository, but directly retrieved from the SFOE website and processed in the ``build_swiss_energy_balances`` rule.
 * Added prebuilt OSM network v0.7 (https://zenodo.org/records/18619025) using updated workflow. 
