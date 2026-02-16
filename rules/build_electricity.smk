@@ -298,7 +298,11 @@ rule determine_availability_matrix:
             if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),
-        luisa=rules.retrieve_luisa_land_cover.output["tif"],
+        luisa=lambda w: (
+            rules.retrieve_luisa_land_cover.output["tif"]
+            if config_provider("renewable", w.technology, "luisa")(w)
+            else []
+        ),
         gebco=ancient(
             lambda w: (
                 rules.retrieve_gebco.output["gebco"]
