@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 run:
-  name: "distribution-grid-experimental"
+  name: "osm-release"
 
 countries:
 - AL
@@ -44,7 +44,14 @@ countries:
 - UA
 
 electricity:
-  voltages: [63., 66., 90., 110., 132., 150., 220., 300., 330., 380., 400., 500., 750.]
+  voltages:
+  - 220.0
+  - 300.0
+  - 330.0
+  - 380.0
+  - 400.0
+  - 500.0
+  - 750.0
   base_network: osm
 
 transmission_projects:
@@ -66,7 +73,7 @@ overpass_api:
     website: https://github.com/PyPSA/pypsa-eur
 
 osm_network_release:
-  release_version: "experimental"
+  release_version: "0.7"
   under_construction: remove
   remove_after: "2025-12-31"
   compare_to:

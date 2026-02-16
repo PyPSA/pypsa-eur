@@ -659,6 +659,12 @@
           "description": "Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file 'data/validation/monthly_fuel_price.csv'.",
           "type": "boolean"
         },
+        "fuel_price_rolling_window": {
+          "default": 6,
+          "description": "Monthly rolling mean window for fossil fuel prices smoothing.",
+          "minimum": 1,
+          "type": "integer"
+        },
         "nuclear": {
           "additionalProperties": {
             "anyOf": [
@@ -797,10 +803,15 @@
               "default": 0.0,
               "description": "Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere."
             },
-            "co2_monthly_prices": {
+            "dynamic": {
               "default": false,
-              "description": "Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+              "description": "Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
               "type": "boolean"
+            },
+            "rolling_window": {
+              "default": 90,
+              "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
+              "type": "integer"
             }
           }
         }
@@ -932,7 +943,67 @@
             }
           }
         },
+        "worldbank_commodity_prices": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "gem_europe_gas_tracker": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "instrat_co2_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -1192,7 +1263,87 @@
             }
           }
         },
+        "swiss_energy_balances": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "synthetic_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "opsd_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "entsoe_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "neso_electricity_demand": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -1920,6 +2071,42 @@
               "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             },
+            "li-ion": {
+              "default": 6,
+              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "lfp": {
+              "default": 6,
+              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "vanadium": {
+              "default": 10,
+              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "lair": {
+              "default": 12,
+              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "pair": {
+              "default": 24,
+              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "iron-air": {
+              "default": 100,
+              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
             "H2": {
               "default": 168,
               "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
@@ -1939,14 +2126,14 @@
               "type": "array"
             },
             "StorageUnit": {
-              "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+              "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
               "items": {
                 "type": "string"
               },
               "type": "array"
             },
             "Store": {
-              "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+              "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
               "items": {
                 "type": "string"
               },
@@ -2095,7 +2282,7 @@
       "description": "Configuration for `energy` settings.",
       "properties": {
         "energy_totals_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
           "type": "integer"
         },
@@ -2329,14 +2516,14 @@
         },
         "MWh_elec_per_tMeOH": {
           "default": 0.167,
-          "description": "The energy amount of electricity needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
-          "markdownDescription": "The energy amount of electricity needed to produce a ton of methanol. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "description": "The energy amount of electricity needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
           "type": "number"
         },
         "MWh_CH4_per_tMeOH": {
           "default": 10.25,
-          "description": "The energy amount of methane needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
-          "markdownDescription": "The energy amount of methane needed to produce a ton of methanol. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "description": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+          "markdownDescription": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
           "type": "number"
         },
         "MWh_MeOH_per_tMeOH": {
@@ -2518,7 +2705,7 @@
               "type": "boolean"
             },
             "interpolate_limit": {
-              "default": 3,
+              "default": 6,
               "description": "Maximum gap size (consecutive nans) which interpolated linearly.",
               "type": "integer"
             },
@@ -2767,31 +2954,39 @@
               "type": "number"
             },
             "corine": {
-              "description": "Configuration for CORINE land cover settings.",
-              "properties": {
-                "grid_codes": {
-                  "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
-                  "items": {
-                    "type": "integer"
-                  },
-                  "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
                 },
-                "distance": {
-                  "default": 1000,
-                  "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
-                  "type": "number"
-                },
-                "distance_grid_codes": {
-                  "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
-                  "items": {
-                    "type": "integer"
+                {
+                  "description": "Configuration for CORINE land cover settings.",
+                  "properties": {
+                    "grid_codes": {
+                      "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "type": "array"
+                    },
+                    "distance": {
+                      "default": 1000,
+                      "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
+                      "type": "number"
+                    },
+                    "distance_grid_codes": {
+                      "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "type": "array"
+                    }
                   },
-                  "type": "array"
+                  "required": [
+                    "grid_codes"
+                  ]
                 }
-              },
-              "required": [
-                "grid_codes"
-              ]
+              ],
+              "description": "CORINE land cover configuration."
             },
             "luisa": {
               "anyOf": [
@@ -2895,11 +3090,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -3070,11 +3272,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -3245,11 +3454,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -3427,11 +3643,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
             },
             "luisa": {
               "anyOf": [
@@ -3544,11 +3767,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
             },
             "luisa": {
               "anyOf": [
@@ -4116,24 +4346,6 @@
         "agriculture_machinery_electric_efficiency": {
           "default": 0.3,
           "description": "The efficiency of oil-powered machinery in the conversion of oil to meet agricultural needs.",
-          "type": "number"
-        },
-        "MWh_MeOH_per_MWh_H2": {
-          "default": 0.8787,
-          "description": "The energy amount of the produced methanol per energy amount of hydrogen. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
-          "markdownDescription": "The energy amount of the produced methanol per energy amount of hydrogen. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
-          "type": "number"
-        },
-        "MWh_MeOH_per_tCO2": {
-          "default": 4.0321,
-          "description": "The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 66.",
-          "markdownDescription": "The energy amount of the produced methanol per ton of CO2. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 66.",
-          "type": "number"
-        },
-        "MWh_MeOH_per_MWh_e": {
-          "default": 3.6907,
-          "description": "The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
-          "markdownDescription": "The energy amount of the produced methanol per energy amount of electricity. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
           "type": "number"
         },
         "shipping_hydrogen_liquefaction": {
@@ -6053,10 +6265,15 @@
           "default": 0.0,
           "description": "Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere."
         },
-        "co2_monthly_prices": {
+        "dynamic": {
           "default": false,
-          "description": "Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+          "description": "Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
           "type": "boolean"
+        },
+        "rolling_window": {
+          "default": 90,
+          "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
+          "type": "integer"
         }
       }
     },
@@ -6160,14 +6377,14 @@
           "type": "array"
         },
         "StorageUnit": {
-          "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+          "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "Store": {
-          "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+          "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
           "items": {
             "type": "string"
           },
@@ -6191,7 +6408,7 @@
           "type": "boolean"
         },
         "interpolate_limit": {
-          "default": 3,
+          "default": 6,
           "description": "Maximum gap size (consecutive nans) which interpolated linearly.",
           "type": "integer"
         },
@@ -6420,6 +6637,42 @@
           "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
           "type": "number"
         },
+        "li-ion": {
+          "default": 6,
+          "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "lfp": {
+          "default": 6,
+          "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "vanadium": {
+          "default": 10,
+          "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "lair": {
+          "default": 12,
+          "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "pair": {
+          "default": 24,
+          "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
+        "iron-air": {
+          "default": 100,
+          "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "type": "number"
+        },
         "H2": {
           "default": 168,
           "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
@@ -6586,11 +6839,18 @@
           "type": "number"
         },
         "corine": {
-          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-          "items": {
-            "type": "integer"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
         },
         "luisa": {
           "anyOf": [
@@ -6761,31 +7021,39 @@
           "type": "number"
         },
         "corine": {
-          "description": "Configuration for CORINE land cover settings.",
-          "properties": {
-            "grid_codes": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+          "anyOf": [
+            {
+              "type": "boolean"
             },
-            "distance": {
-              "default": 1000,
-              "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
-              "type": "number"
-            },
-            "distance_grid_codes": {
-              "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
-              "items": {
-                "type": "integer"
+            {
+              "description": "Configuration for CORINE land cover settings.",
+              "properties": {
+                "grid_codes": {
+                  "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                },
+                "distance": {
+                  "default": 1000,
+                  "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
+                  "type": "number"
+                },
+                "distance_grid_codes": {
+                  "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
               },
-              "type": "array"
+              "required": [
+                "grid_codes"
+              ]
             }
-          },
-          "required": [
-            "grid_codes"
-          ]
+          ],
+          "description": "CORINE land cover configuration."
         },
         "luisa": {
           "anyOf": [
@@ -7210,11 +7478,18 @@
           "type": "number"
         },
         "corine": {
-          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-          "items": {
-            "type": "integer"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
         },
         "luisa": {
           "anyOf": [
@@ -8038,6 +8313,42 @@
               "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
               "type": "number"
             },
+            "li-ion": {
+              "default": 6,
+              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "lfp": {
+              "default": 6,
+              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "vanadium": {
+              "default": 10,
+              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "lair": {
+              "default": 12,
+              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "pair": {
+              "default": 24,
+              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
+            "iron-air": {
+              "default": 100,
+              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "type": "number"
+            },
             "H2": {
               "default": 168,
               "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
@@ -8057,14 +8368,14 @@
               "type": "array"
             },
             "StorageUnit": {
-              "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+              "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
               "items": {
                 "type": "string"
               },
               "type": "array"
             },
             "Store": {
-              "description": "Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+              "description": "Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
               "items": {
                 "type": "string"
               },
@@ -8497,31 +8808,39 @@
               "type": "number"
             },
             "corine": {
-              "description": "Configuration for CORINE land cover settings.",
-              "properties": {
-                "grid_codes": {
-                  "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
-                  "items": {
-                    "type": "integer"
-                  },
-                  "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
                 },
-                "distance": {
-                  "default": 1000,
-                  "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
-                  "type": "number"
-                },
-                "distance_grid_codes": {
-                  "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
-                  "items": {
-                    "type": "integer"
+                {
+                  "description": "Configuration for CORINE land cover settings.",
+                  "properties": {
+                    "grid_codes": {
+                      "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement.",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "type": "array"
+                    },
+                    "distance": {
+                      "default": 1000,
+                      "description": "Distance in meters to keep from areas specified in `distance_grid_codes`.",
+                      "type": "number"
+                    },
+                    "distance_grid_codes": {
+                      "description": "Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`.",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "type": "array"
+                    }
                   },
-                  "type": "array"
+                  "required": [
+                    "grid_codes"
+                  ]
                 }
-              },
-              "required": [
-                "grid_codes"
-              ]
+              ],
+              "description": "CORINE land cover configuration."
             },
             "luisa": {
               "anyOf": [
@@ -8625,11 +8944,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -8800,11 +9126,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -8975,11 +9308,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
               "anyOf": [
@@ -9157,11 +9497,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
             },
             "luisa": {
               "anyOf": [
@@ -9274,11 +9621,18 @@
               "type": "number"
             },
             "corine": {
-              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement.",
-              "items": {
-                "type": "integer"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."
             },
             "luisa": {
               "anyOf": [
@@ -9411,6 +9765,12 @@
           "default": false,
           "description": "Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file 'data/validation/monthly_fuel_price.csv'.",
           "type": "boolean"
+        },
+        "fuel_price_rolling_window": {
+          "default": 6,
+          "description": "Monthly rolling mean window for fossil fuel prices smoothing.",
+          "minimum": 1,
+          "type": "integer"
         },
         "nuclear": {
           "additionalProperties": {
@@ -9669,7 +10029,7 @@
               "type": "boolean"
             },
             "interpolate_limit": {
-              "default": 3,
+              "default": 6,
               "description": "Maximum gap size (consecutive nans) which interpolated linearly.",
               "type": "integer"
             },
@@ -9769,7 +10129,7 @@
       "description": "Configuration for `energy` settings.",
       "properties": {
         "energy_totals_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
           "type": "integer"
         },
@@ -10244,24 +10604,6 @@
         "agriculture_machinery_electric_efficiency": {
           "default": 0.3,
           "description": "The efficiency of oil-powered machinery in the conversion of oil to meet agricultural needs.",
-          "type": "number"
-        },
-        "MWh_MeOH_per_MWh_H2": {
-          "default": 0.8787,
-          "description": "The energy amount of the produced methanol per energy amount of hydrogen. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
-          "markdownDescription": "The energy amount of the produced methanol per energy amount of hydrogen. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
-          "type": "number"
-        },
-        "MWh_MeOH_per_tCO2": {
-          "default": 4.0321,
-          "description": "The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 66.",
-          "markdownDescription": "The energy amount of the produced methanol per ton of CO2. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 66.",
-          "type": "number"
-        },
-        "MWh_MeOH_per_MWh_e": {
-          "default": 3.6907,
-          "description": "The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64.",
-          "markdownDescription": "The energy amount of the produced methanol per energy amount of electricity. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 64.",
           "type": "number"
         },
         "shipping_hydrogen_liquefaction": {
@@ -11110,14 +11452,14 @@
         },
         "MWh_elec_per_tMeOH": {
           "default": 0.167,
-          "description": "The energy amount of electricity needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
-          "markdownDescription": "The energy amount of electricity needed to produce a ton of methanol. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "description": "The energy amount of electricity needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+          "markdownDescription": "The energy amount of electricity needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
           "type": "number"
         },
         "MWh_CH4_per_tMeOH": {
           "default": 10.25,
-          "description": "The energy amount of methane needed to produce a ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
-          "markdownDescription": "The energy amount of methane needed to produce a ton of methanol. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "description": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+          "markdownDescription": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
           "type": "number"
         },
         "MWh_MeOH_per_tMeOH": {
@@ -11266,10 +11608,15 @@
               "default": 0.0,
               "description": "Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere."
             },
-            "co2_monthly_prices": {
+            "dynamic": {
               "default": false,
-              "description": "Add monthly cost for a carbon-dioxide price based on historical values built by the rule `build_monthly_prices`.",
+              "description": "Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`.",
               "type": "boolean"
+            },
+            "rolling_window": {
+              "default": 90,
+              "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
+              "type": "integer"
             }
           }
         }
@@ -12037,7 +12384,67 @@
             }
           }
         },
+        "worldbank_commodity_prices": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "gem_europe_gas_tracker": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "instrat_co2_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -12297,7 +12704,87 @@
             }
           }
         },
+        "swiss_energy_balances": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "synthetic_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "opsd_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "entsoe_electricity_demand": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "neso_electricity_demand": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
