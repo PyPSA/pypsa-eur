@@ -5259,6 +5259,11 @@
               "description": "Whether to keep LPs and MPS files after solving.",
               "type": "boolean"
             },
+            "store_model": {
+              "default": false,
+              "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
+              "type": "boolean"
+            },
             "model_kwargs": {
               "description": "Configuration for `solving.options.model_kwargs` settings.",
               "properties": {
@@ -7752,6 +7757,11 @@
         "keep_files": {
           "default": false,
           "description": "Whether to keep LPs and MPS files after solving.",
+          "type": "boolean"
+        },
+        "store_model": {
+          "default": false,
+          "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
           "type": "boolean"
         },
         "model_kwargs": {
@@ -12111,6 +12121,11 @@
             "keep_files": {
               "default": false,
               "description": "Whether to keep LPs and MPS files after solving.",
+              "type": "boolean"
+            },
+            "store_model": {
+              "default": false,
+              "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
               "type": "boolean"
             },
             "model_kwargs": {
