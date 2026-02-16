@@ -203,6 +203,22 @@ class _DistrictHeatingConfig(ConfigModel):
             "(T_return < T_source < T_forward), or boosting via heat pumps."
         ),
     )
+
+    @field_validator("heat_source_temperatures")
+    @classmethod
+    def validate_heat_source_temperature_keys(
+        cls, v: dict[str, float]
+    ) -> dict[str, float]:
+        """Ensure all keys are valid heat sources with config-defined temperatures."""
+        valid_keys = {s.value for s in HeatSource if s.temperature_from_config}
+        invalid = set(v.keys()) - valid_keys
+        if invalid:
+            raise ValueError(
+                f"Invalid heat_source_temperatures key(s): {sorted(invalid)}. "
+                f"Valid keys: {sorted(valid_keys)}"
+            )
+        return v
+
     fallback_ptx_heat_losses: float = Field(
         0.05,
         description=(
