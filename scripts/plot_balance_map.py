@@ -168,7 +168,7 @@ if __name__ == "__main__":
     link_flow = flow.get("Link")
     transformer_flow = flow.get("Transformer")
 
-    n.plot.map(
+    n.plot(
         bus_size=bus_size * bus_size_factor,
         bus_color=colors,
         bus_split_circle=True,

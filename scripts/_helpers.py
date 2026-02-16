@@ -398,19 +398,19 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
     for c, (p_nom, p_attr) in zip(
         n.components[list(components.keys())], components.values()
     ):
-        if c.df.empty:
+        if c.static.empty:
             continue
         if not existing_only:
             p_nom += "_opt"
         costs[(c.list_name, "capital")] = (
-            (c.df[p_nom] * c.df.capital_cost).groupby(c.df.carrier).sum()
+            (c.static[p_nom] * c.static.capital_cost).groupby(c.static.carrier).sum()
         )
         if p_attr is not None:
-            p = c.pnl[p_attr].sum()
+            p = c.dynamic[p_attr].sum()
             if c.name == "StorageUnit":
                 p = p.loc[p > 0]
             costs[(c.list_name, "marginal")] = (
-                (p * c.df.marginal_cost).groupby(c.df.carrier).sum()
+                (p * c.static.marginal_cost).groupby(c.static.carrier).sum()
             )
     costs = pd.concat(costs)
 

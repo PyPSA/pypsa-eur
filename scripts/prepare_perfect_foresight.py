@@ -121,8 +121,8 @@ def add_year_to_constraints(n: pypsa.Network, baseyear: int) -> None:
     """
 
     for c in n.components[["GlobalConstraint"]]:
-        c.df["investment_period"] = baseyear
-        c.df.rename(index=lambda x: x + "-" + str(baseyear), inplace=True)
+        c.static["investment_period"] = baseyear
+        c.static.rename(index=lambda x: x + "-" + str(baseyear), inplace=True)
 
 
 def hvdc_transport_model(n: pypsa.Network) -> None:
@@ -232,7 +232,7 @@ def concat_networks(
                 "StorageUnit",
             ]
         ]:
-            df_year = component.df.copy()
+            df_year = component.static.copy()
             missing = get_missing(df_year, n, component.list_name)
 
             n.add(component.name, missing.index, **missing)
@@ -245,8 +245,8 @@ def concat_networks(
         # Iterate all component types in the loaded network
         for component in network.components:
             pnl = getattr(n, component.list_name + "_t")
-            for k in iterkeys(component.pnl):
-                pnl_year = component.pnl[k].copy().reindex(snapshots, level=1)
+            for k in iterkeys(component.dynamic):
+                pnl_year = component.dynamic[k].copy().reindex(snapshots, level=1)
                 if pnl_year.empty and (not (component.name == "Load" and k == "p_set")):
                     continue
                 if k not in pnl:
@@ -279,7 +279,7 @@ def concat_networks(
         # (3) global constraints
         for component in network.components[["GlobalConstraint"]]:
             add_year_to_constraints(network, year)
-            n.add(component.name, component.df.index, **component.df)
+            n.add(component.name, component.static.index, **component.static)
 
     # set investment periods
     n.investment_periods = n.snapshots.levels[0]
@@ -555,7 +555,7 @@ def apply_time_segmentation_perfect(
     columns = pd.MultiIndex.from_tuples([], names=["component", "key", "asset"])
     raw = pd.DataFrame(index=n.snapshots, columns=columns)
     for c in n.components:
-        for attr, pnl in c.pnl.items():
+        for attr, pnl in c.dynamic.items():
             # exclude e_min_pu which is used for SOC of EVs in the morning
             if not pnl.empty and attr != "e_min_pu":
                 df = pnl.copy()
