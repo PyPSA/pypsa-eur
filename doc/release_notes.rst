@@ -9,7 +9,7 @@ Release Notes
 Upcoming Release
 ================
 
-* Added ``solving.options.store_model`` config option to store the linopy model as NetCDF file after solving. Not supported with rolling horizon.
+* Added ``solving.options.store_model`` config option to store the linopy model as NetCDF file after solving. Not supported with rolling horizon. Configuration setting can not be set per scenario, only globally.
 
 * Applied scaling of kW and GW to MW for custom_costs as well (https://github.com/PyPSA/pypsa-eur/pull/2023).
 

@@ -18,9 +18,9 @@ rule solve_network:
     output:
         network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
         config=RESULTS + "configs/config.base_s_{clusters}_elec_{opts}.yaml",
-        model=lambda w: (
-            RESULTS + f"models/base_s_{w.clusters}_elec_{w.opts}.nc"
-            if config_provider("solving", "options", "store_model")(w)
+        model=(
+            RESULTS + "models/base_s_{clusters}_elec_{opts}.nc"
+            if config["solving"]["options"]["store_model"]
             else []
         ),
     log:

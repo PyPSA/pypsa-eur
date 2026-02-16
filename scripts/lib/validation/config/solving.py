@@ -122,7 +122,7 @@ class _SolvingOptionsConfig(BaseModel):
     )
     store_model: bool = Field(
         False,
-        description="Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon.",
+        description="Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
     )
     model_kwargs: _ModelKwargsConfig = Field(
         default_factory=_ModelKwargsConfig, description="Model kwargs for linopy."

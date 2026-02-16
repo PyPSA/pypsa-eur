@@ -5045,7 +5045,7 @@
             },
             "store_model": {
               "default": false,
-              "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon.",
+              "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
               "type": "boolean"
             },
             "model_kwargs": {
@@ -7478,7 +7478,7 @@
         },
         "store_model": {
           "default": false,
-          "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon.",
+          "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
           "type": "boolean"
         },
         "model_kwargs": {
@@ -11766,7 +11766,7 @@
             },
             "store_model": {
               "default": false,
-              "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon.",
+              "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
               "type": "boolean"
             },
             "model_kwargs": {
