@@ -1433,13 +1433,13 @@ data:
     source: archive
     version: latest
   jrc_energy_atlas:
-    source: primary
+    source: archive
     version: latest
   desnz_electricity_consumption:
-    source: primary
+    source: archive
     version: latest
   ons_lad:
-    source: primary
+    source: archive
     version: latest
   bidding_zones_electricitymaps:
     source: archive
