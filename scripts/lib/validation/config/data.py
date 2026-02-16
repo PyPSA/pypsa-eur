@@ -112,7 +112,7 @@ class DataConfig(BaseModel):
         description="Seawater temperature data source configuration.",
     )
     swiss_energy_balances: _DataSourceConfig = Field(
-        default_factory=_DataSourceConfig,
+        default_factory=lambda: _DataSourceConfig(source="primary"),
         description="Swiss energy balances data source configuration.",
     )
     synthetic_electricity_demand: _DataSourceConfig = Field(
