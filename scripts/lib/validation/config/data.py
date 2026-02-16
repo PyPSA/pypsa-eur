@@ -47,6 +47,10 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="World Bank urban population data source configuration.",
     )
+    worldbank_commodity_prices: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="World Bank commodity prices data source configuration.",
+    )
     gem_europe_gas_tracker: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="GEM Europe Gas Tracker data source configuration.",
@@ -106,6 +110,10 @@ class DataConfig(BaseModel):
     seawater_temperature: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="Seawater temperature data source configuration.",
+    )
+    swiss_energy_balances: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="Swiss energy balances data source configuration.",
     )
     synthetic_electricity_demand: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
@@ -196,7 +204,7 @@ class DataConfig(BaseModel):
         description="Powerplants data source configuration.",
     )
     costs: _DataSourceConfig = Field(
-        default_factory=lambda: _DataSourceConfig(source="primary"),
+        default_factory=_DataSourceConfig,
         description="Costs data source configuration.",
     )
     country_runoff: _DataSourceConfig = Field(

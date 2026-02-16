@@ -18,12 +18,14 @@ copernicus_land_cover,v3.0.1,archive,latest supported,2026-01-20,"The primary is
 copernicus_land_cover,v2.0.2,archive,deprecated supported,2026-01-13,,https://data.pypsa.org/workflows/eur/copernicus_land_cover/v2.0.2/PROBAV_LC100_global_v3.0.1_2015-base_Discrete-Classification-map_EPSG-4326.tif
 corine,v18_5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/corine/v18_5/corine.zip
 corine,unknown,primary,latest supported,2025-12-02,Need to register with CLMS API and create an access token. The download URL is dynamic,
-costs,v0.13.4,primary,latest supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.4/outputs
-costs,v0.13.4,archive,supported,2026-01-21,"Part of the `technologydata` repository and versioned on GitHub.",https://data.pypsa.org/workflows/eur/costs/v0.13.4
-costs,v0.13.3,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.3/outputs
-costs,v0.13.3,archive,supported,2026-01-20,"Part of the `technologydata` repository and versioned on GitHub.",https://data.pypsa.org/workflows/eur/costs/v0.13.3
-costs,v0.13.2,primary,supported,2025-12-02,"Part of the `technologydata` repository and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.2/outputs
-costs,v0.13.2,archive,supported,2026-01-20,"Part of the `technologydata` repository and versioned on GitHub.",https://data.pypsa.org/workflows/eur/costs/v0.13.2
+costs,v0.14.0,primary,latest supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.14.0/outputs
+costs,v0.14.0,archive,latest supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.14.0
+costs,v0.13.4,primary,supported,2025-12-02,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.4/outputs
+costs,v0.13.4,archive,supported,2026-01-21,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.13.4
+costs,v0.13.3,primary,supported,2025-12-02,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.3/outputs
+costs,v0.13.3,archive,supported,2026-01-20,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.13.3
+costs,v0.13.2,primary,supported,2025-12-02,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.2/outputs
+costs,v0.13.2,archive,supported,2026-01-20,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.13.2
 country_hdd,unknown,build,latest supported,2025-12-02,Latest dataset built using ERA5 runoff data. This takes a very long time to build.,
 country_hdd,2025-08-13,primary,latest supported,2025-12-02,,https://zenodo.org/records/16849356/files/era5-HDD-per-country.csv
 country_hdd,2025-08-13,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/country_hdd/2025-08-13/era5-HDD-per-country.csv
@@ -75,8 +77,10 @@ hotmaps_industrial_sites,unknown,primary,latest supported,2025-12-02,,https://gi
 instrat_co2_prices,unknown,primary,latest supported,2026-02-03,API endpoint provides latest data without versioning,https://energy-api.instrat.pl/api/prices/co2?all=1
 jrc_ardeco,2021,primary,latest supported,2025-12-02,,https://territorial.ec.europa.eu/ardeco-api-v2/rest/export/
 jrc_ardeco,2021,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_ardeco/2021
-jrc_idees,unknown,primary,latest supported,2025-12-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1/JRC-IDEES-2021.zip
-jrc_idees,2024-05-20,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_idees/2024-05-20/JRC-IDEES-2021.zip
+jrc_idees,2023-v1,primary,latest supported,2026-02-04,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2023_v1/JRC-IDEES-2023.zip
+jrc_idees,2023-v1,archive,latest supported,2026-02-09,,https://data.pypsa.org/workflows/eur/jrc_idees/2023-v1/JRC-IDEES-2023.zip
+jrc_idees,2021-v1,primary,supported,2025-12-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1/JRC-IDEES-2021.zip
+jrc_idees,2021-v1,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/jrc_idees/2024-05-20/JRC-IDEES-2021.zip
 lau_regions,2019,primary,latest supported,2025-12-02,,https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip
 lau_regions,2019,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/lau_regions/2019/ref-lau-2019-01m.geojson.zip
 luisa_land_cover,unknown,primary,latest supported,2025-12-02,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif
@@ -101,28 +105,32 @@ nuts3_population,13-03-2025,archive,latest supported,2026-01-13,earlier part of 
 opsd_electricity_demand,unknown,build,latest supported,2026-02-02,multiple versions concatenated,https://data.open-power-system-data.org/time_series/
 opsd_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,,https://data.pypsa.org/workflows/eur/opsd_electricity_demand/2026-02-02/electricity_demand_opsd_raw.csv
 osm,unknown,build,latest supported,2025-12-02,Latest dataset built using OSM data. No single URL available to access the data. See the related scripts and documentation for details.,
-osm,0.6,primary,latest supported,2026-01-13,,https://zenodo.org/records/14144752/files
-osm,0.6,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.6
-osm,0.5,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/13981528/files
-osm,0.5,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.5
-osm,0.4,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/13759222/files
-osm,0.4,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.4
-osm,0.3,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/13358976/files
-osm,0.3,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.3
-osm,0.2,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/13342577/files
-osm,0.2,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.2
-osm,0.1,primary,deprecated not-supported,2026-01-13,,https://zenodo.org/records/12799202/files
-osm,0.1,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.1
+osm,0.7,primary,latest supported,2026-02-12,,https://zenodo.org/records/18619025/files
+osm,0.7,archive,latest supported,2026-02-12,,https://data.pypsa.org/workflows/eur/osm/0.7
+osm,0.6,primary,supported,2026-01-13,,https://zenodo.org/records/14144752/files
+osm,0.6,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.6
+osm,0.5,primary,supported,2026-01-13,,https://zenodo.org/records/13981528/files
+osm,0.5,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.5
+osm,0.4,primary,supported,2026-01-13,,https://zenodo.org/records/13759222/files
+osm,0.4,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.4
+osm,0.3,primary,supported,2026-01-13,,https://zenodo.org/records/13358976/files
+osm,0.3,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.3
+osm,0.2,primary,supported,2026-01-13,,https://zenodo.org/records/13342577/files
+osm,0.2,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.2
+osm,0.1,primary,supported,2026-01-13,,https://zenodo.org/records/12799202/files
+osm,0.1,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.1
 osm_boundaries,unknown,primary,latest supported,2025-12-02,Overpass API is used to fetch the latest available data,
 osm_boundaries,unknown,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm_boundaries/unknown/osm_boundaries.zip
 population_count,2018-11-01,primary,latest supported,2025-12-02,,https://data.worldpop.org/GIS/Population/Global_2000_2020/2019/0_Mosaicked/ppp_2019_1km_Aggregated.tif
 population_count,2018-11-01,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/population_count/2018-11-01/ppp_2019_1km_Aggregated.tif
-powerplants,0.8.0,primary,latest supported,2026-02-05,"Part of the `powerplantmatching` package and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.0/powerplants.csv
-powerplants,0.8.0,archive,latest supported,2026-02-09,"Part of the `powerplantmatching` package and versioned on GitHub.",https://data.pypsa.org/workflows/eur/powerplants/0.8.0/powerplants.csv
-powerplants,0.7.1,primary,supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv
-powerplants,0.7.1,archive,supported,2026-01-20,"Part of the `powerplantmatching` package and versioned on GitHub.",https://data.pypsa.org/workflows/eur/powerplants/0.7.1
-powerplants,0.7.0,primary,supported,2025-12-02,"Part of the `powerplantmatching` package and versioned on GitHub.",https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.0/powerplants.csv
-powerplants,0.7.0,archive,supported,2026-01-20,"Part of the `powerplantmatching` package and versioned on GitHub.",https://data.pypsa.org/workflows/eur/powerplants/0.7.0
+powerplants,0.8.1,primary,latest supported,2026-02-11,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.1/powerplants.csv
+powerplants,0.8.1,archive,latest supported,2026-02-12,Part of the `powerplantmatching` package and versioned on GitHub.,https://data.pypsa.org/workflows/eur/powerplants/0.8.1/powerplants.csv
+powerplants,0.8.0,primary,supported,2026-02-05,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.0/powerplants.csv
+powerplants,0.8.0,archive,supported,2026-02-09,Part of the `powerplantmatching` package and versioned on GitHub.,https://data.pypsa.org/workflows/eur/powerplants/0.8.0/powerplants.csv
+powerplants,0.7.1,primary,supported,2025-12-02,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv
+powerplants,0.7.1,archive,supported,2026-01-20,Part of the `powerplantmatching` package and versioned on GitHub.,https://data.pypsa.org/workflows/eur/powerplants/0.7.1
+powerplants,0.7.0,primary,supported,2025-12-02,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.0/powerplants.csv
+powerplants,0.7.0,archive,supported,2026-01-20,Part of the `powerplantmatching` package and versioned on GitHub.,https://data.pypsa.org/workflows/eur/powerplants/0.7.0
 scigrid_gas,1.1.2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/4767098/files/IGGIELGN.zip
 scigrid_gas,1.1.2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.2
 scigrid_gas,1.1.1,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.1/IGGIELGN.zip
@@ -131,6 +139,7 @@ seawater_temperature,v1.0,primary,latest supported,2026-01-21,Test cutout seawat
 seawater_temperature,v1.0,archive,latest supported,2026-01-21,Test cutout seawater temperature,https://data.pypsa.org/workflows/eur/seawater_temperature/v1.0/seawater_temperature.nc
 ship_raster,v5,primary,latest supported,2025-12-02,,https://datacatalogfiles.worldbank.org/ddh-published/0037580/5/DR0045406/shipdensity_global.zip
 ship_raster,v5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/ship_raster/v5/shipdensity_global.zip
+swiss_energy_balances,2025-10-01,primary,latest supported,2026-02-12,,https://pubdb.bfe.admin.ch/de/publication/download/12361
 synthetic_electricity_demand,v2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/10820928/files/demand_hourly.csv
 synthetic_electricity_demand,v2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/v2
 synthetic_electricity_demand,0.1.0,archive,deprecated might-work,2026-01-13,,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/0.1.0/demand_hourly.csv
@@ -140,5 +149,7 @@ wdpa,unknown,primary,latest supported,2025-12-02,"WDPA changes its URL every mon
 wdpa,2025-07,archive,latest supported,2025-12-02,"We are legally not allowed to redistribute this dataset, luckily the web archive is keeping copies of it.",https://web.archive.org/web/20250715071823if_/https%3A//d1gam3xoknrgr2.cloudfront.net/current/WDPA_Jul2025_Public_shp.zip
 wdpa_marine,unknown,primary,latest supported,2025-12-02,"WDPA maritime changes its URL every month, the URL here is used as a template and {bYYYY} is replaced inside the retrieve.smk.",https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip
 wdpa_marine,2025-07,archive,latest supported,2025-12-02,"We are legally not allowed to redistribute this dataset, luckily the web archive is keeping copies of it.",https://web.archive.org/web/20250715084308if_/https%3A//d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_Jul2025_Public_marine_shp.zip
+worldbank_commodity_prices,jan-2026,primary,latest supported,2026-02-03,,https://thedocs.worldbank.org/en/doc/18675f1d1639c7a34d463f59263ba0a2-0050012025/related/CMO-Historical-Data-Monthly.xlsx
+worldbank_commodity_prices,jan-2026,archive,latest supported,2026-02-12,,https://data.pypsa.org/workflows/eur/worldbank_commodity_prices/jan-2026/CMO-Historical-Data-Monthly.xlsx
 worldbank_urban_population,unknown,primary,latest might-work,2025-12-02,"This is the original World Bank API link, which is sometimes updated; it is not guaranteed to work with the current codebase and data changes without notice.",https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv
 worldbank_urban_population,2025-08-14,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/worldbank_urban_population/2025-08-14/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_22447.zip

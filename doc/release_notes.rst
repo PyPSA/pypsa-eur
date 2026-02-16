@@ -9,13 +9,24 @@ Release Notes
 Upcoming Release
 ================
 
+* Added ``solving.options.store_model`` config option to store the linopy model as NetCDF file after solving. Not supported with rolling horizon. Configuration setting can not be set per scenario, only globally.
+* Update Swiss energy balances from the Swiss Federal Office of Energy (SFOE) to the latest version (October 2025).
+  The data is no longer stored in the repository, but directly retrieved from the SFOE website and processed in the ``build_swiss_energy_balances`` rule.
+* Added prebuilt OSM network v0.7 (https://zenodo.org/records/18619025) using updated workflow. 
+
+* Fix unit commitment compatibility with PyPSA ≥ 1.0 component API to allow usage of unit commitment (https://github.com/PyPSA/pypsa-eur/pull/2049).
+
+* Update energy balances from JRC-IDEES-2021 to `JRC-IDEES-2023
+  <https://publications.jrc.ec.europa.eu/repository/handle/JRC138195>`__. The
+  default reference year was changed from 2019 to 2023.
+* Removed config options `sector:MWh_MeOH_per_tCO2`, `MWh_MeOH_per_MWh_H2`, and `MWh_MeOH_per_MWh_elec` in favour of corresponding data points from technology-data.
 * Download and process Eurostat energy balances from API. This replaces the discontinued ZIP bulk download.
 
 * The function `rescale_idees_from_eurostat` was removed.
 
 * New rule `build_eurostat_balances` to build energy balances from Eurostat data. Outsourced from `build_energy_totals`
 * Updated CO2 emission allowance prices data source to Instrat API for real-time pricing data.
-* Improved OSM network building process (https://github.com/PyPSA/pypsa-eur/pull/2030): Introducing support for temporal attributes (start_date, construction tags) and pure DC buses (switching stations). The interactive network map has been completely rebuilt using PyDeck/deck.gl with GPU acceleration and includes custom JS controls, offering fuzzy search, clickable OSM references, URL-based view sharing (#theme/zoom/lat/lon), and substantially improved performance. Additionally, a generalised plot from https://www.nature.com/articles/s41597-025-04550-7 enables systematic comparison of network topology changes over time.
+* Improved OSM network building process (https://github.com/PyPSA/pypsa-eur/pull/2030): Introducing support for temporal attributes (start_date, construction tags) and pure DC buses (switching stations). The interactive network map has been completely rebuilt using PyDeck/deck.gl with GPU acceleration and includes custom JS controls, offering fuzzy search, clickable OSM references, URL-based view sharing (#theme/zoom/lat/lon), and substantially improved performance. Additionally, a generalised plot from https://www.nature.com/articles/s41597-025-04550-7 enables systematic comparison of network topology changes over time. Cleaned naming scheme (https://github.com/PyPSA/pypsa-eur/pull/2052).
 
 * Add powerplantmatching v0.8.0 to data versions.
 

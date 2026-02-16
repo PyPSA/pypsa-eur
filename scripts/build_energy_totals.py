@@ -5,7 +5,7 @@
 Build total energy demands and carbon emissions per country using JRC IDEES,
 eurostat, and EEA data.
 
-- Country-specific data is read in :func:`build_idees` and `build_swiss` and read in from :mod:`scripts/build_eurostat_balances`.
+- Country-specific data is read in :func:`build_idees` and read in from :mod:`scripts/build_eurostat_balances` and :mod:`scripts/build_swiss_energy_balances`.
 - :func:`build_energy_totals` then combines energy data from Eurostat, Swiss, and IDEES data.
 - :func:`build_district_heat_share` calculates the share of district heating for each country from IDEES data.
 - Historical CO2 emissions are calculated in :func:`build_eea_co2` and :func:`build_eurostat_co2` and combined in :func:`build_co2_totals`.
@@ -21,6 +21,7 @@ Outputs
 import logging
 import multiprocessing as mp
 from functools import partial
+from pathlib import Path
 
 import country_converter as coco
 import geopandas as gpd
@@ -119,39 +120,6 @@ to_ipcc = {
 }
 
 
-def build_swiss() -> pd.DataFrame:
-    """
-    Return a pd.DataFrame of Swiss energy data in TWh/a.
-
-    Returns
-    -------
-    pd.DataFrame
-        Swiss energy data in TWh/a.
-
-    Notes
-    -----
-    - Reads Swiss energy data from `data/switzerland-new_format-all_years.csv`.
-    - Reshapes and renames data.
-    - Converts energy units from PJ/a to TWh/a.
-    """
-    fn = snakemake.input.swiss
-
-    df = pd.read_csv(fn, index_col=[0, 1])
-
-    df.columns = df.columns.astype(int)
-
-    df.columns.name = "year"
-
-    df = df.stack().unstack("item")
-
-    df.columns.name = None
-
-    # convert PJ/a to TWh/a
-    df /= 3.6
-
-    return df
-
-
 def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     """
     Calculate energy totals per country using JRC-IDEES data.
@@ -176,9 +144,18 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     """
 
     ct_idees = idees_rename.get(ct, ct)
-    fn_residential = f"{base_dir}/{ct_idees}/JRC-IDEES-2021_Residential_{ct_idees}.xlsx"
-    fn_tertiary = f"{base_dir}/{ct_idees}/JRC-IDEES-2021_Tertiary_{ct_idees}.xlsx"
-    fn_transport = f"{base_dir}/{ct_idees}/JRC-IDEES-2021_Transport_{ct_idees}.xlsx"
+
+    root = Path(base_dir, ct_idees)
+    years = ("2023", "2021")
+
+    fn_residential, fn_tertiary, fn_transport = [
+        next(
+            p
+            for y in years
+            if (p := root / f"JRC-IDEES-{y}_{s}_{ct_idees}.xlsx").exists()
+        )
+        for s in ("Residential", "Tertiary", "Transport")
+    ]
 
     ct_totals = {}
 
@@ -350,7 +327,14 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[49] == "Battery electric vehicles"
     ct_totals["electricity light duty road freight"] = df.iloc[49]
 
-    row = "Heavy goods vehicles (Diesel oil incl. biofuels)"
+    row = next(
+        r
+        for r in (
+            "Heavy goods vehicles (diesel oil incl. biofuels)",
+            "Heavy goods vehicles (Diesel oil incl. biofuels)",
+        )
+        if r in df.index
+    )
     ct_totals["total heavy duty road freight"] = df.loc[row]
 
     assert df.index[61] == "Passenger cars"
@@ -387,15 +371,27 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[2] == "Domestic"
     ct_totals["total domestic aviation passenger"] = df.iloc[2]
 
-    assert df.index[6] == "International - Intra-EEAwUK"
-    assert df.index[7] == "International - Extra-EEAwUK"
+    assert df.index[6] in (
+        "International - Intra-EEAwCHUK",
+        "International - Intra-EEAwUK",
+    )
+    assert df.index[7] in (
+        "International - Extra-EEAwCHUK",
+        "International - Extra-EEAwUK",
+    )
     ct_totals["total international aviation passenger"] = df.iloc[[6, 7]].sum()
 
     assert df.index[9] == "Domestic"
-    assert df.index[10] == "International - Intra-EEAwUK"
+    assert df.index[10] in (
+        "International - Intra-EEAwCHUK",
+        "International - Intra-EEAwUK",
+    )
     ct_totals["total domestic aviation freight"] = df.iloc[[9, 10]].sum()
 
-    assert df.index[11] == "International - Extra-EEAwUK"
+    assert df.index[11] in (
+        "International - Extra-EEAwCHUK",
+        "International - Extra-EEAwUK",
+    )
     ct_totals["total international aviation freight"] = df.iloc[11]
 
     ct_totals["total domestic aviation"] = (
@@ -464,7 +460,7 @@ def build_idees(countries: list[str]) -> pd.DataFrame:
     )
 
     # clean up dataframe
-    years = np.arange(2000, 2022)
+    years = np.arange(2000, 2024)
     totals = totals[totals.index.get_level_values(1).isin(years)]
 
     # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
@@ -788,8 +784,8 @@ def build_energy_totals(
     if "BA" in df.index:
         # fill missing data for BA (services and road energy data)
         # proportional to RS with ratio of total residential demand
-        mean_BA = df.loc["BA"].loc[2014:2021, "total residential"].mean()
-        mean_RS = df.loc["RS"].loc[2014:2021, "total residential"].mean()
+        mean_BA = df.loc["BA"].loc[2014:2023, "total residential"].mean()
+        mean_RS = df.loc["RS"].loc[2014:2023, "total residential"].mean()
         ratio = mean_BA / mean_RS
         df.loc["BA"] = (
             df.loc["BA"].replace(0.0, np.nan).infer_objects(copy=False).values
@@ -1073,7 +1069,7 @@ def build_transport_data(
     ----------
     - Swiss transport data: `BFS <https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html>`_
     """
-    years = np.arange(2000, 2022)
+    years = np.arange(2000, 2024)
 
     # first collect number of cars
     transport_data = pd.DataFrame(idees["passenger cars"])
@@ -1303,7 +1299,8 @@ if __name__ == "__main__":
         eurostat, snakemake.output.transformation_output_coke
     )
 
-    swiss = build_swiss()
+    swiss = pd.read_csv(snakemake.input.swiss, index_col=[0, 1])
+
     idees = build_idees(idees_countries)
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)

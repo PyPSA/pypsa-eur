@@ -51,6 +51,7 @@ the output file contains the energy demand in TWh/a for the following carriers
 import logging
 import multiprocessing as mp
 from functools import partial
+from pathlib import Path
 
 import country_converter as coco
 import pandas as pd
@@ -130,7 +131,13 @@ jrc_names = {"GR": "EL", "GB": "UK"}
 
 def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammonia):
     jrc_country = jrc_names.get(country, country)
-    fn = f"{jrc_dir}/{jrc_country}/JRC-IDEES-2021_EnergyBalance_{jrc_country}.xlsx"
+
+    root = Path(jrc_dir, jrc_country)
+    fn = next(
+        p
+        for y in ("2023", "2021")
+        if (p := root / f"JRC-IDEES-{y}_EnergyBalance_{jrc_country}.xlsx").exists()
+    )
 
     sheets = list(sector_sheets.values())
     df_dict = pd.read_excel(fn, sheet_name=sheets, index_col=0)

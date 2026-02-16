@@ -101,6 +101,7 @@ snakemake-storage-plugin-cached-http = ">=0.2.1"
 pandera = ">=0.28.1"
 natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
+pydeflate = ">=2.3.4"
 
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"

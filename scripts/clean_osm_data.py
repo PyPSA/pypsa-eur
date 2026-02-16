@@ -530,6 +530,7 @@ def _import_routes_relation(path_relation):
         "nodes",
         "geometry",
         "country",
+        "power",
         "circuits",
         "cables",
         "frequency",
@@ -561,6 +562,7 @@ def _import_routes_relation(path_relation):
                 df["country"] = country
 
                 col_tags = [
+                    "power",
                     "circuits",
                     "cables",
                     "frequency",
@@ -1066,6 +1068,47 @@ def _create_substations_poi(df_substations, tol=BUS_TOL / 2):
     return df_substations
 
 
+def _aggregate_substations(df_substations: pd.DataFrame) -> pd.DataFrame:
+    """
+    Aggregate substations by id, voltage, and country.
+
+    Parameters
+    ----------
+    - df_substations (pd.DataFrame): The input DataFrame containing substations
+      data.
+
+    Returns
+    -------
+    - df_substations (pd.DataFrame): The aggregated DataFrame with substations
+        grouped by 'bus_id', 'voltage', and 'country'.
+
+    """
+    logger.info("Aggregating substations by id, voltage, and country.")
+    df_substations = df_substations.copy()
+
+    # Strip -suffix from 'id' to group by original bus_id before splitting
+    df_substations.loc[:, "id"] = df_substations["id"].apply(
+        lambda x: x.split("-")[0] if "-" in x else x
+    )
+
+    # Group by 'bus_id', 'voltage', and 'country' and aggregate the 'geometry' column
+    df_substations = (
+        df_substations.groupby(["id", "voltage", "country"])
+        .agg(
+            {
+                **{
+                    col: "first"
+                    for col in df_substations.columns
+                    if col not in ["id", "voltage", "country"]
+                },
+            }
+        )
+        .reset_index()
+    )
+
+    return df_substations
+
+
 def _create_lines_geometry(df_lines):
     """
     Create line geometry for the given DataFrame of lines.
@@ -1186,6 +1229,63 @@ def _finalise_substations(df_substations):
         df_substations["voltage"] = df_substations["voltage"].astype(int)
 
     return df_substations
+
+
+def _aggregate_lines(df_lines: pd.DataFrame) -> pd.DataFrame:
+    """
+    Aggregate lines by id and voltage.
+
+    Parameters
+    ----------
+    - df_lines (pd.DataFrame): The input DataFrame containing lines data.
+
+    Returns
+    -------
+    - df_lines (pd.DataFrame): The aggregated DataFrame with lines grouped by
+        'line_id' and 'voltage'.
+
+    """
+    logger.info("Aggregating lines by id and voltage.")
+    df_lines = df_lines.copy()
+
+    # Strip -suffix from 'id' to group by original line_id before splitting
+    df_lines.loc[:, "line_id"] = df_lines["line_id"].apply(
+        lambda x: x.split("-")[0] if "-" in x else x
+    )
+
+    # Group by 'line_id' and 'voltage', sum the circuits and take the first value of all else
+    df_lines = (
+        df_lines.groupby(["line_id", "voltage"])
+        .agg(
+            {
+                **{
+                    col: "first"
+                    for col in df_lines.columns
+                    if col not in ["line_id", "voltage", "circuits"]
+                },
+                "circuits": "sum",
+            }
+        )
+        .reset_index()
+    )
+
+    # Move circuits column to after line_id
+    df_lines = df_lines[
+        [
+            "line_id",
+            "circuits",
+            "voltage",
+            "bus0",
+            "bus1",
+            "length",
+            "underground",
+            "under_construction",
+            "start_date",
+            "geometry",
+        ]
+    ]
+
+    return df_lines
 
 
 def _finalise_lines(df_lines):
@@ -1623,7 +1723,7 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
 
     # Group by 'line_id' and create a dictionary mapping 'bus_id' to 'geometry_bus', excluding the grouping columns
     gdf = (
-        gdf.groupby("line_id")
+        gdf.groupby(["line_id", "voltage_line"])
         .apply(
             lambda x: x[["bus_id", "geometry_bus"]]
             .dropna()
@@ -1633,12 +1733,13 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
         )
         .reset_index()
     )
-    gdf.columns = ["line_id", "bus_dict"]
+    gdf.columns = ["line_id", "voltage", "bus_dict"]
 
     gdf["intersects_bus"] = gdf.apply(lambda row: len(row["bus_dict"]) > 0, axis=1)
+    gdf.set_index(["line_id", "voltage"], inplace=True)
 
     gdf.loc[:, "line_geometry"] = gdf.join(
-        gdf_lines.set_index("line_id")["geometry"], on="line_id"
+        gdf_lines.set_index(["line_id", "voltage"])["geometry"],
     )["geometry"]
 
     # Polygons at the endpoints of the linestring
@@ -1654,12 +1755,10 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
         axis=1,
     )
 
-    gdf.set_index("line_id", inplace=True)
-    gdf_lines.set_index("line_id", inplace=True)
-
+    gdf_lines.set_index(["line_id", "voltage"], inplace=True)
     gdf_lines.loc[:, "geometry"] = gdf["line_geometry_new"]
 
-    return gdf_lines
+    return gdf_lines.reset_index()
 
 
 def _check_if_ways_in_multi(list, longer_list):
@@ -1699,8 +1798,9 @@ if __name__ == "__main__":
     df_substations["voltage"] = _clean_voltage(df_substations["voltage"])
     # Clean dates and construction status
     df_substations["under_construction"] = (
-        df_substations["construction"].notna()
-        | df_substations["construction:power"].notna()
+        (df_substations["construction"] == "substation")
+        | (df_substations["construction:power"] == "substation")
+        | (df_substations["power"] == "construction")
     )
     df_substations["start_date"] = _clean_date(df_substations["start_date"])
 
@@ -1722,6 +1822,9 @@ if __name__ == "__main__":
     # Merge touching polygons
     df_substations = _merge_touching_polygons(df_substations)
     df_substations = _create_substations_poi(df_substations)
+
+    # Aggregate substations if needed
+    df_substations = _aggregate_substations(df_substations)
 
     # Store DC switching stations
     df_dc_switching = df_substations.query(
@@ -1777,8 +1880,9 @@ if __name__ == "__main__":
     df_lines_cables_relation = df_routes_relation.copy()
     df_lines_cables_relation = _drop_duplicate_lines(df_lines_cables_relation)
     df_lines_cables_relation["under_construction"] = (
-        df_lines_cables_relation["construction"].notna()
-        | df_lines_cables_relation["construction:power"].notna()
+        (df_lines_cables_relation["construction"].isin(["line", "cable"]))
+        | (df_lines_cables_relation["construction:power"].isin(["line", "cable"]))
+        | (df_lines_cables_relation["power"] == "construction")
     )
     df_lines_cables_relation["start_date"] = _clean_date(
         df_lines_cables_relation["start_date"]
@@ -1897,7 +2001,9 @@ if __name__ == "__main__":
     df_lines.loc[:, "voltage"] = _clean_voltage(df_lines["voltage"])
     # Clean dates and construction status
     df_lines["under_construction"] = (
-        df_lines["construction"].notna() | df_lines["construction:power"].notna()
+        (df_lines["construction"].isin(["line", "cable"]))
+        | (df_lines["construction:power"].isin(["line", "cable"]))
+        | (df_lines["power"] == "construction")
     )
     df_lines["start_date"] = _clean_date(df_lines["start_date"])
     df_lines, list_voltages = _filter_by_voltage(df_lines, min_voltage=min_voltage_ac)
@@ -1935,6 +2041,8 @@ if __name__ == "__main__":
         [df_lines, df_lines_cables_relation], axis=0, ignore_index=True
     )
 
+    df_lines = _aggregate_lines(df_lines)
+
     # Create GeoDataFrame
     gdf_lines = gpd.GeoDataFrame(df_lines, geometry="geometry", crs=crs)
     gdf_lines = _remove_lines_within_substations(gdf_lines, gdf_substations_polygon)
@@ -1961,7 +2069,9 @@ if __name__ == "__main__":
 
     # Clean dates and construction status
     df_links["under_construction"] = (
-        df_links["construction"].notna() | df_links["construction:power"].notna()
+        (df_links["construction"].isin(["line", "cable"]))
+        | (df_links["construction:power"].isin(["line", "cable"]))
+        | (df_links["power"] == "construction")
     )
     df_links["start_date"] = _clean_date(df_links["start_date"])
 

@@ -58,6 +58,23 @@ if (
             copy2(input["csv"], output["csv"])
 
 
+if (SWISS_ENERGY_BALANCES_DATASET := dataset_version("swiss_energy_balances"))[
+    "source"
+] in [
+    "primary",
+]:
+
+    rule retrieve_swiss_energy_balances:
+        message:
+            "Retrieving Swiss energy balances data"
+        input:
+            xlsx=storage(SWISS_ENERGY_BALANCES_DATASET["url"]),
+        output:
+            xlsx=f"{SWISS_ENERGY_BALANCES_DATASET['folder']}/12361-VWZ_Webtabellen_2024.xlsx",
+        run:
+            copy2(input["xlsx"], output["xlsx"])
+
+
 if (NUTS3_POPULATION_DATASET := dataset_version("nuts3_population"))["source"] in [
     "primary",
     "archive",
@@ -425,6 +442,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["archiv
 
 if (COSTS_DATASET := dataset_version("costs"))["source"] in [
     "primary",
+    "archive",
 ]:
 
     rule retrieve_cost_data:
@@ -1102,20 +1120,19 @@ if (INSTRAT_CO2_PRICES_DATASET := dataset_version("instrat_co2_prices"))["source
             df.to_csv(output["csv"], index=False)
 
 
-# Versioning not implemented as the dataset is used only for validation
-# License - custom; no restrictions on use and redistribution, attribution required
-rule retrieve_monthly_fuel_prices:
-    message:
-        "Retrieving monthly fuel prices data for validation"
-    output:
-        "data/validation/energy-price-trends-xlsx-5619002.xlsx",
-    log:
-        "logs/retrieve_monthly_fuel_prices.log",
-    resources:
-        mem_mb=5000,
-    retries: 2
-    script:
-        scripts("retrieve_monthly_fuel_prices.py")
+if (
+    WORLD_BANK_COMMODITY_PRICES_DATASET := dataset_version("worldbank_commodity_prices")
+)["source"] in ["primary", "archive"]:
+
+    rule retrieve_worldbank_commodity_prices:
+        message:
+            "Retrieving monthly commodity price time series (including fossil fuels)"
+        input:
+            xlsx=storage(WORLD_BANK_COMMODITY_PRICES_DATASET["url"]),
+        output:
+            xlsx=f"{WORLD_BANK_COMMODITY_PRICES_DATASET['folder']}/CMO-Historical-Data-Monthly.xlsx",
+        run:
+            copy2(input["xlsx"], output["xlsx"])
 
 
 if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive"]:
@@ -1267,7 +1284,8 @@ if OSM_DATASET_INCUMBENT["source"] in ["archive"] and OSM_DATASET_INCUMBENT[
                 copy2(input[key], output[key])
 
 
-elif OSM_DATASET["source"] == "build":
+
+if OSM_DATASET["source"] == "build":
     OSM_RAW_JSON = [
         "cables_way.json",
         "lines_way.json",

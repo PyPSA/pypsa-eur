@@ -425,6 +425,7 @@ renewable:
 conventional:
   unit_commitment: false
   dynamic_fuel_price: false
+  fuel_price_rolling_window: 6
   nuclear:
     p_max_pu: data/nuclear_p_max_pu.csv
 
@@ -524,7 +525,7 @@ pypsa_eur:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
-  energy_totals_year: 2019
+  energy_totals_year: 2023
   base_emissions_year: 1990
   emissions: CO2
 
@@ -768,9 +769,6 @@ sector:
   agriculture_machinery_oil_share: 0.5
   agriculture_machinery_fuel_efficiency: 0.7
   agriculture_machinery_electric_efficiency: 0.3
-  MWh_MeOH_per_MWh_H2: 0.8787
-  MWh_MeOH_per_tCO2: 4.0321
-  MWh_MeOH_per_MWh_e: 3.6907
   shipping_hydrogen_liquefaction: false
   shipping_hydrogen_share:
     2020: 0
@@ -1165,6 +1163,7 @@ solving:
         gas pipeline: 0.3
       fractional_last_unit_size: false
     keep_files: false
+    store_model: false
     model_kwargs:
       solver_dir: ""
   agg_p_nom_limits:
@@ -1282,6 +1281,9 @@ data:
   worldbank_urban_population:
     source: archive
     version: latest
+  worldbank_commodity_prices:
+    source: archive
+    version: latest
   gem_europe_gas_tracker:
     source: archive
     version: latest
@@ -1326,6 +1328,9 @@ data:
     version: latest
   seawater_temperature:
     source: archive
+    version: latest
+  swiss_energy_balances:
+    source: primary
     version: latest
   synthetic_electricity_demand:
     source: primary
@@ -1394,7 +1399,7 @@ data:
     source: archive
     version: latest
   costs:
-    source: primary
+    source: archive
     version: latest
   country_runoff:
     source: archive

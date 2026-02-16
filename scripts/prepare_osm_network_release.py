@@ -257,7 +257,25 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
     )
 
     controls = """
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        #deck-container {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        #deck-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
         .voltage-tag {
             display: inline-block;
             background: #6c757d;
@@ -294,27 +312,76 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             margin-top: 4px;
             background: white;
         }
+        .map-btn {
+            position: absolute;
+            top: 10px;
+            background: rgba(255,255,255,0.7);
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 10001;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            line-height: 1;
+            height: 40px;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+        }
+        .map-btn:hover {
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        .map-btn:active {
+            background: rgba(220,220,220,0.9);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transform: scale(0.93);
+        }
+        .ctrl-btn {
+            width: 100%;
+            margin-top: 8px;
+            padding: 6px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+        }
+        .ctrl-btn:hover {
+            background: #5a6268;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        }
+        .ctrl-btn:active {
+            background: #4e555b;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transform: scale(0.97);
+        }
         </style>
-        <button id="menu-toggle"
-            style="position:absolute;top:10px;left:10px;
-                background:rgba(255,255,255,0.7);border:none;
-                padding:10px 12px;cursor:pointer;font-size:16px;
-                border-radius:4px;z-index:1001;box-shadow:0 2px 4px rgba(0,0,0,0.2);
-                line-height:1;height:40px;width:40px;display:flex;align-items:center;justify-content:center">
+        <button id="menu-toggle" class="map-btn"
+            style="left:10px;font-size:16px;padding:10px 12px">
             ☰
         </button>
-        <button id="theme-toggle"
-            style="position:absolute;top:10px;left:60px;
-                background:rgba(255,255,255,0.7);border:none;
-                padding:10px 12px;cursor:pointer;font-size:16px;
-                border-radius:4px;z-index:1001;box-shadow:0 2px 4px rgba(0,0,0,0.2);
-                line-height:1;height:40px;width:40px;display:flex;align-items:center;justify-content:center">
+        <button id="theme-toggle" class="map-btn"
+            style="left:60px;font-size:16px;padding:10px 12px">
             ◐
+        </button>
+        <button id="zoom-in" class="map-btn"
+            onclick="zoomIn()"
+            style="left:110px;font-size:18px;padding:10px 12px">
+            +
+        </button>
+        <button id="zoom-out" class="map-btn"
+            onclick="zoomOut()"
+            style="left:160px;font-size:18px;padding:10px 12px">
+            −
         </button>
         <div id="layer-controls"
             style="position:absolute;top:10px;left:10px;
                 background:rgba(255,255,255,0.75);padding:12px;
-                font-family:sans-serif;z-index:1000;
+                font-family:sans-serif;z-index:10001;
                 border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);
                 display:none;margin-top:50px;min-width:250px;max-width:300px">
 
@@ -326,12 +393,9 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     style="width:100%;padding:6px;border:1px solid #ccc;border-radius:3px;
                         font-size:13px;box-sizing:border-box">
                 <div style="font-size:11px;color:#666;margin-top:4px">
-                    Use & for AND, | for OR (e.g., "DE & 380" or "bus | line")
+                    Use & for AND, | for OR
                 </div>
-                <button onclick="clearTextSearchFilter()"
-                    style="width:100%;margin-top:8px;padding:6px;background:#6c757d;
-                        color:white;border:none;border-radius:3px;cursor:pointer;
-                        font-size:13px">
+                <button class="ctrl-btn" onclick="clearTextSearchFilter()">
                     Clear search
                 </button>
             </div>
@@ -345,16 +409,13 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                     style="width:100%;padding:6px;border:1px solid #ccc;border-radius:3px;
                         font-size:13px;box-sizing:border-box">
                 <div id="voltage-suggestions"></div>
-                <button onclick="clearVoltageFilter()"
-                    style="width:100%;margin-top:8px;padding:6px;background:#6c757d;
-                        color:white;border:none;border-radius:3px;cursor:pointer;
-                        font-size:13px">
+                <button class="ctrl-btn" onclick="clearVoltageFilter()">
                     Clear filter
                 </button>
             </div>
 
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Lines', this.checked)"
                         style="margin-right:8px">
@@ -362,7 +423,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Links', this.checked)"
                         style="margin-right:8px">
@@ -370,7 +431,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Converters', this.checked)"
                         style="margin-right:8px">
@@ -378,7 +439,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Transformers', this.checked)"
                         style="margin-right:8px">
@@ -386,7 +447,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Buses', this.checked)"
                         style="margin-right:8px">
@@ -394,7 +455,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Buses (Polygons)', this.checked)"
                         style="margin-right:8px">
@@ -402,7 +463,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                 </label>
             </div>
             <div style="margin:6px 0">
-                <label style="cursor:pointer;display:flex;align-items:center">
+                <label style="cursor:pointer;display:flex;align-items:center;font-size:12px">
                     <input type="checkbox" checked
                         onchange="setLayerVisibility('Stations', this.checked)"
                         style="margin-right:8px">
@@ -417,6 +478,7 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
         let currentTextSearch = '';
         let isDarkMode = true;
         let hashUpdateTimeout = null;
+        let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         const MAP_STYLES = {
             light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -493,6 +555,232 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
             const viewState = deck.viewManager.getViewports()[0];
             if (viewState) updateHash(viewState, true);
         }
+
+        function zoomIn() {
+            const deck = window.deck;
+            if (!deck) return;
+            const vp = deck.viewManager.getViewports()[0];
+            if (!vp) return;
+            deck.setProps({
+                initialViewState: {
+                    latitude: vp.latitude,
+                    longitude: vp.longitude,
+                    zoom: Math.min(vp.zoom + 1, 20),
+                    pitch: vp.pitch || 30,
+                    transitionDuration: 300,
+                }
+            });
+        }
+
+        function zoomOut() {
+            const deck = window.deck;
+            if (!deck) return;
+            const vp = deck.viewManager.getViewports()[0];
+            if (!vp) return;
+            deck.setProps({
+                initialViewState: {
+                    latitude: vp.latitude,
+                    longitude: vp.longitude,
+                    zoom: Math.max(vp.zoom - 1, 1),
+                    pitch: vp.pitch || 30,
+                    transitionDuration: 300,
+                }
+            });
+        }
+
+        const CIRCUIT_OFFSET_METERS = 0.0003;
+        const CIRCUIT_ZOOM_THRESHOLD = 11.5;
+        const TAPER_DEGREES = 0.00025;  // ~20 meters at European latitudes
+        let circuitsExpanded = false;
+        let hoveredLineId = null;
+
+        function pathLength(path) {
+            let total = 0;
+            for (let i = 1; i < path.length; i++) {
+                const dx = path[i][0] - path[i-1][0];
+                const dy = path[i][1] - path[i-1][1];
+                total += Math.sqrt(dx*dx + dy*dy);
+            }
+            return total;
+        }
+
+        function interpCoord(a, b, t) {
+            return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+        }
+
+        // Returns [densePath, totalLength] so callers avoid recomputing pathLength.
+        function insertTaperPoints(path, taper, total) {
+            if (total <= taper * 2) return [path, total];
+            const result = [];
+            let cumDist = 0;
+            const startT = taper, endT = total - taper;
+            let startIns = false, endIns = false;
+            for (let i = 0; i < path.length; i++) {
+                if (i > 0) {
+                    const dx = path[i][0] - path[i-1][0];
+                    const dy = path[i][1] - path[i-1][1];
+                    const seg = Math.sqrt(dx*dx + dy*dy);
+                    if (!startIns && cumDist + seg >= startT) {
+                        result.push(interpCoord(path[i-1], path[i], (startT - cumDist) / seg));
+                        startIns = true;
+                    }
+                    if (!endIns && cumDist + seg >= endT) {
+                        result.push(interpCoord(path[i-1], path[i], (endT - cumDist) / seg));
+                        endIns = true;
+                    }
+                    cumDist += seg;
+                    // Early exit: both taper points inserted and we've passed endT
+                    if (startIns && endIns && cumDist >= endT) {
+                        result.push(path[i]);
+                        for (let j = i + 1; j < path.length; j++) result.push(path[j]);
+                        return [result, total];
+                    }
+                }
+                result.push(path[i]);
+            }
+            return [result, total];
+        }
+
+        function miterOffset(path, shiftDeg) {
+            // Offset in metric space so all segment directions get equal
+            // perpendicular distance regardless of lat/lon distortion.
+            const n = path.length;
+            if (n < 2) return path;
+            const latRad = path[0][1] * Math.PI / 180;
+            const Mlat = 111320.0;
+            const Mlon = Mlat * Math.cos(latRad);
+            const shiftM = shiftDeg * Mlat;
+            const ox0 = path[0][0], oy0 = path[0][1];
+
+            // Compute metric segment normals in one pass (no intermediate pm[] array)
+            const ns = new Array(n - 1);
+            let px = 0, py = 0;
+            for (let i = 0; i < n - 1; i++) {
+                const qx = (path[i+1][0] - ox0) * Mlon;
+                const qy = (path[i+1][1] - oy0) * Mlat;
+                const dx = qx - px, dy = qy - py;
+                const ln = Math.sqrt(dx*dx + dy*dy) || 1;
+                ns[i] = [-dy/ln, dx/ln];
+                px = qx; py = qy;
+            }
+
+            // Apply miter and convert back to degrees
+            const result = new Array(n);
+            for (let i = 0; i < n; i++) {
+                let nx, ny;
+                if (i === 0) {
+                    [nx, ny] = ns[0];
+                } else if (i === n - 1) {
+                    [nx, ny] = ns[n - 2];
+                } else {
+                    const [n1x, n1y] = ns[i - 1];
+                    const [n2x, n2y] = ns[i];
+                    let bx = n1x + n2x, by = n1y + n2y;
+                    const bl = Math.sqrt(bx*bx + by*by);
+                    if (bl < 1e-10) {
+                        nx = n1x; ny = n1y;
+                    } else {
+                        bx /= bl; by /= bl;
+                        const dot = bx*n1x + by*n1y;
+                        const scale = Math.min(Math.abs(dot) > 1e-10 ? 1.0/dot : 4.0, 4.0);
+                        nx = bx * scale; ny = by * scale;
+                    }
+                }
+                const pmx = (path[i][0] - ox0) * Mlon + nx * shiftM;
+                const pmy = (path[i][1] - oy0) * Mlat + ny * shiftM;
+                result[i] = [ox0 + pmx / Mlon, oy0 + pmy / Mlat];
+            }
+            return result;
+        }
+
+        function offsetPath(path, offsetIndex, totalCircuits) {
+            if (totalCircuits <= 1) return path;
+            const center = (totalCircuits - 1) / 2;
+            const shift = (offsetIndex - center) * CIRCUIT_OFFSET_METERS;
+            const total = pathLength(path);
+            const taper = Math.min(TAPER_DEGREES, total * 0.45);
+            const [dense, denseTotal] = insertTaperPoints(path, taper, total);
+            const mitered = miterOffset(dense, shift);
+            let cumDist = 0;
+            return mitered.map((coord, i) => {
+                if (i > 0) {
+                    const dx = dense[i][0] - dense[i-1][0];
+                    const dy = dense[i][1] - dense[i-1][1];
+                    cumDist += Math.sqrt(dx*dx + dy*dy);
+                }
+                const t = taper > 0
+                    ? Math.min(cumDist, denseTotal - cumDist, taper) / taper
+                    : 1;
+                const ox = coord[0] - dense[i][0];
+                const oy = coord[1] - dense[i][1];
+                return [dense[i][0] + ox*t, dense[i][1] + oy*t];
+            });
+        }
+
+        function buildCircuitIndex(data) {
+            if (!data || !data.length || data[0].circuits === undefined) return null;
+            const index = [];
+            data.forEach((item, dataIdx) => {
+                const circuits = parseInt(item.circuits) || 1;
+                for (let i = 0; i < circuits; i++) {
+                    index.push({ dataIdx, circuitIdx: i, circuits });
+                }
+            });
+            return index;
+        }
+
+        function buildLinesView(data) {
+            const index = buildCircuitIndex(data);
+            if (!index) return data;
+            return index.map(({ dataIdx, circuitIdx, circuits }) => {
+                const item = data[dataIdx];
+                return {
+                    ...item,
+                    path: offsetPath(item.path, circuitIdx, circuits),
+                };
+            });
+        }
+
+        function updateCircuitExpansion(zoom) {
+            const deck = window.deck;
+            if (!deck) return;
+
+            const shouldExpand = zoom >= CIRCUIT_ZOOM_THRESHOLD;
+            if (shouldExpand === circuitsExpanded) return;
+
+            circuitsExpanded = shouldExpand;
+            const originalData = originalLayerData['Lines'];
+            if (!originalData) return;
+
+            deck.setProps({
+                layers: deck.props.layers.map(l =>
+                    l.id === 'Lines'
+                        ? l.clone({ data: shouldExpand ? buildLinesView(originalData) : originalData })
+                        : l
+                )
+            });
+        }
+
+        function updateHoveredLine(lineId) {
+            if (lineId === hoveredLineId) return;
+            hoveredLineId = lineId;
+
+            const deck = window.deck;
+            if (!deck) return;
+
+            const hoverColor = isDarkMode ? [255, 255, 255, 255] : [255, 20, 147, 255];
+
+            deck.setProps({
+                layers: deck.props.layers.map(l => {
+                    if (l.id !== 'Lines') return l;
+                    return l.clone({
+                        getColor: d => d.line_id === hoveredLineId ? hoverColor : d.color,
+                        updateTriggers: { getColor: hoveredLineId }
+                    });
+                })
+            });
+        }
+
 
         function initializeVoltages() {
             const deck = window.deck;
@@ -603,35 +891,30 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
 
             const hasVoltageFilter = selectedVoltages.size > 0;
             const hasTextFilter = currentTextSearch.length > 0;
-
-            if (!hasVoltageFilter && !hasTextFilter) {
-                const layers = deck.props.layers.map(layer =>
-                    originalLayerData[layer.id] ? layer.clone({ data: originalLayerData[layer.id] }) : layer
-                );
-                deck.setProps({ layers });
-                return;
-            }
-
             const voltages = [...selectedVoltages];
+
             const layers = deck.props.layers.map(layer => {
                 const originalData = originalLayerData[layer.id];
-                const filteredData = originalData.filter(item => {
-                    let passesVoltageFilter = !hasVoltageFilter;
-                    if (hasVoltageFilter) {
-                        if (item.voltage !== undefined) {
-                            passesVoltageFilter = voltages.includes(item.voltage);
-                        } else if (item.voltage_bus0 !== undefined || item.voltage_bus1 !== undefined) {
-                            passesVoltageFilter = voltages.includes(item.voltage_bus0) ||
-                                voltages.includes(item.voltage_bus1);
-                        } else {
-                            passesVoltageFilter = true;
+
+                const filteredData = (hasVoltageFilter || hasTextFilter)
+                    ? originalData.filter(item => {
+                        let passesVoltageFilter = !hasVoltageFilter;
+                        if (hasVoltageFilter) {
+                            if (item.voltage !== undefined) {
+                                passesVoltageFilter = voltages.includes(item.voltage);
+                            } else if (item.voltage_bus0 !== undefined || item.voltage_bus1 !== undefined) {
+                                passesVoltageFilter = voltages.includes(item.voltage_bus0) ||
+                                    voltages.includes(item.voltage_bus1);
+                            } else {
+                                passesVoltageFilter = true;
+                            }
                         }
-                    }
+                        return passesVoltageFilter && matchesTextSearch(item, currentTextSearch);
+                    })
+                    : originalData;
 
-                    return passesVoltageFilter && matchesTextSearch(item, currentTextSearch);
-                });
-
-                return layer.clone({ data: filteredData });
+                const data = (layer.id === 'Lines' && circuitsExpanded) ? buildLinesView(filteredData) : filteredData;
+                return layer.clone({ data });
             });
 
             deck.setProps({ layers });
@@ -709,18 +992,67 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
 
                 window.deck.setProps({
                     getTooltip: null,
+                    pickingRadius: isMobile ? 20 : 10,
+                    onHover: ({object}) => {
+                        updateHoveredLine(object ? object.line_id : null);
+                    },
                     onViewStateChange: ({viewState}) => {
                         if (originalOnViewStateChange) {
                             originalOnViewStateChange({viewState});
                         }
                         updateHash(viewState);
+                        updateCircuitExpansion(viewState.zoom);
                         return viewState;
                     }
                 });
 
                 const deckContainer = document.getElementById('deck-container');
                 if (deckContainer) {
-                    deckContainer.addEventListener('click', function(event) {
+                    let touchStartInfo = null;
+                    const TAP_MAX_MOVE = 15;
+                    const TAP_MAX_DURATION = 300;
+
+                    if (isMobile) {
+                        deckContainer.addEventListener('touchstart', function(event) {
+                            if (event.touches.length > 1) {
+                                touchStartInfo = null;
+                                return;
+                            }
+                            touchStartInfo = {
+                                x: event.touches[0].clientX,
+                                y: event.touches[0].clientY,
+                                time: Date.now(),
+                                wasSingleTouch: true
+                            };
+                        }, { passive: true });
+
+                        deckContainer.addEventListener('touchmove', function(event) {
+                            if (event.touches.length > 1 || !touchStartInfo) {
+                                touchStartInfo = null;
+                            }
+                        }, { passive: true });
+                    }
+
+                    const eventType = isMobile ? 'touchend' : 'click';
+                    deckContainer.addEventListener(eventType, function(event) {
+                        if (isMobile) {
+                            if (!touchStartInfo || !touchStartInfo.wasSingleTouch) {
+                                touchStartInfo = null;
+                                return;
+                            }
+                            const touch = event.changedTouches ? event.changedTouches[0] : null;
+                            if (!touch) return;
+                            const dx = touch.clientX - touchStartInfo.x;
+                            const dy = touch.clientY - touchStartInfo.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            const duration = Date.now() - touchStartInfo.time;
+                            touchStartInfo = null;
+                            if (dist > TAP_MAX_MOVE || duration > TAP_MAX_DURATION) return;
+                        }
+
+                        const clientX = isMobile && event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
+                        const clientY = isMobile && event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
+
                         if (currentTooltip) {
                             currentTooltip.remove();
                             currentTooltip = null;
@@ -733,9 +1065,9 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
 
                         const deck = window.deck;
                         const pickInfo = deck.pickObject({
-                            x: event.clientX,
-                            y: event.clientY,
-                            radius: 4
+                            x: clientX,
+                            y: clientY,
+                            radius: isMobile ? 20 : 10
                         });
 
                         if (pickInfo && pickInfo.object) {
@@ -750,15 +1082,11 @@ def inject_custom_controls(deck: pdk.Deck, release_version: str) -> str:
                                     const ids = String(value).split(';');
                                     const links = ids.map(id => {
                                         const trimmedId = id.trim();
-                                        // Only create link if it starts with 'way' or 'relation'
-                                        if (trimmedId.startsWith('way/') || trimmedId.startsWith('relation/')) {
-                                            return `<a href="https://openstreetmap.org/${trimmedId}" target="_blank" rel="noopener noreferrer" style="color:#4a9eff;text-decoration:underline">${trimmedId}</a>`;
-                                        } else {
-                                            return trimmedId;
-                                        }
+                                        return `<a href="https://openstreetmap.org/${trimmedId}" target="_blank" rel="noopener noreferrer" style="color:#4a9eff;text-decoration:underline">${trimmedId}</a>`;
                                     }).join('; ');
                                     displayValue = links;
                                 }
+
                                 html += `<tr>
                                     <td style="padding:3px 8px 3px 0;font-weight:600;vertical-align:top;color:#aaa;white-space:nowrap">${key}</td>
                                     <td style="padding:3px 0;vertical-align:top;color:#fff;word-break:break-all;max-width:300px">${displayValue}</td>
@@ -926,6 +1254,12 @@ if __name__ == "__main__":
     include_polygons = snakemake.params.include_polygons
     export = snakemake.params.export
 
+    out_buses = snakemake.output.buses if export else ""
+    out_lines = snakemake.output.lines if export else ""
+    out_links = snakemake.output.links if export else ""
+    out_converters = snakemake.output.converters if export else ""
+    out_transformers = snakemake.output.transformers if export else ""
+
     #############
     ### Buses ###
     #############
@@ -936,10 +1270,7 @@ if __name__ == "__main__":
     buses.v_nom = buses.v_nom.astype(int)
     buses.sort_index(inplace=True)
 
-    logger.info(f"Exporting {len(buses)} buses to %s", snakemake.output.buses)
-    buses = export_clean_csv(
-        buses, BUSES_COLUMNS, snakemake.output.buses, "bus_id", export
-    )
+    buses = export_clean_csv(buses, BUSES_COLUMNS, out_buses, "bus_id", export)
 
     #############
     ### Lines ###
@@ -967,10 +1298,7 @@ if __name__ == "__main__":
         lambda x: ";".join(set(tag.split("-")[0] for tag in x.split(";")))
     )
 
-    logger.info(f"Exporting {len(lines)} lines to %s", snakemake.output.lines)
-    lines = export_clean_csv(
-        lines, LINES_COLUMNS, snakemake.output.lines, "line_id", export
-    )
+    lines = export_clean_csv(lines, LINES_COLUMNS, out_lines, "line_id", export)
 
     ##########################
     ### Links + Converters ###
@@ -988,26 +1316,18 @@ if __name__ == "__main__":
     links_dc = links[~is_converter].copy()
     converters = links[is_converter].copy()
 
-    logger.info(
-        f"Exporting {len(links_dc)} links to %s",
-        snakemake.output.links,
-    )
     links_dc = export_clean_csv(
         links_dc,
         LINKS_COLUMNS,
-        snakemake.output.links,
+        out_links,
         "link_id",
         export,
     )
 
-    logger.info(
-        f"Exporting {len(converters)} converters to %s",
-        snakemake.output.converters,
-    )
     converters = export_clean_csv(
         converters,
         CONVERTERS_COLUMNS,
-        snakemake.output.converters,
+        out_converters,
         "converter_id",
         export,
     )
@@ -1023,14 +1343,10 @@ if __name__ == "__main__":
     transformers.s_nom = transformers.s_nom.astype(int)
     transformers.sort_index(inplace=True)
 
-    logger.info(
-        f"Exporting {len(transformers)} transformers to %s",
-        snakemake.output.transformers,
-    )
     transformers = export_clean_csv(
         transformers,
         TRANSFORMERS_COLUMNS,
-        snakemake.output.transformers,
+        out_transformers,
         "transformer_id",
         export,
     )
@@ -1124,7 +1440,7 @@ if __name__ == "__main__":
         width_scale=1,
         width_min_pixels=2,
         pickable=True,
-        auto_highlight=True,
+        auto_highlight=False,
         parameters={"depthTest": False},
         id="Lines",
     )
@@ -1178,7 +1494,7 @@ if __name__ == "__main__":
         get_position=["x", "y"],
         get_fill_color=[255, 0, 155, 160],
         radius=20,
-        get_elevation=195,
+        get_elevation=10,
         pickable=True,
         auto_highlight=True,
         parameters={"depthTest": False},
@@ -1239,7 +1555,6 @@ if __name__ == "__main__":
             zoom=5,
             pitch=30,
         ),
-        map_style="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
     )
 
     logger.info("Injecting custom layer controls into map HTML.")
