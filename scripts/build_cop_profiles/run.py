@@ -159,20 +159,14 @@ def get_source_temperature(
         Temperature in Celsius. Returns a float for constant-temperature sources
         or an xr.DataArray for time-varying sources.
 
-    Raises
-    ------
-    ValueError
-        If a constant-temperature source lacks its parameter or a time-varying
-        source lacks its input file.
+    Notes
+    -----
+    Presence of constant-temperature entries in ``heat_source_temperatures``
+    is validated at config load time by ``SectorConfig``.
     """
     heat_source = HeatSource(heat_source_name)
     if heat_source.temperature_from_config:
-        try:
-            return snakemake_params["heat_source_temperatures"][heat_source_name]
-        except KeyError:
-            raise ValueError(
-                f"Constant temperature for heat source '{heat_source_name}' not specified in heat_source_temperatures."
-            )
+        return snakemake_params["heat_source_temperatures"][heat_source_name]
     else:
         return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
 

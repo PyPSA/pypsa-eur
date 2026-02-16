@@ -185,15 +185,34 @@ class _DistrictHeatingConfig(ConfigModel):
         default_factory=lambda: {"buffer": 1000, "handle_missing_countries": "fill"},
         description="District heating areas settings.",
     )
-    geothermal: dict[str, Any] = Field(
-        default_factory=lambda: {"constant_temperature_celsius": 65},
+    heat_source_temperatures: dict[str, float] = Field(
+        default_factory=lambda: {
+            "geothermal": 65,
+            "electrolysis_waste": 70,
+            "fuel_cell_waste": 70,
+            "fischer_tropsch_waste": 200,
+            "haber_bosch_waste": 200,
+            "sabatier_waste": 200,
+            "methanolisation_waste": 200,
+        },
         description=(
-            "Geothermal heat source configuration. Settings: "
-            "'constant_temperature_celsius' specifies the assumed constant "
-            "temperature of geothermal heat (default 65°C). When geothermal is "
-            "included in `heat_sources`, this temperature determines whether heat "
-            "can be used directly (T_source > T_forward) and if not, the ratio for preheating "
-            "(T_return < T_source < T_forward) and boosting via heat pumps."
+            "Assumed constant temperatures (°C) of heat sources used for "
+            "district heating. When a heat source is included in `heat_sources`, "
+            "its temperature determines whether heat can be used directly "
+            "(T_source > T_forward), the ratio for preheating "
+            "(T_return < T_source < T_forward), or boosting via heat pumps."
+        ),
+    )
+    fallback_ptx_heat_losses: float = Field(
+        0.05,
+        description=(
+            "Assumed fractional heat loss for PtX processes whose technology data "
+            "does not provide an explicit heat output efficiency (currently Sabatier "
+            "and H2 Fuel Cell). For these processes the waste heat efficiency is "
+            "calculated as ``1 - fallback_ptx_heat_losses - main_efficiency`` with `main_efficiency` referring to the `efficiency` field in the cost data. "
+            "See ``HeatSource.get_waste_heat_efficiency()`` in "
+            "``scripts/definitions/heat_source.py`` and ``add_waste_heat()`` in "
+            "``scripts/prepare_sector_network.py``."
         ),
     )
 
@@ -467,6 +486,12 @@ class SectorConfig(BaseModel):
                 HeatSource.AIR,
                 HeatSource.PTES,
                 HeatSource.GEOTHERMAL,
+                HeatSource.ELECTROLYSIS_waste,
+                HeatSource.FUEL_CELL_waste,
+                HeatSource.FISCHER_TROPSCH_waste,
+                HeatSource.HABER_BOSCH_waste,
+                HeatSource.SABATIER_waste,
+                HeatSource.METHANOLISATION_waste,
             ],
             HeatSystemType.URBAN_DECENTRAL: [HeatSource.AIR],
             HeatSystemType.RURAL: [HeatSource.AIR, HeatSource.GROUND],
@@ -1034,3 +1059,51 @@ class SectorConfig(BaseModel):
     imports: _ImportsConfig = Field(
         default_factory=_ImportsConfig, description="Imports configuration."
     )
+
+    @model_validator(mode="after")
+    def validate_waste_heat_utilisation_factors(self):
+        """
+        Ensure every PtX waste heat source in ``heat_sources.urban central``
+        has a non-zero utilisation factor (e.g. ``use_fischer_tropsch_waste_heat``).
+
+        Without this, ``prepare_sector_network.add_waste_heat()`` would wire a zero-efficiency link, so the source would be listed but never contribute heat.
+        """
+        urban_central_sources = self.heat_sources.get(HeatSystemType.URBAN_CENTRAL, [])
+        for source in urban_central_sources:
+            option_key = source.waste_heat_option_key
+            if option_key is None:
+                continue
+            utilisation = getattr(self, option_key, 0)
+            if not utilisation:
+                raise ValueError(
+                    f"'{source.value}' is in heat_sources.urban central but "
+                    f"'{option_key}' is 0 or unset. Either set it to a value "
+                    f"in (0, 1] or remove '{source.value}' from heat_sources."
+                )
+        return self
+
+    @model_validator(mode="after")
+    def validate_heat_source_temperatures(self):
+        """
+        Ensure every config-temperature heat source (geothermal, PtX waste)
+        has an entry in ``district_heating.heat_source_temperatures``.
+
+        These temperatures are needed by ``build_cop_profiles`` and
+        ``build_heat_source_utilisation_profiles`` to compute COPs and
+        direct-use / preheating / boosting ratios.
+        """
+        configured_temps = self.district_heating.heat_source_temperatures
+        for system_type, sources in self.heat_sources.items():
+            for source in sources:
+                if (
+                    source.temperature_from_config
+                    and source.value not in configured_temps
+                ):
+                    raise ValueError(
+                        f"'{source.value}' is in heat_sources.{system_type.value} "
+                        f"but has no entry in district_heating."
+                        f"heat_source_temperatures. Add "
+                        f"'heat_source_temperatures.{source.value}: <°C>'. "
+                        f"Configured: {list(configured_temps.keys())}"
+                    )
+        return self

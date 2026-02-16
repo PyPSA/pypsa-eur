@@ -5484,12 +5484,8 @@ def add_waste_heat(
                 f"'{heat_source.process_carrier}' to be present in the network, but it is missing. Make sure the corresponding industrial process link has been added."
             )
 
-        # Get utilisation factor from config
-        utilisation = options.get(heat_source.waste_heat_option_key, 0)
-        if not utilisation:
-            raise RuntimeError(
-                f"Heat source {heat_source.value} enabled in heat_sources config, but utilisation factor '{heat_source.waste_heat_option_key}' is not set or zero."
-            )
+        # Get utilisation factor from config (validated > 0 in config validator)
+        utilisation = options[heat_source.waste_heat_option_key]
 
         # Get efficiency and bus/efficiency column names
         efficiency = heat_source.get_waste_heat_efficiency(
