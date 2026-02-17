@@ -12,6 +12,8 @@ Upcoming Release
 
 * ``data/nuclear_p_max_pu.csv`` now stores annual energy availability factors per country with years as columns. The model automatically selects the column nearest to the simulated weather year.
 
+* New ``conventional: estimate_efficiencies`` option (default ``false``) to fill missing plant-level efficiencies using a carrier- and age-dependent heuristic.
+
 * The ``clustering: consider_efficiency_classes`` option now accepts a list of quantile boundaries (e.g. ``[0.1, 0.5, 0.9]``) in addition to a boolean. Labels are derived from quantile percentages (e.g. ``Q0``, ``Q10``, ``Q90``). The default behaviour (``true``) is unchanged, using ``[0.1, 0.9]`` quantiles.
 
 * Adjust ``powerplants_filter`` to include power plants operational in 2025.

@@ -254,6 +254,60 @@ def sanitize_locations(n):
         )
 
 
+def estimate_efficiency(df: pd.DataFrame, reference_year: int = 2025) -> pd.Series:
+    carrier = df.carrier
+    year = df.dateretrofit.combine_first(df.datein)
+
+    offset = carrier.map(
+        {
+            "lignite": 0.25,
+            "coal": 0.28,
+            "CCGT": 0.40,
+            "OCGT": 0.28,
+            "oil": 0.28,
+            "nuclear": 0.33,
+        }
+    )
+    slope = carrier.map(
+        {
+            "lignite": 0.003,
+            "coal": 0.003,
+            "CCGT": 0.004,
+            "OCGT": 0.003,
+            "oil": 0.002,
+            "nuclear": 0.0,
+        }
+    )
+    year0 = carrier.map(
+        {
+            "lignite": 1960,
+            "coal": 1960,
+            "CCGT": 1980,
+            "OCGT": 1970,
+            "oil": 1960,
+            "nuclear": 1960,
+        }
+    )
+    cap = carrier.map(
+        {
+            "lignite": 0.42,
+            "coal": 0.44,
+            "CCGT": 0.60,
+            "OCGT": 0.41,
+            "oil": 0.38,
+            "nuclear": 0.33,
+        }
+    )
+
+    # heuristic linear efficiency estimation
+    eta = (offset + slope * (year - year0)).clip(lower=offset, upper=cap)
+
+    # degradation of efficiency
+    eta *= 1 - (reference_year - year - 10).clip(lower=0) * 0.001
+
+    return eta
+
+
 def add_co2_emissions(n, costs, carriers):
     """
     Add CO2 emissions to the network's carriers attribute.
@@ -270,6 +324,7 @@ def load_and_aggregate_powerplants(
     consider_efficiency_classes: bool | list[float] = False,
     aggregation_strategies: dict = None,
     exclude_carriers: list = None,
+    estimate_efficiencies: bool = False,
 ) -> pd.DataFrame:
     if not aggregation_strategies:
         aggregation_strategies = {}
@@ -313,7 +368,10 @@ def load_and_aggregate_powerplants(
     ]
     ppl = ppl.join(costs[cost_columns], on="carrier", rsuffix="_r")
 
-    ppl["efficiency"] = ppl.efficiency.combine_first(ppl.efficiency_r)
+    efficiency = ppl.efficiency
+    if estimate_efficiencies:
+        efficiency = efficiency.combine_first(estimate_efficiency(ppl))
+    ppl["efficiency"] = efficiency.combine_first(ppl.efficiency_r)
     ppl["lifetime"] = (ppl.dateout - ppl.datein).fillna(np.inf)
     ppl["build_year"] = ppl.datein.fillna(0).astype(int)
     ppl["marginal_cost"] = (
@@ -1172,6 +1230,7 @@ if __name__ == "__main__":
         params.consider_efficiency_classes,
         params.aggregation_strategies,
         params.exclude_carriers,
+        params.estimate_efficiencies,
     )
 
     attach_load(

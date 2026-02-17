@@ -652,6 +652,11 @@
       "additionalProperties": true,
       "description": "Configuration for `conventional` settings.",
       "properties": {
+        "estimate_efficiencies": {
+          "default": false,
+          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent heuristic, taking priority over flat cost-table values.",
+          "type": "boolean"
+        },
         "unit_commitment": {
           "default": false,
           "description": "Allow the overwrite of ramp_limit_up, ramp_limit_start_up, ramp_limit_shut_down, p_min_pu, min_up_time, min_down_time, and start_up_cost of conventional generators. Refer to the CSV file 'unit_commitment.csv'.",
@@ -9774,6 +9779,11 @@
       "additionalProperties": true,
       "description": "Configuration for `conventional` settings.",
       "properties": {
+        "estimate_efficiencies": {
+          "default": false,
+          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent heuristic, taking priority over flat cost-table values.",
+          "type": "boolean"
+        },
         "unit_commitment": {
           "default": false,
           "description": "Allow the overwrite of ramp_limit_up, ramp_limit_start_up, ramp_limit_shut_down, p_min_pu, min_up_time, min_down_time, and start_up_cost of conventional generators. Refer to the CSV file 'unit_commitment.csv'.",
