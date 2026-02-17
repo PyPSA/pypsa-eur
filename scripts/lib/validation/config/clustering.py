@@ -48,10 +48,6 @@ class _SimplifyNetworkConfig(BaseModel):
         False,
         description="Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
     )
-    exclude_carriers: list[str] = Field(
-        default_factory=list,
-        description="List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-    )
     remove_stubs: bool = Field(
         True,
         description="Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
