@@ -8,6 +8,8 @@ Release Notes
 
 Upcoming Release
 ================
+* Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.
+
 
 * Adjust ``powerplants_filter`` to include power plants operational in 2025.
 
