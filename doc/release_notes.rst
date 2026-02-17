@@ -11,6 +11,8 @@ Upcoming Release
 
 * Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
 
+* The ``clustering: consider_efficiency_classes`` option now accepts a list of quantile boundaries (e.g. ``[0.1, 0.5, 0.9]``) in addition to a boolean. Labels are derived from quantile percentages (e.g. ``Q0``, ``Q10``, ``Q90``). The default behaviour (``true``) is unchanged, using ``[0.1, 0.9]`` quantiles.
+
 * Adjust ``powerplants_filter`` to include power plants operational in 2025.
 
 * Rewrite mapping of power plant sites to model regions / buses. Previously, power plants were mapped to the nearest bus in the same country.
