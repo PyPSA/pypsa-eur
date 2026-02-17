@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Rolling horizon optimisation also in :mod:`solve_network`, not only in :mod:`solve_operations_network`. Drop cyclicity constraints with setting ``rolling_horizon: true``.
+
 * Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
 
 * Adjust ``powerplants_filter`` to include power plants operational in 2025.
