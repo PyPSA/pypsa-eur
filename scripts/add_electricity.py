@@ -661,9 +661,15 @@ def attach_conventional_generators(
             if f"conventional_{carrier}_{attr}" in conventional_inputs:
                 # Values affecting generators of technology k country-specific
                 # First map generator buses to countries; then map countries to p_max_pu
-                values = pd.read_csv(
+                df = pd.read_csv(
                     conventional_inputs[f"conventional_{carrier}_{attr}"], index_col=0
-                ).iloc[:, 0]
+                )
+                try:
+                    df.columns = df.columns.astype(int)
+                    year = n.snapshots[0].year
+                    values = df[year]
+                except (ValueError, TypeError):
+                    values = df.iloc[:, -1]  # take last column if year selection fails
                 bus_values = n.buses.country.map(values)
                 n.generators.update(
                     {attr: n.generators.loc[idx].bus.map(bus_values).dropna()}

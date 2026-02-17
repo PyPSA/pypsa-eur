@@ -11,6 +11,8 @@ Upcoming Release
 
 * Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
 
+* ``data/nuclear_p_max_pu.csv`` now stores annual energy availability factors per country with years as columns. The model automatically selects the column nearest to the simulated weather year.
+
 * Adjust ``powerplants_filter`` to include power plants operational in 2025.
 
 * Rewrite mapping of power plant sites to model regions / buses. Previously, power plants were mapped to the nearest bus in the same country.
