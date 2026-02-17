@@ -354,14 +354,17 @@ def load_and_aggregate_powerplants(
     aggregated.index = aggregated.bus + " " + aggregated.carrier
     aggregated.build_year = aggregated.build_year.astype(int)
 
-    disaggregated = ppl[~to_aggregate][aggregated.columns].copy()
+    disaggregated = ppl[~to_aggregate].copy()
     disaggregated.index = (
         disaggregated.bus
         + " "
         + disaggregated.carrier
         + " "
         + disaggregated.index.astype(str)
+        + " "
+        + disaggregated.name
     )
+    disaggregated = disaggregated[aggregated.columns]
 
     return pd.concat([aggregated, disaggregated])
 
