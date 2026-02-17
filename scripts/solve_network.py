@@ -1364,12 +1364,63 @@ def add_dsr_link_store_coupling_constraint(n: pypsa.Network, snapshots: pd.Datet
         logger.info(f"Added store-link coupling constraints for {constraints_added} DSR stores")
 
 
+def _extract_tech_key(link_name):
+    """Extract technology key from a DSR link name.
+    
+    e.g. "BE0 0 industry dsr Iron & steel industry Scrap-EAF charge"
+      -> "Iron & steel industry|Scrap-EAF"
+    """
+    store_name = link_name.replace(" charge", "").replace(" discharge", "")
+    parts = store_name.split(" industry dsr ")
+    if len(parts) == 2:
+        profile_tech = parts[1]
+        if " " in profile_tech:
+            profile, tech = profile_tech.rsplit(" ", 1)
+            return f"{profile}|{tech}"
+    return None
+
+
+def _filter_links_with_ramp_config(link_names, ramp_rate_config):
+    """Filter links to only those with an explicit ramp_rate entry in config.
+    
+    Returns the filtered link index and a Series of ramp rates for those links.
+    Technologies not listed in ramp_rate config are considered flexible enough
+    to not need ramp constraints at the model's temporal resolution.
+    """
+    filtered = []
+    rates = {}
+    default_rate = ramp_rate_config.get("default", 0.1)
+    
+    # Keys in config that are actual technology entries (not 'default')
+    tech_keys_in_config = {k for k in ramp_rate_config if k != "default"}
+    
+    for link_name in link_names:
+        tech_key = _extract_tech_key(link_name)
+        if tech_key is not None and tech_key in tech_keys_in_config:
+            filtered.append(link_name)
+            rates[link_name] = ramp_rate_config[tech_key]
+        elif tech_key is None:
+            # Profile-level link (no technology breakdown) - apply default
+            filtered.append(link_name)
+            rates[link_name] = default_rate
+    
+    filtered_idx = pd.Index(filtered)
+    rate_series = pd.Series(rates)
+    return filtered_idx, rate_series
+
+
 def add_dsr_ramp_constraints(n: pypsa.Network, snapshots: pd.DatetimeIndex, dsr_config: dict) -> None:
     """
-    Add ramp rate constraints for DSR Links to prevent rapid cycling.
+    Add ramp rate constraints for physically rigid DSR technologies.
     
-    Limits the change in link dispatch per hour to prevent unrealistic
-    rapid charge/discharge switching.
+    VECTORIZED implementation using linopy/xarray array operations.
+    Only applies to technologies explicitly listed in config ramp_rate section.
+    Flexible technologies (e.g. EAF, secondary aluminium) are excluded because
+    they can physically adjust within a single timestep.
+    
+    Constraints:
+        link_p[t] - link_p[t-1] <= +max_ramp   (ramp up limit)
+        link_p[t] - link_p[t-1] >= -max_ramp   (ramp down limit)
     
     Parameters
     ----------
@@ -1380,99 +1431,84 @@ def add_dsr_ramp_constraints(n: pypsa.Network, snapshots: pd.DatetimeIndex, dsr_
     dsr_config : dict
         Industry DSR configuration
     """
-    # Get ramp rate parameters from config (default: 0.5 = 50% of p_nom per hour)
     ramp_rate_config = dsr_config.get("ramp_rate", {})
-    default_ramp_rate = ramp_rate_config.get("default", 0.5)  # 50% per hour
-    
-    # Find DSR links
-    charge_links = n.links.index[n.links.carrier == "industry dsr charge"]
-    discharge_links = n.links.index[n.links.carrier == "industry dsr discharge"]
-    
-    if charge_links.empty and discharge_links.empty:
+    if not ramp_rate_config:
+        logger.info("No ramp_rate section in DSR config, skipping ramp constraints")
         return
     
-    # Get model variables
+    # Find all DSR links
+    all_charge = n.links.index[n.links.carrier == "industry dsr charge"]
+    all_discharge = n.links.index[n.links.carrier == "industry dsr discharge"]
+    
+    if all_charge.empty and all_discharge.empty:
+        return
+    
     if not hasattr(n, "model") or n.model is None:
         return
     
-    link_p = n.model["Link-p"]
+    # Filter to only rigid technologies with explicit ramp rates
+    charge_links, charge_rates = _filter_links_with_ramp_config(all_charge, ramp_rate_config)
+    discharge_links, discharge_rates = _filter_links_with_ramp_config(all_discharge, ramp_rate_config)
     
+    n_skipped_charge = len(all_charge) - len(charge_links)
+    n_skipped_discharge = len(all_discharge) - len(discharge_links)
+    if n_skipped_charge > 0 or n_skipped_discharge > 0:
+        logger.info(
+            f"  Ramp constraints: skipping {n_skipped_charge} flexible charge links "
+            f"and {n_skipped_discharge} flexible discharge links (no explicit ramp_rate)"
+        )
+    
+    if charge_links.empty and discharge_links.empty:
+        logger.info("No rigid technologies found for ramp constraints")
+        return
+    
+    link_p = n.model["Link-p"]
     constraints_added = 0
     
-    # Add ramp constraints for charge links
-    for link_name in charge_links:
-        # Get technology-specific ramp rate if available
-        # Link name: "BE0 0 industry dsr Iron & steel industry Scrap-EAF charge"
-        # Extract technology key: "Iron & steel industry|Scrap-EAF"
-        store_name = link_name.replace(" charge", "")
-        parts = store_name.split(" industry dsr ")
-        if len(parts) == 2:
-            profile_tech = parts[1]
-            if " " in profile_tech:
-                profile, tech = profile_tech.rsplit(" ", 1)
-                tech_key = f"{profile}|{tech}"
-                ramp_rate = ramp_rate_config.get(tech_key, default_ramp_rate)
-            else:
-                ramp_rate = default_ramp_rate
-        else:
-            ramp_rate = default_ramp_rate
+    # --- Vectorized ramp constraints for CHARGE links (rigid technologies only) ---
+    if not charge_links.empty:
+        max_ramp_charge = n.links.loc[charge_links, "p_nom"] * charge_rates
         
-        # Get link capacity
-        p_nom = n.links.loc[link_name, "p_nom"]
-        max_ramp = p_nom * ramp_rate
+        charge_dispatch = link_p.sel({"name": charge_links})
+        charge_ramp = charge_dispatch.diff("snapshot")
+        max_ramp_charge_da = xr.DataArray(
+            max_ramp_charge.values, dims=["name"], coords={"name": charge_links}
+        )
         
-        link_dispatch = link_p.loc[:, link_name]
+        n.model.add_constraints(
+            charge_ramp <= max_ramp_charge_da, name="DSR_charge_ramp_up"
+        )
+        n.model.add_constraints(
+            charge_ramp >= -max_ramp_charge_da, name="DSR_charge_ramp_down"
+        )
         
-        # Ramp up: link[t] - link[t-1] <= max_ramp
-        # Ramp down: link[t] - link[t-1] >= -max_ramp
-        for t in range(1, len(snapshots)):
-            n.model.add_constraints(
-                link_dispatch.loc[snapshots[t]] - link_dispatch.loc[snapshots[t-1]] <= max_ramp,
-                name=f"DSR_charge_ramp_up_{link_name}_{t}"
-            )
-            n.model.add_constraints(
-                link_dispatch.loc[snapshots[t]] - link_dispatch.loc[snapshots[t-1]] >= -max_ramp,
-                name=f"DSR_charge_ramp_down_{link_name}_{t}"
-            )
-        constraints_added += 2 * (len(snapshots) - 1)
+        n_charge = len(charge_links) * (len(snapshots) - 1) * 2
+        constraints_added += n_charge
+        logger.info(f"  Charge ramp constraints: {n_charge} for {len(charge_links)} rigid links")
     
-    # Add ramp constraints for discharge links
-    for link_name in discharge_links:
-        # Get technology-specific ramp rate if available
-        store_name = link_name.replace(" discharge", "")
-        parts = store_name.split(" industry dsr ")
-        if len(parts) == 2:
-            profile_tech = parts[1]
-            if " " in profile_tech:
-                profile, tech = profile_tech.rsplit(" ", 1)
-                tech_key = f"{profile}|{tech}"
-                ramp_rate = ramp_rate_config.get(tech_key, default_ramp_rate)
-            else:
-                ramp_rate = default_ramp_rate
-        else:
-            ramp_rate = default_ramp_rate
+    # --- Vectorized ramp constraints for DISCHARGE links (rigid technologies only) ---
+    if not discharge_links.empty:
+        max_ramp_discharge = n.links.loc[discharge_links, "p_nom"] * discharge_rates
         
-        # Get link capacity
-        p_nom = n.links.loc[link_name, "p_nom"]
-        max_ramp = p_nom * ramp_rate
+        discharge_dispatch = link_p.sel({"name": discharge_links})
+        discharge_ramp = discharge_dispatch.diff("snapshot")
+        max_ramp_discharge_da = xr.DataArray(
+            max_ramp_discharge.values, dims=["name"], coords={"name": discharge_links}
+        )
         
-        link_dispatch = link_p.loc[:, link_name]
+        n.model.add_constraints(
+            discharge_ramp <= max_ramp_discharge_da, name="DSR_discharge_ramp_up"
+        )
+        n.model.add_constraints(
+            discharge_ramp >= -max_ramp_discharge_da, name="DSR_discharge_ramp_down"
+        )
         
-        # Ramp up: link[t] - link[t-1] <= max_ramp
-        # Ramp down: link[t] - link[t-1] >= -max_ramp
-        for t in range(1, len(snapshots)):
-            n.model.add_constraints(
-                link_dispatch.loc[snapshots[t]] - link_dispatch.loc[snapshots[t-1]] <= max_ramp,
-                name=f"DSR_discharge_ramp_up_{link_name}_{t}"
-            )
-            n.model.add_constraints(
-                link_dispatch.loc[snapshots[t]] - link_dispatch.loc[snapshots[t-1]] >= -max_ramp,
-                name=f"DSR_discharge_ramp_down_{link_name}_{t}"
-            )
-        constraints_added += 2 * (len(snapshots) - 1)
+        n_discharge = len(discharge_links) * (len(snapshots) - 1) * 2
+        constraints_added += n_discharge
+        logger.info(f"  Discharge ramp constraints: {n_discharge} for {len(discharge_links)} rigid links")
     
     if constraints_added > 0:
-        logger.info(f"Added ramp rate constraints for {len(charge_links) + len(discharge_links)} DSR links ({constraints_added} total constraints)")
+        logger.info(f"Added DSR ramp constraints: {constraints_added} total (vectorized, 4 bulk calls)")
 
 
 def extra_functionality(
@@ -1525,7 +1561,8 @@ def extra_functionality(
     dsr_config = industry_config.get("dsr", {})
     if dsr_config.get("enable", False):
         add_dri_h2_coupling_constraint(n, snapshots)
-        add_dsr_link_store_coupling_constraint(n, snapshots)
+        # Store-link coupling constraint removed: redundant with PyPSA's bus balance (KCL).
+        # See DSR_DEEP_ANALYSIS_AND_FIX.md for details.
         add_dsr_ramp_constraints(n, snapshots, dsr_config)
     
     if n.config.get("sector", {}).get("tes", False):

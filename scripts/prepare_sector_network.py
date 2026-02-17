@@ -5394,6 +5394,12 @@ def add_industry(
                             carrier="industry dsr flexibility",
                         )
                         
+                        # Get DSR economic parameters from config (v3: optional DSR)
+                        store_capital_cost = dsr_config.get("store_capital_cost", 30.0)  # EUR/MWh/year
+                        link_capital_cost = dsr_config.get("link_capital_cost", 0.0)  # EUR/MW/year
+                        charge_efficiency = dsr_config.get("charge_efficiency", 0.98)
+                        discharge_efficiency = dsr_config.get("discharge_efficiency", 0.98)
+                        
                         # Charge links: load bus -> flexibility bus (increasing load)
                         # When this link flows, store charges, load increases
                         # For negative_only DSR, disable charge links (set p_nom=0 or p_max_pu=0)
@@ -5413,7 +5419,8 @@ def add_industry(
                             p_nom=charge_p_nom,
                             p_min_pu=0.0,  # Unidirectional: only positive flow (charging)
                             p_max_pu=1.0,
-                            efficiency=1.0,  # Can be configured later for losses
+                            efficiency=charge_efficiency,  # v3: Added efficiency losses
+                            capital_cost=link_capital_cost,  # v3: Added capital cost
                         )
                         
                         # Discharge links: flexibility bus -> load bus (decreasing load)
@@ -5428,10 +5435,13 @@ def add_industry(
                             p_nom=P_flex_per_store,
                             p_min_pu=0.0,  # Unidirectional: only positive flow (discharging)
                             p_max_pu=1.0,
-                            efficiency=1.0,  # Can be configured later for losses
+                            efficiency=discharge_efficiency,  # v3: Added efficiency losses
+                            capital_cost=link_capital_cost,  # v3: Added capital cost
                         )
                         
                         # Add store on flexibility bus
+                        # V3: Make DSR capacity EXTENDABLE with CAPITAL COST
+                        # This makes DSR economically optional - optimizer decides whether to build it
                         # Store energy balance: e[t] = e[t-1] + charge_link[t] - discharge_link[t]
                         # This means charge_link increases store energy, discharge_link decreases it
                         n.add(
@@ -5442,7 +5452,10 @@ def add_industry(
                             standing_loss=0.0,
                             e_cyclic=True,
                             e_initial=0.0,
-                            e_nom=e_nom,
+                            e_nom=0.0,  # v3: Start with 0, let optimizer decide
+                            e_nom_extendable=True,  # v3: CRITICAL - make capacity optimizable
+                            e_nom_max=e_nom,  # v3: Use calculated capacity as upper limit
+                            capital_cost=store_capital_cost,  # v3: Add capital cost (EUR/MWh/year)
                             e_max_pu=e_max_pu,
                             e_min_pu=e_min_pu,
                         )

@@ -1,0 +1,297 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# Test configuration for industry DSR implementation
+# Based on EU_test_run.yaml with DSR enabled
+# EU27 countries, full year 2019, 2h resolution, 38 clusters
+
+tutorial: true
+
+run:
+  name: "EU_test_run_temporal_no_dsr"
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+
+
+scenario:
+  clusters:
+  - 38
+  opts:
+  - ''
+  sector_opts:
+  - ''
+  planning_horizons:
+  - 2030
+
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR',
+            'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO',
+            'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+
+snapshots:
+  start: "2019-01-01"
+  end: "2019-12-31"
+
+electricity:
+
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+atlite:
+  default_cutout: europe-2019-sarah3-era5
+  cutouts:
+    europe-2019-sarah3-era5:
+      module: [sarah, era5]
+      x: [-12., 35.]
+      y: [33., 72.]
+      time: ["2019-01-01", "2019-12-31"]
+
+renewable:
+  offwind-ac:
+    max_depth: false
+  offwind-dc:
+    max_depth: false
+  offwind-float:
+    max_depth: false
+    min_depth: false
+
+clustering:
+  temporal:
+    resolution_sector: 2h
+
+sector:
+  gas_network: true
+  H2_retrofit: true
+  residential_heat:
+    dsm:
+      enable: false
+      direction:
+      - overheat
+      restriction_value:
+        2020: 0.06
+        2025: 0.16
+        2030: 0.27
+        2035: 0.36
+        2040: 0.38
+        2045: 0.39
+        2050: 0.4
+      restriction_time:
+      - 10
+      - 22
+  district_heating:
+    progress:
+      2020: 0.0
+      2030: 0.3
+      2040: 0.5
+      2050: 0.8
+  heat_pump_sources:
+    urban central:
+    - air
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
+  hydrogen_turbine: false
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: false
+    biomass_to_methanol: false
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false
+
+industry:
+  HVC_environment_sequestration_fraction: 0.5
+  waste_to_energy: true
+  waste_to_energy_cc: true
+  # Enable temporal electricity demand (required for DSR)
+  temporal_electricity_industry_load: true
+  
+  # Industry DSR configuration with technology breakdown
+  # V3: Optional DSR with economic costs and relaxed checkpoints
+  dsr:
+    enable: false
+    
+    # DSR ECONOMIC PARAMETERS (NEW in v3)
+    # Capital cost for DSR stores (EUR/MWh/year of energy capacity)
+    # Represents investment in control systems, process modifications, scheduling software
+    store_capital_cost: 5.0  # EUR/MWh/year - low cost reflecting minimal infrastructure for load shifting
+    
+    # Link capital costs (EUR/MW/year of power capacity)
+    # For charge/discharge links (minimal, mainly control systems)
+    link_capital_cost: 0.0  # Links are just logical connections, no physical assets
+    
+    # Roundtrip efficiency losses (fraction per link)
+    # Represents opportunity costs of production scheduling
+    charge_efficiency: 0.98  # 2% loss when increasing load (scheduling cost)
+    discharge_efficiency: 0.98  # 2% loss when reducing load (scheduling cost)
+    # Net roundtrip: 0.98 * 0.98 = 96.04%
+    
+    # Technology breakdown: defines how each FfE profile is split into technologies
+    technology_breakdown:
+      "Iron & steel industry":
+        "Scrap-EAF": "auto"
+        "H2-DRI-EAF": "auto"
+        "BF-BOF-CCUS": "auto"
+        "Aluminium-primary": "auto"
+        "Aluminium-secondary": "auto"
+        "Alumina": "auto"
+        "Manufacturing": 0.05
+      "Non-metallic Minerals":
+        "Cement mills": 0.40
+        "Raw mills": 0.26
+        "Kiln": 0.27
+        "Other": 0.07
+      "Paper, Pulp and Print":
+        "Pulp production": 0.30
+        "Paper machines": 0.50
+        "Printing": 0.20
+      "Non-specified (Industry)":
+        "Chlor-alkali": 0.10
+        "Other chemicals": 0.90
+    
+    # Technology-specific flexibility_fraction
+    flexibility_fraction:
+      # Iron & steel industry technologies
+      "Iron & steel industry|Scrap-EAF": 0.85
+      "Iron & steel industry|H2-DRI-EAF": 0.20
+      "Iron & steel industry|BF-BOF-CCUS": 0.05
+      "Iron & steel industry|Manufacturing": 0.0
+      "Iron & steel industry|Aluminium-primary": 0.125
+      "Iron & steel industry|Aluminium-secondary": 0.125
+      "Iron & steel industry|Alumina": 0.0
+      # Non-metallic Minerals technologies
+      "Non-metallic Minerals|Cement mills": 0.42
+      "Non-metallic Minerals|Raw mills": 0.42
+      "Non-metallic Minerals|Kiln": 0.0
+      "Non-metallic Minerals|Other": 0.0
+      # Paper, Pulp and Print technologies
+      "Paper, Pulp and Print|Pulp production": 0.60
+      "Paper, Pulp and Print|Paper machines": 0.0
+      "Paper, Pulp and Print|Printing": 0.60
+      # Non-specified (Industry) technologies
+      "Non-specified (Industry)|Chlor-alkali": 0.10
+      # Other profiles WITHOUT technology_breakdown
+      "Food and Tobacco": 0.10
+      "Textile and Leather": 0.10
+      "Wood and Wood Products": 0.10
+      "Transport Equipment": 0.10
+      "Machinery": 0.10
+    
+    # Technology-specific shift_hours
+    shift_hours:
+      # Iron & steel industry technologies
+      "Iron & steel industry|Scrap-EAF": 2
+      "Iron & steel industry|H2-DRI-EAF": 6
+      "Iron & steel industry|BF-BOF-CCUS": 1
+      "Iron & steel industry|Aluminium-primary": 3
+      "Iron & steel industry|Aluminium-secondary": 3
+      "Iron & steel industry|Alumina": 0
+      # Non-metallic Minerals technologies
+      "Non-metallic Minerals|Cement mills": 4
+      "Non-metallic Minerals|Raw mills": 4
+      # Paper, Pulp and Print technologies
+      "Paper, Pulp and Print|Pulp production": 6
+      "Paper, Pulp and Print|Printing": 6
+      # Non-specified (Industry) technologies
+      "Non-specified (Industry)|Chlor-alkali": 4
+      # Other profiles WITHOUT technology_breakdown
+      "Food and Tobacco": 4
+      "Textile and Leather": 4
+      "Wood and Wood Products": 4
+      "Transport Equipment": 4
+      "Machinery": 4
+    
+    # Technology-specific ramp rates (fraction of p_nom per 2h timestep)
+    # Only applied to RIGID technologies where rapid ramping is physically unrealistic
+    # Flexible technologies (EAF, secondary aluminium) don't need ramp constraints
+    # at 2h resolution - they can physically adjust within one timestep
+    ramp_rate:
+      default: 0.1  # 5%/hour - conservative default for rigid processes
+      # Rigid technologies that NEED ramp constraints:
+      "Iron & steel industry|BF-BOF-CCUS": 0.04     # 2%/h - blast furnace, nearly continuous
+      "Iron & steel industry|Aluminium-primary": 0.08 # 4%/h - electrolysis pots, very limited variation
+      "Iron & steel industry|Alumina": 0.06           # 3%/h - refining, continuous process
+      "Non-metallic Minerals|Kiln": 0.04              # 2%/h - cement kiln, nearly continuous
+      "Non-metallic Minerals|Raw mills": 0.2          # 10%/h - mills more flexible than kilns
+      "Non-metallic Minerals|Cement mills": 0.2       # 10%/h - mills more flexible than kilns
+      "Paper, Pulp and Print|Paper machines": 0.1     # 5%/h - continuous web process
+      "Non-specified (Industry)|Chlor-alkali": 0.1    # 5%/h - electrolysis, limited flexibility
+      # EXCLUDED from ramp constraints (physically flexible at 2h resolution):
+      # - Scrap-EAF: batch process, can start/stop within ~1h
+      # - H2-DRI-EAF: electrolyzer ramps fast
+      # - Aluminium-secondary: batch melting
+      # - Pulp production: batch digesting
+      # - Printing: can start/stop
+      # - Food/Textile/Wood/Transport/Machinery: general manufacturing
+
+    # Technology-specific restriction_time (checkpoint hours)
+    # V3: Relaxed to once-daily (midnight) instead of twice-daily (6am, 6pm)
+    # This allows 24-hour load shifting windows instead of 12-hour
+    restriction_time:
+      # Iron & steel industry technologies
+      "Iron & steel industry|Scrap-EAF": [0]  # Daily checkpoint at midnight
+      "Iron & steel industry|H2-DRI-EAF": [0]
+      "Iron & steel industry|BF-BOF-CCUS": [0]
+      "Iron & steel industry|Aluminium-primary": [0]
+      "Iron & steel industry|Aluminium-secondary": [0]
+      "Iron & steel industry|Alumina": [0]
+      # Non-metallic Minerals technologies
+      "Non-metallic Minerals|Cement mills": [0]
+      "Non-metallic Minerals|Raw mills": [0]
+      # Paper, Pulp and Print technologies
+      "Paper, Pulp and Print|Pulp production": [0]
+      "Paper, Pulp and Print|Printing": [0]
+      # Non-specified (Industry) technologies
+      "Non-specified (Industry)|Chlor-alkali": [0]
+      # Profile-level fallbacks
+      "Iron & steel industry": [0]
+      "Non-metallic Minerals": [0]
+      "Paper, Pulp and Print": [0]
+      "Food and Tobacco": [0]
+      "Textile and Leather": [0]
+      "Wood and Wood Products": [0]
+      "Transport Equipment": [0]
+      "Machinery": [0]
+    
+    restriction_value: 1.0
+    
+    # Negative-only DSR: technologies that can only REDUCE load
+    negative_only:
+      "Non-specified (Industry)|Chlor-alkali": true
+    
+    # Minimum load constraint
+    min_load:
+      "Non-specified (Industry)|Chlor-alkali": 0.70
+
+solving:
+  solver:
+    name: gurobi
+    options: gurobi-default
+  mem: 8000
+
+plotting:
+  map:
+    boundaries:
+  eu_node_location:
+    x: 10.0
+    y: 50.0
+  costs_max: 1000
+  costs_threshold: 0.0000001
+  energy_max:
+  energy_min:
+  energy_threshold: 0.000001
