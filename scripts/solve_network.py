@@ -494,18 +494,20 @@ def prepare_network(
         )
 
     if solve_opts.get("noisy_costs"):
-        for t in n.iterate_components():
-            # if 'capital_cost' in t.df:
-            #    t.df['capital_cost'] += 1e1 + 2.*(np.random.random(len(t.df)) - 0.5)
-            if "marginal_cost" in t.df:
-                t.df["marginal_cost"] += 1e-2 + 2e-3 * (
-                    np.random.random(len(t.df)) - 0.5
+        for t in n.components:
+            # if 'capital_cost' in t.static:
+            #    t.static['capital_cost'] += 1e1 + 2.*(np.random.random(len(t.static)) - 0.5)
+            if "marginal_cost" in t.static:
+                t.static["marginal_cost"] += 1e-2 + 2e-3 * (
+                    np.random.random(len(t.static)) - 0.5
                 )
 
-        for t in n.iterate_components(["Line", "Link"]):
-            t.df["capital_cost"] += (
-                1e-1 + 2e-2 * (np.random.random(len(t.df)) - 0.5)
-            ) * t.df["length"]
+        for t in n.components[["Line", "Link"]]:
+            if t.static.empty:
+                continue
+            t.static["capital_cost"] += (
+                1e-1 + 2e-2 * (np.random.random(len(t.static)) - 0.5)
+            ) * t.static["length"]
 
     if solve_opts.get("nhours"):
         nhours = solve_opts["nhours"]
@@ -999,7 +1001,7 @@ def add_lossy_bidirectional_link_constraints(n):
 
     carriers = n.links.loc[n.links.reversed, "carrier"].unique()  # noqa: F841
     backwards = n.links.query(
-        "carrier in @carriers and p_nom_extendable and reversed"
+        "carrier in @carriers and p_nom_extendable and reversed and active"
     ).index
     forwards = backwards.str.replace("-reversed", "")
     lhs = n.model["Link-p_nom"].loc[backwards]
@@ -1068,10 +1070,10 @@ def add_pipe_retrofit_constraint(n):
     if "reversed" not in n.links.columns:
         n.links["reversed"] = False
     gas_pipes_i = n.links.query(
-        "carrier == 'gas pipeline' and p_nom_extendable and ~reversed"
+        "carrier == 'gas pipeline' and p_nom_extendable and ~reversed and active"
     ).index
     h2_retrofitted_i = n.links.query(
-        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable and ~reversed"
+        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable and ~reversed and active"
     ).index
 
     if h2_retrofitted_i.empty or gas_pipes_i.empty:
@@ -1539,6 +1541,9 @@ if __name__ == "__main__":
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
+
+    if snakemake.output.get("model"):
+        n.model.to_netcdf(snakemake.output.model)
 
     with open(snakemake.output.config, "w") as file:
         yaml.dump(

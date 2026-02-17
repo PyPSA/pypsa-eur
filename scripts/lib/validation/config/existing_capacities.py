@@ -35,6 +35,7 @@ class ExistingCapacitiesConfig(ConfigModel):
             2015,
             2020,
             2025,
+            2030,
         ],
         description="Intervals to group existing capacities for power.",
     )

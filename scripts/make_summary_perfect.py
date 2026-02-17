@@ -53,10 +53,14 @@ def calculate_costs(n, label, costs):
 
     costs = reindex_columns(costs, cols)
 
-    for c in n.iterate_components(
+    for c in n.components[
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
-        capital_costs = c.df.capital_cost * c.df[opt_name.get(c.name, "p") + "_nom_opt"]
+    ]:
+        if c.static.empty:
+            continue
+        capital_costs = (
+            c.static.capital_cost * c.static[opt_name.get(c.name, "p") + "_nom_opt"]
+        )
         active = pd.concat(
             [
                 get_active_assets(n, c.name, inv_p).rename(inv_p)
@@ -69,7 +73,9 @@ def calculate_costs(n, label, costs):
             n.investment_period_weightings["objective"]
             / n.investment_period_weightings["years"]
         )
-        capital_costs_grouped = capital_costs.groupby(c.df.carrier).sum().mul(discount)
+        capital_costs_grouped = (
+            capital_costs.groupby(c.static.carrier).sum().mul(discount)
+        )
 
         capital_costs_grouped = pd.concat([capital_costs_grouped], keys=["capital"])
         capital_costs_grouped = pd.concat([capital_costs_grouped], keys=[c.list_name])
@@ -80,19 +86,19 @@ def calculate_costs(n, label, costs):
 
         if c.name == "Link":
             p = (
-                c.pnl.p0.multiply(n.snapshot_weightings.generators, axis=0)
+                c.dynamic.p0.multiply(n.snapshot_weightings.generators, axis=0)
                 .groupby(level=0)
                 .sum()
             )
         elif c.name == "Line":
             continue
         elif c.name == "StorageUnit":
-            p_all = c.pnl.p.multiply(n.snapshot_weightings.stores, axis=0)
+            p_all = c.dynamic.p.multiply(n.snapshot_weightings.stores, axis=0)
             p_all[p_all < 0.0] = 0.0
             p = p_all.groupby(level=0).sum()
         else:
             p = (
-                round(c.pnl.p, ndigits=2)
+                round(c.dynamic.p, ndigits=2)
                 .multiply(n.snapshot_weightings.generators, axis=0)
                 .groupby(level=0)
                 .sum()
@@ -100,15 +106,15 @@ def calculate_costs(n, label, costs):
 
         # correct sequestration cost
         if c.name == "Store":
-            items = c.df.index[
-                (c.df.carrier == "co2 stored") & (c.df.marginal_cost <= -100.0)
+            items = c.static.index[
+                (c.static.carrier == "co2 stored") & (c.static.marginal_cost <= -100.0)
             ]
-            c.df.loc[items, "marginal_cost"] = -20.0
+            c.static.loc[items, "marginal_cost"] = -20.0
 
-        marginal_costs = p.mul(c.df.marginal_cost).T
+        marginal_costs = p.mul(c.static.marginal_cost).T
         # marginal_costs = active.mul(marginal_costs, axis=0)
         marginal_costs_grouped = (
-            marginal_costs.groupby(c.df.carrier).sum().mul(discount)
+            marginal_costs.groupby(c.static.carrier).sum().mul(discount)
         )
 
         marginal_costs_grouped = pd.concat([marginal_costs_grouped], keys=["marginal"])
@@ -159,10 +165,12 @@ def calculate_cumulative_cost():
 
 def calculate_nodal_capacities(n, label, nodal_capacities):
     # Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
-    for c in n.iterate_components(
+    for c in n.components[
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
-        nodal_capacities_c = c.df.groupby(["location", "carrier"])[
+    ]:
+        if c.static.empty:
+            continue
+        nodal_capacities_c = c.static.groupby(["location", "carrier"])[
             opt_name.get(c.name, "p") + "_nom_opt"
         ].sum()
         index = pd.MultiIndex.from_tuples(
@@ -186,9 +194,11 @@ def calculate_capacities(n, label, capacities):
     )
     capacities = reindex_columns(capacities, cols)
 
-    for c in n.iterate_components(
+    for c in n.components[
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
+    ]:
+        if c.static.empty:
+            continue
         active = pd.concat(
             [
                 get_active_assets(n, c.name, inv_p).rename(inv_p)
@@ -196,10 +206,10 @@ def calculate_capacities(n, label, capacities):
             ],
             axis=1,
         ).astype(int)
-        caps = c.df[opt_name.get(c.name, "p") + "_nom_opt"]
+        caps = c.static[opt_name.get(c.name, "p") + "_nom_opt"]
         caps = active.mul(caps, axis=0)
         capacities_grouped = (
-            caps.groupby(c.df.carrier).sum().drop("load", errors="ignore")
+            caps.groupby(c.static.carrier).sum().drop("load", errors="ignore")
         )
         capacities_grouped = pd.concat([capacities_grouped], keys=[c.list_name])
 
@@ -238,34 +248,36 @@ def calculate_energy(n, label, energy):
     )
     energy = reindex_columns(energy, cols)
 
-    for c in n.iterate_components(n.one_port_components | n.branch_components):
+    for c in n.components[n.one_port_components | n.branch_components]:
+        if c.static.empty:
+            continue
         if c.name in n.one_port_components:
             c_energies = (
-                c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0)
+                c.dynamic.p.multiply(n.snapshot_weightings.generators, axis=0)
                 .groupby(level=0)
                 .sum()
-                .multiply(c.df.sign)
-                .T.groupby(c.df.carrier)
+                .multiply(c.static.sign)
+                .T.groupby(c.static.carrier)
                 .sum()
                 .T
             )
         else:
             c_energies = pd.DataFrame(
-                0.0, columns=c.df.carrier.unique(), index=n.investment_periods
+                0.0, columns=c.static.carrier.unique(), index=n.investment_periods
             )
-            for port in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
+            for port in [col[3:] for col in c.static.columns if col[:3] == "bus"]:
                 totals = (
-                    c.pnl["p" + port]
+                    c.dynamic["p" + port]
                     .multiply(n.snapshot_weightings.generators, axis=0)
                     .groupby(level=0)
                     .sum()
                 )
                 # remove values where bus is missing (bug in nomopyomo)
-                no_bus = c.df.index[c.df["bus" + port] == ""]
+                no_bus = c.static.index[c.static["bus" + port] == ""]
                 totals[no_bus] = float(
                     n.component_attrs[c.name].loc["p" + port, "default"]
                 )
-                c_energies -= totals.T.groupby(c.df.carrier).sum().T
+                c_energies -= totals.T.groupby(c.static.carrier).sum().T
 
         c_energies = pd.concat([c_energies.T], keys=[c.list_name])
 
@@ -288,17 +300,19 @@ def calculate_supply(n, label, supply):
         bus_map = n.buses.carrier == i
         bus_map.at[""] = False
 
-        for c in n.iterate_components(n.one_port_components):
-            items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
+        for c in n.components[n.one_port_components]:
+            if c.static.empty:
+                continue
+            items = c.static.index[c.static.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
                 continue
 
             s = (
-                c.pnl.p[items]
+                c.dynamic.p[items]
                 .max()
-                .multiply(c.df.loc[items, "sign"])
-                .groupby(c.df.loc[items, "carrier"])
+                .multiply(c.static.loc[items, "sign"])
+                .groupby(c.static.loc[items, "carrier"])
                 .sum()
             )
             s = pd.concat([s], keys=[c.list_name])
@@ -307,17 +321,19 @@ def calculate_supply(n, label, supply):
             supply = supply.reindex(s.index.union(supply.index))
             supply.loc[s.index, label] = s
 
-        for c in n.iterate_components(n.branch_components):
-            for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                items = c.df.index[c.df["bus" + end].map(bus_map).fillna(False)]
+        for c in n.components[n.branch_components]:
+            if c.static.empty:
+                continue
+            for end in [col[3:] for col in c.static.columns if col[:3] == "bus"]:
+                items = c.static.index[c.static["bus" + end].map(bus_map).fillna(False)]
 
                 if len(items) == 0:
                     continue
 
                 # lots of sign compensation for direction and to do maximums
                 s = (-1) ** (1 - int(end)) * (
-                    (-1) ** int(end) * c.pnl["p" + end][items]
-                ).max().groupby(c.df.loc[items, "carrier"]).sum()
+                    (-1) ** int(end) * c.dynamic["p" + end][items]
+                ).max().groupby(c.static.loc[items, "carrier"]).sum()
                 s.index = s.index + end
                 s = pd.concat([s], keys=[c.list_name])
                 s = pd.concat([s], keys=[i])
@@ -351,8 +367,10 @@ def calculate_supply_energy(n, label, supply_energy):
         bus_map = n.buses.carrier == i
         bus_map.at[""] = False
 
-        for c in n.iterate_components(n.one_port_components):
-            items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
+        for c in n.components[n.one_port_components]:
+            if c.static.empty:
+                continue
+            items = c.static.index[c.static.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
                 continue
@@ -364,18 +382,18 @@ def calculate_supply_energy(n, label, supply_energy):
 
             if i in ["oil", "co2", "H2"]:
                 if c.name == "Load":
-                    c.df.loc[items, "carrier"] = [
+                    c.static.loc[items, "carrier"] = [
                         load.split("-202")[0] for load in items
                     ]
                 if i == "oil" and c.name == "Generator":
-                    c.df.loc[items, "carrier"] = "imported oil"
+                    c.static.loc[items, "carrier"] = "imported oil"
             s = (
-                c.pnl.p[items]
+                c.dynamic.p[items]
                 .multiply(weightings, axis=0)
                 .groupby(level=0)
                 .sum()
-                .multiply(c.df.loc[items, "sign"])
-                .T.groupby(c.df.loc[items, "carrier"])
+                .multiply(c.static.loc[items, "sign"])
+                .T.groupby(c.static.loc[items, "carrier"])
                 .sum()
             )
             s = pd.concat([s], keys=[c.list_name])
@@ -386,16 +404,20 @@ def calculate_supply_energy(n, label, supply_energy):
             )
             supply_energy.loc[s.index, label] = s.values
 
-        for c in n.iterate_components(n.branch_components):
-            for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                items = c.df.index[c.df[f"bus{str(end)}"].map(bus_map).fillna(False)]
+        for c in n.components[n.branch_components]:
+            if c.static.empty:
+                continue
+            for end in [col[3:] for col in c.static.columns if col[:3] == "bus"]:
+                items = c.static.index[
+                    c.static[f"bus{str(end)}"].map(bus_map).fillna(False)
+                ]
 
                 if len(items) == 0:
                     continue
 
-                s = (-1) * c.pnl["p" + end].reindex(items, axis=1).multiply(
+                s = (-1) * c.dynamic["p" + end].reindex(items, axis=1).multiply(
                     n.snapshot_weightings.objective, axis=0
-                ).groupby(level=0).sum().T.groupby(c.df.loc[items, "carrier"]).sum()
+                ).groupby(level=0).sum().T.groupby(c.static.loc[items, "carrier"]).sum()
                 s.index = s.index + end
                 s = pd.concat([s], keys=[c.list_name])
                 s = pd.concat([s], keys=[i])

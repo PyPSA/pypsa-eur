@@ -2157,7 +2157,7 @@
               "type": "boolean"
             }
           ],
-          "default": "(DateOut >= 2024 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')",
+          "default": "(DateOut > 2025 or DateOut != DateOut) and (DateIn < 2026 or DateIn != DateIn)",
           "description": "Filter query for the default powerplant database."
         },
         "custom_powerplants": {
@@ -2201,14 +2201,18 @@
               "description": "Activate routine to estimate renewable capacities in rule `add_electricity`. This option should not be used in combination with pathway planning `foresight: myopic` or `foresight: perfect` as renewable capacities are added differently in `add_existing_baseyear`.",
               "type": "boolean"
             },
-            "from_gem": {
+            "from_powerplantmatching": {
               "default": true,
-              "description": "Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.",
-              "markdownDescription": "Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker ](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker ](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
+              "description": "Add renewable capacities from powerplantmatching dataset.",
+              "type": "boolean"
+            },
+            "from_irenastat": {
+              "default": false,
+              "description": "Supplement powerplantmatching dataset with heuristics based on country-level renewable capacities from IRENA (IRENASTAT).",
               "type": "boolean"
             },
             "year": {
-              "default": 2020,
+              "default": 2024,
               "description": "Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year.",
               "type": "integer"
             },
@@ -2282,7 +2286,7 @@
       "description": "Configuration for `energy` settings.",
       "properties": {
         "energy_totals_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
           "type": "integer"
         },
@@ -5255,6 +5259,11 @@
               "description": "Whether to keep LPs and MPS files after solving.",
               "type": "boolean"
             },
+            "store_model": {
+              "default": false,
+              "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
+              "type": "boolean"
+            },
             "model_kwargs": {
               "description": "Configuration for `solving.options.model_kwargs` settings.",
               "properties": {
@@ -6316,14 +6325,18 @@
           "description": "Activate routine to estimate renewable capacities in rule `add_electricity`. This option should not be used in combination with pathway planning `foresight: myopic` or `foresight: perfect` as renewable capacities are added differently in `add_existing_baseyear`.",
           "type": "boolean"
         },
-        "from_gem": {
+        "from_powerplantmatching": {
           "default": true,
-          "description": "Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.",
-          "markdownDescription": "Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker ](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker ](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
+          "description": "Add renewable capacities from powerplantmatching dataset.",
+          "type": "boolean"
+        },
+        "from_irenastat": {
+          "default": false,
+          "description": "Supplement powerplantmatching dataset with heuristics based on country-level renewable capacities from IRENA (IRENASTAT).",
           "type": "boolean"
         },
         "year": {
-          "default": 2020,
+          "default": 2024,
           "description": "Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year.",
           "type": "integer"
         },
@@ -7746,6 +7759,11 @@
           "description": "Whether to keep LPs and MPS files after solving.",
           "type": "boolean"
         },
+        "store_model": {
+          "default": false,
+          "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
+          "type": "boolean"
+        },
         "model_kwargs": {
           "description": "Configuration for `solving.options.model_kwargs` settings.",
           "properties": {
@@ -8389,7 +8407,7 @@
               "type": "boolean"
             }
           ],
-          "default": "(DateOut >= 2024 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')",
+          "default": "(DateOut > 2025 or DateOut != DateOut) and (DateIn < 2026 or DateIn != DateIn)",
           "description": "Filter query for the default powerplant database."
         },
         "custom_powerplants": {
@@ -8433,14 +8451,18 @@
               "description": "Activate routine to estimate renewable capacities in rule `add_electricity`. This option should not be used in combination with pathway planning `foresight: myopic` or `foresight: perfect` as renewable capacities are added differently in `add_existing_baseyear`.",
               "type": "boolean"
             },
-            "from_gem": {
+            "from_powerplantmatching": {
               "default": true,
-              "description": "Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.",
-              "markdownDescription": "Add renewable capacities from [Global Energy Monitor's Global Solar Power Tracker ](https://globalenergymonitor.org/projects/global-solar-power-tracker/) and [Global Energy Monitor's Global Wind Power Tracker ](https://globalenergymonitor.org/projects/global-wind-power-tracker/).",
+              "description": "Add renewable capacities from powerplantmatching dataset.",
+              "type": "boolean"
+            },
+            "from_irenastat": {
+              "default": false,
+              "description": "Supplement powerplantmatching dataset with heuristics based on country-level renewable capacities from IRENA (IRENASTAT).",
               "type": "boolean"
             },
             "year": {
-              "default": 2020,
+              "default": 2024,
               "description": "Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year.",
               "type": "integer"
             },
@@ -10119,7 +10141,7 @@
       "description": "Configuration for `energy` settings.",
       "properties": {
         "energy_totals_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
           "type": "integer"
         },
@@ -12099,6 +12121,11 @@
             "keep_files": {
               "default": false,
               "description": "Whether to keep LPs and MPS files after solving.",
+              "type": "boolean"
+            },
+            "store_model": {
+              "default": false,
+              "description": "Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
               "type": "boolean"
             },
             "model_kwargs": {
