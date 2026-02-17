@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
+
 * Adjust ``powerplants_filter`` to include power plants operational in 2025.
 
 * Rewrite mapping of power plant sites to model regions / buses. Previously, power plants were mapped to the nearest bus in the same country.
@@ -36,7 +38,8 @@ Upcoming Release
 * Added ``solving.options.store_model`` config option to store the linopy model as NetCDF file after solving. Not supported with rolling horizon. Configuration setting can not be set per scenario, only globally.
 * Update Swiss energy balances from the Swiss Federal Office of Energy (SFOE) to the latest version (October 2025).
   The data is no longer stored in the repository, but directly retrieved from the SFOE website and processed in the ``build_swiss_energy_balances`` rule.
-* Added prebuilt OSM network v0.7 (https://zenodo.org/records/18619025) using updated workflow. 
+
+* Added prebuilt OSM network v0.7 (https://zenodo.org/records/18619025) using updated workflow.
 
 * Fix unit commitment compatibility with PyPSA ≥ 1.0 component API to allow usage of unit commitment (https://github.com/PyPSA/pypsa-eur/pull/2049).
 
@@ -58,7 +61,7 @@ Upcoming Release
 
 * Include new storage technologies such as li-ion, vanadium, lfp, lair, pair and iron-air. These technologies can now be configured as either store-link combinations or standalone storage units.
   Implemented in both `add_electricity.py` and `prepare_sector_network.py` (https://github.com/PyPSA/pypsa-eur/pull/1961).
-  
+
 * Updated data sources for country-level electricity demand time series. In addition to the OPSD data (``retrieve_electricity_demand_opsd``, demand time series
   are now downloaded via the ENTSO-E Transparency Platform API (``retrieve_electricity_demand_entsoe`` environment variable ``ENTSOE_API_KEY`` required)
   and from the NESO data portal for Great Britain and Northern Ireland (``retrieve_electricity_demand_neso``).
