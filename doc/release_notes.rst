@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Existing battery storage capacities from the powerplantmatching dataset can now be added to the network as ``StorageUnit`` components, using plant-level duration data with fallback to ``electricity: max_hours: battery`` and cost-table round-trip efficiency.
+
 * Bugfix: Rolling horizon optimisation also in :mod:`solve_network`, not only in :mod:`solve_operations_network`. Drop cyclicity constraints with setting ``rolling_horizon: true``.
 
 * Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.

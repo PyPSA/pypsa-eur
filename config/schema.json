@@ -2258,6 +2258,11 @@
             }
           }
         },
+        "estimate_battery_capacities": {
+          "default": false,
+          "description": "Enable estimation of existing battery storage capacities.",
+          "type": "boolean"
+        },
         "autarky": {
           "description": "Configuration for `electricity.autarky` settings.",
           "properties": {
@@ -8510,6 +8515,11 @@
               }
             }
           }
+        },
+        "estimate_battery_capacities": {
+          "default": false,
+          "description": "Enable estimation of existing battery storage capacities.",
+          "type": "boolean"
         },
         "autarky": {
           "description": "Configuration for `electricity.autarky` settings.",
