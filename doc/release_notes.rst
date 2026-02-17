@@ -8,6 +8,9 @@ Release Notes
 
 Upcoming Release
 ================
+
+* Bugfix: Rolling horizon optimisation also in :mod:`solve_network`, not only in :mod:`solve_operations_network`. Drop cyclicity constraints with setting ``rolling_horizon: true``.
+
 * Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.
 
 * ``data/nuclear_p_max_pu.csv`` now stores annual energy availability factors per country with years as columns. The model automatically selects the column nearest to the simulated weather year.
