@@ -586,7 +586,7 @@
         "consider_efficiency_classes": {
           "anyOf": [
             {
-          "type": "boolean"
+              "type": "boolean"
             },
             {
               "items": {
@@ -11779,7 +11779,7 @@
         "consider_efficiency_classes": {
           "anyOf": [
             {
-          "type": "boolean"
+              "type": "boolean"
             },
             {
               "items": {
