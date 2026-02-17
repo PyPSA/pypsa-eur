@@ -425,6 +425,7 @@ renewable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
+  estimate_efficiencies: false
   unit_commitment: false
   dynamic_fuel_price: false
   fuel_price_rolling_window: 6
