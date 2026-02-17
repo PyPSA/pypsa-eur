@@ -723,7 +723,19 @@ if (
 
 
 
-if (ONS_LAD_DATASET := dataset_version("ons_lad"))["source"] in ["archive", "primary"]:
+if (ONS_LAD_DATASET := dataset_version("ons_lad"))["source"] in ["archive"]:
+
+    rule retrieve_ons_lad:
+        message:
+            "Retrieving UK ONS Local Authority Districts (LAD) Boundaries data"
+        input:
+            geojson=storage(ONS_LAD_DATASET["url"]),
+        output:
+            geojson=f"{ONS_LAD_DATASET['folder']}/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
+        run:
+            copy2(input["geojson"], output["geojson"])
+
+elif ONS_LAD_DATASET["source"] in ["primary"]:
 
     rule retrieve_ons_lad:
         message:
