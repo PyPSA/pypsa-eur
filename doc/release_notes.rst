@@ -8,6 +8,8 @@ Release Notes
 
 Upcoming Release
 ================
+* Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.
+
 
 * Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
 

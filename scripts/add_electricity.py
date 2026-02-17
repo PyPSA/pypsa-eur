@@ -616,6 +616,9 @@ def attach_conventional_generators(
             committable_attrs[attr] = ppl.carrier.map(unit_commitment.loc[attr]).fillna(
                 default
             )
+            # These values are given per MW, but PyPSA expects them in total.
+            if attr in {"start_up_cost", "shut_down_cost", "stand_by_cost"}:
+                committable_attrs[attr] *= ppl.p_nom
     else:
         committable_attrs = {}
 
