@@ -9,10 +9,49 @@ Release Notes
 Upcoming Release
 ================
 
+* Pin grpcio<1.78 to silence warnings that are cluttering the log (https://github.com/PyPSA/pypsa-eur/pull/2080).
+
+* Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.
+
+* Bugfix: Rolling horizon optimisation also in :mod:`solve_network`, not only in :mod:`solve_operations_network`. Drop cyclicity constraints with setting ``rolling_horizon: true``.
+
+* Bugfix: Handle CO2Stop ID columns correctly across versions.
+
+* Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
+
+* ``data/nuclear_p_max_pu.csv`` now stores annual energy availability factors per country with years as columns. The model automatically selects the column nearest to the simulated weather year.
+* The ``clustering: consider_efficiency_classes`` option now accepts a list of quantile boundaries (e.g. ``[0.1, 0.5, 0.9]``) in addition to a boolean. Labels are derived from quantile percentages (e.g. ``Q0``, ``Q10``, ``Q90``). The default behaviour (``true``) is unchanged, using ``[0.1, 0.9]`` quantiles.
+* Existing battery storage capacities from the powerplantmatching dataset can now be added to the network as ``StorageUnit`` components, using plant-level duration data with fallback to ``electricity: max_hours: battery`` and cost-table round-trip efficiency.
+
+* Adjust ``powerplants_filter`` to include power plants operational in 2025.
+
+* Rewrite mapping of power plant sites to model regions / buses. Previously, power plants were mapped to the nearest bus in the same country.
+  Now, power plants are mapped using a spatial join to the onshore and offshore regions.
+  This change is necessary as the administrative clustering does not conform to the previous nearest-bus mapping.
+
+* Removed some outdated hotfixes in `build_powerplants.py`.
+
+* Estimate renewable capacities using plant-level data from Powerplantmatching, instead of only Global Energy Monitor (GEM) data. The setting ``from_gem`` is renamed to ``from_powerplantmatching``.
+
+* New setting ``from_irenastat`` to use IRENASTAT data to supplement potential plant-level data from Powerplantmatching for renewable capacity estimation. This step can now be skipped if sufficient plant-level data is available from Powerplantmatching.
+
+* Update default year for renewable capacity estimation to 2024 (latest available).
+
+* Include waste-to-energy plants in electricity-only networks.
+
+* Add 2030 to power plant grouping years by default.
+
+* Do not apply ``powerplantmatching`` phase-out heuristic in :mod:`build_powerplants`.
+
+* Bugfix: Ensure renewable carriers are not added as conventional power plants (if included in ``powerplants.csv``)
+
+* Bugfix: Improved handling of grouping years in :mod:`add_existing_baseyear`.
+
 * Added ``solving.options.store_model`` config option to store the linopy model as NetCDF file after solving. Not supported with rolling horizon. Configuration setting can not be set per scenario, only globally.
 * Update Swiss energy balances from the Swiss Federal Office of Energy (SFOE) to the latest version (October 2025).
   The data is no longer stored in the repository, but directly retrieved from the SFOE website and processed in the ``build_swiss_energy_balances`` rule.
-* Added prebuilt OSM network v0.7 (https://zenodo.org/records/18619025) using updated workflow. 
+
+* Added prebuilt OSM network v0.7 (https://zenodo.org/records/18619025) using updated workflow.
 
 * Fix unit commitment compatibility with PyPSA ≥ 1.0 component API to allow usage of unit commitment (https://github.com/PyPSA/pypsa-eur/pull/2049).
 
@@ -34,7 +73,7 @@ Upcoming Release
 
 * Include new storage technologies such as li-ion, vanadium, lfp, lair, pair and iron-air. These technologies can now be configured as either store-link combinations or standalone storage units.
   Implemented in both `add_electricity.py` and `prepare_sector_network.py` (https://github.com/PyPSA/pypsa-eur/pull/1961).
-  
+
 * Updated data sources for country-level electricity demand time series. In addition to the OPSD data (``retrieve_electricity_demand_opsd``, demand time series
   are now downloaded via the ENTSO-E Transparency Platform API (``retrieve_electricity_demand_entsoe`` environment variable ``ENTSOE_API_KEY`` required)
   and from the NESO data portal for Great Britain and Northern Ireland (``retrieve_electricity_demand_neso``).

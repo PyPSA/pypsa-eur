@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-# yaml-language-server: $schema=./schema.json
+# yaml-language-server: $schema=./schema.default.json
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#version
 version: v2025.07.0
@@ -147,7 +147,7 @@ electricity:
     - battery
     - H2
     Link: []
-  powerplants_filter: "(DateOut >= 2024 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')"
+  powerplants_filter: "(DateOut > 2025 or DateOut != DateOut) and (DateIn < 2026 or DateIn != DateIn)"
   custom_powerplants: false
   everywhere_powerplants: []
   conventional_carriers:
@@ -158,6 +158,7 @@ electricity:
   - coal
   - lignite
   - geothermal
+  - waste
   - biomass
   renewable_carriers:
   - solar
@@ -169,13 +170,15 @@ electricity:
   - hydro
   estimate_renewable_capacities:
     enable: true
-    from_gem: true
-    year: 2020
+    from_powerplantmatching: true
+    from_irenastat: false
+    year: 2024
     expansion_limit: false
     technology_mapping:
       Offshore: "offwind-ac"
       Onshore: onwind
       PV: solar
+  estimate_battery_capacities: false
   autarky:
     enable: false
     by_country: false
@@ -601,6 +604,7 @@ existing_capacities:
   - 2015
   - 2020
   - 2025
+  - 2030
   grouping_years_heat:
   - 1980
   - 1985
@@ -1102,7 +1106,6 @@ clustering:
     aggregate_to_tyndp: false
   simplify_network:
     to_substations: false
-    exclude_carriers: []
     remove_stubs: true
     remove_stubs_across_borders: false
   cluster_network:
@@ -1150,6 +1153,7 @@ solving:
     transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
+    overlap: 0
     post_discretization:
       enable: false
       line_unit_size: 1700

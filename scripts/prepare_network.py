@@ -61,11 +61,13 @@ def modify_attribute(n, adjustments, investment_year, modification="factor"):
             logger.warning(f"{c} needs to be a PyPSA Component")
             continue
         for carrier in change_dict[c].keys():
-            ind_i = n.df(c)[n.df(c).carrier == carrier].index
+            ind_i = (
+                n.components[c].static[n.components[c].static.carrier == carrier].index
+            )
             if ind_i.empty:
                 continue
             for parameter in change_dict[c][carrier].keys():
-                if parameter not in n.df(c).columns:
+                if parameter not in n.components[c].static.columns:
                     logger.warning(f"Attribute {parameter} needs to be in {c} columns.")
                     continue
                 if investment_year:
@@ -74,10 +76,10 @@ def modify_attribute(n, adjustments, investment_year, modification="factor"):
                     factor = change_dict[c][carrier][parameter]
                 if modification == "factor":
                     logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
-                    n.df(c).loc[ind_i, parameter] *= factor
+                    n.components[c].static.loc[ind_i, parameter] *= factor
                 elif modification == "absolute":
                     logger.info(f"Set {parameter} of {carrier} to {factor} ")
-                    n.df(c).loc[ind_i, parameter] = factor
+                    n.components[c].static.loc[ind_i, parameter] = factor
                 else:
                     logger.warning(
                         f"{modification} needs to be either 'absolute' or 'factor'."
@@ -206,9 +208,9 @@ def average_every_nhours(n, offset, drop_leap_day=False):
     m.set_snapshots(snapshot_weightings.index)
     m.snapshot_weightings = snapshot_weightings
 
-    for c in n.iterate_components():
+    for c in n.components:
         pnl = getattr(m, c.list_name + "_t")
-        for k, df in c.pnl.items():
+        for k, df in c.dynamic.items():
             if not df.empty:
                 pnl[k] = df.resample(offset).mean()
 

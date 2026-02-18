@@ -139,38 +139,38 @@ def plot_map(
 
     if snakemake.params.transmission_limit == "lv1.0":
         # should be zero
-        line_widths = n.lines.s_nom_opt - n.lines.s_nom
-        link_widths = n.links.p_nom_opt - n.links.p_nom
+        line_width = n.lines.s_nom_opt - n.lines.s_nom
+        link_width = n.links.p_nom_opt - n.links.p_nom
         if transmission:
-            line_widths = n.lines.s_nom_opt
-            link_widths = n.links.p_nom_opt
+            line_width = n.lines.s_nom_opt
+            link_width = n.links.p_nom_opt
             linewidth_factor = 2e3
             line_lower_threshold = 0.0
             title = "current grid"
     else:
-        line_widths = n.lines.s_nom_opt - n.lines.s_nom_min
-        link_widths = n.links.p_nom_opt - n.links.p_nom_min
+        line_width = n.lines.s_nom_opt - n.lines.s_nom_min
+        link_width = n.links.p_nom_opt - n.links.p_nom_min
         if transmission:
-            line_widths = n.lines.s_nom_opt
-            link_widths = n.links.p_nom_opt
+            line_width = n.lines.s_nom_opt
+            link_width = n.links.p_nom_opt
             title = "total grid"
 
-    line_widths = line_widths.clip(line_lower_threshold, line_upper_threshold)
-    link_widths = link_widths.clip(line_lower_threshold, line_upper_threshold)
+    line_width = line_width.clip(line_lower_threshold, line_upper_threshold)
+    link_width = link_width.clip(line_lower_threshold, line_upper_threshold)
 
-    line_widths = line_widths.replace(line_lower_threshold, 0)
-    link_widths = link_widths.replace(line_lower_threshold, 0)
+    line_width = line_width.replace(line_lower_threshold, 0)
+    link_width = link_width.replace(line_lower_threshold, 0)
 
     fig, ax = plt.subplots(subplot_kw={"projection": proj})
     fig.set_size_inches(7, 6)
 
     n.plot(
-        bus_sizes=costs / bus_size_factor,
-        bus_colors=tech_colors,
-        line_colors=ac_color,
-        link_colors=dc_color,
-        line_widths=line_widths / linewidth_factor,
-        link_widths=link_widths / linewidth_factor,
+        bus_size=costs / bus_size_factor,
+        bus_color=tech_colors,
+        line_color=ac_color,
+        link_color=dc_color,
+        line_width=line_width / linewidth_factor,
+        link_width=link_width / linewidth_factor,
         ax=ax,
         **map_opts,
     )

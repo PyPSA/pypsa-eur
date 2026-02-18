@@ -219,9 +219,9 @@ def sanitize_carriers(n, config):
     Raises a warning if any carrier's "tech_colors" are not defined in the config dictionary.
     """
 
-    for c in n.iterate_components():
-        if "carrier" in c.df:
-            add_missing_carriers(n, c.df.carrier)
+    for c in n.components:
+        if "carrier" in c.static:
+            add_missing_carriers(n, c.static.carrier)
 
     carrier_i = n.carriers.index
     nice_names = (
@@ -267,7 +267,7 @@ def add_co2_emissions(n, costs, carriers):
 def load_and_aggregate_powerplants(
     ppl_fn: str,
     costs: pd.DataFrame,
-    consider_efficiency_classes: bool = False,
+    consider_efficiency_classes: bool | list[float] = False,
     aggregation_strategies: dict = None,
     exclude_carriers: list = None,
 ) -> pd.DataFrame:
@@ -331,15 +331,21 @@ def load_and_aggregate_powerplants(
     df = ppl[to_aggregate].copy()
 
     if consider_efficiency_classes:
+        quantiles = (
+            [0.1, 0.9]
+            if consider_efficiency_classes is True
+            else consider_efficiency_classes
+        )
         for c in df.carrier.unique():
             df_c = df.query("carrier == @c")
-            low = df_c.efficiency.quantile(0.10)
-            high = df_c.efficiency.quantile(0.90)
-            if low < high:
-                labels = ["low", "medium", "high"]
-                suffix = pd.cut(
-                    df_c.efficiency, bins=[0, low, high, 1], labels=labels
-                ).astype(str)
+            thresholds = df_c.efficiency.quantile(quantiles).tolist()
+            if thresholds[0] < thresholds[-1]:
+                unique_thresholds, indices = np.unique(thresholds, return_index=True)
+                labels = ["Q0"] + [
+                    f"Q{int(quantiles[i] * 100)}" for i in sorted(indices)
+                ]
+                bins = [0.0] + unique_thresholds.tolist() + [1.0]
+                suffix = pd.cut(df_c.efficiency, bins=bins, labels=labels).astype(str)
                 df.update({"carrier": df_c.carrier + " " + suffix + " efficiency"})
 
     grouper = ["bus", "carrier"]
@@ -353,15 +359,21 @@ def load_and_aggregate_powerplants(
     aggregated = df.groupby(grouper, as_index=False).agg(strategies)
     aggregated.index = aggregated.bus + " " + aggregated.carrier
     aggregated.build_year = aggregated.build_year.astype(int)
+    aggregated.carrier = aggregated.carrier.str.replace(
+        r" Q\d+ efficiency", "", regex=True
+    )
 
-    disaggregated = ppl[~to_aggregate][aggregated.columns].copy()
+    disaggregated = ppl[~to_aggregate].copy()
     disaggregated.index = (
         disaggregated.bus
         + " "
         + disaggregated.carrier
         + " "
         + disaggregated.index.astype(str)
+        + " "
+        + disaggregated.name
     )
+    disaggregated = disaggregated[aggregated.columns]
 
     return pd.concat([aggregated, disaggregated])
 
@@ -565,6 +577,7 @@ def attach_conventional_generators(
     ppl: pd.DataFrame,
     conventional_carriers: list,
     extendable_carriers: dict,
+    renewable_carriers: set,
     conventional_params: dict,
     conventional_inputs: dict,
     unit_commitment: pd.DataFrame = None,
@@ -585,6 +598,8 @@ def attach_conventional_generators(
         List of conventional energy carriers.
     extendable_carriers : dict
         Dictionary of extendable energy carriers.
+    renewable_carriers : set
+        Set of carriers added separately in attach_wind_and_solar().
     conventional_params : dict
         Dictionary of conventional generator parameters.
     conventional_inputs : dict
@@ -594,9 +609,12 @@ def attach_conventional_generators(
     fuel_price : pd.DataFrame, optional
         DataFrame containing fuel price data, by default None.
     """
-    carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
+    carriers = list(
+        set(conventional_carriers)
+        | set(extendable_carriers["Generator"]) - set(renewable_carriers)
+    )
 
-    ppl = ppl.query("carrier in @carriers")
+    ppl = ppl.query("carrier in @carriers").copy()
 
     # reduce carriers to those in power plant dataset
     carriers = list(set(carriers) & set(ppl.carrier.unique()))
@@ -610,6 +628,9 @@ def attach_conventional_generators(
             committable_attrs[attr] = ppl.carrier.map(unit_commitment.loc[attr]).fillna(
                 default
             )
+            # These values are given per MW, but PyPSA expects them in total.
+            if attr in {"start_up_cost", "shut_down_cost", "stand_by_cost"}:
+                committable_attrs[attr] *= ppl.p_nom
     else:
         committable_attrs = {}
 
@@ -655,9 +676,15 @@ def attach_conventional_generators(
             if f"conventional_{carrier}_{attr}" in conventional_inputs:
                 # Values affecting generators of technology k country-specific
                 # First map generator buses to countries; then map countries to p_max_pu
-                values = pd.read_csv(
+                df = pd.read_csv(
                     conventional_inputs[f"conventional_{carrier}_{attr}"], index_col=0
-                ).iloc[:, 0]
+                )
+                try:
+                    df.columns = df.columns.astype(int)
+                    year = n.snapshots[0].year
+                    values = df[year]
+                except (ValueError, TypeError):
+                    values = df.iloc[:, -1]  # take last column if year selection fails
                 bus_values = n.buses.country.map(values)
                 n.generators.update(
                     {attr: n.generators.loc[idx].bus.map(bus_values).dropna()}
@@ -665,6 +692,43 @@ def attach_conventional_generators(
             else:
                 # Single value affecting all generators of technology k indiscriminantely of country
                 n.generators.loc[idx, attr] = values
+
+
+def attach_existing_batteries(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    ppl: pd.DataFrame,
+) -> None:
+    """Attach existing battery storage units from the power plant dataset."""
+    batt = ppl.query('carrier == "battery"')
+    if batt.empty:
+        return
+
+    add_missing_carriers(n, ["battery"])
+    efficiency = np.sqrt(costs.at["battery inverter", "efficiency"])
+    batt["max_hours"] = batt.max_hours.fillna(batt.max_hours.median())
+
+    n.add(
+        "StorageUnit",
+        batt.index,
+        carrier="battery",
+        bus=batt.bus,
+        p_nom=batt.p_nom,
+        capital_cost=batt.capital_cost,
+        max_hours=batt.max_hours,
+        efficiency_store=efficiency,
+        efficiency_dispatch=efficiency,
+        cyclic_state_of_charge=True,
+    )
+
+    stats = (
+        batt.groupby("country")
+        .p_nom.sum()
+        .div(1e3)
+        .round(3)
+        .sort_values(ascending=False)
+    )
+    logger.info(f"Added {len(batt)} existing battery storage units\n({stats} MW)")
 
 
 def attach_hydro(
@@ -834,7 +898,7 @@ def attach_hydro(
         )
 
 
-def attach_GEM_renewables(
+def attach_renewable_powerplants(
     n: pypsa.Network, tech_map: dict[str, list[str]], smk_inputs: list[str]
 ) -> None:
     """
@@ -848,9 +912,11 @@ def attach_GEM_renewables(
     - None
     """
     tech_string = ", ".join(tech_map.values())
-    logger.info(f"Using GEM renewable capacities for carriers {tech_string}.")
+    logger.info(
+        f"Using powerplantmatching renewable capacities for carriers {tech_string}."
+    )
 
-    df = pm.data.GEM().powerplant.convert_country_to_alpha2()
+    df = pd.read_csv(smk_inputs["powerplants"], index_col=0).drop("bus", axis=1)
     technology_b = ~df.Technology.isin(["Onshore", "Offshore"])
     df["Fueltype"] = df.Fueltype.where(technology_b, df.Technology).replace(
         {"Solar": "PV"}
@@ -1121,7 +1187,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("add_electricity", clusters=100)
+        snakemake = mock_snakemake("add_electricity", clusters=60)
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
@@ -1188,8 +1254,9 @@ if __name__ == "__main__":
         ppl,
         conventional_carriers,
         extendable_carriers,
-        params.conventional,
-        conventional_inputs,
+        renewable_carriers,
+        conventional_params=params.conventional,
+        conventional_inputs=conventional_inputs,
         unit_commitment=unit_commitment,
         fuel_price=fuel_price,
     )
@@ -1229,12 +1296,13 @@ if __name__ == "__main__":
             expansion_limit = estimate_renewable_caps["expansion_limit"]
             year = estimate_renewable_caps["year"]
 
-            if estimate_renewable_caps["from_gem"]:
-                attach_GEM_renewables(n, tech_map, snakemake.input)
+            if estimate_renewable_caps["from_powerplantmatching"]:
+                attach_renewable_powerplants(n, tech_map, snakemake.input)
 
-            estimate_renewable_capacities(
-                n, year, tech_map, expansion_limit, params.countries
-            )
+            if estimate_renewable_caps["from_irenastat"]:
+                estimate_renewable_capacities(
+                    n, year, tech_map, expansion_limit, params.countries
+                )
 
     update_p_nom_max(n)
 
@@ -1242,6 +1310,9 @@ if __name__ == "__main__":
         n, costs, n.buses.index, extendable_carriers["StorageUnit"], max_hours
     )
     attach_stores(n, costs, n.buses.index, extendable_carriers["Store"])
+
+    if params.electricity.get("estimate_battery_capacities", False):
+        attach_existing_batteries(n, costs, ppl)
 
     sanitize_carriers(n, snakemake.config)
     if "location" in n.buses:
