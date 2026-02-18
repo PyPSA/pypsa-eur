@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Handle CO2Stop ID columns correctly across versions.
+
 * Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
 
 * Adjust ``powerplants_filter`` to include power plants operational in 2025.
