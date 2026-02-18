@@ -186,15 +186,11 @@ New data should generally not be added to the data, but externally retrieved in 
 ``data/unit_commitment.csv``
 
 - **Source:** `DIW
-  <https://www.diw.de/documents/publikationen/73/diw_01.c.424566.de/diw_datadoc_2013-068.pdf>`__,
-  `Agora Energiewende
-  <https://www.agora-energiewende.de/fileadmin/Projekte/2017/Flexibility_in_thermal_plants/115_flexibility-report-WEB.pdf>`__,
-  `Schill et al. (2017)
-  <https://static-content.springer.com/esm/art%3A10.1038%2Fnenergy.2017.50/MediaObjects/41560_2017_BFnenergy201750_MOESM196_ESM.pdf>`__,
-  `Martin (2022) <https://zenodo.org/records/6421682>`__
-- **Link:** https://github.com/lisazeyen/hourly_vs_annually/blob/b67ca9222711372d8ab6cd58f9ebe7bc637939bf/scripts/solve_network.py#L554
+  <https://www.diw.de/documents/publikationen/73/diw_01.c.524200.de/dp1540.pdf>`__,
+  `IRENA <https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2019/Sep/IRENA_Flexibility_in_CPPs_2019.pdf?la=en&hash=AF60106EA083E492638D8FA9ADF7FD099259F5A1>__`,
+  `Agora Energiewende <https://www.agora-energiewende.de/fileadmin/Projekte/2017/Flexibility_in_thermal_plants/115_flexibility-report-WEB.pdf>`__.
 - **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Description:** Contains unit commitment parameters for thermal power plants.
 
 ``data/biomass_transport_costs_supply_chain{1,2}.csv``
 
