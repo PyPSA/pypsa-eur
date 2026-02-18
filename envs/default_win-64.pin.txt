@@ -176,6 +176,10 @@ https://conda.anaconda.org/conda-forge/noarch/affine-2.4.0-pyhd8ed1ab_1.conda#8c
 https://conda.anaconda.org/conda-forge/win-64/rasterio-1.5.0-py313h1ced589_0.conda#05a494f768c611dd1ba42ead4556e453
 https://conda.anaconda.org/conda-forge/win-64/pyproj-3.7.2-py313h24787ba_2.conda#b0093312a3b115bd033e74aa92bea3a1
 https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.21.0-pyhcf101f3_1.conda#a0811eb1142b4da29162d1931922a1ec
+https://conda.anaconda.org/conda-forge/win-64/simplejson-3.20.2-py313h5ea7bf4_1.conda#bcdc4785e018f4325845f8217333a17e
+https://conda.anaconda.org/conda-forge/win-64/shapely-2.1.2-py313h64ccc5a_2.conda#89e833ece06dd9d0c0a46d74d1125bf6
+https://conda.anaconda.org/conda-forge/win-64/fiona-1.10.1-py313h8b19803_6.conda#c048daef67f2a62c12200e6c4f1ad688
+https://conda.anaconda.org/conda-forge/noarch/rasterstats-0.20.0-pyhd8ed1ab_2.conda#a6762dbfc4cf7084adf09f0accdf0f8a
 https://conda.anaconda.org/conda-forge/noarch/pyxlsb-1.0.10-pyhd8ed1ab_0.tar.bz2#0c14e44bc93a99cdc11398311c3c0dcf
 https://conda.anaconda.org/conda-forge/noarch/python-dotenv-1.2.1-pyhcf101f3_0.conda#083725d6cd3dc007f06d04bcf1e613a2
 https://conda.anaconda.org/conda-forge/win-64/libgomp-15.2.0-h8ee18e1_18.conda#939fb173e2a4d4e980ef689e99b35223
@@ -191,7 +195,6 @@ https://conda.anaconda.org/conda-forge/win-64/ipopt-3.14.19-he5a0f77_2.conda#513
 https://conda.anaconda.org/conda-forge/win-64/scip-10.0.1-h6f1fe5b_0.conda#2316a278ca8b0c52a7a083b7465757e5
 https://conda.anaconda.org/conda-forge/win-64/pyscipopt-6.1.0-np2py313h776c0ec_0.conda#9d08f3d89b1d716787c99de326a2c112
 https://conda.anaconda.org/conda-forge/noarch/validators-0.35.0-pyhd8ed1ab_0.conda#3449ef730c7d483adde81993994092b9
-https://conda.anaconda.org/conda-forge/win-64/shapely-2.1.2-py313h64ccc5a_2.conda#89e833ece06dd9d0c0a46d74d1125bf6
 https://conda.anaconda.org/conda-forge/noarch/patsy-1.0.2-pyhcf101f3_0.conda#8678577a52161cc4e1c93fcc18e8a646
 https://conda.anaconda.org/conda-forge/win-64/statsmodels-0.14.6-py313h0591002_0.conda#5523b262bcc2cf8116d32a86db503d53
 https://conda.anaconda.org/conda-forge/win-64/qhull-2020.2-hc790b64_5.conda#854fbdff64b572b5c0b470f334d34c11
@@ -521,7 +524,6 @@ https://conda.anaconda.org/conda-forge/win-64/getopt-win32-0.1-h6a83c73_3.conda#
 https://conda.anaconda.org/conda-forge/win-64/graphviz-14.1.2-h4c50273_0.conda#afabed4c46b197b89eb974aa038d12db
 https://conda.anaconda.org/conda-forge/win-64/glpk-5.0-h8ffe710_0.tar.bz2#ff4181250d91940494d3127243a9d858
 https://conda.anaconda.org/conda-forge/noarch/geojson-3.2.0-pyhd8ed1ab_0.conda#9f9840fb1c2e009fb0009a2f9461e64a
-https://conda.anaconda.org/conda-forge/win-64/fiona-1.10.1-py313h8b19803_6.conda#c048daef67f2a62c12200e6c4f1ad688
 https://conda.anaconda.org/conda-forge/noarch/descartes-1.1.0-pyhd8ed1ab_5.conda#4a25cae637029c5589135903aa15b3b6
 https://conda.anaconda.org/conda-forge/win-64/msgpack-python-1.1.2-py313hf069bd2_1.conda#0013c110d17d569ce560b7fae6aee0d3
 https://conda.anaconda.org/conda-forge/noarch/deprecated-1.3.1-pyhd8ed1ab_1.conda#5498feb783ab29db6ca8845f68fa0f03
@@ -533,7 +535,7 @@ https://conda.anaconda.org/conda-forge/noarch/pystac-1.14.3-pyhd8ed1ab_0.conda#7
 https://conda.anaconda.org/conda-forge/win-64/h5py-3.15.1-nompi_py313hf7f959b_101.conda#29bcfb479b3030e2c190f53058b9a345
 https://conda.anaconda.org/conda-forge/noarch/h5netcdf-1.8.1-pyhd8ed1ab_0.conda#ca7f9ba8762d3e360e47917a10e23760
 https://conda.anaconda.org/conda-forge/noarch/jmespath-1.1.0-pyhcf101f3_1.conda#cc73a9bd315659dc5307a5270f44786f
-https://conda.anaconda.org/conda-forge/noarch/botocore-1.42.50-pyhd8ed1ab_0.conda#25cffdcbebbe85f62a0ba31b1bae5911
+https://conda.anaconda.org/conda-forge/noarch/botocore-1.42.51-pyhd8ed1ab_0.conda#f2350b60476eeafb5d044603a9bb0018
 https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.16.0-pyhd8ed1ab_0.conda#061b5affcffeef245d60ec3007d1effd
 https://conda.anaconda.org/conda-forge/noarch/boto3-1.42.50-pyhd8ed1ab_0.conda#65465c189c38fc262c009faa98825cea
 https://conda.anaconda.org/conda-forge/noarch/arcosparse-0.4.2-pyhd8ed1ab_0.conda#9a005ba5f540619a1343587b4ee3d95e

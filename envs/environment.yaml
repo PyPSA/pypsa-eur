@@ -50,6 +50,7 @@ dependencies:
 - pytz >=2025.2
 - pyxlsb >=1.0.10
 - rasterio >=1.4.3
+- rasterstats >=0.10.3
 - rioxarray >=0.20.0
 - ruff >=0.14.3
 - ruamel.yaml >=0.18.0
@@ -70,5 +71,5 @@ dependencies:
 - natsort >=8.4.0
 - snakemake-logger-plugin-pypsa >=0.1.0
 - pydeflate >=2.3.4
-- grpcio <1.78 # Hot fix for https://github.com/PyPSA/linopy/issues/587
+- grpcio <1.78
 - snakemake-executor-plugin-slurm >=1.9.2
