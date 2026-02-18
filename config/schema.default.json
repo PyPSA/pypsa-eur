@@ -651,7 +651,7 @@
       "properties": {
         "estimate_efficiencies": {
           "default": false,
-          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent heuristic, taking priority over flat cost-table values.",
+          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic.",
           "type": "boolean"
         },
         "unit_commitment": {
@@ -9775,7 +9775,7 @@
       "properties": {
         "estimate_efficiencies": {
           "default": false,
-          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent heuristic, taking priority over flat cost-table values.",
+          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic.",
           "type": "boolean"
         },
         "unit_commitment": {
