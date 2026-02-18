@@ -12,7 +12,7 @@ rule add_existing_baseyear:
         existing_capacities=config_provider("existing_capacities"),
         carriers=config_provider("electricity", "renewable_carriers"),
         costs=config_provider("costs"),
-        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        heat_sources=config_provider("sector", "heat_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         network=resources(
@@ -72,7 +72,8 @@ rule add_brownfield:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        tes=config_provider("sector", "tes"),
+        ttes=config_provider("sector", "ttes"),
+        ptes=config_provider("sector", "district_heating", "ptes"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),

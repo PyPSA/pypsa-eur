@@ -8,6 +8,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Update heat source handling in `prepare_sector_network` and introduce preheating of heat sources for more realistic system integrations (https://github.com/PyPSA/pypsa-eur/pull/1893).
 
 * Bugfix: Disregard CORINE land cover data for offshore technologies since its scope is not sufficiently large and codes are already defined by offshore shapes.
 
@@ -109,6 +110,7 @@ Upcoming Release
 * Fix `mock_snakemake` due to breaking `snakemake` upstream API changes, i.e., requiring passing a `LoggerManager` instance (https://github.com/PyPSA/pypsa-eur/pull/1984).
 
 * Added technology-data v0.13.4 (https://github.com/PyPSA/technology-data/releases/tag/v0.13.4) to data versions (https://github.com/PyPSA/pypsa-eur/pull/1985).
+
 
 * Important: PyPSA-Eur now uses a validation schema for configuration files. The schema
   also contains the default values for all known configuration options, which means

@@ -26,6 +26,7 @@ from scripts._helpers import (
 )
 from scripts.add_electricity import sanitize_carriers
 from scripts.build_energy_totals import cartesian
+from scripts.definitions.heat_source import HeatSource
 from scripts.definitions.heat_system import HeatSystem
 from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
 
@@ -494,7 +495,7 @@ def add_heating_capacities_installed_before_baseyear(
     grouping_years: list[int],
     existing_capacities: pd.DataFrame,
     heat_pump_cop: xr.DataArray,
-    heat_pump_source_types: dict[str, list[str]],
+    heat_sources: dict[str, list[str]],
     efficiency_file: str,
     use_time_dependent_cop: bool,
     default_lifetime: int,
@@ -523,8 +524,8 @@ def add_heating_capacities_installed_before_baseyear(
         Default lifetime for heating systems
     existing_capacities : pd.DataFrame
         Existing heating capacity distribution
-    heat_pump_source_types : dict
-        Heat pump sources by system type
+    heat_sources : dict
+        Heat sources by system type
     efficiency_file : str
         Path to heating efficiencies file
     energy_totals_year : int
@@ -592,39 +593,54 @@ def add_heating_capacities_installed_before_baseyear(
 
         for ratio, grouping_year in zip(ratios, valid_grouping_years):
             # Add heat pumps
-            for heat_source in heat_pump_source_types[heat_system.system_type.value]:
-                costs_name = heat_system.heat_pump_costs_name(heat_source)
-
-                efficiency = (
-                    heat_pump_cop.sel(
-                        heat_system=heat_system.system_type.value,
-                        heat_source=heat_source,
-                        name=nodes,
-                    )
-                    .to_pandas()
-                    .reindex(index=n.snapshots)
-                    if use_time_dependent_cop
-                    else costs.at[costs_name, "efficiency"]
-                )
-
-                n.add(
-                    "Link",
-                    nodes,
-                    suffix=f" {heat_system} {heat_source} heat pump-{grouping_year}",
-                    bus0=nodes + " " + heat_system.value + " heat",
-                    bus1=nodes_elec,
-                    carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=1 / efficiency.clip(lower=0.001),
-                    capital_cost=costs.at[costs_name, "capital_cost"],
-                    p_nom=existing_capacities.loc[
+            for heat_source in heat_sources[heat_system.system_type.value]:
+                p_nom = (
+                    existing_capacities.loc[
                         nodes, (heat_system.value, f"{heat_source} heat pump")
                     ]
-                    * ratio,
-                    p_max_pu=0,
-                    p_min_pu=-1 * efficiency / efficiency.clip(lower=0.001),
-                    build_year=int(grouping_year),
-                    lifetime=costs.at[costs_name, "lifetime"],
+                    * ratio
                 )
+
+                if p_nom.sum() > 0:
+                    heat_source = HeatSource(heat_source)
+
+                    if heat_source not in [HeatSource.AIR, HeatSource.GROUND]:
+                        raise ValueError(
+                            f"Currently, only air-sourced and ground-sourced heat pumps are supported for baseyear capacities. Heat source {heat_source} is not."
+                        )
+
+                    costs_name = heat_system.heat_pump_costs_name(heat_source)
+
+                    efficiency = (
+                        heat_pump_cop.sel(
+                            heat_system=heat_system.system_type.value,
+                            heat_source=heat_source.value,
+                            name=nodes,
+                        )
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
+                        if use_time_dependent_cop
+                        else costs.at[costs_name, "efficiency"]
+                    )
+
+                    n.add(
+                        "Link",
+                        nodes,
+                        suffix=f" {heat_system} {heat_source} heat pump-{grouping_year}",
+                        bus0=nodes + " " + heat_system.value + " heat",
+                        bus1=nodes_elec,
+                        carrier=f"{heat_system} {heat_source} heat pump",
+                        efficiency=1 / efficiency.clip(lower=0.001),
+                        capital_cost=costs.at[costs_name, "capital_cost"],
+                        p_nom=existing_capacities.loc[
+                            nodes, (heat_system.value, f"{heat_source} heat pump")
+                        ]
+                        * ratio,
+                        p_max_pu=0,
+                        p_min_pu=-1 * efficiency / efficiency.clip(lower=0.001),
+                        build_year=int(grouping_year),
+                        lifetime=costs.at[costs_name, "lifetime"],
+                    )
 
             # add resistive heater, gas boilers and oil boilers
             n.add(
@@ -827,7 +843,7 @@ if __name__ == "__main__":
                 header=[0, 1],
                 index_col=0,
             ),
-            heat_pump_source_types=snakemake.params.heat_pump_sources,
+            heat_sources=snakemake.params.heat_sources,
             efficiency_file=snakemake.input.heating_efficiencies,
             energy_totals_year=snakemake.params["energy_totals_year"],
             capacity_threshold=snakemake.params.existing_capacities[

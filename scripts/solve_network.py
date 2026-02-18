@@ -1217,7 +1217,7 @@ def extra_functionality(
     ):
         add_solar_potential_constraints(n, config)
 
-    if n.config.get("sector", {}).get("tes", False):
+    if n.config.get("sector", {}).get("ttes", False):
         if n.buses.index.str.contains(
             r"urban central heat|urban decentral heat|rural heat",
             case=False,
