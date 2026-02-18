@@ -7947,7 +7947,7 @@
   "description": "Combined configuration schema for PyPSA-EUR.",
   "properties": {
     "version": {
-      "default": "v2025.07.0",
+      "default": "v2026.02.0",
       "description": "Version of PyPSA-Eur. Descriptive only.",
       "type": "string"
     },
