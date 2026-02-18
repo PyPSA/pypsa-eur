@@ -3118,6 +3118,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -3300,6 +3301,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -3482,6 +3484,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -6876,6 +6879,7 @@
               "type": "array"
             }
           ],
+          "default": false,
           "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
         },
         "luisa": {
@@ -8993,6 +8997,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -9175,6 +9180,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -9357,6 +9363,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
