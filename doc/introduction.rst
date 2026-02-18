@@ -49,7 +49,7 @@ preceding rules which another rule takes as input data.
 
 .. note::
     The dependency graph was generated using
-    ``pixi run dot -c && snakemake --dag results/networks/base_s_128_elec_.nc -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png``
+    ``pixi run snakemake --dag results/networks/base_s_128_elec_.nc -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png``
 
 For the use of ``snakemake``, it makes sense to familiarize yourself quickly
 with the `basic tutorial
