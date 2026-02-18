@@ -181,6 +181,10 @@ https://conda.anaconda.org/conda-forge/noarch/affine-2.4.0-pyhd8ed1ab_1.conda#8c
 https://conda.anaconda.org/conda-forge/osx-arm64/rasterio-1.5.0-py313h8ab8132_0.conda#900d1d837d7ed61e0e8bda33746cc2d4
 https://conda.anaconda.org/conda-forge/osx-arm64/pyproj-3.7.2-py313h698103d_2.conda#65f22ed9bf92ab532ee61b14779f3c9f
 https://conda.anaconda.org/conda-forge/noarch/rioxarray-0.21.0-pyhcf101f3_1.conda#a0811eb1142b4da29162d1931922a1ec
+https://conda.anaconda.org/conda-forge/osx-arm64/simplejson-3.20.2-py313h6535dbc_1.conda#27a8bc65b5f0aecb87a01568e573e6ae
+https://conda.anaconda.org/conda-forge/osx-arm64/shapely-2.1.2-py313h10b2fc2_2.conda#7dc5b3a207a5c0af5fb7dacca24587a7
+https://conda.anaconda.org/conda-forge/osx-arm64/fiona-1.10.1-py313h7df67bf_6.conda#dc81b108af52deb655ea85f9b745f7e2
+https://conda.anaconda.org/conda-forge/noarch/rasterstats-0.20.0-pyhd8ed1ab_2.conda#a6762dbfc4cf7084adf09f0accdf0f8a
 https://conda.anaconda.org/conda-forge/noarch/pyxlsb-1.0.10-pyhd8ed1ab_0.tar.bz2#0c14e44bc93a99cdc11398311c3c0dcf
 https://conda.anaconda.org/conda-forge/noarch/python-dotenv-1.2.1-pyhcf101f3_0.conda#083725d6cd3dc007f06d04bcf1e613a2
 https://conda.anaconda.org/conda-forge/osx-arm64/libhwloc-2.12.2-default_ha3cc4f2_1000.conda#38b8aa4ea25d313ad951bcb7d3cd0ad3
@@ -196,7 +200,6 @@ https://conda.anaconda.org/conda-forge/osx-arm64/ipopt-3.14.19-h9191b9b_2.conda#
 https://conda.anaconda.org/conda-forge/osx-arm64/scip-10.0.1-h1003740_0.conda#7d94bf9d07662bae4a4c0ccdd10928c3
 https://conda.anaconda.org/conda-forge/osx-arm64/pyscipopt-6.1.0-np2py313hdc65ad0_0.conda#e4524c71b2284dd010f27b3e2e001e7a
 https://conda.anaconda.org/conda-forge/noarch/validators-0.35.0-pyhd8ed1ab_0.conda#3449ef730c7d483adde81993994092b9
-https://conda.anaconda.org/conda-forge/osx-arm64/shapely-2.1.2-py313h10b2fc2_2.conda#7dc5b3a207a5c0af5fb7dacca24587a7
 https://conda.anaconda.org/conda-forge/noarch/patsy-1.0.2-pyhcf101f3_0.conda#8678577a52161cc4e1c93fcc18e8a646
 https://conda.anaconda.org/conda-forge/osx-arm64/statsmodels-0.14.6-py313hc577518_0.conda#b547594a22e18442099ffa9fb76521b9
 https://conda.anaconda.org/conda-forge/osx-arm64/qhull-2020.2-h420ef59_5.conda#6483b1f59526e05d7d894e466b5b6924
@@ -528,7 +531,6 @@ https://conda.anaconda.org/conda-forge/noarch/adwaita-icon-theme-49.0-unix_0.con
 https://conda.anaconda.org/conda-forge/osx-arm64/graphviz-14.1.2-hec8c438_0.conda#1f3d859de3ca2bcaa845e92e87d73660
 https://conda.anaconda.org/conda-forge/osx-arm64/glpk-5.0-h6d7a090_0.tar.bz2#02b868940101a06a6365c109ab1a94fe
 https://conda.anaconda.org/conda-forge/noarch/geojson-3.2.0-pyhd8ed1ab_0.conda#9f9840fb1c2e009fb0009a2f9461e64a
-https://conda.anaconda.org/conda-forge/osx-arm64/fiona-1.10.1-py313h7df67bf_6.conda#dc81b108af52deb655ea85f9b745f7e2
 https://conda.anaconda.org/conda-forge/noarch/descartes-1.1.0-pyhd8ed1ab_5.conda#4a25cae637029c5589135903aa15b3b6
 https://conda.anaconda.org/conda-forge/osx-arm64/msgpack-python-1.1.2-py313ha61f8ec_1.conda#78bc73f3c5e84b432cdea463ea4e953e
 https://conda.anaconda.org/conda-forge/noarch/deprecated-1.3.1-pyhd8ed1ab_1.conda#5498feb783ab29db6ca8845f68fa0f03
@@ -540,7 +542,7 @@ https://conda.anaconda.org/conda-forge/noarch/pystac-1.14.3-pyhd8ed1ab_0.conda#7
 https://conda.anaconda.org/conda-forge/osx-arm64/h5py-3.15.1-nompi_py313h7aa1c8b_101.conda#af275e004ef52480fccdde18f4bdcd12
 https://conda.anaconda.org/conda-forge/noarch/h5netcdf-1.8.1-pyhd8ed1ab_0.conda#ca7f9ba8762d3e360e47917a10e23760
 https://conda.anaconda.org/conda-forge/noarch/jmespath-1.1.0-pyhcf101f3_1.conda#cc73a9bd315659dc5307a5270f44786f
-https://conda.anaconda.org/conda-forge/noarch/botocore-1.42.50-pyhd8ed1ab_0.conda#25cffdcbebbe85f62a0ba31b1bae5911
+https://conda.anaconda.org/conda-forge/noarch/botocore-1.42.51-pyhd8ed1ab_0.conda#f2350b60476eeafb5d044603a9bb0018
 https://conda.anaconda.org/conda-forge/noarch/s3transfer-0.16.0-pyhd8ed1ab_0.conda#061b5affcffeef245d60ec3007d1effd
 https://conda.anaconda.org/conda-forge/noarch/boto3-1.42.50-pyhd8ed1ab_0.conda#65465c189c38fc262c009faa98825cea
 https://conda.anaconda.org/conda-forge/noarch/arcosparse-0.4.2-pyhd8ed1ab_0.conda#9a005ba5f540619a1343587b4ee3d95e
