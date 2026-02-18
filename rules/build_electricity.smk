@@ -298,6 +298,7 @@ rule determine_availability_matrix:
         "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} technology"
     params:
         renewable=config_provider("renewable"),
+        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     input:
         unpack(input_ua_md_availability_matrix),
         corine=ancient(rules.retrieve_corine.output["tif_file"]),
@@ -584,9 +585,13 @@ rule build_electricity_demand_base:
         "Building electricity demand time series for base network"
     params:
         distribution_key=config_provider("load", "distribution_key"),
+        substation_only=config_provider("load", "substation_only"),
     input:
         base_network=resources("networks/base_s.nc"),
         regions=resources("regions_onshore_base_s.geojson"),
+        raster=rules.retrieve_electricity_demand_energy_atlas.output["tif"],
+        gb_excel=rules.retrieve_desnz_electricity_consumption.output["xlsx"],
+        gb_geojson=rules.retrieve_ons_lad.output["geojson"],
         nuts3=resources("nuts3_shapes.geojson"),
         load=resources("electricity_demand.csv"),
     output:
