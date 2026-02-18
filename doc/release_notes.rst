@@ -11,6 +11,8 @@ Upcoming Release
 
 * Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
 
+* New ``conventional: estimate_efficiencies`` option (default ``false``) to fill missing plant-level efficiencies using a carrier- and age-dependent heuristic.
+
 * Adjust ``powerplants_filter`` to include power plants operational in 2025.
 
 * Rewrite mapping of power plant sites to model regions / buses. Previously, power plants were mapped to the nearest bus in the same country.
