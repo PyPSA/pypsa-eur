@@ -15,6 +15,8 @@ Upcoming Release
 
 * Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
 
+* Existing battery storage capacities from the powerplantmatching dataset can now be added to the network as ``StorageUnit`` components, using plant-level duration data with fallback to ``electricity: max_hours: battery`` and cost-table round-trip efficiency.
+
 * Adjust ``powerplants_filter`` to include power plants operational in 2025.
 
 * Rewrite mapping of power plant sites to model regions / buses. Previously, power plants were mapped to the nearest bus in the same country.
