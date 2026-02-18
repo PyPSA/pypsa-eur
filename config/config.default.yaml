@@ -497,6 +497,7 @@ load:
   scaling_factor: 1.0
   fixed_year: false
   supplement_synthetic: true
+  substation_only: true
   distribution_key:
     gdp: 0.6
     population: 0.4
@@ -1428,6 +1429,15 @@ data:
     source: archive
     version: latest
   jrc_ardeco:
+    source: archive
+    version: latest
+  jrc_energy_atlas:
+    source: archive
+    version: latest
+  desnz_electricity_consumption:
+    source: archive
+    version: latest
+  ons_lad:
     source: archive
     version: latest
   bidding_zones_electricitymaps:
