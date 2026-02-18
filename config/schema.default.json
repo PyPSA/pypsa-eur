@@ -536,13 +536,6 @@
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
               "type": "boolean"
             },
-            "exclude_carriers": {
-              "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
             "remove_stubs": {
               "default": true,
               "description": "Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -5220,6 +5213,11 @@
               "description": "Number of snapshots to consider in each iteration. Defaults to 100.",
               "type": "integer"
             },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
+              "type": "integer"
+            },
             "post_discretization": {
               "description": "Configuration for `solving.options.post_discretization` settings.",
               "properties": {
@@ -7394,13 +7392,6 @@
           "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
           "type": "boolean"
         },
-        "exclude_carriers": {
-          "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "remove_stubs": {
           "default": true,
           "description": "Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -7718,6 +7709,11 @@
         "horizon": {
           "default": 365,
           "description": "Number of snapshots to consider in each iteration. Defaults to 100.",
+          "type": "integer"
+        },
+        "overlap": {
+          "default": 0,
+          "description": "Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
           "type": "integer"
         },
         "post_discretization": {
@@ -11729,13 +11725,6 @@
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
               "type": "boolean"
             },
-            "exclude_carriers": {
-              "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
             "remove_stubs": {
               "default": true,
               "description": "Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -12087,6 +12076,11 @@
             "horizon": {
               "default": 365,
               "description": "Number of snapshots to consider in each iteration. Defaults to 100.",
+              "type": "integer"
+            },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
               "type": "integer"
             },
             "post_discretization": {
