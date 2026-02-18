@@ -82,11 +82,11 @@ jobs:
         df -h
 
     - name: Skip - no source changes
-      if: steps.filter.outputs.src != 'true' && github.event_name != 'schedule'
+      if: steps.filter.outputs.src != 'true' && github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
       run: echo "Skipping tests because no source code changes detected"
 
     - name: Setup Pixi
-      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       uses: prefix-dev/setup-pixi@v0.9.4
       with:
         pixi-version: v0.59.0
@@ -94,36 +94,36 @@ jobs:
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
 
     - name: Setup cache keys
-      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       run: |
         echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data
         echo "MONTH=$(date +'%Y%m')" >> $GITHUB_ENV # cutouts
         echo "VERSIONS_HASH=${{ hashFiles('data/versions.csv') }}" >> $GITHUB_ENV
 
     - uses: actions/cache@v5
-      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       with:
         path: data
         key: data-${{ env.WEEK }}-${{ env.VERSIONS_HASH }}
 
     - uses: actions/cache@v5
-      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       with:
         path: cutouts
         key: cutouts-${{ env.MONTH }}
 
     - name: Restore git-tracked files in data/
-      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       run: git checkout HEAD -- data/
 
     - name: Run pylint check on scripts
-      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       # check for undefined variables to reuse functions across scripts
       run: |
         pixi run pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
 
     - name: Run snakemake test workflows
-      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule'
+      if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       env:
         SNAKEMAKE_STORAGE_CACHED_HTTP_CACHE: ""
         SNAKEMAKE_STORAGE_CACHED_HTTP_SKIP_REMOTE_CHECKS: "1"
