@@ -3690,6 +3690,12 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
+            },
+            "dc_ac_ratio": {
+              "default": 1.3,
+              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+              "exclusiveMinimum": 0,
+              "type": "number"
             }
           }
         },
@@ -3813,6 +3819,12 @@
             "clip_p_max_pu": {
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
+              "type": "number"
+            },
+            "dc_ac_ratio": {
+              "default": 1.3,
+              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+              "exclusiveMinimum": 0,
               "type": "number"
             }
           }
@@ -7529,6 +7541,12 @@
           "default": 0.01,
           "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
           "type": "number"
+        },
+        "dc_ac_ratio": {
+          "default": 1.3,
+          "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+          "exclusiveMinimum": 0,
+          "type": "number"
         }
       }
     },
@@ -9552,6 +9570,12 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
+            },
+            "dc_ac_ratio": {
+              "default": 1.3,
+              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+              "exclusiveMinimum": 0,
+              "type": "number"
             }
           }
         },
@@ -9675,6 +9699,12 @@
             "clip_p_max_pu": {
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
+              "type": "number"
+            },
+            "dc_ac_ratio": {
+              "default": 1.3,
+              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+              "exclusiveMinimum": 0,
               "type": "number"
             }
           }

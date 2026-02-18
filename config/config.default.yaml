@@ -368,6 +368,7 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 0.01
+    dc_ac_ratio: 1.3
   "solar-hsat":
     cutout: default
     resource:
@@ -408,6 +409,7 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 0.01
+    dc_ac_ratio: 1.3
   hydro:
     cutout: default
     carriers:
