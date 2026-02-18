@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Disregard CORINE land cover data for offshore technologies since its scope is not sufficiently large and codes are already defined by offshore shapes.
+
 * Pin grpcio<1.78 to silence warnings that are cluttering the log (https://github.com/PyPSA/pypsa-eur/pull/2080).
 
 * Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.

@@ -184,6 +184,11 @@
           "description": "Whether progressbar for atlite conversion processes should be shown. False saves time.",
           "type": "boolean"
         },
+        "plot_availability_matrix": {
+          "default": false,
+          "description": "Whether to plot the landuse availability matrix.",
+          "type": "boolean"
+        },
         "cutouts": {
           "additionalProperties": {
             "description": "Configuration for a single cutout in `atlite.cutouts`.",
@@ -3113,6 +3118,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -3295,6 +3301,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -3477,6 +3484,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -6871,6 +6879,7 @@
               "type": "array"
             }
           ],
+          "default": false,
           "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
         },
         "luisa": {
@@ -8566,6 +8575,11 @@
           "description": "Whether progressbar for atlite conversion processes should be shown. False saves time.",
           "type": "boolean"
         },
+        "plot_availability_matrix": {
+          "default": false,
+          "description": "Whether to plot the landuse availability matrix.",
+          "type": "boolean"
+        },
         "cutouts": {
           "additionalProperties": {
             "description": "Configuration for a single cutout in `atlite.cutouts`.",
@@ -8983,6 +8997,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -9165,6 +9180,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -9347,6 +9363,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {

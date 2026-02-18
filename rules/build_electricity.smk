@@ -298,6 +298,7 @@ rule determine_availability_matrix:
         "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} technology"
     params:
         renewable=config_provider("renewable"),
+        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     input:
         unpack(input_ua_md_availability_matrix),
         corine=ancient(rules.retrieve_corine.output["tif_file"]),
