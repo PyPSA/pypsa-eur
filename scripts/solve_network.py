@@ -427,6 +427,7 @@ def prepare_network(
     planning_horizons: str | None,
     co2_sequestration_potential: dict[str, float],
     limit_max_growth: dict[str, Any] | None = None,
+    rolling_horizon: bool = False,
 ) -> None:
     """
     Prepare network with various constraints and modifications.
@@ -527,6 +528,13 @@ def prepare_network(
         add_co2_sequestration_limit(
             n, limit_dict=limit_dict, planning_horizons=planning_horizons
         )
+
+    # rolling horizon disables cyclic storage
+    if rolling_horizon:
+        n.storage_units.state_of_charge_cyclic = False
+        n.storage_units.state_of_charge_initial = 0
+        n.stores.e_cyclic = False
+        n.stores.e_initial = 0
 
 
 def add_CCL_constraints(
@@ -1443,6 +1451,7 @@ if __name__ == "__main__":
         planning_horizons=planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
         limit_max_growth=snakemake.params.get("sector", {}).get("limit_max_growth"),
+        rolling_horizon=cf_solving["rolling_horizon"],
     )
 
     # Determine solve mode
@@ -1461,7 +1470,7 @@ if __name__ == "__main__":
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=logging_frequency
     ) as mem:
-        if rolling_horizon and snakemake.rule == "solve_operations_network":
+        if rolling_horizon:
             logger.info("Using rolling horizon optimization...")
             all_kwargs, _ = collect_kwargs(
                 snakemake.config,

@@ -536,13 +536,6 @@
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
               "type": "boolean"
             },
-            "exclude_carriers": {
-              "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
             "remove_stubs": {
               "default": true,
               "description": "Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -584,9 +577,19 @@
           "type": "array"
         },
         "consider_efficiency_classes": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            }
+          ],
           "default": false,
-          "description": "Aggregated each carriers into the top 10-quantile (high), the bottom 90-quantile (low), and everything in between (medium).",
-          "type": "boolean"
+          "description": "Aggregate each carrier into efficiency classes defined by quantile boundaries. If True, uses [0.1, 0.9] as default quantiles (labels: Q0, Q10, Q90). If a list of floats, defines custom quantile boundaries, e.g. [0.1, 0.5, 0.9]."
         },
         "aggregation_strategies": {
           "description": "Configuration for `clustering.aggregation_strategies` settings.",
@@ -2249,6 +2252,11 @@
               }
             }
           }
+        },
+        "estimate_battery_capacities": {
+          "default": false,
+          "description": "Enable estimation of existing battery storage capacities.",
+          "type": "boolean"
         },
         "autarky": {
           "description": "Configuration for `electricity.autarky` settings.",
@@ -5215,6 +5223,11 @@
               "description": "Number of snapshots to consider in each iteration. Defaults to 100.",
               "type": "integer"
             },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
+              "type": "integer"
+            },
             "post_discretization": {
               "description": "Configuration for `solving.options.post_discretization` settings.",
               "properties": {
@@ -7389,13 +7402,6 @@
           "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
           "type": "boolean"
         },
-        "exclude_carriers": {
-          "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "remove_stubs": {
           "default": true,
           "description": "Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -7713,6 +7719,11 @@
         "horizon": {
           "default": 365,
           "description": "Number of snapshots to consider in each iteration. Defaults to 100.",
+          "type": "integer"
+        },
+        "overlap": {
+          "default": 0,
+          "description": "Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
           "type": "integer"
         },
         "post_discretization": {
@@ -8499,6 +8510,11 @@
               }
             }
           }
+        },
+        "estimate_battery_capacities": {
+          "default": false,
+          "description": "Enable estimation of existing battery storage capacities.",
+          "type": "boolean"
         },
         "autarky": {
           "description": "Configuration for `electricity.autarky` settings.",
@@ -11719,13 +11735,6 @@
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
               "type": "boolean"
             },
-            "exclude_carriers": {
-              "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
             "remove_stubs": {
               "default": true,
               "description": "Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -11767,9 +11776,19 @@
           "type": "array"
         },
         "consider_efficiency_classes": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            }
+          ],
           "default": false,
-          "description": "Aggregated each carriers into the top 10-quantile (high), the bottom 90-quantile (low), and everything in between (medium).",
-          "type": "boolean"
+          "description": "Aggregate each carrier into efficiency classes defined by quantile boundaries. If True, uses [0.1, 0.9] as default quantiles (labels: Q0, Q10, Q90). If a list of floats, defines custom quantile boundaries, e.g. [0.1, 0.5, 0.9]."
         },
         "aggregation_strategies": {
           "description": "Configuration for `clustering.aggregation_strategies` settings.",
@@ -12077,6 +12096,11 @@
             "horizon": {
               "default": 365,
               "description": "Number of snapshots to consider in each iteration. Defaults to 100.",
+              "type": "integer"
+            },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
               "type": "integer"
             },
             "post_discretization": {

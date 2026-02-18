@@ -267,7 +267,7 @@ def add_co2_emissions(n, costs, carriers):
 def load_and_aggregate_powerplants(
     ppl_fn: str,
     costs: pd.DataFrame,
-    consider_efficiency_classes: bool = False,
+    consider_efficiency_classes: bool | list[float] = False,
     aggregation_strategies: dict = None,
     exclude_carriers: list = None,
 ) -> pd.DataFrame:
@@ -331,15 +331,21 @@ def load_and_aggregate_powerplants(
     df = ppl[to_aggregate].copy()
 
     if consider_efficiency_classes:
+        quantiles = (
+            [0.1, 0.9]
+            if consider_efficiency_classes is True
+            else consider_efficiency_classes
+        )
         for c in df.carrier.unique():
             df_c = df.query("carrier == @c")
-            low = df_c.efficiency.quantile(0.10)
-            high = df_c.efficiency.quantile(0.90)
-            if low < high:
-                labels = ["low", "medium", "high"]
-                suffix = pd.cut(
-                    df_c.efficiency, bins=[0, low, high, 1], labels=labels
-                ).astype(str)
+            thresholds = df_c.efficiency.quantile(quantiles).tolist()
+            if thresholds[0] < thresholds[-1]:
+                unique_thresholds, indices = np.unique(thresholds, return_index=True)
+                labels = ["Q0"] + [
+                    f"Q{int(quantiles[i] * 100)}" for i in sorted(indices)
+                ]
+                bins = [0.0] + unique_thresholds.tolist() + [1.0]
+                suffix = pd.cut(df_c.efficiency, bins=bins, labels=labels).astype(str)
                 df.update({"carrier": df_c.carrier + " " + suffix + " efficiency"})
 
     grouper = ["bus", "carrier"]
@@ -353,6 +359,9 @@ def load_and_aggregate_powerplants(
     aggregated = df.groupby(grouper, as_index=False).agg(strategies)
     aggregated.index = aggregated.bus + " " + aggregated.carrier
     aggregated.build_year = aggregated.build_year.astype(int)
+    aggregated.carrier = aggregated.carrier.str.replace(
+        r" Q\d+ efficiency", "", regex=True
+    )
 
     disaggregated = ppl[~to_aggregate].copy()
     disaggregated.index = (
@@ -605,7 +614,7 @@ def attach_conventional_generators(
         | set(extendable_carriers["Generator"]) - set(renewable_carriers)
     )
 
-    ppl = ppl.query("carrier in @carriers")
+    ppl = ppl.query("carrier in @carriers").copy()
 
     # reduce carriers to those in power plant dataset
     carriers = list(set(carriers) & set(ppl.carrier.unique()))
@@ -677,6 +686,43 @@ def attach_conventional_generators(
             else:
                 # Single value affecting all generators of technology k indiscriminantely of country
                 n.generators.loc[idx, attr] = values
+
+
+def attach_existing_batteries(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    ppl: pd.DataFrame,
+) -> None:
+    """Attach existing battery storage units from the power plant dataset."""
+    batt = ppl.query('carrier == "battery"')
+    if batt.empty:
+        return
+
+    add_missing_carriers(n, ["battery"])
+    efficiency = np.sqrt(costs.at["battery inverter", "efficiency"])
+    batt["max_hours"] = batt.max_hours.fillna(batt.max_hours.median())
+
+    n.add(
+        "StorageUnit",
+        batt.index,
+        carrier="battery",
+        bus=batt.bus,
+        p_nom=batt.p_nom,
+        capital_cost=batt.capital_cost,
+        max_hours=batt.max_hours,
+        efficiency_store=efficiency,
+        efficiency_dispatch=efficiency,
+        cyclic_state_of_charge=True,
+    )
+
+    stats = (
+        batt.groupby("country")
+        .p_nom.sum()
+        .div(1e3)
+        .round(3)
+        .sort_values(ascending=False)
+    )
+    logger.info(f"Added {len(batt)} existing battery storage units\n({stats} MW)")
 
 
 def attach_hydro(
@@ -1258,6 +1304,9 @@ if __name__ == "__main__":
         n, costs, n.buses.index, extendable_carriers["StorageUnit"], max_hours
     )
     attach_stores(n, costs, n.buses.index, extendable_carriers["Store"])
+
+    if params.electricity.get("estimate_battery_capacities", False):
+        attach_existing_batteries(n, costs, ppl)
 
     sanitize_carriers(n, snakemake.config)
     if "location" in n.buses:
