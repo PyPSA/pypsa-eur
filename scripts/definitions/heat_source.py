@@ -82,12 +82,12 @@ class HeatSource(Enum):
     GROUND = "ground"
     PTES = "ptes"
     # PTX excess heat sources
-    ELECTROLYSIS_waste = "electrolysis_waste"
-    FISCHER_TROPSCH_waste = "fischer_tropsch_waste"
-    SABATIER_waste = "sabatier_waste"
-    HABER_BOSCH_waste = "haber_bosch_waste"
-    METHANOLISATION_waste = "methanolisation_waste"
-    FUEL_CELL_waste = "fuel_cell_waste"
+    ELECTROLYSIS_WASTE = "electrolysis_waste"
+    FISCHER_TROPSCH_WASTE = "fischer_tropsch_waste"
+    SABATIER_WASTE = "sabatier_waste"
+    HABER_BOSCH_WASTE = "haber_bosch_waste"
+    METHANOLISATION_WASTE = "methanolisation_waste"
+    FUEL_CELL_WASTE = "fuel_cell_waste"
 
     def __str__(self) -> str:
         """
@@ -599,7 +599,7 @@ class HeatSource(Enum):
 
     def resource_bus(self, nodes, heat_system) -> str:
         """
-        Get the primary resource bus for heat from this source.
+        Get the primary resource bus for heat from this source, e.g. `DE0 0 urban central geothermal heat` or `DE0 0 urban central ptes heat`.
 
         This is where heat enters the system from generators or storage
         discharge, at the source's native temperature.

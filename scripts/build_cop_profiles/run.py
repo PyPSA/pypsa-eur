@@ -159,25 +159,15 @@ def get_source_temperature(
         Temperature in Celsius. Returns a float for constant-temperature sources
         or an xr.DataArray for time-varying sources.
 
-    Raises
-    ------
-    ValueError
-        If a constant-temperature source lacks its parameter or a time-varying
-        source lacks its input file.
+    Notes
+    -----
+    Presence of constant-temperature entries in ``heat_source_temperatures``
+    is validated at config load time by ``SectorConfig``.
     """
     heat_source = HeatSource(heat_source_name)
     if heat_source.temperature_from_config:
-        try:
-            return snakemake_params["heat_source_temperatures"][heat_source_name]
-        except KeyError:
-            raise ValueError(
-                f"Constant temperature for heat source '{heat_source_name}' not specified in heat_source_temperatures."
-            )
+        return snakemake_params["heat_source_temperatures"][heat_source_name]
     else:
-        if f"temp_{heat_source_name}" not in snakemake_input.keys():
-            raise ValueError(
-                f"Missing input temperature for heat source {heat_source_name}."
-            )
         return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
 
 
@@ -226,7 +216,6 @@ def get_source_inlet_temperature(
 def get_sink_inlet_temperature(
     source_temperature: float | xr.DataArray,
     central_heating_return_temperature: xr.DataArray,
-    central_heating_forward_temperature: xr.DataArray,
 ) -> float | xr.DataArray:
     """
     Determine the effective sink inlet temperature for the heat pump.
@@ -237,7 +226,7 @@ def get_sink_inlet_temperature(
     temperature. When preheating is not used (source <= return), the heat pump
     receives water at return temperature and heats it to forward temperature.
 
-    When source temperature > return temperature, preheater is used: preheater raises return flow, heat pump inlet is at forward temp.
+    When source temperature > return temperature, preheater is used: preheater raises return flow, heat pump inlet is at source temperature.
     When source temperature <= return temperature, no preheating: heat pump inlet is at return temperature.
 
     Parameters
@@ -248,8 +237,6 @@ def get_sink_inlet_temperature(
         Temperature of the heat source in Celsius.
     central_heating_return_temperature : xr.DataArray
         District heating return temperature in Celsius.
-    central_heating_forward_temperature : xr.DataArray
-        District heating forward (supply) temperature in Celsius.
 
     Returns
     -------
@@ -258,7 +245,7 @@ def get_sink_inlet_temperature(
     """
     return xr.where(
         source_temperature > central_heating_return_temperature,
-        central_heating_forward_temperature,
+        source_temperature,
         central_heating_return_temperature,
     )
 
@@ -305,7 +292,6 @@ if __name__ == "__main__":
 
             sink_inlet_temperature_celsius = get_sink_inlet_temperature(
                 source_temperature=source_temperature_celsius,
-                central_heating_forward_temperature=central_heating_forward_temperature,
                 central_heating_return_temperature=central_heating_return_temperature,
             )
 

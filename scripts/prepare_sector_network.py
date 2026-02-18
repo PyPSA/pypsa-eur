@@ -29,6 +29,8 @@ from scripts._helpers import (
     update_config_from_wildcards,
 )
 from scripts.add_electricity import (
+    attach_storageunits,
+    attach_stores,
     calculate_annuity,
     flatten,
     sanitize_carriers,
@@ -1745,7 +1747,7 @@ def add_electricity_grid_connection(n, costs):
     ]
 
 
-def add_storage_and_grids(
+def add_h2_gas_infrastructure(
     n,
     costs,
     pop_layout,
@@ -1757,7 +1759,7 @@ def add_storage_and_grids(
     options,
 ):
     """
-    Add storage and grid infrastructure to the network including hydrogen, gas, and battery systems.
+    Add hydrogen and gas infrastructure to the network.
 
     Parameters
     ----------
@@ -1806,7 +1808,6 @@ def add_storage_and_grids(
     This function adds multiple types of storage and grid infrastructure:
     - Hydrogen infrastructure (electrolysis, fuel cells, storage)
     - Gas network infrastructure
-    - Battery storage systems
     - Carbon capture and conversion facilities (if enabled in options)
     """
     # Set defaults
@@ -2091,44 +2092,6 @@ def add_storage_and_grids(
             carrier="H2 pipeline",
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
         )
-
-    n.add("Carrier", "battery")
-
-    n.add("Bus", nodes + " battery", location=nodes, carrier="battery", unit="MWh_el")
-
-    n.add(
-        "Store",
-        nodes + " battery",
-        bus=nodes + " battery",
-        e_cyclic=True,
-        e_nom_extendable=True,
-        carrier="battery",
-        capital_cost=costs.at["battery storage", "capital_cost"],
-        lifetime=costs.at["battery storage", "lifetime"],
-    )
-
-    n.add(
-        "Link",
-        nodes + " battery charger",
-        bus0=nodes,
-        bus1=nodes + " battery",
-        carrier="battery charger",
-        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        capital_cost=costs.at["battery inverter", "capital_cost"],
-        p_nom_extendable=True,
-        lifetime=costs.at["battery inverter", "lifetime"],
-    )
-
-    n.add(
-        "Link",
-        nodes + " battery discharger",
-        bus0=nodes + " battery",
-        bus1=nodes,
-        carrier="battery discharger",
-        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        p_nom_extendable=True,
-        lifetime=costs.at["battery inverter", "lifetime"],
-    )
 
     if options["methanation"]:
         n.add(
@@ -3165,7 +3128,7 @@ def add_heat(
 
             n.add(
                 "Bus",
-                nodes + f" {heat_system} ptes heat",
+                HeatSource.PTES.resource_bus(nodes, heat_system),
                 location=nodes,
                 carrier=f"{heat_system} ptes heat",
                 unit="MWh_th",
@@ -3212,7 +3175,6 @@ def add_heat(
                 / 100,  # convert %/hour into unit/hour
                 capital_cost=costs.at["central water pit storage", "capital_cost"],
                 lifetime=costs.at["central water pit storage", "lifetime"],
-                e_nom_min=100000,
             )
 
         if enable_ates and heat_system == HeatSystem.URBAN_CENTRAL:
@@ -3282,8 +3244,8 @@ def add_heat(
                     heat_source=heat_source.value,
                     name=nodes,
                 )
+                .transpose("time", "name")
                 .to_pandas()
-                .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
                 else costs.loc[[costs_name_heat_pump], ["efficiency"]]
             )
@@ -3323,8 +3285,8 @@ def add_heat(
                     heat_source_preheater_utilisation_profile.sel(
                         heat_source=heat_source.value, name=nodes
                     )
+                    .transpose("time", "name")
                     .to_pandas()
-                    .reindex(index=n.snapshots)
                 )
 
                 n.add(
@@ -3358,8 +3320,8 @@ def add_heat(
                     heat_source_direct_utilisation_profile.sel(
                         heat_source=heat_source.value, name=nodes
                     )
+                    .transpose("time", "name")
                     .to_pandas()
-                    .reindex(index=n.snapshots)
                 )
 
                 # add link for direct usage of heat source when source temperature exceeds forward temperature
@@ -3427,6 +3389,7 @@ def add_heat(
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_min_pu=-(cop_heat_pump > 0).squeeze().astype(float),
+                    p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -5521,12 +5484,8 @@ def add_waste_heat(
                 f"'{heat_source.process_carrier}' to be present in the network, but it is missing. Make sure the corresponding industrial process link has been added."
             )
 
-        # Get utilisation factor from config
-        utilisation = options.get(heat_source.waste_heat_option_key, 0)
-        if not utilisation:
-            raise RuntimeError(
-                f"Heat source {heat_source.value} enabled in heat_sources config, but utilisation factor '{heat_source.waste_heat_option_key}' is not set or zero."
-            )
+        # Get utilisation factor from config (validated > 0 in config validator)
+        utilisation = options[heat_source.waste_heat_option_key]
 
         # Get efficiency and bus/efficiency column names
         efficiency = heat_source.get_waste_heat_efficiency(
@@ -6295,6 +6254,7 @@ if __name__ == "__main__":
 
     options = snakemake.params.sector
     cf_industry = snakemake.params.industry
+    ext_carriers = snakemake.params.electricity.get("extendable_carriers", dict())
 
     investment_year = int(snakemake.wildcards.planning_horizons)
 
@@ -6303,6 +6263,7 @@ if __name__ == "__main__":
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
+    max_hours = snakemake.params.electricity["max_hours"]
 
     costs = load_costs(snakemake.input.costs)
 
@@ -6376,7 +6337,7 @@ if __name__ == "__main__":
         cf_industry=cf_industry,
     )
 
-    add_storage_and_grids(
+    add_h2_gas_infrastructure(
         n=n,
         costs=costs,
         pop_layout=pop_layout,
@@ -6386,6 +6347,25 @@ if __name__ == "__main__":
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
+    )
+
+    # Hydrogen already implemented in add_h2_gas_infrastructure
+    extendable_storageunits = list(set(ext_carriers.get("StorageUnit", [])) - {"H2"})
+    extendable_stores = list(set(ext_carriers.get("Store", [])) - {"H2"})
+
+    attach_storageunits(
+        n=n,
+        costs=costs,
+        buses_i=pop_layout.index,
+        extendable_carriers=extendable_storageunits,
+        max_hours=max_hours,
+    )
+
+    attach_stores(
+        n=n,
+        costs=costs,
+        buses_i=pop_layout.index,
+        extendable_carriers=extendable_stores,
     )
 
     if options["transport"]:

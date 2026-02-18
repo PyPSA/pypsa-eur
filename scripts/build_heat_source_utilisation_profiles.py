@@ -88,19 +88,14 @@ def get_source_temperature(
         Either a constant temperature (float) for sources like geothermal,
         or a DataArray with time-varying temperatures for sources like PTES or air.
 
-    Raises
-    ------
-    ValueError
-        If the required temperature data is not available in params or inputs.
+    Notes
+    -----
+    Presence of constant-temperature entries in ``heat_source_temperatures``
+    is validated at config load time by ``SectorConfig``.
     """
     heat_source = HeatSource(heat_source_name)
     if heat_source.temperature_from_config:
-        try:
-            return snakemake_params["heat_source_temperatures"][heat_source_name]
-        except KeyError:
-            raise ValueError(
-                f"Constant temperature for heat source '{heat_source_name}' not specified in heat_source_temperatures."
-            )
+        return snakemake_params["heat_source_temperatures"][heat_source_name]
     else:
         if f"temp_{heat_source_name}" not in snakemake_input.keys():
             raise ValueError(
