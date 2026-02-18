@@ -56,7 +56,7 @@ transmission expansion planning studies. The continental scope and highly
 resolved spatial scale enables a proper description of the long-range smoothing
 effects for renewable power generation and their varying resource availability.
 
-.. image:: img/elec.png
+.. image:: img/base.png
     :width: 70%
     :align: center
 

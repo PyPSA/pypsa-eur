@@ -117,6 +117,11 @@ Rule ``build_tes_capacity_profiles``
 
 .. automodule:: build_tes_capacity_profiles
 
+Rule ``build_eurostat_balances``
+==============================================================================
+
+.. automodule:: build_eurostat_balances
+
 Rule ``build_energy_totals``
 ==============================================================================
 

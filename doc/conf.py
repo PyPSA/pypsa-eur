@@ -64,6 +64,8 @@ extensions = [
     #'sphinxcontrib.tikz',
     #'rinoh.frontend.sphinx',
     "sphinx.ext.imgconverter",  # for SVG conversion
+    "sphinx-jsonschema",
+    "sphinx_design",
 ]
 
 autodoc_mock_imports = [
@@ -76,6 +78,8 @@ autodoc_mock_imports = [
     "powerplantmatching",
     "rasterio",
     "dask.distributed",
+    "pydantic",
+    "ruamel",
 ]
 
 autodoc_default_flags = ["members"]

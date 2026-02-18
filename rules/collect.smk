@@ -33,6 +33,8 @@ rule process_costs:
 
 
 rule cluster_networks:
+    message:
+        "Collecting clustered network files"
     input:
         expand(
             resources("networks/base_s_{clusters}.nc"),
@@ -42,6 +44,8 @@ rule cluster_networks:
 
 
 rule prepare_elec_networks:
+    message:
+        "Collecting prepared electricity network files"
     input:
         expand(
             resources("networks/base_s_{clusters}_elec_{opts}.nc"),
@@ -51,6 +55,8 @@ rule prepare_elec_networks:
 
 
 rule prepare_sector_networks:
+    message:
+        "Collecting prepared sector-coupled network files"
     input:
         expand(
             resources(
@@ -62,6 +68,8 @@ rule prepare_sector_networks:
 
 
 rule solve_elec_networks:
+    message:
+        "Collecting solved electricity network files"
     input:
         expand(
             RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
@@ -84,6 +92,8 @@ rule solve_elec_mga_networks:
 
 
 rule solve_sector_networks:
+    message:
+        "Collecting solved sector-coupled network files"
     input:
         expand(
             RESULTS
@@ -107,6 +117,8 @@ rule solve_sector_mga_networks:
 
 
 rule solve_sector_networks_perfect:
+    message:
+        "Collecting solved sector-coupled network files with perfect foresight"
     input:
         expand(
             RESULTS
@@ -133,6 +145,8 @@ def balance_map_paths(kind, w):
 
 
 rule plot_balance_maps:
+    message:
+        "Plotting energy balance maps"
     input:
         static=lambda w: balance_map_paths("static", w),
         interactive=lambda w: balance_map_paths("interactive", w),
@@ -149,6 +163,8 @@ rule plot_balance_maps_interactive:
 
 
 rule plot_power_networks_clustered:
+    message:
+        "Plotting clustered power network topology"
     input:
         expand(
             resources("maps/power-network-s-{clusters}.pdf"),
