@@ -192,6 +192,8 @@ PyPSA-Eur v2026.02.0 (18th February 2026)
 
 * Allow expandable CCGTs by default (https://github.com/PyPSA/pypsa-eur/pull/1796).
 
+* Reverted to PDF files for graphs generated with :mod:`plot_summary` (https://github.com/PyPSA/pypsa-eur/pull/2083).
+
 * Add user-readable messages to each rule (https://github.com/PyPSA/pypsa-eur/pull/1846).
 
 * Running perfect foresight marked as unstable (https://github.com/PyPSA/pypsa-eur/pull/1853).
