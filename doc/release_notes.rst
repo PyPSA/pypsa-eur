@@ -8,8 +8,10 @@ Release Notes
 
 Upcoming Release
 ================
-* Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.
 
+* Pin grpcio<1.78 to silence warnings that are cluttering the log (https://github.com/PyPSA/pypsa-eur/pull/2080).
+
+* Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.
 
 * Bugfix: Rolling horizon optimisation also in :mod:`solve_network`, not only in :mod:`solve_operations_network`. Drop cyclicity constraints with setting ``rolling_horizon: true``.
 
