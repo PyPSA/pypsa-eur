@@ -10,6 +10,7 @@ Upcoming Release
 ================
 * Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.
 
+* Bugfix: Disregard CORINE land cover data for offshore technologies since its scope is not sufficiently large and codes are already defined by offshore shapes.
 
 * Bugfix: Rolling horizon optimisation also in :mod:`solve_network`, not only in :mod:`solve_operations_network`. Drop cyclicity constraints with setting ``rolling_horizon: true``.
 

@@ -151,7 +151,7 @@ class _OffwindConfig(BaseModel):
         0.8855, description="Correction factor for capacity factor time series."
     )
     corine: bool | list[int] = Field(
-        default_factory=lambda: [44, 255],
+        default_factory=lambda: False,
         description="Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement.",
     )
     luisa: bool | list[int] = Field(

@@ -184,6 +184,11 @@
           "description": "Whether progressbar for atlite conversion processes should be shown. False saves time.",
           "type": "boolean"
         },
+        "plot_availability_matrix": {
+          "default": false,
+          "description": "Whether to plot the landuse availability matrix.",
+          "type": "boolean"
+        },
         "cutouts": {
           "additionalProperties": {
             "description": "Configuration for a single cutout in `atlite.cutouts`.",
@@ -8558,6 +8563,11 @@
         "show_progress": {
           "default": false,
           "description": "Whether progressbar for atlite conversion processes should be shown. False saves time.",
+          "type": "boolean"
+        },
+        "plot_availability_matrix": {
+          "default": false,
+          "description": "Whether to plot the landuse availability matrix.",
           "type": "boolean"
         },
         "cutouts": {
