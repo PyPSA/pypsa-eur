@@ -29,7 +29,6 @@ logs, resources, benchmarks, results, and .snakemake directories except \
 """
 
 update-dags = """
-	dot -c && \
 	snakemake results/networks/base_s_128_elec_.nc -F --dag | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png && \
 	snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/workflow.png
 """
@@ -102,13 +101,14 @@ pandera = ">=0.28.1"
 natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
 pydeflate = ">=2.3.4"
+grpcio = "<1.78"
 
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"
 
 [feature.doc.tasks.build-docs]
 args = ["dir", {"arg" = "output", "default" = "html"}]
-cmd = "dot -c && sphinx-build -T -b {{ output }} doc {{ dir }}/{{ output }} "
+cmd = "sphinx-build -T -b {{ output }} doc {{ dir }}/{{ output }} "
 
 [feature.doc.dependencies]
 atlite = "==0.4.1"
