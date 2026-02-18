@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Reverting to .pdf file ending for graphs generated with `plot_summary` (https://github.com/PyPSA/pypsa-eur/pull/2083).
+
 * Pin grpcio<1.78 to silence warnings that are cluttering the log (https://github.com/PyPSA/pypsa-eur/pull/2080).
 
 * Updated unit commitment parameters. Bugfix scales start-up costs with nominal power capacitiy.
