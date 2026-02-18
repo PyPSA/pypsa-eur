@@ -19,6 +19,7 @@ Upcoming Release
 
 * Add configuration schema updater that allows changes to be made in soft-forks without touching base PyPSA-Eur files (#2014).
 
+* ``data/nuclear_p_max_pu.csv`` now stores annual energy availability factors per country with years as columns. The model automatically selects the column nearest to the simulated weather year.
 * The ``clustering: consider_efficiency_classes`` option now accepts a list of quantile boundaries (e.g. ``[0.1, 0.5, 0.9]``) in addition to a boolean. Labels are derived from quantile percentages (e.g. ``Q0``, ``Q10``, ``Q90``). The default behaviour (``true``) is unchanged, using ``[0.1, 0.9]`` quantiles.
 * Existing battery storage capacities from the powerplantmatching dataset can now be added to the network as ``StorageUnit`` components, using plant-level duration data with fallback to ``electricity: max_hours: battery`` and cost-table round-trip efficiency.
 
