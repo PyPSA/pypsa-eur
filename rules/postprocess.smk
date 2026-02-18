@@ -450,9 +450,9 @@ rule plot_summary:
         eurostat=resources("eurostat_energy_balances.csv"),
         co2=rules.retrieve_ghg_emissions.output["csv"],
     output:
-        costs=RESULTS + "graphs/costs.svg",
-        energy=RESULTS + "graphs/energy.svg",
-        balances=RESULTS + "graphs/balances-energy.svg",
+        costs=RESULTS + "graphs/costs.pdf",
+        energy=RESULTS + "graphs/energy.pdf",
+        balances=RESULTS + "graphs/balances-energy.pdf",
     threads: 2
     resources:
         mem_mb=10000,
