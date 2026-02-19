@@ -278,7 +278,7 @@ def add_power_capacities_installed_before_baseyear(
         values="Capacity",
         aggfunc="sum",
     )
-    
+
     if solar_rooftop_ratio != 0:
         mask = df.index.get_level_values("Fueltype") == "solar"
         solar = df.loc[mask] * (1 - solar_rooftop_ratio)
@@ -287,9 +287,13 @@ def add_power_capacities_installed_before_baseyear(
 
         # Rename column of MultiIndex to add "solar rooftop" as Fueltype
         pos = solar_rooftop.index.names.index("Fueltype")
-        arrays = [solar_rooftop.index.get_level_values(n) for n in solar_rooftop.index.names]
+        arrays = [
+            solar_rooftop.index.get_level_values(n) for n in solar_rooftop.index.names
+        ]
         arrays[pos] = ["solar rooftop"] * len(solar_rooftop)
-        solar_rooftop.index = pd.MultiIndex.from_arrays(arrays, names=solar_rooftop.index.names)
+        solar_rooftop.index = pd.MultiIndex.from_arrays(
+            arrays, names=solar_rooftop.index.names
+        )
 
         df = pd.concat([rest, solar, solar_rooftop]).sort_index()
 
