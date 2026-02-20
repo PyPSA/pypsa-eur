@@ -66,6 +66,18 @@ class ConfigUpdater(ABC):
         `config.default.<prior-update-names>.{self.name}.<post-update-names>.yaml`
         """
 
+    @property
+    @abstractmethod
+    def docs_url(self) -> str | None:
+        """
+        Docs URL for custom config.
+        If not None, this URL will be used in the generated config file to link to documentation for each top-level key in the custom config.
+
+        You can use `{field_name}` as a formatting placeholder in the URL, which will be replaced with the actual field name for each key, e.g.:
+
+        `https://pypsa-eur.readthedocs.io/en/latest/configuration.html#{field_name}`
+        """
+
     @abstractmethod
     def update(self) -> type["ConfigSchema"]:
         """Function in which the custom config schema is created and returned."""

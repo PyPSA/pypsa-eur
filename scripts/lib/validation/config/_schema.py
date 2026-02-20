@@ -79,6 +79,9 @@ class ConfigSchema(BaseModel):
 
     _name: str = "default"
     """internal attribute to track the config filename following the application of config updates"""
+    _docs_url: str = (
+        "https://pypsa-eur.readthedocs.io/en/latest/configuration.html#{field_name}"
+    )
 
     # Top-level fields (from TopLevelConfig)
     version: str = Field(
