@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pyps
 SPDX-License-Identifier: CC-BY-4.0
 -->
 
-[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases)](https://pypsa-eur.readthedocs.io/en/v2026.02.0/)
+[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases)](https://pypsa-eur.readthedocs.io/en/stable/)
 [![Test workflows](https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml/badge.svg)](https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml)
 [![Documentation](https://readthedocs.org/projects/pypsa-eur/badge/?version=latest)](https://pypsa-eur.readthedocs.io/en/latest/?badge=latest)
 ![Size](https://img.shields.io/github/repo-size/pypsa/pypsa-eur)
