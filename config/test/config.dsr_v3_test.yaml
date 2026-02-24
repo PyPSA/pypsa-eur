@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# DSR v3 enabled test run.
+# Usage: snakemake --configfile config/config.default.yaml config/test/config.eu_38_2030_base.yaml config/test/config.dsr_v3_test.yaml
+
+run:
+  name: "EU_test_run_dsr_v3_optional"
+
+industry:
+  dsr:
+    enable: true

@@ -76,6 +76,12 @@ merger-todos.md
 
 *.html
 
+# analysis output
+analysis_output/
+
+# Windows WSL artifacts
+*Zone.Identifier
+
 # private dev folder
 dev/*
 

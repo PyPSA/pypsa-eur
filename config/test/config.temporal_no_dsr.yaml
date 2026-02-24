@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# Temporal industry profiles WITHOUT DSR (baseline for comparison).
+# Also disables residential heat DSM for a clean no-flexibility baseline.
+# Usage: snakemake --configfile config/config.default.yaml config/test/config.eu_38_2030_base.yaml config/test/config.temporal_no_dsr.yaml
+
+run:
+  name: "EU_test_run_temporal_no_dsr"
+
+sector:
+  residential_heat:
+    dsm:
+      enable: false
+
+industry:
+  dsr:
+    enable: false
