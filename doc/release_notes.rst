@@ -9,6 +9,8 @@ Release Notes
 .. Upcoming Release
 .. =================
 
+* refactor: Use scripts path provider consistently (https://github.com/PyPSA/pypsa-eur/pull/2093).
+
 PyPSA-Eur v2026.02.0 (18th February 2026)
 =========================================
 
