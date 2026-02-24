@@ -1236,7 +1236,7 @@ def add_dri_h2_coupling_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex
             h2_store_name = h2_store_at_node.index[0]
             dri_store_to_h2_store[dri_store_name] = h2_store_name
         else:
-            logger.debug(f"No H2 storage found for DRI store {dri_store_name} at bus {dri_bus}")
+            logger.debug(f"No H2 storage found for DRI store {dri_store_name} at bus {h2_bus}")
     
     if not dri_store_to_h2_store:
         logger.warning("No H2 storage found for any DRI DSR stores. DRI flexibility may be overestimated.")
@@ -1285,83 +1285,6 @@ def add_dri_h2_coupling_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex
     
     if constraints_added > 0:
         logger.info(f"Added H2 storage coupling constraints for {constraints_added} DRI DSR stores (H2/DRI ratio: {h2_per_dri_elec:.2f} MWh_H2/MWh_el)")
-
-
-def add_dsr_link_store_coupling_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None:
-    """
-    Add constraint coupling DSR Links to Store dispatch.
-    
-    With the flexibility bus architecture:
-    - Store on flexibility bus
-    - Charge link: load bus -> flexibility bus (positive flow = charging)
-    - Discharge link: flexibility bus -> load bus (positive flow = discharging)
-    
-    Constraint: store_p = charge_link - discharge_link
-    This ensures the store dispatch matches the link flows.
-    
-    Parameters
-    ----------
-    n : pypsa.Network
-        The PyPSA network instance
-    snapshots : pd.DatetimeIndex
-        Simulation timesteps
-    """
-    # Check if industry DSR is enabled
-    industry_config = n.config.get("industry", {})
-    dsr_config = industry_config.get("dsr", {})
-    if not dsr_config.get("enable", False):
-        return
-    
-    # Find DSR stores
-    industry_dsr_stores = n.stores.index[n.stores.carrier == "industry dsr"]
-    if industry_dsr_stores.empty:
-        return
-    
-    # Find corresponding charge and discharge links
-    charge_links = n.links.index[n.links.carrier == "industry dsr charge"]
-    discharge_links = n.links.index[n.links.carrier == "industry dsr discharge"]
-    
-    if charge_links.empty or discharge_links.empty:
-        logger.warning("DSR stores found but charge/discharge links not found. Store-link coupling constraint skipped.")
-        return
-    
-    # Get model variables
-    if not hasattr(n, "model") or n.model is None:
-        return
-    
-    store_p = n.model["Store-p"]
-    link_p = n.model["Link-p"]
-    
-    # Match stores to links by name
-    # Store name: "BE0 0 industry dsr Iron & steel industry Scrap-EAF"
-    # Charge link: "BE0 0 industry dsr Iron & steel industry Scrap-EAF charge"
-    # Discharge link: "BE0 0 industry dsr Iron & steel industry Scrap-EAF discharge"
-    
-    constraints_added = 0
-    for store_name in industry_dsr_stores:
-        charge_link_name = f"{store_name} charge"
-        discharge_link_name = f"{store_name} discharge"
-        
-        if charge_link_name not in charge_links or discharge_link_name not in discharge_links:
-            logger.debug(f"Links not found for store {store_name}, skipping coupling constraint")
-            continue
-        
-        # Constraint: store_p = charge_link - discharge_link
-        # This means:
-        # - When charging: charge_link > 0, discharge_link = 0, store_p > 0
-        # - When discharging: charge_link = 0, discharge_link > 0, store_p < 0
-        store_dispatch = store_p.loc[:, store_name]
-        charge_flow = link_p.loc[:, charge_link_name]
-        discharge_flow = link_p.loc[:, discharge_link_name]
-        
-        n.model.add_constraints(
-            store_dispatch == discharge_flow - charge_flow,
-            name=f"DSR_link_store_coupling_{store_name}"
-        )
-        constraints_added += 1
-    
-    if constraints_added > 0:
-        logger.info(f"Added store-link coupling constraints for {constraints_added} DSR stores")
 
 
 def _extract_tech_key(link_name):
