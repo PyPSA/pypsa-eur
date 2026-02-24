@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-FROM ghcr.io/prefix-dev/pixi:0.63.2 AS build
+FROM ghcr.io/prefix-dev/pixi:0.63.2
 
 LABEL org.opencontainers.image.source=https://github.com/PyPSA/pypsa-eur
 
@@ -12,17 +12,16 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends bash git && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pixi env at /opt/pixi-env (allow for bind mounts)
+COPY pixi.toml pixi.lock /opt/pixi-env/
+RUN cd /opt/pixi-env && pixi install -e default && pixi clean cache --yes
+
 WORKDIR /workspace
 
-COPY pixi.toml pixi.lock ./
+# Link pre-installed pixi env into workspace, activate environment and run command
+RUN echo '[ ! -e /workspace/.pixi ] && ln -s /opt/pixi-env/.pixi /workspace/.pixi' > /entrypoint.sh && \
+    pixi shell-hook -e default --manifest-path /opt/pixi-env/pixi.toml >> /entrypoint.sh && \
+    echo 'exec "$@"' >> /entrypoint.sh
 
-RUN pixi install -e default && pixi clean cache --yes
-RUN pixi shell-hook -e default > /shell-hook.sh
-
-# extend the shell-hook script to run the command passed to the container
-RUN echo 'exec "$@"' >> /shell-hook.sh
-
-# set the entrypoint to the shell-hook script (activate the environment and run the command)
-# no more pixi needed in the prod container
-ENTRYPOINT ["/bin/bash", "/shell-hook.sh"]
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
 CMD ["bash"]
