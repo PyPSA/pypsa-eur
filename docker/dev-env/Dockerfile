@@ -12,7 +12,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends bash git && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /pypsa-eur
+WORKDIR /workspace
 
 COPY pixi.toml pixi.lock ./
 
