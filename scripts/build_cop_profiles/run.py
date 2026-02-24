@@ -147,11 +147,11 @@ def get_source_temperature(
     Parameters
     ----------
     snakemake_params : dict
-        Snakemake parameters containing constant temperature values.
+        Snakemake parameters containing heat_source_temperatures dict.
     snakemake_input : dict
         Snakemake input files containing temperature profile paths.
     heat_source_name : str
-        Name of the heat source (e.g., "air", "ground", "geothermal", "ptes").
+        Name of the heat source (e.g., "air", "ground", "geothermal", "ptes", "electrolysis_waste").
 
     Returns
     -------
@@ -159,15 +159,14 @@ def get_source_temperature(
         Temperature in Celsius. Returns a float for constant-temperature sources
         or an xr.DataArray for time-varying sources.
 
-    Raises
-    ------
-    ValueError
-        If a constant-temperature source lacks its parameter or a time-varying
-        source lacks its input file.
+    Notes
+    -----
+    Presence of constant-temperature entries in ``heat_source_temperatures``
+    is validated at config load time by ``SectorConfig``.
     """
     heat_source = HeatSource(heat_source_name)
-    if heat_source.has_constant_temperature:
-        return snakemake_params[f"constant_temperature_{heat_source_name}"]
+    if heat_source.temperature_from_config:
+        return snakemake_params["heat_source_temperatures"][heat_source_name]
     else:
         return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
 

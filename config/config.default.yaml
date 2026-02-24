@@ -686,13 +686,26 @@ sector:
     dh_areas:
       buffer: 1000
       handle_missing_countries: fill
-    geothermal:
-      constant_temperature_celsius: 65
+    heat_source_temperatures:
+      geothermal: 65
+      electrolysis_waste: 70
+      fuel_cell_waste: 70
+      fischer_tropsch_waste: 200
+      haber_bosch_waste: 200
+      sabatier_waste: 200
+      methanolisation_waste: 200
+    fallback_ptx_heat_losses: 0.05
   heat_sources:
     urban central:
     - air
     - ptes
     - geothermal
+    - electrolysis_waste
+    - fuel_cell_waste
+    - fischer_tropsch_waste
+    - haber_bosch_waste
+    - sabatier_waste
+    - methanolisation_waste
     urban decentral:
     - air
     rural:

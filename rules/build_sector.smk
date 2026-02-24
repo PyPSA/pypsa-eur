@@ -323,11 +323,11 @@ rule build_geothermal_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
-        constant_temperature_celsius=config_provider(
+        source_temperature=config_provider(
             "sector",
             "district_heating",
+            "heat_source_temperatures",
             "geothermal",
-            "constant_temperature_celsius",
         ),
         ignore_missing_regions=config_provider(
             "sector",
@@ -549,6 +549,7 @@ def input_heat_source_temperature(
         for heat sources that require temperature profiles (excludes constant
         temperature sources).
     """
+    from scripts.definitions.heat_source import HeatSource
 
     heat_sources = set(
         config_provider("sector", "heat_sources", "urban central")(w)
@@ -557,25 +558,19 @@ def input_heat_source_temperature(
         config_provider("sector", "heat_sources", "rural")(w),
     )
 
-    district_heating_config = config_provider("sector", "district_heating")(w)
-
     file_names = {}
-    for heat_source in heat_sources:
-        if (
-            district_heating_config
-            and heat_source in district_heating_config
-            and district_heating_config[heat_source].get(
-                "constant_temperature_celsius", False
-            )
-        ):
+    for heat_source_name in heat_sources:
+        heat_source = HeatSource(heat_source_name)
+        # Skip heat sources with temperatures defined in config (not from file)
+        if heat_source.temperature_from_config:
             continue
-        if heat_source == "ptes":
-            file_names[f"temp_{heat_source}"] = resources(
-                f"temp_{replace_names.get(heat_source, heat_source)}_base_s_{{clusters}}_{{planning_horizons}}.nc"
+        if heat_source_name == "ptes":
+            file_names[f"temp_{heat_source_name}"] = resources(
+                f"temp_{replace_names.get(heat_source_name, heat_source_name)}_base_s_{{clusters}}_{{planning_horizons}}.nc"
             )
         else:
-            file_names[f"temp_{heat_source}"] = resources(
-                f"temp_{replace_names.get(heat_source, heat_source)}_base_s_{{clusters}}.nc"
+            file_names[f"temp_{heat_source_name}"] = resources(
+                f"temp_{replace_names.get(heat_source_name, heat_source_name)}_base_s_{{clusters}}.nc"
             )
     return file_names
 
@@ -680,11 +675,8 @@ rule build_cop_profiles:
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
         heat_sources=config_provider("sector", "heat_sources"),
-        constant_temperature_geothermal=config_provider(
-            "sector",
-            "district_heating",
-            "geothermal",
-            "constant_temperature_celsius",
+        heat_source_temperatures=config_provider(
+            "sector", "district_heating", "heat_source_temperatures"
         ),
         snapshots=config_provider("snapshots"),
     input:
@@ -777,20 +769,17 @@ rule build_ptes_operations:
         scripts("build_ptes_operations/run.py")
 
 
-rule build_direct_heat_source_utilisation_profiles:
+rule build_heat_source_utilisation_profiles:
     message:
-        "Building direct heat source utilization profiles for industrial applications for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+        "Building heat source utilization profiles for district heating for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         heat_sources=config_provider("sector", "heat_sources", "urban central"),
         heat_source_cooling=config_provider(
             "sector", "district_heating", "heat_source_cooling"
         ),
         snapshots=config_provider("snapshots"),
-        constant_temperature_geothermal=config_provider(
-            "sector",
-            "district_heating",
-            "geothermal",
-            "constant_temperature_celsius",
+        heat_source_temperatures=config_provider(
+            "sector", "district_heating", "heat_source_temperatures"
         ),
         ptes_enable=config_provider("sector", "district_heating", "ptes", "enable"),
     input:
