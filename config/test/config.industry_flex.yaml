@@ -14,7 +14,7 @@ foresight: myopic
 
 scenario:
   clusters:
-  - 38
+  - 39
   opts:
   - ''
   sector_opts:
@@ -139,6 +139,7 @@ industry:
   dsr:
     enable: true
   waste_to_energy: true
+  temporal_electricity_industry_load: true
 
 solving:
   solver:
