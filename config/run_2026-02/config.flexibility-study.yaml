@@ -3,6 +3,7 @@
 
 run:
   prefix: "2026-02"
+  name: "all" # Must be kept as "all", else the scenario management is not working, see https://github.com/PyPSA/pypsa-eur/issues/2100
   disable_progressbar: true
   shared_resources:
     policy: false
@@ -16,10 +17,6 @@ foresight: overnight
 scenario:
   clusters:
     - 37
-  opts:
-    - ""
-  sector_opts:
-    - ""
   planning_horizons:
     - "2030" # Will be overwritten, but must be kept due to a bug upstream, see https://github.com/PyPSA/pypsa-eur/issues/2100
 
