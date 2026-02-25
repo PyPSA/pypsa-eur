@@ -11,6 +11,8 @@ Release Notes
 
 * refactor: Use scripts path provider consistently (https://github.com/PyPSA/pypsa-eur/pull/2093).
 
+* Fix: Lower the lower bound used to group the power plants in ``add_existing_baseyear`` (https://github.com/PyPSA/pypsa-eur/pull/2097). This now includes all power plants built since 1900.
+
 PyPSA-Eur v2026.02.0 (18th February 2026)
 =========================================
 
