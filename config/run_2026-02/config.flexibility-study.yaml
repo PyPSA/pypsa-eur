@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 run:
-  prefix: "2026-02/flexibility-study"
+  prefix: "2026-02"
   disable_progressbar: true
   shared_resources:
     policy: false
@@ -15,13 +15,13 @@ foresight: overnight
 
 scenario:
   clusters:
-    - 38
+    - 37
   opts:
     - ""
   sector_opts:
     - ""
   planning_horizons:
-    - ""
+    - "2030" # Will be overwritten, but must be kept due to a bug upstream, see https://github.com/PyPSA/pypsa-eur/issues/2100
 
 countries:
   - AL
@@ -57,7 +57,6 @@ countries:
   - SE
   - SI
   - SK
-  - XK
 
 snapshots:
   start: "2019-01-01"
@@ -106,9 +105,24 @@ sector:
   gas_network: true
   H2_network: false
   H2_retrofit: false
+  reduce_space_heat_exogenously: true
+  reduce_space_heat_exogenously_factor:
+    2020: 0.01
+    2025: 0.04
+    2030: 0.08
+    2035: 0.12
+    2040: 0.15
+    2045: 0.24
+    2050: 0.286
+  district_heating:
+    progress:
+      2020: 0.0
+      2030: 0.3
+      2040: 0.5
+      2050: 0.8
   residential_heat:
     dsm:
-      enable: true
+      enable: false
       direction:
         - overheat
         - undercool
@@ -118,14 +132,9 @@ sector:
       2030: 0.3
       2040: 0.5
       2050: 0.8
-  heat_pump_sources:
-    urban central:
-      - air
-    urban decentral:
-      - air
-    rural:
-      - air
   hydrogen_turbine: true
+  bev_dsm: false
+  v2g: false
   bev_energy: 0.07
   regional_oil_demand: false
   regional_co2_sequestration_potential:
@@ -147,10 +156,9 @@ sector:
 
 industry:
   dsr:
-    enable: true
+    enable: false
   waste_to_energy: true
-  # Unclear whether this should be kept - it is only in some of the config files, but not in config.default.yaml
-  # temporal_electricity_industry_load: true
+  temporal_electricity_industry_load: true
 
 solving:
   solver:

@@ -82,17 +82,6 @@ ref-2030:
   costs:
     year: 2030
 
-  sector:
-    residential_heat:
-      dsm:
-        enable: false
-    bev_dsm: false
-    v2g: false
-
-  industry:
-    dsr:
-      enable: false
-
 # Reference 2040
 ref-2040:
   run:
@@ -105,17 +94,6 @@ ref-2040:
   costs:
     year: 2040
 
-  sector:
-    residential_heat:
-      dsm:
-        enable: false
-    bev_dsm: false
-    v2g: false
-
-  industry:
-    dsr:
-      enable: false
-
 # Reference 2050
 ref-2050:
   run:
@@ -127,14 +105,3 @@ ref-2050:
 
   costs:
     year: 2050
-
-  sector:
-    residential_heat:
-      dsm:
-        enable: false
-    bev_dsm: false
-    v2g: false
-
-  industry:
-    dsr:
-      enable: false
