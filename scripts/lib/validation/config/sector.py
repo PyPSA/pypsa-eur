@@ -106,6 +106,25 @@ class _PtesConfig(BaseModel):
         return self
 
 
+class _DhAreasConfig(BaseModel):
+    """Configuration for `sector.district_heating.dh_areas` settings."""
+
+    buffer: float = Field(
+        1000,
+        description="Buffer distance in meters to apply around district heating areas.",
+    )
+    handle_missing_countries: Literal["ignore", "fill", "raise"] = Field(
+        "fill",
+        description=(
+            "Strategy for handling countries that exist in onshore regions but "
+            "lack district heating data. "
+            "'ignore': assume no DH infrastructure (silent). "
+            "'fill': use full onshore region as potential DH area (with warning). "
+            "'raise': fail with an error."
+        ),
+    )
+
+
 class _DistrictHeatingConfig(ConfigModel):
     """Configuration for `sector.district_heating` settings."""
 
@@ -181,8 +200,8 @@ class _DistrictHeatingConfig(ConfigModel):
         },
         description="Heat pump COP approximation settings.",
     )
-    dh_areas: dict[str, Any] = Field(
-        default_factory=lambda: {"buffer": 1000, "handle_missing_countries": "fill"},
+    dh_areas: _DhAreasConfig = Field(
+        default_factory=_DhAreasConfig,
         description="District heating areas settings.",
     )
     heat_source_temperatures: dict[str, float] = Field(
