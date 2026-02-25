@@ -34,7 +34,7 @@ rule base_network_incumbent:
     resources:
         mem_mb=2000,
     script:
-        "../scripts/base_network.py"
+        scripts("base_network.py")
 
 
 rule make_network_comparison:
@@ -62,7 +62,7 @@ rule make_network_comparison:
     resources:
         mem_mb=2000,
     script:
-        "../scripts/make_network_comparison.py"
+        scripts("make_network_comparison.py")
 
 
 rule prepare_osm_network_release:
@@ -92,7 +92,7 @@ rule prepare_osm_network_release:
     resources:
         mem_mb=1000,
     script:
-        "../scripts/prepare_osm_network_release.py"
+        scripts("prepare_osm_network_release.py")
 
 
 rule map_incumbent:
@@ -115,7 +115,7 @@ rule map_incumbent:
     resources:
         mem_mb=1000,
     script:
-        "../scripts/prepare_osm_network_release.py"
+        scripts("prepare_osm_network_release.py")
 
 
 rule osm_release:
