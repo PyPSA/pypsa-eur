@@ -322,22 +322,17 @@ rule build_geothermal_heat_potential:
         "Building geothermal heat potential estimates for {wildcards.clusters} clusters"
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        countries=config_provider("countries"),
         source_temperature=config_provider(
             "sector",
             "district_heating",
             "heat_source_temperatures",
             "geothermal",
         ),
-        ignore_missing_regions=config_provider(
-            "sector",
-            "district_heating",
-            "limited_heat_sources",
-            "geothermal",
-            "ignore_missing_regions",
-        ),
         heat_source_cooling=config_provider(
             "sector", "district_heating", "heat_source_cooling"
+        ),
+        handle_missing_countries=config_provider(
+            "sector", "district_heating", "dh_areas", "handle_missing_countries"
         ),
     input:
         isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output[

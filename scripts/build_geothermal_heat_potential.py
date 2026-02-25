@@ -34,11 +34,10 @@ Relevant Settings
     sector:
         district_heating:
             heat_source_cooling: 6  # K
-            geothermal:
-                constant_temperature_celsius: 65
-            limited_heat_sources:
-                geothermal:
-                    ignore_missing_regions: false
+            heat_source_temperatures:
+                geothermal: 65
+            dh_areas:
+                handle_missing_countries: fill  # or 'ignore' or 'raise'
 
 Inputs
 ------
@@ -57,8 +56,6 @@ Raises
 ------
 ValueError
     If LAU regions in ISI heat potentials are missing from the LAU Regions data.
-ValueError
-    If onshore regions outside EU-27 have no heat source power and ignore_missing_regions is False.
 
 Source
 ------
@@ -216,59 +213,55 @@ def get_unit_conversion_factor(
     return unit_scaling[input_unit] / unit_scaling[output_unit]
 
 
-def identify_non_covered_regions(
-    regions_onshore: gpd.GeoDataFrame, heat_source_power: pd.DataFrame
-) -> pd.Index:
-    """
-    Identify regions without heat source power data.
-
-    Parameters
-    ----------
-    regions_onshore : gpd.GeoDataFrame
-        GeoDataFrame of the onshore regions, indexed by region name.
-    heat_source_power : pd.DataFrame
-        Heat source power data, indexed by region name.
-
-    Returns
-    -------
-    pd.Index
-        Index of regions that have no heat source power data.
-    """
-    return regions_onshore.index.difference(heat_source_power.index)
-
-
 def get_heat_source_power(
     regions_onshore: gpd.GeoDataFrame,
-    supply_potentials: gpd.GeoDataFrame,
+    lau_regions: gpd.GeoDataFrame,
+    supply_potentials: pd.Series,
     full_load_hours: float,
     input_unit: str,
+    handle_missing_countries: str,
     output_unit: str = "MWh",
-    ignore_missing_regions: bool = False,
-) -> pd.DataFrame:
+) -> pd.Series:
     """
-    Get the heat source power from supply potentials.
+    Map LAU-level supply potentials to onshore regions and convert to power.
 
-    Note
-    ----
-    Broadcasts to repeat constant heat source power across snapshots.
+    The Manz et al. (2024) supply potentials are provided at LAU level and cover
+    EU-27 countries. This function spatially joins them to the onshore regions,
+    aggregates, and converts from energy to power using ``full_load_hours``.
+
+    Regions outside the data coverage (e.g. non-EU-27 countries) are handled
+    according to ``handle_missing_countries``.
 
     Parameters
     ----------
     regions_onshore : gpd.GeoDataFrame
-        GeoDataFrame of the onshore regions.
-    supply_potentials : gpd.GeoDataFrame
-        GeoDataFrame of the heat source supply potentials.
+        Onshore regions indexed by region name.
+    lau_regions : gpd.GeoDataFrame
+        LAU region geometries indexed by GISCO_ID.
+    supply_potentials : pd.Series
+        Supply potentials per LAU region (energy units). Index: GISCO_ID.
     full_load_hours : float
-        Full load hours assumed in the supply potential computation. Used to scale the supply potentials to technical potentials.
+        Full load hours assumed in the supply potential computation.
     input_unit : str
-        Unit of the supply potentials. Used to convert to the output unit.
+        Unit of the supply potentials.
+    handle_missing_countries : str
+        Strategy for regions without data:
+
+        - ``"ignore"``: Assume zero potential with a warning.
+        - ``"fill"``: Assume zero potential with a warning.
+        - ``"raise"``: Raise an error listing the missing regions.
     output_unit : str, optional
-        Unit of the technical potentials. Default: "MWh".
+        Desired output unit. Default: ``"MWh"``.
 
     Returns
     -------
-    pd.DataFrame
-        Heat source power in the onshore regions. Indexed by name (onshore region).
+    pd.Series
+        Heat source power [MW] per onshore region, indexed by region name.
+
+    Raises
+    ------
+    ValueError
+        If ``handle_missing_countries`` is ``"raise"`` and regions are missing.
     """
 
     unit_conversion_factor = get_unit_conversion_factor(
@@ -291,39 +284,31 @@ def get_heat_source_power(
 
     heat_source_power = heat_potentials_in_onshore_regions_aggregated * scaling_factor
 
-    non_covered_regions = identify_non_covered_regions(
-        regions_onshore, heat_source_power
-    )
-
-    not_eu_27 = [
-        "GB",
-        "UA",
-        "MD",
-        "AL",
-        "RS",
-        "BA",
-        "ME",
-        "MK",
-        "XK",
-    ]
-
-    if not non_covered_regions.empty:
-        if all(non_covered_regions.str.contains("|".join(not_eu_27))):
-            if ignore_missing_regions:
-                logger.warning(
-                    f"The onshore regions outside EU 27 ({non_covered_regions.to_list()}) have no heat source power. Filling with zeros."
-                )
-                heat_source_power = heat_source_power.reindex(
-                    regions_onshore.index, fill_value=0
-                )
-            else:
-                raise ValueError(
-                    f"The onshore regions outside EU 27 {non_covered_regions.to_list()} have no heat source power. Set the ignore_missing_regions parameter in the config to true if you want to include these countries in your analysis despite missing geothermal data."
-                )
-        else:
+    # Handle regions without data (e.g. non-EU-27 countries)
+    non_covered = regions_onshore.index.difference(heat_source_power.index)
+    if not non_covered.empty:
+        if handle_missing_countries == "raise":
             raise ValueError(
-                f"The onshore regions {non_covered_regions.to_list()} have no heat source power. The pre-processing of the potential data might be faulty."
+                f"No geothermal heat potentials for {len(non_covered)} regions: "
+                f"{non_covered.to_list()}. "
+                f"The Manz et al. data covers EU-27 only. "
+                f"Set sector.district_heating.dh_areas.handle_missing_countries "
+                f"to 'fill' or 'ignore' to fill these with zero."
             )
+        elif handle_missing_countries == "fill":
+            logger.warning(
+                f"No geothermal potentials for {len(non_covered)} regions "
+                f"(outside Manz et al. coverage). Filling with zero: "
+                f"{non_covered.to_list()}"
+            )
+        elif handle_missing_countries == "ignore":
+            logger.warning(
+                f"No geothermal potentials for {len(non_covered)} regions "
+                f"(outside Manz et al. coverage). Assuming no potential: "
+                f"{non_covered.to_list()}"
+            )
+
+    heat_source_power = heat_source_power.reindex(regions_onshore.index, fill_value=0)
 
     return heat_source_power
 
@@ -384,13 +369,14 @@ if __name__ == "__main__":
             "Some LAU regions in ISI heat potentials are missing from the LAU Regions data."
         )
 
-    # get heat source power by mapping heat potentials to onshore regions and scaling to from supply potentials to technical potentials
+    # get heat source power by mapping heat potentials to onshore regions and scaling from supply potentials to technical potentials
     heat_source_power = get_heat_source_power(
         regions_onshore=regions_onshore,
+        lau_regions=lau_regions,
         supply_potentials=geothermal_supply_potentials,
         full_load_hours=FULL_LOAD_HOURS,
         input_unit=input_unit,
-        ignore_missing_regions=snakemake.params.ignore_missing_regions,
+        handle_missing_countries=snakemake.params.handle_missing_countries,
     )
 
     # Load temperature profiles for scaling
