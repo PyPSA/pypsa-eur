@@ -1,0 +1,160 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+  scenarios:
+    enable: true
+    file: config/test/scenarios.eurelectric.yaml
+
+foresight: myopic
+
+scenario:
+  clusters:
+  - 38
+  opts:
+  - ''
+  sector_opts:
+  - ''
+  planning_horizons:
+  - 2030
+  - 2040
+  - 2050
+
+countries:
+- AL
+- AT
+- BA
+- BE
+- BG
+- CH
+- CZ
+- DE
+- DK
+- EE
+- ES
+- FI
+- FR
+- GB
+- GR
+- HR
+- HU
+- IE
+- IT
+- LT
+- LU
+- LV
+- ME
+- MK
+- NL
+- 'NO'
+- PL
+- PT
+- RO
+- RS
+- SE
+- SI
+- SK
+- XK
+
+snapshots:
+  start: "2019-01-01"
+  end: "2019-12-31"
+  inclusive: left
+
+electricity:
+  extendable_carriers:
+    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: []
+  transmission_limit: "v1.25"
+
+atlite:
+  default_cutout: europe-2019-sarah3-era5
+  cutouts:
+    europe-2019-sarah3-era5:
+      module: [sarah, era5]
+      x: [-12., 35.]
+      y: [33., 72.]
+      time: ["2019-01-01", "2019-12-31"]
+
+clustering:
+  temporal:
+    resolution_sector: 36h
+
+transmission_projects:
+  include:
+    tyndp2020: true
+    nep: false
+    manual: true
+  new_link_capacity: keep
+
+sector:
+  gas_network: true
+  H2_network: false
+  H2_retrofit: false
+  residential_heat:
+    dsm:
+      enable: true
+      direction:
+      - overheat
+  district_heating:
+    progress:
+      2020: 0.0
+      2030: 0.3
+      2040: 0.5
+      2050: 0.8
+  heat_pump_sources:
+    urban central:
+    - air
+    urban decentral:
+    - air
+    rural:
+    - air
+  hydrogen_turbine: true
+  bev_energy: 0.07
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: true
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false
+  dac: false
+  hydrogen_fuel_cell: false
+  limit_max_growth:
+    enable: true
+    factor: 1.5
+
+industry:
+  dsr:
+    enable: true
+  waste_to_energy: true
+
+solving:
+  solver:
+    name: gurobi
+    options: gurobi-default
+  mem_mb: 128000
+  runtime: 48h
+
+plotting:
+  map:
+    boundaries:
+  eu_node_location:
+    x: 10.0
+    y: 50.0
+  costs_max: 1000
+  costs_threshold: 0.0000001
+  energy_max:
+  energy_min:
+  energy_threshold: 0.000001
