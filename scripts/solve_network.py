@@ -1609,6 +1609,8 @@ if __name__ == "__main__":
     ) as mem:
         if is_mga_run:
             logger.info("Using MGA...")
+            solving_params = snakemake.params.solving
+            solving_params["solver"]["options"] = snakemake.params.mga["solver_options"]
             model_kwargs, solve_kwargs = collect_kwargs(
                 snakemake.config,
                 snakemake.params.solving,
