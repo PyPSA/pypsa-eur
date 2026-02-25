@@ -2859,7 +2859,7 @@
           "type": "string"
         },
         "format": {
-          "default": "%(levelname)s:%(name)s:%(test)s",
+          "default": "%(levelname)s:%(name)s:%(message)s",
           "description": "Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.",
           "markdownDescription": "Custom format for log messages. See [LogRecord ](https://docs.python.org/3/library/logging.html#logging.LogRecord) attributes.",
           "type": "string"
@@ -8037,7 +8037,7 @@
           "type": "string"
         },
         "format": {
-          "default": "%(levelname)s:%(name)s:%(test)s",
+          "default": "%(levelname)s:%(name)s:%(message)s",
           "description": "Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.",
           "markdownDescription": "Custom format for log messages. See [LogRecord ](https://docs.python.org/3/library/logging.html#logging.LogRecord) attributes.",
           "type": "string"
