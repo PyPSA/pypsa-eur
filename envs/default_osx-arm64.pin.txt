@@ -564,7 +564,7 @@ https://conda.anaconda.org/conda-forge/noarch/bokeh-3.8.2-pyhd8ed1ab_0.conda#0b8
 https://conda.anaconda.org/conda-forge/noarch/dask-2026.1.2-pyhcf101f3_0.conda#f438bd6e7ce6b4d442789f77d3fc7818
 https://conda.anaconda.org/conda-forge/noarch/findlibs-0.1.2-pyhd8ed1ab_0.conda#fa9e9ec7bf26619a8edd3e11155f15d6
 https://conda.anaconda.org/conda-forge/osx-arm64/jasper-4.2.8-hc0e5025_0.conda#54d2328b8db98729ab21f60a4aba9f7c
-https://conda.anaconda.org/conda-forge/osx-arm64/eccodes-2.45.0-h768f3a7_0.conda#73c9f89679eb90386f2787e7681e95b7
+https://conda.anaconda.org/conda-forge/osx-arm64/eccodes-2.46.0-h768f3a7_0.conda#a3a6aa5eb19e85c456ad3bc7b98777af
 https://conda.anaconda.org/conda-forge/osx-arm64/python-eccodes-2.45.0-np2py313h2962dae_1.conda#043a00e5b0a49bb00f3431ec1a0941d0
 https://conda.anaconda.org/conda-forge/noarch/cfgrib-0.9.15.1-pyhd8ed1ab_0.conda#0f12f8436a2a238e255d49ea3f8aefe2
 https://conda.anaconda.org/conda-forge/noarch/multiurl-0.3.7-pyhd8ed1ab_0.conda#e585c71c2ed48e4eee1663d627ddcd47

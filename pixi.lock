@@ -5,6 +5,8 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/bioconda/
     - url: https://conda.anaconda.org/gurobi/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
@@ -754,7 +756,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/docutils-0.22.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/donfig-0.8.1.post1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dpath-2.2.0-pyha770c72_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-64/eccodes-2.45.0-hef68630_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/eccodes-2.46.0-ha961110_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ecmwf-datastores-client-0.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email-validator-2.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email_validator-2.3.0-hd8ed1ab_0.conda
@@ -1325,7 +1327,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/docutils-0.22.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/donfig-0.8.1.post1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dpath-2.2.0-pyha770c72_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/eccodes-2.45.0-h768f3a7_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/eccodes-2.46.0-h768f3a7_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ecmwf-datastores-client-0.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email-validator-2.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email_validator-2.3.0-hd8ed1ab_0.conda
@@ -1894,7 +1896,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/donfig-0.8.1.post1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/double-conversion-3.4.0-hac47afa_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dpath-2.2.0-pyha770c72_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/eccodes-2.45.0-h2bffdaa_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/eccodes-2.46.0-h2bffdaa_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ecmwf-datastores-client-0.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email-validator-2.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email_validator-2.3.0-hd8ed1ab_0.conda
@@ -2353,6 +2355,8 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/bioconda/
     - url: https://conda.anaconda.org/gurobi/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
@@ -3853,6 +3857,8 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/bioconda/
     - url: https://conda.anaconda.org/gurobi/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
@@ -4602,7 +4608,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/docutils-0.22.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/donfig-0.8.1.post1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dpath-2.2.0-pyha770c72_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-64/eccodes-2.45.0-hef68630_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/eccodes-2.46.0-ha961110_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ecmwf-datastores-client-0.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email-validator-2.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email_validator-2.3.0-hd8ed1ab_0.conda
@@ -5173,7 +5179,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/docutils-0.22.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/donfig-0.8.1.post1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dpath-2.2.0-pyha770c72_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/eccodes-2.45.0-h768f3a7_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/eccodes-2.46.0-h768f3a7_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ecmwf-datastores-client-0.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email-validator-2.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email_validator-2.3.0-hd8ed1ab_0.conda
@@ -5742,7 +5748,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/donfig-0.8.1.post1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/double-conversion-3.4.0-hac47afa_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/dpath-2.2.0-pyha770c72_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/eccodes-2.45.0-h2bffdaa_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/eccodes-2.46.0-h2bffdaa_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ecmwf-datastores-client-0.4.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email-validator-2.3.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email_validator-2.3.0-hd8ed1ab_0.conda
@@ -11312,6 +11318,24 @@ packages:
   license_family: Apache
   size: 5266558
   timestamp: 1768916550349
+- conda: https://conda.anaconda.org/conda-forge/osx-64/eccodes-2.46.0-ha961110_0.conda
+  sha256: c076a600b5906d07d0901cd0c81f9d3eb65534ec5d26b99bdfdfd3c86430c97c
+  md5: 57155fbc8bcf8ca83b670f29163639e9
+  depends:
+  - __osx >=11.0
+  - hdf5 >=1.14.6,<1.14.7.0a0
+  - jasper >=4.2.8,<5.0a0
+  - libaec >=1.1.5,<2.0a0
+  - libcxx >=19
+  - libgfortran
+  - libgfortran5 >=14.3.0
+  - libnetcdf >=4.9.3,<4.9.4.0a0
+  - libpng >=1.6.55,<1.7.0a0
+  - libzlib >=1.3.1,<2.0a0
+  license: Apache-2.0
+  license_family: Apache
+  size: 5302605
+  timestamp: 1772015279277
 - conda: https://conda.anaconda.org/conda-forge/osx-arm64/eccodes-2.45.0-h768f3a7_0.conda
   sha256: 378ed51575fe268f90704663b7fcb5f80f7c77865d46d0643124546225773d00
   md5: 73c9f89679eb90386f2787e7681e95b7
@@ -11330,6 +11354,24 @@ packages:
   license_family: Apache
   size: 5142958
   timestamp: 1768915692443
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/eccodes-2.46.0-h768f3a7_0.conda
+  sha256: 3184ed7ad2647931d398e82ec6f675df027a29fa0f5da8cc33c5924076f97092
+  md5: a3a6aa5eb19e85c456ad3bc7b98777af
+  depends:
+  - __osx >=11.0
+  - hdf5 >=1.14.6,<1.14.7.0a0
+  - jasper >=4.2.8,<5.0a0
+  - libaec >=1.1.5,<2.0a0
+  - libcxx >=19
+  - libgfortran
+  - libgfortran5 >=14.3.0
+  - libnetcdf >=4.9.3,<4.9.4.0a0
+  - libpng >=1.6.55,<1.7.0a0
+  - libzlib >=1.3.1,<2.0a0
+  license: Apache-2.0
+  license_family: Apache
+  size: 5330368
+  timestamp: 1772015392178
 - conda: https://conda.anaconda.org/conda-forge/win-64/eccodes-2.45.0-h2bffdaa_0.conda
   sha256: 4ae454952c781a542e165fd332f0123da775128b3730130a65601daaa6294969
   md5: d2813976958e0066e083e5e7f8e3480e
@@ -11347,6 +11389,23 @@ packages:
   license_family: Apache
   size: 2325273
   timestamp: 1768914992523
+- conda: https://conda.anaconda.org/conda-forge/win-64/eccodes-2.46.0-h2bffdaa_0.conda
+  sha256: dfc2b7cc01741eb7575b29e915b760146167fd65ef2f98fad513f60ce6c8cc76
+  md5: b67461a22f04b331bffd046bcfa4c7ac
+  depends:
+  - hdf5 >=1.14.6,<1.14.7.0a0
+  - jasper >=4.2.8,<5.0a0
+  - libaec >=1.1.5,<2.0a0
+  - libnetcdf >=4.9.3,<4.9.4.0a0
+  - libpng >=1.6.55,<1.7.0a0
+  - libzlib >=1.3.1,<2.0a0
+  - ucrt >=10.0.20348.0
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  license: Apache-2.0
+  license_family: Apache
+  size: 2293154
+  timestamp: 1772014569543
 - conda: https://conda.anaconda.org/conda-forge/noarch/ecmwf-datastores-client-0.4.2-pyhd8ed1ab_0.conda
   sha256: c9e08781d043ab18ea83d2523a17d0bd763ae01274fb854c3024f2fee27aaecf
   md5: d957f10f516dcdeb9e382c91d771df12

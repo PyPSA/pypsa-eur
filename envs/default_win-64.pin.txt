@@ -558,7 +558,7 @@ https://conda.anaconda.org/conda-forge/noarch/dask-2026.1.2-pyhcf101f3_0.conda#f
 https://conda.anaconda.org/conda-forge/noarch/findlibs-0.1.2-pyhd8ed1ab_0.conda#fa9e9ec7bf26619a8edd3e11155f15d6
 https://conda.anaconda.org/conda-forge/win-64/freeglut-3.2.2-he0c23c2_3.conda#5872031ef7cba8435ff24af056777473
 https://conda.anaconda.org/conda-forge/win-64/jasper-4.2.8-h8ad263b_0.conda#f25a27d9c58ef3a63173f372edef0639
-https://conda.anaconda.org/conda-forge/win-64/eccodes-2.45.0-h2bffdaa_0.conda#d2813976958e0066e083e5e7f8e3480e
+https://conda.anaconda.org/conda-forge/win-64/eccodes-2.46.0-h2bffdaa_0.conda#b67461a22f04b331bffd046bcfa4c7ac
 https://conda.anaconda.org/conda-forge/win-64/python-eccodes-2.45.0-np2py313haacffc7_1.conda#82fe43e13ca2ca5efc8251da86362acf
 https://conda.anaconda.org/conda-forge/noarch/cfgrib-0.9.15.1-pyhd8ed1ab_0.conda#0f12f8436a2a238e255d49ea3f8aefe2
 https://conda.anaconda.org/conda-forge/noarch/multiurl-0.3.7-pyhd8ed1ab_0.conda#e585c71c2ed48e4eee1663d627ddcd47
