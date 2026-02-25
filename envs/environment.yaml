@@ -5,7 +5,6 @@ channels:
 - gurobi
 - nodefaults
 dependencies:
-- atlite >=0.3
 - bokeh >=3.8.0
 - cartopy >=0.25.0
 - copernicusmarine >=2.2.4
