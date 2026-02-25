@@ -1,14 +1,11 @@
 name: Update locked envs
 on:
-  push:
-    paths:
-    - pixi.toml
   schedule:
   - cron: "0 8 1,16 * *" # Bi-weekly
   workflow_dispatch:
 
 jobs:
-  update-locked-environment:
+  update-lockfiles:
     if: ${{ github.ref == 'refs/heads/master' }}
     name: Update lockfiles
     runs-on: ubuntu-latest
@@ -23,37 +20,14 @@ jobs:
       with:
         pixi-version: v0.59.0
 
-    - name: Update lockfile
+    - name: Full resolve
       run: |
         rm pixi.lock
         pixi install --all
 
-    - name: Create new conda lock files
-      run: |
-        pixi workspace export conda-explicit-spec -e default envs
-        for f in envs/*_conda_spec*; do mv "$f" "${f/_conda_spec/.pin}"; done
-
-    - name: Create new conda environment file
-      run: |
-        pixi workspace export conda-environment -e default envs/environment.yaml -n pypsa-eur
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v6
-      with:
-        name: lockfiles
-        path: |
-          pixi.lock
-          envs/
-
-  create-pull-request:
-    needs: update-locked-environment
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v6
-    - name: Download all artifacts
-      uses: actions/download-artifact@v7
-      with:
-        name: lockfiles
+    - name: Export conda environment files
+      if: ${{ !vars.PYPSA_BOT_ID }}
+      run: pixi run sync-locks
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v8
@@ -64,5 +38,5 @@ jobs:
         body: |
           Automatically generated PR to update the pixi lockfile.
 
-          **Note: Do not merge without manual test execution. Either update the branch to trigger tests, or use `workflow_dispatch` to run tests manually. Unlike standard PRs, tests will not run automatically.**
+          **Note: Do not merge without manual test execution, unless pypsa-bot has already exported the environment files and triggered tests.**
         commit-message: "Update locked environment files for all platforms"

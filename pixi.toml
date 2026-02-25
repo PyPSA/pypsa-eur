@@ -35,6 +35,13 @@ update-dags = """
 
 generate-config = "python -c 'from scripts.lib.validation.config import generate_config_defaults, generate_config_schema; generate_config_defaults(); generate_config_schema()'"
 
+sync-locks = """
+    pixi install -e default && \
+    pixi workspace export conda-explicit-spec -e default envs && \
+    bash -c 'for f in envs/*_conda_spec*; do mv "$f" "${f/_conda_spec/.pin}"; done' && \
+    pixi workspace export conda-environment -e default envs/environment.yaml -n pypsa-eur
+"""
+
 [dependencies]
 atlite = ">=0.3"
 bokeh = ">=3.8.0"
