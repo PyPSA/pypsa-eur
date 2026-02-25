@@ -2,72 +2,81 @@
 # SPDX-License-Identifier: CC0-1.0
 
 run:
+  prefix: "2026-02/flexibility-study"
   disable_progressbar: true
   shared_resources:
     policy: false
   shared_cutouts: true
   scenarios:
     enable: true
-    file: config/test/scenarios.eurelectric.yaml
+    file: config/run_2026-02/scenarios.yaml
 
-foresight: myopic
+foresight: overnight
 
 scenario:
   clusters:
-  - 39
+    - 38
   opts:
-  - ''
+    - ""
   sector_opts:
-  - ''
+    - ""
   planning_horizons:
-  - 2030
-  - 2040
-  - 2050
+    - ""
 
 countries:
-- AL
-- AT
-- BA
-- BE
-- BG
-- CH
-- CZ
-- DE
-- DK
-- EE
-- ES
-- FI
-- FR
-- GB
-- GR
-- HR
-- HU
-- IE
-- IT
-- LT
-- LU
-- LV
-- ME
-- MK
-- NL
-- 'NO'
-- PL
-- PT
-- RO
-- RS
-- SE
-- SI
-- SK
-- XK
+  - AL
+  - AT
+  - BA
+  - BE
+  - BG
+  - CH
+  - CZ
+  - DE
+  - DK
+  - EE
+  - ES
+  - FI
+  - FR
+  - GB
+  - GR
+  - HR
+  - HU
+  - IE
+  - IT
+  - LT
+  - LU
+  - LV
+  - ME
+  - MK
+  - NL
+  - "NO"
+  - PL
+  - PT
+  - RO
+  - RS
+  - SE
+  - SI
+  - SK
+  - XK
 
 snapshots:
   start: "2019-01-01"
   end: "2019-12-31"
-  inclusive: left
+  inclusive: both
 
 electricity:
   extendable_carriers:
-    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
+    Generator:
+      [
+        solar,
+        solar-hsat,
+        onwind,
+        offwind-ac,
+        offwind-dc,
+        offwind-float,
+        OCGT,
+        CCGT,
+      ]
     StorageUnit: [battery]
     Store: [H2]
     Link: []
@@ -84,7 +93,7 @@ atlite:
 
 clustering:
   temporal:
-    resolution_sector: 36h
+    resolution_sector: 3h
 
 transmission_projects:
   include:
@@ -101,7 +110,8 @@ sector:
     dsm:
       enable: true
       direction:
-      - overheat
+        - overheat
+        - undercool
   district_heating:
     progress:
       2020: 0.0
@@ -110,11 +120,11 @@ sector:
       2050: 0.8
   heat_pump_sources:
     urban central:
-    - air
+      - air
     urban decentral:
-    - air
+      - air
     rural:
-    - air
+      - air
   hydrogen_turbine: true
   bev_energy: 0.07
   regional_oil_demand: false
@@ -139,7 +149,8 @@ industry:
   dsr:
     enable: true
   waste_to_energy: true
-  temporal_electricity_industry_load: true
+  # Unclear whether this should be kept - it is only in some of the config files, but not in config.default.yaml
+  # temporal_electricity_industry_load: true
 
 solving:
   solver:

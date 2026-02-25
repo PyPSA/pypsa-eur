@@ -1,0 +1,140 @@
+# +++ Flexibility scenarios +++
+
+# Flexibility 2030
+flex-2030:
+  run:
+    name: flex-2030
+  scenario:
+    planning_horizons:
+      - 2030
+
+  costs:
+    year: 2030
+
+  sector:
+    residential_heat:
+      dsm:
+        enable: true
+    bev_dsm: true
+    v2g: true
+
+  industry:
+    dsr:
+      enable: true
+
+# Flexibility 2040
+flex-2040:
+  run:
+    name: flex-2040
+
+  scenario:
+    planning_horizons:
+      - 2040
+
+  costs:
+    year: 2040
+
+  sector:
+    residential_heat:
+      dsm:
+        enable: true
+    bev_dsm: true
+    v2g: true
+
+  industry:
+    dsr:
+      enable: true
+
+# Flexibility 2050
+flex-2050:
+  run:
+    name: flex-2050
+
+  scenario:
+    planning_horizons:
+      - 2050
+
+  costs:
+    year: 2050
+
+  sector:
+    residential_heat:
+      dsm:
+        enable: true
+    bev_dsm: true
+    v2g: true
+
+  industry:
+    dsr:
+      enable: true
+
+# +++ Reference scenarios +++
+
+# Reference 2030
+ref-2030:
+  run:
+    name: ref-2030
+
+  scenario:
+    planning_horizons:
+      - 2030
+
+  costs:
+    year: 2030
+
+  sector:
+    residential_heat:
+      dsm:
+        enable: false
+    bev_dsm: false
+    v2g: false
+
+  industry:
+    dsr:
+      enable: false
+
+# Reference 2040
+ref-2040:
+  run:
+    name: ref-2040
+
+  scenario:
+    planning_horizons:
+      - 2040
+
+  costs:
+    year: 2040
+
+  sector:
+    residential_heat:
+      dsm:
+        enable: false
+    bev_dsm: false
+    v2g: false
+
+  industry:
+    dsr:
+      enable: false
+
+# Reference 2050
+ref-2050:
+  run:
+    name: ref-2050
+
+  scenario:
+    planning_horizons:
+      - 2050
+
+  costs:
+    year: 2050
+
+  sector:
+    residential_heat:
+      dsm:
+        enable: false
+    bev_dsm: false
+    v2g: false
+
+  industry:
+    dsr:
+      enable: false
