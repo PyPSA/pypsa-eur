@@ -11,7 +11,7 @@ tutorial: false
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#logging
 logging:
   level: INFO
-  format: "%(levelname)s:%(name)s:%(message)s"
+  format: "%(levelname)s:%(name)s:%(test)s"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#remote
 remote:
