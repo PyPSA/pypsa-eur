@@ -16,14 +16,12 @@ foresight: overnight
 
 scenario:
   clusters:
-    - 37
+    - 33
   planning_horizons:
     - "2030" # Will be overwritten, but must be kept due to a bug upstream, see https://github.com/PyPSA/pypsa-eur/issues/2100
 
 countries:
-  - AL
   - AT
-  - BA
   - BE
   - BG
   - CH
@@ -43,14 +41,11 @@ countries:
   - LT
   - LU
   - LV
-  - ME
-  - MK
   - NL
   - "NO"
   - PL
   - PT
   - RO
-  - RS
   - SE
   - SI
   - SK
@@ -123,12 +118,6 @@ sector:
       direction:
         - overheat
         - undercool
-  district_heating:
-    progress:
-      2020: 0.0
-      2030: 0.3
-      2040: 0.5
-      2050: 0.8
   hydrogen_turbine: true
   bev_dsm: false
   v2g: false
