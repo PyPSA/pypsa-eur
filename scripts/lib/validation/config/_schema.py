@@ -49,7 +49,7 @@ class LoggingConfig(ConfigModel):
         description="Restrict console outputs to all infos, warning or errors only",
     )
     format: str = Field(
-        "%(levelname)s:%(name)s:%(test)s",
+        "%(levelname)s:%(name)s:%(message)s",
         description="Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.",
     )
 
