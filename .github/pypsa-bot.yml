@@ -1,17 +1,17 @@
 tasks:
   sync-locks:
     triggers:
-      - "pixi.toml"
-      - "pixi.lock"
+    - "pixi.toml"
+    - "pixi.lock"
     stage:
-      - "pixi.lock"
-      - "envs/"
+    - "pixi.lock"
+    - "envs/"
 
   generate-config:
     triggers:
-      - "scripts/lib/validation/config/**"
+    - "scripts/lib/validation/config/**"
     stage:
-      - "config/"
-      - "doc/"
-      - "*.yaml"
-      - "*.yml"
+    - "config/"
+    - "doc/"
+    - "*.yaml"
+    - "*.yml"
