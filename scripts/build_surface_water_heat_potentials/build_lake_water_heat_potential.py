@@ -1,0 +1,446 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+"""
+Calculate lake water heat potential for district heating systems.
+
+This script computes the thermal potential of lakes as a heat source for district
+heating applications. It uses HydroLAKES lake volume data and HERA ambient temperature
+data to estimate available heating power and average water temperatures across regions
+intersected with district heating areas.
+
+The approximation accounts for temporal and spatial variations in lake volume and
+temperature, providing both spatial and temporal aggregates. Temporal aggregates are
+only used for plotting.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    sector:
+        district_heating:
+            dh_area_buffer: # Buffer around DH areas in meters to include nearby lakes
+            heat_source_cooling: # Exploitable temperature delta
+        heat_sources:
+            - lake_water
+    snapshots:
+        start:
+        end:
+    enable:
+        drop_leap_day:
+
+Inputs
+------
+- ``data/lake_data/HydroLAKES_polys_v10.gdb/``: Lake polygons from HydroLAKES
+- ``data/hera_{year}/ambient_temp_{year}.nc``: Ambient temperature data from HERA
+- ``resources/<run_name>/regions_onshore_base_s_{clusters}.geojson``: Onshore regions
+- ``resources/<run_name>/dh_areas_base_s_{clusters}.geojson``: District heating areas
+
+Outputs
+-------
+- ``resources/<run_name>/heat_source_power_lake_water_base_s_{clusters}.csv``: Lake heating power potentials by region
+- ``resources/<run_name>/temp_lake_water_base_s_{clusters}.nc``: Lake water temperature profiles by region
+- ``resources/<run_name>/temp_lake_water_base_s_{clusters}_temporal_aggregate.nc``: Temporal aggregated temperature data
+- ``resources/<run_name>/heat_source_energy_lake_water_base_s_{clusters}_temporal_aggregate.nc``: Temporal aggregated energy data
+"""
+
+import gc
+import logging
+import warnings
+
+import dask
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import xarray as xr
+from _helpers import (
+    configure_logging,
+    get_snapshots,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
+from approximators.lake_water_heat_approximator import LakeWaterHeatApproximator
+
+warnings.filterwarnings(
+    "ignore",
+    message=".*organizePolygons\\(\\) received a polygon with more than 100 parts.*",
+)
+
+
+logger = logging.getLogger(__name__)
+
+MEMORY_SAFETY_FACTOR = 0.7  # Use 70% of available memory for Dask arrays
+
+
+def load_hera_data(
+    hera_inputs: dict,
+    snapshots: pd.DatetimeIndex,
+    minx: float,
+    miny: float,
+    maxx: float,
+    maxy: float,
+) -> xr.DataArray:
+    """
+    Load and concatenate HERA ambient temperature data with spatial clipping.
+
+    Parameters
+    ----------
+    hera_inputs : dict
+        Dictionary with year-specific HERA file paths.
+        Expected keys: hera_ambient_temperature_{year}.
+    snapshots : pd.DatetimeIndex
+        Target snapshots to select from the combined data.
+    minx, miny, maxx, maxy : float
+        Bounding box coordinates for spatial clipping (EPSG:4326).
+
+    Returns
+    -------
+    xr.DataArray
+        Ambient temperature data reprojected to EPSG:3035.
+    """
+    temp_files = [
+        v for k, v in hera_inputs.items() if k.startswith("hera_ambient_temperature_")
+    ]
+
+    # Determine time range from snapshots with buffer to ensure HERA coverage
+    # HERA data is on 6h intervals, so we need to extend the range to capture
+    # HERA timestamps that bracket our actual snapshots
+    buffer = pd.Timedelta(hours=12)  # Buffer to ensure we capture surrounding HERA data
+    start_time = snapshots.min() - buffer
+    end_time = snapshots.max() + buffer
+
+    # Load and concatenate ambient temperature files using open_mfdataset
+    ambient_temperature = xr.open_mfdataset(
+        temp_files,
+        chunks={"time": -1, "lat": 990, "lon": 1510},
+        concat_dim="time",
+        combine="nested",
+    )["ta6"]
+
+    # Select time range that covers our snapshots (using native HERA resolution)
+    ambient_temperature = ambient_temperature.sel(time=slice(start_time, end_time))
+
+    # Process ambient temperature data
+    return (
+        ambient_temperature.rename({"lat": "latitude", "lon": "longitude"})
+        .rio.write_crs("EPSG:4326")
+        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.reproject("EPSG:3035")
+    )
+
+
+def _create_empty_datasets(
+    snapshots: pd.DatetimeIndex, center_lon: float, center_lat: float
+) -> tuple[xr.Dataset, xr.Dataset]:
+    """
+    Create empty datasets for regions without DH areas.
+
+    When a region has no intersection with district heating areas, we still need
+    to provide valid datasets with zero values to maintain consistent data structure.
+
+    Parameters
+    ----------
+    snapshots : pd.DatetimeIndex
+        Time snapshots for the spatial aggregate.
+    center_lon : float
+        Longitude of region center (for fallback coordinate).
+    center_lat : float
+        Latitude of region center (for fallback coordinate).
+
+    Returns
+    -------
+    tuple[xr.Dataset, xr.Dataset]
+        Tuple of (spatial_aggregate, temporal_aggregate) datasets with zero values.
+    """
+    spatial_aggregate = xr.Dataset(
+        data_vars={
+            "total_power": xr.DataArray(
+                np.zeros(len(snapshots)),
+                dims=["time"],
+                coords={"time": snapshots},
+            ),
+            "average_temperature": xr.DataArray(
+                np.zeros(len(snapshots)),
+                dims=["time"],
+                coords={"time": snapshots},
+            ),
+        }
+    )
+
+    temporal_aggregate = xr.Dataset(
+        data_vars={
+            "total_energy": xr.DataArray(
+                [[0.0]],
+                dims=["longitude", "latitude"],
+                coords={"longitude": [center_lon], "latitude": [center_lat]},
+            ),
+            "average_temperature": xr.DataArray(
+                [[0.0]],
+                dims=["longitude", "latitude"],
+                coords={"longitude": [center_lon], "latitude": [center_lat]},
+            ),
+        }
+    )
+
+    return spatial_aggregate, temporal_aggregate
+
+
+def get_regional_result(
+    hera_inputs: dict,
+    region: gpd.GeoSeries,
+    dh_areas: gpd.GeoDataFrame,
+    lake_shapes: gpd.GeoDataFrame,
+    snapshots: pd.DatetimeIndex,
+    enable_heat_source_maps: bool = False,
+) -> dict[str, xr.Dataset]:
+    """
+    Calculate lake water heat potential for a given region.
+
+    Parameters
+    ----------
+    hera_inputs : dict
+        Dictionary containing HERA input file paths with year-specific keys.
+    region : gpd.GeoSeries
+        Geographical region for which to compute the heat potential.
+    dh_areas : gpd.GeoDataFrame
+        District heating areas to intersect with the region.
+    lake_shapes : gpd.GeoDataFrame
+        Lake polygons from HydroLAKES with Vol_total attribute.
+    snapshots : pd.DatetimeIndex
+        Time snapshots for temporal alignment.
+    enable_heat_source_maps : bool, optional
+        Whether to compute temporal aggregate for heat source maps,
+        by default False.
+
+    Returns
+    -------
+    dict[str, xr.Dataset]
+        Dictionary with keys:
+        - 'spatial aggregate': Dataset with total_power [MW] and
+          average_temperature [°C] time series.
+        - 'temporal aggregate' (optional): Dataset with spatial distribution
+          of total_energy [MWh] and average_temperature [°C].
+    """
+    original_region = region.copy()
+
+    intersected_geometry = gpd.overlay(
+        region.to_frame(),
+        dh_areas,
+        how="intersection",
+    ).union_all()
+
+    region.geometry = intersected_geometry
+
+    # Return empty datasets for regions without DH area intersection
+    if region.geometry.is_empty.any():
+        region_center = (
+            original_region.to_crs("EPSG:3035").centroid.to_crs("EPSG:4326").iloc[0]
+        )
+        spatial_aggregate, temporal_aggregate = _create_empty_datasets(
+            snapshots, region_center.x, region_center.y
+        )
+        return {
+            "spatial aggregate": spatial_aggregate,
+            "temporal aggregate": temporal_aggregate,
+        }
+
+    minx, miny, maxx, maxy = region.total_bounds
+    ambient_temperature = load_hera_data(hera_inputs, snapshots, minx, miny, maxx, maxy)
+
+    region = region.to_crs("EPSG:3035")
+    lake_shapes = lake_shapes.to_crs("EPSG:3035")
+
+    lake_water_heat_approximator = LakeWaterHeatApproximator(
+        ambient_temperature=ambient_temperature,
+        region=region,
+        lake_shapes=lake_shapes,
+    )
+
+    spatial_aggregate = lake_water_heat_approximator.get_spatial_aggregate()
+
+    if enable_heat_source_maps:
+        temporal_aggregate = (
+            lake_water_heat_approximator.get_temporal_aggregate()
+            .rio.reproject("EPSG:4326")
+            .compute()
+        )
+    else:
+        temporal_aggregate = None
+
+    spatial_aggregate = spatial_aggregate.compute()
+
+    # Free memory for next region
+    del lake_water_heat_approximator, ambient_temperature
+    gc.collect()
+
+    result = {"spatial aggregate": spatial_aggregate}
+    if temporal_aggregate is not None:
+        result["temporal aggregate"] = temporal_aggregate
+
+    return result
+
+
+def set_dask_chunk_size(
+    n_threads: int,
+    memory_mb: int,
+    memory_safety_factor: float = MEMORY_SAFETY_FACTOR,
+    n_datasets: int = 1,
+    operation_multiplier: int = 3,
+) -> None:
+    """
+    Configure Dask chunk size based on available memory.
+
+    Parameters
+    ----------
+    n_threads : int
+        Number of threads per worker.
+    memory_mb : int
+        Memory per worker in MB.
+    memory_safety_factor : float, optional
+        Fraction of memory to use, by default 0.7.
+    n_datasets : int, optional
+        Number of concurrent datasets in memory, by default 1.
+    operation_multiplier : int, optional
+        Multiplier for operation overhead, by default 3.
+    """
+    chunk_size = (
+        memory_mb * memory_safety_factor / n_threads / n_datasets / operation_multiplier
+    )
+    dask.config.set({"array.chunk-size": f"{chunk_size}MB"})
+
+
+if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
+        snakemake = mock_snakemake(
+            "build_lake_water_heat_potential",
+            clusters="39",
+            opts="",
+            ll="vopt",
+            sector_opts="",
+            planning_horizons=2050,
+        )
+
+    # Configure logging and scenario
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
+    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+
+    # Get simulation snapshots
+    snapshots: pd.DatetimeIndex = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
+
+    # Load regions and district heating areas
+    regions_onshore = gpd.read_file(snakemake.input["regions_onshore"])
+    regions_onshore.set_index("name", inplace=True)
+    regions_onshore = regions_onshore.to_crs("EPSG:4326")
+
+    dh_areas = gpd.read_file(snakemake.input["dh_areas"]).to_crs("EPSG:3035")
+    # Buffer district heating areas by specified amount
+    dh_areas["geometry"] = dh_areas.geometry.buffer(snakemake.params.dh_area_buffer)
+    dh_areas = dh_areas.to_crs("EPSG:4326")
+
+    lake_data = gpd.read_file(snakemake.input["lake_data"]).to_crs("EPSG:4326")
+
+    # Configure Dask for multi-threading within operations (no distributed cluster)
+    dask.config.set(scheduler="threads")  # Use threaded scheduler
+    dask.config.set(num_workers=snakemake.threads)  # Use specified number of threads
+
+    set_dask_chunk_size(
+        n_threads=snakemake.threads, memory_mb=snakemake.resources.mem_mb
+    )
+
+    # Process regions sequentially but with multi-threaded Dask operations
+    results = []
+    for i, region_name in enumerate(regions_onshore.index, 1):
+        # Extract region geometry and create a copy to avoid modification conflicts
+        region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
+
+        # Process region with multi-threaded Dask operations
+        result = get_regional_result(
+            hera_inputs=dict(snakemake.input),
+            region=region,
+            dh_areas=dh_areas,
+            lake_shapes=lake_data,
+            snapshots=snapshots,
+            enable_heat_source_maps=snakemake.params.enable_heat_source_maps,
+        )
+        results.append(result)
+
+        # Explicit cleanup to free memory between regions
+        del result, region
+        gc.collect()
+
+    # Build DataFrame of total power for each region
+    # Regions as columns and time as rows
+    power = pd.DataFrame(
+        {
+            region_name: res["spatial aggregate"]["total_power"].to_pandas()
+            for region_name, res in zip(regions_onshore.index, results)
+        }
+    ).dropna()
+
+    power = power.reindex(
+        snapshots, method="nearest"
+    )  # Use "nearest" method to handle any minor timestamp differences due to floating point precision
+
+    # Save power potentials in MW
+    power.to_csv(snakemake.output.heat_source_power)
+
+    # Log computed power and temperature values
+    power_mean = power.mean()
+    logger.info("=== Lake heat potential summary ===")
+    logger.info("Mean power per region (MW):")
+    for region in power_mean.index:
+        logger.info(f"  {region}: {power_mean[region]:.2f} MW")
+
+    # Concatenate average temperature for all regions into single dataset
+    temperature = (
+        xr.concat(
+            [res["spatial aggregate"]["average_temperature"] for res in results],
+            dim="name",
+        )
+        .assign_coords(name=regions_onshore.index)
+        .dropna(dim="time")
+    )
+
+    # Align temperature data to snapshots, use nearest to handle any minor decimal differences
+    temperature = temperature.sel(time=snapshots, method="nearest").assign_coords(
+        time=snapshots
+    )
+
+    # Save temperature profiles as NetCDF for heat pump COP calculations
+    # Units: °C (degrees Celsius)
+    temperature.to_netcdf(snakemake.output.heat_source_temperature)
+
+    # Log temperature values
+    temp_mean = temperature.mean(dim="time").to_pandas()
+    logger.info("Mean temperature per region (°C):")
+    for region in temp_mean.index:
+        logger.info(f"  {region}: {temp_mean[region]:.2f} °C")
+    logger.info("=== END summary ===")
+
+    # Save temporal aggregate results for analysis and visualization (if enabled)
+    if snakemake.params.enable_heat_source_maps:
+        # Energy temporal aggregate: spatial distribution of available energy
+        # Units: MWh (megawatt-hours) - total energy potential per location
+        xr.concat(
+            [res["temporal aggregate"]["total_energy"] for res in results],
+            dim=regions_onshore.index,
+        ).to_netcdf(snakemake.output.heat_source_energy_temporal_aggregate)
+
+        # Temperature temporal aggregate: spatial distribution of temperatures
+        # Units: °C (degrees Celsius) - average temperature per location
+        xr.concat(
+            [res["temporal aggregate"]["average_temperature"] for res in results],
+            dim=regions_onshore.index,
+        ).to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)
+
+    else:
+        # Create empty placeholder files to satisfy Snakemake outputs
+        empty_ds = xr.Dataset()
+        empty_ds.to_netcdf(snakemake.output.heat_source_energy_temporal_aggregate)
+        empty_ds.to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)

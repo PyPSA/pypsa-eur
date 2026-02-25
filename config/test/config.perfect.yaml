@@ -53,6 +53,7 @@ sector:
     - ptes
     - river_water
     - sea_water
+    - lake_water
     - geothermal
     - ptes
     urban decentral:

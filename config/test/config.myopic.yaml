@@ -41,6 +41,7 @@ sector:
     - air
     - geothermal
     - river_water
+    - lake_water
     - sea_water
     - ptes
     urban decentral:

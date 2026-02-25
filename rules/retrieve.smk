@@ -1497,3 +1497,24 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
         run:
             copy2(input["kfz"], output["kfz"])
             copy2(input["pkw"], output["pkw"])
+
+
+if (LAKE_DATA_DATASET := dataset_version("lake_data"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_lake_data:
+        input:
+            zip_file=storage(LAKE_DATA_DATASET["url"]),
+        output:
+            zip_file=f"{LAKE_DATA_DATASET['folder']}/HydroLAKES_polys_v10.gdb.zip",
+            lake_data=directory(
+                f"{LAKE_DATA_DATASET['folder']}/HydroLAKES_polys_v10.gdb"
+            ),
+        run:
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(
+                output["zip_file"],
+                LAKE_DATA_DATASET["folder"],
+            )

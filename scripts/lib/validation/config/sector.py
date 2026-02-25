@@ -185,6 +185,10 @@ class _DistrictHeatingConfig(ConfigModel):
         default_factory=lambda: {"buffer": 1000, "handle_missing_countries": "fill"},
         description="District heating areas settings.",
     )
+    fallback_ptx_heat_losses: float = Field(
+        0.05,
+        description="Default heat loss fraction for PtX processes when waste heat recovery is enabled but no specific loss value is provided.",
+    )
     heat_source_temperatures: dict[str, float] = Field(
         default_factory=lambda: {
             "geothermal": 65,
