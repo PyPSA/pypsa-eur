@@ -1367,6 +1367,7 @@ def collect_kwargs(
 
         if cf_solving["post_discretization"].get("enable", False):
             logger.info("Add post-discretization parameters.")
+            cf_solving["post_discretization"].pop("enable", None)
             all_kwargs.update(cf_solving["post_discretization"])
 
         return all_kwargs, {}
