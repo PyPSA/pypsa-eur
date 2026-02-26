@@ -32,19 +32,37 @@ def build_nodal_transport_data(fn, pop_layout, year):
     # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index
+
     nodal_transport_data["number cars"] = (
         pop_layout["fraction"] * nodal_transport_data["number cars"]
     )
+
+    # NEW: passenger_car_pkm should be scaled to nodes (extensive)
+    if "passenger_car_pkm" in nodal_transport_data.columns:
+        nodal_transport_data["passenger_car_pkm"] = (
+            pop_layout["fraction"] * nodal_transport_data["passenger_car_pkm"]
+        )
+
+    # passengers_per_movement is a ratio -> do NOT scale; just keep country value
+    # (already mapped by .loc[pop_layout.ct])
+
     # fill missing fuel efficiency with average data
     nodal_transport_data.loc[
         nodal_transport_data["average fuel efficiency"] == 0.0,
         "average fuel efficiency",
     ] = transport_data["average fuel efficiency"].mean()
 
+    # NEW: fill missing passengers_per_movement with average (if any zeros)
+    if "passengers_per_movement" in nodal_transport_data.columns:
+        nodal_transport_data.loc[
+            nodal_transport_data["passengers_per_movement"] == 0.0,
+            "passengers_per_movement",
+        ] = transport_data["passengers_per_movement"].mean()
+
     return nodal_transport_data
 
 
-def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
+def build_transport_demand(traffic_fn, nodes, nodal_transport_data):
     """
     Returns transport demand per bus in unit km driven [100 km].
     """
@@ -59,34 +77,24 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     )
     transport_shape = transport_shape / transport_shape.sum()
 
-    # get heating demand for correction to demand time series
-    temperature = xr.open_dataarray(airtemp_fn).to_pandas()
 
-    # correction factors for vehicle heating
-    dd_ICE = transport_degree_factor(
-        temperature,
-        options["transport_heating_deadband_lower"],
-        options["transport_heating_deadband_upper"],
-        options["ICE_lower_degree_factor"],
-        options["ICE_upper_degree_factor"],
-    )
+    pkm = nodal_transport_data["passenger_car_pkm"]
+    ppm = nodal_transport_data["passengers_per_movement"]
+    
+    # safety against division by zero
+    ppm = ppm.replace(0, np.nan)
+    if ppm.isna().any():
+        raise ValueError("passengers_per_movement contains zero or NaN values after filling.")
+    planning_year = int(pd.Index(snapshots).year[0])
+    pkm_scale = options.get("land_transport_passenger_km_scaling", {}).get(planning_year, 1.0)
 
-    # divide out the heating/cooling demand from ICE totals
-    ice_correction = (transport_shape * (1 + dd_ICE)).sum() / transport_shape.sum()
+    pkm = pkm * float(pkm_scale)
 
-    # unit TWh
-    energy_totals_transport = (
-        pop_weighted_energy_totals["total road"]
-        + pop_weighted_energy_totals["total rail"]
-        - pop_weighted_energy_totals["electricity rail"]
-    )
+    km_driven = pkm / ppm
 
-    # average fuel efficiency in MWh/100 km
-    eff = nodal_transport_data["average fuel efficiency"]
+    km_100km = km_driven / 100.0
 
-    return (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears).divide(
-        eff * ice_correction
-    )
+    return transport_shape.multiply(km_100km) * nyears
 
 
 def transport_degree_factor(
@@ -195,7 +203,6 @@ if __name__ == "__main__":
 
     transport_demand = build_transport_demand(
         snakemake.input.traffic_data_KFZ,
-        snakemake.input.temp_air_total,
         nodes,
         nodal_transport_data,
     )

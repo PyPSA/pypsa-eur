@@ -549,8 +549,70 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)
 
+    # Keep only numeric year columns (prevents mixed index types like "Code" / "Unnamed:*")
+    year_cols = [c for c in df.columns if isinstance(c, (int, np.integer))]
+    if not year_cols:
+        raise KeyError("No integer year columns found in TrRoad_act")
+
+    # Ensure the 'Code' column exists and is clean (IDEES sometimes adds trailing ';')
+    if "Code" not in df.columns:
+        raise KeyError("Expected 'Code' column in TrRoad_act sheet")
+
+    df["Code"] = df["Code"].astype(str).str.strip().str.rstrip(";")
+
+    def series_by_code(code: str) -> pd.Series:
+        code = str(code).strip().rstrip(";")
+        hit = df.loc[df["Code"] == code, year_cols]
+        if hit.empty:
+            raise KeyError(f"Code not found in TrRoad_act: {code}")
+        if len(hit) > 1:
+            logger.warning(f"Multiple rows found for code '{code}', taking first.")
+        return pd.to_numeric(hit.iloc[0], errors="coerce")
+
+    # Passenger-km (million passenger-km) time series for passenger cars
+    def series_by_country_prefix(prefix_template):
+        candidates = [
+            prefix_template.format(ct=ct),
+            prefix_template.format(ct={"GR": "EL"}.get(ct, ct)),
+        ]
+        for code in candidates:
+            try:
+                return series_by_code(code)
+            except KeyError:
+                continue
+        raise KeyError(f"No matching IDEES code found for country {ct}")
+
+    ct_totals["passenger_car_pkm"] = series_by_country_prefix(
+    "Activity.Mpkm.{ct}.Tr.Road.Passenger.Car")
+
+    # Passengers per movement time series for passenger cars
+    ct_totals["passengers_per_movement"] = series_by_country_prefix(
+    "Load.passenger_per_movement.{ct}.Tr.Road.Passenger.Car")
+    
+    
+    # Existing: passenger cars stock/activity row (ensure we only keep year columns!)
     assert df.index[85] == "Passenger cars"
-    ct_totals["passenger cars"] = df.iloc[85]
+    ct_totals["passenger cars"] = pd.to_numeric(df.iloc[85][year_cols], errors="coerce")
+
+
+
+    # --- SANITIZE: ensure all ct_totals Series have a purely numeric year index ---
+    for k, v in list(ct_totals.items()):
+        if isinstance(v, pd.Series):
+            s = v.copy()
+
+            # Convert index to numeric years, drop non-numeric labels (e.g. 'Code', 'Unit', 'Unnamed:*')
+            years = pd.to_numeric(s.index, errors="coerce")
+            mask = ~years.isna()
+            s = s.loc[mask]
+            s.index = years[mask].astype(int)
+
+            # Optional: sort years (safe)
+            s = s.sort_index()
+
+            ct_totals[k] = s        
+
+
 
     return pd.DataFrame(ct_totals)
 
@@ -604,7 +666,14 @@ def build_idees(countries: list[str]) -> pd.DataFrame:
     # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
     totals.loc[:, "passenger car efficiency"] /= 1e6
     # convert ktoe to TWh
-    patterns = ["passenger cars", ".*space efficiency", ".*water efficiency"]
+    patterns = [
+    "passenger cars",
+    "passenger car efficiency",
+    "passenger_car_pkm",
+    "passengers_per_movement",
+    ".*space efficiency",
+    ".*water efficiency",
+]
     exclude = totals.columns.str.fullmatch("|".join(patterns))
     totals = totals.copy()
     totals.loc[:, ~exclude] *= 11.63 / 1e3
@@ -1194,6 +1263,10 @@ def build_transport_data(
     # first collect number of cars
     transport_data = pd.DataFrame(idees["passenger cars"])
 
+    #collect passenger_car_pkm and passengers_per_movement
+    transport_data["passenger_car_pkm"] = idees["passenger_car_pkm"] * 1e6
+    transport_data["passengers_per_movement"] = idees["passengers_per_movement"]
+
     countries_without_ch = set(countries) - {"CH"}
     new_index = pd.MultiIndex.from_product(
         [countries_without_ch, transport_data.index.unique(1)],
@@ -1220,7 +1293,9 @@ def build_transport_data(
         swiss_cars.index = pd.MultiIndex.from_product(
             [["CH"], swiss_cars.index], names=["country", "year"]
         )
-
+        #passenger_car_pkm and passengers_per_movement gets filled later using EU average/per capita*population approach
+        swiss_cars["passenger_car_pkm"] = np.nan
+        swiss_cars["passengers_per_movement"] = np.nan
         transport_data = pd.concat([transport_data, swiss_cars]).sort_index()
 
     transport_data = transport_data.rename(columns={"passenger cars": "number cars"})
@@ -1245,6 +1320,35 @@ def build_transport_data(
         fill_values = fill_values.reindex(transport_data.index)
 
         transport_data = transport_data.combine_first(fill_values)
+    
+    # fill missing passenger_car_pkm using EU-average per-capita values ---
+    missing = transport_data.index[transport_data["passenger_car_pkm"].isna()]
+    if not missing.empty:
+        logger.info(
+            f"Missing data on passenger_car_pkm from:\n{list(missing)}\n"
+            "Filling gaps with averaged per-capita data."
+        )
+
+        pkm_pp = transport_data["passenger_car_pkm"] / population
+
+        fill_values = {
+            year: pkm_pp.mean() * population for year in transport_data.index.unique(1)}
+        fill_values = pd.DataFrame(fill_values).stack()
+        fill_values = pd.DataFrame(fill_values, columns=["passenger_car_pkm"])
+        fill_values.index.names = ["country", "year"]
+        fill_values = fill_values.reindex(transport_data.index)
+
+        transport_data = transport_data.combine_first(fill_values)
+
+    # fill missing passengers_per_movement using overall mean (ratio) ---
+    missing = transport_data.index[transport_data["passengers_per_movement"].isna()]
+    if not missing.empty:
+        logger.info(
+            f"Missing data on passengers_per_movement from:\n{list(missing)}\n"
+            "Filling gaps with averaged data.")
+
+        fill_value = transport_data["passengers_per_movement"].mean()
+        transport_data.loc[missing, "passengers_per_movement"] = fill_value    
 
     # collect average fuel efficiency in MWh/100km, taking passengar car efficiency in TWh/100km
     transport_data["average fuel efficiency"] = idees["passenger car efficiency"] * 1e6
