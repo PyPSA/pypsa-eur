@@ -1139,6 +1139,11 @@ solving:
       default_price: 100000
       apply_to_all_carriers: true
       carriers: {}
+    load_sinks:
+      enable: false
+      default_price: 100000
+      apply_to_all_carriers: false
+      carriers: {}
     curtailment_mode: false
     noisy_costs: true
     skip_iterations: true

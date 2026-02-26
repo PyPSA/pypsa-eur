@@ -5215,7 +5215,8 @@
                 },
                 "default_price": {
                   "default": 100000,
-                  "description": "The default price for load-shedding in EUR/MWh. Per default 1e5 Eur/MWh is assumed.",
+                  "description": "The default price for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+                  "exclusiveMinimum": 0,
                   "type": "number"
                 },
                 "apply_to_all_carriers": {
@@ -5225,10 +5226,41 @@
                 },
                 "carriers": {
                   "additionalProperties": {
+                    "exclusiveMinimum": 0,
                     "type": "number"
                   },
                   "default": {},
-                  "description": "Dictionary of carriers and their specific load shedding price in EUR/MWh. If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+                  "description": "Dictionary of carriers and their specific load shedding price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+                  "type": "object"
+                }
+              }
+            },
+            "load_sinks": {
+              "description": "Configuration for `solving.options.load_sinks` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either apply_to_all_carriers: true or at least one entry in carriers.",
+                  "type": "boolean"
+                },
+                "default_price": {
+                  "default": 100000,
+                  "description": "The default price for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                },
+                "apply_to_all_carriers": {
+                  "default": false,
+                  "description": "Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+                  "type": "boolean"
+                },
+                "carriers": {
+                  "additionalProperties": {
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "default": {},
+                  "description": "Dictionary of carriers and their specific load sink price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default price is assumed for non-listed carriers.",
                   "type": "object"
                 }
               }
@@ -6748,7 +6780,8 @@
         },
         "default_price": {
           "default": 100000,
-          "description": "The default price for load-shedding in EUR/MWh. Per default 1e5 Eur/MWh is assumed.",
+          "description": "The default price for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+          "exclusiveMinimum": 0,
           "type": "number"
         },
         "apply_to_all_carriers": {
@@ -6758,10 +6791,41 @@
         },
         "carriers": {
           "additionalProperties": {
+            "exclusiveMinimum": 0,
             "type": "number"
           },
           "default": {},
-          "description": "Dictionary of carriers and their specific load shedding price in EUR/MWh. If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+          "description": "Dictionary of carriers and their specific load shedding price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+          "type": "object"
+        }
+      }
+    },
+    "_LoadSinksConfig": {
+      "description": "Configuration for `solving.options.load_sinks` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either apply_to_all_carriers: true or at least one entry in carriers.",
+          "type": "boolean"
+        },
+        "default_price": {
+          "default": 100000,
+          "description": "The default price for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "apply_to_all_carriers": {
+          "default": false,
+          "description": "Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+          "type": "boolean"
+        },
+        "carriers": {
+          "additionalProperties": {
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "default": {},
+          "description": "Dictionary of carriers and their specific load sink price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default price is assumed for non-listed carriers.",
           "type": "object"
         }
       }
@@ -7758,7 +7822,8 @@
             },
             "default_price": {
               "default": 100000,
-              "description": "The default price for load-shedding in EUR/MWh. Per default 1e5 Eur/MWh is assumed.",
+              "description": "The default price for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+              "exclusiveMinimum": 0,
               "type": "number"
             },
             "apply_to_all_carriers": {
@@ -7768,10 +7833,41 @@
             },
             "carriers": {
               "additionalProperties": {
+                "exclusiveMinimum": 0,
                 "type": "number"
               },
               "default": {},
-              "description": "Dictionary of carriers and their specific load shedding price in EUR/MWh. If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+              "description": "Dictionary of carriers and their specific load shedding price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+              "type": "object"
+            }
+          }
+        },
+        "load_sinks": {
+          "description": "Configuration for `solving.options.load_sinks` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either apply_to_all_carriers: true or at least one entry in carriers.",
+              "type": "boolean"
+            },
+            "default_price": {
+              "default": 100000,
+              "description": "The default price for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "apply_to_all_carriers": {
+              "default": false,
+              "description": "Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+              "type": "boolean"
+            },
+            "carriers": {
+              "additionalProperties": {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              "default": {},
+              "description": "Dictionary of carriers and their specific load sink price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default price is assumed for non-listed carriers.",
               "type": "object"
             }
           }
@@ -12164,7 +12260,8 @@
                 },
                 "default_price": {
                   "default": 100000,
-                  "description": "The default price for load-shedding in EUR/MWh. Per default 1e5 Eur/MWh is assumed.",
+                  "description": "The default price for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+                  "exclusiveMinimum": 0,
                   "type": "number"
                 },
                 "apply_to_all_carriers": {
@@ -12174,10 +12271,41 @@
                 },
                 "carriers": {
                   "additionalProperties": {
+                    "exclusiveMinimum": 0,
                     "type": "number"
                   },
                   "default": {},
-                  "description": "Dictionary of carriers and their specific load shedding price in EUR/MWh. If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+                  "description": "Dictionary of carriers and their specific load shedding price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+                  "type": "object"
+                }
+              }
+            },
+            "load_sinks": {
+              "description": "Configuration for `solving.options.load_sinks` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either apply_to_all_carriers: true or at least one entry in carriers.",
+                  "type": "boolean"
+                },
+                "default_price": {
+                  "default": 100000,
+                  "description": "The default price for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                },
+                "apply_to_all_carriers": {
+                  "default": false,
+                  "description": "Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+                  "type": "boolean"
+                },
+                "carriers": {
+                  "additionalProperties": {
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "default": {},
+                  "description": "Dictionary of carriers and their specific load sink price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default price is assumed for non-listed carriers.",
                   "type": "object"
                 }
               }

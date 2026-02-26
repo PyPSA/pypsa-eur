@@ -420,6 +420,62 @@ def add_retrofit_gas_boiler_constraint(
     n.model.add_constraints(lhs == rhs, name="gas_retrofit")
 
 
+def add_load_balance_components(n, config, sign=1):
+    """
+    Add load shedding or load sinks to the network with carrier 'load'.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network to be modified.
+    config : dict
+        The load shedding or load sinks settings.
+    sign : float
+        Direction of the added generators. Positive for load shedding, negative for load sinks.
+
+    Returns
+    -------
+    None
+        Modifies PyPSA network in place.
+    """
+    if "load" not in n.carriers.index:
+        n.add("Carrier", "load")
+
+    carriers = config.get("carriers", {})
+    default_price = config.get("default_price")
+    balance_comp = "shedding" if sign > 0 else "sink"
+
+    logger.info(
+        f"Add load {balance_comp} for {'all carriers' if config.get('apply_to_all_carriers') else ', '.join(carriers)}."
+    )
+
+    for bus_carrier, price in carriers.items():
+        buses_i = n.buses[n.buses.carrier == bus_carrier].index
+        n.add(
+            "Generator",
+            buses_i,
+            f" load {balance_comp}",
+            bus=buses_i,
+            carrier="load",
+            marginal_cost=price,
+            p_nom=np.inf,
+            sign=sign,
+        )
+
+    if config.get("apply_to_all_carriers", False):
+        buses_rest_i = n.buses[~n.buses.carrier.isin(carriers)].index
+        n.add(
+            "Generator",
+            buses_rest_i,
+            f" load {balance_comp}",
+            bus=buses_rest_i,
+            carrier="load",
+            marginal_cost=default_price,
+            p_nom=np.inf,
+            sign=sign,
+        )
+
+
 def prepare_network(
     n: pypsa.Network,
     solve_opts: dict,
@@ -461,36 +517,12 @@ def prepare_network(
             df.where(df.abs() > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
 
     if (load_shedding := solve_opts.get("load_shedding", {})).get("enable", False):
-        n.add("Carrier", "load")
-
-        carriers = load_shedding.get("carriers", {})
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
-        default_price = load_shedding.get("default_price")  # Eur/MWh
+        add_load_balance_components(n, load_shedding)
 
-        for shed_carrier, shed_price in carriers.items():
-            buses_i = n.buses[n.buses.carrier == shed_carrier].index
-            n.add(
-                "Generator",
-                buses_i,
-                " load",
-                bus=buses_i,
-                carrier="load",
-                marginal_cost=shed_price,  # Eur/MWh
-                p_nom=np.inf,
-            )
-
-        if load_shedding.get("apply_to_all_carriers", False):
-            buses_rest_i = n.buses[~n.buses.carrier.isin(carriers)].index
-            n.add(
-                "Generator",
-                buses_rest_i,
-                " load",
-                bus=buses_rest_i,
-                carrier="load",
-                marginal_cost=default_price,  # Eur/MWh
-                p_nom=np.inf,
-            )
+    if (load_sinks := solve_opts.get("load_sinks", {})).get("enable", False):
+        add_load_balance_components(n, load_sinks, sign=-1)
 
     if solve_opts.get("curtailment_mode"):
         n.add("Carrier", "curtailment", color="#fedfed", nice_name="Curtailment")

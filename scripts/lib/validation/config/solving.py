@@ -10,7 +10,7 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solvin
 
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, PositiveFloat, field_validator, model_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -58,17 +58,17 @@ class _LoadSheddingConfig(ConfigModel):
         False,
         description="Enable load shedding by adding high-cost generators to avoid infeasibilities. Requires either apply_to_all_carriers: true or at least one entry in carriers.",
     )
-    default_price: float = Field(
+    default_price: PositiveFloat = Field(
         100000,
-        description="The default price for load-shedding in EUR/MWh. Per default 1e5 Eur/MWh is assumed.",
+        description="The default price for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
     )
     apply_to_all_carriers: bool = Field(
         True,
         description="Switch to apply load shedding to all carriers. Otherwise, load shedding will be applied to listed carriers only.",
     )
-    carriers: dict[str, float] = Field(
+    carriers: dict[str, PositiveFloat] = Field(
         {},
-        description="Dictionary of carriers and their specific load shedding price in EUR/MWh. If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+        description="Dictionary of carriers and their specific load shedding price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
     )
 
     @model_validator(mode="after")
@@ -76,6 +76,37 @@ class _LoadSheddingConfig(ConfigModel):
         if self.enable and not self.carriers and not self.apply_to_all_carriers:
             raise ValueError(
                 "Load shedding is enabled but no carriers are specified and "
+                "'apply_to_all_carriers' is False. Either specify carriers or "
+                "set 'apply_to_all_carriers' to True."
+            )
+        return self
+
+
+class _LoadSinksConfig(ConfigModel):
+    """Configuration for `solving.options.load_sinks` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either apply_to_all_carriers: true or at least one entry in carriers.",
+    )
+    default_price: PositiveFloat = Field(
+        100000,
+        description="The default price for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+    )
+    apply_to_all_carriers: bool = Field(
+        False,
+        description="Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+    )
+    carriers: dict[str, PositiveFloat] = Field(
+        {},
+        description="Dictionary of carriers and their specific load sink price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default price is assumed for non-listed carriers.",
+    )
+
+    @model_validator(mode="after")
+    def check_enabled_has_targets(self):
+        if self.enable and not self.carriers and not self.apply_to_all_carriers:
+            raise ValueError(
+                "Load sinks are enabled but no carriers are specified and "
                 "'apply_to_all_carriers' is False. Either specify carriers or "
                 "set 'apply_to_all_carriers' to True."
             )
@@ -92,6 +123,10 @@ class _SolvingOptionsConfig(BaseModel):
     load_shedding: _LoadSheddingConfig = Field(
         default_factory=_LoadSheddingConfig,
         description="Load shedding settings.",
+    )
+    load_sinks: _LoadSinksConfig = Field(
+        default_factory=_LoadSinksConfig,
+        description="Load sinks settings.",
     )
     curtailment_mode: bool = Field(
         False,
