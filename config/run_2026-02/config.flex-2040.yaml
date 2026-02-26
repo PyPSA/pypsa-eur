@@ -1,0 +1,228 @@
+# Standalone flex-2040 config
+# Escalated flexibility vs 2030: higher DSR fractions, longer shift hours,
+# lower DSR store cost, V2G degradation cost reduced, larger EV fleet
+
+run:
+  prefix: "2026-02"
+  name: "flex-2040"
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+  scenarios:
+    enable: false
+
+foresight: overnight
+
+scenario:
+  clusters:
+    - 37
+  opts:
+    - ""
+  sector_opts:
+    - ""
+  planning_horizons:
+    - "2040"
+
+costs:
+  year: 2040
+
+co2_budget:
+  2040: 0.10
+
+countries:
+  - AT
+  - BE
+  - BG
+  - CH
+  - CZ
+  - DE
+  - DK
+  - EE
+  - ES
+  - FI
+  - FR
+  - GB
+  - GR
+  - HR
+  - HU
+  - IE
+  - IT
+  - LT
+  - LU
+  - LV
+  - NL
+  - "NO"
+  - PL
+  - PT
+  - RO
+  - SE
+  - SI
+  - SK
+
+snapshots:
+  start: "2019-01-01"
+  end: "2019-12-31"
+  inclusive: both
+
+electricity:
+  extendable_carriers:
+    Generator:
+      [
+        solar,
+        solar-hsat,
+        onwind,
+        offwind-ac,
+        offwind-dc,
+        offwind-float,
+        OCGT,
+        CCGT,
+      ]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: []
+  transmission_limit: "v1.25"
+
+atlite:
+  default_cutout: europe-2019-sarah3-era5
+  cutouts:
+    europe-2019-sarah3-era5:
+      module: [sarah, era5]
+      x: [-12., 35.]
+      y: [33., 72.]
+      time: ["2019-01-01", "2019-12-31"]
+
+clustering:
+  temporal:
+    resolution_sector: 3h
+
+transmission_projects:
+  include:
+    tyndp2020: true
+    nep: false
+    manual: true
+  new_link_capacity: keep
+
+sector:
+  gas_network: true
+  H2_network: false
+  H2_retrofit: false
+  reduce_space_heat_exogenously: true
+  reduce_space_heat_exogenously_factor:
+    2040: 0.15
+  district_heating:
+    progress:
+      2040: 0.5
+  residential_heat:
+    dsm:
+      enable: true
+      direction:
+        - overheat
+        - undercool
+      restriction_value:
+        2040: 0.38
+  hydrogen_turbine: true
+  hydrogen_fuel_cell: true
+  bev_dsm: true
+  v2g: true
+  bev_energy: 0.10
+  bev_dsm_availability: 0.5
+  land_transport_electric_share:
+    2040: 0.7
+  land_transport_fuel_cell_share:
+    2040: 0
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: true
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false
+  dac: false
+  limit_max_growth:
+    enable: true
+    factor: 1.5
+
+industry:
+  dsr:
+    enable: true
+    store_capital_cost: 3.0
+    flexibility_fraction:
+      "Iron & steel industry|Scrap-EAF": 0.90
+      "Iron & steel industry|H2-DRI-EAF": 0.35
+      "Iron & steel industry|BF-BOF-CCUS": 0.02
+      "Iron & steel industry|Manufacturing": 0.0
+      "Iron & steel industry|Aluminium-primary": 0.20
+      "Iron & steel industry|Aluminium-secondary": 0.20
+      "Iron & steel industry|Alumina": 0.0
+      "Non-metallic Minerals|Cement mills": 0.55
+      "Non-metallic Minerals|Raw mills": 0.55
+      "Non-metallic Minerals|Kiln": 0.0
+      "Non-metallic Minerals|Other": 0.0
+      "Paper, Pulp and Print|Pulp production": 0.70
+      "Paper, Pulp and Print|Paper machines": 0.0
+      "Paper, Pulp and Print|Printing": 0.70
+      "Non-specified (Industry)|Chlor-alkali": 0.15
+      "Non-specified (Industry)|Other chemicals": 0.25
+      "Food and Tobacco": 0.20
+      "Textile and Leather": 0.20
+      "Wood and Wood Products": 0.20
+      "Transport Equipment": 0.20
+      "Machinery": 0.20
+    shift_hours:
+      "Iron & steel industry|Scrap-EAF": 3
+      "Iron & steel industry|H2-DRI-EAF": 8
+      "Iron & steel industry|BF-BOF-CCUS": 1
+      "Iron & steel industry|Aluminium-primary": 4
+      "Iron & steel industry|Aluminium-secondary": 4
+      "Iron & steel industry|Alumina": 0
+      "Non-metallic Minerals|Cement mills": 6
+      "Non-metallic Minerals|Raw mills": 6
+      "Paper, Pulp and Print|Pulp production": 8
+      "Paper, Pulp and Print|Printing": 8
+      "Non-specified (Industry)|Chlor-alkali": 6
+      "Non-specified (Industry)|Other chemicals": 6
+      "Food and Tobacco": 6
+      "Textile and Leather": 6
+      "Wood and Wood Products": 6
+      "Transport Equipment": 6
+      "Machinery": 6
+    restriction_time:
+      "Non-specified (Industry)|Other chemicals": [0]
+  waste_to_energy: true
+  temporal_electricity_industry_load: true
+
+adjustments:
+  sector:
+    factor:
+      Link:
+        electricity distribution grid:
+          capital_cost: 1.0
+    absolute:
+      Link:
+        V2G:
+          marginal_cost: 60
+
+solving:
+  solver:
+    name: gurobi
+    options: gurobi-default
+  mem_mb: 128000
+  runtime: 48h
+
+plotting:
+  map:
+    boundaries:
+  eu_node_location:
+    x: 10.0
+    y: 50.0
+  costs_max: 1000
+  costs_threshold: 0.0000001
+  energy_max:
+  energy_min:
+  energy_threshold: 0.000001
