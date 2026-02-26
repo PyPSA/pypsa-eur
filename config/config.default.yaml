@@ -1297,7 +1297,7 @@ data:
     source: archive
     version: latest
   nitrogen_statistics:
-    source: primary
+    source: archive
     version: latest
   eu_nuts2013:
     source: archive

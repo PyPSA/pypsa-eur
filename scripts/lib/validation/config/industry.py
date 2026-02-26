@@ -201,7 +201,7 @@ class IndustryConfig(ConfigModel):
         description="Locate industrial sites without valid locations based on city and countries.",
     )
     reference_year: int = Field(
-        2019,
+        2023,
         description="The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_.",
     )
     oil_refining_emissions: float = Field(
