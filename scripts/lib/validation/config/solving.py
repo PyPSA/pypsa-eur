@@ -51,6 +51,37 @@ class _ModelKwargsConfig(BaseModel):
     )
 
 
+class _LoadSheddingConfig(ConfigModel):
+    """Configuration for `solving.options.load_shedding` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Enable load shedding by adding high-cost generators to avoid infeasibilities. Requires either apply_to_all_carriers: true or at least one entry in carriers.",
+    )
+    default_price: float = Field(
+        100000,
+        description="The default price for load-shedding in EUR/MWh. Per default 1e5 Eur/MWh is assumed.",
+    )
+    apply_to_all_carriers: bool = Field(
+        True,
+        description="Switch to apply load shedding to all carriers. Otherwise, load shedding will be applied to listed carriers only.",
+    )
+    carriers: dict[str, float] = Field(
+        {},
+        description="Dictionary of carriers and their specific load shedding price in EUR/MWh. If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+    )
+
+    @model_validator(mode="after")
+    def check_enabled_has_targets(self):
+        if self.enable and not self.carriers and not self.apply_to_all_carriers:
+            raise ValueError(
+                "Load shedding is enabled but no carriers are specified and "
+                "'apply_to_all_carriers' is False. Either specify carriers or "
+                "set 'apply_to_all_carriers' to True."
+            )
+        return self
+
+
 class _SolvingOptionsConfig(BaseModel):
     """Configuration for `solving.options` settings."""
 
@@ -58,9 +89,9 @@ class _SolvingOptionsConfig(BaseModel):
         0.01,
         description="To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
     )
-    load_shedding: bool | float = Field(
-        False,
-        description="Add generators with very high marginal cost to simulate load shedding and avoid problem infeasibilities. If load shedding is a float, it denotes the marginal cost in EUR/kWh.",
+    load_shedding: _LoadSheddingConfig = Field(
+        default_factory=_LoadSheddingConfig,
+        description="Load shedding settings.",
     )
     curtailment_mode: bool = Field(
         False,

@@ -460,23 +460,37 @@ def prepare_network(
         ):
             df.where(df.abs() > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
 
-    if load_shedding := solve_opts.get("load_shedding"):
+    if (load_shedding := solve_opts.get("load_shedding", {})).get("enable", False):
+        n.add("Carrier", "load")
+
+        carriers = load_shedding.get("carriers", {})
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
-        n.add("Carrier", "load")
-        buses_i = n.buses.index
-        if isinstance(load_shedding, bool):
-            load_shedding = 1e5  # Eur/MWh
+        default_price = load_shedding.get("default_price")  # Eur/MWh
 
-        n.add(
-            "Generator",
-            buses_i,
-            " load",
-            bus=buses_i,
-            carrier="load",
-            marginal_cost=load_shedding,  # Eur/MWh
-            p_nom=np.inf,
-        )
+        for shed_carrier, shed_price in carriers.items():
+            buses_i = n.buses[n.buses.carrier == shed_carrier].index
+            n.add(
+                "Generator",
+                buses_i,
+                " load",
+                bus=buses_i,
+                carrier="load",
+                marginal_cost=shed_price,  # Eur/MWh
+                p_nom=np.inf,
+            )
+
+        if load_shedding.get("apply_to_all_carriers", False):
+            buses_rest_i = n.buses[~n.buses.carrier.isin(carriers)].index
+            n.add(
+                "Generator",
+                buses_rest_i,
+                " load",
+                bus=buses_rest_i,
+                carrier="load",
+                marginal_cost=default_price,  # Eur/MWh
+                p_nom=np.inf,
+            )
 
     if solve_opts.get("curtailment_mode"):
         n.add("Carrier", "curtailment", color="#fedfed", nice_name="Curtailment")
