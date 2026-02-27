@@ -2615,7 +2615,7 @@
           "type": "boolean"
         },
         "reference_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_.",
           "markdownDescription": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015 ](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
           "type": "integer"
@@ -11745,7 +11745,7 @@
           "type": "boolean"
         },
         "reference_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_.",
           "markdownDescription": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015 ](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
           "type": "integer"
