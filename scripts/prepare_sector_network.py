@@ -1743,14 +1743,15 @@ def insert_gas_distribution_costs(
     n.links.loc[mchp, "capital_cost"] += capital_cost
 
 
-def add_electricity_grid_connection(n, costs):
+def add_electricity_grid_connection(n, costs, params_renewables):
     carriers = ["onwind", "solar", "solar-hsat"]
-
-    gens = n.generators.index[n.generators.carrier.isin(carriers)]
-
-    n.generators.loc[gens, "capital_cost"] += costs.at[
-        "electricity grid connection", "capital_cost"
-    ]
+    for car in carriers:
+            
+        gens = n.generators.index[n.generators.carrier == car]
+        dc_ac_ratio = params_renewables[car].get("dc_ac_ratio", 1.0)
+        n.generators.loc[gens, "capital_cost"] += costs.at[
+            "electricity grid connection", "capital_cost"
+        ] / dc_ac_ratio
 
 
 def add_h2_gas_infrastructure(
@@ -6576,7 +6577,7 @@ if __name__ == "__main__":
         insert_gas_distribution_costs(n, costs, options=options)
 
     if options["electricity_grid_connection"]:
-        add_electricity_grid_connection(n, costs)
+        add_electricity_grid_connection(n, costs, snakemake.param["renewable"])
 
     for k, v in options["transmission_efficiency"].items():
         if k in options["transmission_efficiency"]["enable"]:
