@@ -68,7 +68,7 @@ class _LoadSheddingConfig(ConfigModel):
     )
     carriers: dict[str, PositiveFloat] = Field(
         {},
-        description="Dictionary of carriers and their specific load shedding price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default price is assumed for non-listed carriers.",
+        description="Dictionary of carriers and their specific load shedding cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default cost is assumed for non-listed carriers.",
     )
 
     @model_validator(mode="after")
@@ -99,7 +99,7 @@ class _LoadSinksConfig(ConfigModel):
     )
     carriers: dict[str, PositiveFloat] = Field(
         {},
-        description="Dictionary of carriers and their specific load sink price in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default price is assumed for non-listed carriers.",
+        description="Dictionary of carriers and their specific load sink cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default cost is assumed for non-listed carriers.",
     )
 
     @model_validator(mode="after")
