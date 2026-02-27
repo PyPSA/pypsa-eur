@@ -102,6 +102,8 @@ co2_budget:
   2045: 0.05
   2050: 0.0
 
+local_co2_budget: false
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages:
