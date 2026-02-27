@@ -467,9 +467,13 @@ def update_wind_solar_costs(
         n.generators.loc[n.generators.carrier == carrier, "capital_cost"] = costs.at[
             cost_key, "capital_cost"
         ]
-        if params_renewable[carrier].get("costs_given_for_ac") and params_renewable[carrier].get("dc_ac_ratio", 1.0) != 1.0:
-            n.generators.loc[n.generators.carrier == carrier, "capital_cost"] /= params_renewable[carrier]["dc_ac_ratio"]
-
+        if (
+            params_renewable[carrier].get("costs_given_for_ac")
+            and params_renewable[carrier].get("dc_ac_ratio", 1.0) != 1.0
+        ):
+            n.generators.loc[n.generators.carrier == carrier, "capital_cost"] /= (
+                params_renewable[carrier]["dc_ac_ratio"]
+            )
 
     # for offshore wind, need to calculated connection costs
     for key, fn in profiles.items():
@@ -695,11 +699,17 @@ def remove_non_electric_buses(n):
         n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
 
-def patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths, params_renewable=None):
+def patch_electricity_network(
+    n, costs, carriers_to_keep, profiles, landfall_lengths, params_renewable=None
+):
     remove_elec_base_techs(n, carriers_to_keep)
     remove_non_electric_buses(n)
     update_wind_solar_costs(
-        n, costs, landfall_lengths=landfall_lengths, profiles=profiles, params_renewable=params_renewable   
+        n,
+        costs,
+        landfall_lengths=landfall_lengths,
+        profiles=profiles,
+        params_renewable=params_renewable,
     )
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
@@ -1746,12 +1756,11 @@ def insert_gas_distribution_costs(
 def add_electricity_grid_connection(n, costs, params_renewables):
     carriers = ["onwind", "solar", "solar-hsat"]
     for car in carriers:
-            
         gens = n.generators.index[n.generators.carrier == car]
         dc_ac_ratio = params_renewables[car].get("dc_ac_ratio", 1.0)
-        n.generators.loc[gens, "capital_cost"] += costs.at[
-            "electricity grid connection", "capital_cost"
-        ] / dc_ac_ratio
+        n.generators.loc[gens, "capital_cost"] += (
+            costs.at["electricity grid connection", "capital_cost"] / dc_ac_ratio
+        )
 
 
 def add_h2_gas_infrastructure(
@@ -6294,7 +6303,14 @@ if __name__ == "__main__":
         for tech, settings in snakemake.params.renewable.items()
         if "landfall_length" in settings.keys()
     }
-    patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths, snakemake.params.renewable)
+    patch_electricity_network(
+        n,
+        costs,
+        carriers_to_keep,
+        profiles,
+        landfall_lengths,
+        snakemake.params.renewable,
+    )
 
     fn = snakemake.input.heating_efficiencies
     year = int(snakemake.params["energy_totals_year"])
