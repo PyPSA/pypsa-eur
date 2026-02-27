@@ -427,6 +427,7 @@ def update_wind_solar_costs(
     profiles: dict[str, str],
     landfall_lengths: dict = None,
     line_length_factor: int | float = 1,
+    params_renewable: dict = None,
 ) -> None:
     """
     Update costs for wind and solar generators added with pypsa-eur to those
@@ -445,6 +446,8 @@ def update_wind_solar_costs(
     profiles : dict[str, str]
         Dictionary mapping technology names to profile file paths
         e.g. {'offwind-dc': 'path/to/profile.nc'}
+    params_renewable : dict, optional
+        Dictionary of renewable parameters, by default None
     """
 
     if landfall_lengths is None:
@@ -464,6 +467,9 @@ def update_wind_solar_costs(
         n.generators.loc[n.generators.carrier == carrier, "capital_cost"] = costs.at[
             cost_key, "capital_cost"
         ]
+        if params_renewable[carrier].get("costs_given_for_ac") and params_renewable[carrier].get("dc_ac_ratio", 1.0) != 1.0:
+            n.generators.loc[n.generators.carrier == carrier, "capital_cost"] /= params_renewable[carrier]["dc_ac_ratio"]
+
 
     # for offshore wind, need to calculated connection costs
     for key, fn in profiles.items():
@@ -689,11 +695,11 @@ def remove_non_electric_buses(n):
         n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
 
-def patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths):
+def patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths, params_renewable=None):
     remove_elec_base_techs(n, carriers_to_keep)
     remove_non_electric_buses(n)
     update_wind_solar_costs(
-        n, costs, landfall_lengths=landfall_lengths, profiles=profiles
+        n, costs, landfall_lengths=landfall_lengths, profiles=profiles, params_renewable=params_renewable   
     )
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
@@ -6287,7 +6293,7 @@ if __name__ == "__main__":
         for tech, settings in snakemake.params.renewable.items()
         if "landfall_length" in settings.keys()
     }
-    patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths)
+    patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths, snakemake.params.renewable)
 
     fn = snakemake.input.heating_efficiencies
     year = int(snakemake.params["energy_totals_year"])
