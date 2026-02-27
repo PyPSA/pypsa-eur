@@ -1,0 +1,46 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# Industry flexibility test: Belgium, 5 clusters, 2030, HiGHS, 1-week horizon.
+# DSR enabled with v2-style restriction_time checkpoints (twice-daily for some techs).
+# Usage: snakemake --configfile config/config.default.yaml config/test/config.industry.flex.yaml
+
+run:
+  name: "Test_2030"
+
+scenario:
+  clusters:
+  - 5
+  planning_horizons:
+  - 2030
+
+countries:
+- BE
+
+enable:
+  retrieve: true
+
+clustering:
+  temporal:
+    resolution_sector: 6h
+
+industry:
+  temporal_electricity_industry_load: true
+  dsr:
+    enable: true
+    # Override restriction_time: v2-style twice-daily checkpoints for some technologies.
+    restriction_time:
+      "Iron & steel industry|Scrap-EAF": [6, 18]
+      "Iron & steel industry|H2-DRI-EAF": [0, 12]
+      "Iron & steel industry|BF-BOF-CCUS": [6, 18]
+    # Override ramp_rate default: v2-style 50% per hour.
+    ramp_rate:
+      default: 0.5
+
+solving:
+  solver:
+    name: highs
+    options: highs-default
+  solving_options:
+    nhours: 168

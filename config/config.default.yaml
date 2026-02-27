@@ -940,6 +940,127 @@ industry:
   reference_year: 2019
   oil_refining_emissions: 0.013
 
+  # Industry electricity demand-side response (DSR): virtual storage for load shifting.
+  # V3: economically optional DSR with technology breakdown and capital costs.
+  # Config keys use FfE profile names (e.g. "Iron & steel industry"), not PyPSA industry categories
+  # (e.g. Electric arc, Cement). See INDUSTRY_CATEGORY_TO_PROFILE in build_industrial_energy_demand_per_node.py.
+  dsr:
+    enable: false
+    # Capital cost for DSR stores (EUR/MWh/year of energy capacity).
+    # Represents investment in control systems, process modifications, scheduling software.
+    store_capital_cost: 5.0
+    # Link capital costs (EUR/MW/year of power capacity).
+    link_capital_cost: 0.0
+    # Roundtrip efficiency losses (fraction per link).
+    charge_efficiency: 0.98
+    discharge_efficiency: 0.98
+    # Technology breakdown: defines how each FfE profile is split into technologies.
+    # Only profiles listed here get technology-level DSR stores; others use profile-level.
+    # "auto" = calculate share from production data; numeric = fixed fraction.
+    technology_breakdown:
+      "Iron & steel industry":
+        "Scrap-EAF": "auto"
+        "H2-DRI-EAF": "auto"
+        "BF-BOF-CCUS": "auto"
+        "Aluminium-primary": "auto"
+        "Aluminium-secondary": "auto"
+        "Alumina": "auto"
+        "Manufacturing": 0.05
+      "Non-metallic Minerals":
+        "Cement mills": 0.40
+        "Raw mills": 0.26
+        "Kiln": 0.27
+        "Other": 0.07
+      "Paper, Pulp and Print":
+        "Pulp production": 0.30
+        "Paper machines": 0.50
+        "Printing": 0.20
+      "Non-specified (Industry)":
+        "Chlor-alkali": 0.10
+        "Other chemicals": 0.90
+    # Fraction of load that can be shifted (0..1).
+    # Technology-specific keys use "profile|technology" format.
+    flexibility_fraction:
+      "Iron & steel industry|Scrap-EAF": 0.85
+      "Iron & steel industry|H2-DRI-EAF": 0.20
+      "Iron & steel industry|BF-BOF-CCUS": 0.05
+      "Iron & steel industry|Manufacturing": 0.0
+      "Iron & steel industry|Aluminium-primary": 0.125
+      "Iron & steel industry|Aluminium-secondary": 0.125
+      "Iron & steel industry|Alumina": 0.0
+      "Non-metallic Minerals|Cement mills": 0.42
+      "Non-metallic Minerals|Raw mills": 0.42
+      "Non-metallic Minerals|Kiln": 0.0
+      "Non-metallic Minerals|Other": 0.0
+      "Paper, Pulp and Print|Pulp production": 0.60
+      "Paper, Pulp and Print|Paper machines": 0.0
+      "Paper, Pulp and Print|Printing": 0.60
+      "Non-specified (Industry)|Chlor-alkali": 0.10
+      "Food and Tobacco": 0.10
+      "Textile and Leather": 0.10
+      "Wood and Wood Products": 0.10
+      "Transport Equipment": 0.10
+      "Machinery": 0.10
+    # Maximum shift duration in hours.
+    shift_hours:
+      "Iron & steel industry|Scrap-EAF": 2
+      "Iron & steel industry|H2-DRI-EAF": 6
+      "Iron & steel industry|BF-BOF-CCUS": 1
+      "Iron & steel industry|Aluminium-primary": 3
+      "Iron & steel industry|Aluminium-secondary": 3
+      "Iron & steel industry|Alumina": 0
+      "Non-metallic Minerals|Cement mills": 4
+      "Non-metallic Minerals|Raw mills": 4
+      "Paper, Pulp and Print|Pulp production": 6
+      "Paper, Pulp and Print|Printing": 6
+      "Non-specified (Industry)|Chlor-alkali": 4
+      "Food and Tobacco": 4
+      "Textile and Leather": 4
+      "Wood and Wood Products": 4
+      "Transport Equipment": 4
+      "Machinery": 4
+    # Ramp rate constraints (fraction of p_nom per timestep).
+    # Only rigid technologies need explicit entries; flexible ones are unconstrained.
+    ramp_rate:
+      default: 0.1
+      "Iron & steel industry|BF-BOF-CCUS": 0.04
+      "Iron & steel industry|Aluminium-primary": 0.08
+      "Iron & steel industry|Alumina": 0.06
+      "Non-metallic Minerals|Kiln": 0.04
+      "Non-metallic Minerals|Raw mills": 0.2
+      "Non-metallic Minerals|Cement mills": 0.2
+      "Paper, Pulp and Print|Paper machines": 0.1
+      "Non-specified (Industry)|Chlor-alkali": 0.1
+    # Checkpoint hours (0-23) at which the DSR store must be empty.
+    # V3: relaxed to once-daily (midnight) for 24-hour shifting windows.
+    restriction_time:
+      "Iron & steel industry|Scrap-EAF": [0]
+      "Iron & steel industry|H2-DRI-EAF": [0]
+      "Iron & steel industry|BF-BOF-CCUS": [0]
+      "Iron & steel industry|Aluminium-primary": [0]
+      "Iron & steel industry|Aluminium-secondary": [0]
+      "Iron & steel industry|Alumina": [0]
+      "Non-metallic Minerals|Cement mills": [0]
+      "Non-metallic Minerals|Raw mills": [0]
+      "Paper, Pulp and Print|Pulp production": [0]
+      "Paper, Pulp and Print|Printing": [0]
+      "Non-specified (Industry)|Chlor-alkali": [0]
+      "Iron & steel industry": [0]
+      "Non-metallic Minerals": [0]
+      "Paper, Pulp and Print": [0]
+      "Food and Tobacco": [0]
+      "Textile and Leather": [0]
+      "Wood and Wood Products": [0]
+      "Transport Equipment": [0]
+      "Machinery": [0]
+    restriction_value: 1.0
+    # Technologies that can only REDUCE load (no upward shifting).
+    negative_only:
+      "Non-specified (Industry)|Chlor-alkali": true
+    # Minimum load constraint (fraction of nominal).
+    min_load:
+      "Non-specified (Industry)|Chlor-alkali": 0.70
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
@@ -1142,6 +1263,16 @@ data:
   jrc_ardeco:
     source: archive
     version: latest
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
+overpass_api:
+  url: https://overpass-api.de/api/interpreter
+  max_tries: 5
+  timeout: 600
+  user_agent:
+    project_name: PyPSA-Eur
+    email: contact@pypsa.org
+    website: https://github.com/PyPSA/pypsa-eur
 
 secrets:
   corine: '' #Add API key here if primary source is used for retrieving corine dataset after registering in https://land.copernicus.eu/user/login

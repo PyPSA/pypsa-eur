@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# No-DSR baseline with renewable expansion (Fit-for-55).
+# Pair with config.dsr_v3_renewable.yaml for apples-to-apples comparison.
+# Usage: snakemake --configfile config/config.default.yaml config/test/config.eu_38_2030_base.yaml config/test/config.no_dsr_renewable.yaml
+
+run:
+  name: "EU_no_dsr_renewable_ff55"
+
+electricity:
+  extendable_carriers:
+    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
+
+industry:
+  dsr:
+    enable: false
+
+co2_budget:
+  2030: 0.45
+
+costs:
+  year: 2030

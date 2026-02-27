@@ -512,7 +512,7 @@ def prepare_network(
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760.0 / nhours
 
-    if foresight == "myopic":
+    if foresight == "myopic" and planning_horizons:
         add_land_use_constraint(n, planning_horizons)
 
     if foresight == "perfect":
@@ -1162,6 +1162,278 @@ def add_co2_atmosphere_constraint(n, snapshots):
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
+def add_dri_h2_coupling_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None:
+    """
+    Add coupling constraint between DRI DSR flexibility and H2 storage capacity.
+    
+    H2-DRI-EAF flexibility requires H2 storage to enable load shifting. This constraint
+    limits DRI load shifting based on available H2 storage capacity.
+    
+    Constraint: |DRI_DSR_dispatch| ≤ H2_storage_capacity / H2_per_DRI_ratio
+    
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    snapshots : pd.DatetimeIndex
+        Simulation timesteps
+    """
+    # Check if industry DSR is enabled
+    industry_config = n.config.get("industry", {})
+    dsr_config = industry_config.get("dsr", {})
+    if not dsr_config.get("enable", False):
+        return
+    
+    # Get H2/DRI ratio from config (MWh_H2 per ton steel, or MWh_H2 per MWh_DRI)
+    # H2_DRI: 1.7 is MWh_H2 per ton steel
+    # We need to convert to MWh_H2 per MWh_DRI electricity
+    # elec_DRI: 0.322 MWh_el per ton steel
+    # So: MWh_H2 per MWh_el = H2_DRI / elec_DRI = 1.7 / 0.322 ≈ 5.28
+    h2_dri_ratio = industry_config.get("H2_DRI", 1.7)
+    elec_dri_ratio = industry_config.get("elec_DRI", 0.322)
+    
+    if elec_dri_ratio == 0:
+        logger.warning(
+            "elec_DRI is 0, cannot calculate H2_per_DRI_electricity_ratio for coupling constraint. "
+            "Skipping H2-DRI coupling constraint. DRI flexibility may be overestimated."
+        )
+        return
+    
+    h2_per_dri_elec = h2_dri_ratio / elec_dri_ratio  # MWh_H2 per MWh_DRI_electricity
+    
+    # Find DRI DSR stores (those with "H2-DRI-EAF" in the name)
+    industry_dsr_stores = n.stores[n.stores.carrier == "industry dsr"]
+    dri_stores = industry_dsr_stores[industry_dsr_stores.index.str.contains("H2-DRI-EAF", case=False, na=False)]
+    
+    if dri_stores.empty:
+        return  # No DRI stores, nothing to constrain
+    
+    # Find H2 storage stores
+    h2_stores = n.stores[n.stores.carrier == "H2 Store"]
+    
+    if h2_stores.empty:
+        logger.warning("H2-DRI-EAF DSR stores found but no H2 storage available. DRI flexibility may be overestimated.")
+        return
+    
+    # Get the model variables (only if model exists)
+    if not hasattr(n, "model") or n.model is None:
+        return
+    
+    # Create mapping: DRI store bus -> H2 store
+    # DRI stores are on "low voltage" buses, need to find corresponding H2 bus
+    dri_store_to_h2_store = {}
+    
+    for dri_store_name in dri_stores.index:
+        # Extract node name from store name (e.g., "BE0 0 industry dsr Iron & steel industry H2-DRI-EAF" -> "BE0 0")
+        node_name = dri_store_name.split(" industry dsr ")[0]
+        
+        # Find H2 store at the same node
+        h2_bus = f"{node_name} H2"
+        h2_store_at_node = h2_stores[h2_stores.bus == h2_bus]
+        
+        if not h2_store_at_node.empty:
+            # Use the first H2 store at this node (there should typically be one)
+            h2_store_name = h2_store_at_node.index[0]
+            dri_store_to_h2_store[dri_store_name] = h2_store_name
+        else:
+            logger.debug(f"No H2 storage found for DRI store {dri_store_name} at bus {h2_bus}")
+    
+    if not dri_store_to_h2_store:
+        logger.warning("No H2 storage found for any DRI DSR stores. DRI flexibility may be overestimated.")
+        return
+    
+    # Add constraints for each DRI store
+    store_p = n.model["Store-p"]  # Store dispatch (power)
+    
+    constraints_added = 0
+    for dri_store_name, h2_store_name in dri_store_to_h2_store.items():
+        # Get H2 storage capacity (nominal energy capacity)
+        h2_store_e_nom = n.stores.loc[h2_store_name, "e_nom"]
+        h2_store_extendable = n.stores.loc[h2_store_name, "e_nom_extendable"]
+        
+        if h2_store_extendable:
+            # For extendable stores, use the model variable
+            # This allows the optimizer to build H2 storage to enable DRI flexibility
+            h2_store_e_nom_var = n.model["Store-e_nom"].loc[h2_store_name]
+            # Constraint: |DRI dispatch| * H2_per_DRI ≤ H2_storage_capacity
+            # This means: max_dri_shift = H2_storage_capacity / H2_per_DRI
+            max_dri_shift = h2_store_e_nom_var / h2_per_dri_elec
+        elif pd.isna(h2_store_e_nom) or h2_store_e_nom == 0:
+            logger.debug(f"H2 store {h2_store_name} has no capacity, skipping constraint for {dri_store_name}")
+            continue
+        else:
+            # For fixed capacity, use the nominal value
+            max_dri_shift = h2_store_e_nom / h2_per_dri_elec
+        
+        # Constraint: |DRI dispatch| ≤ max_dri_shift
+        # This limits both positive (charge) and negative (discharge) dispatch
+        dri_dispatch = store_p.loc[:, dri_store_name]
+        
+        # Add upper bound: DRI dispatch ≤ max_dri_shift
+        n.model.add_constraints(
+            dri_dispatch <= max_dri_shift,
+            name=f"DRI_H2_coupling_upper_{dri_store_name}"
+        )
+        
+        # Add lower bound: DRI dispatch ≥ -max_dri_shift
+        n.model.add_constraints(
+            dri_dispatch >= -max_dri_shift,
+            name=f"DRI_H2_coupling_lower_{dri_store_name}"
+        )
+        
+        constraints_added += 1
+    
+    if constraints_added > 0:
+        logger.info(f"Added H2 storage coupling constraints for {constraints_added} DRI DSR stores (H2/DRI ratio: {h2_per_dri_elec:.2f} MWh_H2/MWh_el)")
+
+
+def _extract_tech_key(link_name):
+    """Extract technology key from a DSR link name.
+    
+    e.g. "BE0 0 industry dsr Iron & steel industry Scrap-EAF charge"
+      -> "Iron & steel industry|Scrap-EAF"
+    """
+    store_name = link_name.replace(" charge", "").replace(" discharge", "")
+    parts = store_name.split(" industry dsr ")
+    if len(parts) == 2:
+        profile_tech = parts[1]
+        if " " in profile_tech:
+            profile, tech = profile_tech.rsplit(" ", 1)
+            return f"{profile}|{tech}"
+    return None
+
+
+def _filter_links_with_ramp_config(link_names, ramp_rate_config):
+    """Filter links to only those with an explicit ramp_rate entry in config.
+    
+    Returns the filtered link index and a Series of ramp rates for those links.
+    Technologies not listed in ramp_rate config are considered flexible enough
+    to not need ramp constraints at the model's temporal resolution.
+    """
+    filtered = []
+    rates = {}
+    default_rate = ramp_rate_config.get("default", 0.1)
+    
+    # Keys in config that are actual technology entries (not 'default')
+    tech_keys_in_config = {k for k in ramp_rate_config if k != "default"}
+    
+    for link_name in link_names:
+        tech_key = _extract_tech_key(link_name)
+        if tech_key is not None and tech_key in tech_keys_in_config:
+            filtered.append(link_name)
+            rates[link_name] = ramp_rate_config[tech_key]
+        elif tech_key is None:
+            # Profile-level link (no technology breakdown) - apply default
+            filtered.append(link_name)
+            rates[link_name] = default_rate
+    
+    filtered_idx = pd.Index(filtered)
+    rate_series = pd.Series(rates)
+    return filtered_idx, rate_series
+
+
+def add_dsr_ramp_constraints(n: pypsa.Network, snapshots: pd.DatetimeIndex, dsr_config: dict) -> None:
+    """
+    Add ramp rate constraints for physically rigid DSR technologies.
+    
+    VECTORIZED implementation using linopy/xarray array operations.
+    Only applies to technologies explicitly listed in config ramp_rate section.
+    Flexible technologies (e.g. EAF, secondary aluminium) are excluded because
+    they can physically adjust within a single timestep.
+    
+    Constraints:
+        link_p[t] - link_p[t-1] <= +max_ramp   (ramp up limit)
+        link_p[t] - link_p[t-1] >= -max_ramp   (ramp down limit)
+    
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    snapshots : pd.DatetimeIndex
+        Simulation timesteps
+    dsr_config : dict
+        Industry DSR configuration
+    """
+    ramp_rate_config = dsr_config.get("ramp_rate", {})
+    if not ramp_rate_config:
+        logger.info("No ramp_rate section in DSR config, skipping ramp constraints")
+        return
+    
+    # Find all DSR links
+    all_charge = n.links.index[n.links.carrier == "industry dsr charge"]
+    all_discharge = n.links.index[n.links.carrier == "industry dsr discharge"]
+    
+    if all_charge.empty and all_discharge.empty:
+        return
+    
+    if not hasattr(n, "model") or n.model is None:
+        return
+    
+    # Filter to only rigid technologies with explicit ramp rates
+    charge_links, charge_rates = _filter_links_with_ramp_config(all_charge, ramp_rate_config)
+    discharge_links, discharge_rates = _filter_links_with_ramp_config(all_discharge, ramp_rate_config)
+    
+    n_skipped_charge = len(all_charge) - len(charge_links)
+    n_skipped_discharge = len(all_discharge) - len(discharge_links)
+    if n_skipped_charge > 0 or n_skipped_discharge > 0:
+        logger.info(
+            f"  Ramp constraints: skipping {n_skipped_charge} flexible charge links "
+            f"and {n_skipped_discharge} flexible discharge links (no explicit ramp_rate)"
+        )
+    
+    if charge_links.empty and discharge_links.empty:
+        logger.info("No rigid technologies found for ramp constraints")
+        return
+    
+    link_p = n.model["Link-p"]
+    constraints_added = 0
+    
+    # --- Vectorized ramp constraints for CHARGE links (rigid technologies only) ---
+    if not charge_links.empty:
+        max_ramp_charge = n.links.loc[charge_links, "p_nom"] * charge_rates
+        
+        charge_dispatch = link_p.sel({"name": charge_links})
+        charge_ramp = charge_dispatch.diff("snapshot")
+        max_ramp_charge_da = xr.DataArray(
+            max_ramp_charge.values, dims=["name"], coords={"name": charge_links}
+        )
+        
+        n.model.add_constraints(
+            charge_ramp <= max_ramp_charge_da, name="DSR_charge_ramp_up"
+        )
+        n.model.add_constraints(
+            charge_ramp >= -max_ramp_charge_da, name="DSR_charge_ramp_down"
+        )
+        
+        n_charge = len(charge_links) * (len(snapshots) - 1) * 2
+        constraints_added += n_charge
+        logger.info(f"  Charge ramp constraints: {n_charge} for {len(charge_links)} rigid links")
+    
+    # --- Vectorized ramp constraints for DISCHARGE links (rigid technologies only) ---
+    if not discharge_links.empty:
+        max_ramp_discharge = n.links.loc[discharge_links, "p_nom"] * discharge_rates
+        
+        discharge_dispatch = link_p.sel({"name": discharge_links})
+        discharge_ramp = discharge_dispatch.diff("snapshot")
+        max_ramp_discharge_da = xr.DataArray(
+            max_ramp_discharge.values, dims=["name"], coords={"name": discharge_links}
+        )
+        
+        n.model.add_constraints(
+            discharge_ramp <= max_ramp_discharge_da, name="DSR_discharge_ramp_up"
+        )
+        n.model.add_constraints(
+            discharge_ramp >= -max_ramp_discharge_da, name="DSR_discharge_ramp_down"
+        )
+        
+        n_discharge = len(discharge_links) * (len(snapshots) - 1) * 2
+        constraints_added += n_discharge
+        logger.info(f"  Discharge ramp constraints: {n_discharge} for {len(discharge_links)} rigid links")
+    
+    if constraints_added > 0:
+        logger.info(f"Added DSR ramp constraints: {constraints_added} total (vectorized, 4 bulk calls)")
+
+
 def extra_functionality(
     n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
 ) -> None:
@@ -1207,6 +1479,15 @@ def extra_functionality(
     ):
         add_solar_potential_constraints(n, config)
 
+    # Add DRI-H2 coupling constraint if industry DSR is enabled
+    industry_config = n.config.get("industry", {})
+    dsr_config = industry_config.get("dsr", {})
+    if dsr_config.get("enable", False):
+        add_dri_h2_coupling_constraint(n, snapshots)
+        # Store-link coupling constraint removed: redundant with PyPSA's bus balance (KCL).
+        # See DSR_DEEP_ANALYSIS_AND_FIX.md for details.
+        add_dsr_ramp_constraints(n, snapshots, dsr_config)
+    
     if n.config.get("sector", {}).get("tes", False):
         if n.buses.index.str.contains(
             r"urban central heat|urban decentral heat|rural heat",
@@ -1270,129 +1551,142 @@ def check_objective_value(n: pypsa.Network, solving: dict) -> None:
             )
 
 
-def solve_network(
-    n: pypsa.Network,
+def collect_kwargs(
     config: dict,
-    params: dict,
     solving: dict,
-    rule_name: str | None = None,
     planning_horizons: str | None = None,
-    **kwargs,
-) -> None:
+    log_fn: str | None = None,
+    mode: str = "single",
+) -> tuple[dict, dict]:
     """
-    Solve network optimization problem.
+    Prepare keyword arguments separated for model creation and model solving.
 
     Parameters
     ----------
-    n : pypsa.Network
-        The PyPSA network instance
-    config : Dict
+    config : dict
         Configuration dictionary containing solver settings
-    params : Dict
-        Dictionary of solving parameters
-    solving : Dict
+    solving : dict
         Dictionary of solving options and configuration
-    rule_name : str, optional
-        Name of the snakemake rule being executed
     planning_horizons : str, optional
-            The current planning horizon year or None in perfect foresight
-    **kwargs
-        Additional keyword arguments passed to the solver
+        The current planning horizon year or None in perfect foresight
+    log_fn : str, optional
+        Path to solver log file
+    mode : str, optional
+        Optimization mode: 'single', 'rolling_horizon', or 'iterative'
+        Default is 'single'
 
     Returns
     -------
-    n : pypsa.Network
-        Solved network instance
-    status : str
-        Solution status
-    condition : str
-        Termination condition
-
-    Raises
-    ------
-    RuntimeError
-        If solving status is infeasible or warning
-    ObjectiveValueError
-        If objective value differs from expected value
+    tuple[dict, dict]
+        Two dictionaries: (model_kwargs, solve_kwargs)
+        - model_kwargs: Arguments for n.optimize.create_model()
+        - solve_kwargs: Arguments for n.optimize.solve_model()
+        For 'rolling_horizon' and 'iterative' modes, returns merged kwargs
+        with additional mode-specific parameters
     """
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
-    kwargs["multi_investment_periods"] = config["foresight"] == "perfect"
-    kwargs["solver_options"] = (
-        solving["solver_options"][set_of_options] if set_of_options else {}
-    )
-    kwargs["solver_name"] = solving["solver"]["name"]
-    kwargs["extra_functionality"] = partial(
-        extra_functionality, planning_horizons=planning_horizons
-    )
-    kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
-    kwargs["linearized_unit_commitment"] = cf_solving.get(
+    # Model creation kwargs
+    model_kwargs = {}
+    model_kwargs["multi_investment_periods"] = config["foresight"] == "perfect"
+    model_kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
+    model_kwargs["linearized_unit_commitment"] = cf_solving.get(
         "linearized_unit_commitment", False
     )
-    kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
-    kwargs["io_api"] = cf_solving.get("io_api", None)
+
+    # Solve kwargs
+    solver_name = solving["solver"]["name"]
+    solver_options = solving["solver_options"][set_of_options] if set_of_options else {}
+
+    solve_kwargs = {}
+    solve_kwargs["solver_name"] = solver_name
+    solve_kwargs["solver_options"] = solver_options
+    solve_kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
+    solve_kwargs["io_api"] = cf_solving.get("io_api", None)
+    solve_kwargs["keep_files"] = cf_solving.get("keep_files", False)
+
+    if log_fn:
+        solve_kwargs["log_fn"] = log_fn
 
     oetc = solving.get("oetc", None)
     if oetc:
         oetc["credentials"] = OetcCredentials(
             email=os.environ["OETC_EMAIL"], password=os.environ["OETC_PASSWORD"]
         )
-        oetc["solver"] = kwargs["solver_name"]
-        oetc["solver_options"] = kwargs["solver_options"]
+        oetc["solver"] = solver_name
+        oetc["solver_options"] = solver_options
         oetc_settings = OetcSettings(**oetc)
         oetc_handler = OetcHandler(oetc_settings)
-        kwargs["remote"] = oetc_handler
+        solve_kwargs["remote"] = oetc_handler
 
-    kwargs["model_kwargs"] = cf_solving.get("model_kwargs", {})
-    kwargs["keep_files"] = cf_solving.get("keep_files", False)
-
-    if kwargs["solver_name"] == "gurobi":
+    if solver_name == "gurobi":
         logging.getLogger("gurobipy").setLevel(logging.CRITICAL)
 
-    rolling_horizon = cf_solving.pop("rolling_horizon", False)
-    skip_iterations = cf_solving.pop("skip_iterations", False)
-    if not n.lines.s_nom_extendable.any():
-        skip_iterations = True
-        logger.info("No expandable lines found. Skipping iterative solving.")
+    # Handle special modes
+    if mode == "rolling_horizon":
+        all_kwargs = {**model_kwargs, **solve_kwargs}
+        all_kwargs["horizon"] = cf_solving.get("horizon", 365)
+        all_kwargs["overlap"] = cf_solving.get("overlap", 0)
+        return all_kwargs, {}
 
-    # add to network for extra_functionality
+    elif mode == "iterative":
+        all_kwargs = {**model_kwargs, **solve_kwargs}
+        all_kwargs["track_iterations"] = cf_solving["track_iterations"]
+        all_kwargs["min_iterations"] = cf_solving["min_iterations"]
+        all_kwargs["max_iterations"] = cf_solving["max_iterations"]
+
+        if cf_solving["post_discretization"].get("enable", False):
+            logger.info("Add post-discretization parameters.")
+            all_kwargs.update(cf_solving["post_discretization"])
+
+        return all_kwargs, {}
+
+    return model_kwargs, solve_kwargs
+
+
+def create_optimization_model(
+    n: pypsa.Network,
+    config: dict,
+    params: dict,
+    model_kwargs: dict,
+    solve_kwargs: dict,
+    planning_horizons: str | None = None,
+) -> None:
+    """
+    Prepare optimization problem by creating model and adding extra functionality.
+
+    This function:
+    1. Attaches config and params to network for extra_functionality
+    2. Creates the optimization model
+    3. Adds extra functionality (custom constraints)
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    config : dict
+        Configuration dictionary containing solver settings
+    params : dict
+        Dictionary of solving parameters
+    model_kwargs : dict
+        Arguments for n.optimize.create_model()
+    solve_kwargs : dict
+        Arguments for n.optimize.solve_model()
+    planning_horizons : str, optional
+        The current planning horizon year or None in perfect foresight
+    """
+    # Add config and params to network for extra_functionality
     n.config = config
     n.params = params
 
-    if rolling_horizon and rule_name == "solve_operations_network":
-        kwargs["horizon"] = cf_solving.get("horizon", 365)
-        kwargs["overlap"] = cf_solving.get("overlap", 0)
-        n.optimize.optimize_with_rolling_horizon(**kwargs)
-        status, condition = "", ""
-    elif skip_iterations:
-        status, condition = n.optimize(**kwargs)
-    else:
-        kwargs["track_iterations"] = cf_solving["track_iterations"]
-        kwargs["min_iterations"] = cf_solving["min_iterations"]
-        kwargs["max_iterations"] = cf_solving["max_iterations"]
-        if cf_solving["post_discretization"].pop("enable"):
-            logger.info("Add post-discretization parameters.")
-            kwargs.update(cf_solving["post_discretization"])
-        status, condition = n.optimize.optimize_transmission_expansion_iteratively(
-            **kwargs
-        )
+    # Create optimization model
+    logger.info("Creating optimization model...")
+    n.optimize.create_model(**model_kwargs)
 
-    if not rolling_horizon:
-        if status != "ok":
-            logger.warning(
-                f"Solving status '{status}' with termination condition '{condition}'"
-            )
-        check_objective_value(n, solving)
-
-    if "warning" in condition:
-        raise RuntimeError("Solving status 'warning'. Discarding solution.")
-
-    if "infeasible" in condition:
-        labels = n.model.compute_infeasibilities()
-        logger.info(f"Labels:\n{labels}")
-        n.model.print_infeasibilities()
-        raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
+    # Add extra functionality (custom constraints)
+    logger.info("Adding extra functionality (custom constraints)...")
+    extra_functionality(n, n.snapshots, planning_horizons)
 
 
 if __name__ == "__main__":
@@ -1412,12 +1706,15 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     solve_opts = snakemake.params.solving["options"]
+    cf_solving = snakemake.params.solving["options"]
 
     np.random.seed(solve_opts.get("seed", 123))
 
+    # Load network
     n = pypsa.Network(snakemake.input.network)
     planning_horizons = snakemake.wildcards.get("planning_horizons", None)
 
+    # Prepare network (settings before solving)
     prepare_network(
         n,
         solve_opts=snakemake.params.solving["options"],
@@ -1427,23 +1724,99 @@ if __name__ == "__main__":
         limit_max_growth=snakemake.params.get("sector", {}).get("limit_max_growth"),
     )
 
+    # Determine solve mode
+    rolling_horizon = cf_solving.get("rolling_horizon", False)
+    skip_iterations = cf_solving.get("skip_iterations", False)
+
+    if not n.lines.s_nom_extendable.any():
+        skip_iterations = True
+        logger.info("No expandable lines found. Skipping iterative solving.")
+
     logging_frequency = snakemake.config.get("solving", {}).get(
         "mem_logging_frequency", 30
     )
+
+    # Solve network based on mode
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=logging_frequency
     ) as mem:
-        solve_network(
-            n,
-            config=snakemake.config,
-            params=snakemake.params,
-            solving=snakemake.params.solving,
-            planning_horizons=planning_horizons,
-            rule_name=snakemake.rule,
-            log_fn=snakemake.log.solver,
-        )
+        if rolling_horizon and snakemake.rule == "solve_operations_network":
+            logger.info("Using rolling horizon optimization...")
+            all_kwargs, _ = collect_kwargs(
+                snakemake.config,
+                snakemake.params.solving,
+                planning_horizons,
+                log_fn=snakemake.log.solver,
+                mode="rolling_horizon",
+            )
+
+            n.config = snakemake.config
+            n.params = snakemake.params
+            all_kwargs["extra_functionality"] = partial(
+                extra_functionality, planning_horizons=planning_horizons
+            )
+            n.optimize.optimize_with_rolling_horizon(**all_kwargs)
+            status, condition = "", ""
+
+        elif skip_iterations:
+            logger.info("Using single-pass optimization...")
+            model_kwargs, solve_kwargs = collect_kwargs(
+                snakemake.config,
+                snakemake.params.solving,
+                planning_horizons,
+                log_fn=snakemake.log.solver,
+                mode="single",
+            )
+            create_optimization_model(
+                n,
+                config=snakemake.config,
+                params=snakemake.params,
+                model_kwargs=model_kwargs,
+                solve_kwargs=solve_kwargs,
+                planning_horizons=planning_horizons,
+            )
+
+            logger.info("Solving model...")
+            status, condition = n.optimize.solve_model(**solve_kwargs)
+
+        else:
+            logger.info("Using iterative transmission expansion optimization...")
+
+            all_kwargs, _ = collect_kwargs(
+                snakemake.config,
+                snakemake.params.solving,
+                planning_horizons,
+                log_fn=snakemake.log.solver,
+                mode="iterative",
+            )
+
+            n.config = snakemake.config
+            n.params = snakemake.params
+            all_kwargs["extra_functionality"] = partial(
+                extra_functionality, planning_horizons=planning_horizons
+            )
+            status, condition = n.optimize.optimize_transmission_expansion_iteratively(
+                **all_kwargs
+            )
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
+
+    # Check results
+    if not rolling_horizon:
+        if status != "ok":
+            logger.warning(
+                f"Solving status '{status}' with termination condition '{condition}'"
+            )
+        check_objective_value(n, snakemake.params.solving)
+
+    if "warning" in condition:
+        raise RuntimeError("Solving status 'warning'. Discarding solution.")
+
+    if "infeasible" in condition:
+        labels = n.model.compute_infeasibilities()
+        logger.info(f"Labels:\n{labels}")
+        n.model.print_infeasibilities()
+        raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)

@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 
 def read_scigrid_gas(fn):
     df = gpd.read_file(fn)
-    expanded_param = df.param.apply(json.loads).apply(pd.Series)
+    # Fix: geopandas may auto-parse JSON fields, check if already parsed
+    if df.param.dtype == object and len(df.param) > 0 and isinstance(df.param.iloc[0], str):
+        expanded_param = df.param.apply(json.loads).apply(pd.Series)
+    else:
+        expanded_param = df.param.apply(pd.Series)
     df = pd.concat([df, expanded_param], axis=1)
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
     df = df.loc[:, ~df.columns.duplicated()]  # duplicated country_code column
