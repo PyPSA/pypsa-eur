@@ -62,8 +62,8 @@ countries:
 
 snapshots:
   start: "2019-01-01"
-  end: "2019-12-31"
-  inclusive: both
+  end: "2020-01-01"
+  inclusive: left
 
 electricity:
   extendable_carriers:
