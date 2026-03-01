@@ -56,6 +56,13 @@ dask-worker-space/
 publications.jrc.ec.europa.eu/
 d1gam3xoknrgr2.cloudfront.net/
 
+# Ignore specific notebooks
+PyPSA_Eurelectric_plot_helper.ipynb
+pypsa_statistics.ipynb
+
+# Ignore Windows metadata files
+*.Zone.Identifier
+
 *.org
 
 *.nc
