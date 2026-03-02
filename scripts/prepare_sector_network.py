@@ -6593,7 +6593,7 @@ if __name__ == "__main__":
         insert_gas_distribution_costs(n, costs, options=options)
 
     if options["electricity_grid_connection"]:
-        add_electricity_grid_connection(n, costs, snakemake.param["renewable"])
+        add_electricity_grid_connection(n, costs, snakemake.params["renewable"])
 
     for k, v in options["transmission_efficiency"].items():
         if k in options["transmission_efficiency"]["enable"]:
