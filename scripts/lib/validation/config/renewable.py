@@ -259,7 +259,7 @@ class _SolarConfig(BaseModel):
     dc_ac_ratio: float = Field(
         1.3,
         description="DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
-        gt=0,
+        ge=1,
     )
     costs_given_for_ac: bool = Field(
         True,
