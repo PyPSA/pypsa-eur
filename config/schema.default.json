@@ -3701,6 +3701,7 @@
               "default": true,
               "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
               "type": "boolean"
+            }
           }
         },
         "solar-hsat": {
@@ -7558,9 +7559,9 @@
           "type": "number"
         },
         "costs_given_for_ac": {
-              "default": true,
-              "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
-              "type": "boolean"
+          "default": true,
+          "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
+          "type": "boolean"
         }
       }
     },
