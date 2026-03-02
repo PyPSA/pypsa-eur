@@ -261,6 +261,10 @@ class _SolarConfig(BaseModel):
         description="DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
         gt=0,
     )
+    costs_given_for_ac: bool = Field(
+        True,
+        description="Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
+    )
 
 
 class _HydroConfig(BaseModel):
