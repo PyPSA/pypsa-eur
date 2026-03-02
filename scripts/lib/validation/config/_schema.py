@@ -79,10 +79,13 @@ class ConfigSchema(BaseModel):
 
     _name: str = "default"
     """internal attribute to track the config filename following the application of config updates"""
+    _docs_url: str = (
+        "https://pypsa-eur.readthedocs.io/en/latest/configuration.html#{field_name}"
+    )
 
     # Top-level fields (from TopLevelConfig)
     version: str = Field(
-        "v2025.07.0", description="Version of PyPSA-Eur. Descriptive only."
+        "v2026.02.0", description="Version of PyPSA-Eur. Descriptive only."
     )
     tutorial: bool = Field(
         False,

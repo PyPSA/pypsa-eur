@@ -121,6 +121,10 @@ class AtliteConfig(BaseModel):
         False,
         description="Whether progressbar for atlite conversion processes should be shown. False saves time.",
     )
+    plot_availability_matrix: bool = Field(
+        False,
+        description="Whether to plot the landuse availability matrix.",
+    )
     cutouts: dict[str, _CutoutConfig] = Field(
         default_factory=lambda: {
             "europe-1940-2024-era5": _CutoutConfig(

@@ -795,7 +795,7 @@ rule build_eurostat_balances:
     benchmark:
         benchmarks("build_eurostat_balances")
     script:
-        "../scripts/build_eurostat_balances.py"
+        scripts("build_eurostat_balances.py")
 
 
 rule build_swiss_energy_balances:

@@ -247,6 +247,18 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="JRC ARDECO data source configuration.",
     )
+    jrc_energy_atlas: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="JRC Energy Atlas data source configuration.",
+    )
+    desnz_electricity_consumption: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="DESNZ (UK Department for Energy Security and Net Zero) electricity consumption data source configuration.",
+    )
+    ons_lad: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="ONS (Office for National Statistics) Local Authority District data source configuration.",
+    )
     bidding_zones_electricitymaps: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="Electricitymaps bidding zones data source configuration.",

@@ -113,6 +113,10 @@ class _SolvingOptionsConfig(BaseModel):
         365,
         description="Number of snapshots to consider in each iteration. Defaults to 100.",
     )
+    overlap: int = Field(
+        0,
+        description="Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
+    )
     post_discretization: _PostDiscretizationConfig = Field(
         default_factory=_PostDiscretizationConfig,
         description="Post-discretization settings.",

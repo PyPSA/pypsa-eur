@@ -93,7 +93,7 @@ if config["foresight"] == "perfect":
 
 rule all:
     input:
-        expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
+        expand(RESULTS + "graphs/costs.pdf", run=config["run"]["name"]),
         expand(resources("maps/power-network.pdf"), run=config["run"]["name"]),
         expand(
             resources("maps/power-network-s-{clusters}.pdf"),
@@ -290,7 +290,6 @@ rule rulegraph:
 
         # Generate visualizations from the DOT file
         if [ -s {output.dot} ]; then
-            dot -c
 
             echo "[Rule rulegraph] Generating PDF from DOT"
             dot -Tpdf -o {output.pdf} {output.dot} || {{ echo "Error: Failed to generate PDF. Is graphviz installed?" >&2; exit 1; }}

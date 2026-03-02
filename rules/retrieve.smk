@@ -61,6 +61,7 @@ if (
 if (SWISS_ENERGY_BALANCES_DATASET := dataset_version("swiss_energy_balances"))[
     "source"
 ] in [
+    "archive",
     "primary",
 ]:
 
@@ -677,6 +678,83 @@ if (
         retries: 2
         run:
             copy2(input["csv"], output["csv"])
+
+
+if (ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_electricity_demand_energy_atlas:
+        message:
+            "Retrieving JRC Energy Atlas electricity demand data raster"
+        output:
+            tif=f"{ENERGY_ATLAS_DATASET['folder']}/electricity_tot_demand_2019.tif",
+        run:
+            import requests
+
+            url = ENERGY_ATLAS_DATASET["url"]
+            response = requests.get(url)
+            response.raise_for_status()
+            with open(output["tif"], "wb") as f:
+                f.write(response.content)
+
+
+
+if (
+    DESNZ_ELECTRICITY_CONSUMPTION_DATASET := dataset_version(
+        "desnz_electricity_consumption"
+    )
+)["source"] in ["primary", "archive"]:
+
+    rule retrieve_desnz_electricity_consumption:
+        message:
+            "Retrieving DESNZ subnational electricity consumption data"
+        output:
+            xlsx=f"{DESNZ_ELECTRICITY_CONSUMPTION_DATASET['folder']}/Subnational_electricity_consumption_statistics_2005-2024.xlsx",
+        run:
+            import requests
+
+            url = DESNZ_ELECTRICITY_CONSUMPTION_DATASET["url"]
+            response = requests.get(url)
+            response.raise_for_status()
+            with open(output["xlsx"], "wb") as f:
+                f.write(response.content)
+
+
+
+if (ONS_LAD_DATASET := dataset_version("ons_lad"))["source"] in ["archive"]:
+
+    rule retrieve_ons_lad:
+        message:
+            "Retrieving UK ONS Local Authority Districts (LAD) Boundaries data"
+        input:
+            geojson=storage(ONS_LAD_DATASET["url"]),
+        output:
+            geojson=f"{ONS_LAD_DATASET['folder']}/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
+        run:
+            copy2(input["geojson"], output["geojson"])
+
+elif ONS_LAD_DATASET["source"] in ["primary"]:
+
+    rule retrieve_ons_lad:
+        message:
+            "Retrieving UK ONS Local Authority Districts (LAD) Boundaries data"
+        output:
+            geojson=f"{ONS_LAD_DATASET['folder']}/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
+        run:
+            import requests
+
+            url = ONS_LAD_DATASET["url"]
+            params = {
+                "outFields": "*",
+                "where": "1=1",
+                "f": "geojson",
+            }
+            response = requests.get(url, params=params)
+            with open(output["geojson"], "wb") as f:
+                f.write(response.content)
+
 
 
 if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [

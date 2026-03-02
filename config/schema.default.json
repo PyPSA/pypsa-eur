@@ -184,6 +184,11 @@
           "description": "Whether progressbar for atlite conversion processes should be shown. False saves time.",
           "type": "boolean"
         },
+        "plot_availability_matrix": {
+          "default": false,
+          "description": "Whether to plot the landuse availability matrix.",
+          "type": "boolean"
+        },
         "cutouts": {
           "additionalProperties": {
             "description": "Configuration for a single cutout in `atlite.cutouts`.",
@@ -536,13 +541,6 @@
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
               "type": "boolean"
             },
-            "exclude_carriers": {
-              "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
             "remove_stubs": {
               "default": true,
               "description": "Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -584,9 +582,19 @@
           "type": "array"
         },
         "consider_efficiency_classes": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            }
+          ],
           "default": false,
-          "description": "Aggregated each carriers into the top 10-quantile (high), the bottom 90-quantile (low), and everything in between (medium).",
-          "type": "boolean"
+          "description": "Aggregate each carrier into efficiency classes defined by quantile boundaries. If True, uses [0.1, 0.9] as default quantiles (labels: Q0, Q10, Q90). If a list of floats, defines custom quantile boundaries, e.g. [0.1, 0.5, 0.9]."
         },
         "aggregation_strategies": {
           "description": "Configuration for `clustering.aggregation_strategies` settings.",
@@ -1943,6 +1951,66 @@
             }
           }
         },
+        "jrc_energy_atlas": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "desnz_electricity_consumption": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "ons_lad": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "bidding_zones_electricitymaps": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -2250,6 +2318,11 @@
             }
           }
         },
+        "estimate_battery_capacities": {
+          "default": false,
+          "description": "Enable estimation of existing battery storage capacities.",
+          "type": "boolean"
+        },
         "autarky": {
           "description": "Configuration for `electricity.autarky` settings.",
           "properties": {
@@ -2542,7 +2615,7 @@
           "type": "boolean"
         },
         "reference_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_.",
           "markdownDescription": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015 ](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
           "type": "integer"
@@ -2746,6 +2819,11 @@
           "default": true,
           "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
           "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
+          "type": "boolean"
+        },
+        "substation_only": {
+          "default": true,
+          "description": "Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data.",
           "type": "boolean"
         },
         "distribution_key": {
@@ -3105,6 +3183,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -3287,6 +3366,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -3469,6 +3549,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -5237,6 +5318,11 @@
               "description": "Number of snapshots to consider in each iteration. Defaults to 100.",
               "type": "integer"
             },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
+              "type": "integer"
+            },
             "post_discretization": {
               "description": "Configuration for `solving.options.post_discretization` settings.",
               "properties": {
@@ -6880,6 +6966,7 @@
               "type": "array"
             }
           ],
+          "default": false,
           "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
         },
         "luisa": {
@@ -7411,13 +7498,6 @@
           "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
           "type": "boolean"
         },
-        "exclude_carriers": {
-          "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "remove_stubs": {
           "default": true,
           "description": "Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -7748,6 +7828,11 @@
           "description": "Number of snapshots to consider in each iteration. Defaults to 100.",
           "type": "integer"
         },
+        "overlap": {
+          "default": 0,
+          "description": "Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
+          "type": "integer"
+        },
         "post_discretization": {
           "description": "Configuration for `solving.options.post_discretization` settings.",
           "properties": {
@@ -7960,7 +8045,7 @@
   "description": "Combined configuration schema for PyPSA-EUR.",
   "properties": {
     "version": {
-      "default": "v2025.07.0",
+      "default": "v2026.02.0",
       "description": "Version of PyPSA-Eur. Descriptive only.",
       "type": "string"
     },
@@ -8533,6 +8618,11 @@
             }
           }
         },
+        "estimate_battery_capacities": {
+          "default": false,
+          "description": "Enable estimation of existing battery storage capacities.",
+          "type": "boolean"
+        },
         "autarky": {
           "description": "Configuration for `electricity.autarky` settings.",
           "properties": {
@@ -8581,6 +8671,11 @@
         "show_progress": {
           "default": false,
           "description": "Whether progressbar for atlite conversion processes should be shown. False saves time.",
+          "type": "boolean"
+        },
+        "plot_availability_matrix": {
+          "default": false,
+          "description": "Whether to plot the landuse availability matrix.",
           "type": "boolean"
         },
         "cutouts": {
@@ -9000,6 +9095,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -9182,6 +9278,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -9364,6 +9461,7 @@
                   "type": "array"
                 }
               ],
+              "default": false,
               "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement."
             },
             "luisa": {
@@ -10133,6 +10231,11 @@
           "default": true,
           "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
           "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
+          "type": "boolean"
+        },
+        "substation_only": {
+          "default": true,
+          "description": "Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data.",
           "type": "boolean"
         },
         "distribution_key": {
@@ -11541,7 +11644,7 @@
           "type": "boolean"
         },
         "reference_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_.",
           "markdownDescription": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015 ](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
           "type": "integer"
@@ -11774,13 +11877,6 @@
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
               "type": "boolean"
             },
-            "exclude_carriers": {
-              "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
             "remove_stubs": {
               "default": true,
               "description": "Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -11822,9 +11918,19 @@
           "type": "array"
         },
         "consider_efficiency_classes": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            }
+          ],
           "default": false,
-          "description": "Aggregated each carriers into the top 10-quantile (high), the bottom 90-quantile (low), and everything in between (medium).",
-          "type": "boolean"
+          "description": "Aggregate each carrier into efficiency classes defined by quantile boundaries. If True, uses [0.1, 0.9] as default quantiles (labels: Q0, Q10, Q90). If a list of floats, defines custom quantile boundaries, e.g. [0.1, 0.5, 0.9]."
         },
         "aggregation_strategies": {
           "description": "Configuration for `clustering.aggregation_strategies` settings.",
@@ -12132,6 +12238,11 @@
             "horizon": {
               "default": 365,
               "description": "Number of snapshots to consider in each iteration. Defaults to 100.",
+              "type": "integer"
+            },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
               "type": "integer"
             },
             "post_discretization": {
@@ -13432,6 +13543,66 @@
           }
         },
         "jrc_ardeco": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "jrc_energy_atlas": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "desnz_electricity_consumption": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "ons_lad": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

@@ -3,7 +3,7 @@
 # yaml-language-server: $schema=./schema.default.json
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#version
-version: v2025.07.0
+version: v2026.02.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#tutorial
 tutorial: false
@@ -178,6 +178,7 @@ electricity:
       Offshore: "offwind-ac"
       Onshore: onwind
       PV: solar
+  estimate_battery_capacities: false
   autarky:
     enable: false
     by_country: false
@@ -188,6 +189,7 @@ atlite:
   default_cutout: "europe-2013-sarah3-era5"
   nprocesses: 16
   show_progress: false
+  plot_availability_matrix: false
   cutouts:
     "europe-1940-2024-era5":
       module: era5
@@ -269,9 +271,7 @@ renewable:
     resource_classes: 1
     capacity_per_sqkm: 2
     correction_factor: 0.8855
-    corine:
-    - 44
-    - 255
+    corine: false
     luisa: false
     natura: true
     ship_threshold: 400
@@ -292,9 +292,7 @@ renewable:
     resource_classes: 1
     capacity_per_sqkm: 2
     correction_factor: 0.8855
-    corine:
-    - 44
-    - 255
+    corine: false
     luisa: false
     natura: true
     ship_threshold: 400
@@ -315,9 +313,7 @@ renewable:
     resource_classes: 1
     capacity_per_sqkm: 2
     correction_factor: 0.8855
-    corine:
-    - 44
-    - 255
+    corine: false
     luisa: false
     natura: true
     ship_threshold: 400
@@ -505,6 +501,7 @@ load:
   scaling_factor: 1.0
   fixed_year: false
   supplement_synthetic: true
+  substation_only: true
   distribution_key:
     gdp: 0.6
     population: 0.4
@@ -589,7 +586,7 @@ solar_thermal:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing_capacities
 existing_capacities:
   grouping_years_power:
-  - 1920
+  - 1900
   - 1950
   - 1955
   - 1960
@@ -1068,7 +1065,7 @@ industry:
   MWh_CH4_per_tMeOH: 10.25
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
-  reference_year: 2019
+  reference_year: 2023
   oil_refining_emissions: 0.013
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
@@ -1108,7 +1105,6 @@ clustering:
     aggregate_to_tyndp: false
   simplify_network:
     to_substations: false
-    exclude_carriers: []
     remove_stubs: true
     remove_stubs_across_borders: false
   cluster_network:
@@ -1156,6 +1152,7 @@ solving:
     transmission_losses: 2
     linearized_unit_commitment: true
     horizon: 365
+    overlap: 0
     post_discretization:
       enable: false
       line_unit_size: 1700
@@ -1436,6 +1433,15 @@ data:
     source: archive
     version: latest
   jrc_ardeco:
+    source: archive
+    version: latest
+  jrc_energy_atlas:
+    source: archive
+    version: latest
+  desnz_electricity_consumption:
+    source: archive
+    version: latest
+  ons_lad:
     source: archive
     version: latest
   bidding_zones_electricitymaps:
