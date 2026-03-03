@@ -1521,6 +1521,7 @@ def insert_electricity_distribution_grid(
     options: dict,
     pop_layout: pd.DataFrame,
     solar_rooftop_potentials_fn: str,
+    params_renewable: dict,
 ) -> None:
     """
     Insert electricity distribution grid components into the network.
@@ -1545,6 +1546,8 @@ def insert_electricity_distribution_grid(
         Population data per node with at least:
         - 'total' column containing population in thousands
         Index should match network nodes
+    params_renewable : dict
+        Renewable energy parameters
 
     Returns
     -------
@@ -1627,11 +1630,19 @@ def insert_electricity_distribution_grid(
     solar = n.generators.index[n.generators.carrier == "solar"]
     n.generators.loc[solar, "capital_cost"] = costs.at["solar-utility", "capital_cost"]
 
+    dc_ac_ratio = params_renewable["solar"].get("dc_ac_ratio", 1.0)
+    if params_renewable["solar"].get("costs_given_for_ac") and dc_ac_ratio != 1.0:
+        n.generators.loc[solar, "capital_cost"] /= dc_ac_ratio
+
+
     fn = solar_rooftop_potentials_fn
     if len(fn) > 0:
         potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze(axis=1)
         potential.index = potential.index.map(flatten) + " solar"
 
+        capital_cost = costs.at["solar rooftop", "capital_cost"]
+        if params_renewable["solar"].get("costs_given_for_ac") and dc_ac_ratio != 1.0:
+            capital_cost /= dc_ac_ratio
         n.add(
             "Generator",
             solar,
@@ -1641,7 +1652,7 @@ def insert_electricity_distribution_grid(
             p_nom_extendable=True,
             p_nom_max=potential.loc[solar],
             marginal_cost=n.generators.loc[solar, "marginal_cost"],
-            capital_cost=costs.at["solar-rooftop", "capital_cost"],
+            capital_cost=capital_cost,
             efficiency=n.generators.loc[solar, "efficiency"],
             p_max_pu=n.generators_t.p_max_pu[solar],
             lifetime=costs.at["solar-rooftop", "lifetime"],
@@ -6571,7 +6582,7 @@ if __name__ == "__main__":
 
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(
-            n, costs, options, pop_layout, snakemake.input.solar_rooftop_potentials
+            n, costs, options, pop_layout, snakemake.input.solar_rooftop_potentials, snakemake.params.renewable
         )
 
     if options["enhanced_geothermal"].get("enable", False):
