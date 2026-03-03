@@ -1634,7 +1634,6 @@ def insert_electricity_distribution_grid(
     if params_renewable["solar"].get("costs_given_for_ac") and dc_ac_ratio != 1.0:
         n.generators.loc[solar, "capital_cost"] /= dc_ac_ratio
 
-
     fn = solar_rooftop_potentials_fn
     if len(fn) > 0:
         potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze(axis=1)
@@ -6582,7 +6581,12 @@ if __name__ == "__main__":
 
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(
-            n, costs, options, pop_layout, snakemake.input.solar_rooftop_potentials, snakemake.params.renewable
+            n,
+            costs,
+            options,
+            pop_layout,
+            snakemake.input.solar_rooftop_potentials,
+            snakemake.params.renewable,
         )
 
     if options["enhanced_geothermal"].get("enable", False):
