@@ -57,6 +57,8 @@ if __name__ == "__main__":
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
     corine = config.get("corine", {})
+    if not isinstance(corine, dict):
+        corine = {}
     if "grid_codes" in corine:
         # Land cover codes to emulate CORINE results
         if snakemake.wildcards.technology == "solar":
