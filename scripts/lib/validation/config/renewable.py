@@ -257,7 +257,7 @@ class _SolarConfig(BaseModel):
         description="To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
     )
     dc_ac_ratio: float = Field(
-        1.3,
+        1.25,
         description="DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
         ge=1,
     )
