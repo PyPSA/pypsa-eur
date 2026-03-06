@@ -1134,7 +1134,16 @@ adjustments:
 solving:
   options:
     clip_p_max_pu: 0.01
-    load_shedding: false
+    load_shedding:
+      enable: false
+      default_cost: 100000
+      all_carriers: true
+      carriers: {}
+    load_sinks:
+      enable: false
+      default_cost: 100000
+      all_carriers: false
+      carriers: {}
     curtailment_mode: false
     noisy_costs: true
     skip_iterations: true
