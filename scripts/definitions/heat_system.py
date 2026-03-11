@@ -231,15 +231,18 @@ class HeatSystem(Enum):
         # Check if this is an excess-heat-sourced heat pump
         if heat_source in [
             HeatSource.PTES,
+            HeatSource.PTES_LAYER_0,
+            HeatSource.PTES_LAYER_1,
+            HeatSource.PTES_LAYER_2,
             HeatSource.GEOTHERMAL,
             HeatSource.SEA_WATER,
             HeatSource.RIVER_WATER,
-            HeatSource.ELECTROLYSIS_waste,
-            HeatSource.FISCHER_TROPSCH_waste,
-            HeatSource.SABATIER_waste,
-            HeatSource.HABER_BOSCH_waste,
-            HeatSource.METHANOLISATION_waste,
-            HeatSource.FUEL_CELL_waste,
+            HeatSource.ELECTROLYSIS_WASTE,
+            HeatSource.FISCHER_TROPSCH_WASTE,
+            HeatSource.SABATIER_WASTE,
+            HeatSource.HABER_BOSCH_WASTE,
+            HeatSource.METHANOLISATION_WASTE,
+            HeatSource.FUEL_CELL_WASTE,
         ]:
             return f"{self.central_or_decentral} excess-heat-sourced heat pump"
         else:

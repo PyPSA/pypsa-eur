@@ -65,7 +65,7 @@ from scripts.build_cop_profiles.central_heating_cop_approximator import (
 from scripts.build_cop_profiles.decentral_heating_cop_approximator import (
     DecentralHeatingCopApproximator,
 )
-from scripts.definitions.heat_source import HeatSource
+from scripts.definitions.heat_source import HeatSource, HeatSourceType
 from scripts.definitions.heat_system_type import HeatSystemType
 
 
@@ -167,6 +167,13 @@ def get_source_temperature(
     heat_source = HeatSource(heat_source_name)
     if heat_source.temperature_from_config:
         return snakemake_params["heat_source_temperatures"][heat_source_name]
+    elif heat_source.source_type == HeatSourceType.STORAGE:
+        # PTES layer temperatures are constants from the ptes_operations dataset
+        if heat_source_name.startswith("ptes layer"):
+            layer_idx = int(heat_source_name.split()[-1])
+            return float(ptes_ds["layer_temperatures"].sel(layer=layer_idx).item())
+        else:
+            return float(ptes_ds.attrs["top_temperature"])
     else:
         return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
 
@@ -268,8 +275,29 @@ if __name__ == "__main__":
         snakemake.input.central_heating_return_temperature_profiles
     )
 
+    # Load PTES operations dataset if enabled
+    if snakemake.params.ptes_enable:
+        ptes_ds = xr.open_dataset(snakemake.input.ptes_operations)
+        num_ptes_layers = int(ptes_ds.attrs["num_layers"])
+    else:
+        ptes_ds = None
+        num_ptes_layers = 0
+
+    def expand_ptes_layers(heat_source_names):
+        """Expand 'ptes' into per-layer entries if multi-layer PTES is enabled."""
+        expanded = []
+        for name in heat_source_names:
+            if name == "ptes" and num_ptes_layers > 1:
+                expanded.extend(f"ptes layer {l}" for l in range(num_ptes_layers))
+            else:
+                expanded.append(name)
+        return expanded
+
     cop_all_system_types = []
     for heat_system_type, heat_sources in snakemake.params.heat_sources.items():
+        heat_sources = (
+            expand_ptes_layers(heat_sources) if heat_sources else heat_sources
+        )
         cop_this_system_type = []
         if not heat_sources:
             cop_all_system_types.append(
@@ -308,6 +336,9 @@ if __name__ == "__main__":
                 cop_this_system_type, dim=pd.Index(heat_sources, name="heat_source")
             )
         )
+
+    if ptes_ds is not None:
+        ptes_ds.close()
 
     cop_dataarray = xr.concat(
         cop_all_system_types,

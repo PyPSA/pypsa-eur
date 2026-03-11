@@ -78,6 +78,9 @@ class HeatSource(Enum):
     AIR = "air"
     GROUND = "ground"
     PTES = "ptes"
+    PTES_LAYER_0 = "ptes layer 0"
+    PTES_LAYER_1 = "ptes layer 1"
+    PTES_LAYER_2 = "ptes layer 2"
     # PTX excess heat sources
     ELECTROLYSIS_WASTE = "electrolysis_waste"
     FISCHER_TROPSCH_WASTE = "fischer_tropsch_waste"
@@ -111,7 +114,12 @@ class HeatSource(Enum):
             return HeatSourceType.INEXHAUSTIBLE
         elif self in [HeatSource.GEOTHERMAL, HeatSource.RIVER_WATER]:
             return HeatSourceType.SUPPLY_LIMITED
-        elif self == HeatSource.PTES:
+        elif self in [
+            HeatSource.PTES,
+            HeatSource.PTES_LAYER_0,
+            HeatSource.PTES_LAYER_1,
+            HeatSource.PTES_LAYER_2,
+        ]:
             return HeatSourceType.STORAGE
         else:
             return HeatSourceType.PROCESS_WASTE
@@ -289,7 +297,10 @@ class HeatSource(Enum):
         bool
             False for PTES with resistive boosting, True otherwise.
         """
-        if self == HeatSource.PTES and ptes_discharge_resistive_boosting:
+        if (
+            self.source_type == HeatSourceType.STORAGE
+            and ptes_discharge_resistive_boosting
+        ):
             logging.info(
                 "PTES configured with resistive boosting during discharge; "
                 "heat pump not built for PTES."

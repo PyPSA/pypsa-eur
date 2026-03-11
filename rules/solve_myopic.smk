@@ -116,6 +116,7 @@ rule solve_sector_network_myopic:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
+        unpack(input_ptes_operations),
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
         ),

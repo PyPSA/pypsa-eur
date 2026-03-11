@@ -101,6 +101,7 @@ rule solve_sector_network_perfect:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
+        unpack(input_ptes_operations),
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
         ),

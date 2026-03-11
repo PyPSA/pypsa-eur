@@ -61,9 +61,22 @@ import logging
 import xarray as xr
 
 from scripts._helpers import configure_logging, set_scenario_config
-from scripts.definitions.heat_source import HeatSource
+from scripts.definitions.heat_source import HeatSource, HeatSourceType
 
 logger = logging.getLogger(__name__)
+
+
+def expand_heat_sources_with_ptes_layers(
+    heat_source_names: list[str], num_layers: int
+) -> list[str]:
+    """Expand 'ptes' into per-layer entries if multi-layer PTES is enabled."""
+    expanded = []
+    for name in heat_source_names:
+        if name == "ptes" and num_layers > 1:
+            expanded.extend(f"ptes layer {l}" for l in range(num_layers))
+        else:
+            expanded.append(name)
+    return expanded
 
 
 def get_source_temperature(
@@ -96,6 +109,13 @@ def get_source_temperature(
     heat_source = HeatSource(heat_source_name)
     if heat_source.temperature_from_config:
         return snakemake_params["heat_source_temperatures"][heat_source_name]
+    elif heat_source.source_type == HeatSourceType.STORAGE:
+        # PTES layer temperatures are constants from the ptes_operations dataset
+        if heat_source_name.startswith("ptes layer"):
+            layer_idx = int(heat_source_name.split()[-1])
+            return float(ptes_ds["layer_temperatures"].sel(layer=layer_idx).item())
+        else:
+            return float(ptes_ds.attrs["top_temperature"])
     else:
         if f"temp_{heat_source_name}" not in snakemake_input.keys():
             raise ValueError(
@@ -182,15 +202,14 @@ def get_preheater_utilisation_profile(
 def get_heat_pump_cooling(
     heat_source_name: str,
     default_heat_source_cooling: float,
-    snakemake_input: dict,
     return_temperature: xr.DataArray = None,
 ) -> float | xr.DataArray:
     """
     Get the additional heat source cooling (temperature drop) through the heat pump for a heat source.
 
     For PTES, this equals the temperature difference between
-    return flow and bottom layers (return_temperature - bottom_temperature), which can
-    be time-varying. For other sources, uses the default constant value.
+    return flow and bottom layer (return_temperature - bottom_temperature).
+    For other sources, uses the default constant value.
 
     Parameters
     ----------
@@ -198,8 +217,6 @@ def get_heat_pump_cooling(
         Name of the heat source (e.g., 'ptes', 'geothermal', 'air').
     default_heat_source_cooling : float
         Default heat source cooling in Kelvin, from config.
-    snakemake_input : dict
-        Snakemake input files, may contain PTES temperature profiles.
     return_temperature : xr.DataArray, optional
         District heating return temperature profiles in °C. Required for PTES.
 
@@ -207,25 +224,16 @@ def get_heat_pump_cooling(
     -------
     float | xr.DataArray
         Heat source cooling in Kelvin. Returns a float for most sources,
-        or a DataArray for PTES when temperatures vary with time.
-
-    Raises
-    ------
-    ValueError
-        If heat source is PTES but bottom temperature profile is not provided.
+        or a DataArray for PTES.
     """
-    if heat_source_name == "ptes":
-        if "temp_ptes_bottom" not in snakemake_input.keys():
-            raise ValueError(
-                "PTES heat source requires bottom temperature profile "
-                "(temp_ptes_bottom) to calculate heat source cooling."
-            )
+    heat_source = HeatSource(heat_source_name)
+    if heat_source.source_type == HeatSourceType.STORAGE:
         if return_temperature is None:
             raise ValueError(
                 "PTES heat source requires return_temperature to calculate heat pump cooling."
             )
-        ptes_bottom_temperature = xr.open_dataarray(snakemake_input["temp_ptes_bottom"])
-        return return_temperature - ptes_bottom_temperature
+        bottom_temperature = float(ptes_ds.attrs["bottom_temperature"])
+        return return_temperature - bottom_temperature
     return default_heat_source_cooling
 
 
@@ -234,7 +242,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_cop_profiles",
+            "build_heat_source_utilisation_profiles",
             clusters=48,
         )
     configure_logging(snakemake)
@@ -244,11 +252,24 @@ if __name__ == "__main__":
     ptes_enable: bool = snakemake.params.ptes_enable
 
     # Validate PTES configuration
-    if ptes_enable and "ptes" not in heat_sources:
+    has_ptes = any(s == "ptes" or s.startswith("ptes layer") for s in heat_sources)
+    if ptes_enable and not has_ptes:
         raise ValueError(
             "PTES is enabled (district_heating.ptes.enable=true) but 'ptes' "
-            "is not in heat_sources.urban_central. PTES requires being listed in heat_sources to create the necessary buses and links for heat discharge to the 'urban central heat' bus."
+            "is not in heat_sources.urban_central. PTES requires being listed "
+            "in heat_sources to create the necessary buses and links for heat "
+            "discharge to the 'urban central heat' bus."
         )
+
+    # Load PTES operations dataset if enabled
+    if ptes_enable:
+        ptes_ds = xr.open_dataset(snakemake.input.ptes_operations)
+        num_ptes_layers = int(ptes_ds.attrs["num_layers"])
+    else:
+        ptes_ds = None
+        num_ptes_layers = 0
+
+    heat_sources = expand_heat_sources_with_ptes_layers(heat_sources, num_ptes_layers)
 
     central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles
@@ -285,7 +306,6 @@ if __name__ == "__main__":
                 heat_source_cooling=get_heat_pump_cooling(
                     heat_source_name=heat_source_key,
                     default_heat_source_cooling=snakemake.params.heat_source_cooling,
-                    snakemake_input=snakemake.input,
                     return_temperature=central_heating_return_temperature,
                 ),
             ).assign_coords(heat_source=heat_source_key)
@@ -293,3 +313,6 @@ if __name__ == "__main__":
         ],
         dim="heat_source",
     ).to_netcdf(snakemake.output.heat_source_preheater_utilisation_profiles)
+
+    if ptes_ds is not None:
+        ptes_ds.close()

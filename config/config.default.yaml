@@ -665,6 +665,9 @@ sector:
       bottom_temperature: 35
       design_top_temperature: 90
       design_bottom_temperature: 35
+      layered:
+        num_layers: 1 
+        heat_transfer_coefficient: 0.01  # H [W/(m²·K)]
     ates:
       enable: false
       suitable_aquifer_types:
