@@ -13,6 +13,5 @@ Closes # (if applicable).
 **If applicable:**
 - [ ] Changed dependencies are added to `pixi.toml` (using `pixi add <dependency-name>`).
 - [ ] Changes in configuration options are reflected in `scripts/lib/validation`.
-- [ ] Updated schema and default configuration files are regenerated (using `pixi run generate-config`).
 - [ ] For new data sources or versions, [these instructions](https://pypsa-eur.readthedocs.io/en/latest/data_sources.html) have been followed.
 - [ ] New rules are documented in the appropriate `doc/*.rst` files.
