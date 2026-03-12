@@ -66,19 +66,6 @@ from scripts.definitions.heat_source import HeatSource, HeatSourceType
 logger = logging.getLogger(__name__)
 
 
-def expand_heat_sources_with_ptes_layers(
-    heat_source_names: list[str], num_layers: int
-) -> list[str]:
-    """Expand 'ptes' into per-layer entries if multi-layer PTES is enabled."""
-    expanded = []
-    for name in heat_source_names:
-        if name == "ptes" and num_layers > 1:
-            expanded.extend(f"ptes layer {l}" for l in range(num_layers))
-        else:
-            expanded.append(name)
-    return expanded
-
-
 def get_source_temperature(
     snakemake_params: dict, snakemake_input: dict, heat_source_name: str
 ) -> float | xr.DataArray:
@@ -251,16 +238,6 @@ if __name__ == "__main__":
     heat_sources: list[str] = snakemake.params.heat_sources
     ptes_enable: bool = snakemake.params.ptes_enable
 
-    # Validate PTES configuration
-    has_ptes = any(s == "ptes" or s.startswith("ptes layer") for s in heat_sources)
-    if ptes_enable and not has_ptes:
-        raise ValueError(
-            "PTES is enabled (district_heating.ptes.enable=true) but 'ptes' "
-            "is not in heat_sources.urban_central. PTES requires being listed "
-            "in heat_sources to create the necessary buses and links for heat "
-            "discharge to the 'urban central heat' bus."
-        )
-
     # Load PTES operations dataset if enabled
     if ptes_enable:
         ptes_ds = xr.open_dataset(snakemake.input.ptes_operations)
@@ -268,8 +245,6 @@ if __name__ == "__main__":
     else:
         ptes_ds = None
         num_ptes_layers = 0
-
-    heat_sources = expand_heat_sources_with_ptes_layers(heat_sources, num_ptes_layers)
 
     central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles

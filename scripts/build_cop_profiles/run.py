@@ -283,21 +283,8 @@ if __name__ == "__main__":
         ptes_ds = None
         num_ptes_layers = 0
 
-    def expand_ptes_layers(heat_source_names):
-        """Expand 'ptes' into per-layer entries if multi-layer PTES is enabled."""
-        expanded = []
-        for name in heat_source_names:
-            if name == "ptes" and num_ptes_layers > 1:
-                expanded.extend(f"ptes layer {l}" for l in range(num_ptes_layers))
-            else:
-                expanded.append(name)
-        return expanded
-
     cop_all_system_types = []
     for heat_system_type, heat_sources in snakemake.params.heat_sources.items():
-        heat_sources = (
-            expand_ptes_layers(heat_sources) if heat_sources else heat_sources
-        )
         cop_this_system_type = []
         if not heat_sources:
             cop_all_system_types.append(
