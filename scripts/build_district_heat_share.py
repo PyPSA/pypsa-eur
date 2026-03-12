@@ -65,8 +65,8 @@ if __name__ == "__main__":
     urban_fraction = pop_layout.urban / pop_layout[["rural", "urban"]].sum(axis=1)
 
     # maximum potential of urban demand covered by district heating
-    central_fraction = snakemake.config["sector"]["district_heating"]["potential"]
-    if isinstance(central_fraction, dict):
+    if isinstance(snakemake.config["sector"]["district_heating"]["potential"], dict):
+        central_fraction = snakemake.config["sector"]["district_heating"]["potential"]
         # Check if individual district heating shares are given for all countries of the network
         other_countries = set(pop_layout.ct.unique()).difference(
             central_fraction.keys()
@@ -89,6 +89,9 @@ if __name__ == "__main__":
             }
         # Map district heating potentials to bus regions
         central_fraction = pop_layout.ct.map(central_fraction)
+    else:
+        # Scalar potential value from config
+        central_fraction = snakemake.config["sector"]["district_heating"]["potential"]
 
     # district heating share at each node
     dist_fraction_node = (

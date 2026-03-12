@@ -11,6 +11,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
+import math
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -18,6 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 def _sanitize_label(label):
+    # Convert float-like numeric labels to int first (170.0 → 170)
+    # to avoid the decimal point being stripped by regex (170.0 → "1700")
+
+    if isinstance(label, float) and not math.isnan(label) and label == int(label):
+        label = int(label)
     return (
         pd.Series([label])
         .fillna("DH")
@@ -26,6 +32,53 @@ def _sanitize_label(label):
         .str.strip()
         .str.replace(r"\s+", "_", regex=True)
     ).iloc[0]
+
+
+def _merge_same_city_areas(dh_areas, demand_column):
+    """
+    Merge DH areas mapped to the same city within the same country.
+
+    Unions geometries into multipolygons and sums demand so that each
+    city is represented by a single DH area entry.  Areas without a
+    city mapping are kept unchanged.
+    """
+    if "city" not in dh_areas.columns:
+        return dh_areas
+
+    has_city = dh_areas["city"].notna() & (dh_areas["city"] != "")
+    no_city = dh_areas[~has_city].copy()
+    with_city = dh_areas[has_city].copy()
+
+    if with_city.empty:
+        return dh_areas
+
+    n_before = len(with_city)
+
+    # Build per-column aggregation: sum demand, keep first for others
+    agg = {}
+    for col in with_city.columns:
+        if col in ("geometry", "country", "city"):
+            continue
+        agg[col] = "sum" if col == demand_column else "first"
+
+    merged = with_city.dissolve(by=["country", "city"], aggfunc=agg).reset_index()
+
+    n_merged = n_before - len(merged)
+    if n_merged > 0:
+        dup_cities = with_city.groupby(["country", "city"]).size()
+        dup_cities = dup_cities[dup_cities > 1]
+        for (ct, city), count in dup_cities.items():
+            demand_sum = with_city.loc[
+                (with_city["country"] == ct) & (with_city["city"] == city),
+                demand_column,
+            ].sum()
+            logger.info(
+                f"  Merged {count} DH areas → {city} ({ct}): "
+                f"{demand_sum:.1f} GWh combined"
+            )
+
+    result = pd.concat([merged, no_city], ignore_index=True)
+    return gpd.GeoDataFrame(result, crs=dh_areas.crs)
 
 
 def _find_containing_region(point, regions):
@@ -217,6 +270,35 @@ if __name__ == "__main__":
     else:
         city_lookup = pd.read_csv(city_lookup_path)
 
+    # Attach city names to ALL dh_areas before selection so that areas
+    # sharing the same city can be merged into one entry.  This avoids
+    # duplicate subnodes (e.g. Duesseldorf_0 / Duesseldorf_1) and frees
+    # slots for additional cities to fill up to n_subnodes.
+    if city_lookup is not None:
+        city_lookup_clean = city_lookup.copy()
+        city_lookup_clean["subnode_label"] = city_lookup_clean["subnode_label"].apply(
+            _sanitize_label
+        )
+        dh_areas["_tmp_label"] = dh_areas[label_column].apply(_sanitize_label)
+        city_mapping = city_lookup_clean[
+            ["subnode_label", "country", "city"]
+        ].drop_duplicates(subset=["subnode_label", "country"])
+        dh_areas = dh_areas.merge(
+            city_mapping,
+            how="left",
+            left_on=["_tmp_label", "country"],
+            right_on=["subnode_label", "country"],
+        ).drop(columns=["_tmp_label", "subnode_label"])
+
+        n_before = len(dh_areas)
+        dh_areas = _merge_same_city_areas(dh_areas, demand_column)
+        n_after = len(dh_areas)
+        if n_before != n_after:
+            logger.info(
+                f"Pre-merged {n_before - n_after} same-city DH areas "
+                f"({n_before} → {n_after} areas)"
+            )
+
     subnodes = identify_largest_district_heating_systems(
         dh_areas,
         regions_onshore,
@@ -226,26 +308,8 @@ if __name__ == "__main__":
         label_column,
     )
 
-    # Attach city names from lookup (merge on label + country for uniqueness)
-    if city_lookup is not None:
-        city_lookup["subnode_label"] = city_lookup["subnode_label"].apply(
-            _sanitize_label
-        )
-        subnodes = subnodes.merge(
-            city_lookup[["subnode_label", "country", "city"]],
-            how="left",
-            on=["subnode_label", "country"],
-        )
-        n_missing = subnodes["city"].isna().sum()
-        if n_missing > 0:
-            logger.warning(
-                f"{n_missing}/{len(subnodes)} subnodes have no city match. "
-                "The dh_city_lookup may be outdated; re-run map_dh_systems_to_cities."
-            )
-
     # Use city name for readable node names when available
     if "city" in subnodes.columns:
-        # Clean city names: remove special chars but KEEP spaces
         city_clean = (
             subnodes["city"]
             .fillna("")
@@ -258,7 +322,7 @@ if __name__ == "__main__":
             subnodes.loc[use_city, "cluster"] + " " + city_clean[use_city]
         )
 
-    # Handle duplicate names
+    # Handle duplicate names (e.g. same city spans two clusters)
     duplicates = subnodes["name"].duplicated(keep=False)
     if duplicates.any():
         for name in subnodes.loc[duplicates, "name"].unique():

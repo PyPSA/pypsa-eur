@@ -1516,6 +1516,13 @@ rule build_district_heating_subnode_demands:
         heat_dsm_profile=resources(
             "residential_heat_dsm_profile_total_base_s_{clusters}.csv"
         ),
+        dh_area_assumptions=lambda w: (
+            "data/dh_area_assumptions.csv"
+            if config_provider(
+                "sector", "district_heating", "subnodes", "use_isi_data_assumptions"
+            )(w)
+            else []
+        ),
     output:
         district_heat_share_subnodes=resources(
             "district_heat_share_subnodes_base_s_{clusters}_{planning_horizons}.csv"

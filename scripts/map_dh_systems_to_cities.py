@@ -27,6 +27,7 @@ Notes
 import logging
 from pathlib import Path
 
+import math
 import geopandas as gpd
 import pandas as pd
 
@@ -35,6 +36,10 @@ logger = logging.getLogger(__name__)
 
 def sanitize_label(label: str) -> str:
     """Mirror the label cleaning used in build_district_heating_subnodes."""
+    # Convert float-like numeric labels to int first (170.0 → 170)
+    # to avoid the decimal point being stripped by regex (170.0 → "1700")
+    if isinstance(label, float) and not math.isnan(label) and label == int(label):
+        label = int(label)
     return (
         pd.Series([label])
         .fillna("DH")

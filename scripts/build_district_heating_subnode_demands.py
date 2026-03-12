@@ -9,6 +9,7 @@ time-series data to include subnodes.
 """
 
 import logging
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -798,19 +799,57 @@ if __name__ == "__main__":
     ).loc[energy_totals_year]
     industrial_demand = pd.read_csv(snakemake.input.industrial_demand, index_col=0)
 
-    # Optional: link dh_areas demand assumptions to current district heating shares
-    link_data_assumptions = snakemake.params.get(
-        "link_data_assumptions",
+    # Optional: scale subnode demands to align ISI data with model's DH demand.
+    # The ISI DH area data embeds specific national DH share assumptions that
+    # may differ from the model's configured DH potential.  The scaling factor
+    #   model_DH_demand / data_DH_demand
+    # is equivalent to the decomposition
+    #   (model_DH_share / data_national_DH_share)
+    #     × (model_demand_at_data_share / data_DH_demand)
+    # where the first factor adjusts for different DH potentials and the second
+    # corrects for different underlying heat demand methodologies.
+    use_isi_data_assumptions = (
         snakemake.config.get("sector", {})
         .get("district_heating", {})
         .get("subnodes", {})
-        .get("link_data_assumptions", False),
+        .get("use_isi_data_assumptions", False)
     )
 
-    if link_data_assumptions and len(subnodes) > 0:
+    if use_isi_data_assumptions and len(subnodes) > 0:
+        dh_assumptions_path = snakemake.input.get("dh_area_assumptions", "")
+        if not dh_assumptions_path or not Path(dh_assumptions_path).exists():
+            raise FileNotFoundError(
+                "use_isi_data_assumptions is True but dh_area_assumptions.csv "
+                "was not found. Provide data/dh_area_assumptions.csv."
+            )
+        dh_assumptions = pd.read_csv(dh_assumptions_path, index_col="country")
+
         logger.info(
-            "Scaling subnode demands to match district heating shares from config"
+            "Scaling subnode demands to align ISI DH area data with model's "
+            "district heating demand per country"
         )
+
+        # Select the year-appropriate data DH demand column.
+        # The ISI data provides national DH demand for 2020 and 2050.
+        # For intermediate planning years, interpolate linearly.
+        if investment_year <= 2020:
+            data_col = "heat_demand_covered_by_dh_2020_GWh"
+            logger.info(f"Using ISI 2020 DH demand as denominator (year {investment_year})")
+        elif investment_year >= 2050:
+            data_col = "heat_demand_covered_by_dh_2050_GWh"
+            logger.info(f"Using ISI 2050 DH demand as denominator (year {investment_year})")
+        else:
+            alpha = (investment_year - 2020) / (2050 - 2020)
+            dh_assumptions["heat_demand_covered_by_dh_interp_GWh"] = (
+                dh_assumptions["heat_demand_covered_by_dh_2020_GWh"] * (1 - alpha)
+                + dh_assumptions["heat_demand_covered_by_dh_2050_GWh"] * alpha
+            )
+            data_col = "heat_demand_covered_by_dh_interp_GWh"
+            logger.info(
+                f"Interpolating ISI DH demand for year {investment_year} "
+                f"(alpha={alpha:.2f} between 2020 and 2050)"
+            )
+
         # Pre-compute useful heat per cluster (MWh)
         useful_heat = {
             cluster: _compute_useful_heat_for_cluster(
@@ -823,8 +862,10 @@ if __name__ == "__main__":
             for cluster in pop_weighted_energy_totals.index
         }
 
-        # Target DH demand per country based on configured district fractions
-        target_dh_by_ct = {}
+        # Model's DH demand per country: sum of (dist_frac * useful_heat * (1+loss))
+        # This uses the DH shares from the model's own config (potential & progress),
+        # NOT the ISI data's assumed national DH shares.
+        model_dh_by_ct = {}
         for cluster, total_useful in useful_heat.items():
             if cluster not in district_heat_share.index or total_useful == 0:
                 continue
@@ -832,27 +873,35 @@ if __name__ == "__main__":
             dist_frac = _to_scalar(
                 district_heat_share.loc[cluster, "district fraction of node"]
             )
-            target_dh_by_ct.setdefault(ct, 0.0)
-            target_dh_by_ct[ct] += (
+            model_dh_by_ct.setdefault(ct, 0.0)
+            model_dh_by_ct[ct] += (
                 dist_frac * total_useful * (1 + district_heating_loss)
             )
 
-        # Current subnode DH demand per country
+        # Scale subnodes per country: scale = model_DH / data_DH.
+        # Each subnode's share of its country total is preserved.
         subnodes["ct"] = subnodes["cluster"].str[:2]
-        current_subnode_dh = subnodes.groupby("ct")["yearly_heat_demand_MWh"].sum()
+        for ct, model_dh in model_dh_by_ct.items():
+            if ct not in subnodes["ct"].values:
+                continue
+            if ct not in dh_assumptions.index:
+                logger.warning(
+                    f"No DH area assumptions for {ct}, skipping demand scaling"
+                )
+                continue
 
-        # Scale subnodes per country
-        for ct, target in target_dh_by_ct.items():
-            if ct not in current_subnode_dh.index:
+            data_total_mwh = (
+                dh_assumptions.loc[ct, data_col] * 1e3
+            )  # GWh -> MWh
+            if data_total_mwh <= 0:
                 continue
-            current = current_subnode_dh.loc[ct]
-            if current <= 0 or target <= 0:
-                continue
-            scale = target / current
+
+            scale = model_dh / data_total_mwh
             subnodes.loc[subnodes["ct"] == ct, "yearly_heat_demand_MWh"] *= scale
             logger.info(
-                f"Country {ct}: scaling subnode DH demand by {scale:.2f} "
-                f"to match configured district heat share (target {target/1e6:.2f} TWh/a)"
+                f"Country {ct}: scale factor {scale:.4f} "
+                f"(model DH {model_dh/1e6:.1f} TWh / "
+                f"ISI data DH {data_total_mwh/1e6:.1f} TWh)"
             )
 
         subnodes = subnodes.drop(columns=["ct"])
