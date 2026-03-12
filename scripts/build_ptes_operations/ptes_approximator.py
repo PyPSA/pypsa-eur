@@ -45,7 +45,7 @@ class PtesApproximator:
         A unit of energy in a colder layer occupies more volume.
         W_1 = 1 for the hottest layer; W_l ≥ 1 for colder layers.
         """
-        weights = (self.top_temperature - self.bottom_temperature) / (
+        weights = (self.design_top_temperature - self.design_bottom_temperature) / (
             self.layer_temperatures - self.bottom_temperature
         )
         return weights
