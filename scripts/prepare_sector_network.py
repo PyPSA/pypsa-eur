@@ -3157,6 +3157,9 @@ def add_heat(
                         "central water pit discharger",
                         "efficiency",
                     ],
+                    marginal_cost=costs.at[
+                        "central water pit discharger", "marginal_cost"
+                    ],
                     p_nom_extendable=True,
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
@@ -3177,9 +3180,7 @@ def add_heat(
                     standing_loss=costs.at[
                         "central water pit storage", "standing_losses"
                     ]
-                    / 100
-                    if num_layers == 1
-                    else 0,
+                    / 100,
                     capital_cost=costs.at["central water pit storage", "capital_cost"]
                     if num_layers == 1
                     else 0,
@@ -3427,6 +3428,27 @@ def add_heat(
                     if options["time_dep_hp_cop"]
                     else costs.loc[[costs_name_heat_pump], ["efficiency"]]
                 )
+
+                p_min_pu = (
+                    0
+                    if heat_source == HeatSource.PTES
+                    and params.sector["district_heating"]["ptes"]["layered"][
+                        "num_layers"
+                    ]
+                    > 1
+                    else -(cop_heat_pump > 0).astype(float)
+                )
+                capital_cost = (
+                    0
+                    if heat_source
+                    in [
+                        HeatSource.PTES_LAYER_0,
+                        HeatSource.PTES_LAYER_1,
+                        HeatSource.PTES_LAYER_2,
+                    ]
+                    else costs.at[costs_name_heat_pump, "capital_cost"] * overdim_factor
+                )
+
                 n.add(
                     "Link",
                     nodes,
@@ -3435,13 +3457,10 @@ def add_heat(
                     bus1=nodes,
                     bus2=heat_source.get_heat_pump_input_bus(nodes, heat_system),
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=1 / cop_heat_pump.clip(lower=0.001),  # .squeeze(),
+                    efficiency=1 / cop_heat_pump.clip(lower=0.001),
                     efficiency2=heat_source.get_heat_pump_efficiency2(cop_heat_pump),
-                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
-                    * overdim_factor,
-                    p_min_pu=-(cop_heat_pump > 0).astype(
-                        float
-                    ),  # .squeeze().astype(float),
+                    capital_cost=capital_cost,
+                    p_min_pu=p_min_pu,
                     p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
