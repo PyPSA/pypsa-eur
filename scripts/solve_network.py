@@ -1036,6 +1036,54 @@ def add_layered_ptes_volume_capacity_constraint(
     n.model.add_constraints(merged <= 0, name="layered_ptes_volume_capacity")
 
 
+def add_layered_ptes_heat_pump_capacity_constraint(
+    n: pypsa.Network,
+) -> None:
+    """
+    Tbd
+    """
+    layer_heat_pumps = n.links.index[
+        n.links.index.str.contains("ptes layer") & n.links.p_nom_extendable
+    ]
+    agg_heat_pumps = n.links.index[
+        n.links.index.str.contains("ptes")
+        & ~n.links.index.str.contains("layer")
+        & n.links.p_nom_extendable
+    ]
+
+    if layer_heat_pumps.empty or agg_heat_pumps.empty:
+        logger.warning(
+            "No valid layered or aggregate PTES heat pumps found. "
+            "Not enforcing volume capacity constraints."
+        )
+        return
+
+    constraints = []
+    for agg in agg_heat_pumps:
+        # Find corresponding layer stores (same prefix before "ptes")
+        prefix = agg.split("ptes")[0] + "ptes layer"
+        layers = layer_heat_pumps[layer_heat_pumps.str.startswith(prefix)]
+        if layers.empty:
+            continue
+
+        layer_p_sum = None
+        for layer_name in layers:
+            layer_p = n.model["Link-p"].loc[:, layer_name]
+            layer_p_sum = layer_p if layer_p_sum is None else layer_p_sum + layer_p
+
+        agg_p_nom = n.model["Link-p_nom"].loc[agg]
+        # Σ W_l · e_{l,t} - ē ≤ 0
+        constraints.append(layer_p_sum - agg_p_nom)
+
+    if not constraints:
+        return
+
+    merged = linopy.expressions.merge(
+        constraints, dim="Link-ext" if PYPSA_V1 else "name"
+    )
+    n.model.add_constraints(merged <= 0, name="layered_ptes_heat_pump_capacity")
+
+
 def add_layered_ptes_interlayer_flow_constraint(
     n: pypsa.Network, ptes_ds: xr.Dataset
 ) -> None:
