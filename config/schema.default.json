@@ -2393,6 +2393,13 @@
           },
           "type": "array"
         },
+        "grouping_years_industry": {
+          "description": "Intervals to group existing capacities for industry.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
         "threshold_capacity": {
           "default": 10,
           "description": "Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
@@ -10448,6 +10455,13 @@
         },
         "grouping_years_heat": {
           "description": "Intervals to group existing capacities for heat.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "grouping_years_industry": {
+          "description": "Intervals to group existing capacities for industry.",
           "items": {
             "type": "integer"
           },
