@@ -2393,6 +2393,13 @@
           },
           "type": "array"
         },
+        "grouping_years_industry": {
+          "description": "Intervals to group existing capacities for industry.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
         "threshold_capacity": {
           "default": 10,
           "description": "Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
@@ -5103,6 +5110,49 @@
               },
               "description": "Price for importing renewable energy of carrier.",
               "type": "object"
+            }
+          }
+        },
+        "endogenous_sectors": {
+          "description": "Sectors modelled endogenously.",
+          "items": {
+            "enum": [
+              "steel",
+              "cement"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "hbi_relocation": {
+          "default": false,
+          "description": "Allow the relocation of iron ore reduction step.",
+          "type": "boolean"
+        },
+        "steel_bof": {
+          "description": "Configuration for `sector.steel_bof` settings.",
+          "properties": {
+            "pledge": {
+              "default": true,
+              "description": "Decommissions coal blast furnaces at their pledged phase out year.",
+              "type": "boolean"
+            },
+            "pledge_delay": {
+              "default": 0,
+              "description": "Delays the decommission year by number of years.",
+              "type": "integer"
+            },
+            "default_phase_out": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "default": 2035,
+              "description": "Decommissions the coal blast furnaces that do not have a pledged phase out year."
             }
           }
         }
@@ -7861,6 +7911,33 @@
         }
       }
     },
+    "_SteelBOFConfig": {
+      "description": "Configuration for `sector.steel_bof` settings.",
+      "properties": {
+        "pledge": {
+          "default": true,
+          "description": "Decommissions coal blast furnaces at their pledged phase out year.",
+          "type": "boolean"
+        },
+        "pledge_delay": {
+          "default": 0,
+          "description": "Delays the decommission year by number of years.",
+          "type": "integer"
+        },
+        "default_phase_out": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "default": 2035,
+          "description": "Decommissions the coal blast furnaces that do not have a pledged phase out year."
+        }
+      }
+    },
     "_TechnologyMappingConfig": {
       "description": "Configuration for `electricity.estimate_renewable_capacities.technology_mapping` settings.",
       "properties": {
@@ -10383,6 +10460,13 @@
           },
           "type": "array"
         },
+        "grouping_years_industry": {
+          "description": "Intervals to group existing capacities for industry.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
         "threshold_capacity": {
           "default": 10,
           "description": "Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
@@ -11391,6 +11475,49 @@
               },
               "description": "Price for importing renewable energy of carrier.",
               "type": "object"
+            }
+          }
+        },
+        "endogenous_sectors": {
+          "description": "Sectors modelled endogenously.",
+          "items": {
+            "enum": [
+              "steel",
+              "cement"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "hbi_relocation": {
+          "default": false,
+          "description": "Allow the relocation of iron ore reduction step.",
+          "type": "boolean"
+        },
+        "steel_bof": {
+          "description": "Configuration for `sector.steel_bof` settings.",
+          "properties": {
+            "pledge": {
+              "default": true,
+              "description": "Decommissions coal blast furnaces at their pledged phase out year.",
+              "type": "boolean"
+            },
+            "pledge_delay": {
+              "default": 0,
+              "description": "Delays the decommission year by number of years.",
+              "type": "integer"
+            },
+            "default_phase_out": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "default": 2035,
+              "description": "Decommissions the coal blast furnaces that do not have a pledged phase out year."
             }
           }
         }
