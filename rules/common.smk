@@ -93,10 +93,8 @@ def load_data_versions(file_path):
         comment="#",
     )
 
-    # Turn 'tags' column from string representation of list to individual columns
-    data_versions["tags"] = data_versions["tags"].apply(
-        lambda x: json.loads(x.replace("'", '"'))
-    )
+    # Turn space-separated tags into individual columns
+    data_versions["tags"] = data_versions["tags"].str.split()
     exploded = data_versions.explode("tags")
     dummies = pd.get_dummies(exploded["tags"], dtype=bool)
     tags_matrix = dummies.groupby(dummies.index).max()
@@ -193,6 +191,15 @@ def input_custom_extra_functionality(w):
     if path:
         return os.path.join(os.path.dirname(workflow.snakefile), path)
     return []
+
+
+def output_model(path_template):
+    def _output_model(w):
+        if config_provider("solving", "options", "store_model")(w):
+            return path_template.format(**dict(w))
+        return []
+
+    return _output_model
 
 
 def solved_previous_horizon(w):

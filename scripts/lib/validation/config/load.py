@@ -21,7 +21,7 @@ class _FillGapsConfig(ConfigModel):
         description="Whether to fill gaps using interpolation for small gaps and time shift for large gaps.",
     )
     interpolate_limit: int = Field(
-        3,
+        6,
         description="Maximum gap size (consecutive nans) which interpolated linearly.",
     )
     time_shift_for_large_gaps: str = Field(
@@ -65,6 +65,10 @@ class LoadConfig(BaseModel):
     supplement_synthetic: bool = Field(
         True,
         description="Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
+    )
+    substation_only: bool = Field(
+        True,
+        description="Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data.",
     )
     distribution_key: _DistributionKeyConfig = Field(
         default_factory=_DistributionKeyConfig,

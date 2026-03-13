@@ -19,10 +19,12 @@ from scripts._helpers import configure_logging, get_snapshots, set_scenario_conf
 
 logger = logging.getLogger(__name__)
 
+OPSD_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
-def load_timeseries(fn, years, countries):
+
+def load_timeseries(fn, years, countries, date_format=None):
     """
-    Read load data from OPSD time-series package version 2020-10-06.
+    Read and pre-filter load data.
 
     Parameters
     ----------
@@ -40,10 +42,9 @@ def load_timeseries(fn, years, countries):
         Load time-series with UTC timestamps x ISO-2 countries
     """
     return (
-        pd.read_csv(fn, index_col=0, parse_dates=[0], date_format="%Y-%m-%dT%H:%M:%SZ")
+        pd.read_csv(fn, index_col=0, parse_dates=[0], date_format=date_format)
         .tz_localize(None)
         .dropna(how="all", axis=0)
-        .rename(columns={"GB_UKM": "GB"})
         .filter(items=countries)
         .loc[years]
     )
@@ -113,29 +114,7 @@ def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
 
 def manual_adjustment(load, fn_load, countries):
     """
-    Adjust gaps manual for load data from OPSD time-series package.
-
-     1. For years later than 2015 for which the load data is mainly taken from the
-        ENTSOE power statistics
-
-     Kosovo (KV) and Albania (AL) do not exist in the data set. Kosovo gets the
-     same load curve as Serbia and Albania the same as Macdedonia, both scaled
-     by the corresponding ratio of total energy consumptions reported by
-     IEA Data browser [0] for the year 2013.
-
-
-     2. For years earlier than 2015 for which the load data is mainly taken from the
-        ENTSOE transparency platforms
-
-     Albania (AL) and Macedonia (MK) do not exist in the data set. Both get the
-     same load curve as Montenegro,  scaled by the corresponding ratio of total energy
-     consumptions reported by  IEA Data browser [0] for the year 2016.
-
-     [0] https://www.iea.org/data-and-statistics?country=WORLD&fuel=Electricity%20and%20heat&indicator=TotElecCons
-
-    Bosnia and Herzegovina (BA) does not exist in the data set for 2019. It gets the
-    electricity consumption data from Croatia (HR) for the year 2019, scaled by the
-    factors derived from https://energy.at-site.be/eurostat-2021/
+    Adjust gaps manual for load data.
 
     Parameters
     ----------
@@ -151,81 +130,93 @@ def manual_adjustment(load, fn_load, countries):
          timestamps x ISO-2 countries
     """
 
-    if "AL" not in load and "AL" in countries:
-        if "ME" in load:
-            load["AL"] = load.ME * (5.7 / 2.9)
-        elif "MK" in load:
-            load["AL"] = load["MK"] * (4.1 / 7.4)
+    copy_timeslice(load, "UA", "2010-01-01 00:00", "2010-01-01 01:00", Delta(days=-1))
+    copy_timeslice(load, "XK", "2010-01-01 00:00", "2010-01-01 01:00", Delta(days=-1))
+    copy_timeslice(load, "MD", "2010-01-01 00:00", "2010-01-01 01:00", Delta(days=-1))
+    copy_timeslice(load, "BA", "2010-01-01 00:00", "2010-01-01 01:00", Delta(days=-1))
 
-    if "MK" in countries and "MK" in countries:
-        if "MK" not in load or load.MK.isnull().sum() > len(load) / 2:
-            if "ME" in load:
-                load["MK"] = load.ME * (6.7 / 2.9)
-
-    if "BA" not in load and "BA" in countries:
-        if "ME" in load:
-            load["BA"] = load.HR * (11.0 / 16.2)
-
-    if "XK" not in load and "XK" in countries:
-        if "RS" in load:
-            load["XK"] = load["RS"] * (4.8 / 27.0)
-
-    copy_timeslice(load, "GR", "2015-08-11 21:00", "2015-08-15 20:00", Delta(weeks=1))
-    copy_timeslice(load, "AT", "2018-12-31 22:00", "2019-01-01 22:00", Delta(days=2))
     copy_timeslice(load, "CH", "2010-01-19 07:00", "2010-01-19 22:00", Delta(days=1))
     copy_timeslice(load, "CH", "2010-03-28 00:00", "2010-03-28 21:00", Delta(days=1))
+    copy_timeslice(load, "CH", "2010-11-04 04:00", "2010-11-04 22:00", Delta(days=1))
+    copy_timeslice(load, "CH", "2025-04-30 00:00", "2025-04-30 23:00", Delta(days=1))
+    copy_timeslice(load, "CH", "2023-02-16 23:00", "2025-02-17 09:00", Delta(days=1))
+    copy_timeslice(load, "NO", "2010-12-09 11:00", "2010-12-09 18:00", Delta(days=1))
+    copy_timeslice(load, "PL", "2014-12-08 00:00", "2014-12-08 23:00", Delta(days=1))
+    copy_timeslice(load, "PL", "2025-04-28 00:00", "2025-04-28 23:00", Delta(days=1))
+
+    copy_timeslice(load, "AT", "2015-11-29 00:00", "2015-11-29 23:00", Delta(days=-1))
+    copy_timeslice(load, "AT", "2014-12-17 23:00", "2014-12-18 07:00", Delta(days=-1))
+    copy_timeslice(load, "CH", "2023-12-05 00:00", "2025-12-05 23:00", Delta(days=-1))
+    copy_timeslice(load, "SI", "2014-12-30 12:00", "2014-12-31 23:00", Delta(days=-2))
+
+    copy_timeslice(load, "LU", "2018-12-07 00:00", "2018-12-09 23:00", Delta(days=-2))
+    copy_timeslice(load, "LU", "2018-12-04 00:00", "2018-12-04 23:00", Delta(days=-1))
+    copy_timeslice(load, "LU", "2018-11-15 00:00", "2018-11-15 23:00", Delta(days=-1))
+
+    copy_timeslice(load, "MK", "2019-09-01 00:00", "2019-09-02 23:00", Delta(weeks=-1))
+    copy_timeslice(load, "MK", "2024-09-02 00:00", "2024-09-02 23:00", Delta(days=-1))
+
+    copy_timeslice(load, "GB", "2018-12-14 21:00", "2018-12-15 02:00", Delta(days=1))
+    copy_timeslice(load, "IE", "2025-11-17 23:00", "2025-11-19 09:00", Delta(weeks=-1))
+
     # is a WE, so take WE before
     copy_timeslice(load, "CH", "2010-10-08 13:00", "2010-10-10 21:00", Delta(weeks=1))
-    copy_timeslice(load, "CH", "2010-11-04 04:00", "2010-11-04 22:00", Delta(days=1))
-    copy_timeslice(load, "NO", "2010-12-09 11:00", "2010-12-09 18:00", Delta(days=1))
-    # whole january missing
-    copy_timeslice(
-        load,
-        "GB",
-        "2010-01-01 00:00",
-        "2010-01-31 23:00",
-        Delta(days=-365),
-        fn_load,
-    )
-    # 1.1. at midnight gets special treatment
-    copy_timeslice(
-        load,
-        "IE",
-        "2016-01-01 00:00",
-        "2016-01-01 01:00",
-        Delta(days=-366),
-        fn_load,
-    )
-    copy_timeslice(
-        load,
-        "PT",
-        "2016-01-01 00:00",
-        "2016-01-01 01:00",
-        Delta(days=-366),
-        fn_load,
-    )
-    copy_timeslice(
-        load,
-        "GB",
-        "2016-01-01 00:00",
-        "2016-01-01 01:00",
-        Delta(days=-366),
-        fn_load,
-    )
 
-    copy_timeslice(load, "BG", "2018-10-27 21:00", "2018-10-28 22:00", Delta(weeks=1))
-    copy_timeslice(load, "LU", "2019-01-02 11:00", "2019-01-05 05:00", Delta(weeks=-1))
-    copy_timeslice(load, "LU", "2019-02-05 20:00", "2019-02-06 19:00", Delta(weeks=-1))
+    # longer stretch
+    copy_timeslice(load, "NL", "2014-12-01 00:00", "2014-12-19 23:00", Delta(weeks=-3))
 
-    if "UA" in countries:
+    def _safe_where(df, col, pred):
+        if col in df.columns:
+            df[col] = df[col].where(pred(df[col]), np.nan)
+
+    def _safe_setna(df, idx, col):
+        if col in df.columns:
+            df.loc[idx, col] = np.nan
+
+    # remove erroneous peaks
+    _safe_where(load, "BA", lambda s: s < 2650)
+    _safe_where(load, "DK", lambda s: s < 6400)
+    _safe_where(load, "MK", lambda s: s < 2000)
+    _safe_where(load, "PT", lambda s: s < 11000)
+
+    # remove erroneous drops
+    _safe_where(load, "EE", lambda s: s > 300)
+    _safe_where(load, "GB", lambda s: s > 10000)
+    _safe_where(load, "GR", lambda s: s > 2300)
+    _safe_where(load, "LT", lambda s: s > 600)
+    _safe_where(load, "LV", lambda s: s > 300)
+    _safe_where(load, "ME", lambda s: s > 90)
+    _safe_where(load, "NO", lambda s: s > 6000)
+    _safe_where(load, "SE", lambda s: s > 6000)
+    _safe_where(load, "SI", lambda s: s > 400)
+    _safe_where(load, "XK", lambda s: s > 200)
+    _safe_where(load, "PT", lambda s: s > 3000)
+    _safe_where(load, "AT", lambda s: s > 3000)
+    _safe_where(load, "BG", lambda s: s > 2000)
+
+    _safe_setna(load, "2019-04-03 01:00", "BG")
+    _safe_setna(load, "2019-10-29 01:00", "BG")
+    _safe_setna(load, "2019-10-29 03:00", "BG")
+    _safe_setna(load, "2018-09-12 16:00", "GB")
+    _safe_setna(load, "2019-10-28 11:00", "SK")
+
+    copy_timeslice(load, "MK", "2019-04-30 00:00", "2019-05-01 23:00", Delta(weeks=-1))
+    for year in [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2024]:
         copy_timeslice(
-            load, "UA", "2013-01-25 14:00", "2013-01-28 21:00", Delta(weeks=1)
+            load, "BA", f"{year}-07-05 00:00", f"{year}-07-08 00:00", Delta(weeks=-1)
         )
         copy_timeslice(
-            load, "UA", "2013-10-28 03:00", "2013-10-28 20:00", Delta(weeks=1)
+            load, "BA", f"{year}-11-22 19:00", f"{year}-11-22 21:00", Delta(days=-1)
         )
 
     return load
+
+
+def repeat_years(s: pd.Series, years: list) -> pd.Series:
+    s = s[~((s.index.month == 2) & (s.index.day == 29))]  # drop leap day
+    return pd.concat(
+        [s.set_axis(s.index.map(lambda t: t.replace(year=y))) for y in years]
+    )
 
 
 if __name__ == "__main__":
@@ -241,34 +232,66 @@ if __name__ == "__main__":
         snakemake.params.snapshots, snakemake.params.drop_leap_day
     )
 
-    fixed_year = snakemake.params["load"].get("fixed_year", False)
-    years = (
-        slice(str(fixed_year), str(fixed_year))
-        if fixed_year
-        else slice(snapshots[0], snapshots[-1])
-    )
+    # supported year ranges
+    years = slice("2010", "2025")
 
     interpolate_limit = snakemake.params.load["fill_gaps"]["interpolate_limit"]
     countries = snakemake.params.countries
 
     time_shift = snakemake.params.load["fill_gaps"]["time_shift_for_large_gaps"]
 
-    load = load_timeseries(snakemake.input.reported, years, countries)
+    opsd = load_timeseries(snakemake.input.opsd, years, countries, OPSD_DATE_FORMAT)
 
-    load = load.reindex(index=snapshots)
+    entsoe = load_timeseries(snakemake.input.entsoe, years, countries)
+
+    neso = load_timeseries(snakemake.input.neso, years, countries)
+
+    load = entsoe.combine_first(opsd).combine_first(neso)
+
+    # zero values are considered missing values
+    load.replace(0, np.nan, inplace=True)
 
     if "UA" in countries:
-        # attach load of UA (best data only for entsoe transparency)
-        load_ua = load_timeseries(snakemake.input.reported, "2018", ["UA"])
-        snapshot_year = str(snapshots.year.unique().item())
-        time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
-        # hack indices (currently, UA is manually set to 2018)
-        load_ua.index -= time_diff
-        load["UA"] = load_ua
-        # attach load of MD (no time-series available, use 2020-totals and distribute according to UA):
-        # https://www.iea.org/data-and-statistics/data-browser/?country=MOLDOVA&fuel=Energy%20consumption&indicator=TotElecCons
-        if "MD" in countries:
-            load["MD"] = 6.2e6 * (load_ua / load_ua.sum())
+        # use 2021 as template for filling missing years
+        s = load.loc["2021", "UA"]
+        fill_values = repeat_years(s, range(2010, 2026))
+        load["UA"] = load["UA"].combine_first(fill_values)
+
+    if "MD" in countries:
+        # use 2022 as template for filling missing years
+        s = load.loc["2022", "MD"]
+        fill_values = repeat_years(s, range(2010, 2025))
+        load["MD"] = load["MD"].combine_first(fill_values)
+
+    if "AL" in countries:
+        # use 2024 as template for filling missing and erroneous years
+        s = load.loc["2024", "AL"]
+        fill_values = repeat_years(s, range(2010, 2026))
+        load.loc[fill_values.index, "AL"] = fill_values
+
+    if "BA" in countries:
+        # use 2024 as template for filling missing and erroneous years
+        s = load.loc["2024", "BA"]
+        fill_values = repeat_years(s, range(2010, 2026))
+        load["BA"] = load["BA"].combine_first(fill_values)
+
+    if "XK" in countries:
+        # use 2024 as template for filling missing and erroneous years
+        s = load.loc["2024", "XK"]
+        fill_values = repeat_years(s, range(2010, 2024))
+        load["XK"] = load["XK"].combine_first(fill_values)
+
+    if "MK" in countries:
+        # use 2024 as template for filling missing and erroneous years
+        s = load.loc["2024", "MK"]
+        fill_values = repeat_years(s, range(2025, 2026))
+        load["MK"] = load["MK"].combine_first(fill_values)
+
+    if "CY" in countries:
+        # use 2021 as template for filling missing years
+        s = load.loc["2021", "CY"]
+        fill_values = repeat_years(s, range(2010, 2026))
+        load["CY"] = load["CY"].combine_first(fill_values)
 
     if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], countries)
@@ -296,6 +319,15 @@ if __name__ == "__main__":
         "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
         "for implementing the needed load data modifications."
     )
+
+    fixed_year = snakemake.params["load"].get("fixed_year", False)
+    years = (
+        slice(str(fixed_year), str(fixed_year))
+        if fixed_year
+        else slice(snapshots[0], snapshots[-1])
+    )
+
+    load = load.loc[years].reindex(index=snapshots)
 
     # need to reindex load time series to target year
     if fixed_year:

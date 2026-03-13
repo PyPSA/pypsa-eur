@@ -43,6 +43,32 @@ class _MaxHoursConfig(BaseModel):
         6,
         description="Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
     )
+    li_ion: float = Field(
+        6,
+        description="Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+        alias="li-ion",
+    )
+    lfp: float = Field(
+        6,
+        description="Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+    )
+    vanadium: float = Field(
+        10,
+        description="Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+    )
+    lair: float = Field(
+        12,
+        description="Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+    )
+    pair: float = Field(
+        24,
+        description="Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+    )
+    iron_air: float = Field(
+        100,
+        description="Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+        alias="iron-air",
+    )
     H2: float = Field(
         168,
         description="Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
@@ -67,11 +93,11 @@ class _ExtendableCarriersConfig(BaseModel):
     )
     StorageUnit: list[str] = Field(
         default_factory=list,
-        description="Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+        description="Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
     )
     Store: list[str] = Field(
         default_factory=lambda: ["battery", "H2"],
-        description="Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.",
+        description="Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air.",
     )
     Link: list[str] = Field(
         default_factory=list,
@@ -103,12 +129,16 @@ class _EstimateRenewableCapacitiesConfig(BaseModel):
         True,
         description="Activate routine to estimate renewable capacities in rule `add_electricity`. This option should not be used in combination with pathway planning `foresight: myopic` or `foresight: perfect` as renewable capacities are added differently in `add_existing_baseyear`.",
     )
-    from_gem: bool = Field(
+    from_powerplantmatching: bool = Field(
         True,
-        description="Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.",
+        description="Add renewable capacities from powerplantmatching dataset.",
+    )
+    from_irenastat: bool = Field(
+        False,
+        description="Supplement powerplantmatching dataset with heuristics based on country-level renewable capacities from IRENA (IRENASTAT).",
     )
     year: int = Field(
-        2020,
+        2024,
         description="Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year.",
     )
     expansion_limit: float | bool = Field(
@@ -178,7 +208,7 @@ class ElectricityConfig(BaseModel):
         description="Defines which carriers are extendable during optimization.",
     )
     powerplants_filter: str | bool = Field(
-        "(DateOut >= 2024 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')",
+        "(DateOut > 2025 or DateOut != DateOut) and (DateIn < 2026 or DateIn != DateIn)",
         description="Filter query for the default powerplant database.",
     )
     custom_powerplants: str | bool = Field(
@@ -198,6 +228,7 @@ class ElectricityConfig(BaseModel):
             "coal",
             "lignite",
             "geothermal",
+            "waste",
             "biomass",
         ],
         description="List of conventional power plants to include in the model from `resources/powerplants_s_{clusters}.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
@@ -217,6 +248,10 @@ class ElectricityConfig(BaseModel):
     estimate_renewable_capacities: _EstimateRenewableCapacitiesConfig = Field(
         default_factory=_EstimateRenewableCapacitiesConfig,
         description="Configuration for estimating renewable capacities.",
+    )
+    estimate_battery_capacities: bool = Field(
+        False,
+        description="Enable estimation of existing battery storage capacities.",
     )
     autarky: _AutarkyConfig = Field(
         default_factory=_AutarkyConfig,

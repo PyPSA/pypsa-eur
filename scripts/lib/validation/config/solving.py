@@ -10,7 +10,7 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solvin
 
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -113,6 +113,10 @@ class _SolvingOptionsConfig(BaseModel):
         365,
         description="Number of snapshots to consider in each iteration. Defaults to 100.",
     )
+    overlap: int = Field(
+        0,
+        description="Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap.",
+    )
     post_discretization: _PostDiscretizationConfig = Field(
         default_factory=_PostDiscretizationConfig,
         description="Post-discretization settings.",
@@ -120,9 +124,19 @@ class _SolvingOptionsConfig(BaseModel):
     keep_files: bool = Field(
         False, description="Whether to keep LPs and MPS files after solving."
     )
+    store_model: bool = Field(
+        False,
+        description="Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware.",
+    )
     model_kwargs: _ModelKwargsConfig = Field(
         default_factory=_ModelKwargsConfig, description="Model kwargs for linopy."
     )
+
+    @model_validator(mode="after")
+    def check_store_model_rolling_horizon(self):
+        if self.rolling_horizon and self.store_model:
+            raise ValueError("store_model is not supported with rolling_horizon")
+        return self
 
 
 class _AggPNomLimitsConfig(BaseModel):
@@ -313,11 +327,42 @@ class SolvingConfig(BaseModel):
                 "PDLPTol": 1e-5,
                 "Crossover": 0,
             },
+            "xpress-default": {
+                "threads": 8,
+                "lpflags": 4,
+                "crossover": 0,
+                "bargaptarget": 1e-5,
+                "baralg": 2,
+            },
+            "xpress-gpu": {
+                "lpflags": 4,
+                "crossover": 0,
+                "baralg": 4,
+                "barhggpu": 1,
+                "barhgreltol": 1e-5,
+            },
             "cbc-default": {},
             "glpk-default": {},
         },
         description="Dictionaries with solver-specific parameter settings.",
     )
+
+    @field_validator("solver_options")
+    @classmethod
+    def check_no_gurobi_credentials(cls, v):
+        """Prevent Gurobi license credentials from being stored in config."""
+        forbidden_keys = {"WLSACCESSID", "WLSSECRET", "LICENSEID"}
+        for solver_name, options in v.items():
+            if "env" in options:
+                found = forbidden_keys & set(options["env"].keys())
+                if found:
+                    raise ValueError(
+                        f"Gurobi license credentials ({', '.join(found)}) must not be set in config to avoid leaking secrets. "
+                        "Use a license file instead or check the PyPSA options documentation on how to pass solver_options via environment variables, "
+                        'e.g. PYPSA_PARAMS__OPTIMIZE__SOLVER_OPTIONS={"env": {"WLSACCESSID": "...", "WLSSECRET": "...", "LICENSEID": 1234}}'
+                    )
+        return v
+
     check_objective: _CheckObjectiveConfig = Field(
         default_factory=_CheckObjectiveConfig,
         description="Objective checking configuration.",
