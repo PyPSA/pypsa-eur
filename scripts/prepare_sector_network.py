@@ -5250,7 +5250,10 @@ def add_industry(
             efficiency2=costs.at["coal", "CO2 intensity"],
         )
 
-    if snakemake.params.sector["endogenous_sectors"]["enable"] and "steel" in snakemake.params.sector["endogenous_sectors"]["subsectors"]:
+    if (
+        snakemake.params.sector["endogenous_sectors"]["enable"]
+        and "steel" in snakemake.params.sector["endogenous_sectors"]["subsectors"]
+    ):
         # add steel load
         logger.info("Adding steel production technologies.")
         n.add("Carrier", "steel")
@@ -5485,7 +5488,10 @@ def add_industry(
             lifetime=costs.at["steel carbon capture retrofit", "lifetime"],
         )
 
-    if snakemake.params.sector["endogenous_sectors"]["enable"] and "cement" in snakemake.params.sector["endogenous_sectors"]["subsectors"]:
+    if (
+        snakemake.params.sector["endogenous_sectors"]["enable"]
+        and "cement" in snakemake.params.sector["endogenous_sectors"]["subsectors"]
+    ):
         # add cement processes
         logger.info("Adding cement production capacities.")
         n.add("Carrier", "cement")

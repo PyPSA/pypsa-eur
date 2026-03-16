@@ -807,7 +807,10 @@ def add_existing_industry(
         ["bus", "country", "carrier", "grouping_year", "Out"], as_index=False
     )["p_set"].sum()
 
-    if options["endogenous_sectors"]["enable"] and "cement" in options["endogenous_sectors"]["subsectors"]:
+    if (
+        options["endogenous_sectors"]["enable"]
+        and "cement" in options["endogenous_sectors"]["subsectors"]
+    ):
         # add cement
         cement = plant_data[plant_data.carrier == "cement"]
         cement.index = (
@@ -957,7 +960,10 @@ def add_existing_industry(
         lifetime=costs.at["SMR", "lifetime"],
     )
 
-    if options["endogenous_sectors"]["enable"] and "steel" in options["endogenous_sectors"]["subsectors"]:
+    if (
+        options["endogenous_sectors"]["enable"]
+        and "steel" in options["endogenous_sectors"]["subsectors"]
+    ):
         # natural gas DRI
         ng_dri = plant_data[plant_data.carrier == "gas DRI"]
         logger.info(f"Adding {len(ng_dri)} existing gas DRI links.")
