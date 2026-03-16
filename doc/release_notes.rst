@@ -8,6 +8,7 @@ Release Notes
 
 .. Upcoming Release
 .. =================
+* The industry reference year and the ammonia production data have been updated to 2023 (https://github.com/PyPSA/pypsa-eur/pull/2103) 
 
 * refactor: Use scripts path provider consistently (https://github.com/PyPSA/pypsa-eur/pull/2093).
 

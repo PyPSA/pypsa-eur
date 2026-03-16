@@ -65,7 +65,7 @@ To do so, we highly recommend you install from one of our platform-specific envi
 
     $ conda update conda
 
-    $ conda create -n pypsa-eur -f envs/default_linux-64.pin.txt # select the appropriate file for your platform
+    $ conda create -n pypsa-eur --file envs/default_linux-64.pin.txt # select the appropriate file for your platform
 
     $ conda activate pypsa-eur
 
