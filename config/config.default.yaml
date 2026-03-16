@@ -32,7 +32,7 @@ run:
   use_shadow_directory: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
-foresight: myopic
+foresight: overnight
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 scenario:
@@ -43,8 +43,7 @@ scenario:
   sector_opts:
   - ""
   planning_horizons:
-  - 2025
-  - 2035
+  - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
@@ -988,10 +987,10 @@ sector:
       gas: 122
       oil: 125
   endogenous_sectors:
-    enable: true
+    enable: false
     subsectors:
-      - steel
-      - cement
+    - steel
+    - cement
   hbi_relocation: false
   steel_bof:
     pledge: true
@@ -1137,7 +1136,7 @@ clustering:
     buses: {}
   temporal:
     resolution_elec: false
-    resolution_sector: 8760H 
+    resolution_sector: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:

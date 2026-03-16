@@ -4774,7 +4774,7 @@
             },
             "meoh_to_oa": {
               "default": false,
-              "description": "Add Methanol-to-Olefins/Aromatics for chemical industry.",
+              "description": "Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
               "type": "boolean"
             }
           }
@@ -5119,15 +5119,19 @@
           }
         },
         "endogenous_sectors": {
-          "description": "Sectors modelled endogenously.",
-          "items": {
-            "enum": [
-              "steel",
-              "cement"
-            ],
-            "type": "string"
-          },
-          "type": "array"
+          "description": "Configuration for `sector.endogenous_sectors` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Enabling to specify industry subsectors to be modelled endogenously.",
+              "type": "boolean"
+            },
+            "subsectors": {
+              "description": "Energy-intensive industry subsectors that are modelled endogenously.",
+              "items": {},
+              "type": "array"
+            }
+          }
         },
         "hbi_relocation": {
           "default": false,
@@ -6410,6 +6414,21 @@
         }
       }
     },
+    "_EndogenousSectorsConfig": {
+      "description": "Configuration for `sector.endogenous_sectors` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Enabling to specify industry subsectors to be modelled endogenously.",
+          "type": "boolean"
+        },
+        "subsectors": {
+          "description": "Energy-intensive industry subsectors that are modelled endogenously.",
+          "items": {},
+          "type": "array"
+        }
+      }
+    },
     "_EnhancedGeothermalConfig": {
       "description": "Configuration for `sector.enhanced_geothermal` settings.",
       "properties": {
@@ -6859,9 +6878,9 @@
           "type": "boolean"
         },
         "meoh_to_oa": {
-              "default": false,
-              "description": "Add Methanol-to-Olefins/Aromatics for chemical industry.",
-              "type": "boolean"
+          "default": false,
+          "description": "Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
+          "type": "boolean"
         }
       }
     },
@@ -11125,7 +11144,7 @@
             },
             "meoh_to_oa": {
               "default": false,
-              "description": "Add Methanol-to-Olefins/Aromatics for chemical industry.",
+              "description": "Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
               "type": "boolean"
             }
           }
@@ -11470,15 +11489,19 @@
           }
         },
         "endogenous_sectors": {
-          "description": "Sectors modelled endogenously.",
-          "items": {
-            "enum": [
-              "steel",
-              "cement"
-            ],
-            "type": "string"
-          },
-          "type": "array"
+          "description": "Configuration for `sector.endogenous_sectors` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Enabling to specify industry subsectors to be modelled endogenously.",
+              "type": "boolean"
+            },
+            "subsectors": {
+              "description": "Energy-intensive industry subsectors that are modelled endogenously.",
+              "items": {},
+              "type": "array"
+            }
+          }
         },
         "hbi_relocation": {
           "default": false,
