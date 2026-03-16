@@ -4551,6 +4551,7 @@ def adjust_industry_demand(nodes):
         "cement": "Cement",
     }
     keys = [sector_dict[k] for k in endogenous_sector if k in sector_dict]
+    keys = [x for item in keys for x in (item if isinstance(item, list) else [item])]
 
     remaining_sectors = ~nodal_df.index.get_level_values(1).isin(keys)
 
