@@ -793,8 +793,6 @@ def add_existing_industry(
     # fill missing build_year with average
     mean_nonzero = plant_data.groupby("carrier")["build_year"].transform("mean").round()
     plant_data["build_year"] = plant_data["build_year"].fillna(mean_nonzero)
-    # assign industry grouping year
-    grouping_years = grouping_years
     plant_data["grouping_year"] = 0
     plant_data["Out"] = plant_data["Out"].fillna(0)
     valid_mask = plant_data["build_year"] < baseyear
@@ -809,7 +807,7 @@ def add_existing_industry(
         ["bus", "country", "carrier", "grouping_year", "Out"], as_index=False
     )["p_set"].sum()
 
-    if "cement" in options["endogenous_sectors"]["subsectors"]:
+    if options["endogenous_sectors"]["enable"] and "cement" in options["endogenous_sectors"]["subsectors"]:
         # add cement
         cement = plant_data[plant_data.carrier == "cement"]
         cement.index = (
@@ -959,7 +957,7 @@ def add_existing_industry(
         lifetime=costs.at["SMR", "lifetime"],
     )
 
-    if "steel" in options["endogenous_sectors"]["subsectors"]:
+    if options["endogenous_sectors"]["enable"] and "steel" in options["endogenous_sectors"]["subsectors"]:
         # natural gas DRI
         ng_dri = plant_data[plant_data.carrier == "gas DRI"]
         logger.info(f"Adding {len(ng_dri)} existing gas DRI links.")

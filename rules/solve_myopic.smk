@@ -32,7 +32,7 @@ rule add_existing_baseyear:
         industry_plants=lambda w: (
             (
                 resources("industry_plants_{clusters}.csv")
-                if config_provider("sector", "endogenous_sectors", "enable")(w)
+                if config_provider("sector", "industry")(w)
                 else []
             ),
         ),
