@@ -1745,8 +1745,10 @@ rule prepare_sector_network:
             if config_provider("sector", "district_heating", "ates", "enable")(w)
             else []
         ),
-        industry_sector_ratios=resources(
-            "industry_sector_ratios_{planning_horizons}.csv"
+        industry_sector_ratios=lambda w: (
+            resources("industry_sector_ratios_{planning_horizons}.csv" )
+            if config_provider("sector", "endogenous_sectors", "enable")(w)
+            else []
         ),
     output:
         resources(

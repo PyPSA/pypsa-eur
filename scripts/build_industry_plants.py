@@ -44,6 +44,8 @@ def prepare_gem_database(regions):
     )
 
     df["country_code"] = df["Country/Area"].apply(country_to_code)
+    # XK not in pycountry
+    df.loc[df["Country/Area"] == "Kosovo", "country_code"] = "XK"
 
     df = df[df.country_code.isin(snakemake.params.countries)]
 
@@ -59,7 +61,7 @@ def prepare_gem_database(regions):
     geometry = gpd.points_from_xy(latlon["lon"], latlon["lat"])
     gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
 
-    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
+    gdf = gpd.sjoin_nearest(gdf, regions.to_crs("EPSG:4326"), how="left")
 
     gdf.rename(columns={"name": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
@@ -104,7 +106,7 @@ def prepare_plant_data(
     # assign bus region to each plant
     geometry = gpd.points_from_xy(isi_data["Longitude"], isi_data["Latitude"])
     plant_data = gpd.GeoDataFrame(isi_data, geometry=geometry, crs="EPSG:4326")
-    plant_data = gpd.sjoin(plant_data, regions, how="inner", predicate="within")
+    plant_data = gpd.sjoin_nearest(plant_data, regions.to_crs("EPSG:4326"), how="left")
     plant_data.rename(columns={"name": "bus"}, inplace=True)
     # filter for countries in model scope
     plant_data = plant_data[plant_data.Country.isin(snakemake.params.countries)]
@@ -132,7 +134,20 @@ def prepare_plant_data(
     return plant_data
 
 
-def prepare_ammonia_data(regions, plant_data):
+def prepare_ammonia_data(
+        regions: gpd.GeoDataFrame,
+        plant_data: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Adds ammonia production sites from the data folder and adds them for all countries that are not included in the Fraunhofer ISI database.
+
+    Parameters
+    ----------
+    regions : gpd
+        onshore regions on which the industry sites are mapped to
+    plant_data: pd.DataFrame
+        DataFrame with plant data from the Fraunhofer ISI database
+    """
     df = pd.read_csv(snakemake.input.ammonia, index_col=0)
 
     geometry = gpd.points_from_xy(df.Longitude, df.Latitude)
@@ -148,11 +163,8 @@ def prepare_ammonia_data(regions, plant_data):
         & (gdf.country.isin(snakemake.params.countries))
     ]
     # following approach from build_industrial_distribution_key.py
-    for country in gdf.Country:
-        facilities = gdf.query("country == @country")
-        production = facilities["Ammonia [kt/a]"]
-        # assume 50% of the minimum production for missing values
-        production = production.fillna(0.5 * facilities["Ammonia [kt/a]"].min())
+    min_prod_per_country = gdf.groupby("country")["Ammonia [kt/a]"].transform("min")
+    gdf["Ammonia [kt/a]"] = gdf["Ammonia [kt/a]"].fillna(0.5 * min_prod_per_country)
 
     # missing data
     gdf.drop(gdf[gdf["Ammonia [kt/a]"].isna()].index, inplace=True)

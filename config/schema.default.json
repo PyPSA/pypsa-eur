@@ -4771,6 +4771,11 @@
               "default": false,
               "description": "Add biomass to methanol with carbon capture.",
               "type": "boolean"
+            },
+            "meoh_to_oa": {
+              "default": false,
+              "description": "Add Methanol-to-Olefins/Aromatics for chemical industry.",
+              "type": "boolean"
             }
           }
         },
@@ -5141,18 +5146,6 @@
               "default": 0,
               "description": "Delays the decommission year by number of years.",
               "type": "integer"
-            },
-            "default_phase_out": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                }
-              ],
-              "default": 2035,
-              "description": "Decommissions the coal blast furnaces that do not have a pledged phase out year."
             }
           }
         }
@@ -6864,6 +6857,11 @@
           "default": false,
           "description": "Add biomass to methanol with carbon capture.",
           "type": "boolean"
+        },
+        "meoh_to_oa": {
+              "default": false,
+              "description": "Add Methanol-to-Olefins/Aromatics for chemical industry.",
+              "type": "boolean"
         }
       }
     },
@@ -7923,18 +7921,6 @@
           "default": 0,
           "description": "Delays the decommission year by number of years.",
           "type": "integer"
-        },
-        "default_phase_out": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
-            }
-          ],
-          "default": 2035,
-          "description": "Decommissions the coal blast furnaces that do not have a pledged phase out year."
         }
       }
     },
@@ -11136,6 +11122,11 @@
               "default": false,
               "description": "Add biomass to methanol with carbon capture.",
               "type": "boolean"
+            },
+            "meoh_to_oa": {
+              "default": false,
+              "description": "Add Methanol-to-Olefins/Aromatics for chemical industry.",
+              "type": "boolean"
             }
           }
         },
@@ -11506,18 +11497,6 @@
               "default": 0,
               "description": "Delays the decommission year by number of years.",
               "type": "integer"
-            },
-            "default_phase_out": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                }
-              ],
-              "default": 2035,
-              "description": "Decommissions the coal blast furnaces that do not have a pledged phase out year."
             }
           }
         }

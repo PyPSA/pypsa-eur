@@ -222,6 +222,7 @@ class _MethanolConfig(BaseModel):
     biomass_to_methanol_cc: bool = Field(
         False, description="Add biomass to methanol with carbon capture."
     )
+    meoh_to_oa: bool = Field(False, description="Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.")
 
 
 class _TransmissionEfficiencyConfig(BaseModel):
@@ -362,6 +363,17 @@ class _ImportsConfig(BaseModel):
         description="Price for importing renewable energy of carrier.",
     )
 
+class _EndogenousSectorsConfig(BaseModel):
+    """Configuration for `sector.endogenous_sectors` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Enabling to specify industry subsectors to be modelled endogenously.",
+    )
+    subsectors: list = Field(
+        default_factory=lambda: ["steel", "cement"],
+        description="Energy-intensive industry subsectors that are modelled endogenously.",
+    )
 
 class _SteelBOFConfig(BaseModel):
     """Configuration for `sector.steel_bof` settings."""
@@ -373,16 +385,6 @@ class _SteelBOFConfig(BaseModel):
     pledge_delay: int = Field(
         0, description="Delays the decommission year by number of years."
     )
-    default_phase_out: bool | int = Field(
-        2035,
-        description="Decommissions the coal blast furnaces that do not have a pledged phase out year.",
-    )
-
-    @field_validator("default_phase_out")
-    def reject_true(cls, v):
-        if v is True:
-            raise ValueError("default_phase_out cannot be True.")
-        return v
 
 
 AllowedEndogenousSectors = Literal["steel", "cement"]
@@ -937,8 +939,8 @@ class SectorConfig(BaseModel):
     )
 
     # Endogenous sectors
-    endogenous_sectors: list[AllowedEndogenousSectors] = Field(
-        default_factory=lambda: ["steel", "cement"],
+    endogenous_sectors: _EndogenousSectorsConfig = Field(
+        default_factory=_EndogenousSectorsConfig,
         description="Sectors modelled endogenously.",
     )
     hbi_relocation: bool = Field(

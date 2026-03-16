@@ -32,7 +32,7 @@ run:
   use_shadow_directory: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
-foresight: overnight
+foresight: myopic
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 scenario:
@@ -43,7 +43,8 @@ scenario:
   sector_opts:
   - ""
   planning_horizons:
-  - 2050
+  - 2025
+  - 2035
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
@@ -897,6 +898,7 @@ sector:
       allam: false
     biomass_to_methanol: true
     biomass_to_methanol_cc: false
+    meoh_to_oa: false
   ammonia: true
   min_part_load_electrolysis: 0
   min_part_load_fischer_tropsch: 0.5
@@ -986,13 +988,14 @@ sector:
       gas: 122
       oil: 125
   endogenous_sectors:
-  - steel
-  - cement
+    enable: true
+    subsectors:
+      - steel
+      - cement
   hbi_relocation: false
   steel_bof:
     pledge: true
     pledge_delay: 0
-    default_phase_out: 2035
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -1134,7 +1137,7 @@ clustering:
     buses: {}
   temporal:
     resolution_elec: false
-    resolution_sector: false
+    resolution_sector: 8760H 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
