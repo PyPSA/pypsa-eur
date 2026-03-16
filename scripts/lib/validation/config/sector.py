@@ -10,7 +10,7 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -222,7 +222,10 @@ class _MethanolConfig(BaseModel):
     biomass_to_methanol_cc: bool = Field(
         False, description="Add biomass to methanol with carbon capture."
     )
-    meoh_to_oa: bool = Field(False, description="Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.")
+    meoh_to_oa: bool = Field(
+        False,
+        description="Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
+    )
 
 
 class _TransmissionEfficiencyConfig(BaseModel):
@@ -363,6 +366,7 @@ class _ImportsConfig(BaseModel):
         description="Price for importing renewable energy of carrier.",
     )
 
+
 class _EndogenousSectorsConfig(BaseModel):
     """Configuration for `sector.endogenous_sectors` settings."""
 
@@ -374,6 +378,7 @@ class _EndogenousSectorsConfig(BaseModel):
         default_factory=lambda: ["steel", "cement"],
         description="Energy-intensive industry subsectors that are modelled endogenously.",
     )
+
 
 class _SteelBOFConfig(BaseModel):
     """Configuration for `sector.steel_bof` settings."""

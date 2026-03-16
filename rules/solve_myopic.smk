@@ -30,9 +30,11 @@ rule add_existing_baseyear:
         ),
         heating_efficiencies=resources("heating_efficiencies.csv"),
         industry_plants=lambda w: (
-            resources("industry_plants_{clusters}.csv")
-            if config_provider("sector", "endogenous_sectors", "enable")(w)
-            else [],
+            (
+                resources("industry_plants_{clusters}.csv")
+                if config_provider("sector", "endogenous_sectors", "enable")(w)
+                else []
+            ),
         ),
     output:
         resources(

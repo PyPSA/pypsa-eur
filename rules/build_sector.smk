@@ -1746,7 +1746,7 @@ rule prepare_sector_network:
             else []
         ),
         industry_sector_ratios=lambda w: (
-            resources("industry_sector_ratios_{planning_horizons}.csv" )
+            resources("industry_sector_ratios_{planning_horizons}.csv")
             if config_provider("sector", "endogenous_sectors", "enable")(w)
             else []
         ),

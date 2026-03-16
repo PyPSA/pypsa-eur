@@ -135,8 +135,8 @@ def prepare_plant_data(
 
 
 def prepare_ammonia_data(
-        regions: gpd.GeoDataFrame,
-        plant_data: pd.DataFrame,
+    regions: gpd.GeoDataFrame,
+    plant_data: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Adds ammonia production sites from the data folder and adds them for all countries that are not included in the Fraunhofer ISI database.
