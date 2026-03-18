@@ -320,4 +320,11 @@ if __name__ == "__main__":
 
     gdf = merge_maps(traps_map, storage_map)
 
+    types = [" OIL", " GAS", " aquifer", ""]
+    for t in types:
+        opt_col = f"optimistic estimate{t} Mt"
+        neu_col = f"neutral estimate{t} Mt"
+
+        gdf[opt_col] = gdf[[opt_col, neu_col]].max(axis=1)
+
     gdf.to_file(snakemake.output[0])

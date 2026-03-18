@@ -706,7 +706,6 @@ class SectorConfig(BaseModel):
         default_factory=lambda: {
             "enable": True,
             "attribute": [
-                "conservative estimate Mt",
                 "conservative estimate GAS Mt",
                 "conservative estimate OIL Mt",
                 "conservative estimate aquifer Mt",
