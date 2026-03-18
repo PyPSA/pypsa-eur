@@ -2393,6 +2393,13 @@
           },
           "type": "array"
         },
+        "grouping_years_industry": {
+          "description": "Intervals to group existing capacities for industry.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
         "threshold_capacity": {
           "default": 10,
           "description": "Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
@@ -4764,6 +4771,11 @@
               "default": false,
               "description": "Add biomass to methanol with carbon capture.",
               "type": "boolean"
+            },
+            "meoh_to_oa": {
+              "default": false,
+              "description": "Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
+              "type": "boolean"
             }
           }
         },
@@ -5103,6 +5115,41 @@
               },
               "description": "Price for importing renewable energy of carrier.",
               "type": "object"
+            }
+          }
+        },
+        "endogenous_sectors": {
+          "description": "Configuration for `sector.endogenous_sectors` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Enabling to specify industry subsectors to be modelled endogenously.",
+              "type": "boolean"
+            },
+            "subsectors": {
+              "description": "Energy-intensive industry subsectors that are modelled endogenously.",
+              "items": {},
+              "type": "array"
+            }
+          }
+        },
+        "hbi_relocation": {
+          "default": false,
+          "description": "Allow the relocation of iron ore reduction step.",
+          "type": "boolean"
+        },
+        "steel_bof": {
+          "description": "Configuration for `sector.steel_bof` settings.",
+          "properties": {
+            "pledge": {
+              "default": true,
+              "description": "Decommissions coal blast furnaces at their pledged phase out year.",
+              "type": "boolean"
+            },
+            "pledge_delay": {
+              "default": 0,
+              "description": "Delays the decommission year by number of years.",
+              "type": "integer"
             }
           }
         }
@@ -6367,6 +6414,21 @@
         }
       }
     },
+    "_EndogenousSectorsConfig": {
+      "description": "Configuration for `sector.endogenous_sectors` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Enabling to specify industry subsectors to be modelled endogenously.",
+          "type": "boolean"
+        },
+        "subsectors": {
+          "description": "Energy-intensive industry subsectors that are modelled endogenously.",
+          "items": {},
+          "type": "array"
+        }
+      }
+    },
     "_EnhancedGeothermalConfig": {
       "description": "Configuration for `sector.enhanced_geothermal` settings.",
       "properties": {
@@ -6813,6 +6875,11 @@
         "biomass_to_methanol_cc": {
           "default": false,
           "description": "Add biomass to methanol with carbon capture.",
+          "type": "boolean"
+        },
+        "meoh_to_oa": {
+          "default": false,
+          "description": "Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
           "type": "boolean"
         }
       }
@@ -7858,6 +7925,21 @@
               "type": "string"
             }
           }
+        }
+      }
+    },
+    "_SteelBOFConfig": {
+      "description": "Configuration for `sector.steel_bof` settings.",
+      "properties": {
+        "pledge": {
+          "default": true,
+          "description": "Decommissions coal blast furnaces at their pledged phase out year.",
+          "type": "boolean"
+        },
+        "pledge_delay": {
+          "default": 0,
+          "description": "Delays the decommission year by number of years.",
+          "type": "integer"
         }
       }
     },
@@ -10383,6 +10465,13 @@
           },
           "type": "array"
         },
+        "grouping_years_industry": {
+          "description": "Intervals to group existing capacities for industry.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
         "threshold_capacity": {
           "default": 10,
           "description": "Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
@@ -11052,6 +11141,11 @@
               "default": false,
               "description": "Add biomass to methanol with carbon capture.",
               "type": "boolean"
+            },
+            "meoh_to_oa": {
+              "default": false,
+              "description": "Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
+              "type": "boolean"
             }
           }
         },
@@ -11391,6 +11485,41 @@
               },
               "description": "Price for importing renewable energy of carrier.",
               "type": "object"
+            }
+          }
+        },
+        "endogenous_sectors": {
+          "description": "Configuration for `sector.endogenous_sectors` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Enabling to specify industry subsectors to be modelled endogenously.",
+              "type": "boolean"
+            },
+            "subsectors": {
+              "description": "Energy-intensive industry subsectors that are modelled endogenously.",
+              "items": {},
+              "type": "array"
+            }
+          }
+        },
+        "hbi_relocation": {
+          "default": false,
+          "description": "Allow the relocation of iron ore reduction step.",
+          "type": "boolean"
+        },
+        "steel_bof": {
+          "description": "Configuration for `sector.steel_bof` settings.",
+          "properties": {
+            "pledge": {
+              "default": true,
+              "description": "Decommissions coal blast furnaces at their pledged phase out year.",
+              "type": "boolean"
+            },
+            "pledge_delay": {
+              "default": 0,
+              "description": "Delays the decommission year by number of years.",
+              "type": "integer"
             }
           }
         }

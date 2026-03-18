@@ -610,6 +610,14 @@ existing_capacities:
   - 2010
   - 2015
   - 2019
+  grouping_years_industry:
+  - 1995
+  - 2000
+  - 2005
+  - 2010
+  - 2015
+  - 2020
+  - 2025
   threshold_capacity: 10
   default_heating_lifetime: 20
   conventional_carriers:
@@ -889,6 +897,7 @@ sector:
       allam: false
     biomass_to_methanol: true
     biomass_to_methanol_cc: false
+    meoh_to_oa: false
   ammonia: true
   min_part_load_electrolysis: 0
   min_part_load_fischer_tropsch: 0.5
@@ -977,6 +986,15 @@ sector:
       methanol: 121
       gas: 122
       oil: 125
+  endogenous_sectors:
+    enable: false
+    subsectors:
+    - steel
+    - cement
+  hbi_relocation: false
+  steel_bof:
+    pledge: true
+    pledge_delay: 0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
