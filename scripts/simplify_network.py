@@ -432,8 +432,15 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.objective.sum() / 8760
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
 
-    linetype_380 = snakemake.config["lines"]["types"][380]
-    n, trafo_map = simplify_network_to_380(n, linetype_380)
+    if params.simplify_network.get("to_380", True):
+        linetype_380 = snakemake.config["lines"]["types"][380]
+        n, trafo_map = simplify_network_to_380(n, linetype_380)
+    else:
+        logger.info(
+            "Skipping 380kV simplification — preserving original voltage levels"
+            " and transformers"
+        )
+        trafo_map = n.buses.index.to_series()
     busmaps = [trafo_map]
 
     n, converter_map = remove_converters(n)
