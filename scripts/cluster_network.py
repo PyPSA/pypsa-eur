@@ -404,7 +404,7 @@ def clustering_for_n_clusters(
         busmap,
         bus_strategies=bus_strategies,
         line_strategies=line_strategies,
-        custom_line_groupers=["build_year"],
+        custom_line_groupers=["build_year", "v_nom"],
     )
 
     return clustering
@@ -767,7 +767,9 @@ if __name__ == "__main__":
     # nc.shapes = n.shapes.copy()
     for which in ["onshore_regions", "offshore_regions"]:
         regions = gpd.read_file(snakemake.input[which])
-        clustered_regions = cluster_regions((cluster_busmap,), regions)
+        clustered_regions = cluster_regions(
+            (cluster_busmap,), regions, with_country=True
+        )
         clustered_regions.to_file(snakemake.output[which])
         # append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
 
