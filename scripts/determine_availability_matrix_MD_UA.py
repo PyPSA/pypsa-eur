@@ -15,6 +15,7 @@ import atlite
 import fiona
 import geopandas as gpd
 import numpy as np
+import xarray as xr
 
 from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
@@ -87,18 +88,35 @@ if __name__ == "__main__":
             snakemake.input.copernicus, codes=codes, buffer=buffer, crs="EPSG:4326"
         )
 
+    has_valid_geometry = not regions.empty and not regions.geometry.isna().all()
+
+    if not has_valid_geometry:
+        logger.info("No valid MD/UA regions; writing empty availability matrix.")
+        availability = xr.DataArray(
+            np.zeros((len(buses), len(cutout.data.y), len(cutout.data.x))),
+            dims=["bus", "y", "x"],
+            coords={"bus": buses, "y": cutout.data.y, "x": cutout.data.x},
+        )
+        availability.to_netcdf(snakemake.output.availability_matrix)
+        raise SystemExit(0)
+
     if config["natura"]:
         wdpa_fn = (
             snakemake.input.wdpa_marine
             if "offwind" in snakemake.wildcards.technology
             else snakemake.input.wdpa
         )
-        layer = get_wdpa_layer_name(wdpa_fn, "polygons")
-        wdpa = gpd.read_file(
-            wdpa_fn,
-            bbox=regions.geometry,
-            layer=layer,
-        ).to_crs(3035)
+
+        if has_valid_geometry:
+            layer = get_wdpa_layer_name(wdpa_fn, "polygons")
+            wdpa = gpd.read_file(
+                wdpa_fn,
+                bbox=regions.geometry,
+                layer=layer,
+            ).to_crs(3035)
+        else:
+            logger.info("No valid region geometries for MD/UA; skipping WDPA polygons.")
+            wdpa = gpd.GeoDataFrame()
 
         # temporary file needed for parallelization
         with NamedTemporaryFile(suffix=".geojson", delete=False) as f:
@@ -109,17 +127,23 @@ if __name__ == "__main__":
                 time.sleep(1)
             excluder.add_geometry(plg_tmp_fn)
 
-        layer = get_wdpa_layer_name(wdpa_fn, "points")
-        wdpa_pts = gpd.read_file(
-            wdpa_fn,
-            bbox=regions.geometry,
-            layer=layer,
-        ).to_crs(3035)
+        if has_valid_geometry:
+            layer = get_wdpa_layer_name(wdpa_fn, "points")
+            wdpa_pts = gpd.read_file(
+                wdpa_fn,
+                bbox=regions.geometry,
+                layer=layer,
+            ).to_crs(3035)
+        else:
+            logger.info("No valid region geometries for MD/UA; skipping WDPA points.")
+            wdpa_pts = gpd.GeoDataFrame(columns=["REP_AREA", "geometry"])
+
         wdpa_pts = wdpa_pts[wdpa_pts["REP_AREA"] > 1]
-        wdpa_pts["buffer_radius"] = np.sqrt(wdpa_pts["REP_AREA"] / np.pi) * 1000
-        wdpa_pts = wdpa_pts.set_geometry(
-            wdpa_pts["geometry"].buffer(wdpa_pts["buffer_radius"])
-        )
+        if not wdpa_pts.empty:
+            wdpa_pts["buffer_radius"] = np.sqrt(wdpa_pts["REP_AREA"] / np.pi) * 1000
+            wdpa_pts = wdpa_pts.set_geometry(
+                wdpa_pts["geometry"].buffer(wdpa_pts["buffer_radius"])
+            )
 
         # temporary file needed for parallelization
         with NamedTemporaryFile(suffix=".geojson", delete=False) as f:
