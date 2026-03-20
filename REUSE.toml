@@ -21,7 +21,7 @@ path = [
     "envs/*.pin.txt",
     "envs/environment.yaml",
     "config/config.default.yaml",
-    "config/schema.json"
+    "config/schema.default.json"
 ]
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
 SPDX-License-Identifier = "CC0-1.0"
@@ -42,7 +42,6 @@ path = [
     "data/parameter_corrections.yaml",
     "data/retro/window_assumptions.csv",
     "data/retro/retro_cost_germany.csv",
-    "data/switzerland-new_format-all_years.csv",
     "data/transmission_projects/**",
     "data/unit_commitment.csv",
     "data/versions.csv",

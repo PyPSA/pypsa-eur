@@ -18,6 +18,11 @@ rule solve_network:
     output:
         network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
         config=RESULTS + "configs/config.base_s_{clusters}_elec_{opts}.yaml",
+        model=(
+            RESULTS + "models/base_s_{clusters}_elec_{opts}.nc"
+            if config["solving"]["options"]["store_model"]
+            else []
+        ),
     log:
         solver=normpath(
             RESULTS + "logs/solve_network/base_s_{clusters}_elec_{opts}_solver.log"

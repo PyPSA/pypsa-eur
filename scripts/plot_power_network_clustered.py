@@ -40,11 +40,11 @@ if __name__ == "__main__":
     n.plot(
         ax=ax,
         margin=0.06,
-        line_widths=n.lines.s_nom / lw_factor,
-        link_colors=n.links.p_nom.apply(
+        line_width=n.lines.s_nom / lw_factor,
+        link_color=n.links.p_nom.apply(
             lambda x: "darkseagreen" if x > 0 else "skyblue"
         ),
-        link_widths=2.0,
+        link_width=2.0,
     )
 
     sizes = [10, 20]

@@ -26,6 +26,11 @@ class ConventionalConfig(ConfigModel):
         False,
         description="Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file 'data/validation/monthly_fuel_price.csv'.",
     )
+    fuel_price_rolling_window: int = Field(
+        6,
+        description="Monthly rolling mean window for fossil fuel prices smoothing.",
+        ge=1,
+    )
     nuclear: dict[str, str | float] = Field(
         default_factory=lambda: {"p_max_pu": "data/nuclear_p_max_pu.csv"},
         description="For any carrier/technology overwrite attributes as listed below.",

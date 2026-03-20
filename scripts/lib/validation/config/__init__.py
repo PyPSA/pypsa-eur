@@ -5,240 +5,35 @@
 """
 Config validation for PyPSA-EUR.
 
-The schema is exported to both `config/config.default.yaml` and `config/schema.json`.
+The schema is exported to both `config/config.default.yaml` and `config/schema.default.json`.
 The json schema is also contributed to the schemastore.org and matches
 `**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
 """
 
 import re
-from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import ValidationError
 from ruamel.yaml import YAML
 
-from scripts.lib.validation.config._base import ConfigModel
-from scripts.lib.validation.config.adjustments import AdjustmentsConfig
-from scripts.lib.validation.config.atlite import AtliteConfig
-from scripts.lib.validation.config.biomass import BiomassConfig
-from scripts.lib.validation.config.clustering import ClusteringConfig
-from scripts.lib.validation.config.co2_budget import Co2BudgetConfig
-from scripts.lib.validation.config.conventional import ConventionalConfig
-from scripts.lib.validation.config.costs import CostsConfig
-from scripts.lib.validation.config.countries import CountriesConfig
-from scripts.lib.validation.config.data import DataConfig
-from scripts.lib.validation.config.electricity import ElectricityConfig
-from scripts.lib.validation.config.enable import EnableConfig
-from scripts.lib.validation.config.energy import EnergyConfig
-from scripts.lib.validation.config.existing_capacities import ExistingCapacitiesConfig
-from scripts.lib.validation.config.foresight import ForesightConfig
-from scripts.lib.validation.config.industry import IndustryConfig
-from scripts.lib.validation.config.lines import LinesConfig
-from scripts.lib.validation.config.links import LinksConfig
-from scripts.lib.validation.config.load import LoadConfig
-from scripts.lib.validation.config.overpass_api import OverpassApiConfig
-from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
-from scripts.lib.validation.config.renewable import RenewableConfig
-from scripts.lib.validation.config.run import RunConfig
-from scripts.lib.validation.config.scenario import ScenarioConfig
-from scripts.lib.validation.config.sector import SectorConfig
-from scripts.lib.validation.config.snapshots import SnapshotsConfig
-from scripts.lib.validation.config.solar_thermal import SolarThermalConfig
-from scripts.lib.validation.config.solving import SolvingConfig
-from scripts.lib.validation.config.transformers import TransformersConfig
-from scripts.lib.validation.config.transmission_projects import (
-    TransmissionProjectsConfig,
-)
-
-
-class LoggingConfig(ConfigModel):
-    """Configuration for top level `logging` settings."""
-
-    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
-        "INFO",
-        description="Restrict console outputs to all infos, warning or errors only",
-    )
-    format: str = Field(
-        "%(levelname)s:%(name)s:%(message)s",
-        description="Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.",
-    )
-
-
-class RemoteConfig(ConfigModel):
-    """Configuration for top level `remote` settings."""
-
-    ssh: str = Field(
-        "",
-        description="Optionally specify the SSH of a remote cluster to be synchronized.",
-    )
-    path: str = Field(
-        "",
-        description="Optionally specify the file path within the remote cluster to be synchronized.",
-    )
-
-
-class ConfigSchema(BaseModel):
-    """
-    Combined configuration schema for PyPSA-EUR.
-    """
-
-    # TODO Change to extra='forbid' once schema covers all config options
-    # For soft-forks it is recommended to either extend the schema for full config
-    # coverage or allow extra fields with extra='allow'
-    model_config = ConfigDict(extra="allow", title="PyPSA-Eur Configuration")
-
-    # Top-level fields (from TopLevelConfig)
-    version: str = Field(
-        "v2025.07.0", description="Version of PyPSA-Eur. Descriptive only."
-    )
-    tutorial: bool = Field(
-        False,
-        description="Switch to retrieve the tutorial data set instead of the full data set.",
-    )
-    logging: LoggingConfig = Field(
-        default_factory=LoggingConfig,
-        description="Logging configuration for the workflow",
-    )
-    remote: RemoteConfig = Field(
-        default_factory=RemoteConfig,
-        description="Configuration for remote workflow execution",
-    )
-
-    run: RunConfig = Field(
-        default_factory=RunConfig,
-        description="Run configuration for PyPSA-EUR workflow execution.",
-    )
-    foresight: ForesightConfig = Field(
-        default_factory=ForesightConfig,
-        description="Foresight mode for the optimization. See Foresight Options for detailed explanations.",
-    )
-    scenario: ScenarioConfig = Field(
-        default_factory=ScenarioConfig,
-        description="Scenario configuration defining wildcards for the workflow.",
-    )
-    countries: CountriesConfig = Field(
-        default_factory=CountriesConfig,
-        description="European countries defined by their Two-letter country codes (ISO 3166-1) which should be included in the energy system model.",
-    )
-    snapshots: SnapshotsConfig = Field(
-        default_factory=SnapshotsConfig,
-        description="Configuration for the time period snapshots.",
-    )
-    enable: EnableConfig = Field(
-        default_factory=EnableConfig,
-        description="Flags to enable/disable workflow features.",
-    )
-    co2_budget: Co2BudgetConfig | None = Field(
-        default_factory=Co2BudgetConfig,
-        description="CO2 budget as fraction of 1990 emissions per planning horizon year.",
-    )
-    electricity: ElectricityConfig = Field(
-        default_factory=ElectricityConfig,
-        description="Electricity sector configuration.",
-    )
-    atlite: AtliteConfig = Field(
-        default_factory=AtliteConfig,
-        description="Atlite cutout configuration for weather data.",
-    )
-    renewable: RenewableConfig = Field(
-        default_factory=RenewableConfig,
-        description="Renewable energy technologies configuration.",
-    )
-    conventional: ConventionalConfig = Field(
-        default_factory=ConventionalConfig,
-        description="Conventional power plants configuration.",
-    )
-    lines: LinesConfig = Field(
-        default_factory=LinesConfig,
-        description="Transmission lines configuration.",
-    )
-    links: LinksConfig = Field(
-        default_factory=LinksConfig,
-        description="HVDC links configuration.",
-    )
-    transmission_projects: TransmissionProjectsConfig = Field(
-        default_factory=TransmissionProjectsConfig,
-        description="Transmission projects configuration.",
-    )
-    transformers: TransformersConfig = Field(
-        default_factory=TransformersConfig,
-        description="Transformers configuration.",
-    )
-    load: LoadConfig = Field(
-        default_factory=LoadConfig,
-        description="Electrical load configuration.",
-    )
-    pypsa_eur: PypsaEurConfig = Field(
-        default_factory=PypsaEurConfig,
-        description="PyPSA-Eur component filtering configuration.",
-    )
-    energy: EnergyConfig = Field(
-        default_factory=EnergyConfig,
-        description="Energy totals configuration.",
-    )
-    biomass: BiomassConfig = Field(
-        default_factory=BiomassConfig,
-        description="Biomass configuration.",
-    )
-    solar_thermal: SolarThermalConfig = Field(
-        default_factory=SolarThermalConfig,
-        description="Solar thermal configuration.",
-    )
-    existing_capacities: ExistingCapacitiesConfig = Field(
-        default_factory=ExistingCapacitiesConfig,
-        description="Existing capacities grouping configuration.",
-    )
-    sector: SectorConfig = Field(
-        default_factory=SectorConfig,
-        description="Sector coupling configuration.",
-    )
-    industry: IndustryConfig = Field(
-        default_factory=IndustryConfig,
-        description="Industry sector configuration.",
-    )
-    costs: CostsConfig = Field(
-        default_factory=CostsConfig,
-        description="Cost assumptions configuration.",
-    )
-    clustering: ClusteringConfig = Field(
-        default_factory=ClusteringConfig,
-        description="Network clustering configuration.",
-    )
-    adjustments: AdjustmentsConfig = Field(
-        default_factory=AdjustmentsConfig,
-        description="Network adjustments configuration.",
-    )
-    solving: SolvingConfig = Field(
-        default_factory=SolvingConfig,
-        description="Solver and optimization configuration.",
-    )
-    data: DataConfig = Field(
-        default_factory=DataConfig,
-        description="Data source configuration.",
-    )
-    overpass_api: OverpassApiConfig = Field(
-        default_factory=OverpassApiConfig,
-        description="Overpass API configuration for OSM data retrieval.",
-    )
-
-    @model_validator(mode="before")
-    @classmethod
-    def check_no_secrets_section(cls, data):
-        """Prevent secrets from being stored in config."""
-        if isinstance(data, dict) and "secrets" in data:
-            raise ValueError(
-                "The 'secrets:' section is no longer supported in config to avoid "
-                "leaking credentials. Use environment variables instead (e.g., "
-                "CORINE_API_TOKEN). You can set these in a .env file in the project root."
-            )
-        return data
+from scripts.lib.validation.config._base import _registry
+from scripts.lib.validation.config._schema import ConfigSchema
 
 
 def validate_config(config: dict) -> ConfigSchema:
     """Validate config dict against schema."""
-    return ConfigSchema(**config)
+    config_schema = ConfigSchema
+    name = config_schema._name.default
+    for item in _registry:
+        updater_config = item(config_schema)
+        config_schema = updater_config.update()
+        if updater_config.name:
+            name += f".{updater_config.name}"
+    validated_config = config_schema(**config)
+    validated_config._name = name
+    return validated_config
 
 
-def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
+def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
     """Generate config defaults YAML file and return the defaults dict."""
     from ruamel.yaml.comments import CommentedMap
 
@@ -248,7 +43,8 @@ def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
 
     # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
     # the goal should be to use snake_case consistently
-    defaults = ConfigSchema().model_dump(by_alias=True)
+    config = validate_config({})
+    defaults = config.model_dump(by_alias=True)
 
     # Create YAML instance with custom settings
     yaml_writer = YAML()
@@ -273,7 +69,9 @@ def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
     data = CommentedMap()
 
     # Add yaml-language-server comment at the very top (before first key)
-    data.yaml_set_start_comment("yaml-language-server: $schema=./schema.json")
+    data.yaml_set_start_comment(
+        f"yaml-language-server: $schema=./schema.{config._name}.json"
+    )
 
     for key, value in defaults.items():
         data[key] = value
@@ -283,13 +81,13 @@ def generate_config_defaults(path: str = "config/config.default.yaml") -> dict:
         data.yaml_set_comment_before_after_key(key, before=f"\ndocs in {docs_url}")
 
     # Write to file
-    with open(path, "w") as f:
+    with open(path.format(configname=config._name), "w") as f:
         yaml_writer.dump(data, f)
 
     return defaults
 
 
-def generate_config_schema(path: str = "config/schema.json") -> dict:
+def generate_config_schema(path: str = "config/schema.{configname}.json") -> dict:
     """Generate JSON schema file and return the schema dict."""
     import json
     import math
@@ -376,14 +174,15 @@ def generate_config_schema(path: str = "config/schema.json") -> dict:
             return [convert_rst_to_markdown(item) for item in obj]
         return obj
 
-    schema = ConfigSchema.model_json_schema()
+    config = validate_config({})
+    schema = config.model_json_schema()
     defs = schema.get("$defs", {})
     schema = resolve_refs(schema, defs)
     schema = sanitize_for_json(schema)
     schema = remove_nested_titles(schema)
     schema = remove_object_type(schema)
     schema = convert_rst_to_markdown(schema)
-    with open(path, "w") as f:
+    with open(path.format(configname=config._name), "w") as f:
         json.dump(schema, f, indent=2)
         f.write("\n")
     return schema
