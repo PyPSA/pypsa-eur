@@ -60,8 +60,11 @@ import time
 
 import atlite
 import geopandas as gpd
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+from atlite.gis import shape_availability
+from rasterio.plot import show
 
 from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
@@ -73,7 +76,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_renewable_profiles", clusters=100, technology="onwind"
+            "determine_availability_matrix", clusters="adm", technology="offwind-dc"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -165,6 +168,16 @@ if __name__ == "__main__":
     logger.info(
         f"Completed landuse availability calculation for {technology} ({duration:2.2f}s)"
     )
+
+    if params.get("plot_availability_matrix", False):
+        logger.info(f"Plotting landuse availability matrix for {technology}.")
+        band, transform = shape_availability(
+            regions.geometry.to_crs(excluder.crs), excluder
+        )
+        fig, ax = plt.subplots(figsize=(10, 10))
+        regions.to_crs(excluder.crs).plot(ax=ax, color="none")
+        show(band, transform=transform, cmap="Greens", ax=ax)
+        plt.savefig(snakemake.output[0].replace(".nc", ".png"), dpi=300)
 
     # For Moldova and Ukraine: Overwrite parts not covered by Corine with
     # externally determined available areas
