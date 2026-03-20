@@ -52,11 +52,11 @@ jobs:
         # <scenario>/<plot_name>.png
         plots: >
           "
-          graphs/energy.svg
-          graphs/costs.svg
-          graphs/balances-energy.svg
-          graphs/balances-urban_central_heat.svg
-          graphs/balances-urban_decentral_heat.svg
-          graphs/balances-rural_heat.svg
+          graphs/energy.pdf
+          graphs/costs.pdf
+          graphs/balances-energy.pdf
+          graphs/balances-urban_central_heat.pdf
+          graphs/balances-urban_decentral_heat.pdf
+          graphs/balances-rural_heat.pdf
           "
         validator_key: ${{ secrets.VALIDATOR_KEY }}

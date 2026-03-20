@@ -63,10 +63,10 @@ def test_config_default_yaml_in_sync():
 
 
 def test_config_schema_json_in_sync():
-    """Test that config/schema.json is in sync with Pydantic schema."""
+    """Test that config/schema.default.json is in sync with Pydantic schema."""
 
     _check_file_in_sync(
-        Path("config/schema.json"),
+        Path("config/schema.default.json"),
         generate_config_schema,
         "json",
     )

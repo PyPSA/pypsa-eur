@@ -29,6 +29,7 @@ The unit of the specific energy consumption is MWh/t material and tCO2/t materia
 """
 
 import logging
+from pathlib import Path
 
 import country_converter as coco
 import pandas as pd
@@ -83,9 +84,16 @@ def load_idees_data(sector, country="EU27"):
     def usecols(x):
         return isinstance(x, str) or x == year
 
+    root = Path(snakemake.input.idees, country)
+    fn = next(
+        p
+        for y in ("2023", "2021")
+        if (p := root / f"JRC-IDEES-{y}_Industry_{country}.xlsx").exists()
+    )
+
     with mute_print():
         idees = pd.read_excel(
-            f"{snakemake.input.idees}/{country}/JRC-IDEES-2021_Industry_{country}.xlsx",
+            fn,
             sheet_name=list(sheets.values()),
             index_col=0,
             header=0,
