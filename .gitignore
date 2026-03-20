@@ -33,6 +33,7 @@ _build
 /scripts/old
 /scripts/create_scenarios.py
 /config/create_scenarios.py
+# /envs/win-64.lock.yaml
 
 config/config.yaml
 config/scenarios.yaml
