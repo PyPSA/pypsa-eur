@@ -242,8 +242,8 @@ def get_heat_source_power(
     supply_potentials: gpd.GeoDataFrame,
     full_load_hours: float,
     input_unit: str,
+    ignore_missing_data: bool,
     output_unit: str = "MWh",
-    ignore_missing_regions: bool = False,
 ) -> pd.DataFrame:
     """
     Get the heat source power from supply potentials.
@@ -309,7 +309,7 @@ def get_heat_source_power(
 
     if not non_covered_regions.empty:
         if all(non_covered_regions.str.contains("|".join(not_eu_27))):
-            if ignore_missing_regions:
+            if ignore_missing_data:
                 logger.warning(
                     f"The onshore regions outside EU 27 ({non_covered_regions.to_list()}) have no heat source power. Filling with zeros."
                 )
@@ -318,7 +318,7 @@ def get_heat_source_power(
                 )
             else:
                 raise ValueError(
-                    f"The onshore regions outside EU 27 {non_covered_regions.to_list()} have no heat source power. Set the ignore_missing_regions parameter in the config to true if you want to include these countries in your analysis despite missing geothermal data."
+                    f"The onshore regions outside EU 27 {non_covered_regions.to_list()} have no heat source power. Set the ignore_missing_geothermal_data parameter in the config to true if you want to include these countries in your analysis despite missing geothermal data."
                 )
         else:
             raise ValueError(
@@ -390,7 +390,7 @@ if __name__ == "__main__":
         supply_potentials=geothermal_supply_potentials,
         full_load_hours=FULL_LOAD_HOURS,
         input_unit=input_unit,
-        ignore_missing_regions=snakemake.params.ignore_missing_regions,
+        ignore_missing_data=snakemake.params.ignore_missing_geothermal_data,
     )
 
     # Load temperature profiles for scaling

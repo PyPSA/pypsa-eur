@@ -329,12 +329,10 @@ rule build_geothermal_heat_potential:
             "heat_source_temperatures",
             "geothermal",
         ),
-        ignore_missing_regions=config_provider(
+        ignore_missing_geothermal_data=config_provider(
             "sector",
             "district_heating",
-            "limited_heat_sources",
-            "geothermal",
-            "ignore_missing_regions",
+            "ignore_missing_geothermal_data",
         ),
         heat_source_cooling=config_provider(
             "sector", "district_heating", "heat_source_cooling"
