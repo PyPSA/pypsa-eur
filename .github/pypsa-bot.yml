@@ -17,6 +17,8 @@ tasks:
     - "*.yml"
 
 app:
+  trusted_users:
+  - daniel-rdt
   runs:
   - name: "config.validator.yaml"
     configfile: "config/test/config.validator.yaml"
