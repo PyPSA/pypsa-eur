@@ -1708,5 +1708,5 @@ if (LAKE_DATA_DATASET := dataset_version("lake_data"))["source"] in [
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(
                 output["zip_file"],
-                LAKE_DATA_DATASET["folder"],
+                output["lake_data"],
             )
