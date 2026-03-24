@@ -7,7 +7,7 @@ data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
 database_en>`_.
 """
 
-from typing import Any, Union
+from typing import Any
 
 import geopandas as gpd
 import numpy as np
@@ -19,8 +19,8 @@ CRS = "EPSG:4326"
 
 
 def convert_to_2d(
-    geom: Union[sg.base.BaseGeometry, Any],
-) -> Union[sg.base.BaseGeometry, Any]:
+    geom: sg.base.BaseGeometry | Any,
+) -> sg.base.BaseGeometry | Any:
     """
     Remove the third dimension (z-coordinate) from a shapely geometry object.
 
@@ -82,7 +82,10 @@ def create_capacity_map_storage(table_fn: str, map_fn: str) -> gpd.GeoDataFrame:
     df = pd.read_csv(table_fn)
 
     sel = ["COUNTRYCOD", "ID", "geometry"]
-    gdf = gpd.read_file(map_fn).rename(columns={"id": "ID"})[sel]
+    gdf = gpd.read_file(map_fn).rename(columns={"id": "ID"})
+    if gdf.ID.isna().all() and "ID2" in gdf.columns:
+        gdf["ID"] = gdf["ID2"]
+    gdf = gdf[sel]
     gdf.geometry = gdf.geometry.buffer(0)
 
     # Combine shapes with the same id into one multi-polygon
@@ -155,7 +158,10 @@ def create_capacity_map_traps(table_fn: list[str], map_fn: str) -> gpd.GeoDataFr
     df = pd.concat([pd.read_csv(path) for path in table_fn], ignore_index=True)
 
     sel = ["COUNTRYCOD", "ID", "geometry"]
-    gdf = gpd.read_file(map_fn).rename(columns={"id": "ID"})[sel]
+    gdf = gpd.read_file(map_fn).rename(columns={"id": "ID"})
+    if gdf.ID.isna().all() and "ID2" in gdf.columns:
+        gdf["ID"] = gdf["ID2"]
+    gdf = gdf[sel]
 
     # Combine shapes with the same id into one multi-polygon
     gdf = gdf.groupby(["COUNTRYCOD", "ID"]).agg(unary_union).reset_index()
@@ -298,7 +304,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_co2_storage")
+        snakemake = mock_snakemake("build_co2_sequestration_potentials")
 
     table_fn = snakemake.input.storage_table
     map_fn = snakemake.input.storage_map

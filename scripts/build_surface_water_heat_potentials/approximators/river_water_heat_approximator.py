@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 import warnings
-from typing import Union
 
 import geopandas as gpd
 import numpy as np
@@ -29,7 +28,7 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         self,
         volume_flow: xr.DataArray,
         ambient_temperature: xr.DataArray,
-        region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
+        region: shapely.geometry.polygon.Polygon | gpd.GeoSeries,
         max_relative_volume_flow: float = 1.0,
         delta_t_max: float = 1,
         min_outlet_temperature: float = 1,

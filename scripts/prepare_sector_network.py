@@ -29,6 +29,8 @@ from scripts._helpers import (
     update_config_from_wildcards,
 )
 from scripts.add_electricity import (
+    attach_storageunits,
+    attach_stores,
     calculate_annuity,
     flatten,
     sanitize_carriers,
@@ -37,7 +39,6 @@ from scripts.add_electricity import (
 from scripts.build_energy_totals import (
     build_co2_totals,
     build_eea_co2,
-    build_eurostat,
     build_eurostat_co2,
 )
 from scripts.build_transport_demand import transport_degree_factor
@@ -255,7 +256,7 @@ def co2_emissions_year(
     """
     eea_co2 = build_eea_co2(input_co2, year, emissions_scope)
 
-    eurostat = build_eurostat(input_eurostat, countries)
+    eurostat = pd.read_csv(input_eurostat)
 
     # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK, XK
     eurostat_co2 = build_eurostat_co2(eurostat, year)
@@ -451,13 +452,18 @@ def update_wind_solar_costs(
 
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
-    n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
-        "solar-utility", "capital_cost"
-    ]
+    carrier_cost_dict = {
+        "solar": "solar-utility",
+        "solar-hsat": "solar-hsat",
+        "onwind": "onwind",
+    }
 
-    n.generators.loc[n.generators.carrier == "onwind", "capital_cost"] = costs.at[
-        "onwind", "capital_cost"
-    ]
+    for carrier, cost_key in carrier_cost_dict.items():
+        if carrier not in n.generators.carrier.values:
+            continue
+        n.generators.loc[n.generators.carrier == carrier, "capital_cost"] = costs.at[
+            cost_key, "capital_cost"
+        ]
 
     # for offshore wind, need to calculated connection costs
     for key, fn in profiles.items():
@@ -660,13 +666,15 @@ def remove_elec_base_techs(n: pypsa.Network, carriers_to_keep: dict) -> None:
         Dictionary specifying which carriers to keep for each component type
         e.g. {'Generator': ['hydro'], 'StorageUnit': ['PHS']}
     """
-    for c in n.iterate_components(carriers_to_keep):
+    for c in n.components[list(carriers_to_keep.keys())]:
+        if c.static.empty:
+            continue
         to_keep = carriers_to_keep[c.name]
-        to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
+        to_remove = pd.Index(c.static.carrier.unique()).symmetric_difference(to_keep)
         if to_remove.empty:
             continue
         logger.info(f"Removing {c.list_name} with carrier {list(to_remove)}")
-        names = c.df.index[c.df.carrier.isin(to_remove)]
+        names = c.static.index[c.static.carrier.isin(to_remove)]
         n.remove(c.name, names)
         n.carriers.drop(to_remove, inplace=True, errors="ignore")
 
@@ -1739,7 +1747,7 @@ def add_electricity_grid_connection(n, costs):
     ]
 
 
-def add_storage_and_grids(
+def add_h2_gas_infrastructure(
     n,
     costs,
     pop_layout,
@@ -1751,7 +1759,7 @@ def add_storage_and_grids(
     options,
 ):
     """
-    Add storage and grid infrastructure to the network including hydrogen, gas, and battery systems.
+    Add hydrogen and gas infrastructure to the network.
 
     Parameters
     ----------
@@ -1800,7 +1808,6 @@ def add_storage_and_grids(
     This function adds multiple types of storage and grid infrastructure:
     - Hydrogen infrastructure (electrolysis, fuel cells, storage)
     - Gas network infrastructure
-    - Battery storage systems
     - Carbon capture and conversion facilities (if enabled in options)
     """
     # Set defaults
@@ -1919,6 +1926,16 @@ def add_storage_and_grids(
         logger.info(
             "Add natural gas infrastructure, incl. LNG terminals, production, storage and entry-points."
         )
+
+        add_carrier_buses(
+            n=n,
+            carrier="gas",
+            costs=costs,
+            spatial=spatial,
+            options=options,
+            cf_industry=None,
+        )
+
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
         if options["H2_retrofit"]:
@@ -2075,44 +2092,6 @@ def add_storage_and_grids(
             carrier="H2 pipeline",
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
         )
-
-    n.add("Carrier", "battery")
-
-    n.add("Bus", nodes + " battery", location=nodes, carrier="battery", unit="MWh_el")
-
-    n.add(
-        "Store",
-        nodes + " battery",
-        bus=nodes + " battery",
-        e_cyclic=True,
-        e_nom_extendable=True,
-        carrier="battery",
-        capital_cost=costs.at["battery storage", "capital_cost"],
-        lifetime=costs.at["battery storage", "lifetime"],
-    )
-
-    n.add(
-        "Link",
-        nodes + " battery charger",
-        bus0=nodes,
-        bus1=nodes + " battery",
-        carrier="battery charger",
-        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        capital_cost=costs.at["battery inverter", "capital_cost"],
-        p_nom_extendable=True,
-        lifetime=costs.at["battery inverter", "lifetime"],
-    )
-
-    n.add(
-        "Link",
-        nodes + " battery discharger",
-        bus0=nodes + " battery",
-        bus1=nodes,
-        carrier="battery discharger",
-        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        p_nom_extendable=True,
-        lifetime=costs.at["battery inverter", "lifetime"],
-    )
 
     if options["methanation"]:
         n.add(
@@ -4550,6 +4529,17 @@ def add_industry(
     - Process emission handling
     """
     logger.info("Add industrial demand")
+
+    # Ensure the gas carrier bus exists before adding any gas-for-industry links.
+    add_carrier_buses(
+        n=n,
+        carrier="gas",
+        costs=costs,
+        spatial=spatial,
+        options=options,
+        cf_industry=None,
+    )
+
     # add oil buses for shipping, aviation and naptha for industry
     add_carrier_buses(
         n,
@@ -4574,6 +4564,12 @@ def add_industry(
 
     # 1e6 to convert TWh to MWh
     industrial_demand = pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
+
+    if not options["biomass"]:
+        raise ValueError(
+            "Industry demand includes solid biomass, but `sector.biomass` is disabled. "
+            "Enable `sector: {biomass: true}` in config."
+        )
 
     n.add(
         "Bus",
@@ -4732,8 +4728,7 @@ def add_industry(
         bus2="co2 atmosphere",
         carrier="industry methanol",
         p_nom_extendable=True,
-        efficiency2=1 / options["MWh_MeOH_per_tCO2"],
-        # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+        efficiency2=costs.at["methanolisation", "carbondioxide-input"],
     )
 
     n.add(
@@ -4747,13 +4742,15 @@ def add_industry(
         p_nom_extendable=True,
         p_min_pu=options["min_part_load_methanolisation"],
         capital_cost=costs.at["methanolisation", "capital_cost"]
-        * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
-        marginal_cost=options["MWh_MeOH_per_MWh_H2"]
-        * costs.at["methanolisation", "VOM"],
+        / costs.at["methanolisation", "hydrogen-input"],  # EUR/MW_H2/a
+        marginal_cost=costs.at["methanolisation", "VOM"]
+        / costs.at["methanolisation", "hydrogen-input"],
         lifetime=costs.at["methanolisation", "lifetime"],
-        efficiency=options["MWh_MeOH_per_MWh_H2"],
-        efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
-        efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
+        efficiency=1 / costs.at["methanolisation", "hydrogen-input"],
+        efficiency2=-costs.at["methanolisation", "electricity-input"]
+        / costs.at["methanolisation", "hydrogen-input"],
+        efficiency3=-costs.at["methanolisation", "carbondioxide-input"]
+        / costs.at["methanolisation", "hydrogen-input"],
     )
 
     if options["oil_boilers"]:
@@ -5340,10 +5337,7 @@ def add_shipping(
             bus2="co2 atmosphere",
             carrier="shipping methanol",
             p_nom_extendable=True,
-            efficiency2=1
-            / options[
-                "MWh_MeOH_per_tCO2"
-            ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+            efficiency2=costs.at["methanolisation", "carbondioxide-input"],
         )
 
     if shipping_oil_share:
@@ -5746,8 +5740,10 @@ def cluster_heat_buses(n):
     logger.info("Cluster residential and service heat buses.")
     components = ["Bus", "Carrier", "Generator", "Link", "Load", "Store"]
 
-    for c in n.iterate_components(components):
-        df = c.df
+    for c in n.components[components]:
+        if c.static.empty:
+            continue
+        df = c.static
         cols = df.columns[df.columns.str.contains("bus") | (df.columns == "carrier")]
 
         # rename columns and index
@@ -5764,7 +5760,7 @@ def cluster_heat_buses(n):
         agg = define_clustering(df.columns, aggregate_dict)
         df = df.groupby(level=0).agg(agg, numeric_only=False)
         # time-varying data
-        pnl = c.pnl
+        pnl = c.dynamic
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
         for k in pnl.keys():
 
@@ -5774,10 +5770,10 @@ def cluster_heat_buses(n):
             pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k], numeric_only=False).T
 
         # remove unclustered assets of service/residential
-        to_drop = c.df.index.difference(df.index)
+        to_drop = c.static.index.difference(df.index)
         n.remove(c.name, to_drop)
         # add clustered assets
-        to_add = df.index.difference(c.df.index)
+        to_add = df.index.difference(c.static.index)
         n.add(c.name, df.loc[to_add].index, **df.loc[to_add])
 
 
@@ -5819,9 +5815,9 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
         m.snapshot_weightings = snapshot_weightings
 
         # Aggregation all time-varying data.
-        for c in n.iterate_components():
+        for c in n.components:
             pnl = getattr(m, c.list_name + "_t")
-            for k, df in c.pnl.items():
+            for k, df in c.dynamic.items():
                 if not df.empty:
                     if c.list_name == "stores" and k == "e_max_pu":
                         pnl[k] = df.groupby(aggregation_map).min()
@@ -6256,6 +6252,7 @@ if __name__ == "__main__":
 
     options = snakemake.params.sector
     cf_industry = snakemake.params.industry
+    ext_carriers = snakemake.params.electricity.get("extendable_carriers", dict())
 
     investment_year = int(snakemake.wildcards.planning_horizons)
 
@@ -6264,6 +6261,7 @@ if __name__ == "__main__":
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
+    max_hours = snakemake.params.electricity["max_hours"]
 
     costs = load_costs(snakemake.input.costs)
 
@@ -6337,7 +6335,7 @@ if __name__ == "__main__":
         cf_industry=cf_industry,
     )
 
-    add_storage_and_grids(
+    add_h2_gas_infrastructure(
         n=n,
         costs=costs,
         pop_layout=pop_layout,
@@ -6347,6 +6345,25 @@ if __name__ == "__main__":
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
+    )
+
+    # Hydrogen already implemented in add_h2_gas_infrastructure
+    extendable_storageunits = list(set(ext_carriers.get("StorageUnit", [])) - {"H2"})
+    extendable_stores = list(set(ext_carriers.get("Store", [])) - {"H2"})
+
+    attach_storageunits(
+        n=n,
+        costs=costs,
+        buses_i=pop_layout.index,
+        extendable_carriers=extendable_storageunits,
+        max_hours=max_hours,
+    )
+
+    attach_stores(
+        n=n,
+        costs=costs,
+        buses_i=pop_layout.index,
+        extendable_carriers=extendable_stores,
     )
 
     if options["transport"]:
