@@ -6,13 +6,13 @@ Build import locations for fossil gas from entry-points, LNG terminals and
 production sites with data from SciGRID_gas and Global Energy Monitor.
 """
 
-import json
 import logging
 
 import geopandas as gpd
 import pandas as pd
 
 from scripts._helpers import configure_logging, set_scenario_config
+from scripts.build_gas_network import unnest_struct
 from scripts.cluster_gas_network import load_bus_regions
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def read_scigrid_gas(fn):
     df = gpd.read_file(fn)
-    expanded_param = df.param.apply(json.loads).apply(pd.Series)
+    expanded_param = unnest_struct(df.param)
     df = pd.concat([df, expanded_param], axis=1)
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
     df = df.loc[:, ~df.columns.duplicated()]  # duplicated country_code column

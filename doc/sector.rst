@@ -117,6 +117,11 @@ Rule ``build_tes_capacity_profiles``
 
 .. automodule:: build_tes_capacity_profiles
 
+Rule ``build_eurostat_balances``
+==============================================================================
+
+.. automodule:: build_eurostat_balances
+
 Rule ``build_energy_totals``
 ==============================================================================
 
@@ -241,6 +246,11 @@ Rule ``build_temperature_profiles``
 ==============================================================================
 
 .. automodule:: build_temperature_profiles
+
+Rule ``build_mobility_profiles``
+==============================================================================
+
+.. automodule:: build_mobility_profiles
 
 Rule ``build_transport_demand``
 ==============================================================================
