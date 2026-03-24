@@ -160,3 +160,5 @@ worldbank_commodity_prices,jan-2026,primary,latest supported,2026-02-03,,https:/
 worldbank_commodity_prices,jan-2026,archive,latest supported,2026-02-12,,https://data.pypsa.org/workflows/eur/worldbank_commodity_prices/jan-2026/CMO-Historical-Data-Monthly.xlsx
 worldbank_urban_population,unknown,primary,latest might-work,2025-12-02,"This is the original World Bank API link, which is sometimes updated; it is not guaranteed to work with the current codebase and data changes without notice.",https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv
 worldbank_urban_population,2025-08-14,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/worldbank_urban_population/2025-08-14/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_22447.zip
+lake_data,v10,primary,latest supported,2025-12-02,,https://data.hydrosheds.org/file/hydrolakes/HydroLAKES_polys_v10.gdb.zip
+lake_data,v10,archive,latest supported,2026-01-13,,https://zenodo.org/records/18164492/files/HydroLAKES_polys_v10_europe.gdb.zip?download=1
