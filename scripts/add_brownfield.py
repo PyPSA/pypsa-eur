@@ -148,9 +148,10 @@ def add_brownfield(
             .groupby(level=0)
             .sum()
         )
-        remaining_capacity = pipe_capacity - already_retrofitted.reindex(
-            index=pipe_capacity.index
-        ).fillna(0)
+        remaining_capacity = (
+            pipe_capacity
+            - already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
+        ).clip(lower=0)
         n.links.loc[h2_retrofitted, "p_nom_max"] = remaining_capacity
 
         # reduce gas network capacity
@@ -166,7 +167,7 @@ def add_brownfield(
                 pipe_capacity
                 - CH4_per_H2
                 * already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
-            )
+            ).clip(lower=0)
             n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
             n.links.loc[gas_pipes_i, "p_nom_max"] = remaining_capacity
 
