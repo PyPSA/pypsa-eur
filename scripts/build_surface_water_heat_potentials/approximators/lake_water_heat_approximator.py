@@ -8,6 +8,9 @@ from functools import cached_property
 import geopandas as gpd
 import shapely
 import xarray as xr
+import numpy as np
+import rioxarray
+import logging
 
 from scripts.build_surface_water_heat_potentials.approximators.river_water_heat_approximator import (
     RiverWaterHeatApproximator,
@@ -16,6 +19,7 @@ from scripts.build_surface_water_heat_potentials.approximators.surface_water_hea
     SurfaceWaterHeatApproximator,
 )
 
+logger = logging.getLogger(__name__)
 
 class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
     """
@@ -184,6 +188,9 @@ class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
         """
         Clip ambient temperature raster to lake areas.
 
+        Falls back to nearest-neighbor sampling at the centroid if the
+        geometries are too small to contain any raster cell center.
+
         Parameters
         ----------
         eligible_lake_parts : gpd.GeoDataFrame
@@ -194,9 +201,21 @@ class LakeWaterHeatApproximator(SurfaceWaterHeatApproximator):
         xr.DataArray
             Ambient temperature clipped to lake areas.
         """
-        return self.ambient_temperature.rio.clip(
-            eligible_lake_parts.geometry, eligible_lake_parts.crs, drop=True
-        )
+        if eligible_lake_parts.empty:
+            logger.warning(
+                "No raster cells found within lake geometries. Returning NaN."
+            )
+            return xr.full_like(self.ambient_temperature.sel(
+                x=[self.region.centroid.x[0]], y=[self.region.centroid.y[0]], method="nearest"
+            ), fill_value=np.nan)
+        else:
+            return self.ambient_temperature.rio.clip(
+                eligible_lake_parts.geometry.buffer(self._data_resolution), # Buffer to ensure we capture nearby raster cells in case there is no raster cell center within the lake polygon
+                eligible_lake_parts.crs,
+                drop=True
+            )
+           
+            
 
     @cached_property
     def _water_temperature_in_region_raster(self) -> xr.DataArray:
