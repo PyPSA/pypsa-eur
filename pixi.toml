@@ -110,6 +110,7 @@ natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
 pydeflate = ">=2.3.4"
 grpcio = "<1.78"
+snakemake-logger-plugin-snkmt = "==0.1.6" # For better pypsa-app integration
 
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"

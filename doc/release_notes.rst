@@ -14,6 +14,8 @@ Release Notes
 
 * Fix: Lower the lower bound used to group the power plants in ``add_existing_baseyear`` (https://github.com/PyPSA/pypsa-eur/pull/2097). This now includes all power plants built since 1900.
 
+* feat: Add options for carrier specific load shedding and load sinks configurable via `load_shedding` and `load_sinks` respectively (https://github.com/PyPSA/pypsa-eur/pull/2105).
+
 PyPSA-Eur v2026.02.0 (18th February 2026)
 =========================================
 
