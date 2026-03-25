@@ -1569,7 +1569,7 @@ rule build_industry_plants:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         ammonia="data/ammonia_plants.csv",
         isi_database="data/1-s2.0-S0196890424010586-mmc2.xlsx",
-        gem_gcct="data/gem/Global-Cement-and-Concrete-Tracker_July-2025.xlsx",
+        gem_gcct=rules.retrieve_gem_cement_concrete_tracker.output["xlsx"],
     output:
         industry_plants=resources("industry_plants_{clusters}.csv"),
     threads: 1
