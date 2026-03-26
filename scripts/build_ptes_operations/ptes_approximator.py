@@ -17,6 +17,7 @@ class PtesApproximator:
         design_top_temperature: float,
         design_bottom_temperature: float,
         design_standing_losses: float,
+        interlayer_heat_transfer_coefficient: float,
     ):
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
@@ -26,6 +27,7 @@ class PtesApproximator:
         self.design_top_temperature = design_top_temperature
         self.design_bottom_temperature = design_bottom_temperature
         self.design_standing_losses = design_standing_losses
+        self.interlayer_heat_transfer_coefficient = interlayer_heat_transfer_coefficient
 
         self._time_dim = [d for d in forward_temperature.dims if d != "name"][0]
 
@@ -87,8 +89,41 @@ class PtesApproximator:
 
     @property
     def interlayer_heat_transfer_coefficients(self) -> np.ndarray:
-        """Tbd."""
-        return np.full(max(self.num_layers - 1, 0), 0.01)
+        """."""
+        return np.full(self.num_layers - 1, self.interlayer_heat_transfer_coefficient)
+
+    def _interlayer_heat_transfer_coefficients(
+        self,
+        conductivity=0.6,
+        density=1000,
+        heat_capacity=4184,
+        storage_height=15,
+        thermocline=1,
+        seconds_per_hour=3600,
+    ) -> np.ndarray:
+        """
+        Interlayer heat transfer coefficient relative to layer state-of-charge. Requires "nominal" layer height, which is assumed to be storage_height distributed equally across layers. Returns array of length num_layers - 1, where each entry corresponds to the coefficient between layer l and l+1.
+
+        Args:
+        ----
+        conductivity: Thermal conductivity of the storage medium [W/m/K]
+        density: Density of the storage medium [kg/m3]
+        heat_capacity: Specific heat capacity of the storage medium [J/kg/K]
+        storage_height: Total height of the storage medium [m]
+        seconds_per_hour: Number of seconds in an hour (for unit conversion)
+        """
+        layer_height = storage_height / (
+            self.num_layers + 1
+        )  # assuming equal layer heights
+
+        return (
+            conductivity
+            / (density * heat_capacity * layer_height)
+            * seconds_per_hour
+            * (self.layer_temperatures[:-1] - self.layer_temperatures[1:])
+            / (self.layer_temperatures[:-1] - self.bottom_temperature)
+            / thermocline
+        )
 
     @property
     def boost_ratios(self) -> xr.DataArray:
@@ -173,7 +208,7 @@ class PtesApproximator:
                 "num_layers": self.num_layers,
                 "top_temperature": self.top_temperature,
                 "bottom_temperature": self.bottom_temperature,
-                "heat_transfer_coefficient": 0.01,
+                "storage_height": 15,  # m, assumed for interlayer coefficient calculation
                 "design_top_temperature": self.design_top_temperature,
                 "design_bottom_temperature": self.design_bottom_temperature,
                 "design_standing_losses": self.design_standing_losses,
