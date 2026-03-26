@@ -81,6 +81,8 @@ class HeatSource(Enum):
     PTES_LAYER_0 = "ptes layer 0"
     PTES_LAYER_1 = "ptes layer 1"
     PTES_LAYER_2 = "ptes layer 2"
+    PTES_LAYER_3 = "ptes layer 3"
+    PTES_LAYER_4 = "ptes layer 4"
     # PTX excess heat sources
     ELECTROLYSIS_WASTE = "electrolysis_waste"
     FISCHER_TROPSCH_WASTE = "fischer_tropsch_waste"
@@ -119,6 +121,8 @@ class HeatSource(Enum):
             HeatSource.PTES_LAYER_0,
             HeatSource.PTES_LAYER_1,
             HeatSource.PTES_LAYER_2,
+            HeatSource.PTES_LAYER_3,
+            HeatSource.PTES_LAYER_4,
         ]:
             return HeatSourceType.STORAGE
         else:
