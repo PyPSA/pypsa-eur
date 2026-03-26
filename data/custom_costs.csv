@@ -10,4 +10,5 @@ all,battery,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degene
 all,battery inverter,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
 all,home battery storage,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
 all,water tank charger,marginal_cost,0.03,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
-all,central water pit charger,marginal_cost,0.025,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,central water pit charger,marginal_cost,0.04,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,central water pit discharger,marginal_cost,0.05,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
