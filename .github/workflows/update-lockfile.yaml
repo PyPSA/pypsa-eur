@@ -20,10 +20,13 @@ jobs:
       with:
         pixi-version: v0.59.0
 
-    - name: Full resolve
+    - name: Full resolve (exclude packages newer than 7 days)
       run: |
+        EXCLUDE_DATE=$(date -u -d '7 days ago' +%Y-%m-%dT00:00:00Z)
+        sed -i "/^\[workspace\]/a exclude-newer = \"$EXCLUDE_DATE\"" pixi.toml
         rm pixi.lock
         pixi install --all
+        git checkout pixi.toml
 
     - name: Export conda environment files
       if: ${{ !vars.PYPSA_BOT_ID }}
