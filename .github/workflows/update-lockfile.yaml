@@ -21,6 +21,8 @@ jobs:
         pixi-version: v0.59.0
 
     - name: Full resolve (exclude packages newer than 7 days)
+      # Exclude recently published packages to avoid pulling in broken or
+      # yanked releases before upstream has had time to react
       run: |
         EXCLUDE_DATE=$(date -u -d '7 days ago' +%Y-%m-%dT00:00:00Z)
         sed -i "/^\[workspace\]/a exclude-newer = \"$EXCLUDE_DATE\"" pixi.toml
