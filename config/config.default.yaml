@@ -696,6 +696,7 @@ sector:
       sabatier_waste: 200
       methanolisation_waste: 200
     fallback_ptx_heat_losses: 0.05
+    ignore_missing_geothermal_data: false
   heat_sources:
     urban central:
     - air

@@ -189,6 +189,11 @@ class _DistrictHeatingConfig(ConfigModel):
         0.05,
         description="Default heat loss fraction for PtX processes when waste heat recovery is enabled but no specific loss value is provided.",
     )
+    ignore_missing_geothermal_data: bool = Field(
+        False,
+        description="If true, missing geothermal data for non-EU countries will be ignored. If false, an error will be raised if countries with missing data are modelled while geothermal heat is included as a heat source.",
+    )
+
     heat_source_temperatures: dict[str, float] = Field(
         default_factory=lambda: {
             "geothermal": 65,
