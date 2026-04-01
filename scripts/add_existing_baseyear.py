@@ -760,17 +760,309 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+def add_existing_industry(
+    n: pypsa.Network,
+    options: dict,
+    plant_fn: str,
+    grouping_years: list,
+    baseyear: int,
+    costs: pd.DataFrame,
+) -> None:
+    """
+    Add existing industry plants depending on the industry options.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to modify
+    options: dict
+        Sector config
+    plant_fn: str
+        Path to file for existing industry plants
+    grouping_years_industry: list
+        Intervals to group capacities
+    baseyear : int
+        Base year for analysis
+    costs : pd.DataFrame
+        Technology costs
+    """
+    logger.info("Add existing industry plants.")
+
+    plant_data = pd.read_csv(plant_fn)
+
+    # fill missing build_year with average
+    mean_nonzero = plant_data.groupby("carrier")["build_year"].transform("mean").round()
+    plant_data["build_year"] = plant_data["build_year"].fillna(mean_nonzero)
+    plant_data["grouping_year"] = 0
+    plant_data["Out"] = plant_data["Out"].fillna(0)
+    valid_mask = plant_data["build_year"] < baseyear
+    valid_mask = valid_mask & plant_data["build_year"].notna()
+    valid_years = plant_data.loc[valid_mask, "build_year"]
+    indices = np.searchsorted(grouping_years, valid_years, side="right")
+    plant_data.loc[valid_years.index, "grouping_year"] = np.array(grouping_years)[
+        indices
+    ]
+
+    plant_data = plant_data.groupby(
+        ["bus", "country", "carrier", "grouping_year", "Out"], as_index=False
+    )["p_set"].sum()
+
+    if (
+        options["endogenous_sectors"]["enable"]
+        and "cement" in options["endogenous_sectors"]["subsectors"]
+    ):
+        # add cement
+        cement = plant_data[plant_data.carrier == "cement"]
+        cement.index = (
+            cement["bus"] + " cement kiln-" + cement["grouping_year"].astype(str)
+        )
+        cement["clinker"] = (
+            cement["bus"] + " cement production-" + cement["grouping_year"].astype(str)
+        )
+        # get rid of capacities without demand
+        cement_buses = n.loads[n.loads.carrier == "cement"].bus.to_list()
+        cement_buses = [x.replace(" cement", "") for x in cement_buses]
+        cement = cement[cement.bus.isin(cement_buses)]
+
+        logger.info(f"Adding {len(cement)} existing cement links.")
+
+        # clinker production
+        gas_input = costs.at["cement dry clinker", "gas-input"]
+        heat_input = costs.at["cement dry clinker", "heat-input"]
+        electricity_input = costs.at["cement dry clinker", "electricity-input"]
+        # process emission from calcination + gas emissions
+        # https://www.ipcc-nggip.iges.or.jp/efdb/ef_detail.php
+        co2_emission = (
+            0.5071 / heat_input
+            + costs.at["gas", "CO2 intensity"] * gas_input / heat_input
+        )
+
+        n.add(
+            "Link",
+            cement.index,
+            bus0=[bus + " cement heat" for bus in cement.bus],
+            bus1=[bus + " clinker" for bus in cement.bus],
+            bus2=[bus + " gas" for bus in cement.bus]
+            if snakemake.params.sector["gas_network"]
+            else "EU gas",
+            bus3=cement.bus,
+            bus4=[bus + " cement emission" for bus in cement.bus],
+            carrier="cement kiln",
+            p_nom_extendable=False,
+            p_nom=cement["p_set"]
+            .mul(heat_input)
+            .mul(costs.at["cement finishing", "clinker-input"])
+            .div(8760)
+            .values,
+            capital_cost=costs.at["cement dry clinker", "capital_cost"] / heat_input,
+            efficiency=1 / heat_input,
+            efficiency2=-gas_input / heat_input,
+            efficiency3=-electricity_input / heat_input,
+            efficiency4=co2_emission,
+            build_year=cement.grouping_year,
+            lifetime=costs.at["cement dry clinker", "lifetime"],
+        )
+
+        # cement finishing
+        electricity_input = (
+            costs.at["cement finishing", "electricity-input"]
+            / costs.at["cement finishing", "clinker-input"]
+        )
+        clinker_input = costs.at["cement finishing", "clinker-input"]
+        n.add(
+            "Link",
+            cement.clinker.to_list(),
+            bus0=[bus + " clinker" for bus in cement.bus],
+            bus1=[bus + " cement" for bus in cement.bus],
+            bus2=cement.bus.to_list(),
+            carrier="cement finishing",
+            p_nom_extendable=False,
+            p_nom=cement["p_set"].mul(clinker_input).div(8760).values,
+            capital_cost=costs.at["cement finishing", "capital_cost"] / clinker_input,
+            efficiency=1 / clinker_input,
+            efficiency2=-electricity_input,
+            build_year=cement.grouping_year.to_list(),
+            lifetime=costs.at["cement finishing", "lifetime"],
+        )
+
+    if options["ammonia"]:
+        ammonia = plant_data[plant_data.carrier == "Haber-Bosch"]
+        index = [
+            f"{bus} Haber-Bosch-{year}"
+            for bus, year in zip(ammonia["bus"], ammonia["grouping_year"])
+        ]
+        ammonia.index = index
+        logger.info(f"Adding {len(ammonia)} existing Haber-Bosch links.")
+        # implementing via H2
+        n.add(
+            "Link",
+            ammonia.index,
+            bus0=[bus for bus in ammonia.bus],
+            bus1=[bus + " NH3" for bus in ammonia.bus]
+            if snakemake.params.sector["ammonia"] == "regional"
+            else "EU NH3",
+            bus2=[bus + " H2" for bus in ammonia.bus],
+            p_nom=ammonia["p_set"]
+            .mul(snakemake.params.MWh_NH3_per_tNH3)
+            .div(costs.at["Haber-Bosch", "electricity-input"])
+            .div(8760)
+            .values,
+            p_nom_extendable=False,
+            carrier="Haber-Bosch",
+            efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
+            efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
+            / costs.at["Haber-Bosch", "electricity-input"],
+            capital_cost=costs.at["Haber-Bosch", "capital_cost"]
+            / costs.at["Haber-Bosch", "electricity-input"],
+            marginal_cost=costs.at["Haber-Bosch", "VOM"]
+            / costs.at["Haber-Bosch", "electricity-input"],
+            build_year=ammonia["grouping_year"],
+            lifetime=costs.at["Haber-Bosch", "lifetime"],
+        )
+
+    # methanol
+    meoh = plant_data[plant_data.carrier == "grey methanol"]
+    index = [
+        f"{bus} grey methanol-{year}"
+        for bus, year in zip(meoh["bus"], meoh["grouping_year"])
+    ]
+    meoh.index = index
+    logger.info(f"Adding {len(meoh)} existing methanolisation links.")
+    # grey methanol
+    capital_cost = (
+        costs.at["SMR", "capital_cost"]
+        + costs.at["methanolisation", "capital_cost"]
+        * costs.at["grey methanol synthesis", "efficiency"]
+    )
+    co2_emissions = (
+        costs.at["gas", "CO2 intensity"]
+        - costs.at["grey methanol synthesis", "efficiency"]
+        * costs.at["methanol", "CO2 intensity"]
+    )
+    n.add(
+        "Link",
+        meoh.index,
+        bus0=[bus + " gas" for bus in meoh.bus]
+        if snakemake.params.sector["gas_network"]
+        else "EU gas",
+        bus1="EU methanol",
+        bus2="co2 atmosphere",
+        p_nom_extendable=False,
+        p_nom=meoh["p_set"]
+        .mul(snakemake.params.MWh_MeOH_per_tMeOH)
+        .div(costs.at["grey methanol synthesis", "efficiency"])
+        .div(8760),
+        carrier="grey methanol",
+        efficiency=costs.at["grey methanol synthesis", "efficiency"],
+        efficiency2=co2_emissions,
+        capital_cost=capital_cost,
+        build_year=meoh.grouping_year,
+        lifetime=costs.at["SMR", "lifetime"],
+    )
+
+    if (
+        options["endogenous_sectors"]["enable"]
+        and "steel" in options["endogenous_sectors"]["subsectors"]
+    ):
+        # natural gas DRI
+        ng_dri = plant_data[plant_data.carrier == "gas DRI"]
+        logger.info(f"Adding {len(ng_dri)} existing gas DRI links.")
+        index = [
+            f"{bus} gas DRI-{year}"
+            for bus, year in zip(ng_dri["bus"], ng_dri["grouping_year"])
+        ]
+        ng_dri.index = index
+        electricity_input = costs.at[
+            "hydrogen direct iron reduction furnace", "electricity-input"
+        ]
+        marginal_cost = (
+            costs.at["iron ore DRI-ready", "commodity"]
+            * costs.at["hydrogen direct iron reduction furnace", "ore-input"]
+            / electricity_input
+        )
+
+        n.add(
+            "Link",
+            ng_dri.index,
+            bus0=[bus for bus in ng_dri.bus],
+            bus1=[bus + " hbi" for bus in ng_dri.bus]
+            if not snakemake.params.sector["hbi_relocation"]
+            else "EU hbi",
+            bus2=[bus + " DRI reduction" for bus in ng_dri.bus],
+            p_nom=ng_dri["p_set"].mul(electricity_input).div(8760).values,
+            p_nom_extendable=False,
+            carrier="DRI",
+            efficiency=1 / electricity_input,
+            efficiency2=-1 / electricity_input,
+            capital_cost=costs.at[
+                "hydrogen direct iron reduction furnace", "capital_cost"
+            ]
+            / electricity_input,
+            marginal_cost=marginal_cost,
+            build_year=ng_dri["grouping_year"],
+            lifetime=costs.at["hydrogen direct iron reduction furnace", "lifetime"],
+        )
+        # BF-BOF
+        bof = plant_data[plant_data.carrier == "BOF"]
+
+        if options["steel_bof"]["pledge"]:
+            lifetime = (
+                bof["Out"] - bof["grouping_year"] + options["steel_bof"]["pledge_delay"]
+            )
+            lifetime[lifetime < 0] = costs.at[
+                "blast furnace-basic oxygen furnace", "lifetime"
+            ]
+        else:
+            lifetime = costs.at["blast furnace-basic oxygen furnace", "lifetime"]
+            # regroup
+            bof = bof.groupby(
+                ["bus", "country", "carrier", "grouping_year"], as_index=False
+            )["p_set"].sum()
+
+        index = [
+            f"{bus} BOF-{year}-{out}"
+            for bus, year, out in zip(bof["bus"], bof["grouping_year"], bof["Out"])
+        ]
+        bof.index = index
+        logger.info(f"Adding {len(bof)} existing BOF links.")
+
+        coal_input = costs.at["blast furnace-basic oxygen furnace", "coal-input"]
+        marginal_cost = (
+            costs.at["iron ore DRI-ready", "commodity"]
+            * costs.at["blast furnace-basic oxygen furnace", "ore-input"]
+            / coal_input
+        )
+
+        n.add(
+            "Link",
+            bof.index,
+            bus0="EU coal",
+            bus1=[bus + " steel" for bus in bof.bus],
+            bus2=[bus + " BOF emission" for bus in bof.bus],
+            p_nom=bof["p_set"].mul(coal_input).div(8760).values,
+            p_nom_extendable=False,
+            carrier="BOF",
+            efficiency=1 / coal_input,
+            efficiency2=costs.at["coal", "CO2 intensity"],
+            marginal_cost=marginal_cost,
+            capital_cost=costs.at["blast furnace-basic oxygen furnace", "capital_cost"]
+            / coal_input,
+            build_year=bof["grouping_year"],
+            lifetime=lifetime.to_list(),
+        )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
-            clusters="5",
+            configfiles="config/config.default.yaml",
+            clusters="50",
             opts="",
             sector_opts="",
-            planning_horizons=2030,
+            planning_horizons=2025,
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
@@ -840,6 +1132,19 @@ if __name__ == "__main__":
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
+
+    # add existing industry plants
+    if options["industry"]:
+        add_existing_industry(
+            n=n,
+            options=options,
+            plant_fn=snakemake.input.industry_plants[0],
+            grouping_years=snakemake.params.existing_capacities[
+                "grouping_years_industry"
+            ],
+            baseyear=snakemake.params.baseyear,
+            costs=costs,
+        )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
