@@ -472,6 +472,7 @@ def attach_wind_and_solar(
     extendable_carriers: list | set,
     line_length_factor: float = 1.0,
     landfall_lengths: dict = None,
+    params_renewable: dict = None,
 ) -> None:
     """
     Attach wind and solar generators to the network.
@@ -542,6 +543,13 @@ def attach_wind_and_solar(
                     )
                 logger.info(
                     f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
+                )
+            elif (
+                params_renewable[car].get("costs_given_for_ac")
+                and params_renewable[car].get("dc_ac_ratio", 1.0) != 1.0
+            ):
+                capital_cost = (
+                    costs.at[car, "capital_cost"] / params_renewable[car]["dc_ac_ratio"]
                 )
             else:
                 capital_cost = costs.at[car, "capital_cost"]
@@ -1269,6 +1277,7 @@ if __name__ == "__main__":
         extendable_carriers,
         params.line_length_factor,
         landfall_lengths,
+        params.renewable,
     )
 
     if "hydro" in renewable_carriers:

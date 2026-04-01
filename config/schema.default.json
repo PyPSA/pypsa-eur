@@ -3771,6 +3771,17 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
+            },
+            "dc_ac_ratio": {
+              "default": 1.25,
+              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+              "minimum": 1,
+              "type": "number"
+            },
+            "costs_given_for_ac": {
+              "default": true,
+              "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
+              "type": "boolean"
             }
           }
         },
@@ -3895,6 +3906,17 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
+            },
+            "dc_ac_ratio": {
+              "default": 1.25,
+              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+              "minimum": 1,
+              "type": "number"
+            },
+            "costs_given_for_ac": {
+              "default": true,
+              "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
+              "type": "boolean"
             }
           }
         },
@@ -7717,6 +7739,17 @@
           "default": 0.01,
           "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
           "type": "number"
+        },
+        "dc_ac_ratio": {
+          "default": 1.25,
+          "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+          "minimum": 1,
+          "type": "number"
+        },
+        "costs_given_for_ac": {
+          "default": true,
+          "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
+          "type": "boolean"
         }
       }
     },
@@ -9806,6 +9839,17 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
+            },
+            "dc_ac_ratio": {
+              "default": 1.25,
+              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+              "minimum": 1,
+              "type": "number"
+            },
+            "costs_given_for_ac": {
+              "default": true,
+              "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
+              "type": "boolean"
             }
           }
         },
@@ -9930,6 +9974,17 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
+            },
+            "dc_ac_ratio": {
+              "default": 1.25,
+              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
+              "minimum": 1,
+              "type": "number"
+            },
+            "costs_given_for_ac": {
+              "default": true,
+              "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
+              "type": "boolean"
             }
           }
         },
