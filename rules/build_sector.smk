@@ -725,12 +725,6 @@ rule build_ptes_operations:
             "bottom_temperature",
         ),
         snapshots=config_provider("snapshots"),
-        charge_boosting_required=config_provider(
-            "sector", "district_heating", "ptes", "charge_boosting_required"
-        ),
-        discharge_resistive_boosting=config_provider(
-            "sector", "district_heating", "ptes", "discharge_resistive_boosting"
-        ),
         temperature_dependent_capacity=config_provider(
             "sector", "district_heating", "ptes", "temperature_dependent_capacity"
         ),
@@ -764,9 +758,6 @@ rule build_ptes_operations:
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
-        ptes_boost_per_discharge_profiles=resources(
-            "ptes_boost_per_discharge_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
     resources:
         mem_mb=2000,
     log:
@@ -777,9 +768,9 @@ rule build_ptes_operations:
         scripts("build_ptes_operations/run.py")
 
 
-rule build_direct_heat_source_utilisation_profiles:
+rule build_heat_source_utilisation_profiles:
     message:
-        "Building direct heat source utilization profiles for industrial applications for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+        "Building heat source alpha profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         heat_sources=config_provider("sector", "heat_sources", "urban central"),
         heat_source_cooling=config_provider(
@@ -803,11 +794,8 @@ rule build_direct_heat_source_utilisation_profiles:
             "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
     output:
-        heat_source_direct_utilisation_profiles=resources(
-            "heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        heat_source_preheater_utilisation_profiles=resources(
-            "heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        heat_source_boosting_profiles=resources(
+            "heat_source_boosting_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
     resources:
         mem_mb=20000,
@@ -1749,26 +1737,9 @@ rule prepare_sector_network:
             )(w)
             else []
         ),
-        ptes_boost_per_discharge_profiles=lambda w: (
+        heat_source_boosting_profiles=lambda w: (
             resources(
-                "ptes_boost_per_discharge_profiles_base_s_{clusters}_{planning_horizons}.nc"
-            )
-            if config_provider("sector", "district_heating", "ptes", "enable")(w)
-            and config_provider(
-                "sector", "district_heating", "ptes", "discharge_resistive_boosting"
-            )(w)
-            else []
-        ),
-        heat_source_direct_utilisation_profiles=lambda w: (
-            resources(
-                "heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
-            )
-            if len(config_provider("sector", "heat_sources", "urban central")(w)) > 0
-            else []
-        ),
-        heat_source_preheater_utilisation_profiles=lambda w: (
-            resources(
-                "heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+                "heat_source_boosting_profiles_base_s_{clusters}_{planning_horizons}.nc"
             )
             if len(config_provider("sector", "heat_sources", "urban central")(w)) > 0
             else []

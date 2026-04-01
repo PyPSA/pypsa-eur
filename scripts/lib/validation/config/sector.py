@@ -47,8 +47,8 @@ class _PtesConfig(BaseModel):
         description="If True, enables boosting by resistive heaters instead of heat pumps. "
         "`prepare_sector_network` then adds the links `<node> urban central water pits resistive booster` "
         "and `<node> urban central water pits resistive heater stand-alone` and reroutes heat generation "
-        "from resistive heaters accordingly. The required boosting energy is computed in `build_ptes_operations` "
-        "as `ptes_boost_per_discharge_profiles_base_s<nodes>_<year>.nc`.",
+        "from resistive heaters accordingly. The required boosting alpha is computed from the unified "
+        "heat source utilisation profiles in `build_heat_source_utilisation_profiles`.",
     )
     top_temperature: float | Literal["forward"] = Field(
         90,

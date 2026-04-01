@@ -16,12 +16,8 @@ storage systems integrated with district heating networks. It determines:
    temperature difference. This captures how storage capacity varies when
    operating temperatures deviate from design conditions.
 
-3. **Discharge boosting profiles**: When the PTES top temperature is below the
-   required forward temperature, additional heating (boosting) is needed during
-   discharge. This profile quantifies the ratio of boost energy to stored energy.
-
 The outputs are used by ``prepare_sector_network.py`` to configure PTES storage
-components, charger/discharger links, and optional resistive boosting infrastructure.
+components and charger/discharger links.
 
 Relevant Settings
 -----------------
@@ -32,8 +28,6 @@ Relevant Settings
             ptes:
                 enable: true
                 temperature_dependent_capacity: false # if true, e_max_pu varies with temperature difference (static but scaled if top/bottom are constant)
-                charge_boosting_required: false # currently not supported
-                discharge_resistive_boosting: false # if true, adds resistive boosting link for discharge boosting and disables heat pump boosting
                 top_temperature: 90  # or "forward" for dynamic
                 bottom_temperature: 35  # or "return" for dynamic
                 design_top_temperature: 90 # used to compute design temperature difference for e_max_pu if temperature_dependent_capacity is true
@@ -52,10 +46,6 @@ Outputs
     PTES top layer temperature profile (°C), clipped to design_top_temperature.
 - ``resources/<run_name>/ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc``
     Normalized PTES capacity profiles (0-1 p.u.).
-- ``resources/<run_name>/ptes_boost_per_discharge_profiles_base_s_{clusters}_{planning_horizons}.nc``
-    Discharge boosting ratio profiles. Values represent the ratio of boost energy
-    to discharge energy needed when T_forward > T_top. Only used when resistive
-    boosting is enabled.
 
 References
 ----------
@@ -92,10 +82,6 @@ if __name__ == "__main__":
     )
     logger.info(f"PTES configuration: {snakemake.params}")
 
-    # Discharge boosting profiles are calculated when resistive boosting is enabled.
-    # For heat pump-based boosting, add "ptes" to central heating heat sources instead and disable resistive boosting.
-    discharge_boosting_required: bool = snakemake.params.discharge_resistive_boosting
-
     ptes_temperature_approximator = PtesTemperatureApproximator(
         forward_temperature=xr.open_dataarray(
             snakemake.input.central_heating_forward_temperature_profiles
@@ -105,8 +91,6 @@ if __name__ == "__main__":
         ),
         top_temperature=snakemake.params.top_temperature,
         bottom_temperature=snakemake.params.bottom_temperature,
-        charge_boosting_required=snakemake.params.charge_boosting_required,
-        discharge_boosting_required=discharge_boosting_required,
         temperature_dependent_capacity=snakemake.params.temperature_dependent_capacity,
         design_bottom_temperature=snakemake.params.design_bottom_temperature,
         design_top_temperature=snakemake.params.design_top_temperature,
@@ -122,8 +106,4 @@ if __name__ == "__main__":
 
     ptes_temperature_approximator.e_max_pu.to_netcdf(
         snakemake.output.ptes_e_max_pu_profiles
-    )
-
-    ptes_temperature_approximator.boost_per_discharge.to_netcdf(
-        snakemake.output.ptes_boost_per_discharge_profiles
     )

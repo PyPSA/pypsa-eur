@@ -21,9 +21,9 @@ class HeatSource(Enum):
         Have spatial/temporal constraints, require resource tracking via buses.
         May support direct utilisation or preheating depending on temperature.
 
-    **Sources with preheater** (PTES):
-        When source temperature is between return and forward temperatures,
-        can preheat return flow before heat pump provides final lift.
+    **Sources with boosting** (PTES, geothermal, river water):
+        When source temperature is below forward temperature, a heat pump
+        provides supplemental boost energy routed through the hp_output_bus.
 
     Attributes
     ----------
@@ -215,91 +215,6 @@ class HeatSource(Enum):
         else:
             return float("inf")
 
-    def get_heat_pump_input_bus(self, nodes, heat_system: str) -> str:
-        """
-        Get the secondary input bus for the heat pump link.
-
-        The heat pump link has bus0 (electricity input), bus1 (heat output),
-        and optionally bus2 (heat source input). This method determines bus2
-        based on the heat source type:
-
-        - Inexhaustible sources: No bus2 (empty string)
-        - Limited sources: bus2 is the heat pump input bus (at return temperature if pre-heated, else at source temperature)
-
-        Parameters
-        ----------
-        nodes : pd.Index or list
-            The nodes for which to generate the bus name.
-        heat_system : str
-            The heat system identifier (e.g., 'urban central').
-
-        Returns
-        -------
-        str
-            The bus2 name for the heat pump, or empty string if not applicable.
-        """
-        if self.requires_bus:
-            return nodes + f" {self.heat_pump_input_carrier(heat_system)}"
-        else:
-            return ""
-
-    def get_heat_pump_efficiency2(self, cop_heat_pump) -> float:
-        """
-        Get the efficiency2 (heat source consumption) for the heat pump link.
-
-        The heat pump link uses an inverted bus configuration where bus0 is the
-        heat output (not input) to attribute capital costs to the heat bus. This
-        means the link operates with negative flow (p_max_pu=0, p_min_pu < 0).
-
-        - Inexhaustible sources (air, ground, sea_water): Returns 1.0 since no
-          resource tracking is needed.
-        - Limited sources (geothermal, river_water, ptes): Returns 1 - 1/COP to
-          track heat drawn from the source bus.
-
-        For a standard heat pump energy balance:
-
-            Q_output = Q_source + W_electricity
-            COP = Q_output / W_electricity
-
-        The fraction of output heat from the source is:
-
-            Q_source / Q_output = (COP - 1) / COP
-
-        However, since bus0 is the output in our inverted configuration, PyPSA
-        interprets efficiency2 as: input_bus2 = p_bus0 * efficiency2
-
-        With negative p_bus0 (heat flowing out), we need efficiency2 to give the
-        correct heat drawn from the source. The formula simplifies to:
-
-            efficiency2 = 1 - 1/COP
-
-        This ensures that for each unit of heat output, the link draws the correct
-        amount from the heat source bus.
-
-        Parameters
-        ----------
-        cop_heat_pump : float or pd.Series
-            The coefficient of performance of the heat pump.
-
-        Returns
-        -------
-        float or pd.Series
-            1 - 1/COP for limited sources (tracks heat drawn from source bus).
-
-        Raises
-        ------
-        NotImplementedError
-            If called for inexhaustible heat sources.
-
-        See Also
-        --------
-        prepare_sector_network.add_heat : Creates heat pump links with this efficiency.
-        """
-        if self.requires_bus:
-            return 1 - (1 / cop_heat_pump.clip(lower=0.001))
-        else:
-            return None
-
     def heat_carrier(self, heat_system) -> str:
         """
         Get the carrier name for heat from this source.
@@ -317,12 +232,12 @@ class HeatSource(Enum):
         """
         return f"{heat_system} {self} heat"
 
-    def preheater_input_carrier(self, heat_system) -> str:
+    def hp_output_carrier(self, heat_system) -> str:
         """
-        Get the carrier name for partially-cooled heat from this source.
+        Get the carrier name for heat produced by the boosting heat pump.
 
-        Used in cascading temperature utilisation: heat that has been used
-        for direct supply but still has usable thermal energy.
+        This bus receives HP output and is consumed by the utilisation link
+        at rate ``boosting_ratio`` per unit of source heat.
 
         Parameters
         ----------
@@ -332,32 +247,13 @@ class HeatSource(Enum):
         Returns
         -------
         str
-            Carrier name with '-pre-heater input' suffix in format '{heat_system} {source} pre-heater input'.
+            Carrier name in format '{heat_system} {source} heat hp output'.
         """
-        return f"{self.heat_carrier(heat_system)} pre-heater input"
+        return f"{self.heat_carrier(heat_system)} hp output"
 
-    def heat_pump_input_carrier(self, heat_system) -> str:
+    def hp_output_bus(self, nodes, heat_system) -> str:
         """
-        Get the carrier name for fully-cooled heat from this source.
-
-        Represents heat pump input, for
-        final temperature lift by heat pump.
-
-        Parameters
-        ----------
-        heat_system : HeatSystem or str
-            The heat system (e.g., 'urban central').
-
-        Returns
-        -------
-        str
-            Carrier name with '-heat-pump input' suffix in format '{heat_system} {source} heat-pump input'.
-        """
-        return f"{self.heat_carrier(heat_system)} heat-pump input"
-
-    def preheater_input_bus(self, nodes, heat_system) -> str:
-        """
-        Get bus name for partially-cooled heat at the given nodes.
+        Get the bus name for heat pump output at the given nodes.
 
         Parameters
         ----------
@@ -369,9 +265,12 @@ class HeatSource(Enum):
         Returns
         -------
         str
-            Bus name combining nodes with medium-temperature carrier in format 'nodes + {heat_system} {source} pre-heater input'.
+            Bus name in format 'nodes + {heat_system} {source} heat hp output'.
         """
-        return nodes + f" {self.preheater_input_carrier(heat_system)}"
+        if self.requires_bus:
+            return nodes + f" {self.hp_output_carrier(heat_system)}"
+        else:
+            return nodes + f" {heat_system} heat"
 
     def resource_bus(self, nodes, heat_system) -> str:
         """
