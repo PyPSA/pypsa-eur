@@ -36,16 +36,13 @@ sector:
   district_heating:
     ates:
       enable: true
-    ptes:
-      supplemental_heating:
-        enable: true
-        booster_heat_pump: true
-  heat_pump_sources:
+  heat_sources:
     urban central:
     - air
     - geothermal
     - river_water
     - sea_water
+    - ptes
     urban decentral:
     - air
     rural:
