@@ -99,7 +99,7 @@ fuels = {
     "Solid fossil fuels": "solid",
     "Peat and peat products": "solid",
     "Oil shale and oil sands": "solid",
-    "Oil and petroleum products": "liquid",
+    "Oil and petroleum products": "naphtha",
     "Manufactured gases": "gas",
     "Natural gas": "gas",
     "Nuclear heat": "heat",
@@ -108,6 +108,8 @@ fuels = {
     "Non-renewable waste": "waste",
     "Electricity": "electricity",
 }
+
+idx = pd.IndexSlice
 
 fuels_eurostat = {
     "TOTAL": "all",  # Total
