@@ -187,6 +187,7 @@ electricity:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: "europe-2013-sarah3-era5"
+  backend: auto
   nprocesses: 16
   show_progress: false
   plot_availability_matrix: false

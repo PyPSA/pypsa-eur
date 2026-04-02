@@ -174,6 +174,16 @@
           "default": "europe-2013-sarah3-era5",
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
         },
+        "backend": {
+          "default": "auto",
+          "description": "Backend for atlite conversion. 'auto' selects automatically, 'dask' uses Dask scheduler, 'streaming' uses streaming backend.",
+          "enum": [
+            "auto",
+            "dask",
+            "streaming"
+          ],
+          "type": "string"
+        },
         "nprocesses": {
           "default": 16,
           "description": "Number of parallel processes in cutout preparation.",
@@ -8785,6 +8795,16 @@
           ],
           "default": "europe-2013-sarah3-era5",
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
+        },
+        "backend": {
+          "default": "auto",
+          "description": "Backend for atlite conversion. 'auto' selects automatically, 'dask' uses Dask scheduler, 'streaming' uses streaming backend.",
+          "enum": [
+            "auto",
+            "dask",
+            "streaming"
+          ],
+          "type": "string"
         },
         "nprocesses": {
           "default": 16,

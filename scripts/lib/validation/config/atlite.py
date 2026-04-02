@@ -8,6 +8,8 @@ Atlite configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 from scripts.lib.validation.config._base import ConfigModel
@@ -112,6 +114,10 @@ class AtliteConfig(BaseModel):
     default_cutout: str | list[str] = Field(
         "europe-2013-sarah3-era5",
         description="Defines a default cutout. Can refer to a single cutout or a list of cutouts.",
+    )
+    backend: Literal["auto", "dask", "streaming"] = Field(
+        "auto",
+        description="Backend for atlite conversion. 'auto' selects automatically, 'dask' uses Dask scheduler, 'streaming' uses streaming backend.",
     )
     nprocesses: int = Field(
         16,

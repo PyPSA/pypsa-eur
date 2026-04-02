@@ -173,7 +173,8 @@ if __name__ == "__main__":
     )
 
     func = getattr(cutout, resource.pop("method"))
-    if client is not None:
+    backend = snakemake.config["atlite"]["backend"]
+    if client is not None and backend == "dask":
         resource["dask_kwargs"] = {"scheduler": client}
 
     logger.info(
@@ -181,7 +182,7 @@ if __name__ == "__main__":
     )
     start = time.time()
 
-    capacity_factor = correction_factor * func(capacity_factor=True, **resource)
+    capacity_factor = correction_factor * func(capacity_factor=True, backend=backend, **resource)
 
     duration = time.time() - start
     logger.info(
@@ -265,6 +266,7 @@ if __name__ == "__main__":
             index=matrix.indexes["bus_bin"],
             per_unit=True,
             return_capacity=False,
+            backend=backend,
             **resource,
         )
         profile = profile.unstack("bus_bin")
