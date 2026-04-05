@@ -89,7 +89,6 @@ adding up the installable potentials of the individual grid cells.
 """
 
 import logging
-import time
 from itertools import product
 
 import geopandas as gpd
@@ -120,6 +119,9 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    logging.getLogger("atlite").setLevel(logging.WARNING)
+    logging.getLogger("pyogrio").setLevel(logging.WARNING)
+
     nprocesses = int(snakemake.threads)
     noprogress = snakemake.config["run"].get("disable_progressbar", True)
     noprogress = noprogress or not snakemake.config["atlite"]["show_progress"]
@@ -136,9 +138,6 @@ if __name__ == "__main__":
 
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
-
-    if correction_factor != 1.0:
-        logger.info(f"correction_factor is set as {correction_factor}")
 
     if nprocesses > 1:
         client = Client(n_workers=nprocesses, threads_per_worker=1)
@@ -177,23 +176,9 @@ if __name__ == "__main__":
     if client is not None and backend == "dask":
         resource["dask_kwargs"] = {"scheduler": client}
 
-    logger.info(
-        f"Calculate average capacity factor per grid cell for technology {technology}..."
-    )
-    start = time.time()
-
-    capacity_factor = correction_factor * func(capacity_factor=True, backend=backend, **resource)
-
-    duration = time.time() - start
-    logger.info(
-        f"Completed average capacity factor calculation per grid cell for technology {technology} ({duration:2.2f}s)"
-    )
+    capacity_factor = correction_factor * func(aggregate_time="mean", backend=backend, **resource)
 
     nbins = params.get("resource_classes", 1)
-    logger.info(
-        f"Create masks for {nbins} resource classes for technology {technology}..."
-    )
-    start = time.time()
 
     fn = snakemake.input.resource_regions
     resource_regions = gpd.read_file(fn).set_index("name").rename_axis("bus").geometry
@@ -240,20 +225,10 @@ if __name__ == "__main__":
         class_regions.index.names = ["bus", "bin"]
     class_regions.to_file(snakemake.output.class_regions)
 
-    duration = time.time() - start
-    logger.info(
-        f"Completed resource class calculation for technology {technology} ({duration:2.2f}s)"
-    )
-
     layout = capacity_factor * area * capacity_per_sqkm
 
     profiles = []
     for year, model in models.items():
-        logger.info(
-            f"Calculate weighted capacity factor time series for model {model} for technology {technology}..."
-        )
-        start = time.time()
-
         resource[tech] = model
 
         matrix = (availability * class_masks).stack(
@@ -266,6 +241,7 @@ if __name__ == "__main__":
             index=matrix.indexes["bus_bin"],
             per_unit=True,
             return_capacity=False,
+            aggregate_time=None,
             backend=backend,
             **resource,
         )
@@ -276,17 +252,10 @@ if __name__ == "__main__":
 
         profiles.append(profile.rename("profile"))
 
-        duration = time.time() - start
-        logger.info(
-            f"Completed weighted capacity factor time series calculation for model {model} for technology {technology} ({duration:2.2f}s)"
-        )
-
     profiles = xr.merge(profiles)
 
-    logger.info(f"Calculating maximal capacity per bus for technology {technology}")
     p_nom_max = capacity_per_sqkm * availability * class_masks @ area
 
-    logger.info(f"Calculate average distances for technology {technology}.")
     layoutmatrix = (layout * availability * class_masks).stack(
         bus_bin=["bus", "bin"], spatial=["y", "x"]
     )
