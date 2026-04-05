@@ -42,8 +42,10 @@ sync-locks = """
     pixi workspace export conda-environment -e default envs/environment.yaml -n pypsa-eur
 """
 
+[pypi-dependencies]
+atlite = { git = "https://github.com/PyPSA/atlite.git", branch = "perf/conversion" }
+
 [dependencies]
-atlite = ">=0.3"
 bokeh = ">=3.8.0"
 cartopy = ">=0.25.0"
 copernicusmarine = ">=2.2.4"
@@ -120,7 +122,6 @@ args = ["dir", {"arg" = "output", "default" = "html"}]
 cmd = "sphinx-build -T -b {{ output }} doc {{ dir }}/{{ output }} "
 
 [feature.doc.dependencies]
-atlite = "==0.4.1"
 cartopy = "==0.25.0"
 dask = "==2025.11.0"
 descartes = "==1.1.0"
