@@ -158,16 +158,9 @@ if __name__ == "__main__":
             snakemake.input.country_shapes, buffer=buffer, invert=True
         )
 
-    logger.info(f"Calculate landuse availability for {technology}...")
-    start = time.time()
 
     kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
     availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
-
-    duration = time.time() - start
-    logger.info(
-        f"Completed landuse availability calculation for {technology} ({duration:2.2f}s)"
-    )
 
     if params.get("plot_availability_matrix", False):
         logger.info(f"Plotting landuse availability matrix for {technology}.")
