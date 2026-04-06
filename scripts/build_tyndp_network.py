@@ -139,18 +139,18 @@ def build_shapes(
     # Bidding zone shapes
     bidding_shapes = bidding_zones.assign(
         bz_id=lambda df: df["zone_name"].apply(format_bz_names),
-        node=lambda df: df.geometry.to_crs(distance_crs)
-        .representative_point()
-        .to_crs(geo_crs),
+        node=lambda df: (
+            df.geometry.to_crs(distance_crs).representative_point().to_crs(geo_crs)
+        ),
         x=lambda df: df["node"].x,
         y=lambda df: df["node"].y,
     ).set_index("bz_id")
 
     # Country shapes
     country_shapes = bidding_shapes.dissolve(by="country")[["geometry"]].assign(
-        node=lambda df: df.geometry.to_crs(distance_crs)
-        .representative_point()
-        .to_crs(geo_crs),
+        node=lambda df: (
+            df.geometry.to_crs(distance_crs).representative_point().to_crs(geo_crs)
+        ),
         x=lambda df: df["node"].x,
         y=lambda df: df["node"].y,
     )
