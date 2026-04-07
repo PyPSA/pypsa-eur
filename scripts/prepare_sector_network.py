@@ -3275,20 +3275,24 @@ def add_heat(
                     .to_pandas()
                 )
 
-                # Utilisation link: source heat (bus0) + HP boost (bus2) → DH (bus1).
-                # Per unit of source heat, eff1 = 1 + boosting_ratio goes to DH and
-                # eff2 = -boosting_ratio is drawn from the hp_output_bus.
+                # Utilisation link (reverse operation, p < 0):
+                # Consumes from resource bus (bus1) and hp_output bus (bus2),
+                # produces onto DH heat bus (bus0).
+                # Per unit of source heat: 1 source + b HP → (1 + b) DH heat.
+                # Energy conserved: eff + eff2 = 1/(1+b) + b/(1+b) = 1.
                 n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat utilisation",
-                    bus0=heat_source.resource_bus(nodes, heat_system),
-                    bus1=nodes + f" {heat_system} heat",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=heat_source.resource_bus(nodes, heat_system),
                     bus2=heat_source.hp_output_bus(nodes, heat_system),
-                    efficiency=1 + boosting_profile,
-                    efficiency2=-boosting_profile,
+                    efficiency=1 / (1 + boosting_profile),
+                    efficiency2=boosting_profile / (1 + boosting_profile),
                     carrier=f"{heat_system} {heat_source} heat utilisation",
                     p_nom_extendable=True,
+                    p_min_pu=-1,
+                    p_max_pu=0,
                 )
 
             if heat_source.requires_generator:
@@ -3334,7 +3338,7 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes + f" {heat_system} heat",
+                    bus0=heat_source.hp_output_bus(nodes, heat_system),
                     bus1=nodes,
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=1 / cop_heat_pump.clip(lower=0.001).squeeze(),

@@ -108,63 +108,10 @@ def get_source_temperature(
         return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
 
 
-def get_heat_pump_cooling(
-    heat_source_name: str,
-    default_heat_source_cooling: float,
-    snakemake_input: dict,
-    return_temperature: xr.DataArray = None,
-) -> float | xr.DataArray:
-    """
-    Get the additional heat source cooling (temperature drop) through the heat pump.
-
-    This is the number of Kelvin below the return temperature that the heat pump
-    can extract from the source, i.e. the HP cools the source from T_source down
-    to T_return − heat_pump_cooling.
-
-    For PTES, equals T_return − T_bottom (the bottom layer is the HP's cold side).
-    For other sources, uses the constant config value ``heat_source_cooling``.
-
-    Parameters
-    ----------
-    heat_source_name : str
-        Name of the heat source (e.g., 'ptes', 'geothermal', 'air').
-    default_heat_source_cooling : float
-        Default heat source cooling in Kelvin, from config.
-    snakemake_input : dict
-        Snakemake input files, may contain PTES bottom temperature profiles.
-    return_temperature : xr.DataArray, optional
-        District heating return temperature profiles in °C. Required for PTES.
-
-    Returns
-    -------
-    float | xr.DataArray
-        Heat source cooling in Kelvin.
-
-    Raises
-    ------
-    ValueError
-        If heat source is PTES but required profiles are not provided.
-    """
-    if heat_source_name == "ptes":
-        if "temp_ptes_bottom" not in snakemake_input.keys():
-            raise ValueError(
-                "PTES heat source requires bottom temperature profile "
-                "(temp_ptes_bottom) to calculate heat source cooling."
-            )
-        if return_temperature is None:
-            raise ValueError(
-                "PTES heat source requires return_temperature to calculate heat pump cooling."
-            )
-        ptes_bottom_temperature = xr.open_dataarray(snakemake_input["temp_ptes_bottom"])
-        return return_temperature - ptes_bottom_temperature
-    return default_heat_source_cooling
-
-
 def get_boosting_profile(
     source_temperature: float | xr.DataArray,
     forward_temperature: xr.DataArray,
     return_temperature: xr.DataArray,
-    heat_pump_cooling: float | xr.DataArray,
 ) -> xr.DataArray:
     """
     Calculate the boosting ratio: HP heat needed per unit of source heat.
@@ -200,19 +147,18 @@ def get_boosting_profile(
         Alpha profile: 0 where direct use is possible, positive ratio otherwise.
         Shape matches forward_temperature.
     """
-    delta_t = xr.where(
-        source_temperature < return_temperature,
-        heat_pump_cooling,
-        source_temperature - return_temperature + heat_pump_cooling,
-    )
-    # Prevent division by zero (e.g. T_source = T_bottom with resistive boosting).
-    # In that case the source cannot be economically used: alpha → ∞ is approximated
-    # by a very large number so the optimiser will not dispatch this configuration.
-    safe_delta_t = delta_t.where(delta_t > 1e-6, other=1e6)
     return xr.where(
         source_temperature >= forward_temperature,
+        # no boosting needed if source_temp > forward_temp
         0.0,
-        (forward_temperature - source_temperature) / safe_delta_t,
+        xr.where(
+            source_temperature < return_temperature,
+            # source does not pre-heat return flow if below return temp
+            1,
+            # if source is between return and forward temp, it pre-heats return flow (part of heat is utilised directly, part is boosted by HP)
+            (forward_temperature - source_temperature)
+            / (source_temperature - return_temperature),
+        ).clip(min=0, max=1),
     )
 
 
@@ -254,12 +200,6 @@ if __name__ == "__main__":
                 ),
                 forward_temperature=central_heating_forward_temperature,
                 return_temperature=central_heating_return_temperature,
-                heat_pump_cooling=get_heat_pump_cooling(
-                    heat_source_name=heat_source_key,
-                    default_heat_source_cooling=snakemake.params.heat_source_cooling,
-                    snakemake_input=snakemake.input,
-                    return_temperature=central_heating_return_temperature,
-                ),
             ).assign_coords(heat_source=heat_source_key)
             for heat_source_key in heat_sources
         ],
