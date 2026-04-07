@@ -13,10 +13,10 @@ The rule is executed in ``build_sector.smk``.
 
 import logging
 
+import dask
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from dask.distributed import Client, LocalCluster
 
 from scripts._helpers import (
     configure_logging,
@@ -36,8 +36,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
-    client = Client(cluster, asynchronous=True)
+    dask.config.set(scheduler="threads", num_workers=nprocesses)
 
     config = snakemake.params.solar_thermal
     config.pop("cutout", None)
@@ -65,7 +64,6 @@ if __name__ == "__main__":
         **config,
         matrix=M_tilde.T,
         index=clustered_regions.index,
-        dask_kwargs=dict(scheduler=client),
         show_progress=False,
     )
 

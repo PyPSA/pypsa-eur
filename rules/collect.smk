@@ -30,6 +30,22 @@ rule process_costs:
         ),
 
 
+rule create_renewable_profiles:
+    input:
+        expand(
+            resources("profile_{clusters}_{tech}.nc"),
+            tech=[
+                tech
+                for tech in config["electricity"]["renewable_carriers"]
+                if tech != "hydro"
+            ],
+            **config["scenario"],
+            run=config["run"]["name"],
+        ),
+    message:
+        "Collection renewable profiles."
+
+
 rule cluster_networks:
     message:
         "Collecting clustered network files"

@@ -92,12 +92,12 @@ import logging
 import time
 from itertools import product
 
+import dask
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
 from atlite.gis import ExclusionContainer
-from dask.distributed import Client
 
 from scripts._helpers import (
     configure_logging,
@@ -140,10 +140,7 @@ if __name__ == "__main__":
     if correction_factor != 1.0:
         logger.info(f"correction_factor is set as {correction_factor}")
 
-    if nprocesses > 1:
-        client = Client(n_workers=nprocesses, threads_per_worker=1)
-    else:
-        client = None
+    dask.config.set(scheduler="threads", num_workers=nprocesses)
 
     sns = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
@@ -173,8 +170,6 @@ if __name__ == "__main__":
     )
 
     func = getattr(cutout, resource.pop("method"))
-    if client is not None:
-        resource["dask_kwargs"] = {"scheduler": client}
 
     logger.info(
         f"Calculate average capacity factor per grid cell for technology {technology}..."

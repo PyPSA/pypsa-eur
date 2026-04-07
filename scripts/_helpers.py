@@ -1024,11 +1024,36 @@ def rename_techs(label: str) -> str:
     return label
 
 
+def _get_netcdf_chunk_sizes(path: str) -> dict[str, int]:
+    """Read chunk sizes from a netCDF file to align dask chunks with on-disk layout."""
+    import netCDF4
+
+    nc = netCDF4.Dataset(path)
+    chunks = {}
+    for v in nc.variables.values():
+        chunking = v.chunking()
+        if not isinstance(chunking, list) or len(v.dimensions) < 3:
+            continue
+        for dim, size in zip(v.dimensions, chunking):
+            if dim not in chunks:
+                chunks[dim] = size
+        break
+    nc.close()
+    return chunks
+
+
 def load_cutout(
-    cutout_files: str | list[str], time: None | pd.DatetimeIndex = None
+    cutout_files: str | list[str],
+    time: None | pd.DatetimeIndex = None,
+    chunks: dict | None = None,
 ) -> atlite.Cutout:
     """
     Load and optionally combine multiple cutout files.
+
+    Reads chunk sizes from the netCDF file on disk to align dask chunks with
+    the storage layout, loads data eagerly into memory, then re-chunks as dask
+    arrays so downstream computation can use the threaded scheduler without
+    HDF5 thread-safety issues.
 
     Parameters
     ----------
@@ -1037,21 +1062,30 @@ def load_cutout(
         If a list is provided, the cutouts will be concatenated along the time dimension.
     time : pd.DatetimeIndex, optional
         If provided, select only the specified times from the cutout.
+    chunks : dict, optional
+        Dask chunk sizes for the returned cutout. If None, reads chunk sizes
+        from the netCDF file.
 
     Returns
     -------
     atlite.Cutout
-        Merged cutout with optional time selection applied.
+        Cutout with in-memory data re-chunked as dask arrays.
     """
+    first_file = cutout_files if isinstance(cutout_files, str) else cutout_files[0]
+    if chunks is None:
+        chunks = _get_netcdf_chunk_sizes(first_file) or {"time": 100}
+
     if isinstance(cutout_files, str):
-        cutout = atlite.Cutout(cutout_files)
+        cutout = atlite.Cutout(cutout_files, chunks=chunks)
     elif isinstance(cutout_files, list):
-        cutout_da = [atlite.Cutout(c).data for c in cutout_files]
+        cutout_da = [atlite.Cutout(c, chunks=chunks).data for c in cutout_files]
         combined_data = xr.concat(cutout_da, dim="time", data_vars="minimal")
         cutout = atlite.Cutout(NamedTemporaryFile().name, data=combined_data)
 
     if time is not None:
         cutout.data = cutout.data.sel(time=time)
+
+    cutout.data = cutout.data.load().chunk(chunks)
 
     return cutout
 

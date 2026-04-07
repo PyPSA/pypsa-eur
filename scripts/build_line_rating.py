@@ -29,11 +29,11 @@ import logging
 import re
 
 import atlite
+import dask
 import geopandas as gpd
 import numpy as np
 import pypsa
 import xarray as xr
-from dask.distributed import Client
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
 
@@ -73,7 +73,7 @@ def calculate_line_rating(
     n: pypsa.Network,
     cutout: atlite.Cutout,
     show_progress: bool = True,
-    dask_kwargs: dict = None,
+    dask_kwargs: dict | None = None,
 ) -> xr.DataArray:
     """
     Calculates the maximal allowed power flow in each line for each time step
@@ -144,16 +144,12 @@ if __name__ == "__main__":
     nprocesses = int(snakemake.threads)
     show_progress = not snakemake.config["run"].get("disable_progressbar", True)
     show_progress = show_progress and snakemake.config["atlite"]["show_progress"]
-    if nprocesses > 1:
-        client = Client(n_workers=nprocesses, threads_per_worker=1)
-    else:
-        client = None
-    dask_kwargs = {"scheduler": client}
+    dask.config.set(scheduler="threads", num_workers=nprocesses)
 
     n = pypsa.Network(snakemake.input.base_network)
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
     cutout = load_cutout(snakemake.input.cutout, time=time)
 
-    da = calculate_line_rating(n, cutout, show_progress, dask_kwargs)
+    da = calculate_line_rating(n, cutout, show_progress)
     da.to_netcdf(snakemake.output[0])

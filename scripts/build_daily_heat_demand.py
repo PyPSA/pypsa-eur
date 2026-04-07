@@ -16,10 +16,10 @@ Heat demand is distributed by population to clustered onshore regions.
 
 import logging
 
+import dask
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from dask.distributed import Client, LocalCluster
 
 from scripts._helpers import (
     configure_logging,
@@ -43,8 +43,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
-    client = Client(cluster, asynchronous=True)
+    dask.config.set(scheduler="threads", num_workers=nprocesses)
 
     cutout_name = snakemake.input.cutout
 
@@ -71,7 +70,6 @@ if __name__ == "__main__":
     heat_demand = cutout.heat_demand(
         matrix=M.T,
         index=clustered_regions.index,
-        dask_kwargs=dict(scheduler=client),
         show_progress=False,
     ).sel(time=daily)
 
