@@ -56,7 +56,6 @@ Outputs
 
 import functools
 import logging
-import time
 
 import atlite
 import geopandas as gpd
@@ -157,7 +156,6 @@ if __name__ == "__main__":
         excluder.add_geometry(
             snakemake.input.country_shapes, buffer=buffer, invert=True
         )
-
 
     kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
     availability = cutout.availabilitymatrix(regions, excluder, **kwargs)

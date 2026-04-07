@@ -176,7 +176,9 @@ if __name__ == "__main__":
     if client is not None and backend == "dask":
         resource["dask_kwargs"] = {"scheduler": client}
 
-    capacity_factor = correction_factor * func(aggregate_time="mean", backend=backend, **resource)
+    capacity_factor = correction_factor * func(
+        aggregate_time="mean", backend=backend, **resource
+    )
 
     nbins = params.get("resource_classes", 1)
 
