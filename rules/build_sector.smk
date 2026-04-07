@@ -738,6 +738,12 @@ rule build_ptes_operations:
             "design_bottom_temperature",
         ),
         layered=config_provider("sector", "district_heating", "ptes", "layered"),
+        interlayer_heat_transfer_coefficient=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "interlayer_heat_transfer_coefficient",
+        ),
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"

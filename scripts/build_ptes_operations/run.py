@@ -90,6 +90,7 @@ if __name__ == "__main__":
         design_top_temperature=snakemake.params.design_top_temperature,
         design_bottom_temperature=snakemake.params.design_bottom_temperature,
         design_standing_losses=0.0,  # placeholder; actual value set from costs data
+        interlayer_heat_transfer_coefficient=snakemake.params.interlayer_heat_transfer_coefficient,
     )
 
     # Write single dataset with all pre-computed PTES parameters
