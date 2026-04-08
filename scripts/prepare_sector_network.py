@@ -2788,11 +2788,12 @@ def add_heat(
         Path to NetCDF file containing coefficient of performance (COP) values for heat pumps
     heat_source_boosting_profile_file : str
         Path to NetCDF file containing heat source boosting ratio profiles (indexed by
-        time, name, heat_source). Values are the HP heat required per unit of source heat.
+        time, name, heat_source). Values in [0, 1] represent the fraction of source
+        heat that must be routed through the heat pump for temperature boosting.
     hourly_heat_demand_total_file : str
         Path to CSV file containing hourly heat demand data
-    ptes_supplemental_heating_required_file: str
-        Path to CSV file indicating when supplemental heating for thermal energy storage (TES) is needed
+    ptes_e_max_pu_file : str
+        Path to NetCDF file containing PTES energy capacity profiles
     district_heat_share_file : str
         Path to CSV file containing district heating share information
     solar_thermal_total_file : str
@@ -2808,8 +2809,6 @@ def add_heat(
     params : dict
         Dictionary containing parameters including:
         - heat_sources
-        - heat_utilisation_potentials
-        - direct_utilisation_heat_sources
     pop_weighted_energy_totals : pd.DataFrame
         Population-weighted energy totals by region
     heating_efficiencies : pd.DataFrame
@@ -3380,15 +3379,11 @@ def add_heat(
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes + f" {heat_system} resistive heat",
                     bus2=ptes_heat_source.hp_input_bus(nodes, heat_system),
-                    # eff = 1 - eff2 (energy conservation)
                     efficiency=boosting_profile / (boosting_profile + 1),
-                    # Use 1 unit of medium-temperature heat to produce (ptes_boost_per_discharge_profiles + 1) units of district heating
-                    # (similar to HP balance: p_el x COP = p_source + p_el )
                     efficiency2=1 / (boosting_profile + 1),
                     p_nom_extendable=True,
                     p_min_pu=-(boosting_profile > 0).astype(float),
                     carrier=f"{heat_system} water pits resistive booster",
-                    p_max_pu=0,
                 )
 
                 n.add(

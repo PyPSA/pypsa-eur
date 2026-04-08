@@ -2,29 +2,25 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build heat source alpha profiles for district heating networks.
+Build heat source boosting ratio profiles for district heating networks.
 
-This script calculates the boosting ratio (alpha) for each heat source: how
+This script calculates the boosting ratio (b) for each heat source: how
 much heat pump output is needed per unit of source heat to reach the forward
 temperature of the district heating network.
 
-**Alpha profile**: For each heat source and timestep, alpha is:
+**Boosting ratio profile**: For each heat source and timestep, b is:
 
-- 0 when T_source ≥ T_forward (direct use possible, no HP boost needed)
-- (T_forward − T_source) / delta_T otherwise, where delta_T is:
-  - heat_pump_cooling                       if T_source < T_return
-  - T_source − T_return + heat_pump_cooling if T_return ≤ T_source < T_forward
+- 0 when T_source ≥ T_forward (direct use, no HP boost needed)
+- 1 when T_source < T_return (source cannot preheat return flow)
+- (T_forward − T_source) / (T_source − T_return) otherwise, clipped to [0, 1]
 
-heat_pump_cooling is the additional temperature drop achievable by the heat
-pump beyond the return temperature (i.e. how far below T_return the HP can
-extract from the source). For PTES it equals T_return − T_bottom; for other
-sources it is the constant config value ``heat_source_cooling``.
+The boosting ratio is consumed by ``prepare_sector_network.py`` to set the
+efficiencies of the heat source utilisation link (forward, p ≥ 0):
 
-The alpha profile is consumed by ``prepare_sector_network.py`` to set the
-efficiencies of the heat source utilisation links:
+- bus0 (source) → bus1 (DH heat) at efficiency (1 − b)
+- bus0 (source) → bus2 (HP input bus) at efficiency2 = b
 
-- bus0 (source) → bus1 (DH heat) at efficiency 1 + alpha
-- bus2 (HP output bus) drawn at efficiency −alpha per unit of source
+Energy is conserved: (1 − b) + b = 1.
 
 Relevant Settings
 -----------------
@@ -36,7 +32,6 @@ Relevant Settings
                 - air
                 - geothermal
         district_heating:
-            heat_source_cooling: 6  # K
             geothermal:
                 constant_temperature_celsius: 65
 
@@ -52,7 +47,7 @@ Outputs
 -------
 - ``resources/<run_name>/heat_source_boosting_profiles_base_s_{clusters}_{planning_horizons}.nc``
     Boosting ratio profiles indexed by (time, name, heat_source).
-    Values: 0 when T_source ≥ T_forward; (T_fwd − T_src) / delta_T otherwise.
+    Values in [0, 1]: 0 = direct use, 1 = full HP boosting required.
 """
 
 import logging
@@ -116,19 +111,15 @@ def get_boosting_profile(
     """
     Calculate the boosting ratio: HP heat needed per unit of source heat.
 
-    Alpha represents the ratio of heat pump output required to source heat input
-    in order to reach the district heating forward temperature:
+    The boosting ratio b represents the fraction of source heat that must be
+    routed through the heat pump (rather than used directly) to reach the
+    district heating forward temperature:
 
-        alpha = 0                                      if T_source ≥ T_forward
-        alpha = (T_fwd − T_src) / delta_T             otherwise
+        b = 0                                                if T_source ≥ T_forward
+        b = 1                                                if T_source < T_return
+        b = (T_forward − T_source) / (T_source − T_return)  otherwise
 
-    where delta_T is:
-
-        delta_T = heat_pump_cooling                       if T_source < T_return
-        delta_T = T_source − T_return + heat_pump_cooling if T_return ≤ T_source < T_forward
-
-    For PTES (where heat_pump_cooling = T_return − T_bottom):
-        delta_T = T_source − T_bottom (when T_source ≥ T_return, which is the normal case)
+    The result is clipped to [0, 1].
 
     Parameters
     ----------
@@ -138,13 +129,11 @@ def get_boosting_profile(
         District heating forward temperature in °C, indexed by (time, name).
     return_temperature : xr.DataArray
         District heating return temperature in °C, indexed by (time, name).
-    heat_pump_cooling : float | xr.DataArray
-        Additional temperature drop achievable by HP beyond return temperature (K).
 
     Returns
     -------
     xr.DataArray
-        Alpha profile: 0 where direct use is possible, positive ratio otherwise.
+        Boosting ratio profile in [0, 1]: 0 = direct use, 1 = full HP boosting.
         Shape matches forward_temperature.
     """
     return xr.where(

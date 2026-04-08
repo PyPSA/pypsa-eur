@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class HeatSource(Enum):
     """
-    Enumeration representing different heat sources for heat pumps and direct utilisation.
+    Enumeration representing different heat sources for heat pumps and utilisation.
 
     Heat sources are categorized by their characteristics:
 
@@ -19,11 +19,9 @@ class HeatSource(Enum):
 
     **Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, PTES):
         Have spatial/temporal constraints, require resource tracking via buses.
-        May support direct utilisation or preheating depending on temperature.
-
-    **Sources with boosting** (PTES, geothermal, river water):
-        When source temperature is below forward temperature, a heat pump
-        provides supplemental boost energy routed through the hp_output_bus.
+        A utilisation link splits source heat into direct DH contribution
+        (fraction 1 − b) and HP input (fraction b), where b is the
+        boosting ratio from ``build_heat_source_utilisation_profiles``.
 
     Attributes
     ----------
@@ -43,7 +41,7 @@ class HeatSource(Enum):
     See Also
     --------
     HeatSystem : Defines heat system types (urban central, urban decentral, rural).
-    build_heat_source_utilisation_profiles : Calculates utilisation profiles for heat sources.
+    build_heat_source_utilisation_profiles : Calculates boosting ratio profiles for heat sources.
     build_cop_profiles : Calculates COP profiles for heat pumps using these sources.
     """
 
@@ -234,10 +232,10 @@ class HeatSource(Enum):
 
     def hp_input_carrier(self, heat_system) -> str:
         """
-        Get the carrier name for heat produced by the boosting heat pump.
+        Get the carrier name for the boosting heat pump input bus.
 
-        This bus receives HP output and is consumed by the utilisation link
-        at rate ``boosting_ratio`` per unit of source heat.
+        For limited sources, the utilisation link routes a fraction (the boosting
+        ratio) of source heat to this bus, where it is consumed by the heat pump.
 
         Parameters
         ----------
@@ -247,13 +245,18 @@ class HeatSource(Enum):
         Returns
         -------
         str
-            Carrier name in format '{heat_system} {source} heat hp output'.
+            Carrier name in format '{heat_system} {source} heat heat pump input'.
         """
         return f"{self.heat_carrier(heat_system)} heat pump input"
 
     def hp_input_bus(self, nodes, heat_system) -> str:
         """
-        Get the bus name for heat pump output at the given nodes.
+        Get the bus name for the heat pump input at the given nodes.
+
+        For limited sources (requires_bus=True), returns the dedicated HP input
+        bus where the utilisation link deposits the boosting fraction of source
+        heat. For inexhaustible sources, returns an empty string (no bus2
+        connection needed since the HP draws from ambient implicitly).
 
         Parameters
         ----------
@@ -265,7 +268,7 @@ class HeatSource(Enum):
         Returns
         -------
         str
-            Bus name in format 'nodes + {heat_system} {source} heat hp output'.
+            Bus name for limited sources, empty string for inexhaustible sources.
         """
         if self.requires_bus:
             return nodes + f" {self.hp_input_carrier(heat_system)}"
