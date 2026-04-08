@@ -232,7 +232,7 @@ class HeatSource(Enum):
         """
         return f"{heat_system} {self} heat"
 
-    def hp_output_carrier(self, heat_system) -> str:
+    def hp_input_carrier(self, heat_system) -> str:
         """
         Get the carrier name for heat produced by the boosting heat pump.
 
@@ -249,9 +249,9 @@ class HeatSource(Enum):
         str
             Carrier name in format '{heat_system} {source} heat hp output'.
         """
-        return f"{self.heat_carrier(heat_system)} hp output"
+        return f"{self.heat_carrier(heat_system)} heat pump input"
 
-    def hp_output_bus(self, nodes, heat_system) -> str:
+    def hp_input_bus(self, nodes, heat_system) -> str:
         """
         Get the bus name for heat pump output at the given nodes.
 
@@ -268,7 +268,7 @@ class HeatSource(Enum):
             Bus name in format 'nodes + {heat_system} {source} heat hp output'.
         """
         if self.requires_bus:
-            return nodes + f" {self.hp_output_carrier(heat_system)}"
+            return nodes + f" {self.hp_input_carrier(heat_system)}"
         else:
             return nodes + f" {heat_system} heat"
 

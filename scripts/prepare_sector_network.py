@@ -3258,13 +3258,13 @@ def add_heat(
 
                 n.add(
                     "Carrier",
-                    heat_source.hp_output_carrier(heat_system),
+                    heat_source.hp_input_carrier(heat_system),
                 )
                 n.add(
                     "Bus",
-                    heat_source.hp_output_bus(nodes, heat_system),
+                    heat_source.hp_input_bus(nodes, heat_system),
                     location=nodes,
-                    carrier=heat_source.hp_output_carrier(heat_system),
+                    carrier=heat_source.hp_input_carrier(heat_system),
                 )
 
                 boosting_profile = (
@@ -3284,15 +3284,13 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat utilisation",
-                    bus0=nodes + f" {heat_system} heat",
-                    bus1=heat_source.resource_bus(nodes, heat_system),
-                    bus2=heat_source.hp_output_bus(nodes, heat_system),
-                    efficiency=1 / (1 + boosting_profile),
-                    efficiency2=boosting_profile / (1 + boosting_profile),
+                    bus0=heat_source.resource_bus(nodes, heat_system),
+                    bus1=nodes + f" {heat_system} heat",
+                    bus2=heat_source.hp_input_bus(nodes, heat_system),
+                    efficiency=1 - boosting_profile,
+                    efficiency2=boosting_profile,
                     carrier=f"{heat_system} {heat_source} heat utilisation",
                     p_nom_extendable=True,
-                    p_min_pu=-1,
-                    p_max_pu=0,
                 )
 
             if heat_source.requires_generator:
@@ -3338,10 +3336,12 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=heat_source.hp_output_bus(nodes, heat_system),
+                    bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
+                    bus2=heat_source.hp_input_bus(nodes, heat_system),
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=1 / cop_heat_pump.clip(lower=0.001).squeeze(),
+                    efficiency2=1 - 1 / cop_heat_pump.clip(lower=0.001).squeeze(),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_min_pu=-(cop_heat_pump > 0).squeeze().astype(float),
@@ -3383,7 +3383,7 @@ def add_heat(
                     suffix=f" {heat_system} water pits resistive booster",
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes + f" {heat_system} resistive heat",
-                    bus2=ptes_heat_source.hp_output_bus(nodes, heat_system),
+                    bus2=ptes_heat_source.hp_input_bus(nodes, heat_system),
                     # eff = 1 - eff2 (energy conservation)
                     efficiency=boosting_profile / (boosting_profile + 1),
                     # Use 1 unit of medium-temperature heat to produce (ptes_boost_per_discharge_profiles + 1) units of district heating
