@@ -97,13 +97,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from atlite.gis import ExclusionContainer
-from dask.distributed import Client
 
 from scripts._helpers import (
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
+    setup_dask,
 )
 from scripts.build_shapes import _simplify_polys
 
@@ -140,10 +140,7 @@ if __name__ == "__main__":
     if correction_factor != 1.0:
         logger.info(f"correction_factor is set as {correction_factor}")
 
-    if nprocesses > 1:
-        client = Client(n_workers=nprocesses, threads_per_worker=1)
-    else:
-        client = None
+    dask_kwargs = setup_dask(nprocesses)
 
     sns = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
@@ -173,15 +170,17 @@ if __name__ == "__main__":
     )
 
     func = getattr(cutout, resource.pop("method"))
-    if client is not None:
-        resource["dask_kwargs"] = {"scheduler": client}
 
     logger.info(
         f"Calculate average capacity factor per grid cell for technology {technology}..."
     )
     start = time.time()
 
-    capacity_factor = correction_factor * func(capacity_factor=True, **resource)
+    capacity_factor = correction_factor * func(
+        capacity_factor=True,
+        dask_kwargs=dask_kwargs,
+        **resource,
+    )
 
     duration = time.time() - start
     logger.info(
@@ -265,6 +264,7 @@ if __name__ == "__main__":
             index=matrix.indexes["bus_bin"],
             per_unit=True,
             return_capacity=False,
+            dask_kwargs=dask_kwargs,
             **resource,
         )
         profile = profile.unstack("bus_bin")

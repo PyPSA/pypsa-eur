@@ -18,6 +18,8 @@ Release Notes
 
 * feat: Add options for carrier specific load shedding and load sinks configurable via `load_shedding` and `load_sinks` respectively (https://github.com/PyPSA/pypsa-eur/pull/2105).
 
+* perf: Optimize dask settings for computing weather-dependent profiles (https://github.com/PyPSA/pypsa-eur/pull/2137).
+
 PyPSA-Eur v2026.02.0 (18th February 2026)
 =========================================
 
