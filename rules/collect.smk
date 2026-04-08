@@ -31,30 +31,28 @@ rule process_costs:
 
 
 rule cluster_networks:
-    message:
-        "Collecting clustered network files"
     input:
         expand(
             resources("networks/base_s_{clusters}.nc"),
             **config["scenario"],
             run=config["run"]["name"],
         ),
+    message:
+        "Collecting clustered network files"
 
 
 rule prepare_elec_networks:
-    message:
-        "Collecting prepared electricity network files"
     input:
         expand(
             resources("networks/base_s_{clusters}_elec_{opts}.nc"),
             **config["scenario"],
             run=config["run"]["name"],
         ),
+    message:
+        "Collecting prepared electricity network files"
 
 
 rule prepare_sector_networks:
-    message:
-        "Collecting prepared sector-coupled network files"
     input:
         expand(
             resources(
@@ -63,22 +61,22 @@ rule prepare_sector_networks:
             **config["scenario"],
             run=config["run"]["name"],
         ),
+    message:
+        "Collecting prepared sector-coupled network files"
 
 
 rule solve_elec_networks:
-    message:
-        "Collecting solved electricity network files"
     input:
         expand(
             RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
             **config["scenario"],
             run=config["run"]["name"],
         ),
+    message:
+        "Collecting solved electricity network files"
 
 
 rule solve_sector_networks:
-    message:
-        "Collecting solved sector-coupled network files"
     input:
         expand(
             RESULTS
@@ -86,11 +84,11 @@ rule solve_sector_networks:
             **config["scenario"],
             run=config["run"]["name"],
         ),
+    message:
+        "Collecting solved sector-coupled network files"
 
 
 rule solve_sector_networks_perfect:
-    message:
-        "Collecting solved sector-coupled network files with perfect foresight"
     input:
         expand(
             RESULTS
@@ -98,6 +96,8 @@ rule solve_sector_networks_perfect:
             **config["scenario"],
             run=config["run"]["name"],
         ),
+    message:
+        "Collecting solved sector-coupled network files with perfect foresight"
 
 
 def balance_map_paths(kind, w):
@@ -117,11 +117,11 @@ def balance_map_paths(kind, w):
 
 
 rule plot_balance_maps:
-    message:
-        "Plotting energy balance maps"
     input:
         static=lambda w: balance_map_paths("static", w),
         interactive=lambda w: balance_map_paths("interactive", w),
+    message:
+        "Plotting energy balance maps"
 
 
 rule plot_balance_maps_static:
@@ -135,11 +135,11 @@ rule plot_balance_maps_interactive:
 
 
 rule plot_power_networks_clustered:
-    message:
-        "Plotting clustered power network topology"
     input:
         expand(
             resources("maps/power-network-s-{clusters}.pdf"),
             **config["scenario"],
             run=config["run"]["name"],
         ),
+    message:
+        "Plotting clustered power network topology"
