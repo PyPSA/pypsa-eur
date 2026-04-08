@@ -2000,21 +2000,20 @@ def add_h2_gas_infrastructure(
         marginal_cost_ccgt = (
             costs.at["CCGT", "VOM"]  # (€/MWh_output)
             * costs.at["CCGT", "efficiency"]  # (MWh_output/MWh_fuel)
-        )
-        marginal_cost_cc = 0  # TODO: calculate VOM?
-        # (
-        #     costs.at["biomass boiler capture", "VOM"]  # (€/tCO2_captured)
-        #     * co2_captured  # (tCO2_captured/MWh_fuel)
-        # )
+        )  # (€/MW_fuel)
+        marginal_cost_cc = (
+            costs.at["biomass boiler capture", "VOM"]  # (€/tCO2_captured)
+            * co2_captured  # (tCO2_captured/MWh_fuel)
+        )  # (€/MW_fuel)
         capital_cost_ccgt = (
             costs.at["CCGT", "capital_cost"]  # (€/MW_output)
-            * costs.at["CCGT", "efficiency"]  # (MW_output/MW_input)
-        )
+            * costs.at["CCGT", "efficiency"]  # (MW_output/MW_fuel)
+        )  # (€/MW_fuel)
         capital_cost_cc = (
             costs.at["biomass boiler capture", "capital_cost"]  # (€/(tCO2_captured/h))
             * capex_uplift_factor  # increase to specific capture cost because ccgt has lower CO2 conc. than biomass CHP
             * co2_captured  # (tCO2_captured/MWh_fuel)
-        )
+        )  # (€/MW_fuel)
 
         n.add(
             "Link",
