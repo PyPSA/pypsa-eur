@@ -270,7 +270,7 @@ class HeatSource(Enum):
         if self.requires_bus:
             return nodes + f" {self.hp_input_carrier(heat_system)}"
         else:
-            return nodes + f" {heat_system} heat"
+            return ""
 
     def resource_bus(self, nodes, heat_system) -> str:
         """

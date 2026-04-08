@@ -3275,11 +3275,7 @@ def add_heat(
                     .to_pandas()
                 )
 
-                # Utilisation link (reverse operation, p < 0):
-                # Consumes from resource bus (bus1) and hp_output bus (bus2),
-                # produces onto DH heat bus (bus0).
-                # Per unit of source heat: 1 source + b HP → (1 + b) DH heat.
-                # Energy conserved: eff + eff2 = 1/(1+b) + b/(1+b) = 1.
+                # Utilisation link distributes part of heat above return temperature to forward flow and rest to heat pump for boosting
                 n.add(
                     "Link",
                     nodes,
