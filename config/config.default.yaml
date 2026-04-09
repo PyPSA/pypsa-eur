@@ -404,20 +404,28 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 0.01
-  hydro:
-    cutout: default
-    carriers:
-    - ror
-    - PHS
-    - hydro
-    PHS_max_hours: 6
-    hydro_max_hours: energy_capacity_totals_by_country
-    flatten_dispatch: false
-    flatten_dispatch_buffer: 0.2
-    clip_min_inflow: 1.0
-    eia_norm_year: false
-    eia_correct_by_capacity: false
-    eia_approximate_missing: false
+ hydro:
+  cutout: default
+  GloFAS_ERA5:
+   methods: GloFAS  #'GloFAS' for GloFAS-ERA5 methodology instead of ERA5 Runoff
+   q_min: 0.2 # qmin fraction with respect to qmax for RoR conversion
+   eff: 0.85 # mean efficiency for inflow conversion to MW
+   reservoir_subcluster_distance_threshold: 1.0
+   reservoir_subcluster_seasonal_weight: 0.5
+   reservoir_subcluster_inflow_level_weight: 1.75
+   reservoir_subcluster_max_hours_weight: 0.75
+  carriers:
+   - ror
+   - PHS
+   - hydro
+  PHS_max_hours: 6
+  hydro_max_hours: energy_capacity_totals_by_country
+  flatten_dispatch: false
+  flatten_dispatch_buffer: 0.2
+  clip_min_inflow: 1.0
+  eia_norm_year: false
+  eia_correct_by_capacity: false
+  eia_approximate_missing: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -1108,7 +1116,7 @@ clustering:
     hac_features:
     - wnd100m
     - influx_direct
-  exclude_carriers: []
+  exclude_carriers: ["hydro"] #necessary for GloFAS-ERA5 methodology
   consider_efficiency_classes: false
   aggregation_strategies:
     generators:
