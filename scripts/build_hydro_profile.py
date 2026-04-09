@@ -141,85 +141,65 @@ def approximate_missing_eia_stats(
     eia_stats_approximated = pd.DataFrame(eia_stats_approximated)
     return pd.concat([eia_stats, eia_stats_approximated]).sort_index()
 
+
 def add_qmax_turb(hydro_ppls, efficiency, q_min_factor=0.2):
-    
-    #function that adds the maximum and minimum turbinable flow rates for each hydro plant
+    # function that adds the maximum and minimum turbinable flow rates for each hydro plant
 
     hydro_ppls["technology"] = hydro_ppls["technology"].fillna("Run-Of-River")
 
-    #Compute country-level median heads
+    # Compute country-level median heads
     ror_mask = hydro_ppls["technology"] == "Run-Of-River"
     res_mask = hydro_ppls["technology"].isin(["Reservoir", "Pumped Storage"])
 
-    median_ror_country = (
-        hydro_ppls[ror_mask]
-        .groupby("country")["damheight_m"]
-        .median()
-    )
+    median_ror_country = hydro_ppls[ror_mask].groupby("country")["damheight_m"].median()
 
-    median_res_country = (
-        hydro_ppls[res_mask]
-        .groupby("country")["damheight_m"]
-        .median()
-    )
+    median_res_country = hydro_ppls[res_mask].groupby("country")["damheight_m"].median()
 
     # Global fallback medians
     median_ror_global = hydro_ppls.loc[ror_mask, "damheight_m"].median(skipna=True)
     median_res_global = hydro_ppls.loc[res_mask, "damheight_m"].median(skipna=True)
 
-    #Replace NaN heads using country medians for safety
+    # Replace NaN heads using country medians for safety
     mask_nan = hydro_ppls["damheight_m"].isna()
 
     for country in hydro_ppls["country"].unique():
-
         # ROR replacement
-        mask_country_ror = (
-            mask_nan &
-            (hydro_ppls["country"] == country) &
-            ror_mask
-        )
+        mask_country_ror = mask_nan & (hydro_ppls["country"] == country) & ror_mask
 
         country_median = median_ror_country.get(country, median_ror_global)
 
         hydro_ppls.loc[mask_country_ror, "damheight_m"] = country_median
 
         # Reservoir + PHS replacement
-        mask_country_res = (
-            mask_nan &
-            (hydro_ppls["country"] == country) &
-            res_mask
-        )
+        mask_country_res = mask_nan & (hydro_ppls["country"] == country) & res_mask
 
         country_median = median_res_country.get(country, median_res_global)
 
         hydro_ppls.loc[mask_country_res, "damheight_m"] = country_median
 
-
-    #Replace zero or negative heads with non zero value
+    # Replace zero or negative heads with non zero value
     mask_zero_or_neg = hydro_ppls["damheight_m"] <= 0
     hydro_ppls.loc[mask_zero_or_neg, "damheight_m"] = 1.0
 
-    #Compute qmax and qmin
-    hydro_ppls["qmax_turb"] = (
-        hydro_ppls["p_nom"] /
-        (9.81 * hydro_ppls["damheight_m"] * 1e-3 * efficiency)
+    # Compute qmax and qmin
+    hydro_ppls["qmax_turb"] = hydro_ppls["p_nom"] / (
+        9.81 * hydro_ppls["damheight_m"] * 1e-3 * efficiency
     )
 
     hydro_ppls["qmin_turb"] = q_min_factor * hydro_ppls["qmax_turb"]
 
     return hydro_ppls
 
+
 def ror_conversion(ror_plants, inflow_m3s):
-    
-    #function that converts the inflows from ROR plants into relative output (p_max_pu)
-    
+    # function that converts the inflows from ROR plants into relative output (p_max_pu)
+
     plant_ids = ror_plants.index.astype(str).values
     inflow_sel = inflow_m3s.sel(plant=plant_ids).load()
 
     out = xr.zeros_like(inflow_sel)
 
     for pid in plant_ids:
-
         qmax = float(ror_plants.loc[pid, "qmax_turb"])
         qmin = float(ror_plants.loc[pid, "qmin_turb"])
 
@@ -227,24 +207,16 @@ def ror_conversion(ror_plants, inflow_m3s):
 
         denom = (qmax - qmin) if (qmax - qmin) != 0 else 1.0
 
-        p = xr.where(
-            s < qmin,
-            0.0,
-            xr.where(
-                s > qmax,
-                1.0,
-                (s - qmin) / denom
-            )
-        )
+        p = xr.where(s < qmin, 0.0, xr.where(s > qmax, 1.0, (s - qmin) / denom))
 
         out.loc[dict(plant=pid)] = p
 
     df = out.to_dataframe(name="p_max_pu").reset_index()
     return df.pivot(index="time", columns="plant", values="p_max_pu")
 
+
 def reservoir_conversion(res_plants, inflow_m3s, eff):
-    
-    #function that converts the inflows of reservoir plants from flow rate to MW
+    # function that converts the inflows of reservoir plants from flow rate to MW
 
     plant_ids = res_plants.index.astype(str).values
     inflow_sel = inflow_m3s.sel(plant=plant_ids).load()
@@ -252,7 +224,6 @@ def reservoir_conversion(res_plants, inflow_m3s, eff):
     converted = {}
 
     for pid in plant_ids:
-
         head = float(res_plants.loc[pid, "damheight_m"])
 
         q = inflow_sel.sel(plant=pid).values
@@ -332,8 +303,8 @@ if __name__ == "__main__":
 
         # 1️⃣ Load powerplants
         ppls = pd.read_csv(
-            r"/home/dselva/projects/pypsa-eur/resources/Europe_2019_GloFAS_SABER/powerplants_s_100.csv",  #PATHHHHHHH
-            index_col=0
+            r"/home/dselva/projects/pypsa-eur/resources/Europe_2019_GloFAS_SABER/powerplants_s_100.csv",  # PATHHHHHHH
+            index_col=0,
         )
 
         ppls.columns = ppls.columns.str.strip().str.lower()
@@ -344,9 +315,9 @@ if __name__ == "__main__":
         hydro_ppls = hydro_ppls.rename(columns={"capacity": "p_nom"})
         hydro_ppls = add_qmax_turb(hydro_ppls, eff, q_min)
 
-        #Load inflow
+        # Load inflow
         inflow_saber = xr.open_dataarray(
-            r"/home/dselva/projects/pypsa-eur/data/Europe_inflow_2019_SABER_regional.nc" #PATHHHHHH
+            r"/home/dselva/projects/pypsa-eur/data/Europe_inflow_2019_SABER_regional.nc"  # PATHHHHHH
         )
 
         inflow_saber = inflow_saber.assign_coords(
@@ -364,23 +335,19 @@ if __name__ == "__main__":
         # Intersection only
         common_index = inflow_index.intersection(hydro_index)
 
-        print("Common plants:", len(common_index))  #logger
+        print("Common plants:", len(common_index))  # logger
 
         # Check that all hydro plants have inflow
         missing_inflow = hydro_index.difference(inflow_index)
         if len(missing_inflow) > 0:
-            raise ValueError(
-                f"{len(missing_inflow)} hydro plants have no inflow data."
-            )
+            raise ValueError(f"{len(missing_inflow)} hydro plants have no inflow data.")
 
         # Now restrict inflow to matched plants only
         inflow_matched = inflow_saber.sel(plant=common_index)
         hydro_matched = hydro_ppls.loc[common_index]
 
-        #Split technologies
-        ror_plants = hydro_matched[
-            hydro_matched["technology"] == "Run-Of-River"
-        ]
+        # Split technologies
+        ror_plants = hydro_matched[hydro_matched["technology"] == "Run-Of-River"]
 
         reservoir_plants = hydro_matched[
             hydro_matched["technology"].isin(["Reservoir", "Pumped Storage"])
@@ -389,7 +356,7 @@ if __name__ == "__main__":
         inflow_ror = inflow_matched.sel(plant=ror_plants.index)
         inflow_res = inflow_matched.sel(plant=reservoir_plants.index)
 
-        #Convert inflow
+        # Convert inflow
         if not ror_plants.empty:
             p_max_pu_ror = ror_conversion(
                 ror_plants,
@@ -397,13 +364,9 @@ if __name__ == "__main__":
             )
         else:
             p_max_pu_ror = pd.DataFrame()
-        
+
         if not reservoir_plants.empty:
-            inflow_res_mw = reservoir_conversion(
-                reservoir_plants,
-                inflow_res,
-                eff=eff
-            )
+            inflow_res_mw = reservoir_conversion(reservoir_plants, inflow_res, eff=eff)
         else:
             inflow_res_mw = pd.DataFrame()
 
@@ -415,10 +378,10 @@ if __name__ == "__main__":
                 dims=("time", "plant"),
                 coords={
                     "time": p_max_pu_ror.index,
-                    "plant": p_max_pu_ror.columns.values
-                }
+                    "plant": p_max_pu_ror.columns.values,
+                },
             )
-        
+
         if not inflow_res_mw.empty:
             outputs["inflow_reservoir"] = xr.DataArray(
                 inflow_res_mw.values,
@@ -426,16 +389,15 @@ if __name__ == "__main__":
                 coords={
                     "time": inflow_res_mw.index,
                     "plant": inflow_res_mw.columns.values,
-                }
+                },
             )
 
         inflow = xr.Dataset(outputs)
 
         print("Final dataset dims:", inflow.dims)
-        
-    else:
 
-        #Default PyPSA-Eur behaviour
+    else:
+        # Default PyPSA-Eur behaviour
         inflow = cutout.runoff(
             shapes=country_shapes,
             smooth=True,
