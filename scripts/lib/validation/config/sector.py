@@ -8,7 +8,7 @@ Sector configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -222,6 +222,10 @@ class _MethanolConfig(BaseModel):
     biomass_to_methanol_cc: bool = Field(
         False, description="Add biomass to methanol with carbon capture."
     )
+    meoh_to_oa: bool = Field(
+        False,
+        description="Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
+    )
 
 
 class _TransmissionEfficiencyConfig(BaseModel):
@@ -361,6 +365,34 @@ class _ImportsConfig(BaseModel):
         },
         description="Price for importing renewable energy of carrier.",
     )
+
+
+class _EndogenousSectorsConfig(BaseModel):
+    """Configuration for `sector.endogenous_sectors` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Enabling to specify industry subsectors to be modelled endogenously.",
+    )
+    subsectors: list = Field(
+        default_factory=lambda: ["steel", "cement"],
+        description="Energy-intensive industry subsectors that are modelled endogenously.",
+    )
+
+
+class _SteelBOFConfig(BaseModel):
+    """Configuration for `sector.steel_bof` settings."""
+
+    pledge: bool = Field(
+        True,
+        description="Decommissions coal blast furnaces at their pledged phase out year.",
+    )
+    pledge_delay: int = Field(
+        0, description="Delays the decommission year by number of years."
+    )
+
+
+AllowedEndogenousSectors = Literal["steel", "cement"]
 
 
 class SectorConfig(BaseModel):
@@ -909,4 +941,17 @@ class SectorConfig(BaseModel):
     )
     imports: _ImportsConfig = Field(
         default_factory=_ImportsConfig, description="Imports configuration."
+    )
+
+    # Endogenous sectors
+    endogenous_sectors: _EndogenousSectorsConfig = Field(
+        default_factory=_EndogenousSectorsConfig,
+        description="Sectors modelled endogenously.",
+    )
+    hbi_relocation: bool = Field(
+        False,
+        description="Allow the relocation of iron ore reduction step.",
+    )
+    steel_bof: _SteelBOFConfig = Field(
+        default_factory=_SteelBOFConfig, description="Steel BOF configuration."
     )
