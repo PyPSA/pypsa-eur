@@ -20,6 +20,8 @@ Release Notes
 
 * perf: Optimize dask settings for computing weather-dependent profiles (https://github.com/PyPSA/pypsa-eur/pull/2137).
 
+* Fix xarray ``FutureWarning`` about implicit MultiIndex promotion in ``build_renewable_profiles`` (https://github.com/PyPSA/pypsa-eur/pull/2144).
+
 PyPSA-Eur v2026.02.0 (18th February 2026)
 =========================================
 
