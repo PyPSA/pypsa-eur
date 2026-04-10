@@ -137,9 +137,6 @@ if __name__ == "__main__":
     correction_factor = params.get("correction_factor", 1.0)
     capacity_per_sqkm = params["capacity_per_sqkm"]
 
-    if correction_factor != 1.0:
-        logger.info(f"correction_factor is set as {correction_factor}")
-
     dask_kwargs = setup_dask(nprocesses)
 
     sns = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
@@ -171,9 +168,6 @@ if __name__ == "__main__":
 
     func = getattr(cutout, resource.pop("method"))
 
-    logger.info(
-        f"Calculate average capacity factor per grid cell for technology {technology}..."
-    )
     start = time.time()
 
     capacity_factor = correction_factor * func(
@@ -188,9 +182,6 @@ if __name__ == "__main__":
     )
 
     nbins = params.get("resource_classes", 1)
-    logger.info(
-        f"Create masks for {nbins} resource classes for technology {technology}..."
-    )
     start = time.time()
 
     fn = snakemake.input.resource_regions
@@ -247,9 +238,6 @@ if __name__ == "__main__":
 
     profiles = []
     for year, model in models.items():
-        logger.info(
-            f"Calculate weighted capacity factor time series for model {model} for technology {technology}..."
-        )
         start = time.time()
 
         resource[tech] = model
@@ -258,16 +246,18 @@ if __name__ == "__main__":
             bus_bin=["bus", "bin"], spatial=["y", "x"]
         )
 
+        bus_bin_mi = matrix.indexes["bus_bin"]
         profile = func(
             matrix=matrix,
             layout=layout,
-            index=matrix.indexes["bus_bin"],
+            index=pd.RangeIndex(len(bus_bin_mi)),
             per_unit=True,
             return_capacity=False,
             dask_kwargs=dask_kwargs,
             **resource,
         )
-        profile = profile.unstack("bus_bin")
+        mindex_coords = xr.Coordinates.from_pandas_multiindex(bus_bin_mi, "dim_0")
+        profile = profile.assign_coords(mindex_coords).unstack("dim_0")
 
         dim = {"year": [year]}
         profile = profile.expand_dims(dim)
@@ -281,10 +271,8 @@ if __name__ == "__main__":
 
     profiles = xr.merge(profiles)
 
-    logger.info(f"Calculating maximal capacity per bus for technology {technology}")
     p_nom_max = capacity_per_sqkm * availability * class_masks @ area
 
-    logger.info(f"Calculate average distances for technology {technology}.")
     layoutmatrix = (layout * availability * class_masks).stack(
         bus_bin=["bus", "bin"], spatial=["y", "x"]
     )
