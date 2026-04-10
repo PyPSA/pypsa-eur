@@ -20,6 +20,7 @@ Release Notes
 
 * perf: Optimize dask settings for computing weather-dependent profiles (https://github.com/PyPSA/pypsa-eur/pull/2137).
 
+* Update heat source handling in `prepare_sector_network` and introduce preheating of heat sources for more realistic system integrations (https://github.com/PyPSA/pypsa-eur/pull/1893).
 PyPSA-Eur v2026.02.0 (18th February 2026)
 =========================================
 
