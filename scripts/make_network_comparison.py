@@ -219,9 +219,11 @@ def prepare_comparison_data(
                 value_name="length",
             )
             .assign(
-                parameter=lambda df: df["parameter"]
-                .str.replace(col_prefix, "", regex=False)
-                .map(label_map)
+                parameter=lambda df: (
+                    df["parameter"]
+                    .str.replace(col_prefix, "", regex=False)
+                    .map(label_map)
+                )
             )
         )
 
