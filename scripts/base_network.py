@@ -1492,6 +1492,20 @@ def build_admin_shapes(
                 .map(country_level)
                 .map(level_map)
             )
+        
+        # Overwrite if more specified subregions are available
+        subregion_level = {
+            k: v for k, v in admin_levels.items() if (k != "level") and (k[:2] in countries) and len(k)>2
+        }
+        if subregion_level:
+            subregion_level_list = "\n".join(
+                [f"- {k}: level {v}" for k, v in subregion_level.items()]
+            )
+            logger.info(
+                f"Setting individual administrative levels for subregions:\n{subregion_level_list}"
+            )
+            for k, v in subregion_level.items():
+                nuts3_regions.loc[nuts3_regions.index.str.startswith(k), "column"] = level_map[v]
 
         # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
         if "GB" in countries and level != "bz":
