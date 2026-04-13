@@ -1469,41 +1469,22 @@ def build_admin_shapes(
 
     if clustering == "administrative":
         logger.info(f"Building bus regions at administrative level {level}")
-
         nuts3_regions["column"] = level_map[level]
 
-        # Only keep the values whose keys are in countries
-        country_level = {
-            k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
-        }
+        countries_config = admin_levels.get("countries", {})
+        country_level = {k: v for k, v in countries_config.items() if len(k) == 2 and k in countries}
+        subregion_level = {k: v for k, v in countries_config.items() if len(k) > 2 and k[:2] in countries}
+
         if country_level:
-            country_level_list = "\n".join(
-                [f"- {k}: level {v}" for k, v in country_level.items()]
-            )
-            logger.info(
-                f"Setting individual administrative levels for:\n{country_level_list}"
-            )
-            nuts3_regions.loc[
-                nuts3_regions["country"].isin(country_level.keys()), "column"
-            ] = (
-                nuts3_regions.loc[
-                    nuts3_regions["country"].isin(country_level.keys()), "country"
-                ]
+            logger.info("Setting individual administrative levels for:\n" + "\n".join(f"- {k}: level {v}" for k, v in country_level.items()))
+            nuts3_regions.loc[nuts3_regions["country"].isin(country_level), "column"] = (
+                nuts3_regions.loc[nuts3_regions["country"].isin(country_level), "country"]
                 .map(country_level)
                 .map(level_map)
             )
-        
-        # Overwrite if more specified subregions are available
-        subregion_level = {
-            k: v for k, v in admin_levels.items() if (k != "level") and (k[:2] in countries) and len(k)>2
-        }
+
         if subregion_level:
-            subregion_level_list = "\n".join(
-                [f"- {k}: level {v}" for k, v in subregion_level.items()]
-            )
-            logger.info(
-                f"Setting individual administrative levels for subregions:\n{subregion_level_list}"
-            )
+            logger.info("Setting individual administrative levels for subregions:\n" + "\n".join(f"- {k}: level {v}" for k, v in subregion_level.items()))
             for k, v in subregion_level.items():
                 nuts3_regions.loc[nuts3_regions.index.str.startswith(k), "column"] = level_map[v]
 
