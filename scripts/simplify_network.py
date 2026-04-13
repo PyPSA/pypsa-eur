@@ -135,13 +135,14 @@ def simplify_links(
 
         seen = set()
 
-        # Supernodes are endpoints of links, identified by having lass then two neighbours or being an AC Bus
-        # An example for the latter is if two different links are connected to the same AC bus.
+        # Supernodes are buses that are not simple chain nodes within the component.
+        # A chain node has degree 2 inside the component; endpoints (degree 1),
+        # junctions (degree >=3), and AC buses are kept as supernodes.
         supernodes = {
             m
             for m in nodes
             if (
-                (len(G.adj[m]) < 2 or (set(G.adj[m]) - nodes))
+                (len(set(G.adj[m]) & nodes) != 2)
                 or (n.buses.loc[m, "carrier"] == "AC")
                 or (m in added_supernodes)
             )
