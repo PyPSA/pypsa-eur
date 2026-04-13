@@ -1105,6 +1105,7 @@ clustering:
     remove_stubs_across_borders: false
   cluster_network:
     algorithm: kmeans
+    allow_ac_dc_mix: true
     hac_features:
     - wnd100m
     - influx_direct

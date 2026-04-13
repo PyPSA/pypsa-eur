@@ -431,6 +431,35 @@ def clustering_for_n_clusters(
     return clustering
 
 
+def apply_carrier_mixing_policy(
+    n: pypsa.Network, busmap: pd.Series, allow_ac_dc_mix: bool
+) -> pd.Series:
+    """Apply carrier mixing policy to a busmap before clustering."""
+    busmap = busmap.astype(str)
+    carrier_by_bus = n.buses.carrier.reindex(busmap.index).astype(str)
+
+    mixed_clusters = (
+        carrier_by_bus.groupby(busmap).nunique().loc[lambda s: s > 1].index
+    )
+
+    if allow_ac_dc_mix:
+        if len(mixed_clusters):
+            logger.warning(
+                "`allow_ac_dc_mix` is enabled. Coercing bus carrier to AC in %s mixed clusters.",
+                len(mixed_clusters),
+            )
+            mixed_bus_i = busmap.index[busmap.isin(mixed_clusters)]
+            n.buses.loc[mixed_bus_i, "carrier"] = "AC"
+        return busmap
+
+    if len(mixed_clusters):
+        logger.info(
+            "Splitting %s mixed AC/DC clusters by carrier before aggregation.",
+            len(mixed_clusters),
+        )
+    return busmap.str.cat(carrier_by_bus, sep="::")
+
+
 def cluster_regions(
     busmaps: tuple | list, regions: gpd.GeoDataFrame, with_country: bool = False
 ) -> gpd.GeoDataFrame:
@@ -516,7 +545,7 @@ def busmap_for_admin_regions(
             buses_subset.to_crs(epsg=3857),
             admin_regions.loc[admin_regions["country"] == country].to_crs(epsg=3857),
             how="left",
-        )["admin"]
+        )["admin"].astype(str)
 
     return buses["busmap"]
 
@@ -586,10 +615,11 @@ def update_bus_coordinates(
     admin_regions["y"] = admin_regions["poi"].y
 
     busmap_df = pd.DataFrame(busmap)
+    busmap_df["admin"] = busmap_df["busmap"].astype(str).str.split("::", n=1).str[0]
     busmap_df = pd.merge(
         busmap_df,
         admin_regions[["x", "y"]],
-        left_on="busmap",
+        left_on="admin",
         right_index=True,
         how="left",
     )
@@ -603,7 +633,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", clusters=60)
+        snakemake = mock_snakemake("cluster_network", clusters=50)
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -685,6 +715,9 @@ if __name__ == "__main__":
                 algorithm=algorithm,
                 features=features,
             )
+
+        allow_ac_dc_mix = params.cluster_network.get("allow_ac_dc_mix", False)
+        busmap = apply_carrier_mixing_policy(n, busmap, allow_ac_dc_mix)
 
         clustering = clustering_for_n_clusters(
             n,
