@@ -1472,21 +1472,39 @@ def build_admin_shapes(
         nuts3_regions["column"] = level_map[level]
 
         countries_config = admin_levels.get("countries", {})
-        country_level = {k: v for k, v in countries_config.items() if len(k) == 2 and k in countries}
-        subregion_level = {k: v for k, v in countries_config.items() if len(k) > 2 and k[:2] in countries}
+        country_level = {
+            k: v for k, v in countries_config.items() if len(k) == 2 and k in countries
+        }
+        subregion_level = {
+            k: v
+            for k, v in countries_config.items()
+            if len(k) > 2 and k[:2] in countries
+        }
 
         if country_level:
-            logger.info("Setting individual administrative levels for:\n" + "\n".join(f"- {k}: level {v}" for k, v in country_level.items()))
-            nuts3_regions.loc[nuts3_regions["country"].isin(country_level), "column"] = (
-                nuts3_regions.loc[nuts3_regions["country"].isin(country_level), "country"]
+            logger.info(
+                "Setting individual administrative levels for:\n"
+                + "\n".join(f"- {k}: level {v}" for k, v in country_level.items())
+            )
+            nuts3_regions.loc[
+                nuts3_regions["country"].isin(country_level), "column"
+            ] = (
+                nuts3_regions.loc[
+                    nuts3_regions["country"].isin(country_level), "country"
+                ]
                 .map(country_level)
                 .map(level_map)
             )
 
         if subregion_level:
-            logger.info("Setting individual administrative levels for subregions:\n" + "\n".join(f"- {k}: level {v}" for k, v in subregion_level.items()))
+            logger.info(
+                "Setting individual administrative levels for subregions:\n"
+                + "\n".join(f"- {k}: level {v}" for k, v in subregion_level.items())
+            )
             for k, v in subregion_level.items():
-                nuts3_regions.loc[nuts3_regions.index.str.startswith(k), "column"] = level_map[v]
+                nuts3_regions.loc[nuts3_regions.index.str.startswith(k), "column"] = (
+                    level_map[v]
+                )
 
         # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
         if "GB" in countries and level != "bz":
