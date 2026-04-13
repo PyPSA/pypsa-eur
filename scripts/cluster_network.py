@@ -438,9 +438,7 @@ def apply_carrier_mixing_policy(
     busmap = busmap.astype(str)
     carrier_by_bus = n.buses.carrier.reindex(busmap.index).astype(str)
 
-    mixed_clusters = (
-        carrier_by_bus.groupby(busmap).nunique().loc[lambda s: s > 1].index
-    )
+    mixed_clusters = carrier_by_bus.groupby(busmap).nunique().loc[lambda s: s > 1].index
 
     if allow_ac_dc_mix:
         if len(mixed_clusters):
