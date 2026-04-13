@@ -3232,15 +3232,19 @@ def add_heat(
             costs_name_heat_pump = heat_system.heat_pump_costs_name(heat_source)
 
             cop_heat_pump = (
-                cop.sel(
-                    heat_system=heat_system.system_type.value,
-                    heat_source=heat_source.value,
-                    name=nodes,
+                (
+                    cop.sel(
+                        heat_system=heat_system.system_type.value,
+                        heat_source=heat_source.value,
+                        name=nodes,
+                    )
+                    .transpose("time", "name")
+                    .to_pandas()
+                    if options["time_dep_hp_cop"]
+                    else costs.loc[[costs_name_heat_pump], ["efficiency"]]
                 )
-                .transpose("time", "name")
-                .to_pandas()
-                if options["time_dep_hp_cop"]
-                else costs.loc[[costs_name_heat_pump], ["efficiency"]]
+                .clip(lower=0.001)
+                .squeeze()
             )
 
             heat_carrier = heat_source.heat_carrier(heat_system)
@@ -3257,33 +3261,41 @@ def add_heat(
 
                 n.add(
                     "Carrier",
-                    heat_source.hp_input_carrier(heat_system),
+                    heat_source.intermediate_carrier(heat_system),
                 )
                 n.add(
                     "Bus",
-                    heat_source.hp_input_bus(nodes, heat_system),
+                    nodes + f" {heat_source.intermediate_carrier(heat_system)}",
                     location=nodes,
-                    carrier=heat_source.hp_input_carrier(heat_system),
+                    carrier=heat_source.intermediate_carrier(heat_system),
                 )
 
-                boosting_profile = (
-                    heat_source_boosting_profile.sel(
-                        heat_source=heat_source.value, name=nodes
+                if heat_source.supports_preheating:
+                    boosting_profile = (
+                        heat_source_boosting_profile.sel(
+                            heat_source=heat_source.value, name=nodes
+                        )
+                        .transpose("time", "name")
+                        .to_pandas()
                     )
-                    .transpose("time", "name")
-                    .to_pandas()
-                )
-
-                # Utilisation link distributes part of heat above return temperature to forward flow and rest to heat pump for boosting
+                # Utilisation link: resource_bus → DH heat + intermediate_bus
+                # Preheating: source directly heats DH (eff=1+b), HP boosts remainder (eff2=-b)
+                # Evaporator: all source → HP cold side (eff=0, eff2=1)
                 n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat utilisation",
                     bus0=heat_source.resource_bus(nodes, heat_system),
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=heat_source.hp_input_bus(nodes, heat_system),
-                    efficiency=1 - boosting_profile,
-                    efficiency2=boosting_profile,
+                    bus2=nodes + f" {heat_source.intermediate_carrier(heat_system)}",
+                    efficiency=1 + boosting_profile / cop_heat_pump
+                    if heat_source.supports_preheating
+                    else 0,
+                    efficiency2=-boosting_profile
+                    * cop_heat_pump
+                    / (boosting_profile + cop_heat_pump)
+                    if heat_source.supports_preheating
+                    else 1,
                     carrier=f"{heat_system} {heat_source} heat utilisation",
                     p_nom_extendable=True,
                 )
@@ -3325,18 +3337,16 @@ def add_heat(
                     "ptes"
                 ]["discharge_resistive_boosting"]
             ):
-                # Inexhaustible sources (air, ground): simple HP → DH heat bus.
-                # For limited sources the HP is added inside the requires_bus block above.
                 n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes + f" {heat_system} heat",
+                    bus0=heat_source.hp_output_bus(nodes, heat_system),
                     bus1=nodes,
-                    bus2=heat_source.hp_input_bus(nodes, heat_system),
+                    bus2=heat_source.intermediate_bus(nodes, heat_system),
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=1 / cop_heat_pump.clip(lower=0.001).squeeze(),
-                    efficiency2=1 - 1 / cop_heat_pump.clip(lower=0.001).squeeze(),
+                    efficiency=1 / cop_heat_pump,
+                    efficiency2=heat_source.hp_eff2(cop_heat_pump),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_min_pu=-(cop_heat_pump > 0).squeeze().astype(float),
@@ -3378,11 +3388,13 @@ def add_heat(
                     suffix=f" {heat_system} water pits resistive booster",
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes + f" {heat_system} resistive heat",
-                    bus2=ptes_heat_source.hp_input_bus(nodes, heat_system),
-                    efficiency=boosting_profile / (boosting_profile + 1),
-                    efficiency2=1 / (boosting_profile + 1),
+                    bus2=nodes
+                    + f" {ptes_heat_source.intermediate_carrier(heat_system)}",
+                    efficiency=0.5,
+                    efficiency2=0.5,
                     p_nom_extendable=True,
-                    p_min_pu=-(boosting_profile > 0).astype(float),
+                    p_max_pu=0,
+                    p_min_pu=-1,
                     carrier=f"{heat_system} water pits resistive booster",
                 )
 
