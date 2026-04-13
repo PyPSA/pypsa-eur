@@ -488,7 +488,7 @@
               "additionalProperties": {
                 "type": "integer"
               },
-              "description": "Optionally include dictionary of individual country or NUTS codes and their individual resolution. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2, 'DEA': 3}`. Only applies when mode is set to `administrative`.",
+              "description": "Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`.",
               "type": "object"
             }
           }
