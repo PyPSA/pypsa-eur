@@ -20,6 +20,8 @@ Release Notes
 
 * perf: Optimize dask settings for computing weather-dependent profiles (https://github.com/PyPSA/pypsa-eur/pull/2137).
 
+* Fix: correct definition of `marginal_cost` for those links were `vom` values from technology cost datasets are defined per units of output (e.g., electricity) (https://github.com/PyPSA/pypsa-eur/pull/2154).
+
 PyPSA-Eur v2026.02.0 (18th February 2026)
 =========================================
 
