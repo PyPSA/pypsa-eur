@@ -18,6 +18,35 @@ more likely to represent direct connections. A minimum degree
 constraint can be enforced to ensure network connectivity and to avoid
 stubs.
 
+Outputs
+-------
+Two GeoJSON files in WGS84 (EPSG:4326) format are written per carrier and cluster configuration:
+
+1. ``all_edges``
+     Full Delaunay edge table (one row per Delaunay edge) with columns:
+
+     - ``name``: Canonical undirected edge identifier ``"bus0 -> bus1"``.
+     - ``bus0``: Canonically ordered first bus id (lexicographic order).
+     - ``bus1``: Canonically ordered second bus id.
+     - ``length``: Great-circle edge length in km multiplied by
+         ``length_factor``.
+     - ``gabriel_edge``: ``True`` if the edge satisfies the Gabriel empty
+         circle criterion.
+     - ``selected_edge``: ``True`` if the edge is part of the final
+         candidate set after filtering/backfilling.
+     - ``geometry``: LineString geometry in ``EPSG:4326``.
+
+2. ``candidates``
+     Selected candidate corridor table (subset of Delaunay edges) with
+     columns:
+
+     - ``name``
+     - ``bus0``
+     - ``bus1``
+     - ``length``
+     - ``gabriel_edge``
+     - ``geometry``
+
 """
 
 from __future__ import annotations
@@ -445,9 +474,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_transmission",
             carrier="carbon_dioxide",
-            clusters="adm",
-            run="test",
-            configfiles=["config/config.nrw.yaml"],
+            clusters="200",
+            run="nodes200",
+            configfiles=["config/config.200.yaml"],
         )
 
     configure_logging(snakemake)
