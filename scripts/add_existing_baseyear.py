@@ -417,7 +417,8 @@ def add_power_capacities_installed_before_baseyear(
                         p_nom=new_capacity / costs.at[key, "efficiency"],
                         capital_cost=costs.at[key, "capital_cost"]
                         * costs.at[key, "efficiency"],
-                        marginal_cost=costs.at[key, "VOM"],
+                        marginal_cost=costs.at[key, "efficiency"]
+                        * costs.at[key, "VOM"],  # NB: VOM is per MWel
                         efficiency=costs.at[key, "efficiency"],
                         build_year=grouping_year,
                         efficiency2=costs.at[key, "efficiency-heat"],
