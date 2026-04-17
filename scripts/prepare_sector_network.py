@@ -1092,7 +1092,8 @@ def add_methanol_to_power(n, costs, pop_layout, types=None):
             carrier="CCGT methanol",
             p_nom_extendable=True,
             capital_cost=capital_cost,
-            marginal_cost=costs.at["CCGT", "VOM"] * costs.at["CCGT", "efficiency"],  # NB: VOM is per MWel
+            marginal_cost=costs.at["CCGT", "VOM"]
+            * costs.at["CCGT", "efficiency"],  # NB: VOM is per MWel
             efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
             lifetime=costs.at["CCGT", "lifetime"],
@@ -1125,7 +1126,8 @@ def add_methanol_to_power(n, costs, pop_layout, types=None):
             carrier="CCGT methanol CC",
             p_nom_extendable=True,
             capital_cost=capital_cost_cc,
-            marginal_cost=costs.at["CCGT", "VOM"] * costs.at["CCGT", "efficiency"],  # NB: VOM is per MWel
+            marginal_cost=costs.at["CCGT", "VOM"]
+            * costs.at["CCGT", "efficiency"],  # NB: VOM is per MWel
             efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["cement capture", "capture_rate"]
             * costs.at["methanolisation", "carbondioxide-input"],
@@ -1866,7 +1868,8 @@ def add_h2_gas_infrastructure(
             efficiency=costs.at["OCGT", "efficiency"],
             capital_cost=costs.at["OCGT", "capital_cost"]
             * costs.at["OCGT", "efficiency"],  # NB: fixed cost is per MWel
-            marginal_cost=costs.at["OCGT", "VOM"] * costs.at["OCGT", "efficiency"],  # NB: VOM is per MWel
+            marginal_cost=costs.at["OCGT", "VOM"]
+            * costs.at["OCGT", "efficiency"],  # NB: VOM is per MWel
             lifetime=costs.at["OCGT", "lifetime"],
         )
 
@@ -3477,7 +3480,8 @@ def add_heat(
                     p_nom_extendable=True,
                     capital_cost=costs.at["central gas CHP", "capital_cost"]
                     * costs.at["central gas CHP", "efficiency"],
-                    marginal_cost=costs.at["central gas CHP", "VOM"] * costs.at["central gas CHP", "efficiency"],  # NB: VOM is per MWel
+                    marginal_cost=costs.at["central gas CHP", "VOM"]
+                    * costs.at["central gas CHP", "efficiency"],  # NB: VOM is per MWel
                     efficiency=costs.at["central gas CHP", "efficiency"],
                     efficiency2=costs.at["central gas CHP", "efficiency"]
                     / costs.at["central gas CHP", "c_b"],
@@ -3499,7 +3503,8 @@ def add_heat(
                     * costs.at["central gas CHP", "efficiency"]
                     + costs.at["biomass CHP capture", "capital_cost"]
                     * costs.at[fuel, "CO2 intensity"],
-                    marginal_cost=costs.at["central gas CHP", "VOM"] * costs.at["central gas CHP", "efficiency"],  # NB: VOM is per MWel
+                    marginal_cost=costs.at["central gas CHP", "VOM"]
+                    * costs.at["central gas CHP", "efficiency"],  # NB: VOM is per MWel
                     efficiency=costs.at["central gas CHP", "efficiency"]
                     - costs.at[fuel, "CO2 intensity"]
                     * (
@@ -4050,7 +4055,8 @@ def add_biomass(
             carrier="biogas to gas",
             capital_cost=costs.at["biogas", "capital_cost"]
             + costs.at["biogas upgrading", "capital_cost"],
-            marginal_cost=costs.at["biogas", "efficiency"] * costs.at["biogas upgrading", "VOM"],  # NB: VOM is per MWh output
+            marginal_cost=costs.at["biogas", "efficiency"]
+            * costs.at["biogas upgrading", "VOM"],  # NB: VOM is per MWh output
             efficiency=costs.at["biogas", "efficiency"],
             efficiency2=-costs.at["gas", "CO2 intensity"],
             p_nom_extendable=True,
@@ -4073,8 +4079,10 @@ def add_biomass(
             + costs.at["biogas upgrading", "capital_cost"]
             + costs.at["biomass CHP capture", "capital_cost"]
             * costs.at["biogas CC", "CO2 stored"],
-            marginal_cost=costs.at["biogas CC", "VOM"] * costs.at["biogas CC", "efficiency"]
-            + costs.at["biogas upgrading", "VOM"] * costs.at["biogas", "efficiency"],  # NB: VOM is per MWh output
+            marginal_cost=costs.at["biogas CC", "VOM"]
+            * costs.at["biogas CC", "efficiency"]
+            + costs.at["biogas upgrading", "VOM"]
+            * costs.at["biogas", "efficiency"],  # NB: VOM is per MWh output
             efficiency=costs.at["biogas CC", "efficiency"],
             efficiency2=costs.at["biogas CC", "CO2 stored"]
             * costs.at["biogas CC", "capture rate"],
@@ -4231,7 +4239,8 @@ def add_biomass(
             carrier="urban central solid biomass CHP",
             p_nom_extendable=True,
             capital_cost=costs.at[key, "capital_cost"] * costs.at[key, "efficiency"],
-            marginal_cost=costs.at[key, "VOM"] * costs.at[key, "efficiency"],  # NB: VOM is per MWel
+            marginal_cost=costs.at[key, "VOM"]
+            * costs.at[key, "efficiency"],  # NB: VOM is per MWel
             efficiency=costs.at[key, "efficiency"],
             efficiency2=costs.at[key, "efficiency-heat"],
             lifetime=costs.at[key, "lifetime"],
@@ -4251,7 +4260,8 @@ def add_biomass(
             * costs.at[key + " CC", "efficiency"]
             + costs.at["biomass CHP capture", "capital_cost"]
             * costs.at["solid biomass", "CO2 intensity"],
-            marginal_cost=costs.at[key + " CC", "efficiency"] * costs.at[key + " CC", "VOM"],  # NB: VOM is per MWel
+            marginal_cost=costs.at[key + " CC", "efficiency"]
+            * costs.at[key + " CC", "VOM"],  # NB: VOM is per MWel
             efficiency=costs.at[key + " CC", "efficiency"]
             - costs.at["solid biomass", "CO2 intensity"]
             * (
