@@ -288,6 +288,28 @@ Switches for some rules and optional features.
    :start-at: electricity:
    :end-before: # docs
 
+.. _transmission_cf:
+
+``transmission``
+================
+
+Configure transmission related settings for all carriers.
+
+For non electric carriers, the transmission candidates are built based on
+Delaunay triangulation and optional Gabriel filtering. The minimum degree
+specifies the minimum connectedness of the candidate graph.
+
+.. jsonschema:: ../config/schema.default.json#/$defs/TransmissionConfig
+   :lift_description:
+   :hide_key: /**/additionalProperties
+
+**YAML Syntax**
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: transmission:
+   :end-before: # docs
+
 .. _atlite_cf:
 
 ``atlite``

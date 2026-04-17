@@ -184,6 +184,21 @@ electricity:
     by_country: false
   transmission_limit: vopt
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission
+transmission:
+  hydrogen:
+    enable: true
+    gabriel_filter:
+      enable: true
+      min_degree: 1
+    length_factor: 1.25
+  carbon_dioxide:
+    enable: true
+    gabriel_filter:
+      enable: true
+      min_degree: 1
+    length_factor: 1.25
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: "europe-2013-sarah3-era5"

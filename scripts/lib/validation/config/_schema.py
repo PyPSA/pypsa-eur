@@ -36,6 +36,7 @@ from scripts.lib.validation.config.snapshots import SnapshotsConfig
 from scripts.lib.validation.config.solar_thermal import SolarThermalConfig
 from scripts.lib.validation.config.solving import SolvingConfig
 from scripts.lib.validation.config.transformers import TransformersConfig
+from scripts.lib.validation.config.transmission import TransmissionConfig
 from scripts.lib.validation.config.transmission_projects import (
     TransmissionProjectsConfig,
 )
@@ -131,6 +132,10 @@ class ConfigSchema(BaseModel):
     electricity: ElectricityConfig = Field(
         default_factory=ElectricityConfig,
         description="Electricity sector configuration.",
+    )
+    transmission: TransmissionConfig = Field(
+        default_factory=TransmissionConfig,
+        description="Transmission candidate configuration.",
     )
     atlite: AtliteConfig = Field(
         default_factory=AtliteConfig,

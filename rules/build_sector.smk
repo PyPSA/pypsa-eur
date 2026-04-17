@@ -146,6 +146,47 @@ rule cluster_gas_network:
         scripts("cluster_gas_network.py")
 
 
+rule build_transmission:
+    message:
+        "Building transmission candidates for {wildcards.carrier} and {wildcards.clusters} clusters"
+    wildcard_constraints:
+        carrier="hydrogen|carbon_dioxide",
+    params:
+        carrier_enabled=lambda w: config_provider(
+            "transmission", w.carrier, "enable"
+        )(w),
+        gabriel_filter_enabled=lambda w: config_provider(
+            "transmission",
+            w.carrier,
+            "gabriel_filter",
+            "enable",
+        )(w),
+        min_degree=lambda w: config_provider(
+            "transmission",
+            w.carrier,
+            "gabriel_filter",
+            "min_degree",
+        )(w),
+        length_factor=lambda w: config_provider(
+            "transmission",
+            w.carrier,
+            "length_factor",
+        )(w),
+    input:
+        network=resources("networks/base_s_{clusters}.nc"),
+    output:
+        all_edges=resources("transmission/{carrier}_all_edges_{clusters}.geojson"),
+        candidates=resources("transmission/{carrier}_candidates_{clusters}.geojson"),
+    resources:
+        mem_mb=4000,
+    log:
+        logs("build_transmission_{carrier}_{clusters}.log"),
+    benchmark:
+        benchmarks("build_transmission/{carrier}_{clusters}")
+    script:
+        scripts("build_transmission.py")
+
+
 rule build_daily_heat_demand:
     input:
         pop_layout=resources("pop_layout_total.nc"),
