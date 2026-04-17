@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build transmission corridor topology/candidates from clustered network 
-bus coordinates using Delaunay triangulation and optional Gabriel graph 
+Build transmission corridor topology/candidates from clustered network
+bus coordinates using Delaunay triangulation and optional Gabriel graph
 filtering.
 
 Description
@@ -12,10 +12,10 @@ Description
 Creates the topology for potential investment corridors between
 clustered buses, i.e. for H2 and CO2 pipeline candidates.
 
-The script computes the Delaunay triangulation of the bus coordinates 
-and optionally filters edges to retain only Gabriel edges, which are 
-more likely to represent direct connections. A minimum degree 
-constraint can be enforced to ensure network connectivity and to avoid 
+The script computes the Delaunay triangulation of the bus coordinates
+and optionally filters edges to retain only Gabriel edges, which are
+more likely to represent direct connections. A minimum degree
+constraint can be enforced to ensure network connectivity and to avoid
 stubs.
 
 """
@@ -28,8 +28,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.geo import haversine_pts
 from numpy.typing import NDArray
+from pypsa.geo import haversine_pts
 from scipy.spatial import Delaunay, QhullError
 from shapely.geometry import LineString
 
@@ -50,7 +50,8 @@ COLS_EDGES = [
 
 
 def delaunay_edges(coords_meter: NDArray[np.float64]) -> list[tuple[int, int]]:
-    """Build sorted unique undirected edges from Delaunay simplices.
+    """
+    Build sorted unique undirected edges from Delaunay simplices.
 
     Parameters
     ----------
@@ -85,7 +86,8 @@ def delaunay_edges(coords_meter: NDArray[np.float64]) -> list[tuple[int, int]]:
 
 
 def pairwise_sq_dists(coords: NDArray[np.float64]) -> NDArray[np.float64]:
-    """Compute the squared Euclidean distance matrix.
+    """
+    Compute the squared Euclidean distance matrix.
 
     Parameters
     ----------
@@ -109,7 +111,8 @@ def classify_gabriel_edges(
     eps: float = 1e-9,
     chunk_size: int = 1024,
 ) -> NDArray[np.bool_]:
-    """Classify candidate edges as Gabriel or non-Gabriel.
+    """
+    Classify candidate edges as Gabriel or non-Gabriel.
 
     Parameters
     ----------
@@ -151,7 +154,8 @@ def classify_gabriel_edges(
 def get_bus_coordinates(
     n: pypsa.Network,
 ) -> tuple[pd.Index, NDArray[np.float64], NDArray[np.float64]]:
-    """Extract bus ids and coordinates in geographic and metric CRS.
+    """
+    Extract bus ids and coordinates in geographic and metric CRS.
 
     Parameters
     ----------
@@ -194,7 +198,8 @@ def delaunay_triangulation(
     coords_meter: NDArray[np.float64],
     length_factor: float = 1.25,
 ) -> gpd.GeoDataFrame:
-    """Build the full Delaunay edge table with geometry and metadata.
+    """
+    Build the full Delaunay edge table with geometry and metadata.
 
     Parameters
     ----------
@@ -209,7 +214,7 @@ def delaunay_triangulation(
     -------
     gpd.GeoDataFrame
         Delaunay edge table including integer node endpoints, normalized bus
-        names, canonical edge ``name``, ``length`` (haversine distance, km), 
+        names, canonical edge ``name``, ``length`` (haversine distance, km),
         ``gabriel_edge`` flag, and LineString geometry.
     """
 
@@ -220,7 +225,7 @@ def delaunay_triangulation(
 
     logger.info("Compute Delaunay triangulation with %s edges.", len(edges))
     logger.info("Calculating edge lengths using length factor %.2f.", length_factor)
-    lengths = haversine_pts(coords_geo[u], coords_geo[v])*length_factor
+    lengths = haversine_pts(coords_geo[u], coords_geo[v]) * length_factor
     gabriel_flags = classify_gabriel_edges(edges_arr, coords_meter)
     edge_geoms = [LineString([coords_geo[i], coords_geo[j]]) for i, j in edges]
 
@@ -261,7 +266,8 @@ def enforce_min_degree(
     node_count: int,
     min_degree: int,
 ) -> gpd.GeoDataFrame:
-    """Add shortest Delaunay edges to satisfy a minimum node degree.
+    """
+    Add shortest Delaunay edges to satisfy a minimum node degree.
 
     Iterates over all Delaunay edges in ascending order of length and adds
     edges to the selected set until every node reaches the requested minimum
@@ -372,7 +378,8 @@ def prepare_candidate_edges(
     node_count: int,
     min_degree: int,
 ) -> gpd.GeoDataFrame:
-    """Build selected candidate edges from a Delaunay edge table.
+    """
+    Build selected candidate edges from a Delaunay edge table.
 
     Parameters
     ----------
@@ -409,7 +416,8 @@ def mark_selected_edges(
     delaunay_graph: gpd.GeoDataFrame,
     selected_edges: gpd.GeoDataFrame,
 ) -> gpd.GeoDataFrame:
-    """Annotate all Delaunay edges with selection membership.
+    """
+    Annotate all Delaunay edges with selection membership.
 
     Parameters
     ----------
@@ -439,7 +447,7 @@ if __name__ == "__main__":
             carrier="carbon_dioxide",
             clusters="adm",
             run="test",
-            configfiles=["config/config.nrw.yaml"]
+            configfiles=["config/config.nrw.yaml"],
         )
 
     configure_logging(snakemake)
@@ -451,7 +459,9 @@ if __name__ == "__main__":
     length_factor = float(snakemake.params["length_factor"])
 
     if not carrier_enabled:
-        raise ValueError("Transmission carrier is disabled in config for this wildcard.")
+        raise ValueError(
+            "Transmission carrier is disabled in config for this wildcard."
+        )
 
     n = pypsa.Network(snakemake.input.network)
 

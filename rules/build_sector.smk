@@ -147,14 +147,23 @@ rule cluster_gas_network:
 
 
 rule build_transmission:
-    message:
-        "Building transmission candidates for {wildcards.carrier} and {wildcards.clusters} clusters"
+    input:
+        network=resources("networks/base_s_{clusters}.nc"),
+    output:
+        all_edges=resources("transmission/{carrier}_all_edges_{clusters}.geojson"),
+        candidates=resources("transmission/{carrier}_candidates_{clusters}.geojson"),
+    log:
+        logs("build_transmission_{carrier}_{clusters}.log"),
+    benchmark:
+        benchmarks("build_transmission/{carrier}_{clusters}")
     wildcard_constraints:
         carrier="hydrogen|carbon_dioxide",
+    resources:
+        mem_mb=4000,
     params:
-        carrier_enabled=lambda w: config_provider(
-            "transmission", w.carrier, "enable"
-        )(w),
+        carrier_enabled=lambda w: config_provider("transmission", w.carrier, "enable")(
+            w
+        ),
         gabriel_filter_enabled=lambda w: config_provider(
             "transmission",
             w.carrier,
@@ -172,17 +181,8 @@ rule build_transmission:
             w.carrier,
             "length_factor",
         )(w),
-    input:
-        network=resources("networks/base_s_{clusters}.nc"),
-    output:
-        all_edges=resources("transmission/{carrier}_all_edges_{clusters}.geojson"),
-        candidates=resources("transmission/{carrier}_candidates_{clusters}.geojson"),
-    resources:
-        mem_mb=4000,
-    log:
-        logs("build_transmission_{carrier}_{clusters}.log"),
-    benchmark:
-        benchmarks("build_transmission/{carrier}_{clusters}")
+    message:
+        "Building transmission candidates for {wildcards.carrier} and {wildcards.clusters} clusters"
     script:
         scripts("build_transmission.py")
 
