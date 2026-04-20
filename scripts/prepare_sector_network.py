@@ -51,7 +51,7 @@ spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
 
-def define_spatial(nodes, options, cf_transmission)
+def define_spatial(nodes, options, cf_transmission):
     """
     Namespace for spatial.
 
