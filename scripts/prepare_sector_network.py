@@ -51,7 +51,7 @@ spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
 
-def define_spatial(nodes, options):
+def define_spatial(nodes, options, cf_transmission)
     """
     Namespace for spatial.
 
@@ -129,7 +129,7 @@ def define_spatial(nodes, options):
         else:
             spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
         if options.get(
-            "co2_spatial", snakemake.config["transmission"]["carbon_dioxide"]["enable"]
+            "co2_spatial", cf_transmission["carbon_dioxide"]["enable"]
         ):
             spatial.gas.industry_cc = nodes + " gas for industry CC"
         else:
@@ -6310,7 +6310,7 @@ if __name__ == "__main__":
     year = int(snakemake.params["energy_totals_year"])
     heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
 
-    spatial = define_spatial(pop_layout.index, options)
+    spatial = define_spatial(pop_layout.index, options, cf_transmission)
 
     if snakemake.params.foresight in ["myopic", "perfect"]:
         add_lifetime_wind_solar(n, costs)
