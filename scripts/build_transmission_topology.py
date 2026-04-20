@@ -472,7 +472,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_transmission",
+            "build_transmission_topology",
             carrier="carbon_dioxide",
             clusters="200",
             run="nodes200",

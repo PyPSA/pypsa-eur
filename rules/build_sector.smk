@@ -146,16 +146,16 @@ rule cluster_gas_network:
         scripts("cluster_gas_network.py")
 
 
-rule build_transmission:
+rule build_transmission_topology:
     input:
         network=resources("networks/base_s_{clusters}.nc"),
     output:
         all_edges=resources("transmission/{carrier}_all_edges_{clusters}.geojson"),
         candidates=resources("transmission/{carrier}_candidates_{clusters}.geojson"),
     log:
-        logs("build_transmission_{carrier}_{clusters}.log"),
+        logs("build_transmission_topology_{carrier}_{clusters}.log"),
     benchmark:
-        benchmarks("build_transmission/{carrier}_{clusters}")
+        benchmarks("build_transmission_topology/{carrier}_{clusters}")
     wildcard_constraints:
         carrier="hydrogen|carbon_dioxide",
     resources:
@@ -184,7 +184,7 @@ rule build_transmission:
     message:
         "Building transmission candidates for {wildcards.carrier} and {wildcards.clusters} clusters"
     script:
-        scripts("build_transmission.py")
+        scripts("build_transmission_topology.py")
 
 
 rule build_daily_heat_demand:
