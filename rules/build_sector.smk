@@ -149,6 +149,7 @@ rule cluster_gas_network:
 rule build_transmission_topology:
     input:
         network=resources("networks/base_s_{clusters}.nc"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
     output:
         all_edges=resources("transmission/{carrier}_all_edges_{clusters}.geojson"),
         candidates=resources("transmission/{carrier}_candidates_{clusters}.geojson"),
@@ -1609,6 +1610,11 @@ rule prepare_sector_network:
         unpack(input_heat_source_power),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
+        co2_transmission_candidates=lambda w: (
+            resources("transmission/carbon_dioxide_candidates_{clusters}.geojson")
+            if config_provider("transmission", "carbon_dioxide", "enable")(w)
+            else []
+        ),
         h2_transmission_candidates=lambda w: (
             resources("transmission/hydrogen_candidates_{clusters}.geojson")
             if config_provider("transmission", "hydrogen", "enable")(w)
@@ -1783,7 +1789,7 @@ rule prepare_sector_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
-        h2_transmission_enable=config_provider("transmission", "hydrogen", "enable"),
+        transmission=config_provider("transmission"),
     message:
         "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizon, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:

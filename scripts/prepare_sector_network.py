@@ -128,7 +128,9 @@ def define_spatial(nodes, options):
             spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
         else:
             spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
-        if options.get("co2_spatial", options["co2_network"]):
+        if options.get(
+            "co2_spatial", snakemake.config["transmission"]["carbon_dioxide"]["enable"]
+        ):
             spatial.gas.industry_cc = nodes + " gas for industry CC"
         else:
             spatial.gas.industry_cc = ["gas for industry CC"]
@@ -872,7 +874,9 @@ def add_co2_tracking(
         )
 
 
-def add_co2_network(n, costs, co2_network_cost_factor=1.0):
+def add_co2_network(
+    n, co2_transmission_candidates, costs, co2_transmission_cost_factor=1.0
+):
     """
     Add CO2 transport network to the PyPSA network.
 
@@ -884,11 +888,13 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0):
     ----------
     n : pypsa.Network
         The PyPSA network container object
+    co2_transmission_candidates : str
+        Path to GeoJSON file containing CO2 pipeline candidates
     costs : pd.DataFrame
         Cost assumptions for different technologies. Must contain entries for
         'CO2 pipeline' and 'CO2 submarine pipeline' with 'capital_cost' and 'lifetime'
         columns
-    co2_network_cost_factor : float, optional
+    co2_transmission_cost_factor : float, optional
         Factor to scale the capital costs of the CO2 network, default 1.0
 
     Returns
@@ -903,7 +909,7 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0):
     created using the create_network_topology helper function.
     """
     logger.info("Adding CO2 network.")
-    co2_links = create_network_topology(n, "CO2 pipeline ")
+    co2_links = gpd.read_file(co2_transmission_candidates).set_index("name")
 
     if "underwater_fraction" not in co2_links.columns:
         co2_links["underwater_fraction"] = 0.0
@@ -911,24 +917,24 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0):
     cost_onshore = (
         (1 - co2_links.underwater_fraction)
         * costs.at["CO2 pipeline", "capital_cost"]
-        * co2_links.length
+        * co2_links["length"]
     )
     cost_submarine = (
         co2_links.underwater_fraction
         * costs.at["CO2 submarine pipeline", "capital_cost"]
-        * co2_links.length
+        * co2_links["length"]
     )
     capital_cost = cost_onshore + cost_submarine
-    capital_cost *= co2_network_cost_factor
+    capital_cost *= co2_transmission_cost_factor
 
     n.add(
         "Link",
         co2_links.index,
-        bus0=co2_links.bus0.values + " co2 stored",
-        bus1=co2_links.bus1.values + " co2 stored",
+        bus0=co2_links["bus0"].values,
+        bus1=co2_links["bus1"].values,
         p_min_pu=-1,
         p_nom_extendable=True,
-        length=co2_links.length.values,
+        length=co2_links["length"].values,
         capital_cost=capital_cost.values,
         carrier="CO2 pipeline",
         lifetime=costs.at["CO2 pipeline", "lifetime"],
@@ -1760,6 +1766,7 @@ def add_h2_gas_infrastructure(
     gas_input_nodes,
     spatial,
     options,
+    h2_transmission_cost_factor=1.0,
 ):
     """
     Add hydrogen and gas infrastructure to the network.
@@ -1800,8 +1807,8 @@ def add_h2_gas_infrastructure(
         - SMR : bool
         - min_part_load_methanation : float
         - cc_fraction : float
-    logger : logging.Logger, optional
-        Logger for output messages. If None, no logging is performed.
+    h2_transmission_cost_factor : float, optional
+        Factor to scale the capital costs of the H2 network, default 1.0
 
     Returns
     -------
@@ -2062,19 +2069,20 @@ def add_h2_gas_infrastructure(
         n.add(
             "Link",
             h2_pipes.index,
-            bus0=h2_pipes.bus0 + " H2",
-            bus1=h2_pipes.bus1 + " H2",
+            bus0=h2_pipes["bus0"] + " H2",
+            bus1=h2_pipes["bus1"] + " H2",
             p_min_pu=-1.0,  # allow that all H2 retrofit pipelines can be used in both directions
-            p_nom_max=h2_pipes.p_nom * options["H2_retrofit_capacity_per_CH4"],
+            p_nom_max=h2_pipes["p_nom"] * options["H2_retrofit_capacity_per_CH4"],
             p_nom_extendable=True,
-            length=h2_pipes.length,
+            length=h2_pipes["length"],
             capital_cost=costs.at["H2 (g) pipeline repurposed", "capital_cost"]
-            * h2_pipes.length,
-            tags=h2_pipes.name,
+            * h2_pipes["length"],
+            tags=h2_pipes["name"],
             carrier="H2 pipeline retrofitted",
             lifetime=costs.at["H2 (g) pipeline repurposed", "lifetime"],
         )
 
+    # TODO: implement offshore costs, using 1.5-2.0x multiplier
     if h2_transmission_enable:
         logger.info("Add options for new hydrogen pipelines.")
 
@@ -2087,13 +2095,14 @@ def add_h2_gas_infrastructure(
         n.add(
             "Link",
             h2_pipes.index,
-            bus0=h2_pipes.bus0.values,
-            bus1=h2_pipes.bus1.values,
+            bus0=h2_pipes["bus0"].values,
+            bus1=h2_pipes["bus1"].values,
             p_min_pu=-1,
             p_nom_extendable=True,
-            length=h2_pipes.length.values,
+            length=h2_pipes["length"].values,
             capital_cost=costs.at["H2 (g) pipeline", "capital_cost"]
-            * h2_pipes.length.values,
+            * h2_pipes["length"].values
+            * h2_transmission_cost_factor,
             carrier="H2 pipeline",
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
         )
@@ -4483,6 +4492,7 @@ def add_industry(
     spatial: SimpleNamespace,
     cf_industry: dict,
     investment_year: int,
+    co2_transmission_enable: bool,
 ):
     """
     Add industry and their corresponding carrier buses to the network.
@@ -5022,7 +5032,7 @@ def add_industry(
         unit="t_co2",
     )
 
-    if options["co2_spatial"] or options["co2_network"]:
+    if options["co2_spatial"] or co2_transmission_enable:
         p_set = (
             -industrial_demand.loc[nodes, "process emission"].rename(
                 index=lambda x: x + " process emissions"
@@ -6258,12 +6268,10 @@ if __name__ == "__main__":
 
     options = snakemake.params.sector
     cf_industry = snakemake.params.industry
+    cf_transmission = snakemake.params.transmission
     ext_carriers = snakemake.params.electricity.get("extendable_carriers", dict())
 
     investment_year = int(snakemake.wildcards.planning_horizons)
-
-    # Transmission
-    h2_transmission_enable = snakemake.params.h2_transmission_enable
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -6350,12 +6358,13 @@ if __name__ == "__main__":
         pop_layout=pop_layout,
         h2_cavern_file=snakemake.input.h2_cavern,
         h2_transmission_candidates=snakemake.input.h2_transmission_candidates,
-        h2_transmission_enable=h2_transmission_enable,
+        h2_transmission_enable=cf_transmission["hydrogen"]["enable"],
         cavern_types=snakemake.params.sector["hydrogen_underground_storage_locations"],
         clustered_gas_network_file=snakemake.input.clustered_gas_network,
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
+        h2_transmission_cost_factor=cf_transmission["hydrogen"]["cost_factor"],
     )
 
     # Hydrogen already implemented in add_h2_gas_infrastructure
@@ -6461,6 +6470,7 @@ if __name__ == "__main__":
             spatial=spatial,
             cf_industry=cf_industry,
             investment_year=investment_year,
+            co2_transmission_enable=cf_transmission["carbon_dioxide"]["enable"],
         )
 
     if options["shipping"]:
@@ -6508,12 +6518,13 @@ if __name__ == "__main__":
     if not snakemake.config["transmission"]["hydrogen"]["enable"]:
         remove_h2_network(n)
 
-    if options["co2_network"]:
+    if cf_transmission["carbon_dioxide"]["enable"]:
         add_co2_network(
-            n,
-            costs,
-            co2_network_cost_factor=snakemake.config["sector"][
-                "co2_network_cost_factor"
+            n=n,
+            co2_transmission_candidates=snakemake.input.co2_transmission_candidates,
+            costs=costs,
+            co2_transmission_cost_factor=cf_transmission["carbon_dioxide"][
+                "cost_factor"
             ],
         )
 
@@ -6612,8 +6623,8 @@ if __name__ == "__main__":
     sanitize_carriers(n, snakemake.config)
     sanitize_locations(n)
 
-    # # Filter for H2 links and map to width 1, others zero
-    # lwidth = (n.links.carrier=="H2 pipeline").astype(int)*5
-    # n.explore(branch_components=["Link"], link_width=lwidth)
+    # Filter carrier links and map to width 1, others zero
+    lwidth = (n.links["carrier"] == "CO2 pipeline").astype(int) * 5
+    n.explore(branch_components=["Link"], link_width=lwidth)
 
     n.export_to_netcdf(snakemake.output[0])

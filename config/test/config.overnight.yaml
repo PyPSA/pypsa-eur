@@ -36,6 +36,10 @@ electricity:
 
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
 
+transmission:
+  carbon_dioxide:
+    enable: false
+
 atlite:
   default_cutout: be-03-2013-era5
   cutouts:
@@ -96,7 +100,6 @@ sector:
   regional_co2_sequestration_potential:
     enable: false
   co2_spatial: false
-  co2_network: false
   methanol:
     methanol_to_power:
       ocgt: false

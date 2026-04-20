@@ -740,14 +740,6 @@ class SectorConfig(BaseModel):
         True,
         description="Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
     )
-    co2_network: bool = Field(
-        True,
-        description="Add option for planning a new carbon dioxide transmission network.",
-    )
-    co2_network_cost_factor: float = Field(
-        1,
-        description="The cost factor for the capital cost of the carbon dioxide transmission network.",
-    )
     cc_fraction: float = Field(
         0.9,
         description="The default fraction of CO2 captured with post-combustion capture.",

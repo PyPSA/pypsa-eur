@@ -4698,16 +4698,6 @@
           "description": "Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
           "type": "boolean"
         },
-        "co2_network": {
-          "default": true,
-          "description": "Add option for planning a new carbon dioxide transmission network.",
-          "type": "boolean"
-        },
-        "co2_network_cost_factor": {
-          "default": 1,
-          "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
-          "type": "number"
-        },
         "cc_fraction": {
           "default": 0.9,
           "description": "The default fraction of CO2 captured with post-combustion capture.",
@@ -5630,6 +5620,12 @@
               "description": "Multiplier applied to geometric corridor lengths.",
               "exclusiveMinimum": 0,
               "type": "number"
+            },
+            "cost_factor": {
+              "default": 1,
+              "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+              "exclusiveMinimum": 0,
+              "type": "number"
             }
           }
         },
@@ -5660,6 +5656,12 @@
             "length_factor": {
               "default": 1.25,
               "description": "Multiplier applied to geometric corridor lengths.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "cost_factor": {
+              "default": 1,
+              "description": "Multiplier applied to the capital cost of transmission infrastructure.",
               "exclusiveMinimum": 0,
               "type": "number"
             }
@@ -8175,6 +8177,12 @@
           "description": "Multiplier applied to geometric corridor lengths.",
           "exclusiveMinimum": 0,
           "type": "number"
+        },
+        "cost_factor": {
+          "default": 1,
+          "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+          "exclusiveMinimum": 0,
+          "type": "number"
         }
       }
     },
@@ -8912,6 +8920,12 @@
               "description": "Multiplier applied to geometric corridor lengths.",
               "exclusiveMinimum": 0,
               "type": "number"
+            },
+            "cost_factor": {
+              "default": 1,
+              "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+              "exclusiveMinimum": 0,
+              "type": "number"
             }
           }
         },
@@ -8942,6 +8956,12 @@
             "length_factor": {
               "default": 1.25,
               "description": "Multiplier applied to geometric corridor lengths.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "cost_factor": {
+              "default": 1,
+              "description": "Multiplier applied to the capital cost of transmission infrastructure.",
               "exclusiveMinimum": 0,
               "type": "number"
             }
@@ -11322,16 +11342,6 @@
           "default": true,
           "description": "Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
           "type": "boolean"
-        },
-        "co2_network": {
-          "default": true,
-          "description": "Add option for planning a new carbon dioxide transmission network.",
-          "type": "boolean"
-        },
-        "co2_network_cost_factor": {
-          "default": 1,
-          "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
-          "type": "number"
         },
         "cc_fraction": {
           "default": 0.9,

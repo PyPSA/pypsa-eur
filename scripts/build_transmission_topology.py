@@ -73,6 +73,7 @@ COLS_EDGES = [
     "length",
     "gabriel_edge",
     "geometry",
+    "underwater_fraction",
 ]
 BUS_SUFFIX = {
     "carbon_dioxide": "co2 stored",
@@ -471,6 +472,33 @@ def mark_selected_edges(
     return delaunay_graph
 
 
+def add_underwater_fraction(
+    edges: gpd.GeoDataFrame,
+    offshore_shapes: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+    """
+    Compute the fraction of each edge's length that lies within offshore regions.
+
+    Parameters
+    ----------
+    edges : gpd.GeoDataFrame
+        Edge table with LineString geometry in ``EPSG:4326``.
+    offshore_shapes : gpd.GeoDataFrame
+        Offshore region polygons used to determine submarine sections.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        ``edges`` with an added ``underwater_fraction`` column in ``[0, 1]``.
+    """
+    offshore_union = offshore_shapes.to_crs(DISTANCE_CRS).union_all()
+    geoms = edges.geometry.to_crs(DISTANCE_CRS)
+    edges["underwater_fraction"] = (
+        (geoms.intersection(offshore_union).length / geoms.length).fillna(0.0).round(2)
+    )
+    return edges
+
+
 if __name__ == "__main__":
     is_mock_run = "snakemake" not in globals()
 
@@ -479,7 +507,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_transmission_topology",
-            carrier="hydrogen",
+            carrier="carbon_dioxide",
             clusters="200",
             run="nodes200",
             configfiles=["config/config.200.yaml"],
@@ -500,6 +528,7 @@ if __name__ == "__main__":
         )
 
     n = pypsa.Network(snakemake.input.network)
+    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
 
     # Delaunay triangulation and Gabriel filtering
     bus_ids, coords_geo, coords_meter = get_bus_coordinates(n)
@@ -509,6 +538,9 @@ if __name__ == "__main__":
         coords_meter=coords_meter,
         length_factor=length_factor,
     )
+
+    add_underwater_fraction(delaunay_graph, offshore_shapes)
+
     selected_edges = prepare_candidate_edges(
         delaunay_graph=delaunay_graph,
         gabriel_filter_enabled=gabriel_filter_enabled,

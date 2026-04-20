@@ -192,12 +192,14 @@ transmission:
       enable: true
       min_degree: 1
     length_factor: 1.25
+    cost_factor: 1
   carbon_dioxide:
     enable: true
     gabriel_filter:
       enable: true
       min_degree: 1
     length_factor: 1.25
+    cost_factor: 1
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
@@ -885,8 +887,6 @@ sector:
   co2_sequestration_cost: 30
   co2_sequestration_lifetime: 50
   co2_spatial: true
-  co2_network: true
-  co2_network_cost_factor: 1
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:

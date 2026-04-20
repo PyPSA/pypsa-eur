@@ -41,6 +41,11 @@ class _TransmissionCarrierConfig(BaseModel):
         gt=0,
         description="Multiplier applied to geometric corridor lengths.",
     )
+    cost_factor: float = Field(
+        1,
+        gt=0,
+        description="Multiplier applied to the capital cost of transmission infrastructure.",
+    )
 
 
 class TransmissionConfig(BaseModel):
