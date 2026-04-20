@@ -795,7 +795,7 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["sector"]["electricity_transmission_grid"] = False
 
         if "noH2network" in opts:
-            config["sector"]["H2_network"] = False
+            config["transmission"]["hydrogen"] = False
 
         if "nowasteheat" in opts:
             config["sector"]["use_fischer_tropsch_waste_heat"] = False

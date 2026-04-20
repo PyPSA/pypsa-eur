@@ -11,6 +11,7 @@ import os
 from itertools import product
 from types import SimpleNamespace
 
+import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -1752,6 +1753,8 @@ def add_h2_gas_infrastructure(
     costs,
     pop_layout,
     h2_cavern_file,
+    h2_transmission_candidates,
+    h2_transmission_enable,
     cavern_types,
     clustered_gas_network_file,
     gas_input_nodes,
@@ -1771,6 +1774,10 @@ def add_h2_gas_infrastructure(
         Population layout with index of locations/nodes
     h2_cavern_file : str
         Path to CSV file containing hydrogen cavern storage potentials
+    h2_transmission_candidates : str
+        Path to GeoJSON file containing hydrogen pipeline candidates
+    h2_transmission_enable : bool
+        Whether hydrogen transmission topology is enabled in config
     cavern_types : list
         List of underground storage types to consider
     clustered_gas_network_file : str, optional
@@ -1787,7 +1794,6 @@ def add_h2_gas_infrastructure(
         - hydrogen_underground_storage : bool
         - gas_network : bool
         - H2_retrofit : bool
-        - H2_network : bool
         - methanation : bool
         - coal_cc : bool
         - SMR_cc : bool
@@ -2069,21 +2075,20 @@ def add_h2_gas_infrastructure(
             lifetime=costs.at["H2 (g) pipeline repurposed", "lifetime"],
         )
 
-    if options["H2_network"]:
+    if h2_transmission_enable:
         logger.info("Add options for new hydrogen pipelines.")
 
-        h2_pipes = create_network_topology(
-            n, "H2 pipeline ", carriers=["DC", "gas pipeline"]
-        )
-        h2_buses_loc = n.buses.query("carrier == 'H2'").location  # noqa: F841
-        h2_pipes = h2_pipes.query("bus0 in @h2_buses_loc and bus1 in @h2_buses_loc")
+        h2_pipes = gpd.read_file(h2_transmission_candidates).set_index("name")
+        h2_bus_ids = n.buses.index[n.buses.carrier == "H2"]
+        h2_pipes = h2_pipes[
+            h2_pipes["bus0"].isin(h2_bus_ids) & h2_pipes["bus1"].isin(h2_bus_ids)
+        ]
 
-        # TODO Add efficiency losses
         n.add(
             "Link",
             h2_pipes.index,
-            bus0=h2_pipes.bus0.values + " H2",
-            bus1=h2_pipes.bus1.values + " H2",
+            bus0=h2_pipes.bus0.values,
+            bus1=h2_pipes.bus1.values,
             p_min_pu=-1,
             p_nom_extendable=True,
             length=h2_pipes.length.values,
@@ -6241,9 +6246,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="10",
+            clusters="200",
             sector_opts="",
             planning_horizons="2050",
+            configfiles=["config/config.200.yaml"],
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
@@ -6255,6 +6261,9 @@ if __name__ == "__main__":
     ext_carriers = snakemake.params.electricity.get("extendable_carriers", dict())
 
     investment_year = int(snakemake.wildcards.planning_horizons)
+
+    # Transmission
+    h2_transmission_enable = snakemake.params.h2_transmission_enable
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -6340,6 +6349,8 @@ if __name__ == "__main__":
         costs=costs,
         pop_layout=pop_layout,
         h2_cavern_file=snakemake.input.h2_cavern,
+        h2_transmission_candidates=snakemake.input.h2_transmission_candidates,
+        h2_transmission_enable=h2_transmission_enable,
         cavern_types=snakemake.params.sector["hydrogen_underground_storage_locations"],
         clustered_gas_network_file=snakemake.input.clustered_gas_network,
         gas_input_nodes=gas_input_nodes,
@@ -6494,7 +6505,7 @@ if __name__ == "__main__":
     if not options["electricity_transmission_grid"]:
         decentral(n)
 
-    if not options["H2_network"]:
+    if not snakemake.config["transmission"]["hydrogen"]["enable"]:
         remove_h2_network(n)
 
     if options["co2_network"]:
@@ -6600,5 +6611,9 @@ if __name__ == "__main__":
 
     sanitize_carriers(n, snakemake.config)
     sanitize_locations(n)
+
+    # # Filter for H2 links and map to width 1, others zero
+    # lwidth = (n.links.carrier=="H2 pipeline").astype(int)*5
+    # n.explore(branch_components=["Link"], link_width=lwidth)
 
     n.export_to_netcdf(snakemake.output[0])

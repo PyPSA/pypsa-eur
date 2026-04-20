@@ -49,8 +49,6 @@ Two GeoJSON files in WGS84 (EPSG:4326) format are written per carrier and cluste
 
 """
 
-from __future__ import annotations
-
 import logging
 
 import geopandas as gpd
@@ -76,6 +74,14 @@ COLS_EDGES = [
     "gabriel_edge",
     "geometry",
 ]
+BUS_SUFFIX = {
+    "carbon_dioxide": "co2 stored",
+    "hydrogen": "H2",
+}
+LINK_PREFIX = {
+    "carbon_dioxide": "CO2 pipeline",
+    "hydrogen": "H2 pipeline",
+}
 
 
 def delaunay_edges(coords_meter: NDArray[np.float64]) -> list[tuple[int, int]]:
@@ -473,7 +479,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_transmission_topology",
-            carrier="carbon_dioxide",
+            carrier="hydrogen",
             clusters="200",
             run="nodes200",
             configfiles=["config/config.200.yaml"],
@@ -483,6 +489,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     carrier_enabled = bool(snakemake.params["carrier_enabled"])
+    carrier = snakemake.wildcards.carrier
     gabriel_filter_enabled = bool(snakemake.params["gabriel_filter_enabled"])
     min_degree = int(snakemake.params["min_degree"])
     length_factor = float(snakemake.params["length_factor"])
@@ -510,6 +517,16 @@ if __name__ == "__main__":
     )
     selected_edges = selected_edges[COLS_EDGES]
     delaunay_graph = mark_selected_edges(delaunay_graph, selected_edges)
+
+    # Rename buses and link names
+    delaunay_graph[["bus0", "bus1"]] = (
+        delaunay_graph[["bus0", "bus1"]] + " " + BUS_SUFFIX[carrier]
+    )
+    delaunay_graph["name"] = LINK_PREFIX[carrier] + " " + delaunay_graph["name"]
+    selected_edges[["bus0", "bus1"]] = (
+        selected_edges[["bus0", "bus1"]] + " " + BUS_SUFFIX[carrier]
+    )
+    selected_edges["name"] = LINK_PREFIX[carrier] + " " + selected_edges["name"]
 
     # Export
     delaunay_graph.to_file(snakemake.output.all_edges)

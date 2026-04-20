@@ -1609,6 +1609,11 @@ rule prepare_sector_network:
         unpack(input_heat_source_power),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
+        h2_transmission_candidates=lambda w: (
+            resources("transmission/hydrogen_candidates_{clusters}.geojson")
+            if config_provider("transmission", "hydrogen", "enable")(w)
+            else []
+        ),
         snapshot_weightings=resources(
             "snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}.csv"
         ),
@@ -1778,6 +1783,7 @@ rule prepare_sector_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
+        h2_transmission_enable=config_provider("transmission", "hydrogen", "enable"),
     message:
         "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizon, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
