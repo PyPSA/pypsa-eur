@@ -2848,7 +2848,7 @@
       "properties": {
         "level": {
           "default": "INFO",
-          "description": "Restrict console outputs to all infos, warning or errors only",
+          "description": "Root log level. Messages below this level are discarded before reaching any handler.",
           "enum": [
             "DEBUG",
             "INFO",
@@ -2857,6 +2857,37 @@
             "CRITICAL"
           ],
           "type": "string"
+        },
+        "console_level": {
+          "default": "WARNING",
+          "description": "Minimum level emitted to the console (stderr). Defaults to ``WARNING`` so parallel rule output stays readable; the full log is kept in the rule's log file.",
+          "enum": [
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL"
+          ],
+          "type": "string"
+        },
+        "file_level": {
+          "anyOf": [
+            {
+              "enum": [
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "CRITICAL"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum level written to the rule log file. Defaults to ``level`` when unset."
         },
         "format": {
           "default": "%(levelname)s:%(name)s:%(message)s",
@@ -8182,7 +8213,7 @@
       "properties": {
         "level": {
           "default": "INFO",
-          "description": "Restrict console outputs to all infos, warning or errors only",
+          "description": "Root log level. Messages below this level are discarded before reaching any handler.",
           "enum": [
             "DEBUG",
             "INFO",
@@ -8191,6 +8222,37 @@
             "CRITICAL"
           ],
           "type": "string"
+        },
+        "console_level": {
+          "default": "WARNING",
+          "description": "Minimum level emitted to the console (stderr). Defaults to ``WARNING`` so parallel rule output stays readable; the full log is kept in the rule's log file.",
+          "enum": [
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL"
+          ],
+          "type": "string"
+        },
+        "file_level": {
+          "anyOf": [
+            {
+              "enum": [
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "CRITICAL"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum level written to the rule log file. Defaults to ``level`` when unset."
         },
         "format": {
           "default": "%(levelname)s:%(name)s:%(message)s",
