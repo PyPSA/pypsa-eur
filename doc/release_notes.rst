@@ -20,6 +20,8 @@ Release Notes
 
 * perf: Optimize dask settings for computing weather-dependent profiles (https://github.com/PyPSA/pypsa-eur/pull/2137).
 
+* Split logging levels between console and log file: the console now defaults to ``WARNING`` while the rule log file still captures ``INFO``. Configure via ``logging.console_level`` and ``logging.file_level`` (https://github.com/PyPSA/pypsa-eur/pull/2144).
+
 PyPSA-Eur v2026.02.0 (18th February 2026)
 =========================================
 
