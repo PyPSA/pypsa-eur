@@ -128,9 +128,7 @@ def define_spatial(nodes, options, cf_transmission):
             spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
         else:
             spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
-        if options.get(
-            "co2_spatial", cf_transmission["carbon_dioxide"]["enable"]
-        ):
+        if options.get("co2_spatial", cf_transmission["carbon_dioxide"]["enable"]):
             spatial.gas.industry_cc = nodes + " gas for industry CC"
         else:
             spatial.gas.industry_cc = ["gas for industry CC"]
