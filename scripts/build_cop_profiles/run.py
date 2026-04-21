@@ -168,12 +168,13 @@ def get_source_temperature(
     if heat_source.temperature_from_config:
         return snakemake_params["heat_source_temperatures"][heat_source_name]
     elif heat_source.source_type == HeatSourceType.STORAGE:
-        # PTES layer temperatures are constants from the ptes_operations dataset
+        # PTES layer temperatures are explicit constants from config.
+        ptes_layer_temperatures = snakemake_params["ptes_layer_temperatures"]
         if heat_source_name.startswith("ptes layer"):
             layer_idx = int(heat_source_name.split()[-1])
-            return float(ptes_ds["layer_temperatures"].sel(layer=layer_idx).item())
+            return float(ptes_layer_temperatures[layer_idx])
         else:
-            return float(ptes_ds.attrs["top_temperature"])
+            return float(ptes_layer_temperatures[0])
     else:
         return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
 
@@ -215,8 +216,8 @@ def get_source_inlet_temperature(
     # heat pump draws directly from the source.
     return xr.where(
         source_temperature > central_heating_return_temperature,
-        central_heating_return_temperature,
         source_temperature,
+        central_heating_return_temperature,
     )
 
 
@@ -252,9 +253,21 @@ def get_sink_inlet_temperature(
     """
     return xr.where(
         source_temperature > central_heating_return_temperature,
-        source_temperature,
         central_heating_return_temperature,
+        source_temperature,
     )
+
+
+def expand_heat_sources_for_ptes_layers(
+    heat_sources_by_system: dict[str, list[str]],
+    ptes_layer_temperatures: list[float] | None,
+) -> dict[str, list[str]]:
+    """Replace 'ptes' by per-layer labels when multiple PTES layers exist."""
+
+    for layer in range(len(ptes_layer_temperatures)):
+        heat_sources_by_system["urban central"].append(f"ptes layer {layer}")
+
+    return heat_sources_by_system
 
 
 if __name__ == "__main__":
@@ -275,16 +288,16 @@ if __name__ == "__main__":
         snakemake.input.central_heating_return_temperature_profiles
     )
 
-    # Load PTES operations dataset if enabled
-    if snakemake.params.ptes_enable:
-        ptes_ds = xr.open_dataset(snakemake.input.ptes_operations)
-        num_ptes_layers = int(ptes_ds.attrs["num_layers"])
+    if snakemake.params.layered_ptes:
+        heat_sources_by_system = expand_heat_sources_for_ptes_layers(
+            heat_sources_by_system=snakemake.params.heat_sources,
+            ptes_layer_temperatures=snakemake.params.ptes_layer_temperatures,
+        )
     else:
-        ptes_ds = None
-        num_ptes_layers = 0
+        heat_sources_by_system = snakemake.params.heat_sources
 
     cop_all_system_types = []
-    for heat_system_type, heat_sources in snakemake.params.heat_sources.items():
+    for heat_system_type, heat_sources in heat_sources_by_system.items():
         cop_this_system_type = []
         if not heat_sources:
             cop_all_system_types.append(
@@ -324,12 +337,9 @@ if __name__ == "__main__":
             )
         )
 
-    if ptes_ds is not None:
-        ptes_ds.close()
-
     cop_dataarray = xr.concat(
         cop_all_system_types,
-        dim=pd.Index(snakemake.params.heat_sources.keys(), name="heat_system"),
+        dim=pd.Index(heat_sources_by_system.keys(), name="heat_system"),
     )
 
     cop_dataarray.to_netcdf(snakemake.output.cop_profiles)

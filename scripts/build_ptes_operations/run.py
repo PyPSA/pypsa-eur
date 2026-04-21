@@ -25,7 +25,7 @@ Relevant Settings
                 design_bottom_temperature: 35
                 discharge_resistive_boosting: false
                 layered:
-                    num_layers: 1
+                    layer_temperatures: [90]
 
 Inputs
 ------
@@ -75,22 +75,15 @@ if __name__ == "__main__":
         snakemake.input.central_heating_return_temperature_profiles
     )
 
-    # Resolve top/bottom temperature to constant floats
-    top_temp = float(snakemake.params.top_temperature)
-    bottom_temp = float(snakemake.params.bottom_temperature)
-
-    layered_config = snakemake.params.layered
-
     approximator = PtesApproximator(
         forward_temperature=forward_temperature,
         return_temperature=return_temperature,
-        top_temperature=top_temp,
-        bottom_temperature=bottom_temp,
-        num_layers=layered_config["num_layers"],
+        layer_temperatures=snakemake.params.layer_temperatures,
         design_top_temperature=snakemake.params.design_top_temperature,
         design_bottom_temperature=snakemake.params.design_bottom_temperature,
         design_standing_losses=0.0,  # placeholder; actual value set from costs data
         interlayer_heat_transfer_coefficient=snakemake.params.interlayer_heat_transfer_coefficient,
+        cop=xr.open_dataarray(snakemake.input.cop_profiles),
     )
 
     # Write single dataset with all pre-computed PTES parameters

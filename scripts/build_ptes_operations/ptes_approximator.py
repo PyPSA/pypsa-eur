@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 
@@ -11,46 +12,60 @@ class PtesApproximator:
         self,
         forward_temperature: xr.DataArray,
         return_temperature: xr.DataArray,
-        top_temperature: float,
-        bottom_temperature: float,
-        num_layers: int,
+        layer_temperatures: list[float] | np.ndarray,
         design_top_temperature: float,
         design_bottom_temperature: float,
         design_standing_losses: float,
         interlayer_heat_transfer_coefficient: float,
+        cop: xr.DataArray,
+        rho=1000,
+        # Specific heat in MWh/kg/K to keep rho*c_p*DeltaT in MWh/m3.
+        c_p=4184 / 3.6e9,
     ):
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
-        self.top_temperature = top_temperature
-        self.bottom_temperature = bottom_temperature
-        self.num_layers = num_layers
+
+        layer_temperatures = np.asarray(layer_temperatures, dtype=float)
+
+        self._layer_temperatures = layer_temperatures
+        self.top_temperature = float(layer_temperatures[0])
+        self.bottom_temperature = float(layer_temperatures[-1])
+        self.num_layers = int(layer_temperatures.size)
         self.design_top_temperature = design_top_temperature
         self.design_bottom_temperature = design_bottom_temperature
         self.design_standing_losses = design_standing_losses
         self.interlayer_heat_transfer_coefficient = interlayer_heat_transfer_coefficient
+        self.rho = rho
+        self.c_p = c_p
+        self._cop = cop
 
         self._time_dim = [d for d in forward_temperature.dims if d != "name"][0]
 
     @property
-    def layer_temperatures(self) -> np.ndarray:
-        """Calculate the fixed temperature of each layer [°C], hottest first."""
-        return np.linspace(
-            self.top_temperature, self.bottom_temperature, self.num_layers + 1
-        )[:-1]
+    def cop(self):
+        return xr.concat(
+            [
+                self._cop.sel(
+                    heat_system="urban central", heat_source=f"ptes layer {i}"
+                ).drop("heat_source")
+                for i in range(self.num_layers)
+            ],
+            dim=pd.Index(np.arange(self.num_layers), name="layer"),
+        ).drop("heat_system")
 
     @property
-    def volume_weights(self) -> np.ndarray:
-        """
-        Volume weight W_l per layer.
+    def layer_temperatures(self) -> np.ndarray:
+        """Fixed temperature of each layer [°C], hottest first."""
+        return self._layer_temperatures
 
-        W_l = (T_top - T_bottom) / (T_l - T_bottom).
-        A unit of energy in a colder layer occupies more volume.
-        W_1 = 1 for the hottest layer; W_l ≥ 1 for colder layers.
-        """
-        weights = (self.design_top_temperature - self.design_bottom_temperature) / (
-            self.layer_temperatures - self.bottom_temperature
+    @property
+    def layer_temperatures_da(self) -> xr.DataArray:
+        """Fixed temperature of each layer [°C], hottest first."""
+        return xr.DataArray(
+            self._layer_temperatures,
+            dims=["layer"],
+            coords={"layer": np.arange(len(self._layer_temperatures))},
         )
-        return weights
 
     @property
     def charging_availability(self) -> xr.DataArray:
@@ -59,33 +74,144 @@ class PtesApproximator:
 
         For each timestep, only the layer whose temperature is closest to the forward temperature can receive charge. Returns a DataArray with dimensions (snapshot, name, layer).
         """
-        # |T_l - T_fwd_t| for each layer
-        # Broadcast: T_fwd is (snapshot, name), T_layers is (layer,)
-        layer_dim = xr.DataArray(
-            self.layer_temperatures,
-            dims=["layer"],
-            coords={"layer": np.arange(len(self.layer_temperatures))},
-        )
-        abs_diff = np.abs(
-            layer_dim - self.forward_temperature
-        )  # (snapshot, name, layer)
 
-        # Find the layer index with minimum distance at each (snapshot, name)
-        closest_layer = abs_diff.argmin(dim="layer")  # (snapshot, name)
+        closest_layer_to_forward = np.abs(
+            self.forward_temperature - self.layer_temperatures_da
+        ).argmin(dim="layer")  # (snapshot, name, layer)
 
-        # Build binary availability: 1 where layer == closest_layer
-        layer_indices = xr.DataArray(
-            np.arange(len(self.layer_temperatures)),
-            dims=["layer"],
-            coords={"layer": np.arange(len(self.layer_temperatures))},
+        return xr.concat(
+            [closest_layer_to_forward == l for l in range(self.num_layers)],
+            dim=pd.Index(np.arange(self.num_layers), name="layer"),
         )
 
-        binary_availability = (layer_indices == closest_layer).astype(float)
-        binary_availability = binary_availability.transpose(
-            self._time_dim, "name", "layer"
+    @property
+    def preheater_efficiency(self) -> xr.DataArray:
+        """
+        Conversion factor from volume to energy flow for heat exchange with return temperature. For each layer, this is (T_layer - T_return) * rho * c_p, but only if T_layer > T_return (otherwise 0). Returns a DataArray with dimensions (snapshot, name, layer).
+        """
+
+        return xr.where(
+            self.return_temperature < self.layer_temperatures_da,
+            self.rho
+            * self.c_p
+            * (self.layer_temperatures_da - self.return_temperature),
+            0,
         )
 
-        return binary_availability
+    @property
+    def heat_pump_efficiency(self) -> xr.DataArray:
+        """
+        Conversion factor from volume to energy flow for heat exchange with return temperature. For each layer, this is (T_layer - T_return) * rho * c_p, but only if T_layer > T_return (otherwise 0). Returns a DataArray with dimensions (snapshot, name, layer).
+        """
+
+        return xr.where(
+            self.layer_temperatures_da > self.return_temperature,
+            self.rho
+            * self.c_p
+            * (self.forward_temperature - self.layer_temperatures_da),
+            self.rho * self.c_p * (self.forward_temperature - self.return_temperature),
+        )
+
+    @property
+    def layer_needs_boosting(self) -> xr.DataArray:
+        """
+        Binary indicator whether a layer requires boosting to reach forward temperature.
+
+        Returns dimensions (snapshot, name, layer).
+        """
+        return xr.where(self.forward_temperature > self.layer_temperatures_da, 1, 0)
+
+    @property
+    def charger_efficiency(self) -> xr.DataArray:
+        """Heat-to-volume conversion efficiency for PTES charging [m3/MWh]."""
+        return (
+            1
+            / (
+                self.rho
+                * self.c_p
+                * (self.layer_temperatures_da - self.bottom_temperature)
+            )
+            * self.charging_availability
+        )
+
+    @property
+    def m3_to_mwh(self) -> np.ndarray:
+        """Per-layer conversion from volume state to energy equivalent [MWh/m3]."""
+        return self.rho * self.c_p * (self.layer_temperatures - self.bottom_temperature)
+
+    @property
+    def e_max_pu(self) -> float:
+        """Scalar PTES capacity scaling against design temperature spread."""
+        design_delta_t = self.design_top_temperature - self.design_bottom_temperature
+        if design_delta_t <= 0:
+            raise ValueError(
+                "design_top_temperature must be larger than design_bottom_temperature"
+            )
+
+        operational_delta_t = self.top_temperature - self.bottom_temperature
+        return max(operational_delta_t / design_delta_t, 0.0)
+
+    @property
+    def return_temp_layer(self) -> xr.DataArray:
+        """Closest layer index to node-wise mean return temperature."""
+
+        return (
+            np.abs(self.layer_temperatures_da - self.return_temperature)
+            .argmin(dim="layer")
+            .astype(int)
+        )
+
+    @property
+    def hp_return_layer(self) -> xr.DataArray:
+        """
+        Reinjection layer index for PTES layer heat pumps.
+
+        For each source layer l and node, select an "other" layer according to:
+        a) if T_l < T_ret: target = T_l - dT
+        b) else: target = T_ret - dT
+
+        Then choose the candidate layer with minimum |T_other - target|,
+        where candidates are strictly colder than the source layer.
+        Returns dimensions (layer, name).
+        """
+
+        delta_t = xr.where(
+            self.return_temperature < self.layer_temperatures_da,
+            (self.forward_temperature - self.layer_temperatures_da)
+            * (1 - 1 / self.cop.clip(min=1)),
+            (self.forward_temperature - self.return_temperature)
+            * (1 - 1 / self.cop.clip(min=1)),
+        )
+
+        target_temp = xr.where(
+            self.return_temperature < self.layer_temperatures_da,
+            self.return_temperature - delta_t,
+            self.layer_temperatures_da - delta_t,
+        )
+
+        # take min over time (target layer must be constant)
+        target_temp = target_temp.min(dim="time")
+
+        ret_val = []
+        for l in range(self.num_layers):
+            closest_layer = abs(
+                self.layer_temperatures_da - target_temp.sel(layer=l)
+            ).argmin(dim="layer")
+            closest_layer = xr.where(
+                closest_layer <= l and closest_layer < self.num_layers - 1,
+                closest_layer + 1,
+                closest_layer,
+            )
+            closest_layer = xr.where(
+                closest_layer == self.num_layers - 1,  # bottom layer
+                None,
+                closest_layer.astype(int),
+            )
+            ret_val.append(closest_layer)
+
+        return xr.concat(
+            ret_val, dim=pd.Index(np.arange(self.num_layers), name="layer")
+        )
 
     @property
     def interlayer_heat_transfer_coefficients(self) -> np.ndarray:
@@ -126,39 +252,6 @@ class PtesApproximator:
         )
 
     @property
-    def boost_ratios(self) -> xr.DataArray:
-        """
-        Resistive boost ratio α^RH_{l,t} per layer per timestep.
-
-        α^RH_{l,t} = max(0, (T_fwd_t - T_l) / (T_l - T_bottom))
-
-        Returns DataArray with dimensions (snapshot, name, layer).
-        """
-        layer_dim = xr.DataArray(
-            self.layer_temperatures,
-            dims=["layer"],
-            coords={"layer": np.arange(len(self.layer_temperatures))},
-        )
-
-        numerator = self.forward_temperature - layer_dim  # (snapshot, name, layer)
-        denominator = layer_dim - self.bottom_temperature  # (layer,)
-
-        alpha = (numerator / denominator).clip(min=0)
-        return alpha
-
-    @property
-    def e_max_pu(self) -> float:
-        """
-        Normalized storage capacity as fraction of design capacity.
-
-        e_max_pu = (T_top - T_bottom) / (T_design_top - T_design_bottom),
-        clipped to non-negative.
-        """
-        delta_t = self.top_temperature - self.bottom_temperature
-        max_delta_t = self.design_top_temperature - self.design_bottom_temperature
-        return max(0, delta_t / max_delta_t)
-
-    @property
     def standing_losses(self) -> float:
         """Tbd."""
         return np.full(self.num_layers, self.design_standing_losses)
@@ -169,11 +262,16 @@ class PtesApproximator:
 
         Variables:
         - layer_temperatures: (layer,)
-        - volume_weights: (layer,)
+        - return_temperature: (snapshot, name)
+        - return_layer_index: (name,)
+        - m3_to_mwh: (layer,)
+        - hx_volume_to_return_temp: (snapshot, name, layer)
+        - hx_volume_to_forward_temp: (snapshot, name, layer)
+        - charger_efficiency: (snapshot, name, layer)
         - charging_availability: (snapshot, name, layer)
         - interlayer_transfer_coefficients: (layer_pair,)
-        - boost_ratios: (snapshot, name, layer)
         - standing_losses: (layer,)
+        - e_max_pu: scalar
         """
         layer_coord = np.arange(self.num_layers)
         pair_coord = np.arange(self.num_layers - 1)
@@ -185,18 +283,23 @@ class PtesApproximator:
                     dims=["layer"],
                     coords={"layer": layer_coord},
                 ),
-                "volume_weights": xr.DataArray(
-                    self.volume_weights,
+                "return_temperature_layer": self.return_temp_layer,
+                "hp_return_layer": self.hp_return_layer,
+                "m3_to_mwh": xr.DataArray(
+                    self.m3_to_mwh,
                     dims=["layer"],
                     coords={"layer": layer_coord},
                 ),
+                "preheater_efficiency": self.preheater_efficiency,
+                "heat_pump_efficiency": self.heat_pump_efficiency,
+                "layer_needs_boosting": self.layer_needs_boosting,
+                "charger_efficiency": self.charger_efficiency,
                 "charging_availability": self.charging_availability,
                 "interlayer_heat_transfer_coefficients": xr.DataArray(
                     self.interlayer_heat_transfer_coefficients,
                     dims=["layer_pair"],
                     coords={"layer_pair": pair_coord},
                 ),
-                "boost_ratios": self.boost_ratios,
                 "standing_losses": xr.DataArray(
                     self.standing_losses,
                     dims=["layer"],
@@ -212,6 +315,8 @@ class PtesApproximator:
                 "design_top_temperature": self.design_top_temperature,
                 "design_bottom_temperature": self.design_bottom_temperature,
                 "design_standing_losses": self.design_standing_losses,
+                "rho": self.rho,
+                "c_p": self.c_p,
             },
         )
         return ds

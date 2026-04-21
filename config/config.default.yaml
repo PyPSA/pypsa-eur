@@ -667,7 +667,7 @@ sector:
       design_top_temperature: 90
       design_bottom_temperature: 35
       layered:
-        num_layers: 1 
+        layer_temperatures: [90]
         heat_transfer_coefficient: 0.01  # H [W/(m²·K)]
     ates:
       enable: false

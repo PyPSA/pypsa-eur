@@ -229,11 +229,9 @@ class HeatSystem(Enum):
             heat_source = HeatSource(heat_source)
 
         # Check if this is an excess-heat-sourced heat pump
+        # Includes PTES (all layers), geothermal, water sources, and PTX waste heat sources
         if heat_source in [
             HeatSource.PTES,
-            HeatSource.PTES_LAYER_0,
-            HeatSource.PTES_LAYER_1,
-            HeatSource.PTES_LAYER_2,
             HeatSource.GEOTHERMAL,
             HeatSource.SEA_WATER,
             HeatSource.RIVER_WATER,

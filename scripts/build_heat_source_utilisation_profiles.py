@@ -2,27 +2,25 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build heat source utilisation profiles for district heating networks.
+Build heat source boosting ratio profiles for district heating networks.
 
-This script calculates when and how much heat from various sources (geothermal,
-PTES, river water, etc.) can be used, based on the temperature relationship
-between the heat source and the district heating network.
+This script calculates the boosting ratio (b) for each heat source: how
+much heat pump output is needed per unit of source heat to reach the forward
+temperature of the district heating network.
 
-Two utilisation modes are calculated:
+**Boosting ratio profile**: For each heat source and timestep, b is:
 
-1. **Direct utilisation**: When the source temperature meets or exceeds the
-   forward temperature (T_source ≥ T_forward), the heat source can directly
-   supply the district heating network. Profile value is 1.0 (full utilisation)
-   or 0.0 (not possible).
+- 0 when T_source ≥ T_forward (direct use, no HP boost needed)
+- 1 when T_source < T_return (source cannot preheat return flow)
+- (T_forward − T_source) / (T_source − T_return) otherwise, clipped to [0, 1]
 
-2. **Preheater utilisation**: When the source temperature is between the return
-   and forward temperatures (T_return < T_source < T_forward), the heat source
-   can preheat the return flow before a heat pump lifts it to forward temperature.
-   The profile value represents that share of the heat above the return temperature which is utilised to increase the heat pump's sink inflow temperature. The return flow serves as the source inlet.
+The boosting ratio is consumed by ``prepare_sector_network.py`` to set the
+efficiencies of the heat source utilisation link (forward, p ≥ 0):
 
-These profiles are used by ``prepare_sector_network.py`` to configure heat
-utilisation links that model cascading temperature use: direct supply when
-possible, preheating when beneficial, with heat pumps handling the final lift.
+- bus0 (source) → bus1 (DH heat) at efficiency (1 − b)
+- bus0 (source) → bus2 (HP input bus) at efficiency2 = b
+
+Energy is conserved: (1 − b) + b = 1.
 
 Relevant Settings
 -----------------
@@ -34,7 +32,6 @@ Relevant Settings
                 - air
                 - geothermal
         district_heating:
-            heat_source_cooling: 6  # K
             geothermal:
                 constant_temperature_celsius: 65
 
@@ -48,12 +45,9 @@ Inputs
 
 Outputs
 -------
-- ``resources/<run_name>/heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc``
-    Direct utilisation profiles indexed by (time, name, heat_source).
-    Values: 1.0 when T_source ≥ T_forward, 0.0 otherwise.
-- ``resources/<run_name>/heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc``
-    Preheater utilisation profiles indexed by (time, name, heat_source).
-    Values: heat extraction efficiency when T_return < T_source < T_forward, 0.0 otherwise.
+- ``resources/<run_name>/heat_source_boosting_profiles_base_s_{clusters}_{planning_horizons}.nc``
+    Boosting ratio profiles indexed by (time, name, heat_source).
+    Values in [0, 1]: 0 = direct use, 1 = full HP boosting required.
 """
 
 import logging
@@ -111,117 +105,52 @@ def get_source_temperature(
         return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
 
 
-def get_direct_utilisation_profile(
-    source_temperature: float | xr.DataArray, forward_temperature: xr.DataArray
-) -> xr.DataArray | float:
-    """
-    Calculate when a heat source can directly supply district heating.
-
-    Direct utilisation is possible when the source temperature meets or exceeds
-    the required forward temperature of the district heating network.
-
-    Parameters
-    ----------
-    source_temperature : float | xr.DataArray
-        Heat source temperature in °C. If float, applies uniformly.
-        If DataArray, indexed by (time, name).
-    forward_temperature : xr.DataArray
-        District heating forward temperature profiles in °C,
-        indexed by (time, name).
-
-    Returns
-    -------
-    xr.DataArray
-        Binary profile: 1.0 where T_source ≥ T_forward (direct use possible),
-        0.0 otherwise.
-    """
-    return xr.where(source_temperature >= forward_temperature, 1.0, 0.0)
-
-
-def get_preheater_utilisation_profile(
+def get_boosting_profile(
     source_temperature: float | xr.DataArray,
     forward_temperature: xr.DataArray,
     return_temperature: xr.DataArray,
-    heat_source_cooling: float,
-) -> xr.DataArray | float:
+) -> xr.DataArray:
     """
-    Calculate preheater utilisation efficiency for intermediate-temperature sources.
+    Calculate the boosting ratio: HP heat needed per unit of source heat.
 
-    When a heat source temperature is between the return and forward temperatures,
-    it can preheat the return flow before a heat pump provides the final temperature
-    lift. This improves overall efficiency by reducing the heat pump's lift.
+    The boosting ratio b represents the fraction of source heat that must be
+    routed through the heat pump (rather than used directly) to reach the
+    district heating forward temperature:
 
-    The efficiency represents the fraction of heat extracted from the source that
-    goes into preheating (vs. the additional cooling through the heat pump):
+        b = 0                                                if T_source ≥ T_forward
+        b = 1                                                if T_source < T_return
+        b = (T_forward − T_source) / (T_source − T_return)  otherwise
 
-        efficiency = (T_source - T_return) / (T_source - T_return + heat_source_cooling)
+    The result is clipped to [0, 1].
 
     Parameters
     ----------
     source_temperature : float | xr.DataArray
-        Heat source temperature in °C. If float, applies uniformly.
-        If DataArray, indexed by (time, name).
+        Heat source temperature in °C.
     forward_temperature : xr.DataArray
-        District heating forward temperature profiles in °C,
-        indexed by (time, name).
+        District heating forward temperature in °C, indexed by (time, name).
     return_temperature : xr.DataArray
-        District heating return temperature profiles in °C,
-        indexed by (time, name).
-    heat_source_cooling : float | xr.DataArray
-        Additional temperature drop (K) when extracting heat from the source
-        through the heat pump, beyond the preheating contribution.
+        District heating return temperature in °C, indexed by (time, name).
 
     Returns
     -------
     xr.DataArray
-        Preheater efficiency profile: value in (0, 1) where T_return < T_source < T_forward,
-        0.0 otherwise (source too cold or hot enough for direct use).
+        Boosting ratio profile in [0, 1]: 0 = direct use, 1 = full HP boosting.
+        Shape matches forward_temperature.
     """
     return xr.where(
-        (source_temperature < forward_temperature)
-        * (source_temperature > return_temperature),
-        (source_temperature - return_temperature)
-        / (source_temperature - return_temperature + heat_source_cooling),
+        source_temperature >= forward_temperature,
+        # no boosting needed if source_temp > forward_temp
         0.0,
+        xr.where(
+            source_temperature < return_temperature,
+            # source does not pre-heat return flow if below return temp
+            1,
+            # if source is between return and forward temp, it pre-heats return flow (part of heat is utilised directly, part is boosted by HP)
+            (forward_temperature - source_temperature)
+            / (source_temperature - return_temperature),
+        ).clip(min=0, max=1),
     )
-
-
-def get_heat_pump_cooling(
-    heat_source_name: str,
-    default_heat_source_cooling: float,
-    return_temperature: xr.DataArray = None,
-) -> float | xr.DataArray:
-    """
-    Get the additional heat source cooling (temperature drop) through the heat pump for a heat source.
-
-    For PTES, this equals the temperature difference between
-    return flow and bottom layer (return_temperature - bottom_temperature).
-    For other sources, uses the default constant value.
-
-    Parameters
-    ----------
-    heat_source_name : str
-        Name of the heat source (e.g., 'ptes', 'geothermal', 'air').
-    default_heat_source_cooling : float
-        Default heat source cooling in Kelvin, from config.
-    return_temperature : xr.DataArray, optional
-        District heating return temperature profiles in °C. Required for PTES.
-
-    Returns
-    -------
-    float | xr.DataArray
-        Heat source cooling in Kelvin. Returns a float for most sources,
-        or a DataArray for PTES.
-    """
-    heat_source = HeatSource(heat_source_name)
-    if heat_source.source_type == HeatSourceType.STORAGE:
-        if return_temperature is None:
-            raise ValueError(
-                "PTES heat source requires return_temperature to calculate heat pump cooling."
-            )
-        bottom_temperature = float(ptes_ds.attrs["bottom_temperature"])
-        return return_temperature - bottom_temperature
-    return default_heat_source_cooling
 
 
 if __name__ == "__main__":
@@ -238,6 +167,14 @@ if __name__ == "__main__":
     heat_sources: list[str] = snakemake.params.heat_sources
     ptes_enable: bool = snakemake.params.ptes_enable
 
+    # PTES uses dedicated routing in prepare_sector_network and no longer
+    # consumes the generic boosting profile pathway.
+    filtered_heat_sources = [
+        hs
+        for hs in heat_sources
+        if not (ptes_enable and HeatSource(hs).source_type == HeatSourceType.STORAGE)
+    ]
+
     # Load PTES operations dataset if enabled
     if ptes_enable:
         ptes_ds = xr.open_dataset(snakemake.input.ptes_operations)
@@ -253,41 +190,27 @@ if __name__ == "__main__":
         snakemake.input.central_heating_return_temperature_profiles
     )
 
-    xr.concat(
-        [
-            get_direct_utilisation_profile(
-                source_temperature=get_source_temperature(
-                    snakemake_params=snakemake.params,
-                    snakemake_input=snakemake.input,
-                    heat_source_name=heat_source_key,
-                ),
-                forward_temperature=central_heating_forward_temperature,
-            ).assign_coords(heat_source=heat_source_key)
-            for heat_source_key in heat_sources
-        ],
-        dim="heat_source",
-    ).to_netcdf(snakemake.output.heat_source_direct_utilisation_profiles)
-
-    xr.concat(
-        [
-            get_preheater_utilisation_profile(
-                source_temperature=get_source_temperature(
-                    heat_source_name=heat_source_key,
-                    snakemake_params=snakemake.params,
-                    snakemake_input=snakemake.input,
-                ),
-                forward_temperature=central_heating_forward_temperature,
-                return_temperature=central_heating_return_temperature,
-                heat_source_cooling=get_heat_pump_cooling(
-                    heat_source_name=heat_source_key,
-                    default_heat_source_cooling=snakemake.params.heat_source_cooling,
+    if filtered_heat_sources:
+        boosting_profiles = xr.concat(
+            [
+                get_boosting_profile(
+                    source_temperature=get_source_temperature(
+                        snakemake_params=snakemake.params,
+                        snakemake_input=snakemake.input,
+                        heat_source_name=heat_source_key,
+                    ),
+                    forward_temperature=central_heating_forward_temperature,
                     return_temperature=central_heating_return_temperature,
-                ),
-            ).assign_coords(heat_source=heat_source_key)
-            for heat_source_key in heat_sources
-        ],
-        dim="heat_source",
-    ).to_netcdf(snakemake.output.heat_source_preheater_utilisation_profiles)
+                ).assign_coords(heat_source=heat_source_key)
+                for heat_source_key in filtered_heat_sources
+            ],
+            dim="heat_source",
+        )
+    else:
+        boosting_profiles = xr.DataArray(
+            [],
+            coords={"heat_source": []},
+            dims=["heat_source"],
+        )
 
-    if ptes_ds is not None:
-        ptes_ds.close()
+    boosting_profiles.to_netcdf(snakemake.output.heat_source_boosting_profiles)
