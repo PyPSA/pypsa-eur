@@ -175,7 +175,7 @@
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
         },
         "nprocesses": {
-          "default": 16,
+          "default": 1,
           "description": "Number of parallel processes in cutout preparation.",
           "type": "integer"
         },
@@ -8787,7 +8787,7 @@
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
         },
         "nprocesses": {
-          "default": 16,
+          "default": 1,
           "description": "Number of parallel processes in cutout preparation.",
           "type": "integer"
         },

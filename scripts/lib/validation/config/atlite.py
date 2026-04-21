@@ -114,7 +114,7 @@ class AtliteConfig(BaseModel):
         description="Defines a default cutout. Can refer to a single cutout or a list of cutouts.",
     )
     nprocesses: int = Field(
-        16,
+        1,
         description="Number of parallel processes in cutout preparation.",
     )
     show_progress: bool = Field(
