@@ -23,7 +23,6 @@ snapshots:
 
 electricity:
   base_network: tyndp
-  transmission_limit: v1.0
 
   extendable_carriers:
     Generator: [OCGT]
@@ -32,6 +31,10 @@ electricity:
     Link: [H2 pipeline]
 
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+transmission:
+  electricity:
+    transmission_limit: v1.0
 
 atlite:
   default_cutout: europe-2013-03-sarah3-era5

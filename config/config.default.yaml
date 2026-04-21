@@ -182,10 +182,12 @@ electricity:
   autarky:
     enable: false
     by_country: false
-  transmission_limit: vopt
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission
 transmission:
+  electricity:
+    enable: true
+    transmission_limit: vopt
   hydrogen:
     enable: true
     gabriel_filter:
@@ -915,7 +917,6 @@ sector:
   use_methanation_waste_heat: 0.25
   use_fuel_cell_waste_heat: 1
   use_electrolysis_waste_heat: 0.25
-  electricity_transmission_grid: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true

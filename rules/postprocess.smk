@@ -62,7 +62,9 @@ if config["foresight"] != "perfect":
             mem_mb=10000,
         params:
             plotting=config_provider("plotting"),
-            transmission_limit=config_provider("electricity", "transmission_limit"),
+            transmission_limit=config_provider(
+                "transmission", "electricity", "transmission_limit"
+            ),
         message:
             "Plotting power network for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizons"
         script:

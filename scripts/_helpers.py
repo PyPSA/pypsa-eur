@@ -750,7 +750,7 @@ def update_config_from_wildcards(config, w, inplace=True):
 
         for o in opts:
             if o.startswith("lv") or o.startswith("lc"):
-                config["electricity"]["transmission_limit"] = o[1:]
+                config["transmission"]["electricity"]["transmission_limit"] = o[1:]
                 break
 
     if w.get("sector_opts"):
@@ -792,7 +792,7 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["clustering"]["temporal"]["resolution_sector"] = nhours
 
         if "decentral" in opts:
-            config["sector"]["electricity_transmission_grid"] = False
+            config["transmission"]["electricity"]["enable"] = False
 
         if "noH2network" in opts:
             config["transmission"]["hydrogen"] = False

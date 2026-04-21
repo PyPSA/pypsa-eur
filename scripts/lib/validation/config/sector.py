@@ -799,10 +799,6 @@ class SectorConfig(BaseModel):
         description="Add option for using waste heat of electrolysis in district heating networks.",
     )
 
-    electricity_transmission_grid: bool = Field(
-        True,
-        description="Switch for enabling/disabling the electricity transmission grid.",
-    )
     electricity_distribution_grid: bool = Field(
         True,
         description="Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",

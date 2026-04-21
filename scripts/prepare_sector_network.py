@@ -6510,7 +6510,7 @@ if __name__ == "__main__":
     if options["dac"]:
         add_dac(n, costs)
 
-    if not options["electricity_transmission_grid"]:
+    if not cf_transmission["electricity"]["enable"]:
         decentral(n)
 
     if not snakemake.config["transmission"]["hydrogen"]["enable"]:
