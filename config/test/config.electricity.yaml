@@ -68,10 +68,12 @@ clustering:
   temporal:
     resolution_elec: 24h
 
-lines:
-  dynamic_line_rating:
-    activate: true
-    max_line_rating: 1.3
+transmission:
+  electricity:
+    lines:
+      dynamic_line_rating:
+        activate: true
+        max_line_rating: 1.3
 
 
 solving:

@@ -188,6 +188,58 @@ transmission:
     enable: true
     base_network: osm
     transmission_limit: vopt
+    lines:
+      types:
+        63.0: "94-AL1/15-ST1A 20.0"
+        66.0: "94-AL1/15-ST1A 20.0"
+        90.0: "184-AL1/30-ST1A 110.0"
+        110.0: "184-AL1/30-ST1A 110.0"
+        132.0: "243-AL1/39-ST1A 110.0"
+        150.0: "243-AL1/39-ST1A 110.0"
+        220.0: "Al/St 240/40 2-bundle 220.0"
+        300.0: "Al/St 240/40 3-bundle 300.0"
+        330.0: "Al/St 240/40 3-bundle 300.0"
+        380.0: "Al/St 240/40 4-bundle 380.0"
+        400.0: "Al/St 240/40 4-bundle 380.0"
+        500.0: "Al/St 240/40 4-bundle 380.0"
+        750.0: "Al/St 560/50 4-bundle 750.0"
+      s_max_pu: 0.7
+      s_nom_max: .inf
+      max_extension: 20000
+      length_factor: 1.25
+      reconnect_crimea: true
+      under_construction: keep
+      dynamic_line_rating:
+        activate: false
+        cutout: default
+        correction_factor: 0.95
+        max_voltage_difference: false
+        max_line_rating: false
+    links:
+      p_max_pu: 1.0
+      p_min_pu: -1.0
+      p_nom_max: .inf
+      max_extension: 30000
+      length_factor: 1.25
+      under_construction: keep
+    transformers:
+      x: 0.1
+      s_nom: 2000.0
+      type: ""
+    projects:
+      enable: true
+      include:
+        tyndp2020: true
+        nep: true
+        manual: true
+      skip:
+      - upgraded_lines
+      - upgraded_links
+      status:
+      - under_construction
+      - in_permitting
+      - confirmed
+      new_link_capacity: zero
   hydrogen:
     enable: true
     gabriel_filter:
@@ -445,66 +497,6 @@ conventional:
   fuel_price_rolling_window: 6
   nuclear:
     p_max_pu: data/nuclear_p_max_pu.csv
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
-lines:
-  types:
-    63.0: "94-AL1/15-ST1A 20.0"
-    66.0: "94-AL1/15-ST1A 20.0"
-    90.0: "184-AL1/30-ST1A 110.0"
-    110.0: "184-AL1/30-ST1A 110.0"
-    132.0: "243-AL1/39-ST1A 110.0"
-    150.0: "243-AL1/39-ST1A 110.0"
-    220.0: "Al/St 240/40 2-bundle 220.0"
-    300.0: "Al/St 240/40 3-bundle 300.0"
-    330.0: "Al/St 240/40 3-bundle 300.0"
-    380.0: "Al/St 240/40 4-bundle 380.0"
-    400.0: "Al/St 240/40 4-bundle 380.0"
-    500.0: "Al/St 240/40 4-bundle 380.0"
-    750.0: "Al/St 560/50 4-bundle 750.0"
-  s_max_pu: 0.7
-  s_nom_max: .inf
-  max_extension: 20000
-  length_factor: 1.25
-  reconnect_crimea: true
-  under_construction: keep
-  dynamic_line_rating:
-    activate: false
-    cutout: default
-    correction_factor: 0.95
-    max_voltage_difference: false
-    max_line_rating: false
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
-links:
-  p_max_pu: 1.0
-  p_min_pu: -1.0
-  p_nom_max: .inf
-  max_extension: 30000
-  length_factor: 1.25
-  under_construction: keep
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
-transmission_projects:
-  enable: true
-  include:
-    tyndp2020: true
-    nep: true
-    manual: true
-  skip:
-  - upgraded_lines
-  - upgraded_links
-  status:
-  - under_construction
-  - in_permitting
-  - confirmed
-  new_link_capacity: zero
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
-transformers:
-  x: 0.1
-  s_nom: 2000.0
-  type: ""
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:

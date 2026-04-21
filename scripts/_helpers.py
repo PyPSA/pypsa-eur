@@ -821,8 +821,12 @@ def update_config_from_wildcards(config, w, inplace=True):
 
         _, maxext = find_opt(opts, "linemaxext")
         if maxext is not None:
-            config["lines"]["max_extension"] = maxext * 1e3
-            config["links"]["max_extension"] = maxext * 1e3
+            config["transmission"]["electricity"]["lines"]["max_extension"] = (
+                maxext * 1e3
+            )
+            config["transmission"]["electricity"]["links"]["max_extension"] = (
+                maxext * 1e3
+            )
 
         _, co2l_value = find_opt(opts, "Co2L")
         if co2l_value is not None:

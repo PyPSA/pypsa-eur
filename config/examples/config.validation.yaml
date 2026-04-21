@@ -61,12 +61,13 @@ conventional:
   biomass:
     p_max_pu: 0.65
 
-lines:
-  s_max_pu: 0.23
-  under_construction: 'remove'
-
-links:
-  include_tyndp: false
+transmission:
+  electricity:
+    lines:
+      s_max_pu: 0.23
+      under_construction: 'remove'
+    projects:
+      enable: false
 
 costs:
   year: 2020

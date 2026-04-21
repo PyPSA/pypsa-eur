@@ -28,7 +28,6 @@ snapshots:
   end: "2013-03-08"
 
 electricity:
-
   extendable_carriers:
     Generator: [OCGT]
     StorageUnit: [battery]

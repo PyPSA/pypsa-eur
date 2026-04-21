@@ -57,9 +57,8 @@ transmission:
   electricity:
     enable: true
     base_network: osm
-
-transmission_projects:
-  enable: false
+    projects:
+      enable: false
 
 data:
   osm:

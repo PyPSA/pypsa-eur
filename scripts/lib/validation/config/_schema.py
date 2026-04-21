@@ -23,8 +23,6 @@ from scripts.lib.validation.config.energy import EnergyConfig
 from scripts.lib.validation.config.existing_capacities import ExistingCapacitiesConfig
 from scripts.lib.validation.config.foresight import ForesightConfig
 from scripts.lib.validation.config.industry import IndustryConfig
-from scripts.lib.validation.config.lines import LinesConfig
-from scripts.lib.validation.config.links import LinksConfig
 from scripts.lib.validation.config.load import LoadConfig
 from scripts.lib.validation.config.overpass_api import OverpassApiConfig
 from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
@@ -35,11 +33,7 @@ from scripts.lib.validation.config.sector import SectorConfig
 from scripts.lib.validation.config.snapshots import SnapshotsConfig
 from scripts.lib.validation.config.solar_thermal import SolarThermalConfig
 from scripts.lib.validation.config.solving import SolvingConfig
-from scripts.lib.validation.config.transformers import TransformersConfig
 from scripts.lib.validation.config.transmission import TransmissionConfig
-from scripts.lib.validation.config.transmission_projects import (
-    TransmissionProjectsConfig,
-)
 
 
 class LoggingConfig(ConfigModel):
@@ -148,22 +142,6 @@ class ConfigSchema(BaseModel):
     conventional: ConventionalConfig = Field(
         default_factory=ConventionalConfig,
         description="Conventional power plants configuration.",
-    )
-    lines: LinesConfig = Field(
-        default_factory=LinesConfig,
-        description="Transmission lines configuration.",
-    )
-    links: LinksConfig = Field(
-        default_factory=LinksConfig,
-        description="HVDC links configuration.",
-    )
-    transmission_projects: TransmissionProjectsConfig = Field(
-        default_factory=TransmissionProjectsConfig,
-        description="Transmission projects configuration.",
-    )
-    transformers: TransformersConfig = Field(
-        default_factory=TransformersConfig,
-        description="Transformers configuration.",
     )
     load: LoadConfig = Field(
         default_factory=LoadConfig,

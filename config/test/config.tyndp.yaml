@@ -22,8 +22,6 @@ snapshots:
   end: "2013-03-08"
 
 electricity:
-  base_network: tyndp
-
   extendable_carriers:
     Generator: [OCGT]
     StorageUnit: [battery]
@@ -34,7 +32,16 @@ electricity:
 
 transmission:
   electricity:
+    base_network: tyndp
     transmission_limit: v1.0
+    links:
+      p_min_pu: 0
+    projects:
+      enable: true
+      include:
+        tyndp2020: false
+        nep: false
+        manual: false
 
 atlite:
   default_cutout: europe-2013-03-sarah3-era5
@@ -50,15 +57,6 @@ renewable:
   offwind-float:
     max_depth: false
     min_depth: false
-
-links:
-  p_min_pu: 0
-
-transmission_projects:
-  include:
-    tyndp2020: false
-    nep: false
-    manual: false
 
 sector:
   transmission_efficiency:
