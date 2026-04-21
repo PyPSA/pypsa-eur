@@ -249,6 +249,13 @@ class _TransmissionCarrierConfigElectricity(BaseModel):
     )
 
 
+class _TransmissionCarrierConfigGas(BaseModel):
+    enable: bool = Field(
+        True,
+        description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+    )
+
+
 class TransmissionConfig(BaseModel):
     """Configuration for `transmission` settings."""
 
@@ -263,4 +270,8 @@ class TransmissionConfig(BaseModel):
     carbon_dioxide: _TransmissionCarrierConfigGeneral = Field(
         default_factory=_TransmissionCarrierConfigGeneral,
         description="Configuration for carbon dioxide transmission candidates.",
+    )
+    methane_gas: _TransmissionCarrierConfigGas = Field(
+        default_factory=_TransmissionCarrierConfigGas,
+        description="Configuration for methane gas transmission candidates.",
     )

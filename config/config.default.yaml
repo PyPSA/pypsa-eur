@@ -254,6 +254,8 @@ transmission:
       min_degree: 1
     length_factor: 1.25
     cost_factor: 1
+  methane_gas:
+    enable: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
@@ -929,7 +931,6 @@ sector:
       compression_per_1000km: 0.01
     electricity distribution grid:
       efficiency_static: 0.97
-  gas_network: true
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
   gas_network_connectivity_upgrade: 1

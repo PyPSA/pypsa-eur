@@ -110,7 +110,7 @@ def define_spatial(nodes, options, cf_transmission):
 
     spatial.gas = SimpleNamespace()
 
-    if options["gas_network"]:
+    if cf_transmission["methane_gas"]["enable"]:
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
         spatial.gas.biogas = nodes + " biogas"
@@ -1758,13 +1758,12 @@ def add_h2_gas_infrastructure(
     pop_layout,
     h2_cavern_file,
     h2_transmission_candidates,
-    h2_transmission_enable,
     cavern_types,
     clustered_gas_network_file,
     gas_input_nodes,
     spatial,
     options,
-    h2_transmission_cost_factor=1.0,
+    cf_transmission,
 ):
     """
     Add hydrogen and gas infrastructure to the network.
@@ -1781,8 +1780,6 @@ def add_h2_gas_infrastructure(
         Path to CSV file containing hydrogen cavern storage potentials
     h2_transmission_candidates : str
         Path to GeoJSON file containing hydrogen pipeline candidates
-    h2_transmission_enable : bool
-        Whether hydrogen transmission topology is enabled in config
     cavern_types : list
         List of underground storage types to consider
     clustered_gas_network_file : str, optional
@@ -1805,8 +1802,8 @@ def add_h2_gas_infrastructure(
         - SMR : bool
         - min_part_load_methanation : float
         - cc_fraction : float
-    h2_transmission_cost_factor : float, optional
-        Factor to scale the capital costs of the H2 network, default 1.0
+    cf_transmission : dict
+        Dictionary of configuration options for transmission infrastructure.
 
     Returns
     -------
@@ -1933,7 +1930,7 @@ def add_h2_gas_infrastructure(
     if options["H2_retrofit"]:
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
-    if options["gas_network"]:
+    if cf_transmission["methane_gas"]["enable"]:
         logger.info(
             "Add natural gas infrastructure, incl. LNG terminals, production, storage and entry-points."
         )
@@ -2081,7 +2078,7 @@ def add_h2_gas_infrastructure(
         )
 
     # TODO: implement offshore costs, using 1.5-2.0x multiplier
-    if h2_transmission_enable:
+    if cf_transmission["hydrogen"]["enable"]:
         logger.info("Add options for new hydrogen pipelines.")
 
         h2_pipes = gpd.read_file(h2_transmission_candidates).set_index("name")
@@ -2100,7 +2097,7 @@ def add_h2_gas_infrastructure(
             length=h2_pipes["length"].values,
             capital_cost=costs.at["H2 (g) pipeline", "capital_cost"]
             * h2_pipes["length"].values
-            * h2_transmission_cost_factor,
+            * cf_transmission["hydrogen"]["cost_factor"],
             carrier="H2 pipeline",
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
         )
@@ -3760,6 +3757,7 @@ def add_biomass(
     options,
     spatial,
     cf_industry,
+    cf_transmission,
     pop_layout,
     biomass_potentials_file,
     biomass_transport_costs_file=None,
@@ -3790,6 +3788,8 @@ def add_biomass(
         Object containing spatial information about different carriers (gas, biomass, etc.)
     cf_industry : dict
         Dictionary containing industrial sector configuration
+    cf_transmission : dict
+        Dictionary of configuration options for transmission infrastructure.
     pop_layout : pd.DataFrame
         DataFrame containing population layout information
     biomass_potentials_file : str
@@ -3821,7 +3821,7 @@ def add_biomass(
     biomass_potentials = pd.read_csv(biomass_potentials_file, index_col=0) * nyears
 
     # need to aggregate potentials if gas not nodally resolved
-    if options["gas_network"]:
+    if cf_transmission["methane_gas"]["enable"]:
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
@@ -4489,6 +4489,7 @@ def add_industry(
     options: dict,
     spatial: SimpleNamespace,
     cf_industry: dict,
+    cf_transmission: dict,
     investment_year: int,
     co2_transmission_enable: bool,
 ):
@@ -4521,6 +4522,8 @@ def add_industry(
         (biomass, gas, oil, methanol, etc.)
     cf_industry : dict
         Industry-specific configuration parameters
+    cf_transmission : dict
+        Dictionary of configuration options for transmission infrastructure.
     investment_year : int
         Year for which investment costs should be considered
     HeatSystem : Enum
@@ -4654,7 +4657,7 @@ def add_industry(
 
     gas_demand = industrial_demand.loc[nodes, "methane"] / nhours
 
-    if options["gas_network"]:
+    if cf_transmission["methane_gas"]["enable"]:
         spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
     else:
         spatial_gas_demand = gas_demand.sum()
@@ -6356,13 +6359,12 @@ if __name__ == "__main__":
         pop_layout=pop_layout,
         h2_cavern_file=snakemake.input.h2_cavern,
         h2_transmission_candidates=snakemake.input.h2_transmission_candidates,
-        h2_transmission_enable=cf_transmission["hydrogen"]["enable"],
         cavern_types=snakemake.params.sector["hydrogen_underground_storage_locations"],
         clustered_gas_network_file=snakemake.input.clustered_gas_network,
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
-        h2_transmission_cost_factor=cf_transmission["hydrogen"]["cost_factor"],
+        cf_transmission=cf_transmission,
     )
 
     # Hydrogen already implemented in add_h2_gas_infrastructure
@@ -6445,6 +6447,7 @@ if __name__ == "__main__":
             options=options,
             spatial=spatial,
             cf_industry=cf_industry,
+            cf_transmission=cf_transmission,
             pop_layout=pop_layout,
             biomass_potentials_file=snakemake.input.biomass_potentials,
             biomass_transport_costs_file=snakemake.input.biomass_transport_costs,
@@ -6467,6 +6470,7 @@ if __name__ == "__main__":
             options=options,
             spatial=spatial,
             cf_industry=cf_industry,
+            cf_transmission=cf_transmission,
             investment_year=investment_year,
             co2_transmission_enable=cf_transmission["carbon_dioxide"]["enable"],
         )

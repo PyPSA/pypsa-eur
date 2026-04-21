@@ -39,6 +39,8 @@ electricity:
 transmission:
   carbon_dioxide:
     enable: false
+  methane_gas:
+    enable: true
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -63,7 +65,6 @@ clustering:
     resolution_sector: 24h
 
 sector:
-  gas_network: true
   H2_retrofit: true
   district_heating:
     ptes:
