@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../schema.default.json
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
@@ -379,7 +380,7 @@ solving:
     EQ: false
   solver:
     name: highs
-    options: highs-simplex
+    options: highs-default
 
   check_objective:
     enable: false

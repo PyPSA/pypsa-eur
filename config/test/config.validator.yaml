@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../schema.default.json
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
@@ -11,5 +12,4 @@ run:
 
 clustering:
   temporal:
-    resolution_elec: 365H
     resolution_sector: 365H
