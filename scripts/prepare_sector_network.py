@@ -513,38 +513,6 @@ def update_wind_solar_costs(
                 capital_cost.rename(index=lambda node: node + " " + tech)
             )
 
-    for connection in ["farshore", "nearshore", "shallow"]:
-        tech = "wave-" + connection
-        landfall_length = landfall_lengths.get(tech, 0.0)
-        if tech not in n.generators.carrier.values:
-            continue
-        profile = snakemake.input["profile_wave-" + connection]
-        with xr.open_dataset(profile) as ds:
-            # if-statement for compatibility with old profiles
-            if "year" in ds.indexes:
-                ds = ds.sel(year=ds.year.min(), drop=True)
-
-            distance = ds["average_distance"].to_pandas()
-            submarine_cost = costs.at[tech + "-connection-submarine", "fixed"]
-            underground_cost = costs.at[tech + "-connection-underground", "fixed"]
-            connection_cost = line_length_factor * (
-                distance * submarine_cost + landfall_length * underground_cost
-            )
-
-            capital_cost = (
-                costs.at["wave", "fixed"]
-                + costs.at[tech + "-station", "fixed"]
-                + connection_cost
-            )
-
-            logger.info(
-                f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {tech}"
-            )
-
-            n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
-                capital_cost.rename(index=lambda node: node + " " + tech)
-            )
-
 
 def add_carrier_buses(
     n: pypsa.Network,
