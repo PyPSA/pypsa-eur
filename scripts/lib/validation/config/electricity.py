@@ -8,8 +8,6 @@ Electricity configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 """
 
-from typing import Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from scripts.lib.validation.config._base import ConfigModel
