@@ -52,7 +52,11 @@ electricity:
   - 400.0
   - 500.0
   - 750.0
-  base_network: osm
+
+transmission:
+  electricity:
+    enable: true
+    base_network: osm
 
 transmission_projects:
   enable: false

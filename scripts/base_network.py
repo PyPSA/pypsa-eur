@@ -674,7 +674,7 @@ def base_network(
     parameter_corrections,
     config,
 ):
-    base_network = config["electricity"].get("base_network")
+    base_network = config["transmission"]["electricity"].get("base_network")
     osm_version = config["data"]["osm"]["version"]
     assert base_network in {"entsoegridkit", "osm", "tyndp"}, (
         f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
@@ -742,7 +742,7 @@ def base_network(
     n.add("Link", converters.index, **converters)
 
     _set_lines_s_nom_from_linetypes(n)
-    if config["electricity"].get("base_network") == "entsoegridkit":
+    if config["transmission"]["electricity"].get("base_network") == "entsoegridkit":
         _apply_parameter_corrections(n, parameter_corrections)
 
     n = _remove_unconnected_components(n)

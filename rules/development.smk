@@ -54,7 +54,7 @@ rule make_network_comparison:
         mem_mb=2000,
     params:
         countries=config_provider("countries"),
-        base_network=config_provider("electricity", "base_network"),
+        base_network=config_provider("transmission", "electricity", "base_network"),
         compare_to_version=config_provider(
             "osm_network_release", "compare_to", "version"
         ),

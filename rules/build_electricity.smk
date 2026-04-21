@@ -60,7 +60,7 @@ rule build_powerplants:
 
 
 def input_base_network(w):
-    base_network = config_provider("electricity", "base_network")(w)
+    base_network = config_provider("transmission", "electricity", "base_network")(w)
     source = config_provider("data", "osm", "source")(w)
     components = {"buses", "lines", "links", "converters", "transformers"}
     if (base_network == "osm") and (source == "archive"):
@@ -694,11 +694,11 @@ def input_custom_busmap(w):
     mode = config_provider("clustering", "mode", default="busmap")(w)
 
     if mode == "custom_busmap":
-        base_network = config_provider("electricity", "base_network")(w)
+        base_network = config_provider("transmission", "electricity", "base_network")(w)
         custom_busmap = f"data/busmaps/base_s_{w.clusters}_{base_network}.csv"
 
     if mode == "custom_busshapes":
-        base_network = config_provider("electricity", "base_network")(w)
+        base_network = config_provider("transmission", "electricity", "base_network")(w)
         custom_busshapes = f"data/busshapes/base_s_{w.clusters}_{base_network}.geojson"
 
     return {

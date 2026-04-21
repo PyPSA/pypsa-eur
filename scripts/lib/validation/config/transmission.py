@@ -8,6 +8,8 @@ Transmission candidate configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -54,6 +56,10 @@ class _TransmissionCarrierConfigElectricity(BaseModel):
     enable: bool = Field(
         True,
         description="Switch for enabling/disabling the electricity transmission grid.",
+    )
+    base_network: Literal["entsoegridkit", "osm", "tyndp"] = Field(
+        "osm",
+        description="Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
     )
     transmission_limit: str = Field(
         "vopt",
