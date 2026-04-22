@@ -5961,7 +5961,7 @@
             }
           }
         },
-        "methane_gas": {
+        "gas": {
           "properties": {
             "enable": {
               "default": true,
@@ -9709,7 +9709,7 @@
             }
           }
         },
-        "methane_gas": {
+        "gas": {
           "properties": {
             "enable": {
               "default": true,

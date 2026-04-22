@@ -271,7 +271,7 @@ class TransmissionConfig(BaseModel):
         default_factory=_TransmissionCarrierConfigGeneral,
         description="Configuration for carbon dioxide transmission candidates.",
     )
-    methane_gas: _TransmissionCarrierConfigGas = Field(
+    gas: _TransmissionCarrierConfigGas = Field(
         default_factory=_TransmissionCarrierConfigGas,
         description="Configuration for methane gas transmission candidates.",
     )

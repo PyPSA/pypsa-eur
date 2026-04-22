@@ -254,7 +254,7 @@ transmission:
       min_degree: 1
     length_factor: 1.25
     cost_factor: 1
-  methane_gas:
+  gas:
     enable: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite

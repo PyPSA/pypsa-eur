@@ -110,7 +110,7 @@ def define_spatial(nodes, options, cf_transmission):
 
     spatial.gas = SimpleNamespace()
 
-    if cf_transmission["methane_gas"]["enable"]:
+    if cf_transmission["gas"]["enable"]:
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
         spatial.gas.biogas = nodes + " biogas"
@@ -1930,7 +1930,7 @@ def add_h2_gas_infrastructure(
     if options["H2_retrofit"]:
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
-    if cf_transmission["methane_gas"]["enable"]:
+    if cf_transmission["gas"]["enable"]:
         logger.info(
             "Add natural gas infrastructure, incl. LNG terminals, production, storage and entry-points."
         )
@@ -3821,7 +3821,7 @@ def add_biomass(
     biomass_potentials = pd.read_csv(biomass_potentials_file, index_col=0) * nyears
 
     # need to aggregate potentials if gas not nodally resolved
-    if cf_transmission["methane_gas"]["enable"]:
+    if cf_transmission["gas"]["enable"]:
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
@@ -4657,7 +4657,7 @@ def add_industry(
 
     gas_demand = industrial_demand.loc[nodes, "methane"] / nhours
 
-    if cf_transmission["methane_gas"]["enable"]:
+    if cf_transmission["gas"]["enable"]:
         spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
     else:
         spatial_gas_demand = gas_demand.sum()

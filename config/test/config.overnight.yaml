@@ -39,7 +39,7 @@ electricity:
 transmission:
   carbon_dioxide:
     enable: false
-  methane_gas:
+  gas:
     enable: true
 
 atlite:
