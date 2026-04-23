@@ -204,6 +204,11 @@ class _TransmissionCarrierConfigGeneral(BaseModel):
         default_factory=_GabrielFilterConfig,
         description="Gabriel filter configuration.",
     )
+    max_offshore_haversine_distance: float = Field(
+        float("inf"),
+        gt=0,
+        description="Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+    )
     length_factor: float = Field(
         1.25,
         gt=0,

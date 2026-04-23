@@ -5909,6 +5909,12 @@
                 }
               }
             },
+            "max_offshore_haversine_distance": {
+              "default": null,
+              "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
             "length_factor": {
               "default": 1.25,
               "description": "Multiplier applied to geometric corridor lengths.",
@@ -5946,6 +5952,12 @@
                   "type": "integer"
                 }
               }
+            },
+            "max_offshore_haversine_distance": {
+              "default": null,
+              "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+              "exclusiveMinimum": 0,
+              "type": "number"
             },
             "length_factor": {
               "default": 1.25,
@@ -8675,6 +8687,12 @@
             }
           }
         },
+        "max_offshore_haversine_distance": {
+          "default": null,
+          "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
         "length_factor": {
           "default": 1.25,
           "description": "Multiplier applied to geometric corridor lengths.",
@@ -9657,6 +9675,12 @@
                 }
               }
             },
+            "max_offshore_haversine_distance": {
+              "default": null,
+              "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
             "length_factor": {
               "default": 1.25,
               "description": "Multiplier applied to geometric corridor lengths.",
@@ -9694,6 +9718,12 @@
                   "type": "integer"
                 }
               }
+            },
+            "max_offshore_haversine_distance": {
+              "default": null,
+              "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+              "exclusiveMinimum": 0,
+              "type": "number"
             },
             "length_factor": {
               "default": 1.25,
