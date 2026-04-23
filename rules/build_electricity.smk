@@ -513,11 +513,11 @@ rule build_transmission_projects:
             if include
         ],
     output:
-        new_lines=resources("transmission_projects/new_lines.csv"),
-        new_links=resources("transmission_projects/new_links.csv"),
-        adjust_lines=resources("transmission_projects/adjust_lines.csv"),
-        adjust_links=resources("transmission_projects/adjust_links.csv"),
-        new_buses=resources("transmission_projects/new_buses.csv"),
+        new_lines=resources("transmission/electricity_projects/new_lines.csv"),
+        new_links=resources("transmission/electricity_projects/new_links.csv"),
+        adjust_lines=resources("transmission/electricity_projects/adjust_lines.csv"),
+        adjust_links=resources("transmission/electricity_projects/adjust_links.csv"),
+        new_buses=resources("transmission/electricity_projects/new_buses.csv"),
     log:
         logs("build_transmission_projects.log"),
     benchmark:
@@ -553,11 +553,11 @@ rule add_transmission_projects_and_dlr:
         ),
         transmission_projects=lambda w: (
             [
-                resources("transmission_projects/new_buses.csv"),
-                resources("transmission_projects/new_lines.csv"),
-                resources("transmission_projects/new_links.csv"),
-                resources("transmission_projects/adjust_lines.csv"),
-                resources("transmission_projects/adjust_links.csv"),
+                resources("transmission/electricity_projects/new_buses.csv"),
+                resources("transmission/electricity_projects/new_lines.csv"),
+                resources("transmission/electricity_projects/new_links.csv"),
+                resources("transmission/electricity_projects/adjust_lines.csv"),
+                resources("transmission/electricity_projects/adjust_links.csv"),
             ]
             if config_provider("transmission", "electricity", "projects", "enable")(w)
             else []

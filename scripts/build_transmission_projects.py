@@ -18,11 +18,11 @@ Inputs
 Outputs
 -------
 
-- ``transmission_projects/new_lines.csv``: New project lines to be added to the network. This includes new lines and upgraded lines.
-- ``transmission_projects/new_links.csv``: New project links to be added to the network. This includes new links and upgraded links.
-- ``transmission_projects/adjust_lines.csv``: For lines which are upgraded, the decommissioning year of the existing line is adjusted to the build year of the upgraded line.
-- ``transmission_projects/adjust_links.csv``: For links which are upgraded, the decommissioning year of the existing link is adjusted to the build year of the upgraded link.
-- ``transmission_projects/new_buses.csv``: For some links, we have to add new buses (e.g. North Sea Wind Power Hub).
+- ``transmission/electricity_projects/new_lines.csv``: New project lines to be added to the network. This includes new lines and upgraded lines.
+- ``transmission/electricity_projects/new_links.csv``: New project links to be added to the network. This includes new links and upgraded links.
+- ``transmission/electricity_projects/adjust_lines.csv``: For lines which are upgraded, the decommissioning year of the existing line is adjusted to the build year of the upgraded line.
+- ``transmission/electricity_projects/adjust_links.csv``: For links which are upgraded, the decommissioning year of the existing link is adjusted to the build year of the upgraded link.
+- ``transmission/electricity_projects/new_buses.csv``: For some links, we have to add new buses (e.g. North Sea Wind Power Hub).
 """
 
 import logging

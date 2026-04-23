@@ -20,7 +20,7 @@ stubs.
 
 Outputs
 -------
-Two GeoJSON files in WGS84 (EPSG:4326) format are written per carrier and cluster configuration:
+GeoJSON files in WGS84 (EPSG:4326) format are written per cluster configuration:
 
 1. ``all_edges``
      Full Delaunay edge table (one row per Delaunay edge) with columns:
@@ -28,8 +28,7 @@ Two GeoJSON files in WGS84 (EPSG:4326) format are written per carrier and cluste
      - ``name``: Canonical undirected edge identifier ``"bus0 -> bus1"``.
      - ``bus0``: Canonically ordered first bus id (lexicographic order).
      - ``bus1``: Canonically ordered second bus id.
-     - ``length``: Great-circle edge length in km multiplied by
-         ``length_factor``.
+     - ``length``: Great-circle edge length in km.
      - ``gabriel_edge``: ``True`` if the edge satisfies the Gabriel empty
          circle criterion.
      - ``selected_edge``: ``True`` if the edge is part of the final
@@ -37,8 +36,8 @@ Two GeoJSON files in WGS84 (EPSG:4326) format are written per carrier and cluste
      - ``geometry``: LineString geometry in ``EPSG:4326``.
 
 2. ``candidates``
-     Selected candidate corridor table (subset of Delaunay edges) with
-     columns:
+    One selected candidate corridor table per configured ``min_degree``
+    (subset of Delaunay edges) with columns:
 
      - ``name``
      - ``bus0``
@@ -75,14 +74,47 @@ COLS_EDGES = [
     "geometry",
     "underwater_fraction",
 ]
-BUS_SUFFIX = {
-    "carbon_dioxide": "co2 stored",
-    "hydrogen": "H2",
-}
-LINK_PREFIX = {
-    "carbon_dioxide": "CO2 pipeline",
-    "hydrogen": "H2 pipeline",
-}
+
+
+def collect_transmission_topology_settings(
+    transmission_cfg: dict,
+) -> bool:
+    """
+    Collect shared topology settings from carriers with gabriel_filter.min_degree.
+
+    Returns
+    -------
+    bool
+        Shared ``gabriel_filter_enabled`` value.
+    """
+    relevant = []
+    for _, carrier_cfg in transmission_cfg.items():
+        if not isinstance(carrier_cfg, dict):
+            continue
+        if not carrier_cfg.get("enable", False):
+            continue
+        gabriel_cfg = carrier_cfg.get("gabriel_filter", {})
+        if not isinstance(gabriel_cfg, dict):
+            continue
+        if not gabriel_cfg.get("enable", False):
+            continue
+        if "min_degree" not in gabriel_cfg:
+            continue
+        relevant.append((carrier_cfg, gabriel_cfg))
+
+    if not relevant:
+        return False
+
+    gabriel_enabled_values = {
+        bool(gabriel_cfg.get("enable", True)) for _, gabriel_cfg in relevant
+    }
+    if len(gabriel_enabled_values) != 1:
+        raise ValueError(
+            "Inconsistent transmission.<carrier>.gabriel_filter.enable across "
+            "carriers with gabriel_filter.min_degree."
+        )
+
+    return gabriel_enabled_values.pop()
 
 
 def delaunay_edges(coords_meter: NDArray[np.float64]) -> list[tuple[int, int]]:
@@ -232,7 +264,6 @@ def delaunay_triangulation(
     bus_ids: pd.Index,
     coords_geo: NDArray[np.float64],
     coords_meter: NDArray[np.float64],
-    length_factor: float = 1.25,
 ) -> gpd.GeoDataFrame:
     """
     Build the full Delaunay edge table with geometry and metadata.
@@ -260,8 +291,7 @@ def delaunay_triangulation(
     v = edges_arr[:, 1]
 
     logger.info("Compute Delaunay triangulation with %s edges.", len(edges))
-    logger.info("Calculating edge lengths using length factor %.2f.", length_factor)
-    lengths = haversine_pts(coords_geo[u], coords_geo[v]) * length_factor
+    lengths = haversine_pts(coords_geo[u], coords_geo[v])
     gabriel_flags = classify_gabriel_edges(edges_arr, coords_meter)
     edge_geoms = [LineString([coords_geo[i], coords_geo[j]]) for i, j in edges]
 
@@ -448,30 +478,6 @@ def prepare_candidate_edges(
     return selected
 
 
-def mark_selected_edges(
-    delaunay_graph: gpd.GeoDataFrame,
-    selected_edges: gpd.GeoDataFrame,
-) -> gpd.GeoDataFrame:
-    """
-    Annotate all Delaunay edges with selection membership.
-
-    Parameters
-    ----------
-    delaunay_graph : gpd.GeoDataFrame
-        Full Delaunay edge table to annotate.
-    selected_edges : gpd.GeoDataFrame
-        Selected candidate edges containing the ``name`` column.
-
-    Returns
-    -------
-    gpd.GeoDataFrame
-        ``delaunay_graph`` with an added boolean ``selected_edge`` column.
-    """
-    selected_names = set(selected_edges["name"])
-    delaunay_graph["selected_edge"] = delaunay_graph["name"].isin(selected_names)
-    return delaunay_graph
-
-
 def add_underwater_fraction(
     edges: gpd.GeoDataFrame,
     offshore_shapes: gpd.GeoDataFrame,
@@ -507,7 +513,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_transmission_topology",
-            carrier="carbon_dioxide",
             clusters="200",
             run="nodes200",
             configfiles=["config/config.200.yaml"],
@@ -516,16 +521,16 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    carrier_enabled = bool(snakemake.params["carrier_enabled"])
-    carrier = snakemake.wildcards.carrier
-    gabriel_filter_enabled = bool(snakemake.params["gabriel_filter_enabled"])
-    min_degree = int(snakemake.params["min_degree"])
-    length_factor = float(snakemake.params["length_factor"])
+    transmission_cfg = dict(snakemake.params["transmission"])
+    configured_min_degrees = sorted({int(v) for v in snakemake.params["min_degrees"]})
+    candidate_file_by_degree = {
+        int(min_degree): path
+        for min_degree, path in snakemake.params[
+            "candidate_outputs_by_min_degree"
+        ].items()
+    }
 
-    if not carrier_enabled:
-        raise ValueError(
-            "Transmission carrier is disabled in config for this wildcard."
-        )
+    gabriel_filter_enabled = collect_transmission_topology_settings(transmission_cfg)
 
     n = pypsa.Network(snakemake.input.network)
     offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
@@ -536,30 +541,35 @@ if __name__ == "__main__":
         bus_ids=bus_ids,
         coords_geo=coords_geo,
         coords_meter=coords_meter,
-        length_factor=length_factor,
     )
 
     add_underwater_fraction(delaunay_graph, offshore_shapes)
 
-    selected_edges = prepare_candidate_edges(
-        delaunay_graph=delaunay_graph,
-        gabriel_filter_enabled=gabriel_filter_enabled,
-        node_count=len(coords_geo),
-        min_degree=min_degree,
-    )
-    selected_edges = selected_edges[COLS_EDGES]
-    delaunay_graph = mark_selected_edges(delaunay_graph, selected_edges)
-
-    # Rename buses and link names
-    delaunay_graph[["bus0", "bus1"]] = (
-        delaunay_graph[["bus0", "bus1"]] + " " + BUS_SUFFIX[carrier]
-    )
-    delaunay_graph["name"] = LINK_PREFIX[carrier] + " " + delaunay_graph["name"]
-    selected_edges[["bus0", "bus1"]] = (
-        selected_edges[["bus0", "bus1"]] + " " + BUS_SUFFIX[carrier]
-    )
-    selected_edges["name"] = LINK_PREFIX[carrier] + " " + selected_edges["name"]
+    if configured_min_degrees:
+        selected_edges_base = prepare_candidate_edges(
+            delaunay_graph=delaunay_graph,
+            gabriel_filter_enabled=gabriel_filter_enabled,
+            node_count=len(coords_geo),
+            min_degree=min(configured_min_degrees),
+        )
+    else:
+        selected_edges_base = delaunay_graph.copy()
+    selected_edges_base = selected_edges_base[COLS_EDGES]
 
     # Export
     delaunay_graph.to_file(snakemake.output.all_edges)
-    selected_edges.to_file(snakemake.output.candidates)
+
+    for min_degree in configured_min_degrees:
+        if min_degree not in candidate_file_by_degree:
+            raise ValueError(
+                f"Missing output file for configured min_degree value: {min_degree}"
+            )
+
+        logger.info("Preparing candidate edges for min_degree=%s.", min_degree)
+        selected_edges = prepare_candidate_edges(
+            delaunay_graph=delaunay_graph,
+            gabriel_filter_enabled=gabriel_filter_enabled,
+            node_count=len(coords_geo),
+            min_degree=min_degree,
+        )[COLS_EDGES]
+        selected_edges.to_file(candidate_file_by_degree[min_degree])

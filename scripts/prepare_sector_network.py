@@ -873,7 +873,11 @@ def add_co2_tracking(
 
 
 def add_co2_network(
-    n, co2_transmission_candidates, costs, co2_transmission_cost_factor=1.0
+    n,
+    carbon_dioxide_transmission_candidates,
+    costs,
+    co2_transmission_cost_factor=1.0,
+    co2_transmission_length_factor=1.0,
 ):
     """
     Add CO2 transport network to the PyPSA network.
@@ -886,7 +890,7 @@ def add_co2_network(
     ----------
     n : pypsa.Network
         The PyPSA network container object
-    co2_transmission_candidates : str
+    carbon_dioxide_transmission_candidates : str
         Path to GeoJSON file containing CO2 pipeline candidates
     costs : pd.DataFrame
         Cost assumptions for different technologies. Must contain entries for
@@ -894,6 +898,9 @@ def add_co2_network(
         columns
     co2_transmission_cost_factor : float, optional
         Factor to scale the capital costs of the CO2 network, default 1.0
+    co2_transmission_length_factor : float, optional
+        Factor to scale transmission lengths read from topology candidates,
+        default 1.0
 
     Returns
     -------
@@ -907,20 +914,31 @@ def add_co2_network(
     created using the create_network_topology helper function.
     """
     logger.info("Adding CO2 network.")
-    co2_links = gpd.read_file(co2_transmission_candidates).set_index("name")
+    co2_links = gpd.read_file(carbon_dioxide_transmission_candidates).copy()
+
+    if "name" not in co2_links.columns:
+        co2_links["name"] = co2_links["bus0"] + " -> " + co2_links["bus1"]
+
+    if not co2_links.empty and not co2_links.iloc[0]["bus0"].endswith(" co2 stored"):
+        co2_links[["bus0", "bus1"]] = co2_links[["bus0", "bus1"]] + " co2 stored"
+
+    co2_links = co2_links.set_index("name")
+    co2_links.index = "CO2 pipeline " + co2_links.index
 
     if "underwater_fraction" not in co2_links.columns:
         co2_links["underwater_fraction"] = 0.0
 
+    scaled_length = co2_links["length"] * co2_transmission_length_factor
+
     cost_onshore = (
         (1 - co2_links.underwater_fraction)
         * costs.at["CO2 pipeline", "capital_cost"]
-        * co2_links["length"]
+        * scaled_length
     )
     cost_submarine = (
         co2_links.underwater_fraction
         * costs.at["CO2 submarine pipeline", "capital_cost"]
-        * co2_links["length"]
+        * scaled_length
     )
     capital_cost = cost_onshore + cost_submarine
     capital_cost *= co2_transmission_cost_factor
@@ -932,7 +950,7 @@ def add_co2_network(
         bus1=co2_links["bus1"].values,
         p_min_pu=-1,
         p_nom_extendable=True,
-        length=co2_links["length"].values,
+        length=scaled_length.values,
         capital_cost=capital_cost.values,
         carrier="CO2 pipeline",
         lifetime=costs.at["CO2 pipeline", "lifetime"],
@@ -1757,7 +1775,7 @@ def add_h2_gas_infrastructure(
     costs,
     pop_layout,
     h2_cavern_file,
-    h2_transmission_candidates,
+    hydrogen_transmission_candidates,
     cavern_types,
     clustered_gas_network_file,
     gas_input_nodes,
@@ -1778,7 +1796,7 @@ def add_h2_gas_infrastructure(
         Population layout with index of locations/nodes
     h2_cavern_file : str
         Path to CSV file containing hydrogen cavern storage potentials
-    h2_transmission_candidates : str
+    hydrogen_transmission_candidates : str
         Path to GeoJSON file containing hydrogen pipeline candidates
     cavern_types : list
         List of underground storage types to consider
@@ -2081,7 +2099,16 @@ def add_h2_gas_infrastructure(
     if cf_transmission["hydrogen"]["enable"]:
         logger.info("Add options for new hydrogen pipelines.")
 
-        h2_pipes = gpd.read_file(h2_transmission_candidates).set_index("name")
+        h2_pipes = gpd.read_file(hydrogen_transmission_candidates).copy()
+        if "name" not in h2_pipes.columns:
+            h2_pipes["name"] = h2_pipes["bus0"] + " -> " + h2_pipes["bus1"]
+
+        if not h2_pipes.empty and not h2_pipes.iloc[0]["bus0"].endswith(" H2"):
+            h2_pipes[["bus0", "bus1"]] = h2_pipes[["bus0", "bus1"]] + " H2"
+
+        h2_pipes = h2_pipes.set_index("name")
+        h2_pipes.index = "H2 pipeline " + h2_pipes.index
+
         h2_bus_ids = n.buses.index[n.buses.carrier == "H2"]
         h2_pipes = h2_pipes[
             h2_pipes["bus0"].isin(h2_bus_ids) & h2_pipes["bus1"].isin(h2_bus_ids)
@@ -2094,9 +2121,13 @@ def add_h2_gas_infrastructure(
             bus1=h2_pipes["bus1"].values,
             p_min_pu=-1,
             p_nom_extendable=True,
-            length=h2_pipes["length"].values,
+            length=(
+                h2_pipes["length"].values
+                * cf_transmission["hydrogen"].get("length_factor", 1.0)
+            ),
             capital_cost=costs.at["H2 (g) pipeline", "capital_cost"]
             * h2_pipes["length"].values
+            * cf_transmission["hydrogen"].get("length_factor", 1.0)
             * cf_transmission["hydrogen"]["cost_factor"],
             carrier="H2 pipeline",
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
@@ -6358,7 +6389,11 @@ if __name__ == "__main__":
         costs=costs,
         pop_layout=pop_layout,
         h2_cavern_file=snakemake.input.h2_cavern,
-        h2_transmission_candidates=snakemake.input.h2_transmission_candidates,
+        hydrogen_transmission_candidates=(
+            snakemake.input.hydrogen_transmission_candidates
+            if hasattr(snakemake.input, "hydrogen_transmission_candidates")
+            else None
+        ),
         cavern_types=snakemake.params.sector["hydrogen_underground_storage_locations"],
         clustered_gas_network_file=snakemake.input.clustered_gas_network,
         gas_input_nodes=gas_input_nodes,
@@ -6523,11 +6558,14 @@ if __name__ == "__main__":
     if cf_transmission["carbon_dioxide"]["enable"]:
         add_co2_network(
             n=n,
-            co2_transmission_candidates=snakemake.input.co2_transmission_candidates,
+            carbon_dioxide_transmission_candidates=snakemake.input.carbon_dioxide_transmission_candidates,
             costs=costs,
             co2_transmission_cost_factor=cf_transmission["carbon_dioxide"][
                 "cost_factor"
             ],
+            co2_transmission_length_factor=cf_transmission["carbon_dioxide"].get(
+                "length_factor", 1.0
+            ),
         )
 
     if options["allam_cycle_gas"]:
@@ -6624,9 +6662,5 @@ if __name__ == "__main__":
 
     sanitize_carriers(n, snakemake.config)
     sanitize_locations(n)
-
-    # Filter carrier links and map to width 1, others zero
-    lwidth = (n.links["carrier"] == "CO2 pipeline").astype(int) * 5
-    n.explore(branch_components=["Link"], link_width=lwidth)
 
     n.export_to_netcdf(snakemake.output[0])

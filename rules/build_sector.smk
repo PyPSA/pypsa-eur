@@ -146,44 +146,52 @@ rule cluster_gas_network:
         scripts("cluster_gas_network.py")
 
 
+def transmission_candidate_min_degrees() -> list[int]:
+    min_degrees = set()
+
+    for carrier_config in config.get("transmission", {}).values():
+        if not isinstance(carrier_config, dict):
+            continue
+        if not carrier_config.get("enable", False):
+            continue
+        gabriel_filter = carrier_config.get("gabriel_filter", {})
+        if not isinstance(gabriel_filter, dict):
+            continue
+        if not gabriel_filter.get("enable", False):
+            continue
+        if isinstance(gabriel_filter, dict) and "min_degree" in gabriel_filter:
+            min_degrees.add(int(gabriel_filter["min_degree"]))
+
+    return sorted(min_degrees)
+
+
 rule build_transmission_topology:
     input:
         network=resources("networks/base_s_{clusters}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
     output:
-        all_edges=resources("transmission/{carrier}_all_edges_{clusters}.geojson"),
-        candidates=resources("transmission/{carrier}_candidates_{clusters}.geojson"),
+        all_edges=resources("transmission/all_edges_{clusters}.geojson"),
+        candidates=expand(
+            resources("transmission/candidates_{{clusters}}_min_{min_degree}.geojson"),
+            min_degree=transmission_candidate_min_degrees(),
+        ),
     log:
-        logs("build_transmission_topology_{carrier}_{clusters}.log"),
+        logs("build_transmission_topology_{clusters}.log"),
     benchmark:
-        benchmarks("build_transmission_topology/{carrier}_{clusters}")
-    wildcard_constraints:
-        carrier="hydrogen|carbon_dioxide",
+        benchmarks("build_transmission_topology/{clusters}")
     resources:
         mem_mb=4000,
     params:
-        carrier_enabled=lambda w: config_provider("transmission", w.carrier, "enable")(
-            w
-        ),
-        gabriel_filter_enabled=lambda w: config_provider(
-            "transmission",
-            w.carrier,
-            "gabriel_filter",
-            "enable",
-        )(w),
-        min_degree=lambda w: config_provider(
-            "transmission",
-            w.carrier,
-            "gabriel_filter",
-            "min_degree",
-        )(w),
-        length_factor=lambda w: config_provider(
-            "transmission",
-            w.carrier,
-            "length_factor",
-        )(w),
+        transmission=config_provider("transmission"),
+        min_degrees=transmission_candidate_min_degrees(),
+        candidate_outputs_by_min_degree=lambda w: {
+            int(min_degree): resources(
+                f"transmission/candidates_{w.clusters}_min_{int(min_degree)}.geojson"
+            )
+            for min_degree in transmission_candidate_min_degrees()
+        },
     message:
-        "Building transmission candidates for {wildcards.carrier} and {wildcards.clusters} clusters"
+        "Building transmission candidates for {wildcards.clusters} clusters"
     script:
         scripts("build_transmission_topology.py")
 
@@ -1604,22 +1612,32 @@ def input_heat_source_power(w):
     }
 
 
+def input_transmission_candidates(w):
+    """Generate transmission candidate file inputs for enabled transmission carriers."""
+    candidates = {}
+    for carrier, carrier_cfg in config.get("transmission", {}).items():
+        if not isinstance(carrier_cfg, dict) or not carrier_cfg.get("enable", False):
+            continue
+        gabriel_cfg = carrier_cfg.get("gabriel_filter")
+        if not isinstance(gabriel_cfg, dict):
+            continue
+        key = f"{carrier}_transmission_candidates"
+        if gabriel_cfg.get("enable", False) and "min_degree" in gabriel_cfg:
+            candidates[key] = resources(
+                f"transmission/candidates_{{clusters}}_min_{gabriel_cfg['min_degree']}.geojson"
+            )
+        else:
+            candidates[key] = resources("transmission/all_edges_{clusters}.geojson")
+    return candidates
+
+
 rule prepare_sector_network:
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),
+        unpack(input_transmission_candidates),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
-        co2_transmission_candidates=lambda w: (
-            resources("transmission/carbon_dioxide_candidates_{clusters}.geojson")
-            if config_provider("transmission", "carbon_dioxide", "enable")(w)
-            else []
-        ),
-        h2_transmission_candidates=lambda w: (
-            resources("transmission/hydrogen_candidates_{clusters}.geojson")
-            if config_provider("transmission", "hydrogen", "enable")(w)
-            else []
-        ),
         snapshot_weightings=resources(
             "snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}.csv"
         ),
