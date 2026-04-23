@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+import math
+
 
 rule build_population_layouts:
     input:
@@ -146,8 +148,8 @@ rule cluster_gas_network:
         scripts("cluster_gas_network.py")
 
 
-def transmission_candidate_min_degrees() -> list[int]:
-    min_degrees = set()
+def transmission_candidate_specs() -> list[tuple[int, str]]:
+    specs = set()
 
     for carrier_config in config.get("transmission", {}).values():
         if not isinstance(carrier_config, dict):
@@ -159,10 +161,14 @@ def transmission_candidate_min_degrees() -> list[int]:
             continue
         if not gabriel_filter.get("enable", False):
             continue
-        if isinstance(gabriel_filter, dict) and "min_degree" in gabriel_filter:
-            min_degrees.add(int(gabriel_filter["min_degree"]))
+        if "min_degree" not in gabriel_filter:
+            continue
 
-    return sorted(min_degrees)
+        min_degree = int(gabriel_filter["min_degree"])
+        max_offdist = f"{float(carrier_config.get('max_offshore_haversine_distance', float('inf'))):g}"
+        specs.add((min_degree, max_offdist))
+
+    return sorted(specs, key=lambda spec: (spec[0], float(spec[1])))
 
 
 rule build_transmission_topology:
@@ -173,9 +179,10 @@ rule build_transmission_topology:
         all_edges=resources("transmission/all_edges_{clusters}.geojson"),
         candidates=[
             resources(
-                f"transmission/candidates_{{clusters}}_min_{int(min_degree)}.geojson"
+                "transmission/candidates_{clusters}_min_"
+                + f"{int(min_degree)}_maxoffdist_{max_offdist}_km.geojson"
             )
-            for min_degree in transmission_candidate_min_degrees()
+            for min_degree, max_offdist in transmission_candidate_specs()
         ],
     log:
         logs("build_transmission_topology_{clusters}.log"),
@@ -185,13 +192,13 @@ rule build_transmission_topology:
         mem_mb=4000,
     params:
         transmission=config_provider("transmission"),
-        min_degrees=transmission_candidate_min_degrees(),
-        candidate_outputs_by_min_degree=lambda w: {
-            int(min_degree): resources(
-                f"transmission/candidates_{w.clusters}_min_{int(min_degree)}.geojson"
-            )
-            for min_degree in transmission_candidate_min_degrees()
-        },
+        candidate_specs=[
+            {
+                "min_degree": int(min_degree),
+                "max_offshore_haversine_distance_km": float(max_offdist),
+            }
+            for min_degree, max_offdist in transmission_candidate_specs()
+        ],
     message:
         "Building transmission candidates for {wildcards.clusters} clusters"
     script:
@@ -1625,8 +1632,10 @@ def input_transmission_candidates(w):
             continue
         key = f"{carrier}_transmission_candidates"
         if gabriel_cfg.get("enable", False) and "min_degree" in gabriel_cfg:
+            min_degree = int(gabriel_cfg["min_degree"])
+            max_offdist = f"{float(carrier_cfg.get('max_offshore_haversine_distance', float('inf'))):g}"
             candidates[key] = resources(
-                f"transmission/candidates_{{clusters}}_min_{gabriel_cfg['min_degree']}.geojson"
+                f"transmission/candidates_{{clusters}}_min_{min_degree}_maxoffdist_{max_offdist}_km.geojson"
             )
         else:
             candidates[key] = resources("transmission/all_edges_{clusters}.geojson")

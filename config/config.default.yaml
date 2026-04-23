@@ -247,6 +247,7 @@ transmission:
       min_degree: 1
     length_factor: 1.25
     cost_factor: 1
+    max_offshore_haversine_distance: .inf
   carbon_dioxide:
     enable: true
     gabriel_filter:
@@ -254,6 +255,7 @@ transmission:
       min_degree: 1
     length_factor: 1.25
     cost_factor: 1
+    max_offshore_haversine_distance: .inf
   gas:
     enable: true
 

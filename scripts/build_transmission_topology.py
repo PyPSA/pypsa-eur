@@ -443,6 +443,7 @@ def prepare_candidate_edges(
     gabriel_filter_enabled: bool,
     node_count: int,
     min_degree: int,
+    max_offshore_haversine_distance_km: float = float("inf"),
 ) -> gpd.GeoDataFrame:
     """
     Build selected candidate edges from a Delaunay edge table.
@@ -457,6 +458,9 @@ def prepare_candidate_edges(
         Number of nodes used for degree accounting.
     min_degree : int
         Minimum per-node degree target used for optional backfilling.
+    max_offshore_haversine_distance_km : float, default inf
+        Maximum allowed offshore edge length in km, computed as
+        ``underwater_fraction * length``. ``inf`` disables this filter.
 
     Returns
     -------
@@ -464,13 +468,23 @@ def prepare_candidate_edges(
         Selected edge table after optional Gabriel filtering and min-degree
         backfilling.
     """
-    if not gabriel_filter_enabled:
-        return delaunay_graph.copy()
+    if np.isfinite(max_offshore_haversine_distance_km):
+        offshore_length = (
+            delaunay_graph["length"] * delaunay_graph["underwater_fraction"]
+        )
+        candidate_pool = delaunay_graph[
+            offshore_length <= max_offshore_haversine_distance_km
+        ].copy()
+    else:
+        candidate_pool = delaunay_graph.copy()
 
-    selected_edges = delaunay_graph[delaunay_graph["gabriel_edge"]].copy()
+    if not gabriel_filter_enabled:
+        return candidate_pool
+
+    selected_edges = candidate_pool[candidate_pool["gabriel_edge"]].copy()
     selected = enforce_min_degree(
         selected_edges=selected_edges,
-        delaunay_graph=delaunay_graph,
+        delaunay_graph=candidate_pool,
         node_count=node_count,
         min_degree=min_degree,
     )
@@ -522,15 +536,17 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     transmission_cfg = dict(snakemake.params["transmission"])
-    configured_min_degrees = sorted({int(v) for v in snakemake.params["min_degrees"]})
-    candidate_file_by_degree = {
-        int(min_degree): path
-        for min_degree, path in snakemake.params[
-            "candidate_outputs_by_min_degree"
-        ].items()
-    }
+    candidate_specs = [
+        {
+            "min_degree": int(spec["min_degree"]),
+            "max_offshore_haversine_distance_km": float(
+                spec["max_offshore_haversine_distance_km"]
+            ),
+        }
+        for spec in snakemake.params["candidate_specs"]
+    ]
 
-    gabriel_filter_enabled = collect_transmission_topology_settings(transmission_cfg)
+    gabriel_filter_enabled = bool(candidate_specs)
 
     n = pypsa.Network(snakemake.input.network)
     offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
@@ -545,31 +561,25 @@ if __name__ == "__main__":
 
     add_underwater_fraction(delaunay_graph, offshore_shapes)
 
-    if configured_min_degrees:
-        selected_edges_base = prepare_candidate_edges(
-            delaunay_graph=delaunay_graph,
-            gabriel_filter_enabled=gabriel_filter_enabled,
-            node_count=len(coords_geo),
-            min_degree=min(configured_min_degrees),
-        )
-    else:
-        selected_edges_base = delaunay_graph.copy()
-    selected_edges_base = selected_edges_base[COLS_EDGES]
-
     # Export
     delaunay_graph.to_file(snakemake.output.all_edges)
 
-    for min_degree in configured_min_degrees:
-        if min_degree not in candidate_file_by_degree:
-            raise ValueError(
-                f"Missing output file for configured min_degree value: {min_degree}"
-            )
+    for spec, output_path in zip(
+        candidate_specs, snakemake.output.candidates, strict=True
+    ):
+        min_degree = spec["min_degree"]
+        max_offshore_haversine_distance_km = spec["max_offshore_haversine_distance_km"]
 
-        logger.info("Preparing candidate edges for min_degree=%s.", min_degree)
+        logger.info(
+            "Preparing candidate edges for min_degree=%s and max_offshore_haversine_distance_km=%s.",
+            min_degree,
+            max_offshore_haversine_distance_km,
+        )
         selected_edges = prepare_candidate_edges(
             delaunay_graph=delaunay_graph,
             gabriel_filter_enabled=gabriel_filter_enabled,
             node_count=len(coords_geo),
             min_degree=min_degree,
+            max_offshore_haversine_distance_km=max_offshore_haversine_distance_km,
         )[COLS_EDGES]
-        selected_edges.to_file(candidate_file_by_degree[min_degree])
+        selected_edges.to_file(output_path)
