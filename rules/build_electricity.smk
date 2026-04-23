@@ -500,7 +500,7 @@ rule build_line_rating:
         scripts("build_line_rating.py")
 
 
-rule build_transmission_projects:
+rule build_electricity_transmission_projects:
     input:
         base_network=resources("networks/base.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -519,9 +519,9 @@ rule build_transmission_projects:
         adjust_links=resources("transmission/electricity_projects/adjust_links.csv"),
         new_buses=resources("transmission/electricity_projects/new_buses.csv"),
     log:
-        logs("build_transmission_projects.log"),
+        logs("build_electricity_transmission_projects.log"),
     benchmark:
-        benchmarks("build_transmission_projects")
+        benchmarks("build_electricity_transmission_projects")
     threads: 1
     resources:
         mem_mb=4000,
@@ -532,12 +532,12 @@ rule build_transmission_projects:
         ),
         s_max_pu=config_provider("transmission", "electricity", "lines", "s_max_pu"),
     message:
-        "Building transmission projects"
+        "Building electricity transmission projects"
     script:
-        scripts("build_transmission_projects.py")
+        scripts("build_electricity_transmission_projects.py")
 
 
-rule add_transmission_projects_and_dlr:
+rule add_electricity_transmission_projects_and_dlr:
     input:
         network=resources("networks/base.nc"),
         dlr=lambda w: (
@@ -565,9 +565,9 @@ rule add_transmission_projects_and_dlr:
     output:
         network=resources("networks/base_extended.nc"),
     log:
-        logs("add_transmission_projects_and_dlr.log"),
+        logs("add_electricity_transmission_projects_and_dlr.log"),
     benchmark:
-        benchmarks("add_transmission_projects_and_dlr")
+        benchmarks("add_electricity_transmission_projects_and_dlr")
     threads: 1
     resources:
         mem_mb=4000,
@@ -580,7 +580,7 @@ rule add_transmission_projects_and_dlr:
     message:
         "Adding transmission projects and dynamic line ratings"
     script:
-        scripts("add_transmission_projects_and_dlr.py")
+        scripts("add_electricity_transmission_projects_and_dlr.py")
 
 
 def input_class_regions(w):

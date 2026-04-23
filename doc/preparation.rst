@@ -79,20 +79,20 @@ Rule ``build_natura``
 .. automodule:: build_natura
 
 
-Rule ``build_transmission_projects``
+Rule ``build_electricity_transmission_projects``
 ====================================
 
-.. automodule:: build_transmission_projects
+.. automodule:: build_electricity_transmission_projects
 
 Rule ``build_line_rating``
 =================================
 
 .. automodule:: build_line_rating
 
-Rule ``add_transmission_projects_and_dlr``
+Rule ``add_electricity_transmission_projects_and_dlr``
 ===========================================
 
-.. automodule:: add_transmission_projects_and_dlr
+.. automodule:: add_electricity_transmission_projects_and_dlr
 
 Rule ``build_bidding_zones``
 =============================

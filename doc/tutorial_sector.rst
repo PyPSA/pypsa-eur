@@ -68,7 +68,7 @@ which were already included in the electricity-only tutorial:
     job                                                 count
     ------------------------------------------------  -------
     add_electricity                                         1
-    add_transmission_projects_and_dlr                       1
+    add_electricity_transmission_projects_and_dlr                       1
     all                                                     1
     base_network                                            1
     build_ammonia_production                                1
@@ -105,7 +105,7 @@ which were already included in the electricity-only tutorial:
     build_ship_raster                                       1
     build_shipping_demand                                   1
     build_temperature_profiles                              1
-    build_transmission_projects                             1
+    build_electricity_transmission_projects                 1
     build_transport_demand                                  1
     cluster_gas_network                                     1
     cluster_network                                         1
@@ -186,10 +186,10 @@ successfully.
             22[label = "retrieve_jrc_ardeco", color = "0.22 0.6 0.85", style="rounded"];
             23[label = "cluster_network\nclusters: 5", color = "0.39 0.6 0.85", style="rounded"];
             24[label = "simplify_network", color = "0.13 0.6 0.85", style="rounded"];
-            25[label = "add_transmission_projects_and_dlr", color = "0.44 0.6 0.85", style="rounded"];
+            25[label = "add_electricity_transmission_projects_and_dlr", color = "0.44 0.6 0.85", style="rounded"];
             26[label = "base_network", color = "0.62 0.6 0.85", style="rounded"];
             27[label = "retrieve_osm_prebuilt", color = "0.52 0.6 0.85", style="rounded"];
-            28[label = "build_transmission_projects", color = "0.32 0.6 0.85", style="rounded"];
+            28[label = "build_electricity_transmission_projects", color = "0.32 0.6 0.85", style="rounded"];
             29[label = "build_electricity_demand_base", color = "0.47 0.6 0.85", style="rounded"];
             30[label = "build_electricity_demand", color = "0.34 0.6 0.85", style="rounded"];
             31[label = "retrieve_electricity_demand", color = "0.61 0.6 0.85", style="rounded"];
@@ -560,10 +560,10 @@ workflow:
             23[label = "retrieve_jrc_ardeco", color = "0.29 0.6 0.85", style="rounded"];
             24[label = "cluster_network\nclusters: 5", color = "0.30 0.6 0.85", style="rounded"];
             25[label = "simplify_network", color = "0.02 0.6 0.85", style="rounded"];
-            26[label = "add_transmission_projects_and_dlr", color = "0.60 0.6 0.85", style="rounded"];
+            26[label = "add_electricity_transmission_projects_and_dlr", color = "0.60 0.6 0.85", style="rounded"];
             27[label = "base_network", color = "0.30 0.6 0.85", style="rounded"];
             28[label = "retrieve_osm_prebuilt", color = "0.43 0.6 0.85", style="rounded"];
-            29[label = "build_transmission_projects", color = "0.51 0.6 0.85", style="rounded"];
+            29[label = "build_electricity_transmission_projects", color = "0.51 0.6 0.85", style="rounded"];
             30[label = "build_electricity_demand_base", color = "0.64 0.6 0.85", style="rounded"];
             31[label = "build_electricity_demand", color = "0.16 0.6 0.85", style="rounded"];
             32[label = "retrieve_electricity_demand", color = "0.33 0.6 0.85", style="rounded"];

@@ -172,12 +172,12 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
             17[label = "retrieve_jrc_ardeco", color = "0.06 0.6 0.85", style="rounded"];
             18[label = "cluster_network\nclusters: 6", color = "0.12 0.6 0.85", style="rounded"];
             19[label = "simplify_network", color = "0.33 0.6 0.85", style="rounded"];
-            20[label = "add_transmission_projects_and_dlr", color = "0.46 0.6 0.85", style="rounded"];
+            20[label = "add_electricity_transmission_projects_and_dlr", color = "0.46 0.6 0.85", style="rounded"];
             21[label = "base_network", color = "0.00 0.6 0.85", style="rounded"];
             22[label = "retrieve_osm_prebuilt", color = "0.41 0.6 0.85", style="rounded"];
             23[label = "build_line_rating", color = "0.57 0.6 0.85", style="rounded"];
             24[label = "retrieve_cutout\ncutout: be-03-2013-era5", color = "0.18 0.6 0.85", style="rounded"];
-            25[label = "build_transmission_projects", color = "0.04 0.6 0.85", style="rounded"];
+            25[label = "build_electricity_transmission_projects", color = "0.04 0.6 0.85", style="rounded"];
             26[label = "build_electricity_demand_base", color = "0.61 0.6 0.85", style="rounded"];
             27[label = "build_electricity_demand", color = "0.16 0.6 0.85", style="rounded"];
             28[label = "retrieve_electricity_demand", color = "0.21 0.6 0.85", style="rounded"];
@@ -307,36 +307,36 @@ In the terminal, this will show up as a list of jobs to be run:
 
     Building DAG of jobs...
     Job stats:
-    job                                      count
-    -------------------------------------  -------
-    add_electricity                              1
-    add_transmission_projects_and_dlr            1
-    base_network                                 1
-    build_electricity_demand                     1
-    build_electricity_demand_base                1
-    build_line_rating                            1
-    build_osm_boundaries                         4
-    build_powerplants                            1
-    build_renewable_profiles                     6
-    build_shapes                                 1
-    build_ship_raster                            1
-    build_transmission_projects                  1
-    cluster_network                              1
-    determine_availability_matrix                6
-    prepare_network                              1
-    retrieve_cost_data                           1
-    retrieve_databundle                          1
-    retrieve_eez                                 1
-    retrieve_electricity_demand                  1
-    retrieve_jrc_ardeco                          1
-    retrieve_nuts_2021_shapes                    1
-    retrieve_osm_boundaries                      4
-    retrieve_osm_prebuilt                        1
-    retrieve_ship_raster                         1
-    retrieve_synthetic_electricity_demand        1
-    simplify_network                             1
-    solve_network                                1
-    total                                       43
+    job                                       count
+    -------------------------------------   -------
+    add_electricity                               1
+    add_electricity_transmission_projects_and_dlr 1
+    base_network                                  1
+    build_electricity_demand                      1
+    build_electricity_demand_base                 1
+    build_line_rating                             1
+    build_osm_boundaries                          4
+    build_powerplants                             1
+    build_renewable_profiles                      6
+    build_shapes                                  1
+    build_ship_raster                             1
+    build_electricity_transmission_projects       1
+    cluster_network                               1
+    determine_availability_matrix                 6
+    prepare_network                               1
+    retrieve_cost_data                            1
+    retrieve_databundle                           1
+    retrieve_eez                                  1
+    retrieve_electricity_demand                   1
+    retrieve_jrc_ardeco                           1
+    retrieve_nuts_2021_shapes                     1
+    retrieve_osm_boundaries                       4
+    retrieve_osm_prebuilt                         1
+    retrieve_ship_raster                          1
+    retrieve_synthetic_electricity_demand         1
+    simplify_network                              1
+    solve_network                                 1
+    total                                        43
 
 
 ``snakemake`` then runs these jobs in the correct order.
