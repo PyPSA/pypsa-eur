@@ -171,10 +171,12 @@ rule build_transmission_topology:
         offshore_shapes=resources("offshore_shapes.geojson"),
     output:
         all_edges=resources("transmission/all_edges_{clusters}.geojson"),
-        candidates=expand(
-            resources("transmission/candidates_{{clusters}}_min_{min_degree}.geojson"),
-            min_degree=transmission_candidate_min_degrees(),
-        ),
+        candidates=[
+            resources(
+                f"transmission/candidates_{{clusters}}_min_{int(min_degree)}.geojson"
+            )
+            for min_degree in transmission_candidate_min_degrees()
+        ],
     log:
         logs("build_transmission_topology_{clusters}.log"),
     benchmark:
