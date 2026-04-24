@@ -1808,8 +1808,6 @@ def add_h2_gas_infrastructure(
         - hydrogen_fuel_cell : bool
         - hydrogen_turbine : bool
         - hydrogen_underground_storage : bool
-        - gas_network : bool
-        - H2_retrofit : bool
         - methanation : bool
         - coal_cc : bool
         - SMR_cc : bool
@@ -1834,6 +1832,8 @@ def add_h2_gas_infrastructure(
     """
     # Set defaults
     options = options or {}
+    hydrogen_retrofit = cf_transmission["hydrogen"]["retrofit"]
+    gas_connectivity_upgrade = cf_transmission["gas"]["connectivity_upgrade"]
 
     logger.info("Add hydrogen storage")
 
@@ -1941,7 +1941,7 @@ def add_h2_gas_infrastructure(
         lifetime=costs.at[tech, "lifetime"],
     )
 
-    if options["H2_retrofit"]:
+    if hydrogen_retrofit["enable"]:
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
     if cf_transmission["gas"]["enable"]:
@@ -1960,7 +1960,7 @@ def add_h2_gas_infrastructure(
 
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
-        if options["H2_retrofit"]:
+        if hydrogen_retrofit["enable"]:
             gas_pipes["p_nom_max"] = gas_pipes.p_nom
             gas_pipes["p_nom_min"] = 0.0
             # 0.1 EUR/MWkm/a to prefer decommissioning to address degeneracy
@@ -2041,7 +2041,7 @@ def add_h2_gas_infrastructure(
             )
 
             # apply k_edge_augmentation weighted by length of complement edges
-            k_edge = options["gas_network_connectivity_upgrade"]
+            k_edge = gas_connectivity_upgrade
             if augmentation := list(
                 k_edge_augmentation(G, k_edge, avail=complement_edges.values)
             ):
@@ -2068,7 +2068,7 @@ def add_h2_gas_infrastructure(
                     lifetime=costs.at["CH4 (g) pipeline", "lifetime"],
                 )
 
-    if options["H2_retrofit"]:
+    if hydrogen_retrofit["enable"]:
         logger.info("Add retrofitting options of existing CH4 pipes to H2 pipes.")
 
         fr = "gas pipeline"
@@ -2081,7 +2081,7 @@ def add_h2_gas_infrastructure(
             bus0=h2_pipes["bus0"] + " H2",
             bus1=h2_pipes["bus1"] + " H2",
             p_min_pu=-1.0,  # allow that all H2 retrofit pipelines can be used in both directions
-            p_nom_max=h2_pipes["p_nom"] * options["H2_retrofit_capacity_per_CH4"],
+            p_nom_max=h2_pipes["p_nom"] * hydrogen_retrofit["capacity_per_ch4"],
             p_nom_extendable=True,
             length=h2_pipes["length"],
             capital_cost=costs.at["H2 (g) pipeline repurposed", "capital_cost"]
@@ -4518,7 +4518,6 @@ def add_industry(
     cf_industry: dict,
     cf_transmission: dict,
     investment_year: int,
-    co2_transmission_enable: bool,
 ):
     """
     Add industry and their corresponding carrier buses to the network.
@@ -5060,7 +5059,7 @@ def add_industry(
         unit="t_co2",
     )
 
-    if options["co2_spatial"] or co2_transmission_enable:
+    if options["co2_spatial"] or cf_transmission["carbon_dioxide"]["enable"]:
         p_set = (
             -industrial_demand.loc[nodes, "process emission"].rename(
                 index=lambda x: x + " process emissions"
@@ -6503,7 +6502,6 @@ if __name__ == "__main__":
             cf_industry=cf_industry,
             cf_transmission=cf_transmission,
             investment_year=investment_year,
-            co2_transmission_enable=cf_transmission["carbon_dioxide"]["enable"],
         )
 
     if options["shipping"]:
@@ -6548,7 +6546,7 @@ if __name__ == "__main__":
     if not cf_transmission["electricity"]["enable"]:
         decentral(n)
 
-    if not snakemake.config["transmission"]["hydrogen"]["enable"]:
+    if not cf_transmission["hydrogen"]["enable"]:
         remove_h2_network(n)
 
     if cf_transmission["carbon_dioxide"]["enable"]:
@@ -6600,7 +6598,7 @@ if __name__ == "__main__":
         limit,
     )
 
-    maxext = snakemake.params["lines"]["max_extension"]
+    maxext = cf_transmission["electricity"]["lines"]["max_extension"]
     if maxext is not None:
         limit_individual_line_extension(n, maxext)
 

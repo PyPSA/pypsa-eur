@@ -37,6 +37,9 @@ electricity:
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
 
 transmission:
+  hydrogen:
+    retrofit:
+      enable: true
   carbon_dioxide:
     enable: false
   gas:
@@ -65,7 +68,6 @@ clustering:
     resolution_sector: 24h
 
 sector:
-  H2_retrofit: true
   district_heating:
     ptes:
       supplemental_heating:

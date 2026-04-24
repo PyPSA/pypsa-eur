@@ -83,10 +83,7 @@ rule add_brownfield:
     resources:
         mem_mb=10000,
     params:
-        H2_retrofit=config_provider("sector", "H2_retrofit"),
-        H2_retrofit_capacity_per_CH4=config_provider(
-            "sector", "H2_retrofit_capacity_per_CH4"
-        ),
+        transmission=config_provider("transmission"),
         threshold_capacity=config_provider("existing_capacities", "threshold_capacity"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -142,6 +139,7 @@ rule solve_sector_network_myopic:
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
+        transmission=config_provider("transmission"),
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
         ),

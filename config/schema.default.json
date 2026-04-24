@@ -4895,23 +4895,6 @@
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
           "type": "boolean"
         },
-        "H2_retrofit": {
-          "default": false,
-          "description": "Add option for retrofiting existing pipelines to transport hydrogen.",
-          "type": "boolean"
-        },
-        "H2_retrofit_capacity_per_CH4": {
-          "default": 0.6,
-          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-          "type": "number"
-        },
-        "gas_network_connectivity_upgrade": {
-          "default": 1,
-          "description": "The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
-          "markdownDescription": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
-          "type": "number"
-        },
         "gas_distribution_grid_cost": {
           "default": true,
           "description": "Add gas distribution grid costs to gas-consuming components.",
@@ -5946,6 +5929,22 @@
               "exclusiveMinimum": 0,
               "type": "number"
             },
+            "retrofit": {
+              "description": "Configuration for `transmission.hydrogen.retrofit` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Add option for retrofitting existing pipelines to transport hydrogen.",
+                  "type": "boolean"
+                },
+                "capacity_per_ch4": {
+                  "default": 0.6,
+                  "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+                  "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+                  "type": "number"
+                }
+              }
+            },
             "efficiency": {
               "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
               "properties": {
@@ -6020,6 +6019,12 @@
               "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
               "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
               "type": "boolean"
+            },
+            "connectivity_upgrade": {
+              "default": 1,
+              "description": "The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
+              "markdownDescription": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
+              "type": "number"
             },
             "efficiency": {
               "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
@@ -7119,6 +7124,22 @@
           "default": false,
           "description": "Approximate hydro generation data for years not included in EIA dataset through a regression based on annual runoff.",
           "type": "boolean"
+        }
+      }
+    },
+    "_HydrogenRetrofitConfig": {
+      "description": "Configuration for `transmission.hydrogen.retrofit` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Add option for retrofitting existing pipelines to transport hydrogen.",
+          "type": "boolean"
+        },
+        "capacity_per_ch4": {
+          "default": 0.6,
+          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "type": "number"
         }
       }
     },
@@ -8805,6 +8826,12 @@
           "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
           "type": "boolean"
         },
+        "connectivity_upgrade": {
+          "default": 1,
+          "description": "The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
+          "markdownDescription": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
+          "type": "number"
+        },
         "efficiency": {
           "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
           "properties": {
@@ -8911,6 +8938,22 @@
           "description": "Multiplier applied to the capital cost of transmission infrastructure.",
           "exclusiveMinimum": 0,
           "type": "number"
+        },
+        "retrofit": {
+          "description": "Configuration for `transmission.hydrogen.retrofit` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add option for retrofitting existing pipelines to transport hydrogen.",
+              "type": "boolean"
+            },
+            "capacity_per_ch4": {
+              "default": 0.6,
+              "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+              "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+              "type": "number"
+            }
+          }
         },
         "efficiency": {
           "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
@@ -9949,6 +9992,22 @@
               "exclusiveMinimum": 0,
               "type": "number"
             },
+            "retrofit": {
+              "description": "Configuration for `transmission.hydrogen.retrofit` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Add option for retrofitting existing pipelines to transport hydrogen.",
+                  "type": "boolean"
+                },
+                "capacity_per_ch4": {
+                  "default": 0.6,
+                  "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+                  "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+                  "type": "number"
+                }
+              }
+            },
             "efficiency": {
               "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
               "properties": {
@@ -10023,6 +10082,12 @@
               "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
               "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
               "type": "boolean"
+            },
+            "connectivity_upgrade": {
+              "default": 1,
+              "description": "The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
+              "markdownDescription": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
+              "type": "number"
             },
             "efficiency": {
               "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
@@ -12319,23 +12384,6 @@
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
           "type": "boolean"
-        },
-        "H2_retrofit": {
-          "default": false,
-          "description": "Add option for retrofiting existing pipelines to transport hydrogen.",
-          "type": "boolean"
-        },
-        "H2_retrofit_capacity_per_CH4": {
-          "default": 0.6,
-          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-          "type": "number"
-        },
-        "gas_network_connectivity_upgrade": {
-          "default": 1,
-          "description": "The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
-          "markdownDescription": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
-          "type": "number"
         },
         "gas_distribution_grid_cost": {
           "default": true,

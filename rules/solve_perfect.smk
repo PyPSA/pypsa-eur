@@ -126,6 +126,7 @@ rule solve_sector_network_perfect:
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
+        transmission=config_provider("transmission"),
         sector=config_provider("sector"),
         planning_horizons=config_provider("scenario", "planning_horizons"),
         co2_sequestration_potential=config_provider(

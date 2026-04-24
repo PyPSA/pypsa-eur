@@ -759,19 +759,6 @@ class SectorConfig(BaseModel):
         True,
         description="Add the cost of electricity grid connection for onshore wind and solar.",
     )
-
-    H2_retrofit: bool = Field(
-        False,
-        description="Add option for retrofiting existing pipelines to transport hydrogen.",
-    )
-    H2_retrofit_capacity_per_CH4: float = Field(
-        0.6,
-        description="The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-    )
-    gas_network_connectivity_upgrade: float = Field(
-        1,
-        description="The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
-    )
     gas_distribution_grid_cost: bool = Field(
         True,
         description="Add gas distribution grid costs to gas-consuming components.",
