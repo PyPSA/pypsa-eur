@@ -10,7 +10,7 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -222,50 +222,6 @@ class _MethanolConfig(BaseModel):
     biomass_to_methanol_cc: bool = Field(
         False, description="Add biomass to methanol with carbon capture."
     )
-
-
-class _TransmissionEfficiencyConfig(BaseModel):
-    """Configuration for `sector.transmission_efficiency` settings."""
-
-    enable: list[str] = Field(
-        default_factory=lambda: [
-            "DC",
-            "H2 pipeline",
-            "gas pipeline",
-            "electricity distribution grid",
-        ],
-        description="Switch to select the carriers for which transmission efficiency is to be added. Carriers not listed assume lossless transmission.",
-    )
-    DC: dict[str, float] = Field(
-        default_factory=lambda: {
-            "efficiency_static": 0.98,
-            "efficiency_per_1000km": 0.977,
-        },
-        description="DC transmission efficiency.",
-    )
-    H2_pipeline: dict[str, float] = Field(
-        default_factory=lambda: {
-            "efficiency_per_1000km": 1,
-            "compression_per_1000km": 0.018,
-        },
-        alias="H2 pipeline",
-        description="H2 pipeline transmission efficiency.",
-    )
-    gas_pipeline: dict[str, float] = Field(
-        default_factory=lambda: {
-            "efficiency_per_1000km": 1,
-            "compression_per_1000km": 0.01,
-        },
-        alias="gas pipeline",
-        description="Gas pipeline transmission efficiency.",
-    )
-    electricity_distribution_grid: dict[str, float] = Field(
-        default_factory=lambda: {"efficiency_static": 0.97},
-        alias="electricity distribution grid",
-        description="Electricity distribution grid efficiency.",
-    )
-
-    model_config = ConfigDict(populate_by_name=True)
 
 
 class _LimitMaxGrowthConfig(BaseModel):
@@ -799,14 +755,9 @@ class SectorConfig(BaseModel):
         description="Add option for using waste heat of electrolysis in district heating networks.",
     )
 
-    electricity_grid_connection_costs: bool = Field(
+    electricity_grid_connection_cost: bool = Field(
         True,
         description="Add the cost of electricity grid connection for onshore wind and solar.",
-    )
-
-    transmission_efficiency: _TransmissionEfficiencyConfig = Field(
-        default_factory=_TransmissionEfficiencyConfig,
-        description="Transmission efficiency configuration.",
     )
 
     H2_retrofit: bool = Field(

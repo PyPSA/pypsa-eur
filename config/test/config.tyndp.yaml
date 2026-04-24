@@ -58,13 +58,6 @@ renewable:
     max_depth: false
     min_depth: false
 
-sector:
-  transmission_efficiency:
-    enable:
-    - H2 pipeline
-    - gas pipeline
-    - electricity distribution grid
-
 clustering:
   mode: administrative
   administrative:

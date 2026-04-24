@@ -1525,7 +1525,7 @@ def add_ammonia(
 def insert_electricity_distribution_grid(
     n: pypsa.Network,
     costs: pd.DataFrame,
-    options: dict,
+    cf_transmission: dict,
     pop_layout: pd.DataFrame,
     solar_rooftop_potentials_fn: str,
 ) -> None:
@@ -1544,10 +1544,9 @@ def insert_electricity_distribution_grid(
         Technology cost assumptions with technologies as index and cost parameters
         as columns, including 'fixed' costs, 'lifetime', and component-specific
         parameters like 'efficiency'
-    options : dict
-        Configuration options containing at least:
-        - transmission_efficiency: dict with distribution grid parameters
-        - marginal_cost_storage: float for storage operation costs
+    cf_transmission : dict
+        Transmission configuration containing at least:
+        - electricity_distribution.efficiency: distribution grid loss parameters
     pop_layout : pd.DataFrame
         Population data per node with at least:
         - 'total' column containing population in thousands
@@ -1598,13 +1597,10 @@ def insert_electricity_distribution_grid(
 
     # deduct distribution losses from electricity demand as these are included in total load
     # https://nbviewer.org/github/Open-Power-System-Data/datapackage_timeseries/blob/2020-10-06/main.ipynb
-    if (
-        efficiency := options["transmission_efficiency"]
-        .get("electricity distribution grid", {})
-        .get("efficiency_static")
-    ) and "electricity distribution grid" in options["transmission_efficiency"][
-        "enable"
-    ]:
+    distribution_efficiency = cf_transmission["electricity_distribution"]["efficiency"]
+    if distribution_efficiency["enable"] and (
+        efficiency := distribution_efficiency["efficiency_static"]
+    ):
         logger.info(
             f"Deducting distribution losses from electricity demand: {np.around(100 * (1 - efficiency), decimals=2)}%"
         )
@@ -1760,7 +1756,7 @@ def insert_gas_distribution_costs(
     n.links.loc[mchp, "capital_cost"] += capital_cost
 
 
-def add_electricity_grid_connection_costs(n, costs):
+def add_electricity_grid_connection_cost(n, costs):
     carriers = ["onwind", "solar", "solar-hsat"]
 
     gens = n.generators.index[n.generators.carrier.isin(carriers)]
@@ -6610,7 +6606,11 @@ if __name__ == "__main__":
 
     if cf_transmission["electricity_distribution"]["enable"]:
         insert_electricity_distribution_grid(
-            n, costs, options, pop_layout, snakemake.input.solar_rooftop_potentials
+            n,
+            costs,
+            cf_transmission,
+            pop_layout,
+            snakemake.input.solar_rooftop_potentials,
         )
 
     if options["enhanced_geothermal"].get("enable", False):
@@ -6631,12 +6631,22 @@ if __name__ == "__main__":
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs, options=options)
 
-    if options["electricity_grid_connection_costs"]:
-        add_electricity_grid_connection_costs(n, costs)
+    if options["electricity_grid_connection_cost"]:
+        add_electricity_grid_connection_cost(n, costs)
 
-    for k, v in options["transmission_efficiency"].items():
-        if k in options["transmission_efficiency"]["enable"]:
-            lossy_bidirectional_links(n, k, v)
+    transmission_efficiency_map = {
+        "DC": cf_transmission["electricity"]["links"]["efficiency"],
+        "H2 pipeline": cf_transmission["hydrogen"]["efficiency"],
+        "gas pipeline": cf_transmission["gas"]["efficiency"],
+        "electricity distribution grid": cf_transmission["electricity_distribution"][
+            "efficiency"
+        ],
+    }
+
+    for carrier, efficiency_config in transmission_efficiency_map.items():
+        if efficiency_config["enable"]:
+            losses = {k: v for k, v in efficiency_config.items() if k != "enable"}
+            lossy_bidirectional_links(n, carrier, losses)
 
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444

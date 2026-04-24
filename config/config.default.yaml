@@ -222,6 +222,10 @@ transmission:
       max_extension: 30000
       length_factor: 1.25
       under_construction: keep
+      efficiency:
+        enable: true
+        efficiency_static: 0.98
+        efficiency_per_1000km: 0.977
     transformers:
       x: 0.1
       s_nom: 2000.0
@@ -243,6 +247,9 @@ transmission:
   electricity_distribution:
     enable: true
     cost_factor: 1.0
+    efficiency:
+      enable: true
+      efficiency_static: 0.97
   hydrogen:
     enable: true
     gabriel_filter:
@@ -251,6 +258,10 @@ transmission:
     max_offshore_haversine_distance: .inf
     length_factor: 1.25
     cost_factor: 1
+    efficiency:
+      enable: true
+      efficiency_per_1000km: 1.0
+      compression_per_1000km: 0.018
   carbon_dioxide:
     enable: true
     gabriel_filter:
@@ -261,6 +272,10 @@ transmission:
     cost_factor: 1
   gas:
     enable: true
+    efficiency:
+      enable: true
+      efficiency_per_1000km: 1.0
+      compression_per_1000km: 0.01
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
@@ -916,24 +931,7 @@ sector:
   use_methanation_waste_heat: 0.25
   use_fuel_cell_waste_heat: 1
   use_electrolysis_waste_heat: 0.25
-  electricity_grid_connection_costs: true
-  transmission_efficiency:
-    enable:
-    - DC
-    - H2 pipeline
-    - gas pipeline
-    - electricity distribution grid
-    DC:
-      efficiency_static: 0.98
-      efficiency_per_1000km: 0.977
-    H2 pipeline:
-      efficiency_per_1000km: 1
-      compression_per_1000km: 0.018
-    gas pipeline:
-      efficiency_per_1000km: 1
-      compression_per_1000km: 0.01
-    electricity distribution grid:
-      efficiency_static: 0.97
+  electricity_grid_connection_cost: true
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
   gas_network_connectivity_upgrade: 1

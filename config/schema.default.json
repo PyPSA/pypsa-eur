@@ -2818,6 +2818,26 @@
             "keep"
           ],
           "type": "string"
+        },
+        "efficiency": {
+          "description": "Configuration for `transmission.electricity.links.efficiency` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Apply transmission efficiency for DC links.",
+              "type": "boolean"
+            },
+            "efficiency_static": {
+              "default": 0.98,
+              "description": "Static DC transmission efficiency.",
+              "type": "number"
+            },
+            "efficiency_per_1000km": {
+              "default": 0.977,
+              "description": "Distance-dependent DC efficiency factor per 1000 km.",
+              "type": "number"
+            }
+          }
         }
       }
     },
@@ -4870,50 +4890,10 @@
           "description": "Add option for using waste heat of electrolysis in district heating networks.",
           "type": "number"
         },
-        "electricity_grid_connection_costs": {
+        "electricity_grid_connection_cost": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
           "type": "boolean"
-        },
-        "transmission_efficiency": {
-          "description": "Configuration for `sector.transmission_efficiency` settings.",
-          "properties": {
-            "enable": {
-              "description": "Switch to select the carriers for which transmission efficiency is to be added. Carriers not listed assume lossless transmission.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "DC": {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "DC transmission efficiency.",
-              "type": "object"
-            },
-            "H2 pipeline": {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "H2 pipeline transmission efficiency.",
-              "type": "object"
-            },
-            "gas pipeline": {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "Gas pipeline transmission efficiency.",
-              "type": "object"
-            },
-            "electricity distribution grid": {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "Electricity distribution grid efficiency.",
-              "type": "object"
-            }
-          }
         },
         "H2_retrofit": {
           "default": false,
@@ -5784,6 +5764,26 @@
                     "keep"
                   ],
                   "type": "string"
+                },
+                "efficiency": {
+                  "description": "Configuration for `transmission.electricity.links.efficiency` settings.",
+                  "properties": {
+                    "enable": {
+                      "default": true,
+                      "description": "Apply transmission efficiency for DC links.",
+                      "type": "boolean"
+                    },
+                    "efficiency_static": {
+                      "default": 0.98,
+                      "description": "Static DC transmission efficiency.",
+                      "type": "number"
+                    },
+                    "efficiency_per_1000km": {
+                      "default": 0.977,
+                      "description": "Distance-dependent DC efficiency factor per 1000 km.",
+                      "type": "number"
+                    }
+                  }
                 }
               }
             },
@@ -5886,12 +5886,26 @@
               "default": 1.0,
               "description": "Multiplies the investment cost of the electricity distribution grid.",
               "type": "number"
+            },
+            "efficiency": {
+              "description": "Configuration for `transmission.electricity_distribution.efficiency` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Apply electricity distribution efficiency.",
+                  "type": "boolean"
+                },
+                "efficiency_static": {
+                  "default": 0.97,
+                  "description": "Static electricity distribution efficiency.",
+                  "type": "number"
+                }
+              }
             }
           },
           "description": "Configuration for simplified electricity distribution grid."
         },
         "hydrogen": {
-          "description": "Configuration for a single transmission carrier.",
           "properties": {
             "enable": {
               "default": true,
@@ -5931,8 +5945,29 @@
               "description": "Multiplier applied to the capital cost of transmission infrastructure.",
               "exclusiveMinimum": 0,
               "type": "number"
+            },
+            "efficiency": {
+              "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Apply transmission efficiency for this carrier.",
+                  "type": "boolean"
+                },
+                "efficiency_per_1000km": {
+                  "default": 1,
+                  "description": "Distance-dependent efficiency factor per 1000 km.",
+                  "type": "number"
+                },
+                "compression_per_1000km": {
+                  "default": 0,
+                  "description": "Additional electricity consumption for compression per 1000 km.",
+                  "type": "number"
+                }
+              }
             }
-          }
+          },
+          "description": "Configuration for hydrogen transmission candidates."
         },
         "carbon_dioxide": {
           "description": "Configuration for a single transmission carrier.",
@@ -5982,9 +6017,29 @@
           "properties": {
             "enable": {
               "default": true,
-              "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
-              "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+              "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+              "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
               "type": "boolean"
+            },
+            "efficiency": {
+              "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Apply transmission efficiency for this carrier.",
+                  "type": "boolean"
+                },
+                "efficiency_per_1000km": {
+                  "default": 1,
+                  "description": "Distance-dependent efficiency factor per 1000 km.",
+                  "type": "number"
+                },
+                "compression_per_1000km": {
+                  "default": 0,
+                  "description": "Additional electricity consumption for compression per 1000 km.",
+                  "type": "number"
+                }
+              }
             }
           },
           "description": "Configuration for methane gas transmission candidates."
@@ -6529,6 +6584,26 @@
         }
       }
     },
+    "_DCEfficiencyConfig": {
+      "description": "Configuration for `transmission.electricity.links.efficiency` settings.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Apply transmission efficiency for DC links.",
+          "type": "boolean"
+        },
+        "efficiency_static": {
+          "default": 0.98,
+          "description": "Static DC transmission efficiency.",
+          "type": "number"
+        },
+        "efficiency_per_1000km": {
+          "default": 0.977,
+          "description": "Distance-dependent DC efficiency factor per 1000 km.",
+          "type": "number"
+        }
+      }
+    },
     "_DataSourceConfig": {
       "description": "Configuration for a single data source.",
       "properties": {
@@ -6699,6 +6774,21 @@
           ],
           "default": false,
           "description": "Maximum line rating relative to nominal capacity without DLR, e.g. 1.3 or 'false' to disable."
+        }
+      }
+    },
+    "_ElectricityDistributionEfficiencyConfig": {
+      "description": "Configuration for `transmission.electricity_distribution.efficiency` settings.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Apply electricity distribution efficiency.",
+          "type": "boolean"
+        },
+        "efficiency_static": {
+          "default": 0.97,
+          "description": "Static electricity distribution efficiency.",
+          "type": "number"
         }
       }
     },
@@ -8567,6 +8657,26 @@
                 "keep"
               ],
               "type": "string"
+            },
+            "efficiency": {
+              "description": "Configuration for `transmission.electricity.links.efficiency` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Apply transmission efficiency for DC links.",
+                  "type": "boolean"
+                },
+                "efficiency_static": {
+                  "default": 0.98,
+                  "description": "Static DC transmission efficiency.",
+                  "type": "number"
+                },
+                "efficiency_per_1000km": {
+                  "default": 0.977,
+                  "description": "Distance-dependent DC efficiency factor per 1000 km.",
+                  "type": "number"
+                }
+              }
             }
           }
         },
@@ -8669,6 +8779,21 @@
           "default": 1.0,
           "description": "Multiplies the investment cost of the electricity distribution grid.",
           "type": "number"
+        },
+        "efficiency": {
+          "description": "Configuration for `transmission.electricity_distribution.efficiency` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Apply electricity distribution efficiency.",
+              "type": "boolean"
+            },
+            "efficiency_static": {
+              "default": 0.97,
+              "description": "Static electricity distribution efficiency.",
+              "type": "number"
+            }
+          }
         }
       }
     },
@@ -8676,9 +8801,29 @@
       "properties": {
         "enable": {
           "default": true,
-          "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
-          "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+          "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+          "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
           "type": "boolean"
+        },
+        "efficiency": {
+          "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Apply transmission efficiency for this carrier.",
+              "type": "boolean"
+            },
+            "efficiency_per_1000km": {
+              "default": 1,
+              "description": "Distance-dependent efficiency factor per 1000 km.",
+              "type": "number"
+            },
+            "compression_per_1000km": {
+              "default": 0,
+              "description": "Additional electricity consumption for compression per 1000 km.",
+              "type": "number"
+            }
+          }
         }
       }
     },
@@ -8726,43 +8871,86 @@
         }
       }
     },
-    "_TransmissionEfficiencyConfig": {
-      "description": "Configuration for `sector.transmission_efficiency` settings.",
+    "_TransmissionCarrierConfigHydrogen": {
       "properties": {
         "enable": {
-          "description": "Switch to select the carriers for which transmission efficiency is to be added. Carriers not listed assume lossless transmission.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "default": true,
+          "description": "Enable transmission candidate generation for this carrier.",
+          "type": "boolean"
         },
-        "DC": {
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "DC transmission efficiency.",
-          "type": "object"
+        "gabriel_filter": {
+          "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
+              "type": "boolean"
+            },
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum node degree target applied after Gabriel filtering.",
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
         },
-        "H2 pipeline": {
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "H2 pipeline transmission efficiency.",
-          "type": "object"
+        "max_offshore_haversine_distance": {
+          "default": null,
+          "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+          "exclusiveMinimum": 0,
+          "type": "number"
         },
-        "gas pipeline": {
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Gas pipeline transmission efficiency.",
-          "type": "object"
+        "length_factor": {
+          "default": 1.25,
+          "description": "Multiplier applied to geometric corridor lengths.",
+          "exclusiveMinimum": 0,
+          "type": "number"
         },
-        "electricity distribution grid": {
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Electricity distribution grid efficiency.",
-          "type": "object"
+        "cost_factor": {
+          "default": 1,
+          "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "efficiency": {
+          "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Apply transmission efficiency for this carrier.",
+              "type": "boolean"
+            },
+            "efficiency_per_1000km": {
+              "default": 1,
+              "description": "Distance-dependent efficiency factor per 1000 km.",
+              "type": "number"
+            },
+            "compression_per_1000km": {
+              "default": 0,
+              "description": "Additional electricity consumption for compression per 1000 km.",
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "_TransmissionEfficiencyConfig": {
+      "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Apply transmission efficiency for this carrier.",
+          "type": "boolean"
+        },
+        "efficiency_per_1000km": {
+          "default": 1,
+          "description": "Distance-dependent efficiency factor per 1000 km.",
+          "type": "number"
+        },
+        "compression_per_1000km": {
+          "default": 0,
+          "description": "Additional electricity consumption for compression per 1000 km.",
+          "type": "number"
         }
       }
     },
@@ -9579,6 +9767,26 @@
                     "keep"
                   ],
                   "type": "string"
+                },
+                "efficiency": {
+                  "description": "Configuration for `transmission.electricity.links.efficiency` settings.",
+                  "properties": {
+                    "enable": {
+                      "default": true,
+                      "description": "Apply transmission efficiency for DC links.",
+                      "type": "boolean"
+                    },
+                    "efficiency_static": {
+                      "default": 0.98,
+                      "description": "Static DC transmission efficiency.",
+                      "type": "number"
+                    },
+                    "efficiency_per_1000km": {
+                      "default": 0.977,
+                      "description": "Distance-dependent DC efficiency factor per 1000 km.",
+                      "type": "number"
+                    }
+                  }
                 }
               }
             },
@@ -9681,12 +9889,26 @@
               "default": 1.0,
               "description": "Multiplies the investment cost of the electricity distribution grid.",
               "type": "number"
+            },
+            "efficiency": {
+              "description": "Configuration for `transmission.electricity_distribution.efficiency` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Apply electricity distribution efficiency.",
+                  "type": "boolean"
+                },
+                "efficiency_static": {
+                  "default": 0.97,
+                  "description": "Static electricity distribution efficiency.",
+                  "type": "number"
+                }
+              }
             }
           },
           "description": "Configuration for simplified electricity distribution grid."
         },
         "hydrogen": {
-          "description": "Configuration for a single transmission carrier.",
           "properties": {
             "enable": {
               "default": true,
@@ -9726,8 +9948,29 @@
               "description": "Multiplier applied to the capital cost of transmission infrastructure.",
               "exclusiveMinimum": 0,
               "type": "number"
+            },
+            "efficiency": {
+              "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Apply transmission efficiency for this carrier.",
+                  "type": "boolean"
+                },
+                "efficiency_per_1000km": {
+                  "default": 1,
+                  "description": "Distance-dependent efficiency factor per 1000 km.",
+                  "type": "number"
+                },
+                "compression_per_1000km": {
+                  "default": 0,
+                  "description": "Additional electricity consumption for compression per 1000 km.",
+                  "type": "number"
+                }
+              }
             }
-          }
+          },
+          "description": "Configuration for hydrogen transmission candidates."
         },
         "carbon_dioxide": {
           "description": "Configuration for a single transmission carrier.",
@@ -9777,9 +10020,29 @@
           "properties": {
             "enable": {
               "default": true,
-              "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
-              "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+              "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+              "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
               "type": "boolean"
+            },
+            "efficiency": {
+              "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Apply transmission efficiency for this carrier.",
+                  "type": "boolean"
+                },
+                "efficiency_per_1000km": {
+                  "default": 1,
+                  "description": "Distance-dependent efficiency factor per 1000 km.",
+                  "type": "number"
+                },
+                "compression_per_1000km": {
+                  "default": 0,
+                  "description": "Additional electricity consumption for compression per 1000 km.",
+                  "type": "number"
+                }
+              }
             }
           },
           "description": "Configuration for methane gas transmission candidates."
@@ -12052,50 +12315,10 @@
           "description": "Add option for using waste heat of electrolysis in district heating networks.",
           "type": "number"
         },
-        "electricity_grid_connection_costs": {
+        "electricity_grid_connection_cost": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
           "type": "boolean"
-        },
-        "transmission_efficiency": {
-          "description": "Configuration for `sector.transmission_efficiency` settings.",
-          "properties": {
-            "enable": {
-              "description": "Switch to select the carriers for which transmission efficiency is to be added. Carriers not listed assume lossless transmission.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "DC": {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "DC transmission efficiency.",
-              "type": "object"
-            },
-            "H2 pipeline": {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "H2 pipeline transmission efficiency.",
-              "type": "object"
-            },
-            "gas pipeline": {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "Gas pipeline transmission efficiency.",
-              "type": "object"
-            },
-            "electricity distribution grid": {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "description": "Electricity distribution grid efficiency.",
-              "type": "object"
-            }
-          }
         },
         "H2_retrofit": {
           "default": false,
