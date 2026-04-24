@@ -527,9 +527,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_transmission_topology",
-            clusters="200",
-            run="nodes200",
-            configfiles=["config/config.200.yaml"],
+            clusters="50",
         )
 
     configure_logging(snakemake)
