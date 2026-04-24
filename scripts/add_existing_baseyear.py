@@ -834,7 +834,9 @@ if __name__ == "__main__":
             capacity_threshold=snakemake.params.existing_capacities[
                 "threshold_capacity"
             ],
-            use_electricity_distribution_grid=options["electricity_distribution_grid"],
+            use_electricity_distribution_grid=cf_transmission[
+                "electricity_distribution"
+            ]["enable"],
         )
 
     # Set defaults for missing missing values

@@ -261,12 +261,27 @@ class _TransmissionCarrierConfigGas(BaseModel):
     )
 
 
+class _TransmissionCarrierConfigElectricityDistribution(BaseModel):
+    enable: bool = Field(
+        True,
+        description="Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
+    )
+    cost_factor: float = Field(
+        1.0,
+        description="Multiplies the investment cost of the electricity distribution grid.",
+    )
+
+
 class TransmissionConfig(BaseModel):
     """Configuration for `transmission` settings."""
 
     electricity: _TransmissionCarrierConfigElectricity = Field(
         default_factory=_TransmissionCarrierConfigElectricity,
         description="Configuration for electricity transmission grid.",
+    )
+    electricity_distribution: _TransmissionCarrierConfigElectricityDistribution = Field(
+        default_factory=_TransmissionCarrierConfigElectricityDistribution,
+        description="Configuration for simplified electricity distribution grid.",
     )
     hydrogen: _TransmissionCarrierConfigGeneral = Field(
         default_factory=_TransmissionCarrierConfigGeneral,

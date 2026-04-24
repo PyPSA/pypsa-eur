@@ -240,6 +240,9 @@ transmission:
       - in_permitting
       - confirmed
       new_link_capacity: zero
+  electricity_distribution:
+    enable: true
+    cost_factor: 1.0
   hydrogen:
     enable: true
     gabriel_filter:
@@ -913,9 +916,7 @@ sector:
   use_methanation_waste_heat: 0.25
   use_fuel_cell_waste_heat: 1
   use_electrolysis_waste_heat: 0.25
-  electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 1.0
-  electricity_grid_connection: true
+  electricity_grid_connection_costs: true
   transmission_efficiency:
     enable:
     - DC

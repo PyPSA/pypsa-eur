@@ -1760,7 +1760,7 @@ def insert_gas_distribution_costs(
     n.links.loc[mchp, "capital_cost"] += capital_cost
 
 
-def add_electricity_grid_connection(n, costs):
+def add_electricity_grid_connection_costs(n, costs):
     carriers = ["onwind", "solar", "solar-hsat"]
 
     gens = n.generators.index[n.generators.carrier.isin(carriers)]
@@ -6608,7 +6608,7 @@ if __name__ == "__main__":
     if maxext is not None:
         limit_individual_line_extension(n, maxext)
 
-    if options["electricity_distribution_grid"]:
+    if cf_transmission["electricity_distribution"]["enable"]:
         insert_electricity_distribution_grid(
             n, costs, options, pop_layout, snakemake.input.solar_rooftop_potentials
         )
@@ -6631,8 +6631,8 @@ if __name__ == "__main__":
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs, options=options)
 
-    if options["electricity_grid_connection"]:
-        add_electricity_grid_connection(n, costs)
+    if options["electricity_grid_connection_costs"]:
+        add_electricity_grid_connection_costs(n, costs)
 
     for k, v in options["transmission_efficiency"].items():
         if k in options["transmission_efficiency"]["enable"]:

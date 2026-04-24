@@ -4870,17 +4870,7 @@
           "description": "Add option for using waste heat of electrolysis in district heating networks.",
           "type": "number"
         },
-        "electricity_distribution_grid": {
-          "default": true,
-          "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
-          "type": "boolean"
-        },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
-        },
-        "electricity_grid_connection": {
+        "electricity_grid_connection_costs": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
           "type": "boolean"
@@ -5884,6 +5874,21 @@
               }
             }
           }
+        },
+        "electricity_distribution": {
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
+              "type": "boolean"
+            },
+            "cost_factor": {
+              "default": 1.0,
+              "description": "Multiplies the investment cost of the electricity distribution grid.",
+              "type": "number"
+            }
+          },
+          "description": "Configuration for simplified electricity distribution grid."
         },
         "hydrogen": {
           "description": "Configuration for a single transmission carrier.",
@@ -8653,6 +8658,20 @@
         }
       }
     },
+    "_TransmissionCarrierConfigElectricityDistribution": {
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
+          "type": "boolean"
+        },
+        "cost_factor": {
+          "default": 1.0,
+          "description": "Multiplies the investment cost of the electricity distribution grid.",
+          "type": "number"
+        }
+      }
+    },
     "_TransmissionCarrierConfigGas": {
       "properties": {
         "enable": {
@@ -9650,6 +9669,21 @@
               }
             }
           }
+        },
+        "electricity_distribution": {
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
+              "type": "boolean"
+            },
+            "cost_factor": {
+              "default": 1.0,
+              "description": "Multiplies the investment cost of the electricity distribution grid.",
+              "type": "number"
+            }
+          },
+          "description": "Configuration for simplified electricity distribution grid."
         },
         "hydrogen": {
           "description": "Configuration for a single transmission carrier.",
@@ -12018,17 +12052,7 @@
           "description": "Add option for using waste heat of electrolysis in district heating networks.",
           "type": "number"
         },
-        "electricity_distribution_grid": {
-          "default": true,
-          "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
-          "type": "boolean"
-        },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
-        },
-        "electricity_grid_connection": {
+        "electricity_grid_connection_costs": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
           "type": "boolean"

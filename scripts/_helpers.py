@@ -810,9 +810,9 @@ def update_config_from_wildcards(config, w, inplace=True):
 
         dg_enable, dg_factor = find_opt(opts, "dist")
         if dg_enable:
-            config["sector"]["electricity_distribution_grid"] = True
+            config["transmission"]["electricity_distribution"]["enable"] = True
             if dg_factor is not None:
-                config["sector"]["electricity_distribution_grid_cost_factor"] = (
+                config["transmission"]["electricity_distribution"]["cost_factor"] = (
                     dg_factor
                 )
 
