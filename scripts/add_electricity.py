@@ -1128,6 +1128,13 @@ def attach_stores(
             "Fuel Cell" if lookup_discharge == "fuel cell" else "discharger"
         )
 
+        discharge_capital_cost = (
+            0.0 if "bicharger" in lookup else costs.at[lookup_discharge, "capital_cost"]
+        )
+        if lookup_discharge == "fuel cell":
+            # NB: fuel cell investment cost is per MWel
+            discharge_capital_cost *= costs.at[lookup_discharge, "efficiency"]
+
         n.add(
             "Bus",
             bus_names,
@@ -1172,6 +1179,7 @@ def attach_stores(
             bus1=buses_i,
             carrier=f"{carrier} {discharge_name}",
             efficiency=costs.at[lookup_discharge, "efficiency"] ** roundtrip_correction,
+            capital_cost=discharge_capital_cost,
             p_nom_extendable=True,
             marginal_cost=costs.at[lookup_discharge, "marginal_cost"],
             lifetime=costs.at[lookup_discharge, "lifetime"],
