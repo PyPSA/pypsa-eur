@@ -4912,9 +4912,9 @@
           "markdownDescription": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
           "type": "number"
         },
-        "gas_distribution_grid": {
+        "gas_distribution_grid_cost": {
           "default": true,
-          "description": "Add a gas distribution grid.",
+          "description": "Add gas distribution grid costs to gas-consuming components.",
           "type": "boolean"
         },
         "gas_distribution_grid_cost_factor": {
@@ -12337,9 +12337,9 @@
           "markdownDescription": "The number of desired edge connectivity (k) in the length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) used for the gas network.",
           "type": "number"
         },
-        "gas_distribution_grid": {
+        "gas_distribution_grid_cost": {
           "default": true,
-          "description": "Add a gas distribution grid.",
+          "description": "Add gas distribution grid costs to gas-consuming components.",
           "type": "boolean"
         },
         "gas_distribution_grid_cost_factor": {

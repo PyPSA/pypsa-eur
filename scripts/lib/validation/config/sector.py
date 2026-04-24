@@ -772,8 +772,9 @@ class SectorConfig(BaseModel):
         1,
         description="The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
     )
-    gas_distribution_grid: bool = Field(
-        True, description="Add a gas distribution grid."
+    gas_distribution_grid_cost: bool = Field(
+        True,
+        description="Add gas distribution grid costs to gas-consuming components.",
     )
     gas_distribution_grid_cost_factor: float = Field(
         1.0,

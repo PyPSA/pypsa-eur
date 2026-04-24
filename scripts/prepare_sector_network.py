@@ -1697,7 +1697,7 @@ def insert_electricity_distribution_grid(
     )
 
 
-def insert_gas_distribution_costs(
+def insert_gas_distribution_cost(
     n: pypsa.Network,
     costs: pd.DataFrame,
     options: dict,
@@ -6628,8 +6628,8 @@ if __name__ == "__main__":
     if options["imports"]["enable"]:
         add_import_options(n, costs, options, gas_input_nodes)
 
-    if options["gas_distribution_grid"]:
-        insert_gas_distribution_costs(n, costs, options=options)
+    if options["gas_distribution_grid_cost"]:
+        insert_gas_distribution_cost(n, costs, options=options)
 
     if options["electricity_grid_connection_cost"]:
         add_electricity_grid_connection_cost(n, costs)
