@@ -31,5 +31,7 @@ electricity:
   co2limit: 9.59e+7
   co2base: 1.918e+9
 
-lines:
-  reconnect_crimea: true
+transmission:
+  electricity:
+    lines:
+      reconnect_crimea: true

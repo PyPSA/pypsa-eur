@@ -302,12 +302,12 @@ def _reconnect_crimea(lines):
 
 def _set_electrical_parameters_lines_eg(lines, config):
     v_noms = config["electricity"]["voltages"]
-    linetypes = config["lines"]["types"]
+    linetypes = config["transmission"]["electricity"]["lines"]["types"]
 
     for v_nom in v_noms:
         lines.loc[lines["v_nom"] == v_nom, "type"] = linetypes[v_nom]
 
-    lines["s_max_pu"] = config["lines"]["s_max_pu"]
+    lines["s_max_pu"] = config["transmission"]["electricity"]["lines"]["s_max_pu"]
 
     return lines
 
@@ -318,7 +318,9 @@ def _set_electrical_parameters_lines_raw(lines, config):
         return lines
 
     v_noms = config["electricity"]["voltages"]
-    linetypes = _get_linetypes_config(config["lines"]["types"], v_noms)
+    linetypes = _get_linetypes_config(
+        config["transmission"]["electricity"]["lines"]["types"], v_noms
+    )
 
     lines["carrier"] = "AC"
     lines["dc"] = False
@@ -327,7 +329,7 @@ def _set_electrical_parameters_lines_raw(lines, config):
         lambda x: _get_linetype_by_voltage(x, linetypes)
     )
 
-    lines["s_max_pu"] = config["lines"]["s_max_pu"]
+    lines["s_max_pu"] = config["transmission"]["electricity"]["lines"]["s_max_pu"]
 
     return lines
 
@@ -345,8 +347,8 @@ def _set_electrical_parameters_links_eg(links, config, links_p_nom):
     if links.empty:
         return links
 
-    p_max_pu = config["links"].get("p_max_pu", 1.0)
-    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
+    p_max_pu = config["transmission"]["electricity"]["links"].get("p_max_pu", 1.0)
+    p_min_pu = config["transmission"]["electricity"]["links"].get("p_min_pu", -p_max_pu)
     links["p_max_pu"] = p_max_pu
     links["p_min_pu"] = p_min_pu
 
@@ -378,8 +380,8 @@ def _set_electrical_parameters_links_raw(links, config):
     if links.empty:
         return links
 
-    p_max_pu = config["links"].get("p_max_pu", 1.0)
-    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
+    p_max_pu = config["transmission"]["electricity"]["links"].get("p_max_pu", 1.0)
+    p_min_pu = config["transmission"]["electricity"]["links"].get("p_min_pu", -p_max_pu)
     links["p_max_pu"] = p_max_pu
     links["p_min_pu"] = p_min_pu
     links["carrier"] = "DC"
@@ -389,8 +391,8 @@ def _set_electrical_parameters_links_raw(links, config):
 
 
 def _set_electrical_parameters_converters(converters, config):
-    p_max_pu = config["links"].get("p_max_pu", 1.0)
-    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
+    p_max_pu = config["transmission"]["electricity"]["links"].get("p_max_pu", 1.0)
+    p_min_pu = config["transmission"]["electricity"]["links"].get("p_min_pu", -p_max_pu)
     converters["p_max_pu"] = p_max_pu
     converters["p_min_pu"] = p_min_pu
 
@@ -407,7 +409,7 @@ def _set_electrical_parameters_converters(converters, config):
 
 
 def _set_electrical_parameters_transformers(transformers, config):
-    config = config["transformers"]
+    config = config["transmission"]["electricity"]["transformers"]
 
     ## Add transformer parameters
     transformers["x"] = config.get("x", 0.1)
@@ -616,7 +618,9 @@ def _set_links_underwater_fraction(n, offshore_shapes):
 
 
 def _adjust_capacities_of_under_construction_branches(n, config):
-    lines_mode = config["lines"].get("under_construction", "undef")
+    lines_mode = config["transmission"]["electricity"]["lines"].get(
+        "under_construction", "undef"
+    )
     if lines_mode == "zero":
         n.lines.loc[n.lines.under_construction, "num_parallel"] = 0.0
         n.lines.loc[n.lines.under_construction, "s_nom"] = 0.0
@@ -624,17 +628,19 @@ def _adjust_capacities_of_under_construction_branches(n, config):
         n.remove("Line", n.lines.index[n.lines.under_construction])
     elif lines_mode != "keep":
         logger.warning(
-            "Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines."
+            "Unrecognized configuration for `transmission: lines: under_construction` = `{}`. Keeping under construction lines."
         )
 
-    links_mode = config["links"].get("under_construction", "undef")
+    links_mode = config["transmission"]["electricity"]["links"].get(
+        "under_construction", "undef"
+    )
     if links_mode == "zero":
         n.links.loc[n.links.under_construction, "p_nom"] = 0.0
     elif links_mode == "remove":
         n.remove("Link", n.links.index[n.links.under_construction])
     elif links_mode != "keep":
         logger.warning(
-            "Unrecognized configuration for `links: under_construction` = `{}`. Keeping under construction links."
+            "Unrecognized configuration for `transmission: links: under_construction` = `{}`. Keeping under construction links."
         )
 
     if lines_mode == "remove" or links_mode == "remove":
@@ -674,7 +680,7 @@ def base_network(
     parameter_corrections,
     config,
 ):
-    base_network = config["electricity"].get("base_network")
+    base_network = config["transmission"]["electricity"].get("base_network")
     osm_version = config["data"]["osm"]["version"]
     assert base_network in {"entsoegridkit", "osm", "tyndp"}, (
         f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
@@ -701,9 +707,9 @@ def base_network(
         converters = _load_converters_from_eg(buses, converters)
 
         # Optionally reconnect Crimea
-        if (config["lines"].get("reconnect_crimea", True)) & (
-            "UA" in config["countries"]
-        ):
+        if (
+            config["transmission"]["electricity"]["lines"].get("reconnect_crimea", True)
+        ) & ("UA" in config["countries"]):
             lines = _reconnect_crimea(lines)
 
         # Set electrical parameters of lines and links
@@ -742,7 +748,7 @@ def base_network(
     n.add("Link", converters.index, **converters)
 
     _set_lines_s_nom_from_linetypes(n)
-    if config["electricity"].get("base_network") == "entsoegridkit":
+    if config["transmission"]["electricity"].get("base_network") == "entsoegridkit":
         _apply_parameter_corrections(n, parameter_corrections)
 
     n = _remove_unconnected_components(n)

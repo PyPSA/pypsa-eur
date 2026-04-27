@@ -432,7 +432,9 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.objective.sum() / 8760
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
 
-    linetype_380 = snakemake.config["lines"]["types"][380]
+    linetype_380 = snakemake.config["transmission"]["electricity"]["lines"]["types"][
+        380
+    ]
     n, trafo_map = simplify_network_to_380(n, linetype_380)
     busmaps = [trafo_map]
 

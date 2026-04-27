@@ -779,15 +779,16 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
-
     renewable_carriers = snakemake.params.carriers
-
     baseyear = snakemake.params.baseyear
+    cf_transmission = snakemake.params.transmission
 
     n = pypsa.Network(snakemake.input.network)
 
     # define spatial resolution of carriers
-    spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
+    spatial = define_spatial(
+        n.buses[n.buses.carrier == "AC"].index, options, cf_transmission
+    )
     add_build_year_to_new_assets(n, baseyear)
 
     costs = load_costs(snakemake.input.costs)
@@ -833,7 +834,9 @@ if __name__ == "__main__":
             capacity_threshold=snakemake.params.existing_capacities[
                 "threshold_capacity"
             ],
-            use_electricity_distribution_grid=options["electricity_distribution_grid"],
+            use_electricity_distribution_grid=cf_transmission[
+                "electricity_distribution"
+            ]["enable"],
         )
 
     # Set defaults for missing missing values

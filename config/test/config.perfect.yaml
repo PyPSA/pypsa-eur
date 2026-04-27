@@ -39,6 +39,10 @@ electricity:
 
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
 
+transmission:
+  carbon_dioxide:
+    enable: false
+
 sector:
   min_part_load_fischer_tropsch: 0
   min_part_load_methanolisation: 0
@@ -68,7 +72,6 @@ sector:
   regional_co2_sequestration_potential:
     enable: false
   co2_spatial: false
-  co2_network: false
   methanol:
     methanol_to_power:
       ocgt: false

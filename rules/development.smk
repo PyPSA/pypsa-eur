@@ -26,9 +26,9 @@ rule base_network_incumbent:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        lines=config_provider("lines"),
-        links=config_provider("links"),
-        transformers=config_provider("transformers"),
+        lines=config_provider("transmission", "electricity", "lines"),
+        links=config_provider("transmission", "electricity", "links"),
+        transformers=config_provider("transmission", "electricity", "transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
     message:
@@ -54,7 +54,7 @@ rule make_network_comparison:
         mem_mb=2000,
     params:
         countries=config_provider("countries"),
-        base_network=config_provider("electricity", "base_network"),
+        base_network=config_provider("transmission", "electricity", "base_network"),
         compare_to_version=config_provider(
             "osm_network_release", "compare_to", "version"
         ),
@@ -85,7 +85,7 @@ rule prepare_osm_network_release:
     resources:
         mem_mb=1000,
     params:
-        line_types=config["lines"]["types"],
+        line_types=config["transmission"]["electricity"]["lines"]["types"],
         release_version=config_provider("osm_network_release", "release_version"),
         include_polygons=True,
         export=True,
@@ -108,7 +108,7 @@ rule map_incumbent:
     resources:
         mem_mb=1000,
     params:
-        line_types=config["lines"]["types"],
+        line_types=config["transmission"]["electricity"]["lines"]["types"],
         release_version="Incumbent",
         include_polygons=False,
         export=False,

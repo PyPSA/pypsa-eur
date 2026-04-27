@@ -30,8 +30,7 @@ def add_brownfield(
     n,
     n_p,
     year,
-    h2_retrofit=False,
-    h2_retrofit_capacity_per_ch4=None,
+    cf_transmission=None,
     capacity_threshold=None,
 ):
     """
@@ -45,14 +44,16 @@ def add_brownfield(
         Previous network to get brownfield from
     year : int
         Planning year
-    h2_retrofit : bool
-        Whether to allow hydrogen pipeline retrofitting
-    h2_retrofit_capacity_per_ch4 : float
-        Ratio of hydrogen to methane capacity for pipeline retrofitting
+    cf_transmission : dict
+        Transmission configuration containing hydrogen retrofit settings
     capacity_threshold : float
         Threshold for removing assets with low capacity
     """
     logger.info(f"Preparing brownfield for the year {year}")
+    hydrogen_retrofit = cf_transmission["hydrogen"]["retrofit"]["enable"]
+    hydrogen_retrofit_capacity_per_ch4 = cf_transmission["hydrogen"]["retrofit"][
+        "capacity_per_ch4"
+    ]
 
     # electric transmission grid set optimised capacities of previous as minimum
     n.lines.s_nom_min = n_p.lines.s_nom_opt
@@ -127,7 +128,7 @@ def add_brownfield(
             n._import_series_from_df(c.dynamic[tattr], c.name, tattr)
 
     # deal with gas network
-    if h2_retrofit:
+    if hydrogen_retrofit:
         # subtract the already retrofitted from the maximum capacity
         h2_retrofitted_fixed_i = n.links[
             (n.links.carrier == "H2 pipeline retrofitted")
@@ -161,7 +162,7 @@ def add_brownfield(
             pipe_capacity = n.links.loc[gas_pipes_i, "p_nom"]
             fr = "H2 pipeline retrofitted"
             to = "gas pipeline"
-            CH4_per_H2 = 1 / h2_retrofit_capacity_per_ch4
+            CH4_per_H2 = 1 / hydrogen_retrofit_capacity_per_ch4
             already_retrofitted.index = already_retrofitted.index.str.replace(fr, to)
             remaining_capacity = (
                 pipe_capacity
@@ -381,8 +382,7 @@ if __name__ == "__main__":
         n,
         n_p,
         year,
-        h2_retrofit=snakemake.params.H2_retrofit,
-        h2_retrofit_capacity_per_ch4=snakemake.params.H2_retrofit_capacity_per_CH4,
+        cf_transmission=snakemake.params.transmission,
         capacity_threshold=snakemake.params.threshold_capacity,
     )
 

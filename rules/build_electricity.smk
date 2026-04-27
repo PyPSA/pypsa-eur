@@ -60,7 +60,7 @@ rule build_powerplants:
 
 
 def input_base_network(w):
-    base_network = config_provider("electricity", "base_network")(w)
+    base_network = config_provider("transmission", "electricity", "base_network")(w)
     source = config_provider("data", "osm", "source")(w)
     components = {"buses", "lines", "links", "converters", "transformers"}
     if (base_network == "osm") and (source == "archive"):
@@ -100,9 +100,9 @@ rule base_network:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        lines=config_provider("lines"),
-        links=config_provider("links"),
-        transformers=config_provider("transformers"),
+        lines=config_provider("transmission", "electricity", "lines"),
+        links=config_provider("transmission", "electricity", "links"),
+        transformers=config_provider("transmission", "electricity", "transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
     message:
@@ -477,7 +477,10 @@ rule build_line_rating:
     input:
         base_network=resources("networks/base.nc"),
         cutout=lambda w: input_cutout(
-            w, config_provider("lines", "dynamic_line_rating", "cutout")(w)
+            w,
+            config_provider(
+                "transmission", "electricity", "lines", "dynamic_line_rating", "cutout"
+            )(w),
         ),
     output:
         output=resources("dlr.nc"),
@@ -497,77 +500,87 @@ rule build_line_rating:
         scripts("build_line_rating.py")
 
 
-rule build_transmission_projects:
+rule build_electricity_transmission_projects:
     input:
         base_network=resources("networks/base.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
         transmission_projects=lambda w: [
             "data/transmission_projects/" + name
-            for name, include in config_provider("transmission_projects", "include")(
-                w
-            ).items()
+            for name, include in config_provider(
+                "transmission", "electricity", "projects", "include"
+            )(w).items()
             if include
         ],
     output:
-        new_lines=resources("transmission_projects/new_lines.csv"),
-        new_links=resources("transmission_projects/new_links.csv"),
-        adjust_lines=resources("transmission_projects/adjust_lines.csv"),
-        adjust_links=resources("transmission_projects/adjust_links.csv"),
-        new_buses=resources("transmission_projects/new_buses.csv"),
+        new_lines=resources("transmission/electricity_projects/new_lines.csv"),
+        new_links=resources("transmission/electricity_projects/new_links.csv"),
+        adjust_lines=resources("transmission/electricity_projects/adjust_lines.csv"),
+        adjust_links=resources("transmission/electricity_projects/adjust_links.csv"),
+        new_buses=resources("transmission/electricity_projects/new_buses.csv"),
     log:
-        logs("build_transmission_projects.log"),
+        logs("build_electricity_transmission_projects.log"),
     benchmark:
-        benchmarks("build_transmission_projects")
+        benchmarks("build_electricity_transmission_projects")
     threads: 1
     resources:
         mem_mb=4000,
     params:
-        transmission_projects=config_provider("transmission_projects"),
-        line_factor=config_provider("lines", "length_factor"),
-        s_max_pu=config_provider("lines", "s_max_pu"),
+        transmission_projects=config_provider("transmission", "electricity", "projects"),
+        line_factor=config_provider(
+            "transmission", "electricity", "lines", "length_factor"
+        ),
+        s_max_pu=config_provider("transmission", "electricity", "lines", "s_max_pu"),
     message:
-        "Building transmission projects"
+        "Building electricity transmission projects"
     script:
-        scripts("build_transmission_projects.py")
+        scripts("build_electricity_transmission_projects.py")
 
 
-rule add_transmission_projects_and_dlr:
+rule add_electricity_transmission_projects_and_dlr:
     input:
         network=resources("networks/base.nc"),
         dlr=lambda w: (
             resources("dlr.nc")
-            if config_provider("lines", "dynamic_line_rating", "activate")(w)
+            if config_provider(
+                "transmission",
+                "electricity",
+                "lines",
+                "dynamic_line_rating",
+                "activate",
+            )(w)
             else []
         ),
         transmission_projects=lambda w: (
             [
-                resources("transmission_projects/new_buses.csv"),
-                resources("transmission_projects/new_lines.csv"),
-                resources("transmission_projects/new_links.csv"),
-                resources("transmission_projects/adjust_lines.csv"),
-                resources("transmission_projects/adjust_links.csv"),
+                resources("transmission/electricity_projects/new_buses.csv"),
+                resources("transmission/electricity_projects/new_lines.csv"),
+                resources("transmission/electricity_projects/new_links.csv"),
+                resources("transmission/electricity_projects/adjust_lines.csv"),
+                resources("transmission/electricity_projects/adjust_links.csv"),
             ]
-            if config_provider("transmission_projects", "enable")(w)
+            if config_provider("transmission", "electricity", "projects", "enable")(w)
             else []
         ),
     output:
         network=resources("networks/base_extended.nc"),
     log:
-        logs("add_transmission_projects_and_dlr.log"),
+        logs("add_electricity_transmission_projects_and_dlr.log"),
     benchmark:
-        benchmarks("add_transmission_projects_and_dlr")
+        benchmarks("add_electricity_transmission_projects_and_dlr")
     threads: 1
     resources:
         mem_mb=4000,
     params:
-        transmission_projects=config_provider("transmission_projects"),
-        dlr=config_provider("lines", "dynamic_line_rating"),
-        s_max_pu=config_provider("lines", "s_max_pu"),
+        transmission_projects=config_provider("transmission", "electricity", "projects"),
+        dlr=config_provider(
+            "transmission", "electricity", "lines", "dynamic_line_rating"
+        ),
+        s_max_pu=config_provider("transmission", "electricity", "lines", "s_max_pu"),
     message:
         "Adding transmission projects and dynamic line ratings"
     script:
-        scripts("add_transmission_projects_and_dlr.py")
+        scripts("add_electricity_transmission_projects_and_dlr.py")
 
 
 def input_class_regions(w):
@@ -677,8 +690,12 @@ rule simplify_network:
         aggregation_strategies=config_provider(
             "clustering", "aggregation_strategies", default={}
         ),
-        p_max_pu=config_provider("links", "p_max_pu", default=1.0),
-        p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
+        p_max_pu=config_provider(
+            "transmission", "electricity", "links", "p_max_pu", default=1.0
+        ),
+        p_min_pu=config_provider(
+            "transmission", "electricity", "links", "p_min_pu", default=-1.0
+        ),
     message:
         "Simplifying network"
     script:
@@ -694,11 +711,11 @@ def input_custom_busmap(w):
     mode = config_provider("clustering", "mode", default="busmap")(w)
 
     if mode == "custom_busmap":
-        base_network = config_provider("electricity", "base_network")(w)
+        base_network = config_provider("transmission", "electricity", "base_network")(w)
         custom_busmap = f"data/busmaps/base_s_{w.clusters}_{base_network}.csv"
 
     if mode == "custom_busshapes":
-        base_network = config_provider("electricity", "base_network")(w)
+        base_network = config_provider("transmission", "electricity", "base_network")(w)
         custom_busshapes = f"data/busshapes/base_s_{w.clusters}_{base_network}.geojson"
 
     return {
@@ -753,7 +770,9 @@ rule cluster_network:
             "electricity", "conventional_carriers", default=[]
         ),
         max_hours=config_provider("electricity", "max_hours"),
-        length_factor=config_provider("lines", "length_factor"),
+        length_factor=config_provider(
+            "transmission", "electricity", "lines", "length_factor"
+        ),
         cluster_mode=config_provider("clustering", "mode"),
         copperplate_regions=config_provider("clustering", "copperplate_regions"),
     message:
@@ -817,8 +836,12 @@ rule add_electricity:
     resources:
         mem_mb=10000,
     params:
-        line_length_factor=config_provider("lines", "length_factor"),
-        link_length_factor=config_provider("links", "length_factor"),
+        line_length_factor=config_provider(
+            "transmission", "electricity", "lines", "length_factor"
+        ),
+        link_length_factor=config_provider(
+            "transmission", "electricity", "links", "length_factor"
+        ),
         scaling_factor=config_provider("load", "scaling_factor"),
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
@@ -860,8 +883,8 @@ rule prepare_network:
         mem_mb=4000,
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_elec"),
-        links=config_provider("links"),
-        lines=config_provider("lines"),
+        links=config_provider("transmission", "electricity", "links"),
+        lines=config_provider("transmission", "electricity", "lines"),
         co2base=config_provider("electricity", "co2base"),
         co2limit_enable=config_provider("electricity", "co2limit_enable", default=False),
         co2limit=config_provider("electricity", "co2limit"),
@@ -871,7 +894,9 @@ rule prepare_network:
         adjustments=config_provider("adjustments", "electricity"),
         autarky=config_provider("electricity", "autarky", default={}),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        transmission_limit=config_provider("electricity", "transmission_limit"),
+        transmission_limit=config_provider(
+            "transmission", "electricity", "transmission_limit"
+        ),
     message:
         "Preparing network for model with {wildcards.clusters} clusters and options {wildcards.opts}"
     script:
@@ -958,7 +983,7 @@ rule build_osm_network:
     params:
         countries=config_provider("countries"),
         voltages=config_provider("electricity", "voltages"),
-        line_types=config_provider("lines", "types"),
+        line_types=config_provider("transmission", "electricity", "lines", "types"),
         under_construction=config_provider("osm_network_release", "under_construction"),
         remove_after=config_provider("osm_network_release", "remove_after"),
     message:

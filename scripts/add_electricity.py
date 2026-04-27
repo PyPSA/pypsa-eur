@@ -14,8 +14,9 @@ preceding rules together into a detailed PyPSA network that is stored in
 ``networks/base_s_{clusters}_elec.nc``. It includes:
 
 - today's transmission topology and transfer capacities (optionally including
-  lines which are under construction according to the config settings ``lines:
-  under_construction`` and ``links: under_construction``),
+    lines which are under construction according to the config settings
+    ``transmission: lines: under_construction`` and
+    ``links: under_construction``),
 - today's thermal and hydro power generation capacities (for the technologies
   listed in the config setting ``electricity: conventional_carriers``), and
 - today's load time-series (upsampled in a top-down approach according to

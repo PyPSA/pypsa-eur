@@ -28,7 +28,6 @@ snapshots:
   end: "2013-03-08"
 
 electricity:
-
   extendable_carriers:
     Generator: [OCGT]
     StorageUnit: [battery]
@@ -36,6 +35,15 @@ electricity:
     Link: [H2 pipeline]
 
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+transmission:
+  hydrogen:
+    retrofit:
+      enable: true
+  carbon_dioxide:
+    enable: false
+  gas:
+    enable: true
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -60,8 +68,6 @@ clustering:
     resolution_sector: 24h
 
 sector:
-  gas_network: true
-  H2_retrofit: true
   district_heating:
     ptes:
       supplemental_heating:
@@ -85,7 +91,6 @@ sector:
   regional_co2_sequestration_potential:
     enable: false
   co2_spatial: false
-  co2_network: false
   methanol:
     methanol_to_power:
       ocgt: false

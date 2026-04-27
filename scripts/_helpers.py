@@ -750,7 +750,7 @@ def update_config_from_wildcards(config, w, inplace=True):
 
         for o in opts:
             if o.startswith("lv") or o.startswith("lc"):
-                config["electricity"]["transmission_limit"] = o[1:]
+                config["transmission"]["electricity"]["transmission_limit"] = o[1:]
                 break
 
     if w.get("sector_opts"):
@@ -792,10 +792,10 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["clustering"]["temporal"]["resolution_sector"] = nhours
 
         if "decentral" in opts:
-            config["sector"]["electricity_transmission_grid"] = False
+            config["transmission"]["electricity"]["enable"] = False
 
         if "noH2network" in opts:
-            config["sector"]["H2_network"] = False
+            config["transmission"]["hydrogen"] = False
 
         if "nowasteheat" in opts:
             config["sector"]["use_fischer_tropsch_waste_heat"] = False
@@ -810,9 +810,9 @@ def update_config_from_wildcards(config, w, inplace=True):
 
         dg_enable, dg_factor = find_opt(opts, "dist")
         if dg_enable:
-            config["sector"]["electricity_distribution_grid"] = True
+            config["transmission"]["electricity_distribution"]["enable"] = True
             if dg_factor is not None:
-                config["sector"]["electricity_distribution_grid_cost_factor"] = (
+                config["transmission"]["electricity_distribution"]["cost_factor"] = (
                     dg_factor
                 )
 
@@ -821,8 +821,12 @@ def update_config_from_wildcards(config, w, inplace=True):
 
         _, maxext = find_opt(opts, "linemaxext")
         if maxext is not None:
-            config["lines"]["max_extension"] = maxext * 1e3
-            config["links"]["max_extension"] = maxext * 1e3
+            config["transmission"]["electricity"]["lines"]["max_extension"] = (
+                maxext * 1e3
+            )
+            config["transmission"]["electricity"]["links"]["max_extension"] = (
+                maxext * 1e3
+            )
 
         _, co2l_value = find_opt(opts, "Co2L")
         if co2l_value is not None:

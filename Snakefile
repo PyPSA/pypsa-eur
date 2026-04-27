@@ -129,7 +129,7 @@ rule all:
             (
                 RESULTS
                 + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
-                if config_provider("sector", "H2_network")(w)
+                if config_provider("transmission", "hydrogen", "enable")(w)
                 else []
             ),
             run=config["run"]["name"],
@@ -139,7 +139,7 @@ rule all:
             (
                 RESULTS
                 + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
-                if config_provider("sector", "gas_network")(w)
+                if config_provider("transmission", "gas", "enable")(w)
                 else []
             ),
             run=config["run"]["name"],

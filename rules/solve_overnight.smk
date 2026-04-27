@@ -40,6 +40,7 @@ rule solve_sector_network:
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
+        transmission=config_provider("transmission"),
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
         ),

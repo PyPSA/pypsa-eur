@@ -1137,7 +1137,9 @@ def add_pipe_retrofit_constraint(n):
 
     p_nom = n.model["Link-p_nom"]
 
-    CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
+    CH4_per_H2 = (
+        1 / n.params["transmission"]["hydrogen"]["retrofit"]["capacity_per_ch4"]
+    )
     lhs = p_nom.loc[gas_pipes_i] + CH4_per_H2 * p_nom.loc[h2_retrofitted_i]
     rhs = n.links.p_nom[gas_pipes_i]
     if not PYPSA_V1:

@@ -8,8 +8,6 @@ Electricity configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 """
 
-from typing import Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from scripts.lib.validation.config._base import ConfigModel
@@ -171,10 +169,6 @@ class ElectricityConfig(BaseModel):
         default_factory=lambda: [220.0, 300.0, 330.0, 380.0, 400.0, 500.0, 750.0],
         description="Voltage levels to consider.",
     )
-    base_network: Literal["entsoegridkit", "osm", "tyndp"] = Field(
-        "osm",
-        description="Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
-    )
     gaslimit_enable: bool = Field(
         False,
         description="Add an overall absolute gas limit configured in `electricity: gaslimit`.",
@@ -256,10 +250,6 @@ class ElectricityConfig(BaseModel):
     autarky: _AutarkyConfig = Field(
         default_factory=_AutarkyConfig,
         description="Autarky configuration.",
-    )
-    transmission_limit: str = Field(
-        "vopt",
-        description="Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",
     )
 
     model_config = ConfigDict(populate_by_name=True)

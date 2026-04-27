@@ -10,7 +10,7 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -222,50 +222,6 @@ class _MethanolConfig(BaseModel):
     biomass_to_methanol_cc: bool = Field(
         False, description="Add biomass to methanol with carbon capture."
     )
-
-
-class _TransmissionEfficiencyConfig(BaseModel):
-    """Configuration for `sector.transmission_efficiency` settings."""
-
-    enable: list[str] = Field(
-        default_factory=lambda: [
-            "DC",
-            "H2 pipeline",
-            "gas pipeline",
-            "electricity distribution grid",
-        ],
-        description="Switch to select the carriers for which transmission efficiency is to be added. Carriers not listed assume lossless transmission.",
-    )
-    DC: dict[str, float] = Field(
-        default_factory=lambda: {
-            "efficiency_static": 0.98,
-            "efficiency_per_1000km": 0.977,
-        },
-        description="DC transmission efficiency.",
-    )
-    H2_pipeline: dict[str, float] = Field(
-        default_factory=lambda: {
-            "efficiency_per_1000km": 1,
-            "compression_per_1000km": 0.018,
-        },
-        alias="H2 pipeline",
-        description="H2 pipeline transmission efficiency.",
-    )
-    gas_pipeline: dict[str, float] = Field(
-        default_factory=lambda: {
-            "efficiency_per_1000km": 1,
-            "compression_per_1000km": 0.01,
-        },
-        alias="gas pipeline",
-        description="Gas pipeline transmission efficiency.",
-    )
-    electricity_distribution_grid: dict[str, float] = Field(
-        default_factory=lambda: {"efficiency_static": 0.97},
-        alias="electricity distribution grid",
-        description="Electricity distribution grid efficiency.",
-    )
-
-    model_config = ConfigDict(populate_by_name=True)
 
 
 class _LimitMaxGrowthConfig(BaseModel):
@@ -740,14 +696,6 @@ class SectorConfig(BaseModel):
         True,
         description="Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
     )
-    co2_network: bool = Field(
-        True,
-        description="Add option for planning a new carbon dioxide transmission network.",
-    )
-    co2_network_cost_factor: float = Field(
-        1,
-        description="The cost factor for the capital cost of the carbon dioxide transmission network.",
-    )
     cc_fraction: float = Field(
         0.9,
         description="The default fraction of CO2 captured with post-combustion capture.",
@@ -807,47 +755,13 @@ class SectorConfig(BaseModel):
         description="Add option for using waste heat of electrolysis in district heating networks.",
     )
 
-    electricity_transmission_grid: bool = Field(
-        True,
-        description="Switch for enabling/disabling the electricity transmission grid.",
-    )
-    electricity_distribution_grid: bool = Field(
-        True,
-        description="Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
-    )
-    electricity_distribution_grid_cost_factor: float = Field(
-        1.0,
-        description="Multiplies the investment cost of the electricity distribution grid.",
-    )
-    electricity_grid_connection: bool = Field(
+    electricity_grid_connection_cost: bool = Field(
         True,
         description="Add the cost of electricity grid connection for onshore wind and solar.",
     )
-
-    transmission_efficiency: _TransmissionEfficiencyConfig = Field(
-        default_factory=_TransmissionEfficiencyConfig,
-        description="Transmission efficiency configuration.",
-    )
-
-    H2_network: bool = Field(True, description="Add option for new hydrogen pipelines.")
-    gas_network: bool = Field(
+    gas_distribution_grid_cost: bool = Field(
         True,
-        description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
-    )
-    H2_retrofit: bool = Field(
-        False,
-        description="Add option for retrofiting existing pipelines to transport hydrogen.",
-    )
-    H2_retrofit_capacity_per_CH4: float = Field(
-        0.6,
-        description="The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-    )
-    gas_network_connectivity_upgrade: float = Field(
-        1,
-        description="The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
-    )
-    gas_distribution_grid: bool = Field(
-        True, description="Add a gas distribution grid."
+        description="Add gas distribution grid costs to gas-consuming components.",
     )
     gas_distribution_grid_cost_factor: float = Field(
         1.0,
