@@ -5895,21 +5895,11 @@
               "description": "Enable transmission candidate generation for this carrier.",
               "type": "boolean"
             },
-            "gabriel_filter": {
-              "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
-              "properties": {
-                "enable": {
-                  "default": true,
-                  "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
-                  "type": "boolean"
-                },
-                "min_degree": {
-                  "default": 1,
-                  "description": "Minimum node degree target applied after Gabriel filtering.",
-                  "minimum": 0,
-                  "type": "integer"
-                }
-              }
+            "gabriel_filter_min_degree": {
+              "default": 1,
+              "description": "Minimum node degree target applied after Gabriel graph filtering. Set to >= 1 to activate Gabriel filtering with min-degree backfilling; 0 disables it.",
+              "minimum": 0,
+              "type": "integer"
             },
             "max_offshore_haversine_distance": {
               "default": null,
@@ -5976,21 +5966,11 @@
               "description": "Enable transmission candidate generation for this carrier.",
               "type": "boolean"
             },
-            "gabriel_filter": {
-              "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
-              "properties": {
-                "enable": {
-                  "default": true,
-                  "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
-                  "type": "boolean"
-                },
-                "min_degree": {
-                  "default": 1,
-                  "description": "Minimum node degree target applied after Gabriel filtering.",
-                  "minimum": 0,
-                  "type": "integer"
-                }
-              }
+            "gabriel_filter_min_degree": {
+              "default": 1,
+              "description": "Minimum node degree target applied after Gabriel graph filtering. Set to >= 1 to activate Gabriel filtering with min-degree backfilling; 0 disables it.",
+              "minimum": 0,
+              "type": "integer"
             },
             "max_offshore_haversine_distance": {
               "default": null,
@@ -7025,22 +7005,6 @@
           "default": 0,
           "description": "Default standing losses.",
           "type": "number"
-        }
-      }
-    },
-    "_GabrielFilterConfig": {
-      "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
-      "properties": {
-        "enable": {
-          "default": true,
-          "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
-          "type": "boolean"
-        },
-        "min_degree": {
-          "default": 1,
-          "description": "Minimum node degree target applied after Gabriel filtering.",
-          "minimum": 0,
-          "type": "integer"
         }
       }
     },
@@ -8862,21 +8826,11 @@
           "description": "Enable transmission candidate generation for this carrier.",
           "type": "boolean"
         },
-        "gabriel_filter": {
-          "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
-          "properties": {
-            "enable": {
-              "default": true,
-              "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
-              "type": "boolean"
-            },
-            "min_degree": {
-              "default": 1,
-              "description": "Minimum node degree target applied after Gabriel filtering.",
-              "minimum": 0,
-              "type": "integer"
-            }
-          }
+        "gabriel_filter_min_degree": {
+          "default": 1,
+          "description": "Minimum node degree target applied after Gabriel graph filtering. Set to >= 1 to activate Gabriel filtering with min-degree backfilling; 0 disables it.",
+          "minimum": 0,
+          "type": "integer"
         },
         "max_offshore_haversine_distance": {
           "default": null,
@@ -8905,21 +8859,11 @@
           "description": "Enable transmission candidate generation for this carrier.",
           "type": "boolean"
         },
-        "gabriel_filter": {
-          "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
-          "properties": {
-            "enable": {
-              "default": true,
-              "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
-              "type": "boolean"
-            },
-            "min_degree": {
-              "default": 1,
-              "description": "Minimum node degree target applied after Gabriel filtering.",
-              "minimum": 0,
-              "type": "integer"
-            }
-          }
+        "gabriel_filter_min_degree": {
+          "default": 1,
+          "description": "Minimum node degree target applied after Gabriel graph filtering. Set to >= 1 to activate Gabriel filtering with min-degree backfilling; 0 disables it.",
+          "minimum": 0,
+          "type": "integer"
         },
         "max_offshore_haversine_distance": {
           "default": null,
@@ -9958,21 +9902,11 @@
               "description": "Enable transmission candidate generation for this carrier.",
               "type": "boolean"
             },
-            "gabriel_filter": {
-              "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
-              "properties": {
-                "enable": {
-                  "default": true,
-                  "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
-                  "type": "boolean"
-                },
-                "min_degree": {
-                  "default": 1,
-                  "description": "Minimum node degree target applied after Gabriel filtering.",
-                  "minimum": 0,
-                  "type": "integer"
-                }
-              }
+            "gabriel_filter_min_degree": {
+              "default": 1,
+              "description": "Minimum node degree target applied after Gabriel graph filtering. Set to >= 1 to activate Gabriel filtering with min-degree backfilling; 0 disables it.",
+              "minimum": 0,
+              "type": "integer"
             },
             "max_offshore_haversine_distance": {
               "default": null,
@@ -10039,21 +9973,11 @@
               "description": "Enable transmission candidate generation for this carrier.",
               "type": "boolean"
             },
-            "gabriel_filter": {
-              "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
-              "properties": {
-                "enable": {
-                  "default": true,
-                  "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
-                  "type": "boolean"
-                },
-                "min_degree": {
-                  "default": 1,
-                  "description": "Minimum node degree target applied after Gabriel filtering.",
-                  "minimum": 0,
-                  "type": "integer"
-                }
-              }
+            "gabriel_filter_min_degree": {
+              "default": 1,
+              "description": "Minimum node degree target applied after Gabriel graph filtering. Set to >= 1 to activate Gabriel filtering with min-degree backfilling; 0 disables it.",
+              "minimum": 0,
+              "type": "integer"
             },
             "max_offshore_haversine_distance": {
               "default": null,
