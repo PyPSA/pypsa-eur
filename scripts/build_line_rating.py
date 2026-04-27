@@ -33,7 +33,6 @@ import geopandas as gpd
 import numpy as np
 import pypsa
 import xarray as xr
-from dask.distributed import Client
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
 
@@ -42,6 +41,7 @@ from scripts._helpers import (
     get_snapshots,
     load_cutout,
     set_scenario_config,
+    setup_dask,
 )
 
 logger = logging.getLogger(__name__)
@@ -144,11 +144,7 @@ if __name__ == "__main__":
     nprocesses = int(snakemake.threads)
     show_progress = not snakemake.config["run"].get("disable_progressbar", True)
     show_progress = show_progress and snakemake.config["atlite"]["show_progress"]
-    if nprocesses > 1:
-        client = Client(n_workers=nprocesses, threads_per_worker=1)
-    else:
-        client = None
-    dask_kwargs = {"scheduler": client}
+    dask_kwargs = setup_dask(nprocesses)
 
     n = pypsa.Network(snakemake.input.base_network)
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)

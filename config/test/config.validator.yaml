@@ -12,5 +12,4 @@ run:
 
 clustering:
   temporal:
-    resolution_elec: 365H
     resolution_sector: 365H

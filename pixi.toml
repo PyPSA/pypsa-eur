@@ -35,8 +35,15 @@ update-dags = """
 
 generate-config = "python -c 'from scripts.lib.validation.config import generate_config_defaults, generate_config_schema; generate_config_defaults(); generate_config_schema()'"
 
+sync-locks = """
+    pixi install -e default && \
+    pixi workspace export conda-explicit-spec -e default envs && \
+    bash -c 'for f in envs/*_conda_spec*; do mv "$f" "${f/_conda_spec/.pin}"; done' && \
+    pixi workspace export conda-environment -e default envs/environment.yaml -n pypsa-eur
+"""
+
 [dependencies]
-atlite = ">=0.3"
+atlite = ">=0.3,!=0.5.0"
 bokeh = ">=3.8.0"
 cartopy = ">=0.25.0"
 copernicusmarine = ">=2.2.4"
@@ -103,6 +110,7 @@ natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
 pydeflate = ">=2.3.4"
 grpcio = "<1.78"
+snakemake-logger-plugin-snkmt = "==0.1.6" # For better pypsa-app integration
 
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"

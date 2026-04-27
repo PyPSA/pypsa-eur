@@ -195,6 +195,7 @@ In the below example, two updates are made to the default config.
 
     class ClusteringConfigUpdater(ConfigUpdater):
         name: str = "update_clustering"
+        docs_url: str | None = None # no attempt will be made at updating the URL.
 
         def update(self) -> type[ConfigSchema]:
             # To update and existing config item, we need it's most recent state, as defined in `self.base_config`
@@ -222,6 +223,7 @@ In the below example, two updates are made to the default config.
 
     class NewConfigItem(ConfigUpdater):
         name: str = "new_section"
+        docs_url: str | None = "https://my-own-docs.readthedocs.org/config.html#{field_name}"
 
         def update(self) -> type[ConfigSchema]:
             new_schema = self._apply_updates(
@@ -242,6 +244,13 @@ This is sufficient for both updates to be imported.
     When generating the config files with the above example (``pixi run generate-config``),
     you would now generate ``config/config.default.update_clustering.new_section.yaml``.
     To override the base ``config/config.default.yaml``, you can set the ``name`` property of your updater classes to empty strings: ``""``.
+
+.. admonition:: Docs URL
+
+    The generated default config file will reference a documentation URL above every top-level key.
+    When using updating with your own config schema, you may well want to also refer to your own documentation.
+    You can set the ``docs_url`` property to refer to a different URL to the default (which is the PyPSA-Eur documentation).
+    Any reference to ``{field_name}`` in the string will be formatted to the top-level key above which the URL comment is being placed in the config, to allow for fine-grained references.
 
 .. admonition:: Chaining updates
 

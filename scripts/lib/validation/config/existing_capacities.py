@@ -18,7 +18,7 @@ class ExistingCapacitiesConfig(ConfigModel):
 
     grouping_years_power: list[int] = Field(
         default_factory=lambda: [
-            1920,
+            1900,
             1950,
             1955,
             1960,
