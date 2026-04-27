@@ -1064,7 +1064,7 @@ def load_cutout(
 def setup_dask(nprocesses: int) -> dict:
     if nprocesses > 1:
         cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
-        client = Client(cluster, asynchronous=True)
+        client = Client(cluster)
         atexit.register(client.shutdown)
     else:
         client = None

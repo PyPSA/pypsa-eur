@@ -126,8 +126,10 @@ def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
     # adjust name to fit syntax of nominal constraint per bus
     df = p_nom_max.reset_index()
     df["name"] = df.apply(
-        lambda row: f"nom_max_{row['carrier']}"
-        + (f"_{row['build_year']}" if row["build_year"] is not None else ""),
+        lambda row: (
+            f"nom_max_{row['carrier']}"
+            + (f"_{row['build_year']}" if row["build_year"] is not None else "")
+        ),
         axis=1,
     )
 
