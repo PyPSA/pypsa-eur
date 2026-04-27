@@ -199,20 +199,6 @@ class ElectricityProjectsConfig(BaseModel):
     )
 
 
-class _GabrielFilterConfig(BaseModel):
-    """Configuration for `transmission.<carrier>.gabriel_filter` settings."""
-
-    enable: bool = Field(
-        True,
-        description="Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
-    )
-    min_degree: int = Field(
-        1,
-        ge=0,
-        description="Minimum node degree target applied after Gabriel filtering.",
-    )
-
-
 class _TransmissionCarrierConfigGeneral(BaseModel):
     """Configuration for a single transmission carrier."""
 
@@ -220,9 +206,10 @@ class _TransmissionCarrierConfigGeneral(BaseModel):
         True,
         description="Enable transmission candidate generation for this carrier.",
     )
-    gabriel_filter: _GabrielFilterConfig = Field(
-        default_factory=_GabrielFilterConfig,
-        description="Gabriel filter configuration.",
+    gabriel_filter_min_degree: int = Field(
+        1,
+        ge=0,
+        description="Minimum node degree target applied after Gabriel graph filtering. Set to >= 1 to activate Gabriel filtering with min-degree backfilling; 0 disables it.",
     )
     max_offshore_haversine_distance: float = Field(
         float("inf"),

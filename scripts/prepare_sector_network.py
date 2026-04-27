@@ -2118,12 +2118,11 @@ def add_h2_gas_infrastructure(
             p_min_pu=-1,
             p_nom_extendable=True,
             length=(
-                h2_pipes["length"].values
-                * cf_transmission["hydrogen"].get("length_factor", 1.0)
+                h2_pipes["length"].values * cf_transmission["hydrogen"]["length_factor"]
             ),
             capital_cost=costs.at["H2 (g) pipeline", "capital_cost"]
             * h2_pipes["length"].values
-            * cf_transmission["hydrogen"].get("length_factor", 1.0)
+            * cf_transmission["hydrogen"]["length_factor"]
             * cf_transmission["hydrogen"]["cost_factor"],
             carrier="H2 pipeline",
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
@@ -6556,9 +6555,9 @@ if __name__ == "__main__":
             co2_transmission_cost_factor=cf_transmission["carbon_dioxide"][
                 "cost_factor"
             ],
-            co2_transmission_length_factor=cf_transmission["carbon_dioxide"].get(
-                "length_factor", 1.0
-            ),
+            co2_transmission_length_factor=cf_transmission["carbon_dioxide"][
+                "length_factor"
+            ],
         )
 
     if options["allam_cycle_gas"]:
