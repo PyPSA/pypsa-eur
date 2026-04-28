@@ -105,11 +105,17 @@ class PtesApproximator:
         """
 
         return xr.where(
-            self.layer_temperatures_da > self.return_temperature,
-            self.rho
-            * self.c_p
-            * (self.forward_temperature - self.layer_temperatures_da),
-            self.rho * self.c_p * (self.forward_temperature - self.return_temperature),
+            self.layer_temperatures_da > self.forward_temperature,
+            0.0,
+            xr.where(
+                self.layer_temperatures_da > self.return_temperature,
+                self.rho
+                * self.c_p
+                * (self.forward_temperature - self.layer_temperatures_da),
+                self.rho
+                * self.c_p
+                * (self.forward_temperature - self.return_temperature),
+            ),
         )
 
     @property
@@ -123,21 +129,17 @@ class PtesApproximator:
 
     @property
     def charger_efficiency(self) -> xr.DataArray:
-        """Heat-to-volume conversion efficiency for PTES charging [m3/MWh]."""
-        return (
-            1
-            / (
-                self.rho
-                * self.c_p
-                * (self.layer_temperatures_da - self.bottom_temperature)
-            )
-            * self.charging_availability
+        """Heat-to-volume conversion efficiency for PTES charging [MWh to m3]."""
+        return xr.where(
+            self.charging_availability, self.charging_availability / self.m3_to_mwh, 0
         )
 
     @property
     def m3_to_mwh(self) -> np.ndarray:
         """Per-layer conversion from volume state to energy equivalent [MWh/m3]."""
-        return self.rho * self.c_p * (self.layer_temperatures - self.bottom_temperature)
+        return (
+            self.rho * self.c_p * (self.layer_temperatures_da - self.bottom_temperature)
+        )
 
     @property
     def e_max_pu(self) -> float:
@@ -160,6 +162,38 @@ class PtesApproximator:
             .argmin(dim="layer")
             .astype(int)
         )
+
+    @property
+    def preheater_return_layer(self) -> xr.DataArray:
+        """
+        Reinjection layer index for the preheater's no-boost return volume.
+
+        For each source layer l and node:
+          a) T_l > T_ret and l is not the closest-to-T_ret layer: target = closest-to-T_ret
+          b) T_l > T_ret and l is the closest-to-T_ret layer: target = min(l + 1, num_layers - 1)
+             (next colder modelled layer; prevents the self-loop that produces phantom heat)
+          c) T_l <= T_ret: no physical feedback; placeholder = num_layers - 1.
+             The preheater's efficiency3 (= 1 - layer_needs_boosting) masks this flow
+             to 0 because any layer colder than T_ret always needs boosting
+             (T_fwd > T_ret >= T_l).
+
+        Returns dimensions (layer, name).
+        """
+        ret_layer = self.return_temp_layer
+        next_colder = xr.where(
+            ret_layer < self.num_layers - 1, ret_layer + 1, self.num_layers - 1
+        )
+        layer_idx = self.layer_temperatures_da.layer
+
+        return xr.where(
+            layer_idx < ret_layer,
+            ret_layer,
+            xr.where(
+                layer_idx == ret_layer,
+                next_colder,
+                self.num_layers - 1,
+            ),
+        ).astype(int)
 
     @property
     def hp_return_layer(self) -> xr.DataArray:
@@ -198,14 +232,9 @@ class PtesApproximator:
                 self.layer_temperatures_da - target_temp.sel(layer=l)
             ).argmin(dim="layer")
             closest_layer = xr.where(
-                closest_layer <= l and closest_layer < self.num_layers - 1,
+                (closest_layer <= l) & (closest_layer < self.num_layers - 1),
                 closest_layer + 1,
                 closest_layer,
-            )
-            closest_layer = xr.where(
-                closest_layer == self.num_layers - 1,  # bottom layer
-                None,
-                closest_layer.astype(int),
             )
             ret_val.append(closest_layer)
 
@@ -214,11 +243,13 @@ class PtesApproximator:
         )
 
     @property
-    def interlayer_heat_transfer_coefficients(self) -> np.ndarray:
+    def interlayer_heat_transfer_coefficients(self) -> xr.DataArray:
         """."""
-        return np.full(self.num_layers - 1, self.interlayer_heat_transfer_coefficient)
+        return xr.full_like(
+            self.layer_temperatures_da, self._interlayer_heat_transfer_coefficient()
+        )
 
-    def _interlayer_heat_transfer_coefficients(
+    def _interlayer_heat_transfer_coefficient(
         self,
         conductivity=0.6,
         density=1000,
@@ -238,6 +269,7 @@ class PtesApproximator:
         storage_height: Total height of the storage medium [m]
         seconds_per_hour: Number of seconds in an hour (for unit conversion)
         """
+        return 0.001
         layer_height = storage_height / (
             self.num_layers + 1
         )  # assuming equal layer heights
@@ -274,7 +306,6 @@ class PtesApproximator:
         - e_max_pu: scalar
         """
         layer_coord = np.arange(self.num_layers)
-        pair_coord = np.arange(self.num_layers - 1)
 
         ds = xr.Dataset(
             {
@@ -284,6 +315,7 @@ class PtesApproximator:
                     coords={"layer": layer_coord},
                 ),
                 "return_temperature_layer": self.return_temp_layer,
+                "preheater_return_layer": self.preheater_return_layer,
                 "hp_return_layer": self.hp_return_layer,
                 "m3_to_mwh": xr.DataArray(
                     self.m3_to_mwh,
@@ -295,11 +327,7 @@ class PtesApproximator:
                 "layer_needs_boosting": self.layer_needs_boosting,
                 "charger_efficiency": self.charger_efficiency,
                 "charging_availability": self.charging_availability,
-                "interlayer_heat_transfer_coefficients": xr.DataArray(
-                    self.interlayer_heat_transfer_coefficients,
-                    dims=["layer_pair"],
-                    coords={"layer_pair": pair_coord},
-                ),
+                "interlayer_heat_transfer_coefficients": self.interlayer_heat_transfer_coefficients,
                 "standing_losses": xr.DataArray(
                     self.standing_losses,
                     dims=["layer"],

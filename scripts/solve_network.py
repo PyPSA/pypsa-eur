@@ -1019,21 +1019,22 @@ def add_layered_ptes_volume_capacity_constraint(
             continue
 
         weighted_sum = None
+        m3_to_mwh_top_layer = ptes_ds["m3_to_mwh"].sel(layer=0).item()
         for layer_name in layers:
-            layer_idx = int(layer_name.split("layer")[-1].strip())
-            c = float(ptes_ds["m3_to_mwh"].sel(layer=layer_idx).item())
-            layer_e = n.model["Store-e"].loc[:, layer_name]
-            term = c * layer_e
-            weighted_sum = term if weighted_sum is None else weighted_sum + term
+            # layer_idx = int(layer_name.split("layer")[-1].strip())
+            layer_soc_m3 = n.model["Store-e"].loc[:, layer_name]
+            weighted_sum = (
+                layer_soc_m3 if weighted_sum is None else weighted_sum + layer_soc_m3
+            )
 
-        agg_e_nom = n.model["Store-e_nom"].loc[agg]
-        # Σ W_l · e_{l,t} - ē ≤ 0
-        constraints.append(weighted_sum - agg_e_nom)
+        agg_e_nom_mwh = n.model["Store-e_nom"].loc[agg]
+        agg_e_nom_m3 = agg_e_nom_mwh / m3_to_mwh_top_layer
+        constraints.append(weighted_sum - agg_e_nom_m3)
 
     merged = linopy.expressions.merge(
         constraints, dim="Store-ext" if PYPSA_V1 else "name"
     )
-    n.model.add_constraints(merged <= 0, name="layered_ptes_volume_capacity")
+    n.model.add_constraints(merged == 0, name="layered_ptes_volume_capacity")
 
 
 def add_layered_ptes_heat_pump_capacity_constraint(
@@ -1068,66 +1069,6 @@ def add_layered_ptes_heat_pump_capacity_constraint(
     n.model.add_constraints(merged <= 0, name="layered_ptes_heat_pump_capacity")
 
 
-def add_layered_ptes_chargers_capacity_constraint(
-    n: pypsa.Network,
-) -> None:
-    """Tbd"""
-    layer_chargers = n.links.index[
-        n.links.index.str.contains("water pits charger layer")
-        & n.links.p_nom_extendable
-    ]
-    dummy_chargers = n.links.index[
-        n.links.index.str.contains("water pits charger")
-        & ~n.links.index.str.contains("layer")
-        & n.links.p_nom_extendable
-    ]
-
-    exprs = []
-    for dummy in dummy_chargers:
-        node_prefix = dummy.replace(" water pits charger", "")
-        matching = layer_chargers[
-            layer_chargers.str.startswith(node_prefix + " water pits charger layer")
-        ]
-        layer_sum = sum(n.model["Link-p_nom"].loc[hp] for hp in matching)
-        dummy_p_nom = n.model["Link-p_nom"].loc[dummy]
-        exprs.append(layer_sum - dummy_p_nom)
-
-    dim = "Link-ext" if PYPSA_V1 else "name"
-    merged = linopy.expressions.merge(exprs, dim=dim, cls=type(exprs[0]))
-    n.model.add_constraints(merged <= 0, name="layered_ptes_chargers_capacity")
-
-
-def add_layered_ptes_dischargers_capacity_constraint(
-    n: pypsa.Network,
-) -> None:
-    """Tbd"""
-    layer_dischargers = n.links.index[
-        n.links.index.str.contains("water pits discharger layer")
-        & n.links.p_nom_extendable
-    ]
-    dummy_dischargers = n.links.index[
-        n.links.index.str.contains("water pits discharger")
-        & ~n.links.index.str.contains("layer")
-        & n.links.p_nom_extendable
-    ]
-
-    exprs = []
-    for dummy in dummy_dischargers:
-        node_prefix = dummy.replace(" water pits discharger", "")
-        matching = layer_dischargers[
-            layer_dischargers.str.startswith(
-                node_prefix + " water pits discharger layer"
-            )
-        ]
-        layer_sum = sum(n.model["Link-p_nom"].loc[hp] for hp in matching)
-        dummy_p_nom = n.model["Link-p_nom"].loc[dummy]
-        exprs.append(layer_sum - dummy_p_nom)
-
-    dim = "Link-ext" if PYPSA_V1 else "name"
-    merged = linopy.expressions.merge(exprs, dim=dim, cls=type(exprs[0]))
-    n.model.add_constraints(merged <= 0, name="layered_ptes_dischargers_capacity")
-
-
 def add_layered_ptes_interlayer_flow_constraint(
     n: pypsa.Network, ptes_ds: xr.Dataset
 ) -> None:
@@ -1140,27 +1081,33 @@ def add_layered_ptes_interlayer_flow_constraint(
     where Ψ is the interlayer transfer coefficient and e_{l,t} is the
     state-of-energy of the upper layer store.
     """
-    interlayer_links = n.links.index[
-        n.links.carrier.str.contains("water pits interlayer")
-    ]
+    interlayer_links = n.links.index[n.links.carrier.str.contains("water pits inter")]
+    if interlayer_links.empty:
+        raise RuntimeError(
+            "No interlayer links found for layered PTES interlayer flow constraints."
+        )
+    elif len(interlayer_links) > len(ptes_ds.layer - 1) * len(ptes_ds.name):
+        raise RuntimeError(
+            f"More interlayer links ({len(interlayer_links)}) found than layers in dataset ({len(ptes_ds.layer)})."
+        )
 
     constraints = []
     for link_name in interlayer_links:
-        # Extract pair index from link name (e.g., "... inter layer 0-layer 1" → 0)
-        pair_str = link_name.split("inter ")[-1]
-        pair_idx = int(pair_str.split("layer ")[1].split("-")[0])
-        heat_transfer_coef = float(
-            ptes_ds["interlayer_heat_transfer_coefficients"]
-            .sel(layer_pair=pair_idx)
-            .item()
-        )
+        upper_layer_bus = n.links.at[link_name, "bus0"]
+        # lower_layer_bus = n.links.at[link_name, "bus1"]
 
-        upper_bus = n.links.at[link_name, "bus0"]
-        # Find the store on the upper bus
-        upper_store = n.stores.index[n.stores.bus == upper_bus]
-        if upper_store.empty:
-            continue
-        upper_store = upper_store[0]
+        upper_store = n.stores.index[n.stores.bus == upper_layer_bus]
+        if len(upper_store) == 1:
+            upper_store = upper_store[0]
+        else:
+            raise RuntimeError(
+                f"None or multiple stores found for upper layer bus {upper_layer_bus} in interlayer link {link_name}."
+            )
+
+        layer = int(upper_layer_bus.split("layer")[-1].strip())
+        heat_transfer_coef = float(
+            ptes_ds["interlayer_heat_transfer_coefficients"].sel(layer=layer).item()
+        )
 
         link_p = n.model["Link-p"].loc[:, link_name]
         store_e = n.model["Store-e"].loc[:, upper_store]
@@ -1195,9 +1142,6 @@ def add_layered_ptes_aggregate_throughput_constraint(
         & n.stores.e_nom_extendable
     ]
 
-    if layer_chargers.empty or agg_stores.empty:
-        return
-
     constraints = []
     for agg in agg_stores:
         prefix = agg.split("water pits")[0] + "water pits"
@@ -1209,20 +1153,19 @@ def add_layered_ptes_aggregate_throughput_constraint(
         if chargers.empty or dischargers.empty:
             continue
 
-        R = n.links.at[chargers[0], "energy to power ratio"]
+        e2p_ratio = n.links.at[chargers[0], "energy to power ratio"]
 
         weighted_sum = None
         for ch, dis in zip(chargers, dischargers):
             layer_idx = int(ch.rsplit("layer ", 1)[-1])
-            c = float(ptes_ds["m3_to_mwh"].sel(layer=layer_idx).item())
-            term = c * (n.model["Link-p"].loc[:, ch] + n.model["Link-p"].loc[:, dis])
+            m3_to_mwh = float(ptes_ds["m3_to_mwh"].sel(layer=layer_idx).item())
+            term = (
+                n.model["Link-p"].loc[:, ch] + m3_to_mwh * n.model["Link-p"].loc[:, dis]
+            )
             weighted_sum = term if weighted_sum is None else weighted_sum + term
 
         agg_e_nom = n.model["Store-e_nom"].loc[agg]
-        constraints.append(R * weighted_sum - agg_e_nom)
-
-    if not constraints:
-        return
+        constraints.append(weighted_sum - e2p_ratio * agg_e_nom)
 
     merged = linopy.expressions.merge(
         constraints, dim="Store-ext" if PYPSA_V1 else "name"
@@ -1481,7 +1424,7 @@ def extra_functionality(
         add_layered_ptes_volume_capacity_constraint(n, ptes_ds)
         add_layered_ptes_interlayer_flow_constraint(n, ptes_ds)
         add_layered_ptes_heat_pump_capacity_constraint(n)
-        # add_layered_ptes_aggregate_throughput_constraint(n, ptes_ds)
+        add_layered_ptes_aggregate_throughput_constraint(n, ptes_ds)
         ptes_ds.close()
 
     add_battery_constraints(n)
