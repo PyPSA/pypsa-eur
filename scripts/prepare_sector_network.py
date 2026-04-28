@@ -427,6 +427,7 @@ def update_wind_solar_costs(
     profiles: dict[str, str],
     landfall_lengths: dict = None,
     line_length_factor: int | float = 1,
+    params_renewable: dict = None,
 ) -> None:
     """
     Update costs for wind and solar generators added with pypsa-eur to those
@@ -445,6 +446,8 @@ def update_wind_solar_costs(
     profiles : dict[str, str]
         Dictionary mapping technology names to profile file paths
         e.g. {'offwind-dc': 'path/to/profile.nc'}
+    params_renewable : dict, optional
+        Dictionary of renewable parameters, by default None
     """
 
     if landfall_lengths is None:
@@ -464,6 +467,13 @@ def update_wind_solar_costs(
         n.generators.loc[n.generators.carrier == carrier, "capital_cost"] = costs.at[
             cost_key, "capital_cost"
         ]
+        if (
+            params_renewable[carrier].get("costs_given_for_ac")
+            and params_renewable[carrier].get("dc_ac_ratio", 1.0) != 1.0
+        ):
+            n.generators.loc[n.generators.carrier == carrier, "capital_cost"] /= (
+                params_renewable[carrier]["dc_ac_ratio"]
+            )
 
     # for offshore wind, need to calculated connection costs
     for key, fn in profiles.items():
@@ -689,11 +699,17 @@ def remove_non_electric_buses(n):
         n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
 
-def patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths):
+def patch_electricity_network(
+    n, costs, carriers_to_keep, profiles, landfall_lengths, params_renewable=None
+):
     remove_elec_base_techs(n, carriers_to_keep)
     remove_non_electric_buses(n)
     update_wind_solar_costs(
-        n, costs, landfall_lengths=landfall_lengths, profiles=profiles
+        n,
+        costs,
+        landfall_lengths=landfall_lengths,
+        profiles=profiles,
+        params_renewable=params_renewable,
     )
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
@@ -1505,6 +1521,7 @@ def insert_electricity_distribution_grid(
     options: dict,
     pop_layout: pd.DataFrame,
     solar_rooftop_potentials_fn: str,
+    params_renewable: dict,
 ) -> None:
     """
     Insert electricity distribution grid components into the network.
@@ -1529,6 +1546,8 @@ def insert_electricity_distribution_grid(
         Population data per node with at least:
         - 'total' column containing population in thousands
         Index should match network nodes
+    params_renewable : dict
+        Renewable energy parameters
 
     Returns
     -------
@@ -1611,11 +1630,18 @@ def insert_electricity_distribution_grid(
     solar = n.generators.index[n.generators.carrier == "solar"]
     n.generators.loc[solar, "capital_cost"] = costs.at["solar-utility", "capital_cost"]
 
+    dc_ac_ratio = params_renewable["solar"].get("dc_ac_ratio", 1.0)
+    if params_renewable["solar"].get("costs_given_for_ac") and dc_ac_ratio != 1.0:
+        n.generators.loc[solar, "capital_cost"] /= dc_ac_ratio
+
     fn = solar_rooftop_potentials_fn
     if len(fn) > 0:
         potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze(axis=1)
         potential.index = potential.index.map(flatten) + " solar"
 
+        capital_cost = costs.at["solar rooftop", "capital_cost"]
+        if params_renewable["solar"].get("costs_given_for_ac") and dc_ac_ratio != 1.0:
+            capital_cost /= dc_ac_ratio
         n.add(
             "Generator",
             solar,
@@ -1625,7 +1651,7 @@ def insert_electricity_distribution_grid(
             p_nom_extendable=True,
             p_nom_max=potential.loc[solar],
             marginal_cost=n.generators.loc[solar, "marginal_cost"],
-            capital_cost=costs.at["solar-rooftop", "capital_cost"],
+            capital_cost=capital_cost,
             efficiency=n.generators.loc[solar, "efficiency"],
             p_max_pu=n.generators_t.p_max_pu[solar],
             lifetime=costs.at["solar-rooftop", "lifetime"],
@@ -1737,14 +1763,14 @@ def insert_gas_distribution_costs(
     n.links.loc[mchp, "capital_cost"] += capital_cost
 
 
-def add_electricity_grid_connection(n, costs):
+def add_electricity_grid_connection(n, costs, params_renewables):
     carriers = ["onwind", "solar", "solar-hsat"]
-
-    gens = n.generators.index[n.generators.carrier.isin(carriers)]
-
-    n.generators.loc[gens, "capital_cost"] += costs.at[
-        "electricity grid connection", "capital_cost"
-    ]
+    for car in carriers:
+        gens = n.generators.index[n.generators.carrier == car]
+        dc_ac_ratio = params_renewables[car].get("dc_ac_ratio", 1.0)
+        n.generators.loc[gens, "capital_cost"] += (
+            costs.at["electricity grid connection", "capital_cost"] / dc_ac_ratio
+        )
 
 
 def add_h2_gas_infrastructure(
@@ -6287,7 +6313,14 @@ if __name__ == "__main__":
         for tech, settings in snakemake.params.renewable.items()
         if "landfall_length" in settings.keys()
     }
-    patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths)
+    patch_electricity_network(
+        n,
+        costs,
+        carriers_to_keep,
+        profiles,
+        landfall_lengths,
+        snakemake.params.renewable,
+    )
 
     fn = snakemake.input.heating_efficiencies
     year = int(snakemake.params["energy_totals_year"])
@@ -6548,7 +6581,12 @@ if __name__ == "__main__":
 
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(
-            n, costs, options, pop_layout, snakemake.input.solar_rooftop_potentials
+            n,
+            costs,
+            options,
+            pop_layout,
+            snakemake.input.solar_rooftop_potentials,
+            snakemake.params.renewable,
         )
 
     if options["enhanced_geothermal"].get("enable", False):
@@ -6570,7 +6608,7 @@ if __name__ == "__main__":
         insert_gas_distribution_costs(n, costs, options=options)
 
     if options["electricity_grid_connection"]:
-        add_electricity_grid_connection(n, costs)
+        add_electricity_grid_connection(n, costs, snakemake.params["renewable"])
 
     for k, v in options["transmission_efficiency"].items():
         if k in options["transmission_efficiency"]["enable"]:

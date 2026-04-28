@@ -321,6 +321,13 @@ if __name__ == "__main__":
         )
     )
 
+    dc_ac_ratio = params.get("dc_ac_ratio", 1.0)
+    if dc_ac_ratio != 1.0:
+        logger.info(
+            f"Applying DC/AC ratio of {dc_ac_ratio} by clipping solar profiles at {1 / dc_ac_ratio:.2f}."
+        )
+        ds["profile"] = ds["profile"].clip(max=1 / dc_ac_ratio)
+
     if "clip_p_max_pu" in params:
         min_p_max_pu = params["clip_p_max_pu"]
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
