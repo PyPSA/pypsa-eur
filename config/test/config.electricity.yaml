@@ -29,12 +29,12 @@ electricity:
   co2limit: 100.e+6
 
   extendable_carriers:
-    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT, nuclear]
+    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT, nuclear, wave-farshore, wave-nearshore, wave-shallow, offsolar]
     StorageUnit: [battery]
     Store: [H2]
     Link: [H2 pipeline]
 
-  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, wave-farshore, wave-nearshore, wave-shallow, offsolar]
   estimate_renewable_capacities:
     enable: true
     from_powerplantmatching: true
@@ -60,6 +60,17 @@ renewable:
   offwind-dc:
     max_depth: false
   offwind-float:
+    max_depth: false
+    min_depth: false
+  wave-farshore:
+    max_depth: false
+    min_depth: false
+  wave-nearshore:
+    max_depth: false
+    min_depth: false
+  wave-shallow:
+    max_depth: false
+  offsolar:
     max_depth: false
     min_depth: false
 

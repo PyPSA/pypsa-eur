@@ -355,7 +355,7 @@ def add_lifetime_wind_solar(n, costs):
     """
     Add lifetime for solar and wind generators.
     """
-    for carrier in ["solar", "onwind", "offwind"]:
+    for carrier in ["solar", "onwind", "offwind", "wave", "offsolar"]:
         gen_i = n.generators.index.str.contains(carrier)
         n.generators.loc[gen_i, "lifetime"] = costs.at[carrier, "lifetime"]
 
@@ -492,15 +492,15 @@ def update_wind_solar_costs(
 
             # Take 'offwind-float' capital cost for 'float', and 'offwind' capital cost for the rest ('ac' and 'dc')
             midtech = tech.split("-", 2)[1]
-            if midtech == "float":
+            if tech == "offwind" and midtech != "float":
                 capital_cost = (
-                    costs.at[tech, "capital_cost"]
+                    costs.at["offwind", "capital_cost"]
                     + costs.at[tech + "-station", "capital_cost"]
                     + connection_cost
                 )
             else:
                 capital_cost = (
-                    costs.at["offwind", "capital_cost"]
+                    costs.at[tech, "capital_cost"]
                     + costs.at[tech + "-station", "capital_cost"]
                     + connection_cost
                 )
