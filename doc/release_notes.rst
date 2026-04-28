@@ -8,6 +8,8 @@ Release Notes
 
 .. Upcoming Release
 .. =================
+* Fix: Prevent over-aggressive HVDC simplification in simplify_network for branched/multi-terminal DC topologies (e.g. UK/Shetland edge cases). Supernode detection now only collapses true chain nodes (degree 2) and preserves DC junctions (degree 3+) so branches are not dropped(https://github.com/PyPSA/pypsa-eur/pull/2147).
+
 * The lockfile update workflow now excludes packages published within the last 7 days to reduce the risk of pulling in broken or yanked releases (https://github.com/PyPSA/pypsa-eur/pull/2130).
 
 * The industry reference year and the ammonia production data have been updated to 2023 (https://github.com/PyPSA/pypsa-eur/pull/2103)

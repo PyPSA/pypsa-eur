@@ -565,6 +565,11 @@
               ],
               "type": "string"
             },
+            "allow_ac_dc_mix": {
+              "default": true,
+              "description": "Controls whether clustering is allowed to mix AC and DC buses within a cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+              "type": "boolean"
+            },
             "hac_features": {
               "description": "List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
               "items": {
@@ -5953,6 +5958,11 @@
             "hac"
           ],
           "type": "string"
+        },
+        "allow_ac_dc_mix": {
+          "default": true,
+          "description": "Controls whether clustering is allowed to mix AC and DC buses within a cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+          "type": "boolean"
         },
         "hac_features": {
           "description": "List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
@@ -12011,6 +12021,11 @@
                 "hac"
               ],
               "type": "string"
+            },
+            "allow_ac_dc_mix": {
+              "default": true,
+              "description": "Controls whether clustering is allowed to mix AC and DC buses within a cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+              "type": "boolean"
             },
             "hac_features": {
               "description": "List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
