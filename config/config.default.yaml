@@ -612,6 +612,7 @@ existing_capacities:
   - 2019
   threshold_capacity: 10
   default_heating_lifetime: 20
+  solar_rooftop_ratio: 0.5
   conventional_carriers:
   - lignite
   - coal
