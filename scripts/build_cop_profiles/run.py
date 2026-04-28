@@ -215,7 +215,7 @@ def get_source_inlet_temperature(
     # When source temperature <= return temperature, no preheating:
     # heat pump draws directly from the source.
     return xr.where(
-        source_temperature > central_heating_return_temperature,
+        source_temperature < central_heating_return_temperature,
         source_temperature,
         central_heating_return_temperature,
     )
