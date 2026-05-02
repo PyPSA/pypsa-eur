@@ -1469,29 +1469,42 @@ def build_admin_shapes(
 
     if clustering == "administrative":
         logger.info(f"Building bus regions at administrative level {level}")
-
         nuts3_regions["column"] = level_map[level]
 
-        # Only keep the values whose keys are in countries
+        countries_config = admin_levels.get("countries", {})
         country_level = {
-            k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
+            k: v for k, v in countries_config.items() if len(k) == 2 and k in countries
         }
+        subregion_level = {
+            k: v
+            for k, v in countries_config.items()
+            if len(k) > 2 and k[:2] in countries
+        }
+
         if country_level:
-            country_level_list = "\n".join(
-                [f"- {k}: level {v}" for k, v in country_level.items()]
-            )
             logger.info(
-                f"Setting individual administrative levels for:\n{country_level_list}"
+                "Setting individual administrative levels for:\n"
+                + "\n".join(f"- {k}: level {v}" for k, v in country_level.items())
             )
             nuts3_regions.loc[
-                nuts3_regions["country"].isin(country_level.keys()), "column"
+                nuts3_regions["country"].isin(country_level), "column"
             ] = (
                 nuts3_regions.loc[
-                    nuts3_regions["country"].isin(country_level.keys()), "country"
+                    nuts3_regions["country"].isin(country_level), "country"
                 ]
                 .map(country_level)
                 .map(level_map)
             )
+
+        if subregion_level:
+            logger.info(
+                "Setting individual administrative levels for subregions:\n"
+                + "\n".join(f"- {k}: level {v}" for k, v in subregion_level.items())
+            )
+            for k, v in subregion_level.items():
+                nuts3_regions.loc[nuts3_regions.index.str.startswith(k), "column"] = (
+                    level_map[v]
+                )
 
         # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
         if "GB" in countries and level != "bz":
