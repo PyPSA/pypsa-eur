@@ -29,6 +29,7 @@ jobs:
         rm pixi.lock
         pixi install --all
         git checkout pixi.toml
+        sed -i '/^\s*exclude-newer:/d' pixi.lock
 
     - name: Export conda environment files
       if: ${{ !vars.PYPSA_BOT_ID }}
