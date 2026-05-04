@@ -154,6 +154,7 @@ if __name__ == "__main__":
     if snakemake.wildcards.technology.startswith("offwind"):
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
+        offshore_regions = np.intersect1d(offshore_regions, regions.index)
         regions = regions.loc[offshore_regions]
         regions = regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
             regions.crs
@@ -294,6 +295,9 @@ if __name__ == "__main__":
     average_distance = []
     bus_bins = layoutmatrix.indexes["bus_bin"]
     for bus, bin in bus_bins:
+        if bus not in regions.index:
+            average_distance.append(0.0)
+            continue
         row = layoutmatrix.sel(bus=bus, bin=bin).data
         nz_b = row != 0
         row = row[nz_b]
