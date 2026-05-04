@@ -22,6 +22,8 @@ Release Notes
 
 * perf: Optimize dask settings for computing weather-dependent profiles (https://github.com/PyPSA/pypsa-eur/pull/2137).
 
+* Fix: correct definition of `marginal_cost` for those links were `vom` values from technology cost datasets are defined per units of output (e.g., electricity) (https://github.com/PyPSA/pypsa-eur/pull/2154).
+
 * feat: Improve the config validation to cover scenario management (https://github.com/PyPSA/pypsa-eur/pull/2155).
 
 - Added solar rooftop ratio setting to ``add_existing_baseyear`` for heuristically splitting existing solar capacity between rooftop and utility-scale (defaults to a 50:50 split).
