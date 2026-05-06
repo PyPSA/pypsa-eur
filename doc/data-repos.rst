@@ -7,6 +7,8 @@ Repository
 ###########
 
 Data in this section is included in the PyPSA-Eur repository in the ``data`` folder.
+While most external data is stored outside of the repository, this data is inside the repository either for simplicity or historic reasons.
+New data should generally not be added to the data, but externally retrieved in a versioned manner.
 
 ``data/entsoegridkit``
 
@@ -20,7 +22,7 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **Source:** European Commission DG ENER; Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment
 - **Link:** https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en
 - **License:** CC-BY 4.0 (`reference <https://commission.europa.eu/legal-notice_en>`__)
-- **Description:** Contains country-level data on existing heating infrastructure, i.e. gas, oil, coal boilers, resistive heaters, air- and ground-sourced heat pumps.
+- **Description:** Contains country-level data on existing heating infrastructure, i.e. gas, oil, coal, biomass boilers, resistive heaters, air- and ground-sourced heat pumps.
 
 ``data/retro/comparative_level_investment.csv``
 
@@ -49,7 +51,7 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **License:** `custom <https://ec.europa.eu/eurostat/about-us/policies/copyright>`__
 - **Description:** Electricity prices for household consumers.
 
-``data/retro/{floor_area_missing,u_values_poland}.csv``
+``data/retro/floor_area_missing.csv`` and ``data/retro/u_values_poland.csv``
 
 - **Source:** EU Building Stock Observatory
 - **Link:** https://data.europa.eu/euodp/de/data/dataset/building-stock-observatory
@@ -96,13 +98,6 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **Link:** https://www.icis.com/explore/resources/news/2023/01/18/10846094/insight-poor-demand-high-costs-stifle-europe-industry-despite-falling-gas-prices/
 - **License:** CC-BY 4.0 (for compiled dataset)
 - **Description:** Locations and production capacities of ammonia plants in Europe.
-
-``data/attributed_ports.json``
-
-- **Source:** World Bank
-- **Link:** https://datacatalog.worldbank.org/search/dataset/0038118/Global---International-Ports
-- **License:** CC-BY 4.0 (`reference <https://datacatalog.worldbank.org/search/dataset/0038118/Global---International-Ports>`__)
-- **Description:** International ports with attributes describing name, port functions, total capacity and location.
 
 ``data/cement_plants-noneu.csv``
 
@@ -155,13 +150,6 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **License:** CC0 (`reference <https://www.eia.gov/about/copyrights_reuse.php>`__)
 - **Description:** Contains country-level hydro-electric generato for Europe by year.
 
-``data/gr-e-11.03.02.01.01-cc.csv``
-
-- **Source:** Swiss Federal Statistics Office
-- **Link:** https://www.bfs.admin.ch/asset/de/30305426
-- **License:** `custom (OPEN BY ASK) <https://www.bfs.admin.ch/bfs/en/home/fso/swiss-federal-statistical-office/terms-of-use.html>`__
-- **Description:** Stock of road motor vehicles in Switzerland.
-
 ``data/heat_load_profile_BDEW.csv``
 
 - **Source:** oemof/demandlib
@@ -195,25 +183,14 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **License:** CC0 (`reference <https://www.eia.gov/about/copyrights_reuse.php>`__)
 - **Description:** Contains locations and capacities of oil refineries in Europe.
 
-``data/switzerland-new_format-all_years.csv``
-
-- **Source:** Swiss Federal Office of Energy (SFOE)
-- **Link:** https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken/energieverbrauch-nach-verwendungszweck.html/
-- **License:** `custom <https://www.admin.ch/gov/de/start/rechtliches.html>`__
-- **Description:** Contains energy consumption by sector / application for Switzerland.
-
 ``data/unit_commitment.csv``
 
 - **Source:** `DIW
-  <https://www.diw.de/documents/publikationen/73/diw_01.c.424566.de/diw_datadoc_2013-068.pdf>`__,
-  `Agora Energiewende
-  <https://www.agora-energiewende.de/fileadmin/Projekte/2017/Flexibility_in_thermal_plants/115_flexibility-report-WEB.pdf>`__,
-  `Schill et al. (2017)
-  <https://static-content.springer.com/esm/art%3A10.1038%2Fnenergy.2017.50/MediaObjects/41560_2017_BFnenergy201750_MOESM196_ESM.pdf>`__,
-  `Martin (2022) <https://zenodo.org/records/6421682>`__
-- **Link:** https://github.com/lisazeyen/hourly_vs_annually/blob/b67ca9222711372d8ab6cd58f9ebe7bc637939bf/scripts/solve_network.py#L554
+  <https://www.diw.de/documents/publikationen/73/diw_01.c.524200.de/dp1540.pdf>`__,
+  `IRENA <https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2019/Sep/IRENA_Flexibility_in_CPPs_2019.pdf?la=en&hash=AF60106EA083E492638D8FA9ADF7FD099259F5A1>__`,
+  `Agora Energiewende <https://www.agora-energiewende.de/fileadmin/Projekte/2017/Flexibility_in_thermal_plants/115_flexibility-report-WEB.pdf>`__.
 - **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Description:** Contains unit commitment parameters for thermal power plants.
 
 ``data/biomass_transport_costs_supply_chain{1,2}.csv``
 

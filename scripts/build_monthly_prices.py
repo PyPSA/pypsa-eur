@@ -5,103 +5,77 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-This script extracts monthly fuel prices of oil, gas, coal and lignite, as well
-as CO2 prices.
+This script extracts monthly fuel prices of oil, gas and coal.
 
 Description
 -----------
 
-The rule :mod:`build_monthly_prices` collects monthly fuel prices and CO2 prices
-and translates them from different input sources to pypsa syntax
-
-Data sources:
-    [1] Fuel price index. Destatis
-    https://www.destatis.de/EN/Home/_node.html
-    [2] average annual fuel price lignite, ENTSO-E
-    https://2020.entsos-tyndp-scenarios.eu/fuel-commodities-and-carbon-prices/
-    [3] CO2 Prices, Emission spot primary auction, EEX
-    https://www.eex.com/en/market-data/environmental-markets/eua-primary-auction-spot-download
-
-
-Data was accessed at 16.5.2023
+The rule :mod:`build_monthly_prices` collects monthly fuel prices
+and translates them from different input sources to pypsa syntax.
 """
 
 import logging
 
 import pandas as pd
+from pydeflate import imf_gdp_deflate, set_pydeflate_path
 
 from scripts._helpers import configure_logging, set_scenario_config
 
+set_pydeflate_path("../data/pydeflate/")
+
 logger = logging.getLogger(__name__)
 
-
-# keywords in datasheet
-keywords = {
-    "coal": " GP09-051 Hard coal",
-    "lignite": " GP09-052 Lignite and lignite briquettes",
-    "oil": " GP09-0610 10 Mineral oil, crude",
-    "gas": "GP09-062 Natural gas",
-}
-
-# sheet names to pypsa syntax
-sheet_name_map = {
-    "coal": "5.1 Hard coal and lignite",
-    "lignite": "5.1 Hard coal and lignite",
-    "oil": "5.2 Mineral oil",
-    "gas": "5.3.1 Natural gas - indices",
-}
-
-
-# import fuel price 2015 in Eur/MWh
-# source lignite, price for 2020, scaled by price index, ENTSO-E [3]
-price_2020 = (
-    pd.Series({"coal": 3.0, "oil": 10.6, "gas": 5.6, "lignite": 1.1}) * 3.6
-)  # Eur/MWh
-
-# manual adjustment of coal price
-price_2020["coal"] = 2.4 * 3.6
-price_2020["lignite"] = 1.6 * 3.6
-
-
-def get_fuel_price():
-    price = {}
-    for carrier, keyword in keywords.items():
-        sheet_name = sheet_name_map[carrier]
-        df = pd.read_excel(
-            snakemake.input.fuel_price_raw,
-            sheet_name=sheet_name,
-            index_col=0,
-            skiprows=6,
-            nrows=18,
-        )
-        df = df.dropna(axis=0).iloc[:, :12]
-        start, end = df.index[0], str(int(df.index[-1][:4]) + 1)
-        df = df.stack()
-        df.index = pd.date_range(start=start, end=end, freq="MS", inclusive="left")
-        scale = price_2020[carrier] / df["2020"].mean()  # scale to 2020 price
-        df = df.mul(scale)
-        price[carrier] = df
-
-    return pd.concat(price, axis=1)
-
-
-def get_co2_price():
-    # emission price
-    co2_price = pd.read_excel(snakemake.input.co2_price_raw, index_col=1, header=5)
-    return co2_price["Auction Price €/tCO2"]
-
+MMBTU_PER_MWH = 3.41214
+BBL_PER_MWH = 0.5883
+METRIC_TON_PER_MWH_COAL = 0.1433
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_monthly_prices")
+        snakemake = mock_snakemake("build_fossil_fuel_prices")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    fuel_price = get_fuel_price()
-    fuel_price.to_csv(snakemake.output.fuel_price)
+    df = pd.read_excel(
+        snakemake.input.fuel_price_raw,
+        skiprows=[0, 1, 2, 3, 5],
+        header=0,
+        index_col=0,
+        sheet_name="Monthly Prices",
+        parse_dates=True,
+        date_format="%YM%m",
+        na_values=["…"],
+    )
 
-    co2_price = get_co2_price()
-    co2_price.to_csv(snakemake.output.co2_price)
+    COLUMNS = {
+        "Crude oil, Brent": "oil",
+        "Coal, South African **": "coal",
+        "Natural gas, Europe": "gas",
+    }
+    df = df.rename(columns=COLUMNS)[list(COLUMNS.values())]
+
+    # Convert from nominal to real prices (deflate to base year 2020)
+    df["year"] = df.index.year
+    df["iso_code"] = "DEU"
+    for col in COLUMNS.values():
+        df[col] = imf_gdp_deflate(
+            df,
+            value_column=col,
+            source_currency="USD",
+            target_currency="EUR",
+            base_year=2020,
+        )["value"].values
+    df = df[df.index.year >= 1999]  # only available from 1999 onwards
+    df = df.drop(columns=["year", "iso_code"])
+
+    df["oil"] *= BBL_PER_MWH
+    df["gas"] *= MMBTU_PER_MWH
+    df["coal"] *= METRIC_TON_PER_MWH_COAL
+
+    # rolling mean for smoothing
+    window = snakemake.params.rolling_window
+    df = df.rolling(window=window, center=True, min_periods=1).mean()
+
+    df.to_csv(snakemake.output.fuel_price)

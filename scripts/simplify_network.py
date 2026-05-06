@@ -88,7 +88,7 @@ def simplify_network_to_380(
     trafo_map = pd.concat([trafo_map, missing])
 
     for c in n.one_port_components | n.branch_components:
-        df = n.df(c)
+        df = n.components[c].static
         for col in df.columns:
             if col.startswith("bus"):
                 df[col] = df[col].map(trafo_map)
@@ -103,7 +103,7 @@ def _remove_clustered_buses_and_branches(n: pypsa.Network, busmap: pd.Series) ->
     buses_to_del = n.buses.index.difference(busmap)
     n.remove("Bus", buses_to_del)
     for c in n.branch_components:
-        df = n.df(c)
+        df = n.components[c].static
         n.remove(c, df.index[df.bus0.isin(buses_to_del) | df.bus1.isin(buses_to_del)])
 
 

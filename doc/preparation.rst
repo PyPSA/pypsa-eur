@@ -73,6 +73,11 @@ Rule ``base_network``
 
 .. automodule:: base_network
 
+Rule ``build_natura``
+=============================
+
+.. automodule:: build_natura
+
 
 Rule ``build_transmission_projects``
 ====================================

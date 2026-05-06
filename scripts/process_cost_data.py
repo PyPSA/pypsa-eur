@@ -31,7 +31,7 @@ import warnings
 import pandas as pd
 import pypsa
 
-from scripts.add_electricity import calculate_annuity
+from scripts.add_electricity import STORE_LOOKUP, calculate_annuity
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +105,16 @@ def prepare_costs(
         DataFrame containing the prepared cost data
 
     """
+
+    def _convert_to_MW(cost_df: pd.DataFrame) -> pd.DataFrame:
+        # correct units to MW and EUR
+        cost_df.loc[cost_df.unit.str.contains("/kW"), "value"] *= 1e3
+        cost_df.loc[cost_df.unit.str.contains("/GW"), "value"] /= 1e3
+
+        cost_df.unit = cost_df.unit.str.replace("/kW", "/MW")
+        cost_df.unit = cost_df.unit.str.replace("/GW", "/MW")
+        return cost_df
+
     # Load custom costs and categorize into two sets:
     # - Raw attributes: overwritten before cost preparation
     # - Prepared attributes: overwritten after cost preparation
@@ -115,9 +125,12 @@ def prepare_costs(
             index_col=["technology", "parameter"],
         ).query("planning_horizon in [@planning_horizon, 'all']")
 
+        custom_costs = _convert_to_MW(custom_costs)
+
         custom_costs = custom_costs.drop("planning_horizon", axis=1).value.unstack(
             level=1
         )
+
         prepared_attrs = ["marginal_cost", "capital_cost"]
         raw_attrs = list(set(custom_costs.columns) - set(prepared_attrs))
         custom_raw = custom_costs[raw_attrs].dropna(axis=0, how="all")
@@ -128,12 +141,7 @@ def prepare_costs(
         if key in config:
             config["overwrites"][key] = config[key]
 
-    # correct units to MW and EUR
-    costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
-    costs.loc[costs.unit.str.contains("/GW"), "value"] /= 1e3
-
-    costs.unit = costs.unit.str.replace("/kW", "/MW")
-    costs.unit = costs.unit.str.replace("/GW", "/MW")
+    costs = _convert_to_MW(costs)
 
     # min_count=1 is important to generate NaNs which are then filled by fillna
     costs = costs.value.unstack(level=1).groupby("technology").sum(min_count=1)
@@ -164,6 +172,9 @@ def prepare_costs(
     annuity_factor_fom = annuity_factor + costs["FOM"] / 100.0
     costs["capital_cost"] = annuity_factor_fom * costs["investment"] * nyears
 
+    costs.loc["waste"] = costs.loc["waste CHP"]
+    costs.at["waste", "CO2 intensity"] = costs.at["oil", "CO2 intensity"]
+
     costs.at["OCGT", "fuel"] = costs.at["gas", "fuel"]
     costs.at["CCGT", "fuel"] = costs.at["gas", "fuel"]
 
@@ -180,8 +191,12 @@ def prepare_costs(
     # Calculate storage costs if max_hours is provided
     if max_hours is not None:
 
-        def costs_for_storage(store, link1, link2=None, max_hours=1.0):
-            capital_cost = link1["capital_cost"] + max_hours * store["capital_cost"]
+        def costs_for_storage(store=None, link1=None, link2=None, max_hours=1.0):
+            capital_cost = 0
+            if store is not None:
+                capital_cost += max_hours * store["capital_cost"]
+            if link1 is not None:
+                capital_cost += link1["capital_cost"]
             if link2 is not None:
                 capital_cost += link2["capital_cost"]
             return pd.Series(
@@ -193,17 +208,30 @@ def prepare_costs(
                 }
             )
 
-        costs.loc["battery"] = costs_for_storage(
-            costs.loc["battery storage"],
-            costs.loc["battery inverter"],
-            max_hours=max_hours["battery"],
-        )
-        costs.loc["H2"] = costs_for_storage(
-            costs.loc["hydrogen storage underground"],
-            costs.loc["fuel cell"],
-            costs.loc["electrolysis"],
-            max_hours=max_hours["H2"],
-        )
+        costs_i = costs.index
+        for k, v in max_hours.items():
+            tech = STORE_LOOKUP[k]
+            store = tech.get("store") if tech.get("store") in costs_i else None
+            bicharger = (
+                tech.get("bicharger") if tech.get("bicharger") in costs_i else None
+            )
+            charger = tech.get("charger") if tech.get("charger") in costs_i else None
+            discharger = (
+                tech.get("discharger") if tech.get("discharger") in costs_i else None
+            )
+            if bicharger:
+                costs.loc[k] = costs_for_storage(
+                    costs.loc[store],
+                    costs.loc[bicharger],
+                    max_hours=v,
+                )
+            elif store:
+                costs.loc[k] = costs_for_storage(
+                    costs.loc[store],
+                    costs.loc[charger] if charger else None,
+                    costs.loc[discharger] if discharger else None,
+                    max_hours=v,
+                )
 
     # Overwrite marginal and capital costs
     costs = overwrite_costs(costs, custom_prepared)

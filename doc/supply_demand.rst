@@ -169,6 +169,77 @@ Activated in Config from the `tes <https://github.com/PyPSA/pypsa-eur-sec/blob/3
 Thermal energy can be stored in large water pits associated with district heating systems and individual thermal energy storage (TES), i.e., small water tanks. Water tanks are modelled as `stores <https://pypsa.readthedocs.io/en/latest/components.html?highlight=distribution#store,  which are connected to heat demand buses through water charger/discharger links>`__.
 A thermal energy density of 46.8 kWh :math:`_{th}`/m3 is assumed, corresponding to a temperature difference of 40 K. The decay of thermal energy in the stores: 1- :math:`e^{-1/24τ}` is assumed to have a time constant  of  τ=180 days for central TES and  τ=3 days for individual TES, both modifiable through `tes_tau <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L229>`__ in config file. Charging and discharging efficiencies are 90% due to pipe losses.
 
+**Residential Heat Demand-Side Management (DSM)**
+
+Can be activated in the `config file <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__ through the ``residential_heat: dsm`` option (default: false).
+
+Residential heat demand-side management allows electric heating systems to provide flexibility to the energy system by shifting heat demand within configurable time windows while maintaining thermal comfort. This feature models the thermal mass of buildings as an energy storage capability, enabling residential electric heating to operate more flexibly in response to electricity price signals and renewable generation variability.
+
+*Implementation approach*
+
+The implementation is based on the `smartEn/DNV methodology <https://smarten.eu/wp-content/uploads/2022/10/SmartEN-DSF-benefits-2030-Report_DIGITAL-1.pdf>`__ (see Appendix A, Section 1.1.2.5 "Residential electric heating" and page 17 Section 3.6) for quantifying demand-side flexibility benefits from residential heat pumps in the European energy system. The study estimates 195.5 TWh of annual flexibility potential for EU27 heat pumps using 12-hour load shifting constraints. Building thermal mass is represented as energy stores connected to residential heat buses, with time-varying availability constraints that enforce consumption requirements within defined periods.
+
+*Time windows and constraints*
+
+Heat demand can be shifted within configurable time periods to avoid buildings acting as long-term seasonal storage. By default, 12-hour periods are used:
+
+- **Day period**: 10am (10:00) to 10pm (22:00)
+- **Night period**: 10pm (22:00) to 10am (10:00)
+
+At the boundaries between these periods (configured via `residential_heat_restriction_time <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__, default: [10, 22] corresponding to 10am and 10pm local time of each country/bus), the thermal storage state of charge must return to its baseline level. The implementation automatically adjusts these checkpoint hours to each country's local timezone, ensuring consistent behavioral patterns across different regions. This ensures that heat consumption requirements are met within each time window while allowing temporal load shifting for demand response. Users can adjust the checkpoint hours to create different period lengths as needed.
+
+*Storage capacity and flexibility magnitude*
+
+The flexibility storage capacity is sized based on the maximum residential space heating demand at each node. The actual available flexibility is constrained by the `residential_heat_restriction_value <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__ parameter, which sets the maximum state of charge as a fraction of the storage capacity.
+
+For instance, a value of 0.27 would represent a conservative assumption for the thermal buffer capacity available in residential buildings, balancing flexibility potential against thermal comfort constraints. This parameter is user-configurable and can be adjusted based on specific assumptions about building thermal mass, insulation quality, and acceptable temperature variations. Setting it to 0 disables heat flexibility, while values closer to 1.0 allow greater load shifting (though this may require stronger assumptions about building characteristics and occupant comfort tolerance).
+
+*Thermal characteristics*
+
+Thermal losses are modeled using the same standing loss rates as decentralized water tank storage (a simplifying assumption that likely underestimates actual building losses). The storage is cyclic, meaning the state of charge at the end of the optimization period must equal that at the beginning.
+
+*Applicable heat systems*
+
+Residential heat DSM is available for the following heat systems when enabled:
+
+- Residential rural heating
+- Residential urban decentral heating
+- Urban central (district) heating
+
+Services sector heating is currently excluded as a conservative modeling choice.
+
+*Benefits and use cases*
+
+Heat DSM provides several system benefits:
+
+- Load shifting to periods of high renewable generation
+- Peak demand reduction during high-price periods
+- Integration support for variable renewable energy
+- Reduced need for backup generation capacity
+- Lower overall system costs through temporal optimization
+
+The feature is particularly valuable in scenarios with high renewable penetration, where flexible demand can absorb surplus generation and reduce curtailment.
+
+*Configuration example*
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :lines: 564-566
+
+*References*
+
+The methodology follows the approach proposed by Y. Akhmetov *et al.* (2025) in `"Flattening the peak demand curve through energy efficient buildings: A holistic approach towards net-zero carbon" <https://www.sciencedirect.com/science/article/pii/S0306261925001515>`__, and builds upon assumptions from smartEn and DNV (2022), `"Demand-side flexibility in the EU: Quantification of benefits in 2030"`.
+
+In this framework, heat pumps are assumed to provide flexibility to the energy system within daily operational constraints, represented by two time windows: from 9 am to 9 pm, and 9 pm to 9 am. These time windows are parametrizable, allowing sensitivity analyses of different flexibility periods.
+
+The potential for heat demand shifting is derived from the projected roll-out of heat pumps, as outlined in the European Commissions *Impact Assessment Report on the Heat Pump Action Plan* (`see page 55, Fig. 44 <https://eur-lex.europa.eu/resource.html?uri=cellar:6c154426-c5a6-11ee-95d9-01aa75ed71a1.0001.02/DOC_3&format=PDF>`__). The projected number of installed heat pumps is translated into the share of electrified households capable of participating in demand-side management (DSM).
+
+For example, a projected **58 million heat pumps** in 2030 corresponds to:
+
+``58 million / 202 million households in the EU ≈ 28 %``
+
+Thus, approximately 28 % of EU households are assumed to contribute to the residential DSM potential by 2030.
+
 **Retrofitting of the thermal envelope of buildings**
 
 Co-optimising building renovation is only enabled if in the `config <https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L222>`__ file. To reduce the computational burden,

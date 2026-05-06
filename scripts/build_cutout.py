@@ -71,8 +71,6 @@ A **SARAH-3 cutout** can be used to amend the fields ``temperature``, ``influx_t
 import logging
 
 import atlite
-import geopandas as gpd
-import pandas as pd
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -88,19 +86,12 @@ if __name__ == "__main__":
 
     cutout_params = snakemake.params.cutouts[snakemake.wildcards.cutout]
     cutout_params["time"] = slice(*cutout_params["time"])
+    cutout_params["x"] = slice(*cutout_params["x"])
+    cutout_params["y"] = slice(*cutout_params["y"])
+    prepare_kwargs = cutout_params.pop("prepare_kwargs", {})
 
-    if {"x", "y", "bounds"}.isdisjoint(cutout_params):
-        # Determine the bounds from bus regions with a buffer of two grid cells
-        onshore = gpd.read_file(snakemake.input.regions_onshore)
-        offshore = gpd.read_file(snakemake.input.regions_offshore)
-        regions = pd.concat([onshore, offshore])
-        d = max(cutout_params.get("dx", 0.25), cutout_params.get("dy", 0.25)) * 2
-        cutout_params["bounds"] = regions.total_bounds + [-d, -d, d, d]
-    elif {"x", "y"}.issubset(cutout_params):
-        cutout_params["x"] = slice(*cutout_params["x"])
-        cutout_params["y"] = slice(*cutout_params["y"])
-
-    logger.info(f"Preparing cutout with parameters {cutout_params}.")
-    features = cutout_params.pop("features", None)
+    logger.info(f"Creating cutout with parameters {cutout_params}.")
     cutout = atlite.Cutout(snakemake.output[0], **cutout_params)
-    cutout.prepare(features=features)
+
+    logger.info(f"Preparing cutout the cutout with parameters {prepare_kwargs}.")
+    cutout.prepare(**prepare_kwargs)

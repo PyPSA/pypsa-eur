@@ -65,7 +65,7 @@ To do so, we highly recommend you install from one of our platform-specific envi
 
     $ conda update conda
 
-    $ conda create -n pypsa-eur -f envs/default_linux-64.pin.txt # select the appropriate file for your platform
+    $ conda create -n pypsa-eur --file envs/default_linux-64.pin.txt # select the appropriate file for your platform
 
     $ conda activate pypsa-eur
 
@@ -111,6 +111,7 @@ Nevertheless, you can still use open-source solvers for smaller problems.
     The rules :mod:`cluster_network` solves a mixed-integer quadratic optimisation problem for clustering.
     The open-source solvers HiGHS, Cbc and GlPK cannot handle this. A fallback to SCIP is implemented in this case, which is included in the standard environment specifications.
     For an open-source solver setup install for example HiGHS **and** SCIP in your ``conda`` environment on OSX/Linux.
+
     To install the default solver Gurobi, run
 
     .. code:: console
@@ -119,3 +120,27 @@ Nevertheless, you can still use open-source solvers for smaller problems.
         $ conda install -c gurobi gurobi"=12.0.1"
 
     Additionally, you need to setup your `Gurobi license <https://www.gurobi.com/solutions/licensing/>`__.
+
+    To use Xpress, install the ``xpress`` Python package and ensure you have:
+
+    - ``XPRESSDIR`` environment variable pointing to your Xpress installation
+    - ``XPAUTH_PATH`` environment variable pointing to your license directory
+    - A valid Xpress license file
+
+    Then configure the solver in your config file:
+
+    .. code:: yaml
+
+        solving:
+          solver:
+            name: xpress
+            options: xpress-default
+
+    For GPU-accelerated solving, use:
+
+    .. code:: yaml
+
+        solving:
+          solver:
+            name: xpress
+            options: xpress-gpu
