@@ -1113,7 +1113,7 @@ def add_biomass_to_methanol_cc(n, costs):
     )
 
 
-def add_methanol_to_power(n, costs, pop_layout, types=None):
+def add_methanol_to_power(n, costs, pop_layout, options=options, types=None):
     if types is None:
         types = {}
 
@@ -1252,7 +1252,7 @@ def add_methanol_reforming(n, costs):
     )
 
 
-def add_methanol_reforming_cc(n, costs):
+def add_methanol_reforming_cc(n, costs, options):
     logger.info("Adding methanol steam reforming with carbon capture.")
 
     tech = "Methanol steam reforming"
@@ -3824,6 +3824,7 @@ def add_methanol(
             n=n,
             costs=costs,
             pop_layout=pop_layout,
+            options=options,
             types=methanol_options["methanol_to_power"],
         )
 
@@ -3831,7 +3832,7 @@ def add_methanol(
         add_methanol_reforming(n=n, costs=costs)
 
     if methanol_options["methanol_reforming_cc"]:
-        add_methanol_reforming_cc(n=n, costs=costs)
+        add_methanol_reforming_cc(n=n, costs=costs, options=options)
 
 
 def add_biomass(
