@@ -748,6 +748,10 @@ class SectorConfig(BaseModel):
         1,
         description="The cost factor for the capital cost of the carbon dioxide transmission network.",
     )
+    co2_network_liquefaction: bool = Field(
+        False,
+        description="Add option for including compressor stations with investment costs and electricity demand for liquefaction step for carbon dioxide before transport.",
+    )
     cc_fraction: float = Field(
         0.9,
         description="The default fraction of CO2 captured with post-combustion capture.",

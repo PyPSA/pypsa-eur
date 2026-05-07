@@ -8,6 +8,8 @@ Release Notes
 
 .. Upcoming Release
 .. =================
+* Adding option to include the compression step in carbon dioxide transport before transporting in dense phase and including electricity demand for post combustion carbon capture.
+
 * The industry reference year and the ammonia production data have been updated to 2023 (https://github.com/PyPSA/pypsa-eur/pull/2103) 
 
 * refactor: Use scripts path provider consistently (https://github.com/PyPSA/pypsa-eur/pull/2093).
