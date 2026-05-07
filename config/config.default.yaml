@@ -872,6 +872,7 @@ sector:
   co2_spatial: true
   co2_network: true
   co2_network_cost_factor: 1
+  co2_network_liquefaction: false
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
