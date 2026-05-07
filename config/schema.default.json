@@ -4710,7 +4710,7 @@
         },
         "co2_network_liquefaction": {
           "default": false,
-          "description": "Add option to include compressor stations for carbon dioxide transport. Before being able to be transported, carbon dioxide must be compressed to 150bar to reach a dense phase that makes large scale transport via pipeline feasible.",
+          "description": "Add option for including compressor stations with investment costs and electricity demand for liquefaction step for carbon dioxide before transport.",
           "type": "boolean"
         },
         "cc_fraction": {
@@ -11003,7 +11003,7 @@
         },
         "co2_network_liquefaction": {
           "default": false,
-          "description": "Add option to include compressor stations for carbon dioxide transport. Before being able to be transported, carbon dioxide must be compressed to 150bar to reach a dense phase that makes large scale transport via pipeline feasible.",
+          "description": "Add option for including compressor stations with investment costs and electricity demand for liquefaction step for carbon dioxide before transport.",
           "type": "boolean"
         },
         "cc_fraction": {
