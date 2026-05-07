@@ -875,6 +875,12 @@ sector:
   co2_network_cost_factor: 1
   co2_network_liquefaction: false
   cc_fraction: 0.9
+  cc_capital_cost_factor:
+    gas: 2.0
+    biomass: 1.8
+    coal: 1.8
+    waste: 1.7
+    cement: 1.0
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
   - onshore

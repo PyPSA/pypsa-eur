@@ -4723,6 +4723,13 @@
           "description": "The default fraction of CO2 captured with post-combustion capture.",
           "type": "number"
         },
+        "cc_capital_cost_factor": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. The default values are based on the DEA technology-data report.",
+          "type": "object"
+        },
         "hydrogen_underground_storage": {
           "default": true,
           "description": "Add options for storing hydrogen underground. Storage potential depends regionally.",
@@ -11176,6 +11183,13 @@
           "default": 0.9,
           "description": "The default fraction of CO2 captured with post-combustion capture.",
           "type": "number"
+        },
+        "cc_capital_cost_factor": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. The default values are based on the DEA technology-data report.",
+          "type": "object"
         },
         "hydrogen_underground_storage": {
           "default": true,

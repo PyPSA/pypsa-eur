@@ -1174,7 +1174,7 @@ def add_methanol_to_power(n, costs, pop_layout, types=None):
 
         capital_cost_cc = (
             capital_cost
-            + costs.at["cement capture", "capital_cost"]
+            + costs.at["cement capture", "capital_cost"] * options["cc_capital_cost_factor"]["gas"]
             * costs.at["methanolisation", "carbondioxide-input"]
         )
         efficiency_cc = (
@@ -1265,6 +1265,7 @@ def add_methanol_reforming_cc(n, costs):
     capital_cost_cc = (
         capital_cost
         + costs.at["cement capture", "capital_cost"]
+        * options["cc_capital_cost_factor"]["gas"]
         * costs.at["methanolisation", "carbondioxide-input"]
     )
     electricity_cc = (
@@ -4728,8 +4729,9 @@ def add_industry(
         carrier="solid biomass for industry CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "capital_cost"]
-        * costs.at["solid biomass", "CO2 intensity"],
-        efficiency=options["cc_fraction"],
+        * costs.at["solid biomass", "CO2 intensity"]
+        * options["cc_capital_cost_factor"]["biomass"],
+        efficiency=0.9, # TODO: make config option
         efficiency2=-costs.at["solid biomass", "CO2 intensity"]
         * costs.at["cement capture", "capture_rate"],
         efficiency3=costs.at["solid biomass", "CO2 intensity"]
@@ -4791,6 +4793,7 @@ def add_industry(
         carrier="gas for industry CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "capital_cost"]
+        * options["cc_capital_cost_factor"]["gas"]
         * costs.at["gas", "CO2 intensity"],
         efficiency=0.9,
         efficiency2=costs.at["gas", "CO2 intensity"]
@@ -5182,7 +5185,8 @@ def add_industry(
         bus3=bus3,
         carrier="process emissions CC",
         p_nom_extendable=True,
-        capital_cost=costs.at["cement capture", "capital_cost"],
+        capital_cost=costs.at["cement capture", "capital_cost"]
+        * options["cc_capital_cost_factor"]["cement"],
         efficiency=1 - costs.at["cement capture", "capture_rate"],
         efficiency2=costs.at["cement capture", "capture_rate"],
         efficiency3=-efficiency3,
@@ -6369,10 +6373,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="50",
+            clusters="10",
             sector_opts="",
-            planning_horizons="2035",
-            configfiles="config/config.default.yaml",
+            planning_horizons="2050",
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
