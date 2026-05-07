@@ -835,7 +835,7 @@ def add_co2_tracking(
             bus2=spatial.nodes,
             capital_cost=costs.at["CO2 liquefaction", "capital_cost"],
             efficiency=1.0,
-            efficiency2=-0.16515,  # TONI TODO
+            efficiency2=-costs.at["CO2 liquefaction", "electricity-input"],
             p_nom=0,
             p_nom_extendable=True,
             carrier="co2 compression",
@@ -852,6 +852,16 @@ def add_co2_tracking(
             p_nom=1e7,
             carrier="co2 expansion",
             unit="t_co2",
+        )
+        n.add(
+            "Link",
+            sequestration_buses,
+            bus0=spatial.co2.dense,
+            bus1=sequestration_buses,
+            carrier="co2 sequestered",
+            marginal_cost=options["co2_sequestration_cost"],
+            efficiency=1.0,
+            p_nom_extendable=True,
         )
 
     else:
