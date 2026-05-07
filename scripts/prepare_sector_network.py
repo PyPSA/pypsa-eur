@@ -1113,7 +1113,7 @@ def add_biomass_to_methanol_cc(n, costs):
     )
 
 
-def add_methanol_to_power(n, costs, pop_layout, options=options, types=None):
+def add_methanol_to_power(n, costs, pop_layout, options, types=None):
     if types is None:
         types = {}
 
