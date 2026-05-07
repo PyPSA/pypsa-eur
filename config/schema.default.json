@@ -4708,6 +4708,11 @@
           "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
           "type": "number"
         },
+        "co2_network_liquefaction": {
+          "default": false,
+          "description": "Add option to include compressor stations for carbon dioxide transport. Before being able to be transported, carbon dioxide must be compressed to 150bar to reach a dense phase that makes large scale transport via pipeline feasible.",
+          "type": "boolean"
+        },
         "cc_fraction": {
           "default": 0.9,
           "description": "The default fraction of CO2 captured with post-combustion capture.",
@@ -10995,6 +11000,11 @@
           "default": 1,
           "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
           "type": "number"
+        },
+        "co2_network_liquefaction": {
+          "default": false,
+          "description": "Add option to include compressor stations for carbon dioxide transport. Before being able to be transported, carbon dioxide must be compressed to 150bar to reach a dense phase that makes large scale transport via pipeline feasible.",
+          "type": "boolean"
         },
         "cc_fraction": {
           "default": 0.9,
