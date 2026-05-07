@@ -762,7 +762,7 @@ class SectorConfig(BaseModel):
             "biomass": 1.8,
             "coal": 1.8,
             "waste": 1.7,
-            "cement": 1.0
+            "cement": 1.0,
         },
         description="Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. The default values are based on the DEA technology-data report.",
     )
