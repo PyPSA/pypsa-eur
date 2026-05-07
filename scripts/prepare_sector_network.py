@@ -839,7 +839,7 @@ def add_co2_tracking(
             p_nom=0,
             p_nom_extendable=True,
             carrier="co2 compression",
-            unit="MWh",
+            unit="t_co2",
         )
         n.add("Carrier", "co2 expansion")
         n.add(
