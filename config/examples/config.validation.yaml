@@ -81,7 +81,8 @@ clustering:
 
 solving:
   options:
-    load_shedding: true
+    load_shedding:
+      enable: true
     rolling_horizon: false
     horizon: 1000
     overlap: 48

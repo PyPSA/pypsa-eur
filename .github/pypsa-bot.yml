@@ -15,3 +15,16 @@ tasks:
     - "doc/"
     - "*.yaml"
     - "*.yml"
+
+app:
+  trusted_users:
+  - daniel-rdt
+  runs:
+  - name: "config.validator.yaml"
+    configfile: "config/test/config.validator.yaml"
+    triggers: [main, pr]
+    cache:
+      key: "validator-{YYYY}-{MM}"
+      dirs: ["data"]
+    import_networks:
+    - "results/validation/networks/base_s_50___2050.nc"

@@ -5,7 +5,7 @@ channels:
 - gurobi
 - nodefaults
 dependencies:
-- atlite >=0.3
+- atlite >=0.3,!=0.5.0
 - bokeh >=3.8.0
 - cartopy >=0.25.0
 - copernicusmarine >=2.2.4
@@ -72,4 +72,5 @@ dependencies:
 - snakemake-logger-plugin-pypsa >=0.1.0
 - pydeflate >=2.3.4
 - grpcio <1.78
+- snakemake-logger-plugin-snkmt ==0.1.6
 - snakemake-executor-plugin-slurm >=1.9.2

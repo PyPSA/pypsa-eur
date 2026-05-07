@@ -131,8 +131,10 @@ def prepare_dataset(
     # lines which have way too discrepant line lengths
     # get assigned haversine length * length factor
     df["length_haversine"] = df.apply(
-        lambda p: length_factor
-        * haversine_pts([p.point0.x, p.point0.y], [p.point1.x, p.point1.y]),
+        lambda p: (
+            length_factor
+            * haversine_pts([p.point0.x, p.point0.y], [p.point1.x, p.point1.y])
+        ),
         axis=1,
     )
     ratio = df.eval("length / length_haversine")
