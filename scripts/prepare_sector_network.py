@@ -97,13 +97,13 @@ def define_spatial(nodes, options):
         spatial.co2.locations = nodes
         spatial.co2.vents = nodes + " co2 vent"
         spatial.co2.process_emissions = nodes + " process emissions"
-        spatial.co2.dense = nodes + " co2 stored dense"
+        spatial.co2.dense = nodes + " co2 dense"
     else:
         spatial.co2.nodes = ["co2 stored"]
         spatial.co2.locations = ["EU"]
         spatial.co2.vents = ["co2 vent"]
         spatial.co2.process_emissions = ["process emissions"]
-        spatial.co2.dense = ["co2 stored dense"]
+        spatial.co2.dense = ["co2 dense"]
 
     spatial.co2.df = pd.DataFrame(vars(spatial.co2), index=nodes)
 
@@ -981,7 +981,7 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=Fals
     capital_cost *= co2_network_cost_factor
 
     if co2_liquefaction:
-        suffix = " co2 stored dense"
+        suffix = " co2 dense"
     else:
         suffix = " co2 stored"
 
@@ -1199,7 +1199,7 @@ def add_methanol_to_power(n, costs, pop_layout, options, types=None):
             p_nom_extendable=True,
             capital_cost=capital_cost_cc,
             marginal_cost=costs.at["CCGT", "VOM"]
-            * costs.at["CCGT", "efficiency"],  # NB: VOM is per MWel
+            * efficiency_cc,  # NB: VOM is per MWel
             efficiency=efficiency_cc,
             efficiency2=costs.at["cement capture", "capture_rate"]
             * costs.at["methanolisation", "carbondioxide-input"],
