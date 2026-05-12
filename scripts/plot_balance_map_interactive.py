@@ -125,12 +125,14 @@ if __name__ == "__main__":
             bus_carrier=co2_carriers,
             groupby=["bus", "carrier"],
         )
-        eb = eb.rename(index=lambda value: value.replace("co2 dense", carrier), level="bus")
+        eb = eb.rename(
+            index=lambda value: value.replace("co2 dense", carrier), level="bus"
+        )
         eb = eb.groupby(level=["component", "bus", "carrier"]).sum()
     else:
-        transmission_carriers = get_transmission_carriers(n, bus_carrier=carrier).rename(
-            {"name": "carrier"}
-        )
+        transmission_carriers = get_transmission_carriers(
+            n, bus_carrier=carrier
+        ).rename({"name": "carrier"})
 
         ### Pie charts
         eb = n.statistics.energy_balance(
