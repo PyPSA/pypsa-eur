@@ -80,13 +80,26 @@ if __name__ == "__main__":
     n.buses["x"] = n.buses.location.map(n.buses.x)
     n.buses["y"] = n.buses.location.map(n.buses.y)
 
-    # bus_size according to energy balance of bus carrier
-    eb = n.statistics.energy_balance(bus_carrier=carrier, groupby=["bus", "carrier"])
+    if carrier == "co2 stored" and "co2 dense" in n.buses.carrier.unique():
+        co2_carriers = ["co2 stored", "co2 dense"]
+        # Aggregate energy balance of "co2 stored" and "co2 dense" to get the total CO2 balance for each bus
+        eb = n.statistics.energy_balance(bus_carrier=co2_carriers, groupby=["bus", "carrier"])
+        eb = eb.rename(index=lambda value: value.replace("co2 dense", carrier), level="bus")
+        eb = eb.groupby(level=["component", "bus", "carrier"]).sum()
 
-    # remove energy balance of transmission carriers which relate to losses
-    transmission_carriers = get_transmission_carriers(n, bus_carrier=carrier).rename(
-        {"name": "carrier"}
-    )
+        # remove energy balance of transmission carriers which relate to losses
+        transmission_carriers = get_transmission_carriers(n, bus_carrier=co2_carriers).rename(
+            {"name": "carrier"}
+        )
+    else:
+        # bus_size according to energy balance of bus carrier
+        eb = n.statistics.energy_balance(bus_carrier=carrier, groupby=["bus", "carrier"])
+
+        # remove energy balance of transmission carriers which relate to losses
+        transmission_carriers = get_transmission_carriers(n, bus_carrier=carrier).rename(
+            {"name": "carrier"}
+        )
+
     components = transmission_carriers.unique("component")
     carriers = transmission_carriers.unique("carrier")
 
