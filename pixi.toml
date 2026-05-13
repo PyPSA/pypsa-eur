@@ -8,6 +8,7 @@ channels = ["conda-forge", "bioconda", "gurobi"]
 name = "pypsa-eur"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "2025.07.0"
+exclude-newer = "7d"
 
 [tasks]
 
