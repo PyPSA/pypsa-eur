@@ -1,0 +1,47 @@
+name: Security scan
+on:
+  pull_request:
+    types:
+    - closed
+    branches:
+    - master
+
+jobs:
+  security-scan:
+    if: ${{ github.event.pull_request.merged == true && github.head_ref == 'update-locked-environment' }}
+    name: SBOM and vulnerability scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.9.5
+      with:
+        pixi-version: v0.68.1
+
+    - name: Generate SBOM
+      id: sbom
+      uses: anchore/sbom-action@v0
+      with:
+        path: ".pixi/envs/default"
+        output-file: sbom.spdx.json
+        dependency-snapshot: true
+
+    - name: Generate SBOM vulnerability report
+      id: scan
+      uses: anchore/scan-action@v3
+      with:
+        sbom: sbom.spdx.json
+        fail-build: false
+        add-cpes-if-none: true
+
+    - name: Upload report
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}

@@ -9,6 +9,8 @@ jobs:
     if: ${{ github.ref == 'refs/heads/master' }}
     name: Update lockfiles
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         shell: bash -l {0}
