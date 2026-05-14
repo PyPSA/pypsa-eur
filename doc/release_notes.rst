@@ -8,6 +8,9 @@ Release Notes
 
 .. Upcoming Release
 .. =================
+
+* Security: SBOM security scan included in CI; Development dependencies (pre-commit, pylint, jupyter, etc.) moved to ``dev`` ``pixi`` environment.
+
 * Fix: Re-introduce capital costs for non-bicharging discharge links in ``add_electricity.py``, e.g. fuel cells.
 
 * The lockfile update workflow now excludes packages published within the last 7 days to reduce the risk of pulling in broken or yanked releases (https://github.com/PyPSA/pypsa-eur/pull/2130).
