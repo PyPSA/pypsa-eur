@@ -149,7 +149,7 @@ ship_raster,v5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workf
 swiss_energy_balances,2025-10-01,primary,latest supported,2026-02-12,,https://pubdb.bfe.admin.ch/de/publication/download/12361
 swiss_energy_balances,2025-10-01,archive,latest supported,2026-02-16,,https://web.archive.org/web/20260216/https%3A//pubdb.bfe.admin.ch/de/publication/download/12361
 synthetic_electricity_demand,v2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/10820928/files/demand_hourly.csv
-synthetic_electricity_demand,v2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/v2
+synthetic_electricity_demand,v2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/v2/demand_hourly.csv
 synthetic_electricity_demand,0.1.0,archive,deprecated might-work,2026-01-13,,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/0.1.0/demand_hourly.csv
 tyndp,2024,primary,latest supported,2025-12-02,,https://2024-data.entsos-tyndp-scenarios.eu/files/scenarios-inputs
 tyndp,2024,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/tyndp/2024
