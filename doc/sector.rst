@@ -122,6 +122,16 @@ Rule ``build_eurostat_balances``
 
 .. automodule:: build_eurostat_balances
 
+Rule ``build_co2_totals``
+==============================================================================
+
+.. automodule:: build_co2_totals
+
+Rule ``build_transformation_output_coke``
+==============================================================================
+
+.. automodule:: build_transformation_output_coke
+
 Rule ``build_energy_totals``
 ==============================================================================
 

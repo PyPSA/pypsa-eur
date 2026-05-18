@@ -2,20 +2,18 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build total energy demands and carbon emissions per country using JRC IDEES,
-eurostat, and EEA data.
+Build total energy demands per country using JRC IDEES and Eurostat data.
 
-- Country-specific data is read in :func:`build_idees` and read in from :mod:`scripts/build_eurostat_balances` and :mod:`scripts/build_swiss_energy_balances`.
-- :func:`build_energy_totals` then combines energy data from Eurostat, Swiss, and IDEES data.
+- Country-specific data is read in :func:`build_idees` from :mod:`scripts/build_eurostat_balances` and :mod:`scripts/build_swiss_energy_balances`.
+- :func:`build_energy_totals` combines energy data from Eurostat, Swiss, and IDEES data.
 - :func:`build_district_heat_share` calculates the share of district heating for each country from IDEES data.
-- Historical CO2 emissions are calculated in :func:`build_eea_co2` and :func:`build_eurostat_co2` and combined in :func:`build_co2_totals`.
 
 Outputs
 -------
-- `resources/<run_name>/energy_totals.csv`: Energy totals per country, sector and year.
-- `resources/<run_name>/co2_totals.csv`: CO2 emissions per country, sector and year.
-- `resources/<run_name>/transport_data.csv`: Transport data per country and year.
-- `resources/<run_name>/district_heat_share.csv`: District heating share per by country and year.
+- ``resources/<run_name>/energy_totals.csv``: Energy totals per country, sector and year.
+- ``resources/<run_name>/transport_data.csv``: Transport data per country and year.
+- ``resources/<run_name>/district_heat_share.csv``: District heating share per country and year.
+- ``resources/<run_name>/heating_efficiencies.csv``: Heating efficiencies per country and year.
 """
 
 import logging
@@ -33,7 +31,6 @@ from scripts._helpers import configure_logging, mute_print, set_scenario_config
 
 cc = coco.CountryConverter()
 logger = logging.getLogger(__name__)
-idx = pd.IndexSlice
 
 
 def cartesian(s1: pd.Series, s2: pd.Series) -> pd.DataFrame:
@@ -65,59 +62,9 @@ def cartesian(s1: pd.Series, s2: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(np.outer(s1, s2), index=s1.index, columns=s2.index)
 
 
-def reverse(dictionary: dict) -> dict:
-    """
-    Reverses the keys and values of a dictionary.
-
-    Parameters
-    ----------
-    dictionary : dict
-        The dictionary to be reversed.
-
-    Returns
-    -------
-    dict
-        A new dictionary with the keys and values reversed.
-
-    Examples
-    --------
-    >>> d = {"a": 1, "b": 2, "c": 3}
-    >>> reverse(d)
-    {1: 'a', 2: 'b', 3: 'c'}
-    """
-    return {v: k for k, v in dictionary.items()}
-
-
 idees_rename = {"GR": "EL", "GB": "UK"}
 
-eu28 = cc.EU28as("ISO2").ISO2.tolist()
 eu27 = cc.EU27as("ISO2").ISO2.tolist()
-eu28_eea = eu28.copy()
-eu28_eea.remove("GB")
-eu28_eea.append("UK")
-
-
-to_ipcc = {
-    "electricity": "1.A.1.a - Public Electricity and Heat Production",
-    "residential non-elec": "1.A.4.b - Residential",
-    "services non-elec": "1.A.4.a - Commercial/Institutional",
-    "rail non-elec": "1.A.3.c - Railways",
-    "road non-elec": "1.A.3.b - Road Transportation",
-    "domestic navigation": "1.A.3.d - Domestic Navigation",
-    "international navigation": "1.D.1.b - International Navigation",
-    "domestic aviation": "1.A.3.a - Domestic Aviation",
-    "international aviation": "1.D.1.a - International Aviation",
-    "total energy": "1 - Energy",
-    "industrial processes": "2 - Industrial Processes and Product Use",
-    "agriculture": "3 - Agriculture",
-    "agriculture, forestry and fishing": "1.A.4.c - Agriculture/Forestry/Fishing",
-    "LULUCF": "4 - Land Use, Land-Use Change and Forestry",
-    "waste management": "5 - Waste management",
-    "other": "6 - Other Sector",
-    "indirect": "ind_CO2 - Indirect CO2",
-    "total wL": "Total (with LULUCF)",
-    "total woL": "Total (without LULUCF)",
-}
 
 
 def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
@@ -417,7 +364,12 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     return pd.DataFrame(ct_totals)
 
 
-def build_idees(countries: list[str]) -> pd.DataFrame:
+def build_idees(
+    countries: list[str],
+    idees_dir: str,
+    nprocesses: int = 1,
+    disable_progress: bool = True,
+) -> pd.DataFrame:
     """
     Build energy totals from IDEES database for the given list of countries
     using :func:`idees_per_country`.
@@ -426,6 +378,12 @@ def build_idees(countries: list[str]) -> pd.DataFrame:
     ----------
     countries : list[str]
         List of country names for which energy totals need to be built.
+    idees_dir : str
+        Path to the IDEES data directory.
+    nprocesses : int, optional
+        Number of parallel processes, by default 1.
+    disable_progress : bool, optional
+        Whether to disable the progress bar, by default True.
 
     Returns
     -------
@@ -438,10 +396,7 @@ def build_idees(countries: list[str]) -> pd.DataFrame:
     - Returns a DataFrame with columns: country, year, and energy totals for different categories.
     """
 
-    nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
-
-    func = partial(idees_per_country, base_dir=snakemake.input.idees)
+    func = partial(idees_per_country, base_dir=idees_dir)
     tqdm_kwargs = dict(
         ascii=False,
         unit=" country",
@@ -795,7 +750,9 @@ def build_energy_totals(
     return df
 
 
-def build_district_heat_share(countries: list[str], idees: pd.DataFrame) -> pd.Series:
+def build_district_heat_share(
+    countries: list[str], idees: pd.DataFrame, district_heat_share_fn: str
+) -> pd.Series:
     """
     Calculate the share of district heating for each country.
 
@@ -805,6 +762,8 @@ def build_district_heat_share(countries: list[str], idees: pd.DataFrame) -> pd.S
         List of country codes for which to calculate district heating share.
     idees : pd.DataFrame
         IDEES energy data dataframe.
+    district_heat_share_fn : str
+        Path to the fallback district heat share CSV file.
 
     Returns
     -------
@@ -835,7 +794,7 @@ def build_district_heat_share(countries: list[str], idees: pd.DataFrame) -> pd.S
 
     # Missing district heating share
     dh_share = (
-        pd.read_csv(snakemake.input.district_heat_share, index_col=0, usecols=[0, 1])
+        pd.read_csv(district_heat_share_fn, index_col=0, usecols=[0, 1])
         .div(100)
         .squeeze()
     )
@@ -859,188 +818,11 @@ def build_district_heat_share(countries: list[str], idees: pd.DataFrame) -> pd.S
     return district_heat_share
 
 
-def build_eea_co2(
-    input_co2: str, year: int = 1990, emissions_scope: str = "CO2"
-) -> pd.DataFrame:
-    """
-    Calculate CO2 emissions for a given year based on EEA data in Mt.
-
-    Parameters
-    ----------
-    input_co2 : str
-        Path to the input CSV file with CO2 data.
-    year : int, optional
-        Year for which to calculate emissions, by default 1990.
-    emissions_scope : str, optional
-        Scope of the emissions to consider, by default "CO2".
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with CO2 emissions for the given year.
-
-    Notes
-    -----
-    - The function reads the `input_co2` data and for a specific `year` and `emission scope`
-    - It calculates "industrial non-elec" and "agriculture" emissions from that data
-    - It drops unneeded columns and converts the emissions to Mt.
-
-    References
-    ----------
-    - `EEA CO2 data <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_ (downloaded 201228, modified by EEA last on 201221)
-    """
-
-    df = pd.read_csv(input_co2, encoding="latin-1", low_memory=False)
-
-    df.replace(dict(Year="1985-1987"), 1986, inplace=True)
-    df.Year = df.Year.astype(int)
-    index_col = ["Country_code", "Pollutant_name", "Year", "Sector_name"]
-    df = df.set_index(index_col).sort_index()
-
-    cts = ["CH", "EUA", "NO"] + eu28_eea
-
-    slicer = idx[cts, emissions_scope, year, to_ipcc.values()]
-    emissions = (
-        df.loc[slicer, "emissions"]
-        .unstack("Sector_name")
-        .rename(columns=reverse(to_ipcc))
-        .droplevel([1, 2])
-    )
-
-    emissions.rename(index={"EUA": "EU28", "UK": "GB"}, inplace=True)
-
-    to_subtract = [
-        "electricity",
-        "services non-elec",
-        "residential non-elec",
-        "road non-elec",
-        "rail non-elec",
-        "domestic aviation",
-        "international aviation",
-        "domestic navigation",
-        "international navigation",
-        "agriculture, forestry and fishing",
-    ]
-    emissions["industrial non-elec"] = emissions["total energy"] - emissions[
-        to_subtract
-    ].sum(axis=1)
-
-    emissions["agriculture"] += emissions["agriculture, forestry and fishing"]
-
-    to_drop = [
-        "total energy",
-        "total wL",
-        "total woL",
-        "agriculture, forestry and fishing",
-    ]
-    emissions.drop(columns=to_drop, inplace=True)
-
-    # convert from Gt to Mt
-    return emissions / 1e3
-
-
-def build_eurostat_co2(eurostat: pd.DataFrame, year: int = 1990) -> pd.Series:
-    """
-    Calculate CO2 emissions for a given year based on Eurostat fuel consumption
-    data and fuel-specific emissions.
-
-    Parameters
-    ----------
-    eurostat : pd.DataFrame
-        DataFrame with Eurostat data.
-    year : int, optional
-        Year for which to calculate emissions, by default 1990.
-
-    Returns
-    -------
-    pd.Series
-        Series with CO2 emissions for the given year.
-
-    Notes
-    -----
-    - The function hard-sets fuel-specific emissions:
-        - solid fuels: 0.36 tCO2_equi/MW_th (approximates coal)
-        - oil: 0.285 tCO2_equi/MW_th (average of distillate and residue)
-        - natural gas: 0.2 tCO2_equi/MW_th
-    - It then multiplies the Eurostat fuel consumption data for `year` by the specific emissions and sums the result.
-
-    References
-    ----------
-    - Oil values from `EIA <https://www.eia.gov/tools/faqs/faq.cfm?id=74&t=11>`_
-    - Distillate oil (No. 2)  0.276
-    - Residual oil (No. 6)  0.298
-    - `EIA Electricity Annual <https://www.eia.gov/electricity/annual/html/epa_a_03.html>`_
-    """
-
-    emissions = pd.Series(
-        {
-            "C0000X0350-0370": 0.36,  # solid fossil fuels
-            "O4000XBIO": 0.285,  # oil and petroleum products
-            "G3000": 0.2,  # natural gas
-        }
-    )
-    return (
-        eurostat.query("year == @year and siec in @emissions.index")
-        .assign(value=lambda df: df["value"] * df["siec"].map(emissions))
-        .groupby(["country", "nrg_bal"])["value"]
-        .sum(min_count=1)
-    )
-
-
-def build_co2_totals(
-    countries: list[str], eea_co2: pd.DataFrame, eurostat_co2: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Combine CO2 emissions data from EEA and Eurostat for a list of countries.
-
-    Parameters
-    ----------
-    countries : list[str]
-        List of country codes for which CO2 totals need to be built.
-    eea_co2 : pd.DataFrame
-        DataFrame with EEA CO2 emissions data.
-    eurostat_co2 : pd.DataFrame
-        DataFrame with Eurostat CO2 emissions data.
-
-    Returns
-    -------
-    pd.DataFrame
-        Combined CO2 emissions data for the given countries.
-
-    Notes
-    -----
-    - The function combines the CO2 emissions from EEA and Eurostat into a single DataFrame for the given countries.
-    """
-
-    co2 = eea_co2.reindex(countries)
-
-    for ct in pd.Index(countries).intersection(
-        ["BA", "RS", "XK", "AL", "ME", "MK", "UA", "MD"]
-    ):
-        mappings = {
-            "electricity": "TI_EHG_E",
-            "residential non-elec": "FC_OTH_HH_E",
-            "services non-elec": "FC_OTH_CP_E",
-            "road non-elec": "FC_TRA_ROAD_E",
-            "rail non-elec": "FC_TRA_RAIL_E",
-            "domestic navigation": "FC_TRA_DNAVI_E",
-            "international navigation": "INTMARB",
-            "domestic aviation": "FC_TRA_DAVI_E",
-            "international aviation": "INTAVI",
-            # does not include industrial process emissions or fuel processing/refining
-            "industrial non-elec": "FC_IND_E",
-            # does not include non-energy emissions
-            "agriculture": ["FC_OTH_AF_E", "FC_OTH_FISH_E"],
-        }
-
-        for i, mi in mappings.items():
-            co2.at[ct, i] = eurostat_co2.loc[ct, mi].sum()
-
-    return co2
-
-
 def build_transport_data(
-    countries: list[str], population: pd.DataFrame, idees: pd.DataFrame
+    countries: list[str],
+    population: pd.DataFrame,
+    idees: pd.DataFrame,
+    swiss_transport_fn: str | None = None,
 ) -> pd.DataFrame:
     """
     Build transport data for a set of countries based on IDEES data.
@@ -1053,6 +835,8 @@ def build_transport_data(
         DataFrame with population data.
     idees : pd.DataFrame
         DataFrame with IDEES data.
+    swiss_transport_fn : str, optional
+        Path to the Swiss vehicle stock CSV file. Required when "CH" is in countries.
 
     Returns
     -------
@@ -1083,7 +867,7 @@ def build_transport_data(
     transport_data = transport_data.reindex(index=new_index)
 
     if "CH" in countries:
-        fn = snakemake.input.swiss_transport
+        fn = swiss_transport_fn
 
         # Detect delimiter automatically; BFS files often use ';'
         with open(fn) as f:
@@ -1141,7 +925,9 @@ def build_transport_data(
     return transport_data
 
 
-def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
+def update_residential_from_eurostat(
+    energy: pd.DataFrame, eurostat_households_fn: str
+) -> pd.DataFrame:
     """
     Updates energy balances for residential from disaggregated data from
     Eurostat by mutating input data DataFrame.
@@ -1150,6 +936,8 @@ def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
     ----------
     energy : pd.DataFrame
         DataFrame with energy data.
+    eurostat_households_fn : str
+        Path to the Eurostat household energy balances CSV file.
 
     Returns
     -------
@@ -1161,7 +949,7 @@ def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
     - The function first reads in the Eurostat data for households and maps the energy types to the corresponding Eurostat codes.
     - For each energy type, it selects the corresponding data, converts units, and drops unnecessary data.
     """
-    eurostat_households = pd.read_csv(snakemake.input.eurostat_households)
+    eurostat_households = pd.read_csv(eurostat_households_fn)
 
     # Column mapping for energy type
     nrg_type = {
@@ -1195,34 +983,6 @@ def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
     logger.info(
         "Updated energy balances for residential using disaggregate final energy consumption data in Households from Eurostat"
     )
-
-
-def build_transformation_output_coke(eurostat, fn):
-    """
-    Extracts and builds the transformation output data for coke ovens from the
-    Eurostat dataset.
-
-    This function specifically filters the Eurostat data to extract
-    transformation output related to coke ovens.
-    Since the transformation output for coke ovens
-    is not included in the final energy consumption of the iron and steel sector,
-    it needs to be processed and added separately. The filtered data is saved
-    as a CSV file.
-
-    Parameters
-    ----------
-    eurostat (pd.DataFrame): A pandas DataFrame containing Eurostat data with
-                             a multi-level index
-    fn (str): The file path where the resulting CSV file should be saved.
-
-    Output:
-    The resulting transformation output data for coke ovens is saved as a CSV
-    file at the path specified in fn.
-    """
-
-    eurostat.query("nrg_bal == 'TO_CO'").set_index(["country", "year", "siec"])[
-        "value"
-    ].unstack("siec").to_csv(fn)
 
 
 def build_heating_efficiencies(
@@ -1294,36 +1054,26 @@ if __name__ == "__main__":
     idees_countries = pd.Index(countries).intersection(eu27)
 
     eurostat = pd.read_csv(snakemake.input.eurostat)
-
-    build_transformation_output_coke(
-        eurostat, snakemake.output.transformation_output_coke
-    )
-
     swiss = pd.read_csv(snakemake.input.swiss, index_col=[0, 1])
 
-    idees = build_idees(idees_countries)
+    nprocesses = snakemake.threads
+    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    idees = build_idees(
+        idees_countries, snakemake.input.idees, nprocesses, disable_progress
+    )
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
-
-    update_residential_from_eurostat(energy)
-
+    update_residential_from_eurostat(energy, snakemake.input.eurostat_households)
     energy.to_csv(snakemake.output.energy_name)
 
-    # use rescaled idees data to calculate district heat share
     district_heat_share = build_district_heat_share(
-        countries, energy.loc[idees_countries]
+        countries, energy.loc[idees_countries], snakemake.input.district_heat_share
     )
     district_heat_share.to_csv(snakemake.output.district_heat_share)
 
-    base_year_emissions = params["base_emissions_year"]
-    emissions_scope = snakemake.params.energy["emissions"]
-    eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)
-    eurostat_co2 = build_eurostat_co2(eurostat, base_year_emissions)
-
-    co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
-    co2.to_csv(snakemake.output.co2_name)
-
-    transport = build_transport_data(countries, population, idees)
+    transport = build_transport_data(
+        countries, population, idees, snakemake.input.swiss_transport
+    )
     transport.to_csv(snakemake.output.transport_name)
 
     heating_efficiencies = build_heating_efficiencies(countries, idees)
