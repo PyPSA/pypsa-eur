@@ -12,7 +12,7 @@ from shapely import line_merge
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon
 
 from scripts._helpers import configure_logging, set_scenario_config
-from scripts.build_shapes import eez
+from scripts.build_offshore_shapes import eez
 
 logger = logging.getLogger(__name__)
 

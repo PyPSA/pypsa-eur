@@ -15,7 +15,7 @@ import pytest
 
 sys.path.append("./scripts")
 
-from build_shapes import _simplify_polys
+from _helpers import _simplify_polys
 
 path_cwd = pathlib.Path.cwd()
 

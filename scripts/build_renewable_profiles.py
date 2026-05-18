@@ -99,13 +99,13 @@ import xarray as xr
 from atlite.gis import ExclusionContainer
 
 from scripts._helpers import (
+    _simplify_polys,
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
     setup_dask,
 )
-from scripts.build_shapes import _simplify_polys
 
 logger = logging.getLogger(__name__)
 

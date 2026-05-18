@@ -8,6 +8,8 @@ Release Notes
 
 .. Upcoming Release
 .. =================
+* refactor: Split :mod:`build_shapes` into three independent rules: :mod:`build_offshore_shapes` (EEZ only), :mod:`build_nuts3_shapes` (NUTS3/ADM1 regions with GDP/population data), and :mod:`build_shapes` (country and Europe boundary aggregation).
+
 * Fix: Re-introduce capital costs for non-bicharging discharge links in ``add_electricity.py``, e.g. fuel cells.
 
 * The lockfile update workflow now excludes packages published within the last 7 days to reduce the risk of pulling in broken or yanked releases (https://github.com/PyPSA/pypsa-eur/pull/2130).
