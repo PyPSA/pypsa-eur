@@ -220,7 +220,9 @@ def bidding_zone_map(
         country_bz = bidding_zones[bidding_zones.country == country]
 
         if country_regions.empty or country_bz.empty:
-            logger.debug(f"Skipping country {country}: no regions or bidding zones found")
+            logger.debug(
+                f"Skipping country {country}: no regions or bidding zones found"
+            )
             continue
 
         if country_regions.crs != country_bz.crs:
@@ -252,7 +254,9 @@ def bidding_zone_map(
                 if not distances.empty:
                     bz_map[idx] = country_bz.loc[distances.idxmin(), "zone_name"]
                 else:
-                    logger.warning(f"Could not find any bidding zone for region {idx} in {country}")
+                    logger.warning(
+                        f"Could not find any bidding zone for region {idx} in {country}"
+                    )
 
     unassigned = bz_map.isnull().sum()
     if unassigned > 0:
@@ -310,7 +314,10 @@ def create_regions(
 
     logger.info("Processing non-NUTS regions.")
     regions_non_nuts = pd.concat(
-        [gpd.read_file(p) for p in [ba_adm1_path, md_adm1_path, ua_adm1_path, xk_adm1_path]]
+        [
+            gpd.read_file(p)
+            for p in [ba_adm1_path, md_adm1_path, ua_adm1_path, xk_adm1_path]
+        ]
     ).drop(columns=["osm_id"])
     regions_non_nuts["id"] = regions_non_nuts["id"].apply(normalise_text)
     regions_non_nuts["name"] = regions_non_nuts["name"].apply(normalise_text)
@@ -334,13 +341,17 @@ def create_regions(
     logger.info(f"Importing JRC ARDECO GDP data for year {GDP_YEAR}.")
     nuts3_gdp_df = pd.read_csv(nuts3_gdp, index_col=[0])
     nuts3_gdp_df = nuts3_gdp_df.query("LEVEL_ID == 3 and UNIT == 'EUR'")
-    nuts3_gdp_df.index = nuts3_gdp_df.index.str.replace("UK", "GB").str.replace("EL", "GR")
+    nuts3_gdp_df.index = nuts3_gdp_df.index.str.replace("UK", "GB").str.replace(
+        "EL", "GR"
+    )
     regions["gdp"] = nuts3_gdp_df[str(GDP_YEAR)]
 
     logger.info(f"Importing JRC ARDECO population data for year {POP_YEAR}.")
     nuts3_pop_df = pd.read_csv(nuts3_pop, index_col=[0])
     nuts3_pop_df = nuts3_pop_df.query("LEVEL_ID == 3")
-    nuts3_pop_df.index = nuts3_pop_df.index.str.replace("UK", "GB").str.replace("EL", "GR")
+    nuts3_pop_df.index = nuts3_pop_df.index.str.replace("UK", "GB").str.replace(
+        "EL", "GR"
+    )
     regions["pop"] = nuts3_pop_df[str(POP_YEAR)].div(1e3).round(0)
 
     other_countries = {"BA", "MD", "UA", "XK"}
