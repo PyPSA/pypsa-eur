@@ -70,7 +70,6 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
-import pypsa
 from shapely.geometry import MultiPolygon, Polygon
 
 from scripts._helpers import configure_logging, set_scenario_config
@@ -212,7 +211,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    n = pypsa.Network(snakemake.input.network)
     countries = snakemake.params.countries
 
     fn_onshore = snakemake.input.regions_onshore
@@ -250,8 +248,9 @@ if __name__ == "__main__":
         logger.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
     # Add "everywhere powerplants" to all bus locations
+    buses = regions[["x", "y", "country"]]
     ppl = add_everywhere_powerplants(
-        ppl, n.buses, snakemake.params.everywhere_powerplants
+        ppl, buses, snakemake.params.everywhere_powerplants
     )
 
     ppl = ppl.dropna(subset=["lat", "lon"])
