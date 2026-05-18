@@ -29,8 +29,8 @@ import logging
 import warnings
 
 import pandas as pd
-import pypsa
 
+from scripts._helpers import get_snapshots
 from scripts.add_electricity import STORE_LOOKUP, calculate_annuity
 
 logger = logging.getLogger(__name__)
@@ -258,8 +258,10 @@ if __name__ == "__main__":
 
     cost_params = snakemake.params["costs"]
 
-    n = pypsa.Network(snakemake.input.network)
-    nyears = n.snapshot_weightings.generators.sum() / 8760.0
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
+    nyears = len(snapshots) / 8760.0
     planning_horizon = str(snakemake.wildcards.planning_horizons)
 
     # Retrieve costs assumptions

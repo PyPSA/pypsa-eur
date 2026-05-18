@@ -631,8 +631,7 @@ rule build_hac_features:
 
 rule process_cost_data:
     input:
-        network=resources("networks/base_s.nc"),
-        costs=rules.retrieve_cost_data.output["costs"],
+                costs=rules.retrieve_cost_data.output["costs"],
         custom_costs=config_provider("costs", "custom_cost_fn"),
     output:
         resources("costs_{planning_horizons}_processed.csv"),
@@ -646,6 +645,8 @@ rule process_cost_data:
     params:
         costs=config_provider("costs"),
         max_hours=config_provider("electricity", "max_hours"),
+snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     script:
         scripts("process_cost_data.py")
 
