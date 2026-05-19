@@ -5,10 +5,14 @@ on:
     - closed
     branches:
     - master
-
+ on:
+    push:
+      branches: [master]
+      paths: [pixi.lock]
+    schedule:
+      - cron: "0 6 * * *"
 jobs:
   security-scan:
-    if: ${{ github.event.pull_request.merged == true && github.head_ref == 'update-locked-environment' }}
     name: SBOM and vulnerability scan
     runs-on: ubuntu-latest
     permissions:
