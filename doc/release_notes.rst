@@ -8,6 +8,9 @@ Release Notes
 
 .. Upcoming Release
 .. =================
+
+* refactor: Split :mod:`build_energy_totals` into three rules: :mod:`build_co2_totals` (CO2 emissions from EEA and Eurostat, no IDEES dependency) and :mod:`build_transformation_output_coke` (coke oven transformation output from Eurostat only) run independently of the remaining :mod:`build_energy_totals` (IDEES-based energy totals, transport data, district heat share, and heating efficiencies).
+
 * Fix: Re-introduce capital costs for non-bicharging discharge links in ``add_electricity.py``, e.g. fuel cells.
 
 * The lockfile update workflow now excludes packages published within the last 7 days to reduce the risk of pulling in broken or yanked releases (https://github.com/PyPSA/pypsa-eur/pull/2130).
