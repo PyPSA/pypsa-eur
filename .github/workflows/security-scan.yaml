@@ -1,16 +1,10 @@
 name: Security scan
 on:
-  pull_request:
-    types:
-    - closed
-    branches:
-    - master
- on:
-    push:
-      branches: [master]
-      paths: [pixi.lock]
-    schedule:
-      - cron: "0 6 * * *"
+  push:
+    branches: [master]
+    paths: [pixi.lock]
+  schedule:
+  - cron: "0 6 * * *"
 jobs:
   security-scan:
     name: SBOM and vulnerability scan
