@@ -55,8 +55,8 @@ EUROPE_COUNTRIES = [
 ]
 
 
-def eez(eez_path, country_list=EUROPE_COUNTRIES):
-    df = gpd.read_file(eez_path)
+def eez(eez, country_list=EUROPE_COUNTRIES):
+    df = gpd.read_file(eez)
     iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")  # noqa: F841
     pol_type = ["200NM", "Overlapping claim"]  # noqa: F841
     df = df.query("ISO_TER1 in @iso3_list and POL_TYPE in @pol_type").copy()

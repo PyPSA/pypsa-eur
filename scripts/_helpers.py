@@ -19,6 +19,7 @@ from typing import Literal
 
 import atlite
 import fiona
+import numpy as np
 import pandas as pd
 import pypsa
 import pytz
@@ -1100,7 +1101,7 @@ def _simplify_polys(
     if isinstance(polys, MultiPolygon):
         polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
         mainpoly = polys[0]
-        mainlength = mainpoly.area**0.5
+        mainlength = np.sqrt(mainpoly.area / (2.0 * np.pi))
 
         if maxdistance is not None:
             mainlength = maxdistance

@@ -78,13 +78,39 @@ NUTS3_INCLUDE = [
 
 
 def normalise_text(text):
+    """
+    Removes diacritics from non-standard Latin letters, converts them to their
+    closest standard 26-letter Latin equivalents, and removes asterisks (*) from the text.
+
+    Args:
+        text (str): Input string to normalize.
+
+    Returns:
+        str: Normalized string with only standard Latin letters and no asterisks.
+    """
+    # Normalize Unicode to decompose characters (e.g., č -> c + ̌)
     text = unicodedata.normalize("NFD", text)
+    # Remove diacritical marks by filtering out characters of the 'Mn' (Mark, Nonspacing) category
     text = "".join(char for char in text if unicodedata.category(char) != "Mn")
+    # Remove asterisks
     text = text.replace("*", "")
-    return "".join(char for char in text if char.isascii())
+    # Optionally, ensure only ASCII characters remain
+    text = "".join(char for char in text if char.isascii())
+    return text
 
 
 def simplify_europe(regions):
+    """
+    Simplifies the geometries of European regions by removing small islands and re-adding selected regions manually.
+
+    Parameters
+    ----------
+        regions (GeoDataFrame): A GeoDataFrame containing the geometries of European regions.
+
+    Returns
+    -------
+        regions (GeoDataFrame): A simplified GeoDataFrame with updated geometries and dropped entries.
+    """
     logger.info(
         "Simplifying geometries for Europe by removing small islands smaller than 500 km2 or further than 200 km away."
     )
@@ -101,6 +127,7 @@ def simplify_europe(regions):
     coverage.loc["DK"] = coverage_dk.values[0]
     coverage = gpd.GeoDataFrame(geometry=coverage, crs=DISTANCE_CRS).to_crs(GEO_CRS)
 
+    # Re-add selected regions manually
     coverage = pd.concat([coverage, regions.loc[NUTS3_INCLUDE, ["geometry"]]])
     shape = coverage.union_all()
 
@@ -111,17 +138,40 @@ def simplify_europe(regions):
         how="inner",
         predicate="intersects",
     )
+
+    # Group by level3 and country, and aggregate by union, and name index "index"
     regions_polygon = regions_polygon.groupby(["level3"])["geometry"].apply(
         lambda x: x.union_all()
     )
 
+    # Update regions
     regions = regions.loc[regions.index.isin(regions_polygon.index)]
     regions.loc[regions_polygon.index, "geometry"] = regions_polygon
+
     return regions
 
 
 def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
+    """
+    Calculate the GDP p.c. and population values for non NUTS3 regions.
+
+    Parameters
+    ----------
+        - country (str): The two-letter country code of the non-NUTS3 region.
+        - regions (GeoDataFrame): A GeoDataFrame containing the regions.
+        - gdp_non_nuts3 (str): The file path to the dataset containing the GDP p.c values
+          for non NUTS3 countries (e.g. MD, UA)
+        - pop_non_nuts3 (str): The file path to the dataset containing the POP values
+        for non NUTS3 countries (e.g. MD, UA)
+
+    Returns
+    -------
+    tuple: A tuple containing two GeoDataFrames:
+        - gdp: A GeoDataFrame with the mean GDP p.c. values mapped to each bus.
+        - pop: A GeoDataFrame with the summed POP values mapped to each bus.
+    """
     region = regions.loc[regions.country == country, ["geometry"]]
+    # Create a bounding box for UA, MD from region shape, including a buffer of 10000 metres
     bounding_box = (
         gpd.GeoDataFrame(geometry=[box(*region.total_bounds)], crs=region.crs)
         .to_crs(epsg=3857)
@@ -129,6 +179,7 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
         .to_crs(region.crs)
     )
 
+    # GDP Mapping
     logger.info(f"Mapping mean GDP p.c. to non-NUTS3 region: {country}")
     with xr.open_dataset(gdp_non_nuts3) as src_gdp:
         src_gdp = src_gdp.where(
@@ -149,8 +200,10 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
     gdp_mapped = gpd.sjoin(gdp_raster, region, predicate="within")
     gdp = gdp_mapped.groupby(["id"]).agg({"gdp": "mean"})
 
+    # Population Mapping
     logger.info(f"Mapping summed population to non-NUTS3 region: {country}")
     with rasterio.open(pop_non_nuts3) as src_pop:
+        # Mask the raster with the bounding box
         out_image, out_transform = mask(src_pop, bounding_box, crop=True)
         out_meta = src_pop.meta.copy()
         out_meta.update(
@@ -161,14 +214,16 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
                 "transform": out_transform,
             }
         )
-    masked_data = out_image[0]
+    masked_data = out_image[0]  # Use the first band (rest is empty)
     row_indices, col_indices = np.where(masked_data != src_pop.nodata)
     values = masked_data[row_indices, col_indices]
 
+    # Affine transformation from pixel coordinates to geo coordinates
     x_coords, y_coords = rasterio.transform.xy(out_transform, row_indices, col_indices)
+    pop_raster = pd.DataFrame({"x": x_coords, "y": y_coords, "pop": values})
     pop_raster = gpd.GeoDataFrame(
-        {"x": x_coords, "y": y_coords, "pop": values},
-        geometry=gpd.points_from_xy(x_coords, y_coords),
+        pop_raster,
+        geometry=gpd.points_from_xy(pop_raster.x, pop_raster.y),
         crs=src_pop.crs,
     )
     pop_mapped = gpd.sjoin(pop_raster, region, predicate="within")
@@ -176,11 +231,14 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
     gdp_pop = region.join(gdp).join(pop).drop(columns="geometry")
     gdp_pop.fillna(0, inplace=True)
 
+    # Clean and rescale data to 2019 historical values
     gdp_pop["gdp"] = gdp_pop["gdp"].round(0)
     gdp_pop["pop"] = gdp_pop["pop"].div(1e3).round(0)
+
     gdp_pop["pop"] = (
         gdp_pop["pop"].div(gdp_pop["pop"].sum()).mul(OTHER_POP_2019[country]).round(0)
     )
+
     gdp_pop["gdp"] = (
         gdp_pop["gdp"]
         .mul(1e9)
@@ -189,6 +247,7 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
         .div(EXCHANGE_EUR_USD_2019)
         / (1e3 * gdp_pop["pop"])
     ).round(0)
+
     return gdp_pop
 
 
@@ -212,56 +271,98 @@ def bidding_zone_map(
     bidding_zone_map : pandas.Series
         A Series with the same index as regions, containing the assigned bidding zone names.
     """
-    bz_map = pd.Series(pd.NA, regions.index, dtype="object")
+    # Initialize the bidding_zone column with NaN values
+    bidding_zone_map = pd.Series(pd.NA, regions.index, dtype="object")
+
     logger.info("Mapping bidding zones to regions based on maximum overlap area")
 
-    for country in regions["country"].unique():
-        country_regions = regions.loc[regions["country"] == country].copy()
-        country_bz = bidding_zones[bidding_zones.country == country]
+    # Get unique countries in regions
+    countries = regions["country"].unique()
 
-        if country_regions.empty or country_bz.empty:
+    # Process each country separately
+    for country in countries:
+        # Get regions for this country
+        country_sel = regions["country"] == country
+        country_regions = regions.loc[country_sel].copy()
+
+        # Get bidding zones for this country
+        country_bidding_zones = bidding_zones[bidding_zones.country == country]
+
+        if country_regions.empty or country_bidding_zones.empty:
             logger.debug(
                 f"Skipping country {country}: no regions or bidding zones found"
             )
             continue
 
-        if country_regions.crs != country_bz.crs:
-            country_bz = country_bz.to_crs(country_regions.crs)
+        logger.debug(f"Processing {len(country_regions)} regions in country: {country}")
 
-        assignments, no_overlap = [], []
+        # Calculate overlap for each region with each bidding zone
+        assignments = []
+        no_overlap_regions = []
+
+        # Ensure same CRS for accurate area calculations
+        if country_regions.crs != country_bidding_zones.crs:
+            country_bidding_zones = country_bidding_zones.to_crs(country_regions.crs)
+
         for idx, region in country_regions.iterrows():
-            best_zone, max_overlap = None, 0
-            for _, zone in country_bz.iterrows():
-                intersection = region.geometry.intersection(zone.geometry)
-                if not intersection.is_empty and intersection.area > max_overlap:
-                    max_overlap = intersection.area
-                    best_zone = zone.zone_name
+            region_geom = region.geometry
+            max_overlap = 0
+            best_zone = None
+
+            for _, zone in country_bidding_zones.iterrows():
+                intersection = region_geom.intersection(zone.geometry)
+                if not intersection.is_empty:
+                    overlap_area = intersection.area
+                    if overlap_area > max_overlap:
+                        max_overlap = overlap_area
+                        best_zone = zone.zone_name
+
             if best_zone is not None:
                 assignments.append((idx, best_zone))
             else:
-                no_overlap.append(idx)
+                # Keep track of regions with no overlap for nearest assignment
+                no_overlap_regions.append(idx)
+                logger.debug(
+                    f"Region {idx} in {country} has no overlap with any bidding zone, will use nearest"
+                )
 
+        # Update the bidding_zone column for regions with overlap
         for idx, zone in assignments:
-            bz_map[idx] = zone
+            bidding_zone_map[idx] = zone
 
-        if no_overlap:
+        # Handle regions with no overlap by finding nearest bidding zone
+        if no_overlap_regions:
             logger.info(
-                f"Assigning {len(no_overlap)} regions in {country} to nearest bidding zone"
+                f"Assigning {len(no_overlap_regions)} regions in {country} to nearest bidding zone"
             )
-            for idx in no_overlap:
+
+            for idx in no_overlap_regions:
                 region_geom = regions.loc[idx, "geometry"]
-                distances = country_bz.geometry.distance(region_geom)
-                if not distances.empty:
-                    bz_map[idx] = country_bz.loc[distances.idxmin(), "zone_name"]
+                min_distance = float("inf")
+                nearest_zone = None
+
+                for _, zone in country_bidding_zones.iterrows():
+                    distance = region_geom.distance(zone.geometry)
+                    if distance < min_distance:
+                        min_distance = distance
+                        nearest_zone = zone.zone_name
+
+                if nearest_zone is not None:
+                    bidding_zone_map[idx] = nearest_zone
+                    logger.debug(
+                        f"Region {idx} assigned to nearest zone {nearest_zone}"
+                    )
                 else:
                     logger.warning(
                         f"Could not find any bidding zone for region {idx} in {country}"
                     )
 
-    unassigned = bz_map.isnull().sum()
+    # Check if any regions couldn't be assigned
+    unassigned = bidding_zone_map.isnull().sum()
     if unassigned > 0:
         logger.warning(f"{unassigned} regions couldn't be assigned to any bidding zone")
-    return bz_map
+
+    return bidding_zone_map
 
 
 def create_regions(
@@ -279,96 +380,136 @@ def create_regions(
     other_pop,
 ):
     """
-    Build the NUTS3/ADM1 region GeoDataFrame enriched with GDP, population,
-    and optionally bidding zone assignments.
+    Create regions by processing NUTS and non-NUTS geographical shapes.
 
     Parameters
     ----------
-    country_list : list[str]
-    nuts3_path : str
-    ba_adm1_path, md_adm1_path, ua_adm1_path, xk_adm1_path : str
-    offshore_shapes : geopandas.GeoDataFrame
-        Used to clip onshore region boundaries at the coastline.
-    nuts3_gdp, nuts3_pop : str
-    bidding_zones_path : str or list
-    other_gdp, other_pop : str
+        - country_list (list): List of country codes to include.
+        - nuts3_path (str): Path to the NUTS3 2021 shapefile.
+        - ba_adm1_path (str): Path to adm1 boundaries for Bosnia and  Herzegovina.
+        - md_adm1_path (str): Path to adm1 boundaries for Moldova.
+        - ua_adm1_path (str): Path to adm1 boundaries for Ukraine.
+        - xk_adm1_path (str): Path to adm1 boundaries for Kosovo.
+        - offshore_shapes (geopandas.GeoDataFrame): Geographical shapes of the exclusive economic zones.
 
     Returns
     -------
-    geopandas.GeoDataFrame
+        geopandas.GeoDataFrame: A GeoDataFrame containing the processed regions with columns:
+            - id: Region identifier.
+            - country: Country code.
+            - name: Region name.
+            - geometry: Geometrical shape of the region.
+            - level1: Level 1 region identifier.
+            - level2: Level 2 region identifier.
+            - level3: Level 3 region identifier.
     """
+    # Prepare NUTS shapes
     logger.info("Processing NUTS regions.")
     regions = gpd.read_file(nuts3_path)
-    regions.loc[regions.CNTR_CODE == "EL", "CNTR_CODE"] = "GR"
+    regions.loc[regions.CNTR_CODE == "EL", "CNTR_CODE"] = "GR"  # Rename "EL" to "GR
     regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("EL", "GR")
-    regions.loc[regions.CNTR_CODE == "UK", "CNTR_CODE"] = "GB"
+    regions.loc[regions.CNTR_CODE == "UK", "CNTR_CODE"] = "GB"  # Rename "UK" to "GB"
     regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("UK", "GB")
 
-    regions = regions[["NUTS_ID", "CNTR_CODE", "NAME_LATN", "geometry"]].rename(
+    # Create new df
+    regions = regions[["NUTS_ID", "CNTR_CODE", "NAME_LATN", "geometry"]]
+
+    # Rename columns and add level columns
+    regions = regions.rename(
         columns={"NUTS_ID": "id", "CNTR_CODE": "country", "NAME_LATN": "name"}
     )
+
+    # Normalise text
     regions["id"] = regions["id"].apply(normalise_text)
+
     regions["level1"] = regions["id"].str[:3]
     regions["level2"] = regions["id"].str[:4]
     regions["level3"] = regions["id"]
 
+    # Non NUTS countries
     logger.info("Processing non-NUTS regions.")
-    regions_non_nuts = pd.concat(
-        [
-            gpd.read_file(p)
-            for p in [ba_adm1_path, md_adm1_path, ua_adm1_path, xk_adm1_path]
-        ]
-    ).drop(columns=["osm_id"])
+
+    ba_adm1 = gpd.read_file(ba_adm1_path)
+    md_adm1 = gpd.read_file(md_adm1_path)
+    ua_adm1 = gpd.read_file(ua_adm1_path)
+    xk_adm1 = gpd.read_file(xk_adm1_path)
+
+    regions_non_nuts = pd.concat([ba_adm1, md_adm1, ua_adm1, xk_adm1])
+    regions_non_nuts = regions_non_nuts.drop(columns=["osm_id"])
+
+    # Normalise text
     regions_non_nuts["id"] = regions_non_nuts["id"].apply(normalise_text)
     regions_non_nuts["name"] = regions_non_nuts["name"].apply(normalise_text)
+
+    # Add level columns
     regions_non_nuts["level1"] = regions_non_nuts["id"]
     regions_non_nuts["level2"] = regions_non_nuts["id"]
     regions_non_nuts["level3"] = regions_non_nuts["id"]
 
+    # Clip regions by non-NUTS shapes
     regions["geometry"] = regions["geometry"].difference(
         regions_non_nuts.geometry.union_all()
     )
 
+    # Concatenate NUTS and non-NUTS regions
     logger.info("Harmonising NUTS and non-NUTS regions.")
-    regions = pd.concat([regions, regions_non_nuts]).set_index("id")
+    regions = pd.concat([regions, regions_non_nuts])
+    regions.set_index("id", inplace=True)
+
+    # Drop regions out of geographical scope
     regions = regions.drop(DROP_REGIONS, errors="ignore")
 
+    # Clip regions by offshore shapes
     logger.info("Clipping regions by offshore shapes.")
     regions["geometry"] = regions["geometry"].difference(
         offshore_shapes.geometry.union_all()
     )
 
+    # GDP and POP for NUTS3 regions
+    # GDP
     logger.info(f"Importing JRC ARDECO GDP data for year {GDP_YEAR}.")
-    nuts3_gdp_df = pd.read_csv(nuts3_gdp, index_col=[0])
-    nuts3_gdp_df = nuts3_gdp_df.query("LEVEL_ID == 3 and UNIT == 'EUR'")
-    nuts3_gdp_df.index = nuts3_gdp_df.index.str.replace("UK", "GB").str.replace(
-        "EL", "GR"
-    )
-    regions["gdp"] = nuts3_gdp_df[str(GDP_YEAR)]
+    nuts3_gdp = pd.read_csv(nuts3_gdp, index_col=[0])
+    nuts3_gdp = nuts3_gdp.query("LEVEL_ID == 3 and UNIT == 'EUR'")
+    nuts3_gdp.index = nuts3_gdp.index.str.replace("UK", "GB").str.replace("EL", "GR")
+    nuts3_gdp = nuts3_gdp[str(GDP_YEAR)]
+    regions["gdp"] = nuts3_gdp
 
+    # Population
     logger.info(f"Importing JRC ARDECO population data for year {POP_YEAR}.")
-    nuts3_pop_df = pd.read_csv(nuts3_pop, index_col=[0])
-    nuts3_pop_df = nuts3_pop_df.query("LEVEL_ID == 3")
-    nuts3_pop_df.index = nuts3_pop_df.index.str.replace("UK", "GB").str.replace(
-        "EL", "GR"
-    )
-    regions["pop"] = nuts3_pop_df[str(POP_YEAR)].div(1e3).round(0)
+    nuts3_pop = pd.read_csv(nuts3_pop, index_col=[0])
+    nuts3_pop = nuts3_pop.query("LEVEL_ID == 3")
+    nuts3_pop.index = nuts3_pop.index.str.replace("UK", "GB").str.replace("EL", "GR")
+    nuts3_pop = nuts3_pop[str(POP_YEAR)]
+    regions["pop"] = nuts3_pop.div(1e3).round(0)
 
+    # GDP and POP for non-NUTS3 regions
     other_countries = {"BA", "MD", "UA", "XK"}
-    if any(c in country_list for c in other_countries):
+
+    if any(country in country_list for country in other_countries):
         gdp_pop = pd.concat(
-            [calc_gdp_pop(c, regions, other_gdp, other_pop) for c in other_countries],
+            [
+                calc_gdp_pop(country, regions, other_gdp, other_pop)
+                for country in other_countries
+            ],
             axis=0,
         )
+
+        # Merge NUTS3 and non-NUTS3 regions
         regions.loc[gdp_pop.index, ["gdp", "pop"]] = gdp_pop[["gdp", "pop"]]
 
+    # Resort columns and rename index
     regions = regions[
         ["name", "level1", "level2", "level3", "gdp", "pop", "country", "geometry"]
     ]
     regions.index.name = "index"
+
+    # Simplify geometries
     regions = simplify_europe(regions)
+
+    # Only include countries in the config
     regions = regions.query("country in @country_list")
 
+    # Add bidding zone information
     if bidding_zones_path:
         bidding_zones = gpd.read_file(bidding_zones_path)
         regions = regions.assign(bidding_zone=bidding_zone_map(regions, bidding_zones))
