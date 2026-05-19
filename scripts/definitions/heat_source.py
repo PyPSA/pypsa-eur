@@ -5,6 +5,8 @@
 import logging
 from enum import Enum
 
+import pandas as pd
+
 logger = logging.getLogger(__name__)
 
 
@@ -267,7 +269,13 @@ class HeatSource(Enum):
         str
             Carrier name in format '{heat_system} {source} heat heat pump output'.
         """
-        return f"{self.heat_carrier(heat_system)} heat pump output"
+        if self.requires_bus:
+            if self.supports_preheating:
+                return f"{self.heat_carrier(heat_system)} heat pump output"
+            else:
+                return f"{self.heat_carrier(heat_system)} heat pump input"
+        else:
+            return ""
 
     def intermediate_bus(self, nodes, heat_system) -> str:
         """
@@ -291,7 +299,7 @@ class HeatSource(Enum):
         str
             Bus name for evaporator sources, empty string otherwise.
         """
-        if self.requires_bus and not self.supports_preheating:
+        if self.requires_bus:
             return nodes + f" {self.intermediate_carrier(heat_system)}"
         else:
             return ""
@@ -366,3 +374,65 @@ class HeatSource(Enum):
             Bus name combining nodes with heat carrier in format 'nodes + {heat_system} {source} heat'.
         """
         return nodes + f" {self.heat_carrier(heat_system)}"
+
+    def delivered_heat_per_source_heat(
+        self, boosting_profile: pd.DataFrame, cop: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Calculate the utilisation efficiency from resource bus to demand for a given heat source.
+
+        For sources with preheating, this is `1 + boosting_profile / cop`. It is NOT `1 + boosting_profile`, because the actual energy addition, in electricity, per unit of source heat, by the heat pump is `boosting_profile / cop` accounting for the fact that the heat pump uses some of the source heat as input.
+        For other exhaustible sources, this is `0` (no direct contribution to demand, all source heat goes to HP input).
+        For inexhaustible sources, this should not be called.
+
+        Parameters
+        ----------
+        boosting_profile : pd.DataFrame
+            Time series of boosting ratios (fraction of source heat going to HP output).
+        cop : pd.DataFrame
+            Time series of COP values for the heat pump.
+
+        Returns
+        -------
+        pd.DataFrame
+            Time series of utilisation efficiency from resource bus to demand.
+
+        Raises
+        ------
+        RuntimeError
+             If COP and boosting profile values are inconsistent (e.g., one is zero while the other is positive), which would indicate invalid input data.
+        """
+        if (cop * boosting_profile == 0) and (cop + boosting_profile > 0):
+            raise RuntimeError(
+                "Invalid input: COP and boosting profile must either both be zero or both be positive."
+            )
+
+        if self.supports_preheating:
+            return 1 + (boosting_profile / cop).replace([float("inf"), 0])
+        else:
+            return 0
+
+    def source_heat_per_hp_output(self, boosting_profile: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate the utilisation efficiency from resource bus to HP for a given heat source.
+
+        For preheating sources, the heat pump delivers `boosting_profile` MWh per  1 MWh source heat. Thus, the efficiency is `-1 / boosting_profile` (negative because the source heat is consumed, and the HP output is positive).
+        For other exhaustible sources, the efficiency is `1` (all source heat goes to HP input, none directly to demand).
+        For inexhaustible sources, this should not be called.
+
+        Parameters
+        ----------
+        boosting_profile : pd.DataFrame
+            Time series of boosting ratios (fraction of source heat going to HP output).
+        cop : pd.DataFrame
+            Time series of COP values for the heat pump.
+
+        Returns
+        -------
+        pd.DataFrame
+            Time series of utilisation efficiency from resource bus to HP output.
+        """
+        if self.supports_preheating:
+            return -boosting_profile
+        else:
+            return 1

@@ -3278,24 +3278,24 @@ def add_heat(
                         .transpose("time", "name")
                         .to_pandas()
                     )
+                else:
+                    boosting_profile = None
                 # Utilisation link: resource_bus → DH heat + intermediate_bus
                 # Preheating: source directly heats DH (eff=1+b), HP boosts remainder (eff2=-b)
-                # Evaporator: all source → HP cold side (eff=0, eff2=1)
+                # No preheating: all source → HP cold side (eff=0, eff2=1)
                 n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat utilisation",
                     bus0=heat_source.resource_bus(nodes, heat_system),
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=nodes + f" {heat_source.intermediate_carrier(heat_system)}",
-                    efficiency=1 + boosting_profile / cop_heat_pump
-                    if heat_source.supports_preheating
-                    else 0,
-                    efficiency2=-boosting_profile
-                    * cop_heat_pump
-                    / (boosting_profile + cop_heat_pump)
-                    if heat_source.supports_preheating
-                    else 1,
+                    bus2=heat_source.intermediate_carrier(heat_system),
+                    efficiency=heat_source.delivered_heat_per_source_heat(
+                        boosting_profile=boosting_profile, cop=cop_heat_pump
+                    ),
+                    efficiency2=heat_source.source_heat_per_hp_output(
+                        boosting_profile=boosting_profile
+                    ),
                     carrier=f"{heat_system} {heat_source} heat utilisation",
                     p_nom_extendable=True,
                 )
