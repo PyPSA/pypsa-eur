@@ -434,8 +434,8 @@ def apply_carrier_mixing_policy(
 
     If ``allow_ac_dc_mixing_in_bus_clusters`` is True, mixed AC/DC clusters are
     kept as-is. If it is False, buses in mixed clusters are split by appending
-    the carrier to the cluster label, for example ``cluster::AC`` and
-    ``cluster::DC``.
+    the carrier directly to the cluster label, for example ``clusterAC`` and
+    ``clusterDC``.
 
     Parameters
     ----------
@@ -471,7 +471,7 @@ def apply_carrier_mixing_policy(
             "Splitting %s mixed AC/DC clusters by carrier before aggregation.",
             len(mixed_clusters),
         )
-    return busmap.str.cat(carrier_by_bus, sep="::")
+    return busmap.str.cat(carrier_by_bus, sep="")
 
 
 def cluster_regions(
