@@ -267,19 +267,17 @@ class HeatSource(Enum):
         Returns
         -------
         str
-            Carrier name in format '{heat_system} {source} heat heat pump output'.
+            Carrier name in format '{heat_system} {source} heat intermediate'
+            for limited sources; empty string for inexhaustible sources.
         """
         if self.requires_bus:
-            if self.supports_preheating:
-                return f"{self.heat_carrier(heat_system)} heat pump output"
-            else:
-                return f"{self.heat_carrier(heat_system)} heat pump input"
+            return f"{self.heat_carrier(heat_system)} intermediate"
         else:
             return ""
 
     def intermediate_bus(self, nodes, heat_system) -> str:
         """
-        Get the intermediate bus connecting the utilisation link and heat pump.
+        Connection of utilisation link and heat pump. Heat pump output for preheating sources, heat pump input for other sources.
 
         For limited sources (requires_bus=True), returns the dedicated
         intermediate bus. For preheating sources, the HP produces onto this bus
@@ -376,7 +374,10 @@ class HeatSource(Enum):
         return nodes + f" {self.heat_carrier(heat_system)}"
 
     def delivered_heat_per_source_heat(
-        self, boosting_profile: pd.DataFrame, cop: pd.DataFrame
+        self,
+        boosting_profile: pd.DataFrame,
+        cop: pd.DataFrame,
+        discharge_resistive_boosting: bool = None,
     ) -> pd.DataFrame:
         """
         Calculate the utilisation efficiency from resource bus to demand for a given heat source.
@@ -391,6 +392,8 @@ class HeatSource(Enum):
             Time series of boosting ratios (fraction of source heat going to HP output).
         cop : pd.DataFrame
             Time series of COP values for the heat pump.
+        discharge_resistive_boosting : bool, optional
+            Whether PTES uses resistive boosting during discharge instead of heat pumps. If True, the delivered heat per source heat for PTES is `1 + boosting_profile` without division by COP.Required only for PTES.
 
         Returns
         -------
@@ -402,19 +405,20 @@ class HeatSource(Enum):
         RuntimeError
              If COP and boosting profile values are inconsistent (e.g., one is zero while the other is positive), which would indicate invalid input data.
         """
-        if (cop * boosting_profile == 0) and (cop + boosting_profile > 0):
-            raise RuntimeError(
-                "Invalid input: COP and boosting profile must either both be zero or both be positive."
-            )
+        if self == HeatSource.PTES and discharge_resistive_boosting:
+            # For PTES with resistive boosting, the delivered heat per source heat is 1 (direct contribution) + boosting_profile (additional from resistive heaters), without division by COP since no heat pump is used.
+            return 1 + boosting_profile.replace(float("inf"), 0)
 
-        if self.supports_preheating:
-            return 1 + (boosting_profile / cop).replace([float("inf"), 0])
+        elif self.supports_preheating:
+            return 1 + (boosting_profile / cop).replace(float("inf"), 0)
         else:
             return 0
 
-    def source_heat_per_hp_output(self, boosting_profile: pd.DataFrame) -> pd.DataFrame:
+    def booster_output_per_source_heat(
+        self, boosting_profile: pd.DataFrame
+    ) -> pd.DataFrame:
         """
-        Calculate the utilisation efficiency from resource bus to HP for a given heat source.
+        Necessary booster output per unit of source heat for preheating sources. 1 for non-preheating sources (utilisation link bus 2 points to HP input).
 
         For preheating sources, the heat pump delivers `boosting_profile` MWh per  1 MWh source heat. Thus, the efficiency is `-1 / boosting_profile` (negative because the source heat is consumed, and the HP output is positive).
         For other exhaustible sources, the efficiency is `1` (all source heat goes to HP input, none directly to demand).

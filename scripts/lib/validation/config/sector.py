@@ -34,8 +34,8 @@ class _PtesConfig(BaseModel):
     )
     temperature_dependent_capacity: bool = Field(
         False,
-        description="If True, the energy capacity is scaled as "
-        "`e_nom_pu=(top_temperature - bottom_temperature) / (design_top_temperature - design_bottom_temperature)`. "
+        description="If True, the p.u. - energy capacity `e_max_pu` is scaled as "
+        "`(top_temperature - bottom_temperature) / (design_top_temperature - design_bottom_temperature)`. "
         "See `build_ptes_operations`.",
     )
     charge_boosting_required: bool = Field(
@@ -472,8 +472,10 @@ class SectorConfig(BaseModel):
             HeatSystemType.RURAL: [HeatSource.AIR, HeatSource.GROUND],
         },
         description=(
-            "Heat sources by heat system type. Allowed: "
-            "urban central: all except 'ground'; "
+            "Heat sources by heat system type. "
+            "District-heating-only sources (`ptes`, `geothermal`, `river_water`, `sea_water`) "
+            "are restricted to `urban central`. Allowed: "
+            "urban central: any of {air, ptes, geothermal, river_water, sea_water}; "
             "urban decentral: ['air']; "
             "rural: ['air', 'ground']."
         ),
@@ -484,7 +486,13 @@ class SectorConfig(BaseModel):
     def validate_heat_sources_for_system_type(
         cls, v: dict[HeatSystemType, list[HeatSource]]
     ) -> dict[HeatSystemType, list[HeatSource]]:
-        """Validate that heat sources are appropriate for each system type."""
+        """
+        Validate that heat sources are appropriate for each system type.
+
+        District-heating-only sources (`ptes`, `geothermal`, `river_water`,
+        `sea_water`) require district-heating infrastructure and are restricted
+        to `urban central`. `ground` is restricted to `rural`.
+        """
         allowed_heat_sources = {
             HeatSystemType.URBAN_CENTRAL: [
                 s for s in HeatSource if s != HeatSource.GROUND
@@ -501,6 +509,44 @@ class SectorConfig(BaseModel):
                     f"'{system_type.value}'. Allowed: {[s.value for s in allowed]}."
                 )
         return v
+
+    @model_validator(mode="after")
+    def validate_ptes_consistency(self) -> "SectorConfig":
+        """
+        Cross-field checks for PTES and resistive boosting.
+
+        - `district_heating.ptes.enable` must agree with `'ptes'` being listed
+          in `heat_sources['urban central']`. Otherwise the network ends up
+          with either a PTES storage that nothing discharges into the system
+          or a PTES resource bus with no upstream storage.
+        - `district_heating.ptes.discharge_resistive_boosting=True` requires
+          `resistive_heaters=True`, since the resistive booster link reroutes
+          the resistive heater's output and is built inside the
+          `resistive_heaters` branch in `prepare_sector_network.add_heat`.
+        """
+        ptes = self.district_heating.ptes
+        urban_central_sources = self.heat_sources.get(HeatSystemType.URBAN_CENTRAL, [])
+        ptes_in_sources = HeatSource.PTES in urban_central_sources
+
+        if ptes.enable and not ptes_in_sources:
+            raise ValueError(
+                "`district_heating.ptes.enable=True` requires `'ptes'` in "
+                "`heat_sources['urban central']` so the PTES resource bus, "
+                "utilisation link, and (optionally) booster are built."
+            )
+        if ptes_in_sources and not ptes.enable:
+            raise ValueError(
+                "`'ptes'` is listed in `heat_sources['urban central']` but "
+                "`district_heating.ptes.enable=False`. Either remove `'ptes'` "
+                "from heat sources or enable PTES."
+            )
+        if ptes.discharge_resistive_boosting and not self.resistive_heaters:
+            raise ValueError(
+                "`district_heating.ptes.discharge_resistive_boosting=True` "
+                "requires `resistive_heaters=True`: the resistive booster "
+                "reroutes resistive-heater output to the PTES intermediate bus."
+            )
+        return self
 
     residential_heat: _ResidentialHeatConfig = Field(
         default_factory=_ResidentialHeatConfig,
