@@ -415,11 +415,6 @@ def clustering_for_n_clusters(
     bus_strategies.setdefault("substation_lv", lambda x: bool(x.sum()))
     bus_strategies.setdefault("substation_off", lambda x: bool(x.sum()))
 
-    # TODO Quick Fix for osm-prebuilt-version 0.6
-    for way_i in ["way/140248154", "way/975637991"]:
-        if way_i in n.buses.index:
-            n.buses.loc[way_i, "carrier"] = "AC"
-
     clustering = get_clustering_from_busmap(
         n,
         busmap,
