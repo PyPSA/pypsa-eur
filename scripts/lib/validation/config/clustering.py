@@ -65,9 +65,9 @@ class _ClusterNetworkConfig(BaseModel):
         "kmeans",
         description="Clustering algorithm to use.",
     )
-    allow_ac_dc_mix: bool = Field(
-        True,
-        description="Controls whether clustering is allowed to mix AC and DC buses within a cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+    allow_ac_dc_mixing_in_bus_clusters: bool = Field(
+        False,
+        description="Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
     )
     hac_features: list[str] = Field(
         default_factory=lambda: ["wnd100m", "influx_direct"],

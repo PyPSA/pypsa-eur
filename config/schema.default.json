@@ -565,9 +565,9 @@
               ],
               "type": "string"
             },
-            "allow_ac_dc_mix": {
-              "default": true,
-              "description": "Controls whether clustering is allowed to mix AC and DC buses within a cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+            "allow_ac_dc_mixing_in_bus_clusters": {
+              "default": false,
+              "description": "Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
               "type": "boolean"
             },
             "hac_features": {
@@ -5959,9 +5959,9 @@
           ],
           "type": "string"
         },
-        "allow_ac_dc_mix": {
-          "default": true,
-          "description": "Controls whether clustering is allowed to mix AC and DC buses within a cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+        "allow_ac_dc_mixing_in_bus_clusters": {
+          "default": false,
+          "description": "Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
           "type": "boolean"
         },
         "hac_features": {
@@ -12022,9 +12022,9 @@
               ],
               "type": "string"
             },
-            "allow_ac_dc_mix": {
-              "default": true,
-              "description": "Controls whether clustering is allowed to mix AC and DC buses within a cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+            "allow_ac_dc_mixing_in_bus_clusters": {
+              "default": false,
+              "description": "Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
               "type": "boolean"
             },
             "hac_features": {

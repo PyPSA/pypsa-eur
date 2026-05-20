@@ -242,9 +242,6 @@ def simplify_links(
 
     _remove_clustered_buses_and_branches(n, busmap)
 
-    # Change carrier type of all added super_nodes to "AC"
-    n.buses.loc[added_supernodes, "carrier"] = "AC"
-
     return n, busmap
 
 

@@ -432,18 +432,59 @@ def clustering_for_n_clusters(
 
 
 def apply_carrier_mixing_policy(
-    n: pypsa.Network, busmap: pd.Series, allow_ac_dc_mix: bool
+    n: pypsa.Network, busmap: pd.Series, allow_ac_dc_mixing_in_bus_clusters: bool
 ) -> pd.Series:
-    """Apply carrier mixing policy to a busmap before clustering."""
+    """Apply carrier mixing policy to a busmap before clustering.
+
+    This function enforces a policy for how AC and DC buses are handled when
+    assigning buses to clusters. Two behaviors are supported:
+
+        - If ``allow_ac_dc_mixing_in_bus_clusters`` is True, any cluster that contains a mix of AC and
+      DC buses will be coerced to AC by setting the carrier of the affected
+      buses in ``n.buses['carrier']`` to ``"AC"`` (mutation in-place).
+        - If ``allow_ac_dc_mixing_in_bus_clusters`` is False, mixed clusters are split by appending
+      the bus carrier to the cluster label (``"<cluster>::AC"`` or
+      ``"<cluster>::DC"``) so that AC and DC buses are placed into separate
+      aggregated clusters.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        PyPSA network containing a ``buses`` DataFrame with a ``carrier``
+        column. Note that when ``allow_ac_dc_mixing_in_bus_clusters`` is True this object is
+        mutated in-place (``n.buses['carrier']`` may be changed).
+    busmap : pandas.Series
+        Series mapping bus index to cluster label. The index should align with
+        ``n.buses.index``. Values are treated as strings and may be returned
+        modified when clusters are split by carrier.
+    allow_ac_dc_mixing_in_bus_clusters : bool
+        Policy flag: when True mixed AC/DC clusters are coerced to AC; when
+        False mixed clusters are split by carrier in the returned busmap.
+
+    Returns
+    -------
+    pandas.Series
+        The (possibly modified) busmap. If ``allow_ac_dc_mixing_in_bus_clusters`` is False, the
+        returned series will contain cluster labels with the carrier appended
+        using the separator ``"::"`` for buses that originally belonged to a
+        mixed cluster.
+
+    Notes
+    -----
+    - The function casts ``busmap`` and bus carriers to strings internally.
+    - When coercing carriers to AC the change is applied directly to
+      ``n.buses['carrier']`` and is therefore visible to callers holding the
+      same ``n`` object.
+    """
     busmap = busmap.astype(str)
     carrier_by_bus = n.buses.carrier.reindex(busmap.index).astype(str)
 
     mixed_clusters = carrier_by_bus.groupby(busmap).nunique().loc[lambda s: s > 1].index
 
-    if allow_ac_dc_mix:
+    if allow_ac_dc_mixing_in_bus_clusters:
         if len(mixed_clusters):
             logger.warning(
-                "`allow_ac_dc_mix` is enabled. Coercing bus carrier to AC in %s mixed clusters.",
+                "`allow_ac_dc_mixing_in_bus_clusters` is enabled. Coercing bus carrier to AC in %s mixed clusters.",
                 len(mixed_clusters),
             )
             mixed_bus_i = busmap.index[busmap.isin(mixed_clusters)]
@@ -613,7 +654,21 @@ def update_bus_coordinates(
     admin_regions["y"] = admin_regions["poi"].y
 
     busmap_df = pd.DataFrame(busmap)
-    busmap_df["admin"] = busmap_df["busmap"].astype(str).str.split("::", n=1).str[0]
+
+    # Determine admin for each bus via spatial join of bus coordinates
+    # to the administrative polygons
+    buses_gdf = gpd.GeoDataFrame(
+        n.buses[["x", "y"]].copy(),
+        geometry=gpd.points_from_xy(n.buses["x"], n.buses["y"]),
+        crs=geo_crs,
+    )
+
+    # Find nearest admin region for each bus 
+    admin_geo = admin_regions.copy()
+    admin_geo["admin_id"] = admin_geo.index
+    joined = gpd.sjoin_nearest(buses_gdf, admin_geo, how="left")
+    busmap_df["admin"] = joined["admin_id"].astype(str).reindex(busmap_df.index)
+
     busmap_df = pd.merge(
         busmap_df,
         admin_regions[["x", "y"]],
@@ -714,8 +769,13 @@ if __name__ == "__main__":
                 features=features,
             )
 
-        allow_ac_dc_mix = params.cluster_network.get("allow_ac_dc_mix", False)
-        busmap = apply_carrier_mixing_policy(n, busmap, allow_ac_dc_mix)
+        allow_ac_dc_mixing_in_bus_clusters = params.cluster_network[
+            "allow_ac_dc_mixing_in_bus_clusters"
+        ]
+
+        busmap = apply_carrier_mixing_policy(
+            n, busmap, allow_ac_dc_mixing_in_bus_clusters
+        )
 
         clustering = clustering_for_n_clusters(
             n,
