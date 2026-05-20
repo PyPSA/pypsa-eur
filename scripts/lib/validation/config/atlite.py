@@ -122,7 +122,7 @@ class AtliteConfig(BaseModel):
         description="Whether progressbar for atlite conversion processes should be shown. False saves time.",
     )
     plot_availability_matrix: bool = Field(
-        False,
+        True,
         description="Whether to plot the landuse availability matrix.",
     )
     cutouts: dict[str, _CutoutConfig] = Field(

@@ -185,7 +185,7 @@
           "type": "boolean"
         },
         "plot_availability_matrix": {
-          "default": false,
+          "default": true,
           "description": "Whether to plot the landuse availability matrix.",
           "type": "boolean"
         },
@@ -8802,7 +8802,7 @@
           "type": "boolean"
         },
         "plot_availability_matrix": {
-          "default": false,
+          "default": true,
           "description": "Whether to plot the landuse availability matrix.",
           "type": "boolean"
         },
