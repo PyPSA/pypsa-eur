@@ -263,8 +263,10 @@ rule determine_availability_matrix_MD_UA:
             w, config_provider("renewable", w.technology, "cutout")(w)
         ),
     output:
-        availability_matrix=resources(
-            "availability_matrix_MD-UA_{clusters}_{technology}.nc"
+        nc=resources("availability_matrix_MD-UA_{clusters}_{technology}.nc"),
+        plot=branch(
+            config["atlite"]["plot_availability_matrix"],
+            then=resources("availability_matrix_MD-UA_{clusters}_{technology}.png"),
         ),
     log:
         logs("determine_availability_matrix_MD_UA_{clusters}_{technology}.log"),
@@ -275,6 +277,7 @@ rule determine_availability_matrix_MD_UA:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     params:
         renewable=config_provider("renewable"),
+        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     message:
         "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} technology"
     script:
