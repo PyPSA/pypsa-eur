@@ -8,6 +8,7 @@ channels = ["conda-forge", "bioconda", "gurobi"]
 name = "pypsa-eur"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "2025.07.0"
+exclude-newer = "7d"
 
 [tasks]
 
@@ -43,7 +44,7 @@ sync-locks = """
 """
 
 [dependencies]
-atlite = ">=0.3"
+atlite = ">=0.3,!=0.5.0"
 bokeh = ">=3.8.0"
 cartopy = ">=0.25.0"
 copernicusmarine = ">=2.2.4"

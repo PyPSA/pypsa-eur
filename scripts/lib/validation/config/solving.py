@@ -350,6 +350,7 @@ class SolvingConfig(BaseModel):
                 "AggFill": 0,
                 "PreDual": 0,
                 "GURO_PAR_BARDENSETHRESH": 200,
+                "IISMethod": 1,
             },
             "gurobi-numeric-focus": {
                 "NumericFocus": 3,

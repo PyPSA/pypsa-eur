@@ -10,6 +10,8 @@ Release Notes
 .. =================
 * Fix: Prevent over-aggressive HVDC simplification in simplify_network for branched/multi-terminal DC topologies (e.g. UK/Shetland edge cases). Supernode detection now only collapses true chain nodes (degree 2) and preserves DC junctions (degree 3+) so branches are not dropped(https://github.com/PyPSA/pypsa-eur/pull/2147).
 
+* Fix: Re-introduce capital costs for non-bicharging discharge links in ``add_electricity.py``, e.g. fuel cells.
+
 * The lockfile update workflow now excludes packages published within the last 7 days to reduce the risk of pulling in broken or yanked releases (https://github.com/PyPSA/pypsa-eur/pull/2130).
 
 * The industry reference year and the ammonia production data have been updated to 2023 (https://github.com/PyPSA/pypsa-eur/pull/2103)
@@ -21,6 +23,12 @@ Release Notes
 * feat: Add options for carrier specific load shedding and load sinks configurable via `load_shedding` and `load_sinks` respectively (https://github.com/PyPSA/pypsa-eur/pull/2105).
 
 * perf: Optimize dask settings for computing weather-dependent profiles (https://github.com/PyPSA/pypsa-eur/pull/2137).
+
+* Fix: correct definition of `marginal_cost` for those links were `vom` values from technology cost datasets are defined per units of output (e.g., electricity) (https://github.com/PyPSA/pypsa-eur/pull/2154).
+
+* feat: Improve the config validation to cover scenario management (https://github.com/PyPSA/pypsa-eur/pull/2155).
+
+- Added solar rooftop ratio setting to ``add_existing_baseyear`` for heuristically splitting existing solar capacity between rooftop and utility-scale (defaults to a 50:50 split).
 
 PyPSA-Eur v2026.02.0 (18th February 2026)
 =========================================

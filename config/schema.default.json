@@ -2408,6 +2408,11 @@
           "description": "Default lifetime for heating technologies (years).",
           "type": "integer"
         },
+        "solar_rooftop_ratio": {
+          "default": 0.5,
+          "description": "Ratio of existing solar capacity to assign to rooftop vs utility-scale (between 0 and 1).",
+          "type": "number"
+        },
         "conventional_carriers": {
           "description": "List of conventional power plants to include in the sectoral network.",
           "items": {
@@ -10558,6 +10563,11 @@
           "default": 20,
           "description": "Default lifetime for heating technologies (years).",
           "type": "integer"
+        },
+        "solar_rooftop_ratio": {
+          "default": 0.5,
+          "description": "Ratio of existing solar capacity to assign to rooftop vs utility-scale (between 0 and 1).",
+          "type": "number"
         },
         "conventional_carriers": {
           "description": "List of conventional power plants to include in the sectoral network.",
