@@ -434,47 +434,27 @@ def clustering_for_n_clusters(
 def apply_carrier_mixing_policy(
     n: pypsa.Network, busmap: pd.Series, allow_ac_dc_mixing_in_bus_clusters: bool
 ) -> pd.Series:
-    """Apply carrier mixing policy to a busmap before clustering.
+    """
+    Handle AC/DC buses before clustering.
 
-    This function enforces a policy for how AC and DC buses are handled when
-    assigning buses to clusters. Two behaviors are supported:
-
-        - If ``allow_ac_dc_mixing_in_bus_clusters`` is True, any cluster that contains a mix of AC and
-      DC buses will be coerced to AC by setting the carrier of the affected
-      buses in ``n.buses['carrier']`` to ``"AC"`` (mutation in-place).
-        - If ``allow_ac_dc_mixing_in_bus_clusters`` is False, mixed clusters are split by appending
-      the bus carrier to the cluster label (``"<cluster>::AC"`` or
-      ``"<cluster>::DC"``) so that AC and DC buses are placed into separate
-      aggregated clusters.
+    If ``allow_ac_dc_mixing_in_bus_clusters`` is True, mixed AC/DC clusters are
+    kept as-is. If it is False, buses in mixed clusters are split by appending
+    the carrier to the cluster label, for example ``cluster::AC`` and
+    ``cluster::DC``.
 
     Parameters
     ----------
     n : pypsa.Network
-        PyPSA network containing a ``buses`` DataFrame with a ``carrier``
-        column. Note that when ``allow_ac_dc_mixing_in_bus_clusters`` is True this object is
-        mutated in-place (``n.buses['carrier']`` may be changed).
+        Network providing bus carrier information.
     busmap : pandas.Series
-        Series mapping bus index to cluster label. The index should align with
-        ``n.buses.index``. Values are treated as strings and may be returned
-        modified when clusters are split by carrier.
+        Mapping from bus name to cluster label.
     allow_ac_dc_mixing_in_bus_clusters : bool
-        Policy flag: when True mixed AC/DC clusters are coerced to AC; when
-        False mixed clusters are split by carrier in the returned busmap.
+        Whether mixed AC/DC clusters are allowed.
 
     Returns
     -------
     pandas.Series
-        The (possibly modified) busmap. If ``allow_ac_dc_mixing_in_bus_clusters`` is False, the
-        returned series will contain cluster labels with the carrier appended
-        using the separator ``"::"`` for buses that originally belonged to a
-        mixed cluster.
-
-    Notes
-    -----
-    - The function casts ``busmap`` and bus carriers to strings internally.
-    - When coercing carriers to AC the change is applied directly to
-      ``n.buses['carrier']`` and is therefore visible to callers holding the
-      same ``n`` object.
+        Busmap, possibly with carrier suffixes added.
     """
     busmap = busmap.astype(str)
     carrier_by_bus = n.buses.carrier.reindex(busmap.index).astype(str)
@@ -663,7 +643,7 @@ def update_bus_coordinates(
         crs=geo_crs,
     )
 
-    # Find nearest admin region for each bus 
+    # Find nearest admin region for each bus
     admin_geo = admin_regions.copy()
     admin_geo["admin_id"] = admin_geo.index
     joined = gpd.sjoin_nearest(buses_gdf, admin_geo, how="left")
