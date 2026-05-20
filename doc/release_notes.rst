@@ -8,6 +8,8 @@ Release Notes
 
 .. Upcoming Release
 .. =================
+* Fix: The ``atlite.plot_availability_matrix`` config option was not correctly read in :mod:`determine_availability_matrix`. The PNG output is now an optional named output in the rule, only present when plotting is enabled (https://github.com/PyPSA/pypsa-eur/pull/2163).
+
 * Fix: Re-introduce capital costs for non-bicharging discharge links in ``add_electricity.py``, e.g. fuel cells.
 
 * The lockfile update workflow now excludes packages published within the last 7 days to reduce the risk of pulling in broken or yanked releases (https://github.com/PyPSA/pypsa-eur/pull/2130).
