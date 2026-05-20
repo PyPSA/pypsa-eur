@@ -9,7 +9,7 @@ Release Notes
 .. Upcoming Release
 .. =================
 * Fix: ``atlite.plot_availability_matrix`` config option for :mod:`determine_availability_matrix` and :mod:`determine_availability_matrix_MD_UA` scripts, changed their output and behaviour to align consistently.
-  Change the default config entry to plotting ``True`` (https://github.com/PyPSA/pypsa-eur/pull/2163).
+  Change the default config entry to plotting ``True`` (https://github.com/PyPSA/pypsa-eur/pull/2173).
 
 * Fix: Re-introduce capital costs for non-bicharging discharge links in ``add_electricity.py``, e.g. fuel cells.
 
