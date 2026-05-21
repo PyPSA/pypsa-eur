@@ -8,6 +8,9 @@ Release Notes
 
 .. Upcoming Release
 .. =================
+
+* Fix: ``atlite.plot_availability_matrix`` config option for :mod:`determine_availability_matrix` and :mod:`determine_availability_matrix_MD_UA` scripts, changed their output and behaviour to align consistently (https://github.com/PyPSA/pypsa-eur/pull/2173).
+
 * Fix: Activate losses for `H2 pipeline retrofitted` links by default, to ensure consistency with `H2 pipeline` links.
 
 * Fix: Re-introduce capital costs for non-bicharging discharge links in ``add_electricity.py``, e.g. fuel cells.
