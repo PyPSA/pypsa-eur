@@ -185,8 +185,8 @@
           "type": "boolean"
         },
         "plot_availability_matrix": {
-          "default": true,
-          "description": "Whether to plot the landuse availability matrix.",
+          "default": false,
+          "description": "Whether to plot the landuse availability matrix. Warning: This requires a significant amount of memory and time and may crash for larger workflows. Use with caution.",
           "type": "boolean"
         },
         "cutouts": {
@@ -8802,8 +8802,8 @@
           "type": "boolean"
         },
         "plot_availability_matrix": {
-          "default": true,
-          "description": "Whether to plot the landuse availability matrix.",
+          "default": false,
+          "description": "Whether to plot the landuse availability matrix. Warning: This requires a significant amount of memory and time and may crash for larger workflows. Use with caution.",
           "type": "boolean"
         },
         "cutouts": {

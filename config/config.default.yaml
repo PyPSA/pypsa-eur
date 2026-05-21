@@ -189,7 +189,7 @@ atlite:
   default_cutout: "europe-2013-sarah3-era5"
   nprocesses: 1
   show_progress: false
-  plot_availability_matrix: true
+  plot_availability_matrix: false
   cutouts:
     "europe-1940-2024-era5":
       module: era5
