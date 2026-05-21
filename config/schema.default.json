@@ -4878,6 +4878,13 @@
               "description": "H2 pipeline transmission efficiency.",
               "type": "object"
             },
+            "H2 pipeline retrofitted": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "H2 pipeline retrofitted transmission efficiency.",
+              "type": "object"
+            },
             "gas pipeline": {
               "additionalProperties": {
                 "type": "number"
@@ -8093,6 +8100,13 @@
             "type": "number"
           },
           "description": "H2 pipeline transmission efficiency.",
+          "type": "object"
+        },
+        "H2 pipeline retrofitted": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "H2 pipeline retrofitted transmission efficiency.",
           "type": "object"
         },
         "gas pipeline": {
@@ -11325,6 +11339,13 @@
                 "type": "number"
               },
               "description": "H2 pipeline transmission efficiency.",
+              "type": "object"
+            },
+            "H2 pipeline retrofitted": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "H2 pipeline retrofitted transmission efficiency.",
               "type": "object"
             },
             "gas pipeline": {
