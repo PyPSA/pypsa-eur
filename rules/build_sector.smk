@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 
+from scripts.definitions.heat_source import HeatSource
+
+
 rule build_population_layouts:
     message:
         "Building population layout data (total, urban, rural) from NUTS3 shapes and World Bank statistics"
@@ -739,20 +742,15 @@ rule build_ptes_operations:
 
 rule build_heat_source_utilisation_profiles:
     message:
-        "Building heat source alpha profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+        "Building heat source boosting profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         heat_sources=config_provider("sector", "heat_sources", "urban central"),
-        heat_source_cooling=config_provider(
-            "sector", "district_heating", "heat_source_cooling"
-        ),
-        snapshots=config_provider("snapshots"),
         constant_temperature_geothermal=config_provider(
             "sector",
             "district_heating",
             "geothermal",
             "constant_temperature_celsius",
         ),
-        ptes_enable=config_provider("sector", "district_heating", "ptes", "enable"),
     input:
         unpack(input_heat_source_temperature),
         central_heating_forward_temperature_profiles=resources(
@@ -1570,8 +1568,6 @@ rule build_egs_potentials:
 
 
 def input_heat_source_power(w):
-
-    from scripts.definitions.heat_source import HeatSource
 
     result = {}
     heat_sources = config_provider("sector", "heat_sources", "urban central")(w)

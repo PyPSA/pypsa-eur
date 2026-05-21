@@ -241,8 +241,8 @@ class HeatSystem(Enum):
 
     def heat_source_costs_name(self, heat_source: HeatSource | str) -> str:
         """
-        Generates the name for direct source utilisation costs based on the heat source and
-        system.
+        Generates the name for the heat-source generator costs based on the heat
+        source and system.
         Used to retrieve data from `technology-data <https://github.com/PyPSA/technology-data>`.
 
         Parameters

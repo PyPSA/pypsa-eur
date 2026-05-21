@@ -185,14 +185,8 @@ def get_source_inlet_temperature(
     temperature as its effective source inlet (since it lifts from there).
     Otherwise, the heat pump draws directly from the source temperature.
 
-    Notes
-    -----
-    We assume ideal heat exchangers with no temperature losses.
-
     Parameters
     ----------
-    heat_source_name : str
-        Name of the heat source.
     source_temperature : float | xr.DataArray
         Temperature of the heat source in Celsius.
     central_heating_return_temperature : xr.DataArray
@@ -202,6 +196,10 @@ def get_source_inlet_temperature(
     -------
     float | xr.DataArray
         Effective source inlet temperature for the heat pump in Celsius.
+
+    Notes
+    -----
+    We assume ideal heat exchangers with no temperature losses.
     """
     # When source temperature > return temperature, preheater is used:
     # heat pump lifts from return temperature (after preheating).
@@ -221,19 +219,13 @@ def get_sink_inlet_temperature(
     """
     Determine the effective sink inlet temperature for the heat pump.
 
-    For heat sources with preheating capability (e.g., PTES), when the source
-    temperature exceeds the return temperature, a preheater raises the return
-    flow to forward temperature. The heat pump then lifts from return to forward
-    temperature. When preheating is not used (source <= return), the heat pump
-    receives water at return temperature and heats it to forward temperature.
-
-    When source temperature > return temperature, preheater is used: preheater raises return flow, heat pump inlet is at source temperature.
-    When source temperature <= return temperature, no preheating: heat pump inlet is at return temperature.
+    When the source temperature exceeds the return temperature, the preheater
+    raises the return flow to the source temperature and the heat pump lifts
+    from there to forward. Otherwise no preheating is used and the heat pump
+    receives return-temperature water directly.
 
     Parameters
     ----------
-    heat_source_name : str
-        Name of the heat source.
     source_temperature : float | xr.DataArray
         Temperature of the heat source in Celsius.
     central_heating_return_temperature : xr.DataArray

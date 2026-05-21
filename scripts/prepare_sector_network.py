@@ -2807,8 +2807,10 @@ def add_heat(
     heat_dsm_profile_file : str
         Path to CSV file containing demand-side management profiles for heat
     params : dict
-        Dictionary containing parameters including:
-        - heat_sources
+        Snakemake params namespace. Accessed keys include
+        ``sector`` (full sector config, used for nested district-heating / PTES
+        settings), ``heat_sources`` (per-heat-system source lists), and
+        ``costs``/``electricity``/etc. forwarded from the rule.
     pop_weighted_energy_totals : pd.DataFrame
         Population-weighted energy totals by region
     heating_efficiencies : pd.DataFrame
@@ -3364,24 +3366,15 @@ def add_heat(
                 )
 
         if options["resistive_heaters"]:
-            ptes_heat_source = HeatSource.PTES
             key = f"{heat_system.central_or_decentral} resistive heater"
 
             if (
                 heat_system == HeatSystem.URBAN_CENTRAL
-                and params.sector["district_heating"]["ptes"]["enable"] == True
+                and params.sector["district_heating"]["ptes"]["enable"]
                 and params.sector["district_heating"]["ptes"][
                     "discharge_resistive_boosting"
                 ]
             ):
-                boosting_profile = (
-                    heat_source_boosting_profile.sel(
-                        heat_source=HeatSource.PTES.value, name=nodes
-                    )
-                    .transpose("time", "name")
-                    .to_pandas()
-                )
-
                 n.add(
                     "Bus",
                     nodes,
@@ -3396,7 +3389,7 @@ def add_heat(
                     suffix=f" {heat_system} water pits resistive booster",
                     bus0=nodes + f" {heat_system} resistive heat",
                     bus1=nodes
-                    + f" {ptes_heat_source.intermediate_carrier(heat_system)}",
+                    + f" {HeatSource.PTES.intermediate_carrier(heat_system)}",
                     efficiency=1.0,
                     p_nom_extendable=True,
                     carrier=f"{heat_system} water pits resistive booster",
@@ -3408,7 +3401,7 @@ def add_heat(
                     suffix=f" {heat_system} resistive heater stand-alone",
                     bus0=nodes + f" {heat_system} resistive heat",
                     bus1=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} resistive heat stand-alone",
+                    carrier=f"{heat_system} resistive heater stand-alone",
                     efficiency=1.0,
                     p_nom_extendable=True,
                 )

@@ -4,23 +4,29 @@
 """
 Build heat source boosting ratio profiles for district heating networks.
 
-This script calculates the boosting ratio (b) for each heat source: how
-much heat pump output is needed per unit of source heat to reach the forward
+This script calculates the boosting ratio ``b`` for each heat source: the
+fraction of HP boost needed per unit of source heat to reach the forward
 temperature of the district heating network.
 
-**Boosting ratio profile**: For each heat source and timestep, b is:
+**Boosting ratio profile**: For each heat source and timestep, ``b`` is:
 
 - 0 when T_source ≥ T_forward (direct use, no HP boost needed)
 - 1 when T_source < T_return (source cannot preheat return flow)
 - (T_forward − T_source) / (T_source − T_return) otherwise, clipped to [0, 1]
 
 The boosting ratio is consumed by ``prepare_sector_network.py`` to set the
-efficiencies of the heat source utilisation link (forward, p ≥ 0):
+efficiencies of the heat source utilisation link
+(``bus0=resource → bus1=DH heat, bus2=intermediate``):
 
-- bus0 (source) → bus1 (DH heat) at efficiency (1 − b)
-- bus0 (source) → bus2 (HP input bus) at efficiency2 = b
-
-Energy is conserved: (1 − b) + b = 1.
+- **Preheating sources** (PTES, geothermal):
+  ``efficiency = 1 + b/cop``, ``efficiency2 = -b``.
+  The source directly contributes ``1`` MW of preheat per source MW and the HP
+  supplies the ``b`` MW boost via the intermediate bus, consuming
+  ``b/cop`` MW electricity. Energy balance per source MW:
+  ``in = 1 (source) + b/cop (elec) = out = 1 + b/cop (DH heat)``.
+- **Non-preheating limited sources** (river_water):
+  ``efficiency = 0``, ``efficiency2 = 1`` — all source heat is routed to the
+  HP cold side via the intermediate bus.
 
 Relevant Settings
 -----------------
@@ -31,9 +37,13 @@ Relevant Settings
             urban central:
                 - air
                 - geothermal
+                - ptes
         district_heating:
             geothermal:
                 constant_temperature_celsius: 65
+            ptes:
+                enable: true
+                discharge_resistive_boosting: false
 
 Inputs
 ------
@@ -50,14 +60,10 @@ Outputs
     Values in [0, 1]: 0 = direct use, 1 = full HP boosting required.
 """
 
-import logging
-
 import xarray as xr
 
 from scripts._helpers import configure_logging, set_scenario_config
 from scripts.definitions.heat_source import HeatSource
-
-logger = logging.getLogger(__name__)
 
 
 def get_source_temperature(
@@ -163,14 +169,6 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     heat_sources: list[str] = snakemake.params.heat_sources
-    ptes_enable: bool = snakemake.params.ptes_enable
-
-    # Validate PTES configuration
-    if ptes_enable and "ptes" not in heat_sources:
-        raise ValueError(
-            "PTES is enabled (district_heating.ptes.enable=true) but 'ptes' "
-            "is not in heat_sources.urban_central. PTES requires being listed in heat_sources to create the necessary buses and links for heat discharge to the 'urban central heat' bus."
-        )
 
     central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles

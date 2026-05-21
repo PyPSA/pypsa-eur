@@ -54,9 +54,6 @@ class HeatSource(Enum):
     GROUND = "ground"
     PTES = "ptes"
 
-    def __init__(self, *args):
-        super().__init__(*args)
-
     def __str__(self) -> str:
         """
         Returns the string representation of the heat source.
@@ -164,7 +161,7 @@ class HeatSource(Enum):
             False for PTES with resistive boosting, True otherwise.
         """
         if self == HeatSource.PTES and ptes_discharge_resistive_boosting:
-            logging.info(
+            logger.info(
                 "PTES configured with resistive boosting during discharge; "
                 "heat pump not built for PTES."
             )
@@ -192,7 +189,7 @@ class HeatSource(Enum):
 
         Notes
         -----
-        - For direct utilisation heat sources (geothermal), gets cost from technology-data.
+        - For geothermal, gets cost from technology-data.
         - For other limited sources (like river_water), returns 0.0.
         - For inexhaustible sources, this method shouldn't be called.
         """
@@ -295,7 +292,8 @@ class HeatSource(Enum):
         Returns
         -------
         str
-            Bus name for evaporator sources, empty string otherwise.
+            Bus name for limited sources (``requires_bus=True``), empty string
+            for inexhaustible sources.
         """
         if self.requires_bus:
             return nodes + f" {self.intermediate_carrier(heat_system)}"
@@ -377,7 +375,7 @@ class HeatSource(Enum):
         self,
         boosting_profile: pd.DataFrame,
         cop: pd.DataFrame,
-        discharge_resistive_boosting: bool = None,
+        discharge_resistive_boosting: bool,
     ) -> pd.DataFrame:
         """
         Calculate the utilisation efficiency from resource bus to demand for a given heat source.
@@ -392,18 +390,15 @@ class HeatSource(Enum):
             Time series of boosting ratios (fraction of source heat going to HP output).
         cop : pd.DataFrame
             Time series of COP values for the heat pump.
-        discharge_resistive_boosting : bool, optional
-            Whether PTES uses resistive boosting during discharge instead of heat pumps. If True, the delivered heat per source heat for PTES is `1 + boosting_profile` without division by COP.Required only for PTES.
+        discharge_resistive_boosting : bool
+            Whether PTES uses resistive boosting during discharge instead of heat
+            pumps. If True, the delivered heat per source heat for PTES is
+            ``1 + boosting_profile`` without division by COP. Only consulted for PTES.
 
         Returns
         -------
         pd.DataFrame
             Time series of utilisation efficiency from resource bus to demand.
-
-        Raises
-        ------
-        RuntimeError
-             If COP and boosting profile values are inconsistent (e.g., one is zero while the other is positive), which would indicate invalid input data.
         """
         if self == HeatSource.PTES and discharge_resistive_boosting:
             # For PTES with resistive boosting, the delivered heat per source heat is 1 (direct contribution) + boosting_profile (additional from resistive heaters), without division by COP since no heat pump is used.
@@ -420,16 +415,14 @@ class HeatSource(Enum):
         """
         Necessary booster output per unit of source heat for preheating sources. 1 for non-preheating sources (utilisation link bus 2 points to HP input).
 
-        For preheating sources, the heat pump delivers `boosting_profile` MWh per  1 MWh source heat. Thus, the efficiency is `-1 / boosting_profile` (negative because the source heat is consumed, and the HP output is positive).
-        For other exhaustible sources, the efficiency is `1` (all source heat goes to HP input, none directly to demand).
+        For preheating sources, the heat pump delivers ``boosting_profile`` MWh per 1 MWh source heat, so the utilisation link's ``efficiency2`` is ``-boosting_profile`` (negative because the intermediate bus is sinking heat that the HP must supply).
+        For other exhaustible sources, the efficiency is ``1`` (all source heat goes to HP input, none directly to demand).
         For inexhaustible sources, this should not be called.
 
         Parameters
         ----------
         boosting_profile : pd.DataFrame
             Time series of boosting ratios (fraction of source heat going to HP output).
-        cop : pd.DataFrame
-            Time series of COP values for the heat pump.
 
         Returns
         -------

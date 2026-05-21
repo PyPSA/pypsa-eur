@@ -73,66 +73,42 @@ class PtesTemperatureApproximator:
         self.design_top_temperature = design_top_temperature
         self.design_bottom_temperature = design_bottom_temperature
 
-    @property
-    def top_temperature_profile(self) -> xr.DataArray:
-        """
-        PTES top layer temperature profile.
-
-        Returns either the forward temperature (if top_temperature == 'forward'),
-        clipped to the design_top_temperature, or a constant temperature profile
-        (if top_temperature is a numeric value).
-
-        Returns
-        -------
-        xr.DataArray
-            The resulting top temperature profile for PTES.
-        """
+        # Build profiles once, log once.
         if self.top_temperature == "forward":
             logger.info(
-                f"PTES top temperature profile: Using dynamic forward temperature from district heating network, clipped by design top temperature to {self.design_top_temperature}°C "
-                f"Forward temperature range: {float(self.forward_temperature.min().values):.1f}°C to {float(self.forward_temperature.max().values):.1f}°C)"
+                f"PTES top temperature profile: dynamic forward temperature, clipped to design_top_temperature={self.design_top_temperature}°C "
+                f"(forward range {float(self.forward_temperature.min().values):.1f}–{float(self.forward_temperature.max().values):.1f}°C)."
             )
-            return self.forward_temperature.where(
+            self._top_temperature_profile = self.forward_temperature.where(
                 self.forward_temperature <= self.design_top_temperature,
                 self.design_top_temperature,
             )
         elif isinstance(self.top_temperature, (int, float)):
             logger.info(
-                f"PTES top temperature profile: Using constant temperature of {self.top_temperature}°C "
-                f"for all {self.forward_temperature.size} snapshots and nodes"
+                f"PTES top temperature profile: constant {self.top_temperature}°C."
             )
-            return xr.full_like(self.forward_temperature, self.top_temperature)
+            self._top_temperature_profile = xr.full_like(
+                self.forward_temperature, self.top_temperature
+            )
         else:
             raise ValueError(
                 f"Invalid top_temperature: {self.top_temperature}. "
                 "Must be 'forward' or a numeric value."
             )
 
-    @property
-    def bottom_temperature_profile(self) -> xr.DataArray:
-        """
-        PTES bottom layer temperature profile.
-
-        Returns either the return temperature (if bottom_temperature == 'return')
-        or a constant temperature profile (if bottom_temperature is a numeric value).
-
-        Returns
-        -------
-        xr.DataArray
-            The resulting bottom temperature profile for PTES.
-        """
         if self.bottom_temperature == "return":
             logger.info(
-                f"PTES bottom temperature profile: Using dynamic return temperature from district heating network "
-                f"(shape: {self.return_temperature.shape}, range: {float(self.return_temperature.min().values):.1f}°C to {float(self.return_temperature.max().values):.1f}°C)"
+                f"PTES bottom temperature profile: dynamic return temperature "
+                f"(return range {float(self.return_temperature.min().values):.1f}–{float(self.return_temperature.max().values):.1f}°C)."
             )
-            return self.return_temperature
+            self._bottom_temperature_profile = self.return_temperature
         elif isinstance(self.bottom_temperature, (int, float)):
             logger.info(
-                f"PTES bottom temperature profile: Using constant temperature of {self.bottom_temperature}°C "
-                f"for all {self.return_temperature.size} snapshots and nodes"
+                f"PTES bottom temperature profile: constant {self.bottom_temperature}°C."
             )
-            return xr.full_like(self.return_temperature, self.bottom_temperature)
+            self._bottom_temperature_profile = xr.full_like(
+                self.return_temperature, self.bottom_temperature
+            )
         else:
             raise ValueError(
                 f"Invalid bottom_temperature: {self.bottom_temperature}. "
@@ -140,9 +116,31 @@ class PtesTemperatureApproximator:
             )
 
     @property
+    def top_temperature_profile(self) -> xr.DataArray:
+        """
+        PTES top layer temperature profile.
+
+        Either the forward temperature (if ``top_temperature == 'forward'``)
+        clipped to ``design_top_temperature``, or a constant temperature profile
+        (if ``top_temperature`` is a numeric value). Built once in ``__init__``.
+        """
+        return self._top_temperature_profile
+
+    @property
+    def bottom_temperature_profile(self) -> xr.DataArray:
+        """
+        PTES bottom layer temperature profile.
+
+        Either the return temperature (if ``bottom_temperature == 'return'``)
+        or a constant temperature profile (if ``bottom_temperature`` is a
+        numeric value). Built once in ``__init__``.
+        """
+        return self._bottom_temperature_profile
+
+    @property
     def e_max_pu(self) -> xr.DataArray:
         """
-        Calculate e_max_pu for PTES as design_temperature_delta / actual_temperature_delta.
+        Calculate e_max_pu for PTES as actual_temperature_delta / design_temperature_delta.
 
         Returns
         -------

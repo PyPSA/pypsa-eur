@@ -38,10 +38,6 @@ class _PtesConfig(BaseModel):
         "`(top_temperature - bottom_temperature) / (design_top_temperature - design_bottom_temperature)`. "
         "See `build_ptes_operations`.",
     )
-    charge_boosting_required: bool = Field(
-        False,
-        description="Deprecated. Not implemented.",
-    )
     discharge_resistive_boosting: bool = Field(
         False,
         description="If True, enables boosting by resistive heaters instead of heat pumps. "

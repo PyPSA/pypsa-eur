@@ -80,7 +80,6 @@ if __name__ == "__main__":
     logger.info(
         "Loading district heating temperature profiles and calculating PTES operational profiles"
     )
-    logger.info(f"PTES configuration: {snakemake.params}")
 
     ptes_temperature_approximator = PtesTemperatureApproximator(
         forward_temperature=xr.open_dataarray(
