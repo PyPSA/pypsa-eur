@@ -9,7 +9,12 @@ Release Notes
 .. Upcoming Release
 .. =================
 
-* Security: SBOM security scan included in CI; Development dependencies (pre-commit, pylint, jupyter, etc.) moved to ``dev`` ``pixi`` environment.
+* Security: SBOM security scan included in CI. 
+
+* Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to ``dev`` ``pixi`` environment.
+  Removed 62 CVEs from ``default`` environment.
+  
+* Fix: Activate losses for `H2 pipeline retrofitted` links by default, to ensure consistency with `H2 pipeline` links.
 
 * Fix: Re-introduce capital costs for non-bicharging discharge links in ``add_electricity.py``, e.g. fuel cells.
 
