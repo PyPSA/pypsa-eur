@@ -632,24 +632,6 @@ rule build_sea_heat_potential:
 
 
 rule build_cop_profiles:
-    params:
-        heat_pump_sink_T_decentral_heating=config_provider(
-            "sector", "heat_pump_sink_T_individual_heating"
-        ),
-        heat_source_cooling_central_heating=config_provider(
-            "sector", "district_heating", "heat_source_cooling"
-        ),
-        heat_pump_cop_approximation_central_heating=config_provider(
-            "sector", "district_heating", "heat_pump_cop_approximation"
-        ),
-        heat_sources=config_provider("sector", "heat_sources"),
-        constant_temperature_geothermal=config_provider(
-            "sector",
-            "district_heating",
-            "geothermal",
-            "constant_temperature_celsius",
-        ),
-        snapshots=config_provider("snapshots"),
     input:
         unpack(input_heat_source_temperature),
         central_heating_forward_temperature_profiles=resources(
@@ -689,35 +671,6 @@ rule build_cop_profiles:
 
 
 rule build_ptes_operations:
-    params:
-        top_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "top_temperature",
-        ),
-        bottom_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "bottom_temperature",
-        ),
-        snapshots=config_provider("snapshots"),
-        temperature_dependent_capacity=config_provider(
-            "sector", "district_heating", "ptes", "temperature_dependent_capacity"
-        ),
-        design_top_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "design_top_temperature",
-        ),
-        design_bottom_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "design_bottom_temperature",
-        ),
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
@@ -760,14 +713,6 @@ rule build_ptes_operations:
 
 
 rule build_heat_source_utilisation_profiles:
-    params:
-        heat_sources=config_provider("sector", "heat_sources", "urban central"),
-        constant_temperature_geothermal=config_provider(
-            "sector",
-            "district_heating",
-            "geothermal",
-            "constant_temperature_celsius",
-        ),
     input:
         unpack(input_heat_source_temperature),
         central_heating_forward_temperature_profiles=resources(
@@ -1618,29 +1563,6 @@ def input_heat_source_power(w):
 
 
 rule prepare_sector_network:
-    params:
-        time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
-        co2_budget=config_provider("co2_budget"),
-        conventional_carriers=config_provider(
-            "existing_capacities", "conventional_carriers"
-        ),
-        foresight=config_provider("foresight"),
-        sector=config_provider("sector"),
-        industry=config_provider("industry"),
-        renewable=config_provider("renewable"),
-        lines=config_provider("lines"),
-        pypsa_eur=config_provider("pypsa_eur"),
-        length_factor=config_provider("lines", "length_factor"),
-        planning_horizons=config_provider("scenario", "planning_horizons"),
-        countries=config_provider("countries"),
-        adjustments=config_provider("adjustments", "sector"),
-        emissions_scope=config_provider("energy", "emissions"),
-        emission_prices=config_provider("costs", "emission_prices"),
-        electricity=config_provider("electricity"),
-        biomass=config_provider("biomass"),
-        RDIR=RDIR,
-        heat_sources=config_provider("sector", "heat_sources"),
-        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),

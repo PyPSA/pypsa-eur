@@ -4,16 +4,6 @@
 
 
 rule add_existing_baseyear:
-    message:
-        "Adding existing infrastructure for base year for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
-    params:
-        baseyear=config_provider("scenario", "planning_horizons", 0),
-        sector=config_provider("sector"),
-        existing_capacities=config_provider("existing_capacities"),
-        carriers=config_provider("electricity", "renewable_carriers"),
-        costs=config_provider("costs"),
-        heat_sources=config_provider("sector", "heat_sources"),
-        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
@@ -47,6 +37,16 @@ rule add_existing_baseyear:
     threads: 1
     resources:
         mem_mb=3000,
+    params:
+        baseyear=config_provider("scenario", "planning_horizons", 0),
+        sector=config_provider("sector"),
+        existing_capacities=config_provider("existing_capacities"),
+        carriers=config_provider("electricity", "renewable_carriers"),
+        costs=config_provider("costs"),
+        heat_sources=config_provider("sector", "heat_sources"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
+    message:
+        "Adding existing infrastructure for base year for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
         scripts("add_existing_baseyear.py")
 
