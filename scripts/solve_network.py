@@ -42,7 +42,6 @@ import xarray as xr
 import yaml
 from linopy.remote.oetc import OetcCredentials, OetcHandler, OetcSettings
 from pypsa.descriptors import get_activity_mask
-from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 from scripts._benchmark import memory_logger
 from scripts._helpers import (
@@ -825,7 +824,7 @@ def add_SAFE_constraints(n, config):
 def add_operational_reserve_margin(n, sns, config):
     """
     Build reserve margin constraints based on the formulation given in
-    https://genxproject.github.io/GenX/dev/core/#Reserves.
+    https://genxproject.github.io/GenX.jl/stable/Model_Reference/core/#Operational-Reserves.
 
     Parameters
     ----------
@@ -836,66 +835,72 @@ def add_operational_reserve_margin(n, sns, config):
     Example:
     --------
     config.yaml requires to specify operational_reserve:
-    operational_reserve: # like https://genxproject.github.io/GenX/dev/core/#Reserves
+    operational_reserve:
         activate: true
         epsilon_load: 0.02 # percentage of load at each snapshot
         epsilon_vres: 0.02 # percentage of VRES at each snapshot
-        contingency: 400000 # MW
+        contingency: 4000 # MW
     """
     reserve_config = config["electricity"]["operational_reserve"]
     EPSILON_LOAD = reserve_config["epsilon_load"]
     EPSILON_VRES = reserve_config["epsilon_vres"]
     CONTINGENCY = reserve_config["contingency"]
 
+    vres_carriers = [
+        "ror" if c == "hydro" else c
+        for c in config["electricity"]["renewable_carriers"]
+    ]  # noqa: F841
+
+    generator_dim = "Generator" if not PYPSA_V1 else "name"
+
+    gen_i = n.generators.query("carrier != 'load'").index  # exclude load shedding
+    fix_i = n.generators.loc[gen_i].query("not p_nom_extendable").index
+    ext_i = n.generators.loc[gen_i].query("p_nom_extendable").index
+    vres_i = n.generators.loc[gen_i].query("carrier in @vres_carriers").index
+
     # Reserve Variables
-    n.model.add_variables(
-        0, np.inf, coords=[sns, n.generators.index], name="Generator-r"
-    )
+    n.model.add_variables(0, np.inf, coords=[sns, gen_i], name="Generator-r")
     reserve = n.model["Generator-r"]
-    summed_reserve = reserve.sum("Generator")
+    lhs = reserve.sum(generator_dim)
 
     # Share of extendable renewable capacities
-    ext_i = n.generators.query("p_nom_extendable").index
-    vres_i = n.generators_t.p_max_pu.columns
     if not ext_i.empty and not vres_i.empty:
         capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
         p_nom_vres = n.model["Generator-p_nom"].loc[vres_i.intersection(ext_i)]
         if not PYPSA_V1:
             p_nom_vres = p_nom_vres.rename({"Generator-ext": "Generator"})
-        lhs = summed_reserve + (
-            p_nom_vres * (-EPSILON_VRES * xr.DataArray(capacity_factor))
-        ).sum("Generator")
+        lhs += (p_nom_vres * (-EPSILON_VRES * xr.DataArray(capacity_factor))).sum(
+            generator_dim
+        )
 
-        # Total demand per t
-        demand = get_as_dense(n, "Load", "p_set").sum(axis=1)
+    # Total demand per t
+    demand = n.get_switchable_as_dense("Load", "p_set").sum(axis=1)
 
-        # VRES potential of non extendable generators
-        capacity_factor = n.generators_t.p_max_pu[vres_i.difference(ext_i)]
-        renewable_capacity = n.generators.p_nom[vres_i.difference(ext_i)]
-        potential = (capacity_factor * renewable_capacity).sum(axis=1)
+    # VRES potential of non extendable generators
+    capacity_factor = n.generators_t.p_max_pu[vres_i.difference(ext_i)]
+    renewable_capacity = n.generators.p_nom[vres_i.difference(ext_i)]
+    potential = (capacity_factor * renewable_capacity).sum(axis=1)
 
-        # Right-hand-side
-        rhs = EPSILON_LOAD * demand + EPSILON_VRES * potential + CONTINGENCY
+    # Right-hand-side
+    rhs = EPSILON_LOAD * demand + EPSILON_VRES * potential + CONTINGENCY
 
-        n.model.add_constraints(lhs >= rhs, name="reserve_margin")
+    n.model.add_constraints(lhs >= rhs, name="reserve_margin")
 
     # additional constraint that capacity is not exceeded
-    gen_i = n.generators.index
-    ext_i = n.generators.query("p_nom_extendable").index
-    fix_i = n.generators.query("not p_nom_extendable").index
 
-    dispatch = n.model["Generator-p"]
+    dispatch = n.model["Generator-p"].sel(name=gen_i)
     reserve = n.model["Generator-r"]
+    lhs = dispatch + reserve
 
-    capacity_variable = n.model["Generator-p_nom"]
-    if not PYPSA_V1:
-        capacity_variable = capacity_variable.rename({"Generator-ext": "Generator"})
+    p_max_pu = n.get_switchable_as_dense("Generator", "p_max_pu")
+
+    if not ext_i.empty:
+        capacity_variable = n.model["Generator-p_nom"].sel(name=ext_i)
+        if not PYPSA_V1:
+            capacity_variable = capacity_variable.rename({"Generator-ext": "Generator"})
+        lhs -= capacity_variable * xr.DataArray(p_max_pu[ext_i])
+
     capacity_fixed = n.generators.p_nom[fix_i]
-
-    p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
-
-    lhs = dispatch + reserve - capacity_variable * xr.DataArray(p_max_pu[ext_i])
-
     rhs = (p_max_pu[fix_i] * capacity_fixed).reindex(columns=gen_i, fill_value=0)
 
     n.model.add_constraints(lhs <= rhs, name="Generator-p-reserve-upper")
@@ -1462,9 +1467,9 @@ def create_optimization_model(
     logger.info("Creating optimization model...")
     n.optimize.create_model(**model_kwargs)
 
-    # Add extra functionality (custom constraints)
-    logger.info("Adding extra functionality (custom constraints)...")
-    extra_functionality(n, n.snapshots, planning_horizons)
+    # # Add extra functionality (custom constraints)
+    # logger.info("Adding extra functionality (custom constraints)...")
+    # extra_functionality(n, n.snapshots, planning_horizons)
 
 
 if __name__ == "__main__":
@@ -1472,10 +1477,10 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
+            "solve_network",
             opts="",
-            clusters="5",
-            configfiles="config/test/config.overnight.yaml",
+            clusters="128",
+            configfiles="config/config.validation.yaml",
             sector_opts="",
             planning_horizons="2030",
         )
