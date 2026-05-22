@@ -11,6 +11,10 @@ Release Notes
 
 * Fix: ``atlite.plot_availability_matrix`` config option for :mod:`determine_availability_matrix` and :mod:`determine_availability_matrix_MD_UA` scripts, changed their output and behaviour to align consistently (https://github.com/PyPSA/pypsa-eur/pull/2173).
 
+* New ``conventional: estimate_efficiencies`` option (default ``false``) to fill missing plant-level efficiencies using a carrier- and age-dependent heuristic.
+
+* Adjust ``powerplants_filter`` to include power plants operational in 2025.
+
 * Fix: Activate losses for `H2 pipeline retrofitted` links by default, to ensure consistency with `H2 pipeline` links.
 
 * Fix: Re-introduce capital costs for non-bicharging discharge links in ``add_electricity.py``, e.g. fuel cells.

@@ -839,6 +839,7 @@ rule add_electricity:
         ),
         aggregation_strategies=config_provider("clustering", "aggregation_strategies"),
         exclude_carriers=config_provider("clustering", "exclude_carriers"),
+        estimate_efficiencies=config_provider("conventional", "estimate_efficiencies"),
     message:
         "Adding electricity to network with {wildcards.clusters} clusters"
     script:

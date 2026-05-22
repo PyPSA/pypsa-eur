@@ -18,6 +18,10 @@ class ConventionalConfig(ConfigModel):
 
     model_config = ConfigDict(extra="allow")
 
+    estimate_efficiencies: bool = Field(
+        False,
+        description="Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic.",
+    )
     unit_commitment: bool = Field(
         False,
         description="Allow the overwrite of ramp_limit_up, ramp_limit_start_up, ramp_limit_shut_down, p_min_pu, min_up_time, min_down_time, and start_up_cost of conventional generators. Refer to the CSV file 'unit_commitment.csv'.",
