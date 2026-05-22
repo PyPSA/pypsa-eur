@@ -846,11 +846,10 @@ def add_operational_reserve_margin(n, sns, config):
     EPSILON_VRES = reserve_config["epsilon_vres"]
     CONTINGENCY = reserve_config["contingency"]
 
-    vres_carriers = [
+    vres_carriers = [  # noqa: F841
         "ror" if c == "hydro" else c
         for c in config["electricity"]["renewable_carriers"]
-    ]  # noqa: F841
-
+    ]
     generator_dim = "Generator" if not PYPSA_V1 else "name"
 
     gen_i = n.generators.query("carrier != 'load'").index  # exclude load shedding
@@ -1467,9 +1466,9 @@ def create_optimization_model(
     logger.info("Creating optimization model...")
     n.optimize.create_model(**model_kwargs)
 
-    # # Add extra functionality (custom constraints)
-    # logger.info("Adding extra functionality (custom constraints)...")
-    # extra_functionality(n, n.snapshots, planning_horizons)
+    # Add extra functionality (custom constraints)
+    logger.info("Adding extra functionality (custom constraints)...")
+    extra_functionality(n, n.snapshots, planning_horizons)
 
 
 if __name__ == "__main__":
@@ -1477,10 +1476,10 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_network",
+            "solve_sector_network",
             opts="",
-            clusters="128",
-            configfiles="config/config.validation.yaml",
+            clusters="5",
+            configfiles="config/test/config.overnight.yaml",
             sector_opts="",
             planning_horizons="2030",
         )
