@@ -51,19 +51,23 @@ archive_has_url = Check(
     error="Archive entries must have a URL",
 )
 one_latest_per_dataset_source = Check(
-    lambda df: df[df["tags"].str.contains("latest")]
-    .groupby(["dataset", "source"])
-    .size()
-    .eq(1)
-    .all(),
+    lambda df: (
+        df[df["tags"].str.contains("latest")]
+        .groupby(["dataset", "source"])
+        .size()
+        .eq(1)
+        .all()
+    ),
     error="Exactly one 'latest' tag required per dataset/source combination",
 )
 latest_same_version_across_sources = Check(
-    lambda df: df[(df["tags"].str.contains("latest")) & (df["version"] != "unknown")]
-    .groupby("dataset")["version"]
-    .nunique()
-    .le(1)
-    .all(),
+    lambda df: (
+        df[(df["tags"].str.contains("latest")) & (df["version"] != "unknown")]
+        .groupby("dataset")["version"]
+        .nunique()
+        .le(1)
+        .all()
+    ),
     error="All 'latest' entries for a dataset must have the same version across sources (excluding 'unknown')",
 )
 VersionsSchema = pa.DataFrameSchema(

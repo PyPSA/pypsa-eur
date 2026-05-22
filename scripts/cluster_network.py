@@ -409,9 +409,9 @@ def clustering_for_n_clusters(
     if aggregation_strategies is None:
         aggregation_strategies = dict()
 
-    line_strategies = aggregation_strategies.get("lines", dict())
+    line_strategies = dict(aggregation_strategies.get("lines", {}))
 
-    bus_strategies = aggregation_strategies.get("buses", dict())
+    bus_strategies = dict(aggregation_strategies.get("buses", {}))
     bus_strategies.setdefault("substation_lv", lambda x: bool(x.sum()))
     bus_strategies.setdefault("substation_off", lambda x: bool(x.sum()))
 

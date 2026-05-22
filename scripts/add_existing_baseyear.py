@@ -161,6 +161,7 @@ def add_power_capacities_installed_before_baseyear(
     capacity_threshold: float,
     lifetime_values: dict[str, float],
     renewable_carriers: list[str],
+    solar_rooftop_ratio: float = 0.5,
 ) -> None:
     """
     Add power generation capacities installed before base year.
@@ -185,6 +186,8 @@ def add_power_capacities_installed_before_baseyear(
         Default values for missing data
     renewable_carriers: list
         List of renewable carriers in the network
+    solar_rooftop_ratio: float
+        Ratio of solar capacity to assign to rooftop vs utility-scale (between 0 and 1)
     """
     logger.debug(f"Adding power capacities installed before {baseyear}")
 
@@ -277,6 +280,24 @@ def add_power_capacities_installed_before_baseyear(
         aggfunc="sum",
     )
 
+    if solar_rooftop_ratio != 0:
+        mask = df.index.get_level_values("Fueltype") == "solar"
+        solar = df.loc[mask] * (1 - solar_rooftop_ratio)
+        solar_rooftop = df.loc[mask] * solar_rooftop_ratio
+        rest = df.loc[~mask]
+
+        # Rename column of MultiIndex to add "solar rooftop" as Fueltype
+        pos = solar_rooftop.index.names.index("Fueltype")
+        arrays = [
+            solar_rooftop.index.get_level_values(n) for n in solar_rooftop.index.names
+        ]
+        arrays[pos] = ["solar rooftop"] * len(solar_rooftop)
+        solar_rooftop.index = pd.MultiIndex.from_arrays(
+            arrays, names=solar_rooftop.index.names
+        )
+
+        df = pd.concat([rest, solar, solar_rooftop]).sort_index()
+
     lifetime = df_agg.pivot_table(
         index=["grouping_year", "Fueltype", "resource_class"],
         columns="bus",
@@ -294,6 +315,13 @@ def add_power_capacities_installed_before_baseyear(
         "urban central solid biomass CHP": "biomass",
     }
 
+    cost_key_dict = {
+        "solar": "solar",
+        "solar rooftop": "solar-rooftop",
+        "onwind": "onwind",
+        "offwind-ac": "offwind",
+    }
+
     for grouping_year, generator, resource_class in df.index:
         # capacity is the capacity in MW at each node for this
         capacity = df.loc[grouping_year, generator, resource_class]
@@ -302,10 +330,10 @@ def add_power_capacities_installed_before_baseyear(
         suffix = "-ac" if generator == "offwind" else ""
         name_suffix = f" {generator}{suffix}-{grouping_year}"
         asset_i = capacity.index + name_suffix
-        if generator in ["solar", "onwind", "offwind-ac"]:
+        if generator in ["solar", "solar rooftop", "onwind", "offwind-ac"]:
             asset_i = capacity.index + " " + resource_class + name_suffix
             name_suffix = " " + resource_class + name_suffix
-            cost_key = generator.split("-")[0]
+            cost_key = cost_key_dict[generator]
             # to consider electricity grid connection costs or a split between
             # solar utility and rooftop as well, rather take cost assumptions
             # from existing network than from the cost database
@@ -334,13 +362,13 @@ def add_power_capacities_installed_before_baseyear(
                     "Generator",
                     new_capacity.index,
                     suffix=name_suffix,
-                    bus=new_capacity.index,
+                    bus=n.generators.bus[p_max_pu.columns].values,
                     carrier=generator,
                     p_nom=new_capacity,
                     marginal_cost=marginal_cost,
                     capital_cost=capital_cost,
                     efficiency=costs.at[cost_key, "efficiency"],
-                    p_max_pu=p_max_pu.rename(columns=n.generators.bus),
+                    p_max_pu=p_max_pu.values,
                     build_year=grouping_year,
                     lifetime=costs.at[cost_key, "lifetime"],
                 )
@@ -418,7 +446,8 @@ def add_power_capacities_installed_before_baseyear(
                         p_nom=new_capacity / costs.at[key, "efficiency"],
                         capital_cost=costs.at[key, "capital_cost"]
                         * costs.at[key, "efficiency"],
-                        marginal_cost=costs.at[key, "VOM"],
+                        marginal_cost=costs.at[key, "efficiency"]
+                        * costs.at[key, "VOM"],  # NB: VOM is per MWel
                         efficiency=costs.at[key, "efficiency"],
                         build_year=grouping_year,
                         efficiency2=costs.at[key, "efficiency-heat"],
@@ -820,6 +849,7 @@ if __name__ == "__main__":
         capacity_threshold=snakemake.params.existing_capacities["threshold_capacity"],
         lifetime_values=snakemake.params.costs["fill_values"],
         renewable_carriers=renewable_carriers,
+        solar_rooftop_ratio=snakemake.params.existing_capacities["solar_rooftop_ratio"],
     )
 
     if options["heating"]:

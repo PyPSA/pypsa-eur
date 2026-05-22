@@ -65,7 +65,7 @@ sector:
 
 electricity:
   extendable_carriers:
-    Generator: [OCGT, solar, onwind, OCGT, CCGT, nuclear]
+    Generator: [solar, onwind, OCGT, CCGT, nuclear]
     StorageUnit: [battery]
     Store: [H2]
     Link: [H2 pipeline]

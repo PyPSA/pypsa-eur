@@ -101,9 +101,10 @@ natura,2025-08-15,primary,latest supported,2025-12-02,,https://zenodo.org/record
 natura,2025-08-15,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/natura/2025-08-15/natura.tiff
 neso_electricity_demand,unknown,build,latest supported,2026-02-02,,https://www.neso.energy/data-portal/historic-demand-data
 neso_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,,https://data.pypsa.org/workflows/eur/neso_electricity_demand/2026-02-02/electricity_demand_neso_raw.csv
-nitrogen_statistics,2023,primary,not-tested,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2023-nitro-ERT.xlsx
-nitrogen_statistics,2022,primary,latest supported,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx
-nitrogen_statistics,2022,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2022/nitro-ert.xlsx
+nitrogen_statistics,2023,primary,latest supported,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2023-nitro-ERT.xlsx
+nitrogen_statistics,2023,archive,latest supported,2026-02-26,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2023/myb1-2023-nitro-ERT.xlsx
+nitrogen_statistics,2022,primary,supported,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx
+nitrogen_statistics,2022,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2022/nitro-ert.xlsx
 nuts3_population,13-03-2025,primary,latest supported,2025-12-02,,https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp?format=TSV&compressed=true
 nuts3_population,13-03-2025,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/nuts3_population/13-03-2025/nama_10r_3popgdp.tsv.gz
 ons_lad,may-2024,primary,latest supported,2026-02-02,API request used,https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Local_Authority_Districts_May_2024_Boundaries__UK_BSC/FeatureServer/0/query
@@ -138,7 +139,7 @@ powerplants,0.7.1,archive,supported,2026-01-20,Part of the `powerplantmatching` 
 powerplants,0.7.0,primary,supported,2025-12-02,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.0/powerplants.csv
 powerplants,0.7.0,archive,supported,2026-01-20,Part of the `powerplantmatching` package and versioned on GitHub.,https://data.pypsa.org/workflows/eur/powerplants/0.7.0
 scigrid_gas,1.1.2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/4767098/files/IGGIELGN.zip
-scigrid_gas,1.1.2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.2
+scigrid_gas,1.1.2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.2/IGGIELGN.zip
 scigrid_gas,1.1.1,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.1/IGGIELGN.zip
 scigrid_gas,1.1.0,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.0/IGGIELGN.zip
 seawater_temperature,v1.0,primary,latest supported,2026-01-21,Test cutout seawater temperature,https://zenodo.org/records/15828866/files/seawater_temperature.nc
@@ -148,7 +149,7 @@ ship_raster,v5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workf
 swiss_energy_balances,2025-10-01,primary,latest supported,2026-02-12,,https://pubdb.bfe.admin.ch/de/publication/download/12361
 swiss_energy_balances,2025-10-01,archive,latest supported,2026-02-16,,https://web.archive.org/web/20260216/https%3A//pubdb.bfe.admin.ch/de/publication/download/12361
 synthetic_electricity_demand,v2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/10820928/files/demand_hourly.csv
-synthetic_electricity_demand,v2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/v2
+synthetic_electricity_demand,v2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/v2/demand_hourly.csv
 synthetic_electricity_demand,0.1.0,archive,deprecated might-work,2026-01-13,,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/0.1.0/demand_hourly.csv
 tyndp,2024,primary,latest supported,2025-12-02,,https://2024-data.entsos-tyndp-scenarios.eu/files/scenarios-inputs
 tyndp,2024,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/tyndp/2024
