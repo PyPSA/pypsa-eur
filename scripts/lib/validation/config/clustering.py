@@ -48,10 +48,6 @@ class _SimplifyNetworkConfig(BaseModel):
         False,
         description="Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
     )
-    exclude_carriers: list[str] = Field(
-        default_factory=list,
-        description="List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
-    )
     remove_stubs: bool = Field(
         True,
         description="Controls whether radial parts of the network should be recursively aggregated. Defaults to true.",
@@ -142,9 +138,9 @@ class ClusteringConfig(BaseModel):
         default_factory=list,
         description="List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
     )
-    consider_efficiency_classes: bool = Field(
+    consider_efficiency_classes: bool | list[float] = Field(
         False,
-        description="Aggregated each carriers into the top 10-quantile (high), the bottom 90-quantile (low), and everything in between (medium).",
+        description="Aggregate each carrier into efficiency classes defined by quantile boundaries. If True, uses [0.1, 0.9] as default quantiles (labels: Q0, Q10, Q90). If a list of floats, defines custom quantile boundaries, e.g. [0.1, 0.5, 0.9].",
     )
     aggregation_strategies: _AggregationStrategiesConfig = Field(
         default_factory=_AggregationStrategiesConfig,

@@ -30,6 +30,20 @@ Rule ``retrieve_cutout``
 See :ref:`cutouts`.
 
 
+Rule ``retrieve_electricity_demand_energy_atlas``
+=================================================
+
+This rule downloads 1km by 1km raster of estimated annual electricity demand from the `JRC Energy Atlas <https://energy-industry-geolab.jrc.ec.europa.eu/energy-atlas/>`__ .
+
+Rule ``retrieve_desnz_electricity_consumption``
+================================================
+
+This rule downloads subnational electricity consumption data for Great Britain from the `Department for Energy Security and Net Zero <https://www.gov.uk/government/statistics/regional-and-local-authority-electricity-consumption-statistics>`__ .
+
+Rule ``retrieve_ons_lad``
+=========================
+
+This rule downloads shapefiles of local authorities in the United Kingdom from the `Office for National Statistics <https://geoportal.statistics.gov.uk/datasets/ons::local-authority-districts-may-2024-boundaries-uk-bsc-2/about>`__ .
 
 Rule ``retrieve_electricity_demand_opsd``
 =========================================

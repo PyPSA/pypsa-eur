@@ -66,6 +66,10 @@ class LoadConfig(BaseModel):
         True,
         description="Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
     )
+    substation_only: bool = Field(
+        True,
+        description="Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data.",
+    )
     distribution_key: _DistributionKeyConfig = Field(
         default_factory=_DistributionKeyConfig,
         description="Distribution key for spatially disaggregating the per-country electricity demand data.",

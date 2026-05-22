@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import atexit
 import contextlib
 import copy
 import logging
@@ -12,6 +13,7 @@ from collections.abc import Callable
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Literal
 
 import atlite
 import fiona
@@ -21,6 +23,7 @@ import pytz
 import requests
 import xarray as xr
 import yaml
+from dask.distributed import Client, LocalCluster
 from snakemake.utils import update_config
 from tqdm import tqdm
 
@@ -1025,7 +1028,9 @@ def rename_techs(label: str) -> str:
 
 
 def load_cutout(
-    cutout_files: str | list[str], time: None | pd.DatetimeIndex = None
+    cutout_files: str | list[str],
+    time: None | pd.DatetimeIndex = None,
+    chunks: Literal["auto"] | dict | None = "auto",
 ) -> atlite.Cutout:
     """
     Load and optionally combine multiple cutout files.
@@ -1044,9 +1049,9 @@ def load_cutout(
         Merged cutout with optional time selection applied.
     """
     if isinstance(cutout_files, str):
-        cutout = atlite.Cutout(cutout_files)
+        cutout = atlite.Cutout(cutout_files, chunks=chunks)
     elif isinstance(cutout_files, list):
-        cutout_da = [atlite.Cutout(c).data for c in cutout_files]
+        cutout_da = [atlite.Cutout(c, chunks=chunks).data for c in cutout_files]
         combined_data = xr.concat(cutout_da, dim="time", data_vars="minimal")
         cutout = atlite.Cutout(NamedTemporaryFile().name, data=combined_data)
 
@@ -1054,6 +1059,17 @@ def load_cutout(
         cutout.data = cutout.data.sel(time=time)
 
     return cutout
+
+
+def setup_dask(nprocesses: int) -> dict:
+    if nprocesses > 1:
+        cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
+        client = Client(cluster)
+        atexit.register(client.shutdown)
+    else:
+        client = None
+
+    return dict(scheduler=client)
 
 
 def load_costs(cost_file: str) -> pd.DataFrame:

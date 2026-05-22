@@ -249,6 +249,10 @@ class ElectricityConfig(BaseModel):
         default_factory=_EstimateRenewableCapacitiesConfig,
         description="Configuration for estimating renewable capacities.",
     )
+    estimate_battery_capacities: bool = Field(
+        False,
+        description="Enable estimation of existing battery storage capacities.",
+    )
     autarky: _AutarkyConfig = Field(
         default_factory=_AutarkyConfig,
         description="Autarky configuration.",
