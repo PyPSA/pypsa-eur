@@ -10,6 +10,9 @@ Computes a time aggregation scheme for the given network, in the form of a CSV
 file with the snapshot weightings, indexed by the new subset of snapshots. This
 rule only computes said aggregation scheme; aggregation of time-varying network
 data is done in ``prepare_sector_network.py``.
+
+The ``ncx`` syntax, e.g. ``12c24``, selects ``n`` equally spaced chunks of
+``x`` consecutive snapshots in each year.
 """
 
 import logging
@@ -21,7 +24,9 @@ import tsam.timeseriesaggregation as tsam
 import xarray as xr
 
 from scripts._helpers import (
+    build_time_chunked_snapshot_weightings,
     configure_logging,
+    parse_time_chunking_resolution,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -94,6 +99,18 @@ if __name__ == "__main__":
 
         sns = snapshot_weightings.index
         snapshot_weightings = snapshot_weightings.loc[sns]
+        snapshot_weightings.to_csv(snakemake.output.snapshot_weightings)
+
+    # Periodic snapshot chunks
+    elif parsed_resolution := parse_time_chunking_resolution(resolution):
+        chunks, chunk_length = parsed_resolution
+        logger.info(
+            f"Use {chunks} chunks of {chunk_length} snapshots per year "
+            "for temporal aggregation"
+        )
+        snapshot_weightings = build_time_chunked_snapshot_weightings(
+            n.snapshots, n.snapshot_weightings, resolution
+        )
         snapshot_weightings.to_csv(snakemake.output.snapshot_weightings)
 
     # Temporal segmentation

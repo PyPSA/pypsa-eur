@@ -93,11 +93,11 @@ class _TemporalConfig(BaseModel):
 
     resolution_elec: bool | str = Field(
         False,
-        description="Resample the time-resolution by averaging over every `n` snapshots in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks.",
+        description="Resample the time-resolution by averaging over every `n` snapshots in `prepare_network`, use `nseg` for temporal segmentation, or use `ncx` (e.g. `12c24`) to select `n` equally spaced chunks of `x` snapshots per year. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks.",
     )
     resolution_sector: bool | str = Field(
         False,
-        description="Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`.",
+        description="Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`, use `nsn` for representative snapshots, use `nseg` for temporal segmentation, or use `ncx` (e.g. `12c24`) to select `n` equally spaced chunks of `x` snapshots per year.",
     )
 
 

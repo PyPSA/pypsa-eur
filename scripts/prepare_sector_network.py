@@ -25,6 +25,7 @@ from scripts._helpers import (
     configure_logging,
     get,
     load_costs,
+    parse_time_chunking_resolution,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -5801,6 +5802,15 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
         n.set_snapshots(n.snapshots[::sn])
         n.snapshot_weightings *= sn
         return n
+    elif parse_time_chunking_resolution(resolution):
+        # Chunked snapshots are selected directly in time_aggregation.py.
+        snapshot_weightings = pd.read_csv(
+            snapshot_weightings, index_col=0, parse_dates=True
+        )
+        logger.info("Use %s chunked snapshots", len(snapshot_weightings))
+        m = n.copy(snapshots=snapshot_weightings.index)
+        m.snapshot_weightings = snapshot_weightings
+        return m
     else:
         # Otherwise, use the provided snapshots
         snapshot_weightings = pd.read_csv(

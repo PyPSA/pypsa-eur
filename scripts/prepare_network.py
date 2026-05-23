@@ -13,7 +13,8 @@ as.
 - specifying an expansion limit on the **cost** of transmission expansion,
 - specifying an expansion limit on the **volume** of transmission expansion, and
 - reducing the **temporal** resolution by averaging over multiple hours
-  or segmenting time series into chunks of varying lengths using ``tsam``.
+  selecting equally spaced chunks, or segmenting time series into chunks of
+  varying lengths using ``tsam``.
 
 Description
 -----------
@@ -32,9 +33,11 @@ import pypsa
 
 from scripts._helpers import (
     PYPSA_V1,
+    build_time_chunked_snapshot_weightings,
     configure_logging,
     get,
     load_costs,
+    parse_time_chunking_resolution,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -217,6 +220,22 @@ def average_every_nhours(n, offset, drop_leap_day=False):
     return m
 
 
+def apply_time_chunking(n, resolution):
+    chunks, chunk_length = parse_time_chunking_resolution(resolution)
+    logger.info(
+        f"Using {chunks} chunks of {chunk_length} snapshots per year "
+        "for temporal aggregation."
+    )
+
+    snapshot_weightings = build_time_chunked_snapshot_weightings(
+        n.snapshots, n.snapshot_weightings, resolution
+    )
+    m = n.copy(snapshots=snapshot_weightings.index)
+    m.snapshot_weightings = snapshot_weightings
+
+    return m
+
+
 def apply_time_segmentation(n, segments, solver_name="cbc"):
     logger.info(f"Aggregating time series to {segments} segments.")
     try:
@@ -324,9 +343,9 @@ if __name__ == "__main__":
     is_string = isinstance(time_resolution, str)
     if is_string and time_resolution.lower().endswith("h"):
         n = average_every_nhours(n, time_resolution, snakemake.params.drop_leap_day)
-
-    # segments with package tsam
-    if is_string and time_resolution.lower().endswith("seg"):
+    elif parse_time_chunking_resolution(time_resolution):
+        n = apply_time_chunking(n, time_resolution)
+    elif is_string and time_resolution.lower().endswith("seg"):
         solver_name = snakemake.config["solving"]["solver"]["name"]
         segments = int(time_resolution.replace("seg", ""))
         n = apply_time_segmentation(n, segments, solver_name)

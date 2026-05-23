@@ -26,6 +26,8 @@ Release Notes
 
 * feat: Improve the config validation to cover scenario management (https://github.com/PyPSA/pypsa-eur/pull/2155).
 
+- Added temporal chunking option ``ncx`` (e.g. ``12c24``) to select ``n`` equally spaced chunks of ``x`` snapshots per year for electricity-only and sector-coupled models.
+
 - Added solar rooftop ratio setting to ``add_existing_baseyear`` for heuristically splitting existing solar capacity between rooftop and utility-scale (defaults to a 50:50 split).
 
 PyPSA-Eur v2026.02.0 (18th February 2026)

@@ -216,6 +216,83 @@ def find_opt(opts, expr):
     return False, None
 
 
+def parse_time_chunking_resolution(resolution):
+    """
+    Parse temporal chunking settings of the form ``12c24``.
+
+    The first number is the number of chunks selected per year and the second
+    number is the number of consecutive snapshots per chunk.
+    """
+    if not isinstance(resolution, str):
+        return None
+
+    match = re.fullmatch(r"(\d+)c(\d+)", resolution.lower())
+    if match is None:
+        return None
+
+    chunks, chunk_length = map(int, match.groups())
+    if chunks < 1 or chunk_length < 1:
+        raise ValueError(
+            f"Invalid temporal chunking resolution {resolution!r}: "
+            "number of chunks and chunk length must be positive."
+        )
+
+    return chunks, chunk_length
+
+
+def build_time_chunked_snapshot_weightings(snapshots, snapshot_weightings, resolution):
+    """
+    Select equally spaced chunks in each year and scale their weightings.
+
+    For example, ``12c24`` selects 12 chunks of 24 consecutive snapshots in each
+    calendar year. The selected snapshots keep their original time-dependent
+    values, while snapshot weightings are scaled so every year preserves its
+    original total weighting.
+    """
+    parsed_resolution = parse_time_chunking_resolution(resolution)
+    if parsed_resolution is None:
+        raise ValueError(
+            f"Invalid temporal chunking resolution {resolution!r}: "
+            "expected a value like '12c24'."
+        )
+    chunks, chunk_length = parsed_resolution
+
+    snapshots = pd.DatetimeIndex(snapshots)
+    positions = pd.Series(range(len(snapshots)), index=snapshots)
+    snapshot_weightings = snapshot_weightings.loc[snapshots]
+    chunked_weightings = []
+
+    for year, year_positions in positions.groupby(positions.index.year):
+        snapshots_per_year = len(year_positions)
+        chunk_period = snapshots_per_year / chunks
+
+        if chunk_length > chunk_period:
+            raise ValueError(
+                f"Invalid temporal chunking resolution {resolution!r} for {year}: "
+                f"{chunks} chunks of {chunk_length} snapshots would overlap in "
+                f"a year with {snapshots_per_year} snapshots."
+            )
+
+        starts = [int(i * chunk_period) for i in range(chunks)]
+        selected_positions = [
+            pos
+            for start in starts
+            for pos in year_positions.iloc[start : start + chunk_length]
+        ]
+        selected_snapshots = snapshots[selected_positions]
+
+        selected_weightings = snapshot_weightings.loc[selected_snapshots].copy()
+        year_weightings = snapshot_weightings.loc[year_positions.index]
+        scaling = year_weightings.sum() / selected_weightings.sum()
+        if isinstance(snapshot_weightings, pd.DataFrame):
+            selected_weightings = selected_weightings.mul(scaling, axis=1)
+        else:
+            selected_weightings *= scaling
+        chunked_weightings.append(selected_weightings)
+
+    return pd.concat(chunked_weightings)
+
+
 # Define a context manager to temporarily mute print statements
 @contextlib.contextmanager
 def mute_print():
@@ -697,7 +774,7 @@ def update_config_from_wildcards(config, w, inplace=True):
     if w.get("opts"):
         opts = w.opts.split("-")
 
-        if nhours := get_opt(opts, r"^\d+(h|seg)$"):
+        if nhours := get_opt(opts, r"^\d+(h|seg)$|^\d+c\d+$"):
             config["clustering"]["temporal"]["resolution_elec"] = nhours
 
         co2l_enable, co2l_value = find_opt(opts, "Co2L")
@@ -788,7 +865,7 @@ def update_config_from_wildcards(config, w, inplace=True):
         if "SAFE" in opts:
             config["solving"]["constraints"]["SAFE"] = True
 
-        if nhours := get_opt(opts, r"^\d+(h|sn|seg)$"):
+        if nhours := get_opt(opts, r"^\d+(h|sn|seg)$|^\d+c\d+$"):
             config["clustering"]["temporal"]["resolution_sector"] = nhours
 
         if "decentral" in opts:
