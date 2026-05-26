@@ -1211,6 +1211,13 @@ solving:
       primal_feasibility_tolerance: 1.0e-05
       dual_feasibility_tolerance: 1.0e-05
       random_seed: 123
+    "highs-hipo":
+      solver: hipo
+      parallel: 'on'
+      primal_feasibility_tolerance: 1.0e-05
+      dual_feasibility_tolerance: 1.0e-05
+      random_seed: 123
+      run_crossover: 'off'
     "gurobi-default":
       threads: 32
       method: 2
