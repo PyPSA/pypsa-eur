@@ -877,9 +877,9 @@ sector:
   cc_fraction: 0.9
   cc_capital_cost_factor:
     gas: 2.0
-    biomass: 1.8
-    coal: 1.8
-    waste: 1.7
+    biomass: 1.1
+    coal: 1.1
+    waste: 1.2
     cement: 1.0
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:

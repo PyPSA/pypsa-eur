@@ -4727,7 +4727,7 @@
           "additionalProperties": {
             "type": "number"
           },
-          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. The default values are based on the DEA technology-data report.",
+          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. Factors are given relative to cement capture. The default values are based on the DEA technology-data report on carbon capture, transport and storage Table 8 / Figure 12 (https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage).",
           "type": "object"
         },
         "hydrogen_underground_storage": {
@@ -11188,7 +11188,7 @@
           "additionalProperties": {
             "type": "number"
           },
-          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. The default values are based on the DEA technology-data report.",
+          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. Factors are given relative to cement capture. The default values are based on the DEA technology-data report on carbon capture, transport and storage Table 8 / Figure 12 (https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage).",
           "type": "object"
         },
         "hydrogen_underground_storage": {

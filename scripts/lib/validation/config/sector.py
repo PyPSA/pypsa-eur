@@ -759,12 +759,12 @@ class SectorConfig(BaseModel):
     cc_capital_cost_factor: dict[str, float] = Field(
         default_factory=lambda: {
             "gas": 2.0,
-            "biomass": 1.8,
-            "coal": 1.8,
-            "waste": 1.7,
+            "biomass": 1.1,
+            "coal": 1.1,
+            "waste": 1.2,
             "cement": 1.0,
         },
-        description="Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. The default values are based on the DEA technology-data report.",
+        description="Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. Factors are given relative to cement capture. The default values are based on the DEA technology-data report on carbon capture, transport and storage Table 8 / Figure 12 (https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage).",
     )
     hydrogen_underground_storage: bool = Field(
         True,

@@ -71,8 +71,6 @@ def define_spatial(nodes, options):
         spatial.biomass.nodes_unsustainable = nodes + " unsustainable solid biomass"
         spatial.biomass.bioliquids = nodes + " unsustainable bioliquids"
         spatial.biomass.locations = nodes
-        spatial.biomass.industry = nodes + " solid biomass for industry"
-        spatial.biomass.industry_cc = nodes + " solid biomass for industry CC"
         spatial.msw.nodes = nodes + " municipal solid waste"
         spatial.msw.locations = nodes
     else:
@@ -80,10 +78,11 @@ def define_spatial(nodes, options):
         spatial.biomass.nodes_unsustainable = ["EU unsustainable solid biomass"]
         spatial.biomass.bioliquids = ["EU unsustainable bioliquids"]
         spatial.biomass.locations = ["EU"]
-        spatial.biomass.industry = ["solid biomass for industry"]
-        spatial.biomass.industry_cc = ["solid biomass for industry CC"]
         spatial.msw.nodes = ["EU municipal solid waste"]
         spatial.msw.locations = ["EU"]
+    spatial.biomass.industry = nodes + " solid biomass for industry"
+    spatial.biomass.industry_cc = nodes + " solid biomass for industry CC"
+    spatial.biomass.industry.locations = nodes
 
     spatial.biomass.df = pd.DataFrame(vars(spatial.biomass), index=nodes)
     spatial.msw.df = pd.DataFrame(vars(spatial.msw), index=nodes)
@@ -115,24 +114,20 @@ def define_spatial(nodes, options):
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
         spatial.gas.biogas = nodes + " biogas"
-        spatial.gas.industry = nodes + " gas for industry"
-        spatial.gas.industry_cc = nodes + " gas for industry CC"
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
         spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
     else:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
         spatial.gas.biogas = ["EU biogas"]
-        spatial.gas.industry = ["gas for industry"]
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
         if options.get("biomass_spatial", options["biomass_transport"]):
             spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
         else:
             spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
-        if options.get("co2_spatial", options["co2_network"]):
-            spatial.gas.industry_cc = nodes + " gas for industry CC"
-        else:
-            spatial.gas.industry_cc = ["gas for industry CC"]
+    spatial.gas.industry = nodes + " gas for industry"
+    spatial.gas.industry_cc = nodes + " gas for industry CC"
+    spatial.gas.industry.locations = nodes
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
@@ -836,7 +831,6 @@ def add_co2_tracking(
             capital_cost=costs.at["CO2 dense phase compression", "capital_cost"],
             efficiency=1.0,
             efficiency2=-costs.at["CO2 dense phase compression", "electricity-input"],
-            p_nom=0,
             p_nom_extendable=True,
             carrier="co2 compression",
             unit="t_co2",
@@ -861,7 +855,8 @@ def add_co2_tracking(
             carrier="co2 sequestered",
             marginal_cost=options["co2_sequestration_cost"],
             efficiency=1.0,
-            p_nom_extendable=True,
+            p_nom=np.inf,
+            p_nom_extendable=False,
         )
 
     else:
@@ -873,7 +868,8 @@ def add_co2_tracking(
             carrier="co2 sequestered",
             marginal_cost=options["co2_sequestration_cost"],
             efficiency=1.0,
-            p_nom_extendable=True,
+            p_nom=np.inf,
+            p_nom_extendable=False,
         )
 
     if options["regional_co2_sequestration_potential"]["enable"]:
@@ -1199,7 +1195,7 @@ def add_methanol_to_power(n, costs, pop_layout, options, types=None):
             p_nom_extendable=True,
             capital_cost=capital_cost_cc,
             marginal_cost=costs.at["CCGT", "VOM"]
-            * efficiency_cc,  # NB: VOM is per MWel
+            * costs.at["CCGT", "efficiency"],  # NB: VOM is per MWel
             efficiency=efficiency_cc,
             efficiency2=costs.at["cement capture", "capture_rate"]
             * costs.at["methanolisation", "carbondioxide-input"],
@@ -4672,20 +4668,17 @@ def add_industry(
     n.add(
         "Bus",
         spatial.biomass.industry,
-        location=spatial.biomass.locations,
+        location=spatial.biomass.industry.locations,
         carrier="solid biomass for industry",
         unit="MWh_LHV",
     )
 
-    if options.get("biomass_spatial", options["biomass_transport"]):
-        p_set = (
-            industrial_demand.loc[spatial.biomass.locations, "solid biomass"].rename(
-                index=lambda x: x + " solid biomass for industry"
-            )
-            / nhours
+    p_set = (
+        industrial_demand.loc[spatial.biomass.industry.locations, "solid biomass"].rename(
+            index=lambda x: x + " solid biomass for industry"
         )
-    else:
-        p_set = industrial_demand["solid biomass"].sum() / nhours
+        / nhours
+    )
 
     n.add(
         "Load",
@@ -4705,29 +4698,19 @@ def add_industry(
         efficiency=1.0,
     )
 
-    if len(spatial.biomass.industry_cc) <= 1 and len(spatial.co2.nodes) > 1:
-        link_names = nodes + " " + spatial.biomass.industry_cc
-    else:
-        link_names = spatial.biomass.industry_cc
-
-    if options["biomass_spatial"]:
-        bus4 = spatial.biomass.locations
-        efficiency4 = costs.at["solid biomass", "CO2 intensity"] * (
-            costs.at["cement capture", "electricity-input"]
-            + costs.at["cement capture", "compression-electricity-input"]
-        )
-    else:
-        bus4 = ""
-        efficiency4 = 1.0
+    ele_for_cc = costs.at["solid biomass", "CO2 intensity"] * (
+        costs.at["cement capture", "electricity-input"]
+        + costs.at["cement capture", "compression-electricity-input"]
+    )
 
     n.add(
         "Link",
-        link_names,
+        spatial.biomass.industry_cc,
         bus0=spatial.biomass.nodes,
         bus1=spatial.biomass.industry,
         bus2="co2 atmosphere",
         bus3=spatial.co2.nodes,
-        bus4=bus4,
+        bus4=spatial.biomass.industry.locations,
         carrier="solid biomass for industry CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "capital_cost"]
@@ -4738,31 +4721,21 @@ def add_industry(
         * costs.at["cement capture", "capture_rate"],
         efficiency3=costs.at["solid biomass", "CO2 intensity"]
         * costs.at["cement capture", "capture_rate"],
-        efficiency4=-efficiency4,
+        efficiency4=-ele_for_cc,
         lifetime=costs.at["cement capture", "lifetime"],
     )
 
     n.add(
         "Bus",
         spatial.gas.industry,
-        location=spatial.gas.locations,
+        location=spatial.gas.industry.locations,
         carrier="gas for industry",
         unit="MWh_LHV",
     )
 
     gas_demand = industrial_demand.loc[nodes, "methane"] / nhours
 
-    if options["gas_network"]:
-        spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
-        bus4 = spatial.gas.locations
-        efficiency4 = costs.at["gas", "CO2 intensity"] * (
-            costs.at["cement capture", "electricity-input"]
-            + costs.at["cement capture", "compression-electricity-input"]
-        )
-    else:
-        spatial_gas_demand = gas_demand.sum()
-        bus4 = ""
-        efficiency4 = 1.0
+    spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
 
     n.add(
         "Load",
@@ -4784,6 +4757,10 @@ def add_industry(
         efficiency2=costs.at["gas", "CO2 intensity"],
     )
 
+    ele_for_cc = costs.at["gas", "CO2 intensity"] * (
+        costs.at["cement capture", "electricity-input"]
+        + costs.at["cement capture", "compression-electricity-input"]
+    )
     n.add(
         "Link",
         spatial.gas.industry_cc,
@@ -4791,7 +4768,7 @@ def add_industry(
         bus1=spatial.gas.industry,
         bus2="co2 atmosphere",
         bus3=spatial.co2.nodes,
-        bus4=bus4,
+        bus4=spatial.gas.industry.locations,
         carrier="gas for industry CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "capital_cost"]
@@ -4802,7 +4779,7 @@ def add_industry(
         * (1 - costs.at["cement capture", "capture_rate"]),
         efficiency3=costs.at["gas", "CO2 intensity"]
         * costs.at["cement capture", "capture_rate"],
-        efficiency4=-efficiency4,
+        efficiency4=-ele_for_cc,
         lifetime=costs.at["cement capture", "lifetime"],
     )
 
