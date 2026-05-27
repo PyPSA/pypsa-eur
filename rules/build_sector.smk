@@ -321,22 +321,8 @@ rule build_dh_areas:
 
 
 rule build_geothermal_heat_potential:
-    input:
-        isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output[
-            "isi_heat_potentials"
-        ],
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        lau_regions=rules.retrieve_lau_regions.output["zip"],
-    output:
-        heat_source_power=resources(
-            "heat_source_power_geothermal_base_s_{clusters}.csv"
-        ),
-    log:
-        logs("build_heat_source_potentials_geothermal_s_{clusters}.log"),
-    benchmark:
-        benchmarks("build_heat_source_potentials/geothermal_s_{clusters}")
-    resources:
-        mem_mb=2000,
+    message:
+        "Building geothermal heat potential estimates for {wildcards.clusters} clusters"
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
@@ -356,8 +342,32 @@ rule build_geothermal_heat_potential:
         heat_source_cooling=config_provider(
             "sector", "district_heating", "heat_source_cooling"
         ),
-    message:
-        "Building geothermal heat potential estimates for {wildcards.clusters} clusters"
+    input:
+        isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output[
+            "isi_heat_potentials"
+        ],
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        lau_regions=rules.retrieve_lau_regions.output["zip"],
+    output:
+        heat_source_power=resources(
+            "heat_source_power_geothermal_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs(
+            "build_heat_source_potentials_geothermal_s_{clusters}_{planning_horizons}.log"
+        ),
+    benchmark:
+        benchmarks(
+            "build_heat_source_potentials/geothermal_s_{clusters}_{planning_horizons}"
+        )
     script:
         scripts("build_geothermal_heat_potential.py")
 
@@ -649,6 +659,12 @@ rule build_cop_profiles:
             "sector", "district_heating", "heat_source_temperatures"
         ),
         snapshots=config_provider("snapshots"),
+        constant_temperature_geothermal=config_provider(
+            "sector",
+            "district_heating",
+            "geothermal",
+            "constant_temperature_celsius",
+        ),
     input:
         unpack(input_heat_source_temperature),
         central_heating_forward_temperature_profiles=resources(
@@ -657,7 +673,7 @@ rule build_cop_profiles:
         central_heating_return_temperature_profiles=resources(
             "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
-        regions_onshore=input_regions_onshore_district_heating,
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
     resources:
@@ -716,13 +732,10 @@ rule build_ptes_operations:
         central_heating_return_temperature_profiles=resources(
             "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
-        regions_onshore=input_regions_onshore_district_heating,
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         ptes_top_temperature_profiles=resources(
             "temp_ptes_top_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        ptes_bottom_temperature_profiles=resources(
-            "temp_ptes_bottom_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
@@ -753,9 +766,14 @@ rule build_heat_source_utilisation_profiles:
             "sector", "district_heating", "heat_source_temperatures"
         ),
         ptes_enable=config_provider("sector", "district_heating", "ptes", "enable"),
+        constant_temperature_geothermal=config_provider(
+            "sector",
+            "district_heating",
+            "geothermal",
+            "constant_temperature_celsius",
+        ),
     input:
         unpack(input_heat_source_temperature),
-        unpack(input_ptes_bottom_temperature),
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
@@ -1772,18 +1790,9 @@ rule prepare_sector_network:
         electricity=config_provider("electricity"),
         biomass=config_provider("biomass"),
         RDIR=RDIR,
-        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-        direct_utilisation_heat_sources=config_provider(
-            "sector", "district_heating", "direct_utilisation_heat_sources"
-        ),
-        limited_heat_sources=config_provider(
-            "sector", "district_heating", "limited_heat_sources"
-        ),
-        temperature_limited_stores=config_provider(
-            "sector", "district_heating", "temperature_limited_stores"
-        ),
+        heat_sources=config_provider("sector", "heat_sources"),
     message:
         "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizon, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
