@@ -50,10 +50,16 @@ class PtesApproximator:
 
     @property
     def cop(self):
+        # build_cop_profiles only expands to per-layer "ptes layer {i}" labels when
+        # num_layers > 1; the single-layer build keeps the plain "ptes" source. Fall
+        # back to it here instead of selecting a non-existent "ptes layer 0".
+        def _heat_source(i: int) -> str:
+            return f"ptes layer {i}" if self.num_layers > 1 else "ptes"
+
         return xr.concat(
             [
                 self._cop.sel(
-                    heat_system="urban central", heat_source=f"ptes layer {i}"
+                    heat_system="urban central", heat_source=_heat_source(i)
                 ).drop("heat_source")
                 for i in range(self.num_layers)
             ],

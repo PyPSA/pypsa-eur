@@ -108,20 +108,24 @@ if __name__ == "__main__":
     # Write single dataset with all pre-computed PTES parameters, including the
     # booster COP recomputed at the actual evaporator outlet (the reinjection
     # layer depth) so the electricity/source split reflects the real cooling depth.
+    # The booster COP only feeds the layered (num_layers > 1) discharge chain; the
+    # single-tank case never uses it, so skip it there (its per-layer source lookup
+    # would also be meaningless with one layer).
     dataset = approximator.to_dataset()
-    hp_cop_params = snakemake.params.heat_pump_cop_approximation_central_heating
-    dataset["booster_cop"] = approximator.booster_cop(
-        CentralHeatingCopApproximator,
-        refrigerant=hp_cop_params["refrigerant"],
-        delta_t_pinch_point=hp_cop_params[
-            "heat_exchanger_pinch_point_temperature_difference"
-        ],
-        isentropic_compressor_efficiency=hp_cop_params[
-            "isentropic_compressor_efficiency"
-        ],
-        heat_loss=hp_cop_params["heat_loss"],
-        min_delta_t_lift=hp_cop_params["min_delta_t_lift"],
-    )
+    if approximator.num_layers > 1:
+        hp_cop_params = snakemake.params.heat_pump_cop_approximation_central_heating
+        dataset["booster_cop"] = approximator.booster_cop(
+            CentralHeatingCopApproximator,
+            refrigerant=hp_cop_params["refrigerant"],
+            delta_t_pinch_point=hp_cop_params[
+                "heat_exchanger_pinch_point_temperature_difference"
+            ],
+            isentropic_compressor_efficiency=hp_cop_params[
+                "isentropic_compressor_efficiency"
+            ],
+            heat_loss=hp_cop_params["heat_loss"],
+            min_delta_t_lift=hp_cop_params["min_delta_t_lift"],
+        )
     # Clear inherited encodings (the booster COP carries the temperature profile's
     # time encoding, which can conflict with the dataset's and overflow on decode)
     # and write the time axis with an explicit, safe reference so it round-trips.

@@ -2877,9 +2877,7 @@ def add_heat(
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
 
-    for (
-        heat_system
-    ) in (
+    for heat_system in (
         HeatSystem
     ):  # this loops through all heat systems defined in _entities.HeatSystem
         overdim_factor = options["overdimension_heat_generators"][
@@ -3770,18 +3768,14 @@ def add_heat(
                     bus0=heat_source.resource_bus(nodes, heat_system),
                     bus1=nodes + f" {heat_system} heat",
                     bus2=nodes + f" {heat_source.intermediate_carrier(heat_system)}",
-                    efficiency=(
-                        1 + boosting_profile / cop_heat_pump
-                        if heat_source.supports_preheating
-                        else 0
-                    ),
-                    efficiency2=(
-                        -boosting_profile
-                        * cop_heat_pump
-                        / (boosting_profile + cop_heat_pump)
-                        if heat_source.supports_preheating
-                        else 1
-                    ),
+                    efficiency=1 + boosting_profile / cop_heat_pump
+                    if heat_source.supports_preheating
+                    else 0,
+                    efficiency2=-boosting_profile
+                    * cop_heat_pump
+                    / (boosting_profile + cop_heat_pump)
+                    if heat_source.supports_preheating
+                    else 1,
                     carrier=f"{heat_system} {heat_source} heat utilisation",
                     p_nom_extendable=True,
                 )
@@ -6439,9 +6433,9 @@ def add_enhanced_geothermal(
         * Nyears
     )
 
-    assert (
-        egs_potentials["capital_cost"] > 0
-    ).all(), "Error in EGS cost, negative values found."
+    assert (egs_potentials["capital_cost"] > 0).all(), (
+        "Error in EGS cost, negative values found."
+    )
 
     orc_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
     orc_capital_cost = (orc_annuity + FOM / (1 + FOM)) * orc_capex * Nyears
