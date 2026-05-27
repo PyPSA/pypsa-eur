@@ -81,6 +81,8 @@ if __name__ == "__main__":
         "Loading district heating temperature profiles and calculating PTES operational profiles"
     )
 
+    discharge_boosting_required: bool = snakemake.params.discharge_resistive_boosting
+
     ptes_temperature_approximator = PtesTemperatureApproximator(
         forward_temperature=xr.open_dataarray(
             snakemake.input.central_heating_forward_temperature_profiles
@@ -101,4 +103,8 @@ if __name__ == "__main__":
 
     ptes_temperature_approximator.e_max_pu.to_netcdf(
         snakemake.output.ptes_e_max_pu_profiles
+    )
+
+    ptes_temperature_approximator.boost_per_discharge.to_netcdf(
+        snakemake.output.ptes_boost_per_discharge_profiles
     )

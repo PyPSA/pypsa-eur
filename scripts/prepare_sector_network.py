@@ -2753,7 +2753,8 @@ def add_heat(
     n: pypsa.Network,
     costs: pd.DataFrame,
     cop_profiles_file: str,
-    heat_source_boosting_profile_file: str,
+    heat_source_direct_utilisation_profile_file: str,
+    heat_source_preheater_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
     ates_e_nom_max: str,
@@ -2767,6 +2768,7 @@ def add_heat(
     floor_area_file: str,
     heat_source_profile_files: dict[str, str],
     heat_dsm_profile_file: str,
+    ptes_boost_per_discharge_profile_file: str,
     params: dict,
     pop_weighted_energy_totals: pd.DataFrame,
     heating_efficiencies: pd.DataFrame,
@@ -2853,9 +2855,15 @@ def add_heat(
 
     cop = xr.open_dataarray(cop_profiles_file)
 
-    heat_source_boosting_profile = (
-        xr.open_dataarray(heat_source_boosting_profile_file)
-        if len(heat_source_boosting_profile_file) > 0
+    heat_source_direct_utilisation_profile = (
+        xr.open_dataarray(heat_source_direct_utilisation_profile_file)
+        if len(heat_source_direct_utilisation_profile_file) > 0
+        else None
+    )
+
+    heat_source_preheater_utilisation_profile = (
+        xr.open_dataarray(heat_source_preheater_utilisation_profile_file)
+        if len(heat_source_preheater_utilisation_profile_file) > 0
         else None
     )
 
@@ -3261,49 +3269,60 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                n.add(
-                    "Carrier",
-                    heat_source.intermediate_carrier(heat_system),
-                )
-                n.add(
-                    "Bus",
-                    heat_source.intermediate_bus(nodes, heat_system),
-                    location=nodes,
-                    carrier=heat_source.intermediate_carrier(heat_system),
+                preheater_utilisation_profile = (
+                    heat_source_preheater_utilisation_profile.sel(
+                        heat_source=heat_source.value, name=nodes
+                    )
+                    .transpose("time", "name")
+                    .to_pandas()
                 )
 
-                if heat_source.supports_preheating:
-                    boosting_profile = (
-                        heat_source_boosting_profile.sel(
-                            heat_source=heat_source.value, name=nodes
-                        )
-                        .transpose("time", "name")
-                        .to_pandas()
+                n.add(
+                    "Bus",
+                    heat_source.preheater_input_bus(nodes, heat_system),
+                    location=nodes,
+                    carrier=heat_source.preheater_input_carrier(heat_system),
+                )
+
+                n.add(
+                    "Bus",
+                    heat_source.get_heat_pump_input_bus(nodes, heat_system),
+                    location=nodes,
+                    carrier=heat_source.heat_pump_input_carrier(heat_system),
+                )
+
+                n.add(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} {heat_source} heat preheater",
+                    bus0=heat_source.preheater_input_bus(nodes, heat_system),
+                    bus1=nodes + f" {heat_system} heat",
+                    bus2=heat_source.get_heat_pump_input_bus(nodes, heat_system),
+                    efficiency=preheater_utilisation_profile,
+                    efficiency2=1 - preheater_utilisation_profile,
+                    carrier=f"{heat_system} {heat_source} heat preheater",
+                    p_nom_extendable=True,
+                )
+
+                direct_utilisation_profile = (
+                    heat_source_direct_utilisation_profile.sel(
+                        heat_source=heat_source.value, name=nodes
                     )
-                else:
-                    boosting_profile = None
-                # Utilisation link: resource_bus → DH heat + intermediate_bus
-                # Preheating: source directly heats DH (eff=1+b), HP boosts remainder (eff2=-b)
-                # No preheating: all source → HP cold side (eff=0, eff2=1)
+                    .transpose("time", "name")
+                    .to_pandas()
+                )
+
+                # add link for direct usage of heat source when source temperature exceeds forward temperature
+
                 n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat utilisation",
                     bus0=heat_source.resource_bus(nodes, heat_system),
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=heat_source.intermediate_bus(
-                        nodes, heat_system
-                    ),  # Heat pump output for preheating sources, heat pump input for other sources
-                    efficiency=heat_source.delivered_heat_per_source_heat(
-                        boosting_profile=boosting_profile,
-                        cop=cop_heat_pump,
-                        discharge_resistive_boosting=params.sector["district_heating"][
-                            "ptes"
-                        ]["discharge_resistive_boosting"],
-                    ),  # 1 + boosting_profile / cop for preheating sources, 0 otherwise
-                    efficiency2=heat_source.booster_output_per_source_heat(
-                        boosting_profile=boosting_profile
-                    ),  # - boosting_profile for preheating sources, 1 otherwise
+                    bus2=heat_source.preheater_input_bus(nodes, heat_system),
+                    efficiency=direct_utilisation_profile,
+                    efficiency2=1 - direct_utilisation_profile,
                     carrier=f"{heat_system} {heat_source} heat utilisation",
                     p_nom_extendable=True,
                 )
@@ -3349,14 +3368,12 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=heat_source.hp_output_bus(nodes, heat_system),
+                    bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
-                    bus2=heat_source.intermediate_bus(nodes, heat_system),
+                    bus2=heat_source.get_heat_pump_input_bus(nodes, heat_system),
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=1 / cop_heat_pump,
-                    efficiency2=heat_source.hp_eff2(
-                        cop_heat_pump
-                    ),  # 0 for pre-heating sources, 1 - 1 / cop otherwise
+                    efficiency=1 / cop_heat_pump.clip(lower=0.001).squeeze(),
+                    efficiency2=heat_source.get_heat_pump_efficiency2(cop_heat_pump),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_min_pu=-(cop_heat_pump > 0).squeeze().astype(float),
@@ -3366,15 +3383,25 @@ def add_heat(
                 )
 
         if options["resistive_heaters"]:
+            ptes_heat_source = HeatSource.PTES
             key = f"{heat_system.central_or_decentral} resistive heater"
 
             if (
                 heat_system == HeatSystem.URBAN_CENTRAL
-                and params.sector["district_heating"]["ptes"]["enable"]
+                and params.sector["district_heating"]["ptes"]["enable"] == True
                 and params.sector["district_heating"]["ptes"][
                     "discharge_resistive_boosting"
                 ]
+                and ptes_heat_source.value
+                in params.heat_sources[heat_system.system_type.value]
             ):
+                ptes_boost_per_discharge_profiles = (
+                    xr.open_dataarray(ptes_boost_per_discharge_profile_file)
+                    .sel(name=nodes)
+                    .to_pandas()
+                    .reindex(index=n.snapshots)
+                )
+
                 n.add(
                     "Bus",
                     nodes,
@@ -3387,12 +3414,19 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} water pits resistive booster",
-                    bus0=nodes + f" {heat_system} resistive heat",
-                    bus1=nodes
-                    + f" {HeatSource.PTES.intermediate_carrier(heat_system)}",
-                    efficiency=1.0,
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes + f" {heat_system} resistive heat",
+                    bus2=ptes_heat_source.preheater_input_bus(nodes, heat_system),
+                    # eff = 1 - eff2 (energy conservation)
+                    efficiency=ptes_boost_per_discharge_profiles
+                    / (ptes_boost_per_discharge_profiles + 1),
+                    # Use 1 unit of medium-temperature heat to produce (ptes_boost_per_discharge_profiles + 1) units of district heating
+                    # (similar to HP balance: p_el x COP = p_source + p_el )
+                    efficiency2=1 / (ptes_boost_per_discharge_profiles + 1),
                     p_nom_extendable=True,
+                    p_min_pu=-(ptes_boost_per_discharge_profiles > 0).astype(float),
                     carrier=f"{heat_system} water pits resistive booster",
+                    p_max_pu=0,
                 )
 
                 n.add(
@@ -3401,7 +3435,7 @@ def add_heat(
                     suffix=f" {heat_system} resistive heater stand-alone",
                     bus0=nodes + f" {heat_system} resistive heat",
                     bus1=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} resistive heater stand-alone",
+                    carrier=f"{heat_system} resistive heat stand-alone",
                     efficiency=1.0,
                     p_nom_extendable=True,
                 )
@@ -6390,7 +6424,9 @@ if __name__ == "__main__":
             n=n,
             costs=costs,
             cop_profiles_file=snakemake.input.cop_profiles,
-            heat_source_boosting_profile_file=snakemake.input.heat_source_boosting_profiles,
+            heat_source_direct_utilisation_profile_file=snakemake.input.heat_source_direct_utilisation_profiles,
+            heat_source_preheater_utilisation_profile_file=snakemake.input.heat_source_preheater_utilisation_profiles,
+            ptes_boost_per_discharge_profile_file=snakemake.input.ptes_boost_per_discharge_profiles,
             hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
             ptes_e_max_pu_file=snakemake.input.ptes_e_max_pu_profiles,
             ates_e_nom_max=snakemake.input.ates_potentials,
