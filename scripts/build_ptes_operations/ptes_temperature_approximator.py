@@ -167,3 +167,53 @@ class PtesTemperatureApproximator:
                 f"for all {self.forward_temperature.size} snapshots and nodes"
             )
             return xr.ones_like(self.forward_temperature)
+
+    @property
+    def boost_per_discharge(self) -> xr.DataArray:
+        """
+        Calculate the additional lift required between the store's
+        current top temperature and the forward temperature with the lift
+        already achieved inside the store.
+
+        Notes
+        -----
+        The total thermal output required to reach the forward temperature is:
+
+            Q_total = Q_discharge + Q_boost
+
+        The total heat transfer is partitioned into:
+
+            Q_discharge = Ṽ·ρ·cₚ·(T_top − T_bottom)
+            Q_boost  = Ṽ·ρ·cₚ·(T_forward − T_top)
+
+        Solving this to constant Ṽ gives α as the ratio of required boost to available store energy:
+
+            α = Q_boost / Q_discharge
+              = (T_forward − T_top) / (T_top − T_bottom)
+
+        This expression quantifies the share of PTES output that is covered
+        by stored energy relative to the additional heating needed to meet
+        the desired forward temperature.
+
+        Returns
+        -------
+        xr.DataArray
+            The resulting fraction of PTES charge that must be further heated.
+        """
+        result = (
+            (self.forward_temperature - self.top_temperature_profile)
+            / (self.top_temperature_profile - self.bottom_temperature_profile)
+        ).where(self.forward_temperature > self.top_temperature_profile, 0)
+
+        # Count how many snapshots require boosting
+        boosting_needed = (
+            (self.forward_temperature > self.top_temperature_profile).sum().values
+        )
+        total_snapshots = self.forward_temperature.size
+
+        logger.info(
+            f"Discharge boosting (boost_per_discharge): Enabled. "
+            f"Boosting required for {int(boosting_needed)}/{total_snapshots} snapshot-node combinations "
+            f"(ratio range: {float(result.min().values):.3f} to {float(result.max().values):.3f})"
+        )
+        return result

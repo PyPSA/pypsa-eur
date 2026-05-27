@@ -632,23 +632,8 @@ rule build_sea_heat_potential:
 
 
 rule build_cop_profiles:
-    input:
-        unpack(input_heat_source_temperature),
-        central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-    output:
-        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
-    log:
-        logs("build_cop_profiles_s_{clusters}_{planning_horizons}.log"),
-    benchmark:
-        benchmarks("build_cop_profiles/s_{clusters}_{planning_horizons}")
-    resources:
-        mem_mb=20000,
+    message:
+        "Building coefficient of performance (COP) profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
             "sector", "heat_pump_sink_T_individual_heating"
@@ -659,60 +644,11 @@ rule build_cop_profiles:
         heat_pump_cop_approximation_central_heating=config_provider(
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
-        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        limited_heat_sources=config_provider(
-            "sector", "district_heating", "limited_heat_sources"
+        heat_sources=config_provider("sector", "heat_sources"),
+        heat_source_temperatures=config_provider(
+            "sector", "district_heating", "heat_source_temperatures"
         ),
         snapshots=config_provider("snapshots"),
-    message:
-        "Building coefficient of performance (COP) profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
-    script:
-        scripts("build_cop_profiles/run.py")
-
-
-rule build_ptes_operations:
-    input:
-        central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-    output:
-        ptes_top_temperature_profiles=resources(
-            "temp_ptes_top_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        ptes_e_max_pu_profiles=resources(
-            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-    log:
-        logs("build_ptes_operations_s_{clusters}_{planning_horizons}.log"),
-    benchmark:
-        benchmarks("build_ptes_operations_s_{clusters}_{planning_horizons}")
-    resources:
-        mem_mb=2000,
-    params:
-        max_ptes_top_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "max_top_temperature",
-        ),
-        min_ptes_bottom_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "min_bottom_temperature",
-        ),
-        snapshots=config_provider("snapshots"),
-    message:
-        "Building thermal energy storage operations profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
-    script:
-        scripts("build_ptes_operations/run.py")
-
-
-rule build_heat_source_utilisation_profiles:
     input:
         unpack(input_heat_source_temperature),
         central_heating_forward_temperature_profiles=resources(
@@ -721,10 +657,120 @@ rule build_heat_source_utilisation_profiles:
         central_heating_return_temperature_profiles=resources(
             "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
+        regions_onshore=input_regions_onshore_district_heating,
     output:
-        heat_source_boosting_profiles=resources(
-            "heat_source_boosting_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
+    resources:
+        mem_mb=20000,
+    log:
+        logs("build_cop_profiles_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_cop_profiles/s_{clusters}_{planning_horizons}")
+    script:
+        scripts("build_cop_profiles/run.py")
+
+
+
+rule build_ptes_operations:
+    message:
+        "Building thermal energy storage operations profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+    params:
+        top_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "top_temperature",
         ),
+        bottom_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "bottom_temperature",
+        ),
+        snapshots=config_provider("snapshots"),
+        charge_boosting_required=config_provider(
+            "sector", "district_heating", "ptes", "charge_boosting_required"
+        ),
+        discharge_resistive_boosting=config_provider(
+            "sector", "district_heating", "ptes", "discharge_resistive_boosting"
+        ),
+        temperature_dependent_capacity=config_provider(
+            "sector", "district_heating", "ptes", "temperature_dependent_capacity"
+        ),
+        design_top_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "design_top_temperature",
+        ),
+        design_bottom_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "design_bottom_temperature",
+        ),
+    input:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        regions_onshore=input_regions_onshore_district_heating,
+    output:
+        ptes_top_temperature_profiles=resources(
+            "temp_ptes_top_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        ptes_bottom_temperature_profiles=resources(
+            "temp_ptes_bottom_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        ptes_e_max_pu_profiles=resources(
+            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        ptes_boost_per_discharge_profiles=resources(
+            "ptes_boost_per_discharge_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_ptes_operations_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_ptes_operations_s_{clusters}_{planning_horizons}")
+    script:
+        scripts("build_ptes_operations/run.py")
+
+
+rule build_heat_source_utilisation_profiles:
+    message:
+        "Building heat source utilization profiles for district heating for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+    params:
+        heat_sources=config_provider("sector", "heat_sources", "urban central"),
+        heat_source_cooling=config_provider(
+            "sector", "district_heating", "heat_source_cooling"
+        ),
+        snapshots=config_provider("snapshots"),
+        heat_source_temperatures=config_provider(
+            "sector", "district_heating", "heat_source_temperatures"
+        ),
+        ptes_enable=config_provider("sector", "district_heating", "ptes", "enable"),
+    input:
+        unpack(input_heat_source_temperature),
+        unpack(input_ptes_bottom_temperature),
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    output:
+        heat_source_direct_utilisation_profiles=resources(
+            "heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        heat_source_preheater_utilisation_profiles=resources(
+            "heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    resources:
+        mem_mb=20000,
     log:
         logs(
             "build_heat_source_utilisation_profiles_s_{clusters}_{planning_horizons}.log"
@@ -733,18 +779,6 @@ rule build_heat_source_utilisation_profiles:
         benchmarks(
             "build_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}"
         )
-    resources:
-        mem_mb=20000,
-    params:
-        direct_utilisation_heat_sources=config_provider(
-            "sector", "district_heating", "direct_utilisation_heat_sources"
-        ),
-        limited_heat_sources=config_provider(
-            "sector", "district_heating", "limited_heat_sources"
-        ),
-        snapshots=config_provider("snapshots"),
-    message:
-        "Building direct heat source utilization profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     script:
         scripts("build_heat_source_utilisation_profiles.py")
 
@@ -1648,9 +1682,26 @@ rule prepare_sector_network:
             )(w)
             else []
         ),
-        heat_source_boosting_profiles=lambda w: (
+        ptes_boost_per_discharge_profiles=lambda w: (
             resources(
-                "heat_source_boosting_profiles_base_s_{clusters}_{planning_horizons}.nc"
+                "ptes_boost_per_discharge_profiles_base_s_{clusters}_{planning_horizons}.nc"
+            )
+            if config_provider("sector", "district_heating", "ptes", "enable")(w)
+            and config_provider(
+                "sector", "district_heating", "ptes", "discharge_resistive_boosting"
+            )(w)
+            else []
+        ),
+        heat_source_direct_utilisation_profiles=lambda w: (
+            resources(
+                "heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+            )
+            if len(config_provider("sector", "heat_sources", "urban central")(w)) > 0
+            else []
+        ),
+        heat_source_preheater_utilisation_profiles=lambda w: (
+            resources(
+                "heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
             )
             if len(config_provider("sector", "heat_sources", "urban central")(w)) > 0
             else []
