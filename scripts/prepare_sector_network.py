@@ -827,6 +827,7 @@ def add_co2_tracking(
         carrier="co2 sequestered",
         efficiency=1.0,
         p_nom_extendable=True,
+        marginal_cost=float(options.get("co2_transport_floor_cost", 22.0)),
     )
 
     location_to_bus = pd.Series(sequestration_buses, index=spatial.co2.locations)

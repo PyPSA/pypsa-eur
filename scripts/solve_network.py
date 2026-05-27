@@ -1021,8 +1021,8 @@ def export_cdr_credit_accounting(
     if solver_values_missing:
         logger.warning(
             "CDR accounting is configured for sequestration timing, but solver "
-            "values for CDR-credited/CO2AnnualCDRSeq are unavailable. Exporting "
-            "the solved network and a flagged accounting row without credit values."
+            "values for CDR-credited/CO2AnnualCDRSeq are unavailable. "
+            "Falling back to capture_proxy for credited amounts."
         )
 
     def _mt(series: pd.Series, key: str) -> float:
@@ -1031,9 +1031,29 @@ def export_cdr_credit_accounting(
         return float(series.loc[key]) / 1e6
 
     if solver_values_missing:
-        credited_dac_mt = np.nan
-        credited_biogenic_mt = np.nan
-        method = "solver_unavailable"
+        proxy_dac = capture_proxy["dac"] / 1e6
+        proxy_biogenic = capture_proxy["biogenic"] / 1e6
+        proxy_total = proxy_dac + proxy_biogenic
+        if proxy_total > 0:
+            # Cap proportionally at credit_limit when limit is binding
+            if not np.isnan(credit_limit_mt) and proxy_total > credit_limit_mt:
+                scale = credit_limit_mt / proxy_total
+                credited_dac_mt = proxy_dac * scale
+                credited_biogenic_mt = proxy_biogenic * scale
+            else:
+                credited_dac_mt = proxy_dac
+                credited_biogenic_mt = proxy_biogenic
+            method = "capture_proxy_fallback"
+            solver_values_missing = False  # credited values are now available
+            logger.info(
+                "CDR fallback: credited dac=%.2f Mt, biogenic=%.2f Mt via capture_proxy",
+                credited_dac_mt,
+                credited_biogenic_mt,
+            )
+        else:
+            credited_dac_mt = np.nan
+            credited_biogenic_mt = np.nan
+            method = "solver_unavailable"
     elif use_solver_export:
         credited_dac_mt = _mt(credited_series, "dac")
         credited_biogenic_mt = _mt(credited_series, "biogenic")
