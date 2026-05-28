@@ -3274,11 +3274,17 @@ def add_heat(
                     )
                     t_ret = layer_t[ret_idx.values]
                     t_boost = layer_t[boost_idx.values]
-                    direct_drop = np.clip(t_layer - t_ret, 0.0, None)  # delivered direct
+                    direct_drop = np.clip(
+                        t_layer - t_ret, 0.0, None
+                    )  # delivered direct
                     extract_dt = np.clip(t_layer - t_boost, 0.0, None)  # total released
-                    below_drop = np.clip(extract_dt - direct_drop, 0.0, None)  # evaporator
+                    below_drop = np.clip(
+                        extract_dt - direct_drop, 0.0, None
+                    )  # evaporator
                     with np.errstate(divide="ignore", invalid="ignore"):
-                        direct_frac = np.where(extract_dt > 0, direct_drop / extract_dt, 0.0)
+                        direct_frac = np.where(
+                            extract_dt > 0, direct_drop / extract_dt, 0.0
+                        )
                         hp_frac = np.where(extract_dt > 0, below_drop / extract_dt, 0.0)
                     direct_drop = pd.Series(direct_drop, index=nodes)
                     extract_dt = pd.Series(extract_dt, index=nodes)

@@ -419,9 +419,7 @@ class PtesApproximator:
                 min_delta_t_lift=min_delta_t_lift,
             ).cop
             cops.append(cop_layer.drop_vars("layer", errors="ignore"))
-        return xr.concat(
-            cops, dim=pd.Index(np.arange(self.num_layers), name="layer")
-        )
+        return xr.concat(cops, dim=pd.Index(np.arange(self.num_layers), name="layer"))
 
     def to_dataset(self) -> xr.Dataset:
         """
