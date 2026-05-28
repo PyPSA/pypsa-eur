@@ -1136,6 +1136,10 @@ def add_layered_ptes_aggregate_throughput_constraint(
         n.links.index.str.contains("water pits charger")
         & n.links.index.str.contains("layer")
     ]
+    layer_dischargers = n.links.index[
+        n.links.index.str.contains("water pits discharger")
+        & n.links.index.str.contains("layer")
+    ]
     agg_stores = n.stores.index[
         n.stores.index.str.contains("water pits")
         & ~n.stores.index.str.contains("layer")
@@ -1146,23 +1150,29 @@ def add_layered_ptes_aggregate_throughput_constraint(
     for agg in agg_stores:
         prefix = agg.split("water pits")[0] + "water pits"
 
+        # The volume-trade charger uses several links per destination layer
+        # (one per colder source layer, named "... charger layer {n} from
+        # layer {s}"), so there is no 1:1 charger<->discharger mapping. Sum the
+        # heat drawn over *all* chargers (already in energy units) and the
+        # energy-equivalent volume over *all* dischargers.
         chargers = layer_chargers[layer_chargers.str.startswith(prefix + " charger")]
-        dischargers = pd.Index(
-            [c.replace(" charger ", " discharger ") for c in chargers]
-        ).intersection(n.links.index)
+        dischargers = layer_dischargers[
+            layer_dischargers.str.startswith(prefix + " discharger")
+        ]
         if chargers.empty or dischargers.empty:
             continue
 
         e2p_ratio = n.links.at[chargers[0], "energy to power ratio"]
 
         weighted_sum = None
-        for ch, dis in zip(chargers, dischargers):
-            layer_idx = int(ch.rsplit("layer ", 1)[-1])
-            m3_to_mwh = float(ptes_ds["m3_to_mwh"].sel(layer=layer_idx).item())
-            term = (
-                n.model["Link-p"].loc[:, ch] + m3_to_mwh * n.model["Link-p"].loc[:, dis]
-            )
+        for ch in chargers:
+            term = n.model["Link-p"].loc[:, ch]
             weighted_sum = term if weighted_sum is None else weighted_sum + term
+        for dis in dischargers:
+            layer_idx = int(dis.rsplit("layer ", 1)[-1])
+            m3_to_mwh = float(ptes_ds["m3_to_mwh"].sel(layer=layer_idx).item())
+            term = m3_to_mwh * n.model["Link-p"].loc[:, dis]
+            weighted_sum = weighted_sum + term
 
         agg_e_nom = n.model["Store-e_nom"].loc[agg]
         constraints.append(weighted_sum - e2p_ratio * agg_e_nom)

@@ -666,6 +666,12 @@ sector:
       bottom_temperature: 35
       design_top_temperature: 90
       design_bottom_temperature: 35
+      # If true, the return-level and heat-pump reinjection layers are chosen as
+      # the warmest layer at/below the target temperature (floor) instead of the
+      # closest layer, guaranteeing discharge cannot generate energy (no free
+      # lunch) at the cost of a small conservative leak. If false, the closest
+      # layer is used and build_ptes_operations warns when a free lunch is risked.
+      conservative_return_layer: false
       layered:
         layer_temperatures: [90]
         heat_transfer_coefficient: 0.01  # H [W/(m²·K)]

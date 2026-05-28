@@ -262,12 +262,30 @@ def expand_heat_sources_for_ptes_layers(
     heat_sources_by_system: dict[str, list[str]],
     ptes_layer_temperatures: list[float] | None,
 ) -> dict[str, list[str]]:
-    """Replace 'ptes' by per-layer labels when multiple PTES layers exist."""
+    """Replace plain PTES with per-layer labels when multiple PTES layers exist."""
 
-    for layer in range(len(ptes_layer_temperatures)):
-        heat_sources_by_system["urban central"].append(f"ptes layer {layer}")
+    if not ptes_layer_temperatures or len(ptes_layer_temperatures) <= 1:
+        return heat_sources_by_system
 
-    return heat_sources_by_system
+    expanded_heat_sources_by_system = {
+        heat_system_type: list(heat_sources)
+        for heat_system_type, heat_sources in heat_sources_by_system.items()
+    }
+
+    urban_central_heat_sources = expanded_heat_sources_by_system.get(
+        HeatSystemType.URBAN_CENTRAL.value, []
+    )
+
+    try:
+        ptes_index = urban_central_heat_sources.index(HeatSource.PTES.value)
+    except ValueError:
+        return expanded_heat_sources_by_system
+
+    urban_central_heat_sources[ptes_index : ptes_index + 1] = [
+        f"ptes layer {layer}" for layer in range(len(ptes_layer_temperatures))
+    ]
+
+    return expanded_heat_sources_by_system
 
 
 if __name__ == "__main__":
@@ -288,13 +306,10 @@ if __name__ == "__main__":
         snakemake.input.central_heating_return_temperature_profiles
     )
 
-    if snakemake.params.layered_ptes:
-        heat_sources_by_system = expand_heat_sources_for_ptes_layers(
-            heat_sources_by_system=snakemake.params.heat_sources,
-            ptes_layer_temperatures=snakemake.params.ptes_layer_temperatures,
-        )
-    else:
-        heat_sources_by_system = snakemake.params.heat_sources
+    heat_sources_by_system = expand_heat_sources_for_ptes_layers(
+        heat_sources_by_system=snakemake.params.heat_sources,
+        ptes_layer_temperatures=snakemake.params.ptes_layer_temperatures,
+    )
 
     cop_all_system_types = []
     for heat_system_type, heat_sources in heat_sources_by_system.items():

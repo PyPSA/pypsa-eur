@@ -677,9 +677,6 @@ rule build_cop_profiles:
         ptes_layer_temperatures=config_provider(
             "sector", "district_heating", "ptes", "layered", "layer_temperatures"
         ),
-        layered_ptes=config_provider(
-            "sector", "district_heating", "ptes", "layered", "enable"
-        ),
         snapshots=config_provider("snapshots"),
     input:
         unpack(input_heat_source_temperature),
@@ -746,6 +743,18 @@ rule build_ptes_operations:
             "district_heating",
             "ptes",
             "interlayer_heat_transfer_coefficient",
+        ),
+        conservative_return_layer=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "conservative_return_layer",
+        ),
+        heat_source_cooling_central_heating=config_provider(
+            "sector", "district_heating", "heat_source_cooling"
+        ),
+        heat_pump_cop_approximation_central_heating=config_provider(
+            "sector", "district_heating", "heat_pump_cop_approximation"
         ),
     input:
         central_heating_forward_temperature_profiles=resources(

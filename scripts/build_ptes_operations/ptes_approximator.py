@@ -18,12 +18,19 @@ class PtesApproximator:
         design_standing_losses: float,
         interlayer_heat_transfer_coefficient: float,
         cop: xr.DataArray,
+        conservative_return_layer: bool = False,
         rho=1000,
         # Specific heat in MWh/kg/K to keep rho*c_p*DeltaT in MWh/m3.
         c_p=4184 / 3.6e9,
     ):
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
+        # When True, the return-level and heat-pump reinjection layers are chosen
+        # as the warmest layer at/below the target temperature (floor), so direct
+        # and boosted discharge never deposit spent volume above the return level
+        # -> no energy generation on discharge. When False, the closest layer is
+        # used (and discharge_free_lunch_warnings flags any free-lunch risk).
+        self.conservative_return_layer = bool(conservative_return_layer)
 
         layer_temperatures = np.asarray(layer_temperatures, dtype=float)
 
@@ -43,10 +50,16 @@ class PtesApproximator:
 
     @property
     def cop(self):
+        # build_cop_profiles only expands to per-layer "ptes layer {i}" labels when
+        # num_layers > 1; the single-layer build keeps the plain "ptes" source. Fall
+        # back to it here instead of selecting a non-existent "ptes layer 0".
+        def _heat_source(i: int) -> str:
+            return f"ptes layer {i}" if self.num_layers > 1 else "ptes"
+
         return xr.concat(
             [
                 self._cop.sel(
-                    heat_system="urban central", heat_source=f"ptes layer {i}"
+                    heat_system="urban central", heat_source=_heat_source(i)
                 ).drop("heat_source")
                 for i in range(self.num_layers)
             ],
@@ -155,13 +168,30 @@ class PtesApproximator:
 
     @property
     def return_temp_layer(self) -> xr.DataArray:
-        """Closest layer index to node-wise mean return temperature."""
+        """
+        Layer index used as the return level.
 
-        return (
-            np.abs(self.layer_temperatures_da - self.return_temperature)
-            .argmin(dim="layer")
-            .astype(int)
-        )
+        With ``conservative_return_layer`` the warmest layer at or below the
+        return temperature is chosen (floor), so direct discharge never deposits
+        spent volume above the return level (no energy generation). If no layer is
+        at/below the return temperature the coldest (bottom) layer is used.
+        Otherwise the closest layer is chosen (nearest).
+        """
+        layer_t = self.layer_temperatures_da
+        return_t = self.return_temperature
+        if self._time_dim in getattr(return_t, "dims", ()):
+            # Floor against the coldest return temperature to stay conservative
+            # at every timestep.
+            return_t = return_t.min(dim=self._time_dim)
+
+        if self.conservative_return_layer:
+            at_or_below = layer_t <= return_t
+            floored = at_or_below.argmax(dim="layer")  # warmest layer with T <= T_ret
+            return xr.where(
+                at_or_below.any(dim="layer"), floored, self.num_layers - 1
+            ).astype(int)
+
+        return np.abs(layer_t - return_t).argmin(dim="layer").astype(int)
 
     @property
     def preheater_return_layer(self) -> xr.DataArray:
@@ -226,17 +256,31 @@ class PtesApproximator:
         # take min over time (target layer must be constant)
         target_temp = target_temp.min(dim="time")
 
+        layer_t = self.layer_temperatures_da
+        layer_idx = layer_t.layer
         ret_val = []
         for l in range(self.num_layers):
-            closest_layer = abs(
-                self.layer_temperatures_da - target_temp.sel(layer=l)
-            ).argmin(dim="layer")
-            closest_layer = xr.where(
-                (closest_layer <= l) & (closest_layer < self.num_layers - 1),
-                closest_layer + 1,
-                closest_layer,
-            )
-            ret_val.append(closest_layer)
+            target = target_temp.sel(layer=l)
+            colder = layer_idx > l  # candidates must be strictly colder than source
+            if self.conservative_return_layer:
+                # Warmest strictly-colder layer at/below the target depth (floor),
+                # so the boosted volume is never deposited above its reference
+                # temperature -> the heat pump can never create energy. Fall back
+                # to the bottom layer if none is cold enough.
+                at_or_below = (layer_t <= target) & colder
+                chosen = xr.where(
+                    at_or_below.any(dim="layer"),
+                    at_or_below.argmax(dim="layer"),
+                    self.num_layers - 1,
+                )
+            else:
+                closest_layer = abs(layer_t - target).argmin(dim="layer")
+                chosen = xr.where(
+                    (closest_layer <= l) & (closest_layer < self.num_layers - 1),
+                    closest_layer + 1,
+                    closest_layer,
+                )
+            ret_val.append(chosen)
 
         return xr.concat(
             ret_val, dim=pd.Index(np.arange(self.num_layers), name="layer")
@@ -287,6 +331,95 @@ class PtesApproximator:
     def standing_losses(self) -> float:
         """Tbd."""
         return np.full(self.num_layers, self.design_standing_losses)
+
+    def discharge_free_lunch_warnings(self, tol: float = 0.5) -> list[str]:
+        """
+        Flag nodes whose discretisation risks energy generation on discharge.
+
+        Direct (non-boosted) discharge cools a layer from ``T_layer`` down to the
+        district-heating return temperature and deposits the spent volume at the
+        return-level layer, delivering ``rho*c_p*(T_layer - T_return)`` of heat
+        while debiting the store by ``rho*c_p*(T_layer - T_return_layer)``. If the
+        chosen (nearest) return-level layer sits *above* the actual return
+        temperature (``T_return_layer > T_return``) the discharge creates
+        ``rho*c_p*(T_return_layer - T_return)`` of heat per m3 — a free lunch.
+
+        To stay conservative the layer temperatures should be chosen (in config)
+        so the return-level layer is at or below the return temperature. This
+        returns a human-readable warning per node where that does not hold (empty
+        list if the discretisation is safe everywhere).
+        """
+        layer_t = self.layer_temperatures_da
+        return_t = self.return_temperature
+        # Per-node return temperature reduced to a scalar (mean over time if the
+        # return profile is time-resolved).
+        if self._time_dim in getattr(return_t, "dims", ()):
+            return_t = return_t.mean(dim=self._time_dim)
+        return_layer_t = layer_t.sel(layer=self.return_temp_layer)
+        gap = (return_layer_t - return_t).compute()
+        warnings = []
+        for name in np.atleast_1d(gap["name"].values):
+            g = float(gap.sel(name=name))
+            if g > tol:
+                warnings.append(
+                    f"  {name}: return-level layer {float(return_layer_t.sel(name=name)):.1f} C "
+                    f"> return T {float(return_t.sel(name=name)):.1f} C by {g:.1f} K"
+                )
+        return warnings
+
+    def booster_cop(
+        self,
+        cop_approximator_cls,
+        refrigerant,
+        delta_t_pinch_point,
+        isentropic_compressor_efficiency,
+        heat_loss,
+        min_delta_t_lift,
+    ) -> xr.DataArray:
+        """
+        Per-layer booster COP recomputed at the actual evaporator outlet.
+
+        The build_cop_profiles COP fixes the source outlet a shallow
+        ``heat_source_cooling`` below the inlet. For the PTES booster the spent
+        volume is in fact cooled all the way down to the reinjection
+        (``hp_return``) layer, so the evaporator glide is ``T_source_inlet ->
+        T_deposit``. Recomputing the COP with that outlet makes it reflect the
+        real cooling depth (deeper cooling -> lower COP -> more electricity).
+
+        Energy conservation is unaffected (heat = evaporator + electricity holds
+        for any COP); this only sharpens the electricity/source split. Returns
+        dimensions (layer, time, name).
+        """
+        layer_t = self.layer_temperatures_da
+        ret = self.return_temperature
+        hp_return = self.hp_return_layer  # (layer, name)
+        cops = []
+        for layer in range(self.num_layers):
+            t_layer = float(self.layer_temperatures[layer])
+            # preheater raises the return flow to T_layer when T_layer > T_ret, so
+            # the heat pump source inlet is min(T_layer, T_ret) and its sink inlet
+            # max(T_layer, T_ret).
+            source_inlet = xr.where(ret < t_layer, ret, t_layer)
+            sink_inlet = xr.where(ret < t_layer, t_layer, ret)
+            source_outlet = layer_t.sel(layer=hp_return.sel(layer=layer)).drop_vars(
+                "layer", errors="ignore"
+            )
+            # the evaporator can only cool (deposit at/below the inlet); clamp for
+            # the non-boosted layers whose hp_return value is unused anyway.
+            source_outlet = np.minimum(source_outlet, source_inlet)
+            cop_layer = cop_approximator_cls(
+                sink_outlet_temperature_celsius=self.forward_temperature,
+                sink_inlet_temperature_celsius=sink_inlet,
+                source_inlet_temperature_celsius=source_inlet,
+                source_outlet_temperature_celsius=source_outlet,
+                refrigerant=refrigerant,
+                delta_t_pinch_point=delta_t_pinch_point,
+                isentropic_compressor_efficiency=isentropic_compressor_efficiency,
+                heat_loss=heat_loss,
+                min_delta_t_lift=min_delta_t_lift,
+            ).cop
+            cops.append(cop_layer.drop_vars("layer", errors="ignore"))
+        return xr.concat(cops, dim=pd.Index(np.arange(self.num_layers), name="layer"))
 
     def to_dataset(self) -> xr.Dataset:
         """
