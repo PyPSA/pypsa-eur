@@ -30,8 +30,8 @@ mkdir -p "$LOG_DIR"
 
 # Wall time and resource settings
 WALLTIME="72:00"     # 72 hours: extra headroom for origin-tracking solve overhead
-CORES=8
-MEM_MB=15000         # 15 GB/core × 8 cores = 120 GB total; origin-tracking adds ~50-80 GB on top of base ~23 GB peak
+CORES=1
+MEM_MB=48000         # 48 GB total on 1 core. WARNING: CO2 origin-tracking adds ~50-80 GB on top of ~23 GB base (~73-103 GB peak) — raise MEM_MB (e.g. 104000) if this OOMs
 QUEUE="hpc"
 
 # Parse --clean flag
@@ -140,7 +140,7 @@ PIXI_BIN="\$(command -v pixi || true)"
 [[ -z "\$PIXI_BIN" ]] && { echo "Error: pixi not found"; exit 127; }
 
 WORK_ROOT="/work3/\$USER"
-export TMPDIR="\${TMPDIR:-\$WORK_ROOT/tmp}"
+export TMPDIR="\${__LSF_JOB_TMPDIR__:-\$WORK_ROOT/tmp}"
 export XDG_CACHE_HOME="\${XDG_CACHE_HOME:-\$WORK_ROOT/.cache}"
 export SNAKEMAKE_OUTPUT_CACHE="\${SNAKEMAKE_OUTPUT_CACHE:-\$WORK_ROOT/.snakemake_cache}"
 mkdir -p "\$TMPDIR" "\$XDG_CACHE_HOME" "\$SNAKEMAKE_OUTPUT_CACHE"

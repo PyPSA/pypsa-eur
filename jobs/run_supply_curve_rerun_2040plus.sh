@@ -27,8 +27,8 @@ LOG_DIR="$REPO_ROOT/logs/supply_curve"
 mkdir -p "$LOG_DIR"
 
 WALLTIME="72:00"
-CORES=8
-MEM_MB=15000
+CORES=1
+MEM_MB=48000
 QUEUE="hpc"
 
 DEFAULT_PREFIXES=(S0 S01 S02 S03 S04 S05 S06 S07 S08 S09 S10)
@@ -98,7 +98,7 @@ PIXI_BIN="\$(command -v pixi || true)"
 [[ -z "\$PIXI_BIN" ]] && { echo "Error: pixi not found"; exit 127; }
 
 WORK_ROOT="/work3/\$USER"
-export TMPDIR="\${TMPDIR:-\$WORK_ROOT/tmp}"
+export TMPDIR="\${__LSF_JOB_TMPDIR__:-\$WORK_ROOT/tmp}"
 export XDG_CACHE_HOME="\${XDG_CACHE_HOME:-\$WORK_ROOT/.cache}"
 export SNAKEMAKE_OUTPUT_CACHE="\${SNAKEMAKE_OUTPUT_CACHE:-\$WORK_ROOT/.snakemake_cache}"
 mkdir -p "\$TMPDIR" "\$XDG_CACHE_HOME" "\$SNAKEMAKE_OUTPUT_CACHE"
