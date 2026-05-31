@@ -176,12 +176,15 @@ def get_compose_inputs(w):
 
 # Main composition rule - combines all network building steps
 rule compose_network:
-    message:
-        "Composing network for horizon {wildcards.horizon}"
     input:
         unpack(get_compose_inputs),
     output:
         resources("networks/composed_{horizon}.nc"),
+    log:
+        logs("compose_network_{horizon}.log"),
+    threads: 1
+    resources:
+        mem_mb=8000,
     params:
         foresight=config_provider("foresight"),
         electricity=config_provider("electricity"),
@@ -229,10 +232,7 @@ rule compose_network:
         co2_budget=config_provider("co2_budget"),
         adjustments=config_provider("adjustments"),
         solver_name=config_provider("solving", "solver", "name"),
-    log:
-        logs("compose_network_{horizon}.log"),
-    threads: 1
-    resources:
-        mem_mb=8000,
+    message:
+        "Composing network for horizon {wildcards.horizon}"
     script:
         "../scripts/compose_network.py"

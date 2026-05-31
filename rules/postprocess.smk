@@ -5,121 +5,121 @@
 if config["foresight"] != "perfect":
 
     rule plot_base_network:
-        message:
-            "Plotting base power network"
-        params:
-            plotting=config_provider("plotting"),
         input:
             network=resources("networks/base.nc"),
             onshore_regions=resources("onshore_regions_base.geojson"),
         output:
             map=resources("maps/base_network.pdf"),
+        benchmark:
+            benchmarks("plot_base_network")
         threads: 1
         resources:
             mem_mb=4000,
-        benchmark:
-            benchmarks("plot_base_network")
+        params:
+            plotting=config_provider("plotting"),
+        message:
+            "Plotting base power network"
         script:
             "../scripts/plot_base_network.py"
 
     rule plot_clustered_network:
-        message:
-            "Plotting clustered network clusters"
-        params:
-            plotting=config_provider("plotting"),
         input:
             network=resources("networks/clustered.nc"),
             regions=resources("onshore_regions.geojson"),
         output:
             map=resources("maps/clustered_network.pdf"),
+        benchmark:
+            benchmarks("plot_clustered_network")
         threads: 1
         resources:
             mem_mb=4000,
-        benchmark:
-            benchmarks("plot_clustered_network")
+        params:
+            plotting=config_provider("plotting"),
+        message:
+            "Plotting clustered network clusters"
         script:
             "../scripts/plot_power_network_clustered.py"
 
     rule plot_power_network:
-        message:
-            "Plotting power network for {wildcards.horizon} planning horizon"
-        params:
-            plotting=config_provider("plotting"),
-            transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
         output:
             map=RESULTS + "maps/static/power_network_{horizon}.pdf",
-        threads: 2
-        resources:
-            mem_mb=10000,
         log:
             RESULTS + "logs/plot_power_network_{horizon}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_power_network_{horizon}")
+        threads: 2
+        resources:
+            mem_mb=10000,
+        params:
+            plotting=config_provider("plotting"),
+            transmission_limit=config_provider("electricity", "transmission_limit"),
+        message:
+            "Plotting power network for {wildcards.horizon} planning horizon"
         script:
             "../scripts/plot_power_network.py"
 
     rule plot_hydrogen_network:
-        message:
-            "Plotting hydrogen network for {wildcards.horizon} planning horizon"
-        params:
-            plotting=config_provider("plotting"),
-            foresight=config_provider("foresight"),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
         output:
             map=RESULTS + "maps/static/h2_network_{horizon}.pdf",
-        threads: 2
-        resources:
-            mem_mb=10000,
         log:
             RESULTS + "logs/plot_hydrogen_network_{horizon}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_hydrogen_network_{horizon}")
+        threads: 2
+        resources:
+            mem_mb=10000,
+        params:
+            plotting=config_provider("plotting"),
+            foresight=config_provider("foresight"),
+        message:
+            "Plotting hydrogen network for {wildcards.horizon} planning horizon"
         script:
             "../scripts/plot_hydrogen_network.py"
 
     rule plot_gas_network:
-        message:
-            "Plotting methane network for {wildcards.horizon} planning horizon"
-        params:
-            plotting=config_provider("plotting"),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
         output:
             map=RESULTS + "maps/static/ch4_network_{horizon}.pdf",
-        threads: 2
-        resources:
-            mem_mb=10000,
         log:
             RESULTS + "logs/plot_gas_network_{horizon}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_gas_network_{horizon}")
+        threads: 2
+        resources:
+            mem_mb=10000,
+        params:
+            plotting=config_provider("plotting"),
+        message:
+            "Plotting methane network for {wildcards.horizon} planning horizon"
         script:
             "../scripts/plot_gas_network.py"
 
     rule plot_balance_map:
-        message:
-            "Plotting balance map for {wildcards.horizon} planning horizon and {wildcards.carrier} carrier"
-        params:
-            plotting=config_provider("plotting"),
-            settings=lambda w: config_provider("plotting", "balance_map", w.carrier),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
         output:
             RESULTS + "maps/static/balance_map_{carrier}_{horizon}.pdf",
-        threads: 1
-        resources:
-            mem_mb=8000,
         log:
             RESULTS + "logs/plot_balance_map_{horizon}_{carrier}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_balance_map_{horizon}_{carrier}")
+        threads: 1
+        resources:
+            mem_mb=8000,
+        params:
+            plotting=config_provider("plotting"),
+            settings=lambda w: config_provider("plotting", "balance_map", w.carrier),
+        message:
+            "Plotting balance map for {wildcards.horizon} planning horizon and {wildcards.carrier} carrier"
         script:
             "../scripts/plot_balance_map.py"
 
@@ -129,13 +129,13 @@ if config["foresight"] != "perfect":
             regions=resources("onshore_regions.geojson"),
         output:
             RESULTS + "maps/interactive/balance_map_{carrier}_{horizon}.html",
-        threads: 1
-        resources:
-            mem_mb=8000,
         log:
             RESULTS + "logs/plot_balance_map_interactive/{horizon}_{carrier}.log",
         benchmark:
             RESULTS + "benchmarks/plot_balance_map_interactive/{horizon}_{carrier}"
+        threads: 1
+        resources:
+            mem_mb=8000,
         script:
             scripts("plot_balance_map_interactive.py")
 
@@ -157,13 +157,13 @@ if config["foresight"] != "perfect":
             + "maps/static/heat_source_temperature_map_{carrier}_{horizon}.html",
             energy_map=RESULTS
             + "maps/static/heat_source_energy_map_{carrier}_{horizon}.html",
-        threads: 1
-        resources:
-            mem_mb=150000,
         log:
             RESULTS + "logs/plot_heat_source_map/{carrier}_{horizon}.log",
         benchmark:
             (RESULTS + "benchmarks/plot_heat_source_map/{carrier}_{horizon}")
+        threads: 1
+        resources:
+            mem_mb=150000,
         script:
             scripts("plot_heat_source_map.py")
 
@@ -177,10 +177,6 @@ if config["foresight"] == "perfect":
         }
 
     rule plot_power_network_perfect:
-        message:
-            "Plotting power network with perfect foresight"
-        params:
-            plotting=config_provider("plotting"),
         input:
             network=RESULTS + "networks_brownfield_all_years.nc",
             regions=resources("onshore_regions.geojson"),
@@ -189,16 +185,15 @@ if config["foresight"] == "perfect":
         threads: 2
         resources:
             mem_mb=10000,
+        params:
+            plotting=config_provider("plotting"),
+        message:
+            "Plotting power network with perfect foresight"
         script:
             scripts("plot_power_network_perfect.py")
 
 
 rule make_summary:
-    message:
-        "Creating optimization results summary statistics"
-    params:
-        foresight=config_provider("foresight"),
-        planning_horizons=config_provider("planning_horizons"),
     input:
         networks=lambda w: (
             [RESULTS + f"networks/solved_{config['planning_horizons'][-1]}.nc"]
@@ -224,29 +219,23 @@ rule make_summary:
         market_values=RESULTS + "csvs/market_values.csv",
         metrics=RESULTS + "csvs/metrics.csv",
         cumulative_costs=RESULTS + "csvs/cumulative_costs.csv",
-    threads: 1
-    resources:
-        mem_mb=16000,
     log:
         RESULTS + "logs/make_summary.log",
     benchmark:
         RESULTS + "benchmarks/make_summary"
+    threads: 1
+    resources:
+        mem_mb=16000,
+    params:
+        foresight=config_provider("foresight"),
+        planning_horizons=config_provider("planning_horizons"),
+    message:
+        "Creating optimization results summary statistics"
     script:
         "../scripts/make_summary.py"
 
 
 rule plot_summary:
-    message:
-        "Plotting summary statistics and results"
-    params:
-        countries=config_provider("countries"),
-        planning_horizons=config_provider("planning_horizons"),
-        emissions_scope=config_provider("co2_budget", "emissions_scope"),
-        plotting=config_provider("plotting"),
-        foresight=config_provider("foresight"),
-        co2_budget=config_provider("co2_budget"),
-        sector=config_provider("sector"),
-        RDIR=RDIR,
     input:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
@@ -257,62 +246,69 @@ rule plot_summary:
         costs=RESULTS + "graphs/costs.svg",
         energy=RESULTS + "graphs/energy.svg",
         balances=RESULTS + "graphs/balances_energy.svg",
+    log:
+        RESULTS + "logs/plot_summary.log",
     threads: 2
     resources:
         mem_mb=10000,
-    log:
-        RESULTS + "logs/plot_summary.log",
+    params:
+        countries=config_provider("countries"),
+        planning_horizons=config_provider("planning_horizons"),
+        emissions_scope=config_provider("co2_budget", "emissions_scope"),
+        plotting=config_provider("plotting"),
+        foresight=config_provider("foresight"),
+        co2_budget=config_provider("co2_budget"),
+        sector=config_provider("sector"),
+        RDIR=RDIR,
+    message:
+        "Plotting summary statistics and results"
     script:
         "../scripts/plot_summary.py"
 
 
 rule plot_balance_timeseries:
-    message:
-        "Plotting energy balance time series for {wildcards.horizon} planning horizon"
+    input:
+        network=RESULTS + "networks/solved_{horizon}.nc",
+        rc="matplotlibrc",
+    output:
+        directory(RESULTS + "graphs/balance_timeseries_{horizon}"),
+    log:
+        RESULTS + "logs/plot_balance_timeseries_{horizon}.log",
+    benchmark:
+        RESULTS + "benchmarks/plot_balance_timeseries_{horizon}"
+    threads: 16
+    resources:
+        mem_mb=10000,
     params:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-    input:
-        network=RESULTS + "networks/solved_{horizon}.nc",
-        rc="matplotlibrc",
-    threads: 16
-    resources:
-        mem_mb=10000,
-    log:
-        RESULTS + "logs/plot_balance_timeseries_{horizon}.log",
-    benchmark:
-        RESULTS
-
-        +"benchmarks/plot_balance_timeseries_{horizon}"
-    output:
-        directory(RESULTS + "graphs/balance_timeseries_{horizon}"),
+    message:
+        "Plotting energy balance time series for {wildcards.horizon} planning horizon"
     script:
         "../scripts/plot_balance_timeseries.py"
 
 
 rule plot_heatmap_timeseries:
-    message:
-        "Plotting heatmap time series visualization for {wildcards.horizon} planning horizon"
+    input:
+        network=RESULTS + "networks/solved_{horizon}.nc",
+        rc="matplotlibrc",
+    output:
+        directory(RESULTS + "graphs/heatmap_timeseries_{horizon}"),
+        {},
+    log:
+        RESULTS + "logs/plot_heatmap_timeseries_{horizon}.log",
+    benchmark:
+        RESULTS + "benchmarks/plot_heatmap_timeseries_{horizon}"
+    threads: 16
+    resources:
+        mem_mb=10000,
     params:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-    input:
-        network=RESULTS + "networks/solved_{horizon}.nc",
-        rc="matplotlibrc",
-    threads: 16
-    resources:
-        mem_mb=10000,
-    log:
-        RESULTS + "logs/plot_heatmap_timeseries_{horizon}.log",
-    benchmark:
-        RESULTS
-
-        +"benchmarks/plot_heatmap_timeseries_{horizon}"
-    output:
-        directory(RESULTS + "graphs/heatmap_timeseries_{horizon}"),
-        {},
+    message:
+        "Plotting heatmap time series visualization for {wildcards.horizon} planning horizon"
     script:
         "../scripts/plot_heatmap_timeseries.py"
 
@@ -331,11 +327,6 @@ STATISTICS_BARPLOTS = [
 
 
 rule plot_base_statistics:
-    message:
-        "Plotting base scenario statistics"
-    params:
-        plotting=config_provider("plotting"),
-        barplots=STATISTICS_BARPLOTS,
     input:
         network=RESULTS + "networks/solved.nc",
     output:
@@ -344,6 +335,11 @@ rule plot_base_statistics:
             for plot in STATISTICS_BARPLOTS
         },
         barplots_touch=RESULTS + "figures/.statistics_plots",
+    params:
+        plotting=config_provider("plotting"),
+        barplots=STATISTICS_BARPLOTS,
+    message:
+        "Plotting base scenario statistics"
     script:
         scripts("plot_statistics.py")
 
