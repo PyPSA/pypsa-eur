@@ -124,10 +124,6 @@ if config["foresight"] != "perfect":
             "../scripts/plot_balance_map.py"
 
     rule plot_balance_map_interactive:
-        params:
-            settings=lambda w: config_provider(
-                "plotting", "balance_map_interactive", w.carrier
-            ),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
@@ -141,12 +137,9 @@ if config["foresight"] != "perfect":
         benchmark:
             RESULTS + "benchmarks/plot_balance_map_interactive/{horizon}_{carrier}"
         script:
-            "../scripts/plot_balance_map_interactive.py"
+            scripts("plot_balance_map_interactive.py")
 
     rule plot_heat_source_map:
-        params:
-            plotting=config_provider("plotting"),
-            heat_sources=config_provider("sector", "heat_pump_sources"),
         input:
             regions=resources("onshore_regions.geojson"),
             heat_source_temperature=lambda w: (
@@ -172,7 +165,7 @@ if config["foresight"] != "perfect":
         benchmark:
             (RESULTS + "benchmarks/plot_heat_source_map/{carrier}_{horizon}")
         script:
-            "../scripts/plot_heat_source_map.py"
+            scripts("plot_heat_source_map.py")
 
 
 if config["foresight"] == "perfect":
@@ -197,7 +190,7 @@ if config["foresight"] == "perfect":
         resources:
             mem_mb=10000,
         script:
-            "../scripts/plot_power_network_perfect.py"
+            scripts("plot_power_network_perfect.py")
 
 
 rule make_summary:
@@ -258,7 +251,7 @@ rule plot_summary:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/energy_balance.csv",
-        eurostat=rules.retrieve_eurostat_balances.output["directory"],
+        eurostat=resources("eurostat_energy_balances.csv"),
         co2=rules.retrieve_ghg_emissions.output["csv"],
     output:
         costs=RESULTS + "graphs/costs.svg",
@@ -352,7 +345,7 @@ rule plot_base_statistics:
         },
         barplots_touch=RESULTS + "figures/.statistics_plots",
     script:
-        "../scripts/plot_statistics.py"
+        scripts("plot_statistics.py")
 
 
 rule build_ambient_air_temperature_yearly_average:
@@ -363,15 +356,12 @@ rule build_ambient_air_temperature_yearly_average:
         average_ambient_air_temperature=resources(
             "temp_ambient_air_temporal_aggregate.nc"
         ),
-    threads: 1
-    resources:
-        mem_mb=5000,
     log:
         RESULTS + "logs/build_ambient_air_temperature_yearly_average.log",
     benchmark:
         (RESULTS + "benchmarks/build_ambient_air_temperature_yearly_average")
     script:
-        "../scripts/build_ambient_air_temperature_yearly_average.py"
+        scripts("build_ambient_air_temperature_yearly_average.py")
 
 
 rule plot_cop_profiles:
@@ -386,17 +376,10 @@ rule plot_cop_profiles:
     resources:
         mem_mb=10000,
     script:
-        "../scripts/plot_cop_profiles/plot_cop_profiles.py"
+        scripts("plot_cop_profiles/plot_cop_profiles.py")
 
 
 rule plot_interactive_bus_balance:
-    params:
-        plotting=config_provider("plotting"),
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        bus_name_pattern=config_provider(
-            "plotting", "interactive_bus_balance", "bus_name_pattern"
-        ),
     input:
         network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
@@ -408,5 +391,12 @@ rule plot_interactive_bus_balance:
         RESULTS + "benchmarks/plot_interactive_bus_balance/{horizon}"
     resources:
         mem_mb=20000,
+    params:
+        plotting=config_provider("plotting"),
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        bus_name_pattern=config_provider(
+            "plotting", "interactive_bus_balance", "bus_name_pattern"
+        ),
     script:
-        "../scripts/plot_interactive_bus_balance.py"
+        scripts("plot_interactive_bus_balance.py")

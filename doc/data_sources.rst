@@ -14,6 +14,7 @@ data sources.
    :maxdepth: 1
 
    ../data-base-network
+   ../data-cutouts
    ../data-repos
 
 .. _managing_data_versions:

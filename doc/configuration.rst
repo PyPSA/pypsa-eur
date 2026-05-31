@@ -63,7 +63,7 @@ implementations, and custom extensions all observe the same precedence rules.
 ``version``
 ===========
 
-.. jsonschema:: ../config/schema.json#/properties/version
+.. jsonschema:: ../config/schema.default.json#/properties/version
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -79,7 +79,7 @@ implementations, and custom extensions all observe the same precedence rules.
 ``tutorial``
 ============
 
-.. jsonschema:: ../config/schema.json#/properties/tutorial
+.. jsonschema:: ../config/schema.default.json#/properties/tutorial
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -95,7 +95,7 @@ implementations, and custom extensions all observe the same precedence rules.
 ``logging``
 ===========
 
-.. jsonschema:: ../config/schema.json#/$defs/LoggingConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/LoggingConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -113,7 +113,7 @@ implementations, and custom extensions all observe the same precedence rules.
 
 "Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
 
-.. jsonschema:: ../config/schema.json#/$defs/RemoteConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/RemoteConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -137,7 +137,7 @@ The ``run`` section is used for running and storing scenarios with different con
 It determines the path at which resources, networks and results are stored.
 Therefore the user can run different configurations within the same directory.
 
-.. jsonschema:: ../config/schema.json#/$defs/RunConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/RunConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -153,7 +153,7 @@ Therefore the user can run different configurations within the same directory.
 ``foresight``
 =============
 
-.. jsonschema:: ../config/schema.json#/$defs/ForesightConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/ForesightConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -188,7 +188,7 @@ years that should be simulated sequentially:
 
    planning_horizons: [2030, 2040, 2050]
 
-.. jsonschema:: ../config/schema.json#/$defs/ScenarioConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/ScenarioConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -217,7 +217,7 @@ years that should be simulated sequentially:
 ``countries``
 =============
 
-.. jsonschema:: ../config/schema.json#/$defs/CountriesConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/CountriesConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -235,7 +235,7 @@ years that should be simulated sequentially:
 
 Specifies the temporal range to build an energy system model for as arguments to `pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`__
 
-.. jsonschema:: ../config/schema.json#/$defs/SnapshotsConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/SnapshotsConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -253,7 +253,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 Switches for some rules and optional features.
 
-.. jsonschema:: ../config/schema.json#/$defs/EnableConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/EnableConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -273,9 +273,9 @@ Carbon budgets share one schema for all foresight modes. The ``values`` key
 selects whether yearly entries inside ``upper``/``lower`` are interpreted as
 fractions of the 1990 baseline (``fraction``) or absolute GtCO₂/year
 (``absolute``). Enable ``upper`` and/or ``lower`` to enforce those caps only for
-the explicitly listed years or a total budget across all :ref:`planning_horizons`. 
+the explicitly listed years or a total budget across all :ref:`planning_horizons`.
 
-.. jsonschema:: ../config/schema.json#/$defs/Co2BudgetConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/Co2BudgetConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -292,7 +292,7 @@ the explicitly listed years or a total budget across all :ref:`planning_horizons
 ``electricity``
 ===============
 
-.. jsonschema:: ../config/schema.json#/$defs/ElectricityConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/ElectricityConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -310,7 +310,7 @@ the explicitly listed years or a total budget across all :ref:`planning_horizons
 
 Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`__.
 
-.. jsonschema:: ../config/schema.json#/$defs/AtliteConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/AtliteConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -329,7 +329,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``onwind``
 ----------
 
-.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/onwind
+.. jsonschema:: ../config/schema.default.json#/$defs/RenewableConfig/properties/onwind
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -352,7 +352,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``offwind-x``
 --------------
 
-.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-ac
+.. jsonschema:: ../config/schema.default.json#/$defs/RenewableConfig/properties/offwind-ac
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -363,11 +363,11 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at: "offwind-ac":
    :end-before: solar:
 
-.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-dc
+.. jsonschema:: ../config/schema.default.json#/$defs/RenewableConfig/properties/offwind-dc
    :lift_description:
    :hide_key: /**/additionalProperties
 
-.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/offwind-float
+.. jsonschema:: ../config/schema.default.json#/$defs/RenewableConfig/properties/offwind-float
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -384,7 +384,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``solar``
 ---------------
 
-.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/solar
+.. jsonschema:: ../config/schema.default.json#/$defs/RenewableConfig/properties/solar
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -407,7 +407,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 ``hydro``
 ---------------
 
-.. jsonschema:: ../config/schema.json#/$defs/RenewableConfig/properties/hydro
+.. jsonschema:: ../config/schema.default.json#/$defs/RenewableConfig/properties/hydro
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -430,7 +430,7 @@ with country specific values. Then, the values are read in and applied to all
 generators of the given carrier in the given country. Note that the value(s)
 overwrite the existing values.
 
-.. jsonschema:: ../config/schema.json#/$defs/ConventionalConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/ConventionalConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -446,7 +446,7 @@ overwrite the existing values.
 ``lines``
 =========
 
-.. jsonschema:: ../config/schema.json#/$defs/LinesConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/LinesConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -462,7 +462,7 @@ overwrite the existing values.
 ``links``
 =============
 
-.. jsonschema:: ../config/schema.json#/$defs/LinksConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/LinksConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -480,7 +480,7 @@ overwrite the existing values.
 
 Allows to define additional transmission projects that will be added to the base network, e.g., from the TYNDP 2020 dataset. The projects are read in from the CSV files in the subfolder of ``data/transmission_projects/``. New transmission projects, e.g. from TYNDP 2024, can be added in a new subfolder of transmission projects, e.g. ``data/transmission_projects/tyndp2024`` while extending the list of ``transmission_projects`` in the ``config.yaml`` by ``tyndp2024``. The CSV files in the project folder should have the same columns as the CSV files in the template folder ``data/transmission_projects/template``.
 
-.. jsonschema:: ../config/schema.json#/$defs/TransmissionProjectsConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/TransmissionProjectsConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -496,7 +496,7 @@ Allows to define additional transmission projects that will be added to the base
 ``transformers``
 ================
 
-.. jsonschema:: ../config/schema.json#/$defs/TransformersConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/TransformersConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -512,7 +512,7 @@ Allows to define additional transmission projects that will be added to the base
 ``load``
 =============
 
-.. jsonschema:: ../config/schema.json#/$defs/LoadConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/LoadConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -531,7 +531,7 @@ Allows to define additional transmission projects that will be added to the base
 .. note::
    Only used for sector-coupling studies.
 
-.. jsonschema:: ../config/schema.json#/$defs/EnergyConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/EnergyConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -550,7 +550,7 @@ Allows to define additional transmission projects that will be added to the base
 .. note::
    Only used for sector-coupling studies.
 
-.. jsonschema:: ../config/schema.json#/$defs/BiomassConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/BiomassConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -589,7 +589,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. note::
    Only used for sector-coupling studies.
 
-.. jsonschema:: ../config/schema.json#/$defs/SolarThermalConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/SolarThermalConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -611,7 +611,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 Activating ``enabled`` instructs :mod:`compose_network` to merge the historical
 assets stored in ``resources/powerplants.csv`` into ``networks/composed_{horizon}.nc``.
 
-.. jsonschema:: ../config/schema.json#/$defs/ExistingCapacitiesConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/ExistingCapacitiesConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -632,7 +632,7 @@ assets stored in ``resources/powerplants.csv`` into ``networks/composed_{horizon
 
 .. dropdown:: Details
 
-   .. jsonschema:: ../config/schema.json#/$defs/SectorConfig
+   .. jsonschema:: ../config/schema.default.json#/$defs/SectorConfig
       :lift_description:
       :hide_key: /**/additionalProperties
 
@@ -651,7 +651,7 @@ assets stored in ``resources/powerplants.csv`` into ``networks/composed_{horizon
 .. note::
    Only used for sector-coupling studies.
 
-.. jsonschema:: ../config/schema.json#/$defs/IndustryConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/IndustryConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -667,7 +667,7 @@ assets stored in ``resources/powerplants.csv`` into ``networks/composed_{horizon
 ``costs``
 =============
 
-.. jsonschema:: ../config/schema.json#/$defs/CostsConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/CostsConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -684,7 +684,7 @@ assets stored in ``resources/powerplants.csv`` into ``networks/composed_{horizon
 ``clustering``
 ==============
 
-.. jsonschema:: ../config/schema.json#/$defs/ClusteringConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/ClusteringConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -703,7 +703,7 @@ assets stored in ``resources/powerplants.csv`` into ``networks/composed_{horizon
 ``adjustments``
 ===============
 
-.. jsonschema:: ../config/schema.json#/$defs/AdjustmentsConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/AdjustmentsConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -719,7 +719,7 @@ assets stored in ``resources/powerplants.csv`` into ``networks/composed_{horizon
 ``solving``
 ===========
 
-.. jsonschema:: ../config/schema.json#/$defs/SolvingConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/SolvingConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -747,7 +747,7 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
 
 .. dropdown:: Details
 
-   .. jsonschema:: ../config/schema.json#/$defs/DataConfig
+   .. jsonschema:: ../config/schema.default.json#/$defs/DataConfig
       :lift_description:
       :hide_key: /**/additionalProperties
 
@@ -768,7 +768,7 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
 ``overpass_api``
 ================
 
-.. jsonschema:: ../config/schema.json#/$defs/OverpassApiConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/OverpassApiConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 
@@ -784,7 +784,7 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
 ``secrets``
 ===========
 
-.. jsonschema:: ../config/schema.json#/$defs/SecretsConfig
+.. jsonschema:: ../config/schema.default.json#/$defs/SecretsConfig
    :lift_description:
    :hide_key: /**/additionalProperties
 

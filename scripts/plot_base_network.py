@@ -34,8 +34,8 @@ if __name__ == "__main__":
     n.plot(
         ax=ax,
         margin=0.06,
-        line_widths=n.lines.s_nom / lw_factor,
-        link_widths=n.links.p_nom / lw_factor,
+        line_width=n.lines.s_nom / lw_factor,
+        link_width=n.links.p_nom / lw_factor,
     )
 
     if not n.lines.empty:

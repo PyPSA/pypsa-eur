@@ -66,11 +66,12 @@ In addition the configuration option ``electricity: everywhere_powerplants`` can
 import itertools
 import logging
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
-from powerplantmatching.export import map_country_bus
+from shapely.geometry import MultiPolygon, Polygon
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -137,22 +138,89 @@ def replace_natural_gas_technology(df):
     return df.Technology.mask(df.Fueltype == "Natural Gas", tech)
 
 
-def replace_natural_gas_fueltype(df):
+def replace_natural_gas_fueltype(df: pd.DataFrame) -> pd.Series:
     return df.Fueltype.mask(
         (df.Technology == "OCGT") | (df.Technology == "CCGT"), "Natural Gas"
     )
+
+
+def fill_unoccupied_holes(gdf: gpd.GeoDataFrame) -> gpd.GeoSeries:
+    def _fill_poly(poly, idx):
+        if not poly.interiors:
+            return poly
+        kept = [h for h in poly.interiors if gdf.drop(idx).intersects(Polygon(h)).any()]
+        return Polygon(poly.exterior, kept)
+
+    result = gdf.geometry.copy()
+    for idx in gdf.index:
+        g = gdf.geometry[idx]
+        if g.geom_type == "Polygon":
+            result[idx] = _fill_poly(g, idx)
+        elif g.geom_type == "MultiPolygon":
+            result[idx] = MultiPolygon([_fill_poly(p, idx) for p in g.geoms])
+    return result
+
+
+def map_to_country_bus(
+    ppl: gpd.GeoDataFrame, regions: gpd.GeoDataFrame, max_distance: float = 10000
+) -> gpd.GeoDataFrame:
+    """
+    Assign power plants to region buses of the same country.
+
+    First, spatial join is performed per country to avoid cross-border
+    misassignment. Remaining unmatched plants are assigned via nearest
+    neighbor (max 10000m) within the same country.
+    """
+    assigned = []
+    unmatched = []
+
+    for country, plants in ppl.groupby("Country"):
+        country_regions = regions[regions.index.str[:2] == country]
+        joined = (
+            plants.sjoin(country_regions)
+            .rename(columns={"name": "bus"})
+            .reindex(plants.index)
+        )
+        assigned.append(joined.dropna(subset=["bus"]))
+        missing = joined[joined["bus"].isna()]
+        if not missing.empty:
+            unmatched.append(plants.loc[missing.index])
+
+    if unmatched:
+        unmatched = pd.concat(unmatched)
+        for country, plants in unmatched.groupby("Country"):
+            country_regions = regions[regions.index.str[:2] == country]
+            nearest = (
+                plants.to_crs(3035)
+                .sjoin_nearest(country_regions.to_crs(3035), max_distance=max_distance)
+                .rename(columns={"name": "bus"})
+                .to_crs(4326)
+            )
+            missing = plants.index.difference(nearest.index)
+            print(country, missing)
+            nearest = pd.concat([nearest, plants.loc[missing]])
+            assigned.append(nearest)
+
+    return pd.concat(assigned)
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_powerplants")
+        snakemake = mock_snakemake("build_powerplants", clusters=256)
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
     countries = snakemake.params.countries
+
+    fn_onshore = snakemake.input.regions_onshore
+    fn_offshore = snakemake.input.regions_offshore
+
+    regions = pd.concat([gpd.read_file(fn_onshore), gpd.read_file(fn_offshore)])
+    regions = regions.dissolve("name")
+    regions["geometry"] = fill_unoccupied_holes(regions)
 
     # Steps copied from PPM: Usually run by PPM when using pm.powerplants(...) from cache
     ppl = (
@@ -161,23 +229,12 @@ if __name__ == "__main__":
         .pipe(pm.collection.set_column_name, "Matched Data")
     )
     ppl = (
-        ppl.powerplant.fill_missing_decommissioning_years()
-        .powerplant.convert_country_to_alpha2()
-        .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
+        ppl.powerplant.convert_country_to_alpha2()
+        .query("Country in @countries")
         .assign(Technology=replace_natural_gas_technology)
         .assign(Fueltype=replace_natural_gas_fueltype)
         .replace({"Solid Biomass": "Bioenergy", "Biogas": "Bioenergy"})
     )
-
-    # Correct bioenergy for countries where possible
-    opsd = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
-    opsd = opsd.replace({"Solid Biomass": "Bioenergy", "Biogas": "Bioenergy"}).query(
-        'Country in @countries and Fueltype == "Bioenergy"'
-    )
-    opsd["Name"] = "Biomass"
-    available_countries = opsd.Country.unique()
-    ppl = ppl.query('not (Country in @available_countries and Fueltype == "Bioenergy")')
-    ppl = pd.concat([ppl, opsd])
 
     ppl_query = snakemake.params.powerplants_filter
     if isinstance(ppl_query, str):
@@ -198,18 +255,23 @@ if __name__ == "__main__":
     )
 
     ppl = ppl.dropna(subset=["lat", "lon"])
-    ppl = map_country_bus(ppl, n.buses)
+
+    ppl = gpd.GeoDataFrame(ppl, geometry=gpd.points_from_xy(ppl.lon, ppl.lat), crs=4326)
+
+    ppl = map_to_country_bus(ppl, regions)
 
     bus_null_b = ppl["bus"].isnull()
     if bus_null_b.any():
+        stats = (
+            ppl.loc[bus_null_b]
+            .groupby(by=["Country", "Fueltype"])
+            .Capacity.sum()
+            .sort_values(ascending=False)
+        )
         logger.warning(
-            f"Couldn't find close bus for {bus_null_b.sum()} powerplants. "
-            "Removing them from the powerplants list."
+            f"Couldn't assign sufficiently close region for {bus_null_b.sum()} powerplants.\n"
+            f"Removing the following capacities (MW) from the powerplants dataset:\n {stats}"
         )
         ppl = ppl[~bus_null_b]
-
-    # TODO: This has to fixed in PPM, some powerplants are still duplicated
-    cumcount = ppl.groupby(["bus", "Fueltype"]).cumcount() + 1
-    ppl.Name = ppl.Name.where(cumcount == 1, ppl.Name + " " + cumcount.astype(str))
 
     ppl.reset_index(drop=True).to_csv(snakemake.output[0])

@@ -1,9 +1,47 @@
-# yaml-language-server: $schema=../schema.json
+# yaml-language-server: $schema=../schema.default.json
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 run:
   name: "distribution-grid-experimental"
+
+countries:
+- AL
+- AT
+- BA
+- BE
+- BG
+- CH
+- CZ
+- DE
+- DK
+- EE
+- ES
+- FI
+- FR
+- GB
+- GR
+- HR
+- HU
+- IE
+- IT
+- LT
+- LU
+- LV
+- ME
+- MD
+- MK
+- NL
+- 'NO'
+- PL
+- PT
+- RO
+- RS
+- SE
+- SI
+- SK
+- XK
+- UA
 
 electricity:
   voltages: [63., 66., 90., 110., 132., 150., 220., 300., 330., 380., 400., 500., 750.]
@@ -26,3 +64,11 @@ overpass_api:
     project_name: PyPSA-Eur
     email: contact@pypsa.org
     website: https://github.com/PyPSA/pypsa-eur
+
+osm_network_release:
+  release_version: "experimental"
+  under_construction: remove
+  remove_after: "2025-12-31"
+  compare_to:
+    version: latest
+    source: archive

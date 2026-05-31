@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../schema.json
+# yaml-language-server: $schema=../schema.default.json
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
@@ -81,7 +81,8 @@ clustering:
 
 solving:
   options:
-    load_shedding: true
+    load_shedding:
+      enable: true
     rolling_horizon: false
     horizon: 1000
     overlap: 48

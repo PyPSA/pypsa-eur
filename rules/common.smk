@@ -233,6 +233,15 @@ def input_custom_extra_functionality(w):
     return []
 
 
+def output_model(path_template):
+    def _output_model(w):
+        if config_provider("solving", "options", "store_model")(w):
+            return path_template.format(**dict(w))
+        return []
+
+    return _output_model
+
+
 def solved_previous_horizon(w):
     horizons = config_provider("planning_horizons")(w)
     i = horizons.index(int(w.horizon))

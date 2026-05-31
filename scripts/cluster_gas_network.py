@@ -63,8 +63,10 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
 
     # recalculate lengths as center to center * length factor
     df["length"] = df.apply(
-        lambda p: length_factor
-        * haversine_pts([p.point0.x, p.point0.y], [p.point1.x, p.point1.y]),
+        lambda p: (
+            length_factor
+            * haversine_pts([p.point0.x, p.point0.y], [p.point1.x, p.point1.y])
+        ),
         axis=1,
     )
 

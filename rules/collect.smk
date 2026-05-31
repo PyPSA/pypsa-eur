@@ -27,13 +27,13 @@ rule process_costs:
 
 
 rule cluster_networks:
-    message:
-        "Collecting clustered network files"
     input:
         expand(
             resources("networks/clustered.nc"),
             run=config["run"]["name"],
         ),
+    message:
+        "Collecting clustered network files"
 
 
 rule compose_networks:
@@ -45,6 +45,8 @@ rule compose_networks:
             run=config["run"]["name"],
             horizon=config["planning_horizons"],
         ),
+    message:
+        "Collecting prepared electricity network files"
 
 
 rule solve_networks:
@@ -56,6 +58,8 @@ rule solve_networks:
             run=config["run"]["name"],
             horizon=config["planning_horizons"][-1],
         ),
+    message:
+        "Collecting solved sector-coupled network files with perfect foresight"
 
 
 def balance_map_paths(kind, w):
@@ -77,11 +81,11 @@ def balance_map_paths(kind, w):
 
 
 rule plot_balance_maps:
-    message:
-        "Plotting energy balance maps"
     input:
         static=lambda w: balance_map_paths("static", w),
         interactive=lambda w: balance_map_paths("interactive", w),
+    message:
+        "Plotting energy balance maps"
 
 
 rule plot_balance_maps_static:
@@ -106,3 +110,5 @@ rule plot_power_networks:
             if config["foresight"] != "perfect"
             else []
         ),
+    message:
+        "Plotting clustered power network topology"

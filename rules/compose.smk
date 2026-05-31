@@ -61,7 +61,7 @@ def get_compose_inputs(w):
             **input_heat_source_power(w),
             **rules.cluster_gas_network.output,
             **rules.build_gas_input_locations.output,
-            eurostat=rules.retrieve_eurostat_balances.output["directory"],
+            eurostat=resources("eurostat_energy_balances.csv"),
             pop_weighted_energy_totals=resources("pop_weighted_energy_totals.csv"),
             pop_weighted_heat_totals=resources("pop_weighted_heat_totals.csv"),
             shipping_demand=resources("shipping_demand.csv"),

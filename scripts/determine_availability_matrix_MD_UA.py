@@ -14,7 +14,10 @@ from tempfile import NamedTemporaryFile
 import atlite
 import fiona
 import geopandas as gpd
+import matplotlib.pyplot as plt
 import numpy as np
+from atlite.gis import shape_availability
+from rasterio.plot import show
 
 from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
@@ -38,6 +41,9 @@ if __name__ == "__main__":
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+
+    pts_tmp_fn = None
+    plg_tmp_fn = None
 
     nprocesses = int(snakemake.threads)
     noprogress = not snakemake.config["atlite"].get("show_progress", True)
@@ -160,10 +166,22 @@ if __name__ == "__main__":
         availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
 
     for fn in [pts_tmp_fn, plg_tmp_fn]:
-        if os.path.exists(fn):
+        if fn and os.path.exists(fn):
             os.remove(fn)
 
     availability = availability.sel(bus=buses)
 
+    if snakemake.params.plot_availability_matrix:
+        logger.info(
+            f"Plotting landuse availability matrix for {snakemake.wildcards.technology}."
+        )
+        band, transform = shape_availability(
+            regions.geometry.to_crs(excluder.crs), excluder
+        )
+        fig, ax = plt.subplots(figsize=(10, 10))
+        regions.to_crs(excluder.crs).plot(ax=ax, color="none")
+        show(band, transform=transform, cmap="Greens", ax=ax)
+        plt.savefig(snakemake.output["plot"], dpi=300)
+
     # Save and plot for verification
-    availability.to_netcdf(snakemake.output.availability_matrix)
+    availability.to_netcdf(snakemake.output["nc"])

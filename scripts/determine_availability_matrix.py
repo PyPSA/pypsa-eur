@@ -60,8 +60,11 @@ import time
 
 import atlite
 import geopandas as gpd
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+from atlite.gis import shape_availability
+from rasterio.plot import show
 
 from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
@@ -73,7 +76,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_renewable_profiles", clusters=100, technology="onwind"
+            "determine_availability_matrix", clusters="adm", technology="offwind-dc"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -166,6 +169,16 @@ if __name__ == "__main__":
         f"Completed landuse availability calculation for {technology} ({duration:2.2f}s)"
     )
 
+    if snakemake.params.plot_availability_matrix:
+        logger.info(f"Plotting landuse availability matrix for {technology}.")
+        band, transform = shape_availability(
+            regions.geometry.to_crs(excluder.crs), excluder
+        )
+        fig, ax = plt.subplots(figsize=(10, 10))
+        regions.to_crs(excluder.crs).plot(ax=ax, color="none")
+        show(band, transform=transform, cmap="Greens", ax=ax)
+        plt.savefig(snakemake.output["plot"], dpi=300)
+
     # For Moldova and Ukraine: Overwrite parts not covered by Corine with
     # externally determined available areas
     if "availability_matrix_MD_UA" in snakemake.input.keys():
@@ -174,4 +187,4 @@ if __name__ == "__main__":
         )
         availability.loc[availability_MDUA.coords] = availability_MDUA
 
-    availability.to_netcdf(snakemake.output[0])
+    availability.to_netcdf(snakemake.output["nc"])
