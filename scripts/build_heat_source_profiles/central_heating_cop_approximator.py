@@ -6,7 +6,9 @@
 import numpy as np
 import xarray as xr
 
-from scripts.build_cop_profiles.base_cop_approximator import BaseCopApproximator
+from scripts.build_heat_source_profiles.base_cop_approximator import (
+    BaseCopApproximator,
+)
 
 
 class CentralHeatingCopApproximator(BaseCopApproximator):

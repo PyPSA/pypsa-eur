@@ -67,10 +67,10 @@ Rule ``build_clustered_solar_rooftop_potentials``
 
 .. automodule:: build_clustered_solar_rooftop_potentials
 
-Rule ``build_cop_profiles``
+Rule ``build_heat_source_profiles``
 ==============================================================================
 
-.. automodule:: build_cop_profiles
+.. automodule:: build_heat_source_profiles
 
 Rule ``build_direct_heat_source_utilisation_profiles``
 ==============================================================================

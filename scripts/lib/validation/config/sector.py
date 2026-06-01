@@ -44,7 +44,7 @@ class _PtesConfig(BaseModel):
         "`prepare_sector_network` then adds the links `<node> urban central water pits resistive booster` "
         "and `<node> urban central water pits resistive heater stand-alone` and reroutes heat generation "
         "from resistive heaters accordingly. The required boosting alpha is computed from the unified "
-        "heat source utilisation profiles in `build_heat_source_utilisation_profiles`.",
+        "heat source utilisation profiles in `build_heat_source_profiles`.",
     )
     top_temperature: float | Literal["forward"] = Field(
         90,
@@ -166,6 +166,14 @@ class _DistrictHeatingConfig(ConfigModel):
     )
     heat_source_cooling: float = Field(
         6, description="Cooling of heat source for heat pumps."
+    )
+    heat_pump_cooling_iterative: bool = Field(
+        True,
+        description="Solve the source-side heat pump cooling iteratively for preheating sources (PTES, geothermal). If false, use the flat `heat_source_cooling` value for all sources.",
+    )
+    log_heat_pump_cooling_iterations: bool = Field(
+        False,
+        description="Write the full per-node, per-timestep heat pump cooling iteration trace to a CSV for debugging.",
     )
     heat_pump_cop_approximation: dict[str, Any] = Field(
         default_factory=lambda: {

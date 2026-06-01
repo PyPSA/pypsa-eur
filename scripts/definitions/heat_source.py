@@ -20,8 +20,8 @@ class HeatSource(Enum):
     **Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, PTES):
         Have spatial/temporal constraints, require resource tracking via buses.
         A utilisation link splits source heat into direct DH contribution
-        (fraction 1 − b) and HP input (fraction b), where b is the
-        boosting ratio from ``build_heat_source_utilisation_profiles``.
+        and HP input, using the utilisation profiles from
+        ``build_heat_source_profiles``.
 
     Attributes
     ----------
@@ -41,8 +41,7 @@ class HeatSource(Enum):
     See Also
     --------
     HeatSystem : Defines heat system types (urban central, urban decentral, rural).
-    build_heat_source_utilisation_profiles : Calculates boosting ratio profiles for heat sources.
-    build_cop_profiles : Calculates COP profiles for heat pumps using these sources.
+    build_heat_source_profiles : Calculates COP and utilisation profiles for heat sources.
     """
 
     GEOTHERMAL = "geothermal"
