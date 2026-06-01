@@ -136,3 +136,9 @@ plotting:
   energy_max: auto
   energy_min: auto
   energy_threshold: 0.00001
+  balance_map:
+    bus_carriers:
+    - AC
+  balance_map_interactive:
+    bus_carriers:
+    - AC

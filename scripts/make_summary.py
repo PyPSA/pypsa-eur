@@ -184,7 +184,8 @@ def calculate_energy(n: pypsa.Network) -> pd.Series:
     """
     Calculate the net energy supply (positive) and consumption (negative) by technology carrier across all ports.
     """
-    return n.statistics.energy_balance(groupby="carrier").sort_values(ascending=False)
+    energy = n.statistics.energy_balance(groupby="carrier")
+    return energy.sort_values(ascending=False) if isinstance(energy, pd.Series) else energy
 
 
 @_loop_over_collection
@@ -192,7 +193,12 @@ def calculate_energy_balance(n: pypsa.Network) -> pd.Series:
     """
     Calculate the energy supply (positive) and consumption (negative) by technology carrier for each bus carrier.
     """
-    return n.statistics.energy_balance().sort_values(ascending=False)
+    balance = n.statistics.energy_balance()
+    return (
+        balance.sort_values(ascending=False)
+        if isinstance(balance, pd.Series)
+        else balance
+    )
 
 
 @_loop_over_collection
@@ -208,36 +214,48 @@ def calculate_metrics(n: pypsa.Network) -> pd.Series:
     """
     Calculate system-level metrics, e.g. shadow prices, grid expansion, total costs.
     """
-    metrics = {}
-
-    dc_links = n.links.query("carrier == 'DC'")
-    metrics["line_volume_DC"] = dc_links.eval("length * p_nom_opt").sum()
-    metrics["line_volume_AC"] = n.lines.eval("length * s_nom_opt").sum()
-    metrics["line_volume"] = metrics["line_volume_AC"] + metrics["line_volume_DC"]
-
-    metrics["total costs"] = n.statistics.capex().sum() + n.statistics.opex().sum()
-
+    capex = n.statistics.capex()
+    opex = n.statistics.opex()
     buses_i = n.buses.query("carrier == 'AC'").index
-    prices = n.buses_t.marginal_price[buses_i]
 
-    zero_hours = prices.where(prices < 0.1).count().sum()
-    metrics["electricity_price_zero_hours"] = zero_hours / prices.size
-    metrics["electricity_price_mean"] = prices.unstack().mean()
-    metrics["electricity_price_std"] = prices.unstack().std()
+    def metrics_for(period: int | None) -> pd.Series:
+        metrics = {}
+        dc_links = n.links.query("carrier == 'DC'")
+        metrics["line_volume_DC"] = dc_links.eval("length * p_nom_opt").sum()
+        metrics["line_volume_AC"] = n.lines.eval("length * s_nom_opt").sum()
+        metrics["line_volume"] = metrics["line_volume_AC"] + metrics["line_volume_DC"]
 
-    if "lv_limit" in n.global_constraints.index:
-        metrics["line_volume_limit"] = n.global_constraints.at["lv_limit", "constant"]
-        metrics["line_volume_shadow"] = n.global_constraints.at["lv_limit", "mu"]
+        total_capex = capex[period].sum() if period is not None else capex.sum()
+        total_opex = opex[period].sum() if period is not None else opex.sum()
+        metrics["total costs"] = total_capex + total_opex
 
-    if "CO2Limit" in n.global_constraints.index:
-        metrics["co2_shadow"] = n.global_constraints.at["CO2Limit", "mu"]
+        prices = n.buses_t.marginal_price[buses_i]
+        if period is not None:
+            prices = prices.loc[period]
+        metrics["electricity_price_zero_hours"] = (
+            prices.where(prices < 0.1).count().sum() / prices.size
+        )
+        flat_prices = prices.stack()
+        metrics["electricity_price_mean"] = flat_prices.mean()
+        metrics["electricity_price_std"] = flat_prices.std()
 
-    if "co2_sequestration_limit" in n.global_constraints.index:
-        metrics["co2_storage_shadow"] = n.global_constraints.at[
-            "co2_sequestration_limit", "mu"
-        ]
+        if "lv_limit" in n.global_constraints.index:
+            metrics["line_volume_limit"] = n.global_constraints.at[
+                "lv_limit", "constant"
+            ]
+            metrics["line_volume_shadow"] = n.global_constraints.at["lv_limit", "mu"]
+        if "CO2Limit" in n.global_constraints.index:
+            metrics["co2_shadow"] = n.global_constraints.at["CO2Limit", "mu"]
+        if "co2_sequestration_limit" in n.global_constraints.index:
+            metrics["co2_storage_shadow"] = n.global_constraints.at[
+                "co2_sequestration_limit", "mu"
+            ]
+        return pd.Series(metrics)
 
-    return pd.Series(metrics).sort_index()
+    if n.has_investment_periods:
+        columns = {p: metrics_for(p) for p in n.investment_periods}
+        return pd.DataFrame(columns).sort_index()
+    return metrics_for(None).sort_index()
 
 
 @_loop_over_collection
@@ -245,7 +263,11 @@ def calculate_prices(n: pypsa.Network) -> pd.Series:
     """
     Calculate time-averaged prices per carrier.
     """
-    return n.buses_t.marginal_price.mean().groupby(n.buses.carrier).mean().sort_index()
+    marginal_price = n.buses_t.marginal_price
+    if n.has_investment_periods:
+        by_bus = marginal_price.groupby(level=0).mean().T
+        return by_bus.groupby(n.buses.carrier).mean().sort_index()
+    return marginal_price.mean().groupby(n.buses.carrier).mean().sort_index()
 
 
 @_loop_over_collection
@@ -253,27 +275,36 @@ def calculate_weighted_prices(n: pypsa.Network) -> pd.Series:
     """
     Calculate load-weighted prices per bus carrier.
     """
-    carriers = n.buses.carrier.unique()
-    weighted_prices = {}
 
-    for carrier in carriers:
-        load = n.statistics.withdrawal(
-            groupby="bus",
-            aggregate_time=False,
-            bus_carrier=carrier,
-            aggregate_across_components=True,
-        ).T
-
-        if not load.empty and load.sum().sum() > 0:
+    def weighted_for(period: int | None) -> pd.Series:
+        weighted_prices = {}
+        for carrier in n.buses.carrier.unique():
+            load = n.statistics.withdrawal(
+                groupby="bus",
+                aggregate_time=False,
+                bus_carrier=carrier,
+                aggregate_across_components=True,
+            ).T
+            if load.empty:
+                continue
             price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
-            price = price.reindex(columns=load.columns, fill_value=1)
-
             weights = n.snapshot_weightings.generators
+            if period is not None:
+                load = load.loc[period]
+                price = price.loc[period]
+                weights = weights.loc[period]
+            if load.sum().sum() <= 0:
+                continue
+            price = price.reindex(columns=load.columns, fill_value=1)
             a = weights @ (load * price).sum(axis=1)
             b = weights @ load.sum(axis=1)
             weighted_prices[carrier] = a / b
+        return pd.Series(weighted_prices)
 
-    return pd.Series(weighted_prices).sort_index()
+    if n.has_investment_periods:
+        columns = {p: weighted_for(p) for p in n.investment_periods}
+        return pd.DataFrame(columns).sort_index()
+    return weighted_for(None).sort_index()
 
 
 @_loop_over_collection
@@ -281,11 +312,12 @@ def calculate_market_values(n: pypsa.Network) -> pd.Series:
     """
     Calculate market values for electricity.
     """
-    return (
-        n.statistics.market_value(bus_carrier="AC", aggregate_across_components=True)
-        .sort_values()
-        .dropna()
+    market_value = n.statistics.market_value(
+        bus_carrier="AC", aggregate_across_components=True
     )
+    if isinstance(market_value, pd.Series):
+        return market_value.sort_values().dropna()
+    return market_value.dropna(how="all")
 
 
 def calculate_cumulative_costs(

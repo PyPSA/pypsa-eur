@@ -6398,7 +6398,10 @@ def main(
         )
         n.remove("Line", idx)
 
-    if options["cluster_heat_buses"]:
+    first_year_myopic = (
+        foresight in ["myopic", "perfect"] and params.horizons[0] == current_horizon
+    )
+    if options["cluster_heat_buses"] and not first_year_myopic:
         cluster_heat_buses(n)
 
     logger.info("Completed sector components")

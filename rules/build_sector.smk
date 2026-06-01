@@ -1282,6 +1282,8 @@ rule build_shipping_demand:
         demand=resources("energy_totals.csv"),
     output:
         resources("shipping_demand.csv"),
+    params:
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     threads: 1
     resources:
         mem_mb=2000,

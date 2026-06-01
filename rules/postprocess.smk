@@ -124,6 +124,10 @@ if config["foresight"] != "perfect":
             "../scripts/plot_balance_map.py"
 
     rule plot_balance_map_interactive:
+        params:
+            settings=lambda w: config_provider(
+                "plotting", "balance_map_interactive", w.carrier
+            ),
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
