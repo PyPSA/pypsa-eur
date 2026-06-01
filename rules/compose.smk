@@ -5,8 +5,8 @@
 """
 Production implementation of streamlined PyPSA-EUR workflow compose rules.
 
-This file implements the new 4-step workflow structure:
-base → clustered → composed → solved
+This file implements the streamlined workflow structure:
+base → simplified → clustered → composed → solved
 
 All configuration is now driven by config sections rather than wildcards.
 """
@@ -25,9 +25,7 @@ def get_compose_inputs(w):
         **input_profile_tech(w),
         **input_class_regions(w),
         **input_conventional(w),
-        base_network=resources("networks/simplified.nc"),
         tech_costs=resources(f"costs_{horizon}_processed.csv"),
-        regions=resources("onshore_regions.geojson"),
         powerplants=resources("powerplants.csv"),
         hydro_capacities=ancient("data/hydro_capacities.csv"),
         unit_commitment="data/unit_commitment.csv",
@@ -37,16 +35,19 @@ def get_compose_inputs(w):
             else []
         ),
         co2_price=resources("co2_price.csv"),
+        eurostat=(
+            resources("eurostat_energy_balances.csv")
+            if cfg["co2_budget"]["relative"]
+            else []
+        ),
+        co2=(
+            rules.retrieve_ghg_emissions.output["csv"]
+            if cfg["co2_budget"]["relative"]
+            else []
+        ),
         load=resources("electricity_demand_simplified.nc"),
         snapshot_weightings=resources("snapshot_weightings.csv"),
         network=resources("networks/clustered.nc"),
-        costs=(
-            expand(
-                rules.retrieve_cost_data.output["costs"], horizon=[cfg["costs"]["year"]]
-            )[0]
-            if foresight == "overnight"
-            else rules.retrieve_cost_data.output["costs"]
-        ),
         busmap=resources("busmap.csv"),
         solar_rooftop_potentials=(
             resources("solar_rooftop_potentials.csv")
@@ -61,7 +62,6 @@ def get_compose_inputs(w):
             **input_heat_source_power(w),
             **rules.cluster_gas_network.output,
             **rules.build_gas_input_locations.output,
-            eurostat=resources("eurostat_energy_balances.csv"),
             pop_weighted_energy_totals=resources("pop_weighted_energy_totals.csv"),
             pop_weighted_heat_totals=resources("pop_weighted_heat_totals.csv"),
             shipping_demand=resources("shipping_demand.csv"),
@@ -71,7 +71,6 @@ def get_compose_inputs(w):
             dsm_profile=resources("dsm_profile.csv"),
             heat_dsm_profile=resources("residential_heat_dsm_profile.csv"),
             co2_totals_name=resources("co2_totals.csv"),
-            co2="data/bundle/eea/UNFCCC_v23.csv",
             biomass_potentials=resources("biomass_potentials_{horizon}.csv"),
             h2_cavern=resources("salt_cavern_potentials.csv"),
             clustered_pop_layout=resources("pop_layout.csv"),

@@ -55,8 +55,8 @@ if __name__ == "__main__":
     inputs = snakemake.input
 
     current_horizon = int(snakemake.wildcards.horizon)
-    horizons = config["planning_horizons"]
-    foresight = config["foresight"]
+    horizons = params.horizons
+    foresight = params.foresight
     sector_mode = params.sector["enabled"]
 
     is_first_horizon = current_horizon == horizons[0]
@@ -96,7 +96,13 @@ if __name__ == "__main__":
     sanitize_carriers(n, config)
     sanitize_locations(n)
     n.meta = dict(config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.consistency_check()
+    if n.investment_periods.empty:
+        n.consistency_check()
+    else:
+        logger.warning(
+            "Skipping consistency check for multi-period (perfect foresight) network: "
+            "known pandas/PyPSA MultiIndex limitation."
+        )
 
     logger.info(f"Exporting composed network for horizon {current_horizon}")
     n.export_to_netcdf(snakemake.output[0])

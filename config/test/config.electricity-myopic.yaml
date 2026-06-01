@@ -57,6 +57,7 @@ electricity:
 
 existing_capacities:
   grouping_years_power:
+  - 1900
   - 2020
   grouping_years_heat:
   - 2015

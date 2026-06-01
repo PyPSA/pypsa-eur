@@ -328,7 +328,7 @@ def update_dynamic_ptes_capacity(
         Updates capacity in-place.
     """
     # Check if e_max_pu exists in current network
-    if not n.stores_t.e_max_pu.empty:
+    if n.stores_t.e_max_pu.empty:
         logger.debug(
             "No dynamic PTES e_max_pu profiles in current network, skipping update"
         )

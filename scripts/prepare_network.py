@@ -96,6 +96,7 @@ def add_co2limit(
     nyears: float = 1.0,
     suffix: str = "",
     investment_period: int | None = None,
+    glc_type: str = "primary_energy",
 ) -> None:
     """
     Add global CO2 emissions constraint(s) to the network.
@@ -116,6 +117,11 @@ def add_co2limit(
     investment_period : int | None, default None
         Investment period for perfect foresight constraints. When set, the global
         constraint applies only to that investment period.
+    glc_type : str, default "primary_energy"
+        GlobalConstraint type determining which solver routine enforces it:
+        ``primary_energy`` (PyPSA native, electricity-only), ``co2_atmosphere``
+        (sector atmosphere-store constraint) or ``Co2Budget`` (cumulative perfect
+        foresight budget).
 
     """
     # FAIL FAST: Validate inputs
@@ -134,7 +140,7 @@ def add_co2limit(
     n.add(
         "GlobalConstraint",
         "CO2Limit" + suffix,
-        type="co2_limit",
+        type=glc_type,
         investment_period=investment_period,
         carrier_attribute="co2_emissions",
         sense="<=",
@@ -145,7 +151,7 @@ def add_co2limit(
         n.add(
             "GlobalConstraint",
             "CO2Min" + suffix,
-            type="co2_limit",
+            type=glc_type,
             investment_period=investment_period,
             carrier_attribute="co2_emissions",
             sense=">=",
@@ -226,6 +232,8 @@ def apply_co2_budget_constraints(
         return
 
     is_last_horizon = current_horizon == horizons[-1]
+    elec_only = not params.sector["enabled"]
+    glc_type = "primary_energy" if elec_only else "co2_atmosphere"
 
     if upper_is_scalar:
         if foresight == "perfect" and not is_last_horizon:
@@ -234,8 +242,22 @@ def apply_co2_budget_constraints(
             )
             return
         if foresight == "perfect":
+            # cumulative budget over all periods: recompute nyears from the
+            # merged multi-period network rather than the per-horizon value
             nyears = n.snapshot_weightings.objective.sum() / 8760.0
-        add_co2limit(n, upper, lower, nyears)
+            if elec_only:
+                add_co2limit(n, upper, lower, nyears, glc_type="primary_energy")
+            else:
+                add_co2limit(
+                    n,
+                    upper,
+                    lower,
+                    nyears,
+                    glc_type="Co2Budget",
+                    investment_period=horizons[-1],
+                )
+            return
+        add_co2limit(n, upper, lower, nyears, glc_type=glc_type)
         return
 
     if foresight == "perfect":
@@ -246,9 +268,10 @@ def apply_co2_budget_constraints(
             nyears,
             suffix=f"-{current_horizon}",
             investment_period=current_horizon,
+            glc_type=glc_type,
         )
     else:
-        add_co2limit(n, upper, lower, nyears)
+        add_co2limit(n, upper, lower, nyears, glc_type=glc_type)
 
 
 def add_gaslimit(n, gaslimit, Nyears=1.0):
@@ -569,16 +592,12 @@ def main(
 
     emission_prices = params.costs["emission_prices"]
 
-    if emission_prices["enable"]:
-        add_emission_prices(
-            n,
-            {"co2": emission_prices["co2"]},
-            exclude_co2=False,
-        )
-        if emission_prices["dynamic"]:
-            if not os.path.exists(inputs.co2_price):
-                raise ValueError("CO2 price file for monthly prices not found")
-            add_dynamic_emission_prices(n, inputs.co2_price)
+    if emission_prices["dynamic"]:
+        if not os.path.exists(inputs.co2_price):
+            raise ValueError("CO2 price file for monthly prices not found")
+        add_dynamic_emission_prices(n, inputs.co2_price)
+    elif emission_prices["enable"]:
+        add_emission_prices(n, {"co2": emission_prices["co2"]}, exclude_co2=False)
 
     transmission_limit = electricity_cfg["transmission_limit"]
     if isinstance(transmission_limit, str):

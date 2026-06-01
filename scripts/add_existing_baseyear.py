@@ -273,7 +273,8 @@ def add_power_capacities_installed_before_baseyear(
         aggfunc="sum",
     )
 
-    if solar_rooftop_ratio != 0:
+    has_solar_rooftop = (n.generators.carrier == "solar rooftop").any()
+    if solar_rooftop_ratio != 0 and has_solar_rooftop:
         mask = df.index.get_level_values("Fueltype") == "solar"
         solar = df.loc[mask] * (1 - solar_rooftop_ratio)
         solar_rooftop = df.loc[mask] * solar_rooftop_ratio

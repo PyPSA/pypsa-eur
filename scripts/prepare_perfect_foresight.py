@@ -85,6 +85,8 @@ def concatenate_network_with_previous(
     n.snapshot_weightings.loc[current_horizon] = n_current.snapshot_weightings
     n.set_investment_periods(list(n.investment_periods))
 
+    previous_horizon = n_previous.investment_periods[-1]
+
     for c_current in n_current.components.values():
         c = n.c[c_current.name]
         existing_comps = c.static.index
@@ -98,7 +100,21 @@ def concatenate_network_with_previous(
                 continue
 
             default = c.attrs.default[attr]
+            c.dynamic[attr].loc[current_horizon] = c.dynamic[attr].loc[
+                previous_horizon
+            ].values
             c.dynamic[attr].loc[current_horizon, df.columns] = df.values
+
+            persisting = c.dynamic[attr].columns.difference(df.columns)
+            twins = persisting.str.replace(
+                r"-\d{4}$", f"-{current_horizon}", regex=True
+            )
+            has_twin = twins.isin(df.columns)
+            if has_twin.any():
+                c.dynamic[attr].loc[current_horizon, persisting[has_twin]] = df[
+                    twins[has_twin]
+                ].values
+
             c.dynamic[attr] = c.dynamic[attr].fillna(default)
 
             overlap_non_equal_static_only = c_current.static.loc[
@@ -817,111 +833,6 @@ def apply_time_segmentation_perfect(
     n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
 
 
-def update_heat_pump_efficiency_for_horizon(
-    n: pypsa.Network, current_horizon: int
-) -> None:
-    """
-    Update efficiency of all heat pumps to use current horizon's technology (incremental).
-
-    For incremental perfect foresight workflow: after preparing a single horizon,
-    update all heat pumps in that horizon to use current technology.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Single-period network converted to multi-period [current_horizon]
-    current_horizon : int
-        The horizon year (e.g., 2040)
-
-    Notes
-    -----
-    Modifies n.links_t["efficiency"] and n.links_t["efficiency2"] in-place.
-    Called BEFORE concatenation for each horizon.
-    """
-    if not isinstance(n.snapshots, pd.MultiIndex):
-        logger.debug(
-            "Network is not multi-period, skipping heat pump efficiency update"
-        )
-        return
-
-    heat_pump_idx = n.links.index[n.links.index.str.contains("heat pump")]
-    if heat_pump_idx.empty:
-        logger.debug("No heat pumps found in network")
-        return
-
-    if current_horizon not in n.investment_periods:
-        logger.warning(f"Horizon {current_horizon} not in investment periods, skipping")
-        return
-
-    # Heat pumps with current tech (e.g., "bus AB heat pump-2040")
-    current_tech_hps = heat_pump_idx.str[:-4] + str(current_horizon)
-
-    if "efficiency" not in n.links_t or n.links_t["efficiency"].empty:
-        logger.debug("No dynamic efficiency data")
-        return
-
-    try:
-        correct_efficiency = n.links_t["efficiency"].loc[
-            (current_horizon, slice(None)), current_tech_hps
-        ]
-        n.links_t["efficiency"].loc[(current_horizon, slice(None)), heat_pump_idx] = (
-            correct_efficiency.values
-        )
-        logger.info(
-            f"Updated {len(heat_pump_idx)} heat pumps to {current_horizon} technology"
-        )
-
-        # Also update efficiency2 if exists
-        if "efficiency2" in n.links_t and not n.links_t["efficiency2"].empty:
-            hps_with_eff2 = heat_pump_idx.intersection(n.links_t["efficiency2"].columns)
-            tech_with_eff2 = current_tech_hps.intersection(
-                n.links_t["efficiency2"].columns
-            )
-            if not hps_with_eff2.empty and not tech_with_eff2.empty:
-                correct_eff2 = n.links_t["efficiency2"].loc[
-                    (current_horizon, slice(None)), tech_with_eff2
-                ]
-                n.links_t["efficiency2"].loc[
-                    (current_horizon, slice(None)), hps_with_eff2
-                ] = correct_eff2.values
-                logger.debug(f"Updated efficiency2 for {len(hps_with_eff2)} heat pumps")
-    except KeyError as e:
-        logger.warning(f"Could not update heat pump efficiency: {e}")
-
-
-def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]) -> None:
-    """
-    Update the efficiency of heat pumps for all periods (batch version).
-
-    DEPRECATED in streamlined workflow: Use update_heat_pump_efficiency_for_horizon()
-    for incremental updates instead.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        The concatenated network.
-    years : list[int]
-        List of planning horizon years.
-
-    Notes
-    -----
-    This batch function is only used in the old concat_networks() workflow.
-    """
-    logger.warning(
-        "Using batch update_heat_pump_efficiency(). "
-        "Consider update_heat_pump_efficiency_for_horizon() for incremental updates."
-    )
-
-    heat_pump_idx = n.links.index[n.links.index.str.contains("heat pump")]
-    for year in years:
-        correct_efficiency = n.links_t["efficiency"].loc[
-            (year, slice(None)), heat_pump_idx.str[:-4] + str(year)
-        ]
-        n.links_t["efficiency"].loc[(year, slice(None)), heat_pump_idx] = (
-            correct_efficiency.values
-        )
-
-
 def main(
     n: pypsa.Network,
     n_previous: pypsa.Network | None,
@@ -929,12 +840,8 @@ def main(
     current_horizon: int,
 ) -> pypsa.Network:
     is_first_horizon = current_horizon == params.horizons[0]
-    sector_mode = params.sector["enabled"]
 
     add_build_year_to_new_assets(n, current_horizon)
-
-    if sector_mode:
-        update_heat_pump_efficiency_for_horizon(n, current_horizon)
 
     adjust_stores_for_perfect_foresight(n)
 
@@ -956,8 +863,5 @@ def main(
         logger.info(
             f"Investment period weightings applied for {len(n.investment_periods)} periods"
         )
-
-    n.stores.e_initial_per_period = ~n.stores.e_cyclic
-    n.stores.e_cyclic_per_period = n.stores.e_cyclic
 
     return n
