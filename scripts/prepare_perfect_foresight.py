@@ -543,6 +543,7 @@ def adjust_stores_for_perfect_foresight(n: pypsa.Network) -> None:
     non_cyclic_carriers = [
         "co2",
         "co2 stored",
+        "co2 sequestered",
         "solid biomass",
         "biogas",
         "EV battery",
@@ -558,7 +559,7 @@ def adjust_stores_for_perfect_foresight(n: pypsa.Network) -> None:
     # Stores that should reset to initial energy at start of each period
     # Biomass and biogas: annual resource availability is renewed each year
     # CO2 stored: sequestration storage resets each period
-    e_initial_carriers = ["solid biomass", "biogas", "co2 stored"]
+    e_initial_carriers = ["solid biomass", "biogas", "co2 stored", "co2 sequestered"]
     for carrier in e_initial_carriers:
         if carrier == "solid biomass":
             store_i = n.stores[n.stores.carrier.str.contains("solid biomass")].index
