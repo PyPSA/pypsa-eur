@@ -44,6 +44,13 @@ jobs:
         add-cpes-if-none: true
         output-format: sarif
 
+    # Point alerts to pixi.lock so githubs path scoped PR check registers it
+    - name: Rewrite SARIF locations to pixi.lock
+      run: |
+        jq '.runs[].results[].locations[].physicalLocation.artifactLocation.uri = "pixi.lock"' \
+          "${{ steps.scan.outputs.sarif }}" > rewritten.sarif
+        mv rewritten.sarif "${{ steps.scan.outputs.sarif }}"
+
     - name: Upload SARIF
       if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
       uses: github/codeql-action/upload-sarif@v4
