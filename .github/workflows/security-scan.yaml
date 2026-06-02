@@ -25,7 +25,7 @@ jobs:
       with:
         pixi-version: v0.68.1
 
-    - name: Generate SBOM (master only)
+    - name: Generate SBOM # (master only)
       if: github.ref == 'refs/heads/master'
       uses: anchore/sbom-action@v0.24.0
       with:
@@ -33,7 +33,7 @@ jobs:
         output-file: sbom.spdx.json
         dependency-snapshot: true
 
-    - name: Scan
+    - name: Vulnerability Scan
       id: scan
       uses: anchore/scan-action@v7.4.0
       with:
@@ -44,7 +44,7 @@ jobs:
         add-cpes-if-none: true
         output-format: sarif
 
-    - name: Upload SARIF to Code Scanning
+    - name: Upload SARIF
       if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
       uses: github/codeql-action/upload-sarif@v4
       with:
