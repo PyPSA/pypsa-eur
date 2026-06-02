@@ -39,8 +39,7 @@ jobs:
       uses: anchore/scan-action@v7.4.0
       with:
         path: ".pixi/envs/default"
-        # Fork PRs cannot upload SARIF. Fail the build directly so a regression still blocks merge.
-        fail-build: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        fail-build: false
         severity-cutoff: high
         add-cpes-if-none: true
         output-format: sarif
@@ -58,3 +57,36 @@ jobs:
       with:
         sarif_file: ${{ steps.scan.outputs.sarif }}
         category: pixi-vuln-scan
+
+    # Fork PRs cant upload SARIF (no access to token), so code scannings native diff
+    # does not apply. This builds our own diff from a master-uploaded SARIF artifact instead.
+    - name: Upload SARIF as artifact
+      if: github.ref == 'refs/heads/master'
+      uses: actions/upload-artifact@v7
+      with:
+        name: master-sarif
+        path: ${{ steps.scan.outputs.sarif }}
+        retention-days: 30
+
+    - name: Download master baseline
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+      uses: dawidd6/action-download-artifact@v11
+      with:
+        workflow: security-scan.yaml
+        name: master-sarif
+        branch: master
+        if_no_artifact_found: fail
+        path: master-baseline
+
+    - name: Fail on new CVEs
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+      run: |
+        new=$(comm -23 \
+          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' "${{ steps.scan.outputs.sarif }}" | sort -u) \
+          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' master-baseline/*.sarif | sort -u))
+        if [ -n "$new" ]; then
+          echo "::error::New high+ CVEs vs master:"
+          printf '%s\n' "$new"
+          exit 1
+        fi
+        echo "No new high+ CVEs vs master."
