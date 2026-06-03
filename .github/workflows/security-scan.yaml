@@ -20,6 +20,8 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
+    outputs:
+      sarif: ${{ steps.scan.outputs.sarif }}
     steps:
     - uses: actions/checkout@v6
     - uses: prefix-dev/setup-pixi@v0.9.5
@@ -68,8 +70,13 @@ jobs:
         path: ${{ steps.scan.outputs.sarif }}
         retention-days: 30
 
+  report-on-fork-pr:
+    name: SBOM and vulnerability scan
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    needs: scan
+    steps:
     - name: Download master baseline
-      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
       uses: dawidd6/action-download-artifact@v11
       with:
         workflow: security-scan.yaml
@@ -79,10 +86,9 @@ jobs:
         path: master-baseline
 
     - name: Fail on new CVEs
-      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
       run: |
         new=$(comm -23 \
-          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' "${{ steps.scan.outputs.sarif }}" | sort -u) \
+          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' "${{ needs.scan.outputs.sarif }}" | sort -u) \
           <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' master-baseline/*.sarif | sort -u))
         if [ -n "$new" ]; then
           echo "::error::New high+ CVEs vs master:"
