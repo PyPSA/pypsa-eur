@@ -1223,7 +1223,7 @@ def add_co2_atmosphere_constraint(n, snapshots):
 def add_national_co2_budget_constraints(
     n: pypsa.Network,
     planning_horizons: str,
-    config,
+    snakemake,
 ) -> None:
     """
     Add per-country CO2 budget constraints based on a balance at the
@@ -1241,7 +1241,9 @@ def add_national_co2_budget_constraints(
     """
     from scripts.prepare_sector_network import determine_emission_sectors
 
-    national_co2_budgets = config["solving"]["constraints"]["co2_budget_national"]
+    national_co2_budgets = snakemake.config["solving"]["constraints"][
+        "co2_budget_national"
+    ]
     investment_year = int(planning_horizons)
 
     logger.info(f"Adding national CO2 budgets for year {investment_year}")
@@ -1423,7 +1425,7 @@ def extra_functionality(
     else:
         add_co2_atmosphere_constraint(n, snapshots)
         if constraints.get("co2_budget_national") and planning_horizons is not None:
-            add_national_co2_budget_constraints(n, planning_horizons, config)
+            add_national_co2_budget_constraints(n, planning_horizons, snakemake)  # pylint: disable=E0601
 
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
