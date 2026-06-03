@@ -1220,6 +1220,154 @@ def add_co2_atmosphere_constraint(n, snapshots):
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
+def add_national_co2_budget_constraints(
+    n: pypsa.Network,
+    planning_horizons: str,
+    snakemake,
+) -> None:
+    """
+    Add per-country CO2 budget constraints based on a balance at the
+    ``co2 atmosphere`` bus.
+
+    Budgets are configured per country and planning horizon under
+    ``solving: constraints: co2_budget_national`` as a fraction of the
+    country's 1990 emissions. Emissions (positive and negative) are
+    balanced over all links of a country that connect to the
+    ``co2 atmosphere`` bus, so that emissions are accounted for in the
+    region where they occur. Whether fossil or synthetic fuels are burned
+    makes no difference; all emissions are booked where combustion occurs.
+    Aviation kerosene emissions are scaled by the domestic-to-total
+    aviation ratio to exclude international aviation from the budget.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance to add the constraints to.
+    planning_horizons : str
+        The current (myopic) planning horizon year.
+    snakemake
+        The snakemake workflow object, providing the ``co2_totals`` and
+        ``energy_totals`` inputs and the ``energy_totals_year`` param.
+    """
+    from scripts.prepare_sector_network import determine_emission_sectors
+
+    national_co2_budgets = n.config["solving"]["constraints"]["co2_budget_national"]
+    investment_year = int(planning_horizons)
+
+    logger.info(f"Adding national CO2 budgets for year {investment_year}")
+
+    nyears = n.snapshot_weightings.generators.sum() / 8760
+    MtCO2_to_tCO2 = 1e6
+
+    co2_totals = pd.read_csv(snakemake.input.co2_totals, index_col=0).mul(MtCO2_to_tCO2)
+    sectors = determine_emission_sectors(n.config["sector"])
+    co2_total_totals = co2_totals[sectors].sum(axis=1) * nyears
+
+    energy_totals = pd.read_csv(snakemake.input.energy_totals, index_col=[0, 1])
+    energy_year = int(snakemake.params.energy_totals_year)
+
+    weightings = n.snapshot_weightings.generators
+    links = n.links
+
+    for ct in national_co2_budgets:
+        if investment_year not in national_co2_budgets[ct]:
+            continue
+
+        limit = co2_total_totals[ct] * national_co2_budgets[ct][investment_year]
+        logger.info(
+            f"Limiting emissions in country {ct} to "
+            f"{national_co2_budgets[ct][investment_year]:.1%} of 1990 levels, "
+            f"i.e. {limit:,.2f} tCO2/a"
+        )
+
+        lhs = []
+        link_ports = links.filter(like="bus").columns.str[3:]
+        for port in link_ports:
+            # aviation is excluded here to scale it by the domestic share below
+            idx = links.query(
+                f"name.str.startswith('{ct}') "
+                f"& bus{port} == 'co2 atmosphere' "
+                f"& carrier != 'kerosene for aviation'"
+            ).index
+
+            if idx.empty:
+                continue
+
+            logger.info(
+                f"For {ct} adding the following link carriers on port {port} "
+                f"to the CO2 constraint: {sorted(links.loc[idx, 'carrier'].unique())}"
+            )
+
+            if port == "0":
+                efficiency = -1.0
+            elif port == "1":
+                efficiency = links.loc[idx, "efficiency"]
+            else:
+                efficiency = links.loc[idx, f"efficiency{port}"]
+
+            port_emissions = (
+                n.model["Link-p"].loc[:, idx].mul(efficiency).mul(weightings).sum()
+            )
+            lhs.append(port_emissions)
+
+        # Scale aviation emissions by the domestic share to exclude
+        # international aviation from the national budget.
+        aviation_domestic = energy_totals.loc[
+            (ct, energy_year), "total domestic aviation"
+        ]
+        aviation_international = energy_totals.loc[
+            (ct, energy_year), "total international aviation"
+        ]
+        aviation_total = aviation_domestic + aviation_international
+        domestic_aviation_factor = (
+            aviation_domestic / aviation_total if aviation_total else 0.0
+        )
+        aviation_links = links.query(
+            f"name.str.startswith('{ct}') & carrier == 'kerosene for aviation'"
+        )
+        if not aviation_links.empty:
+            aviation_emissions = (
+                n.model["Link-p"]
+                .loc[:, aviation_links.index]
+                # 'co2 atmosphere' is assumed to be at bus2 for aviation links
+                .mul(aviation_links["efficiency2"])
+                .mul(weightings)
+                .sum()
+                .mul(domestic_aviation_factor)
+            )
+            lhs.append(aviation_emissions)
+            logger.info(
+                f"Adding domestic aviation emissions for {ct} with a "
+                f"factor of {domestic_aviation_factor:.2f}"
+            )
+
+        if not lhs:
+            logger.warning(
+                f"No links connecting to 'co2 atmosphere' found for {ct}; "
+                "skipping its national CO2 budget constraint."
+            )
+            continue
+
+        cname = f"co2_limit-{ct}"
+
+        n.model.add_constraints(sum(lhs) <= limit, name=f"GlobalConstraint-{cname}")
+
+        if cname in n.global_constraints.index:
+            logger.warning(
+                f"Global constraint {cname} already exists. Dropping and re-adding it."
+            )
+            n.global_constraints.drop(cname, inplace=True)
+
+        n.add(
+            "GlobalConstraint",
+            cname,
+            constant=limit,
+            sense="<=",
+            type="",
+            carrier_attribute="",
+        )
+
+
 def extra_functionality(
     n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
 ) -> None:
@@ -1283,6 +1431,8 @@ def extra_functionality(
         add_retrofit_gas_boiler_constraint(n, snapshots)
     else:
         add_co2_atmosphere_constraint(n, snapshots)
+        if constraints.get("co2_budget_national") and planning_horizons is not None:
+            add_national_co2_budget_constraints(n, planning_horizons, snakemake)
 
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)

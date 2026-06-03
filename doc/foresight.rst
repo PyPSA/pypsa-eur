@@ -194,6 +194,56 @@ transformations required in Europe to achieve different climate goals (2022)
 <https://doi.org/10.1016/j.joule.2022.04.016>`__.
 
 
+.. _national_co2_budgets:
+
+National CO2 budgets
+--------------------
+
+In addition to the system-wide carbon budget, individual countries can be given
+their own CO2 budget to model differentiated, country-specific climate targets
+(for example, Austria's path to climate neutrality by 2040 following its
+*Klimaschutzgesetz* targets). National budgets are available in myopic foresight
+and are configured under ``solving: constraints: co2_budget_national`` as a
+fraction of each country's 1990 emissions, keyed by country code and planning
+horizon:
+
+.. code:: yaml
+
+  solving:
+    constraints:
+      co2_budget_national:
+        AT:
+          2020: 0.67   # 67% of 1990 emissions
+          2030: 0.34
+          2040: 0.00   # net-zero
+          2050: -0.05  # net-negative
+
+Leave the mapping empty (the default) to disable the feature. The absolute
+1990 reference is taken from ``co2_totals.csv`` for the emission sectors enabled
+in the ``sector`` configuration, scaled to the number of years represented by
+the planning horizon.
+
+For every listed country and planning horizon a constraint is added that
+balances all emissions at the ``co2 atmosphere`` bus:
+
+1. all links of the country connecting to the ``co2 atmosphere`` bus are
+   identified, across all of their bus ports;
+2. emissions (positive and negative) are accounted for in the region where the
+   technology causes them, so emissions in one region of a country can be
+   compensated by negative emissions (CCS, DAC, CCU) in another region of the
+   *same* country;
+3. aviation emissions are scaled by the domestic-to-total aviation ratio
+   (from ``energy_totals.csv``) so that international aviation is excluded;
+4. the resulting sum is constrained to be below the national budget:
+   :math:`\sum \text{emissions} \le \text{budget}_{ct}`.
+
+Unlike the PyPSA-DE implementation this feature is derived from, no distinction
+is made between synthetic and fossil fuels: all emissions are booked where
+combustion occurs, and a country cannot use synthetic-fuel production to offset
+emissions in another country. The constraint can be combined with the global
+``co2limit``/carbon budget, which continues to cap system-wide emissions.
+
+
 General myopic code structure
 ---------------------------------
 

@@ -9,6 +9,8 @@ Release Notes
 .. Upcoming Release
 .. =================
 
+* feat: Add optional per-country CO2 budget constraints for myopic foresight, configurable via ``solving: constraints: co2_budget_national`` as a fraction of each country's 1990 emissions per planning horizon. Emissions are balanced at the ``co2 atmosphere`` bus per country, with aviation scaled by the domestic share. See :ref:`national_co2_budgets`.
+
 * Fix: ``atlite.plot_availability_matrix`` config option for :mod:`determine_availability_matrix` and :mod:`determine_availability_matrix_MD_UA` scripts, changed their output and behaviour to align consistently (https://github.com/PyPSA/pypsa-eur/pull/2173).
 
 * Fix: Activate losses for `H2 pipeline retrofitted` links by default, to ensure consistency with `H2 pipeline` links.
