@@ -9,6 +9,8 @@ Release Notes
 .. Upcoming Release
 .. =================
 
+* Fix: Operational reserve margin constraints now work for PyPSA v1.0. Load shedding generators are now excluded from reserve margin calculations. Renewable generators are now identified based on the configuration rather than presence of ``p_max_pu`` data. Fixed for networks without extendable generators.
+
 * Fix: ``atlite.plot_availability_matrix`` config option for :mod:`determine_availability_matrix` and :mod:`determine_availability_matrix_MD_UA` scripts, changed their output and behaviour to align consistently (https://github.com/PyPSA/pypsa-eur/pull/2173).
 
 * Fix: Activate losses for `H2 pipeline retrofitted` links by default, to ensure consistency with `H2 pipeline` links.
