@@ -1190,6 +1190,7 @@ solving:
     EQ: false
     BAU: false
     SAFE: false
+    co2_budget_national: {}
   solver:
     name: gurobi
     options: "gurobi-default"
