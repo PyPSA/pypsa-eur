@@ -298,7 +298,7 @@ def distribute_n_clusters_to_countries(
         .sum()
         .pipe(normed)
     )
-
+    L.index.name = "cluster"
     N = n.buses.groupby(["country", "sub_network"]).size()[L.index]
 
     assert n_clusters >= len(N) and n_clusters <= N.sum(), (
