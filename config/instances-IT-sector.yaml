@@ -2,7 +2,7 @@
 
 run:
   prefix: ""
-  name: "smspp"
+  name: "IT-sector"
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -39,8 +39,8 @@ solving:
     linearized_unit_commitment: false
     noisy_costs: false
   solver:
-    name: [gurobi, smspp, smspp]  # Note: somehow smspp with investment is not working
-    options: [gurobi-default, smspp-ucblock, smspp-investmentblock]
+    name: [gurobi, smspp]  # Note: somehow smspp with investment is not working
+    options: [gurobi-default, smspp-ucblock]
   solver_options:
     smspp-ucblock:
       capacity_expansion_ucblock: true

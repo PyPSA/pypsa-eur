@@ -2,7 +2,7 @@
 
 run:
   prefix: ""
-  name: "smspp"
+  name: "IT-elec"
   scenarios:
     enable: false
     file: config/scenarios.yaml

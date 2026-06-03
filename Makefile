@@ -8,21 +8,21 @@ CORES ?= 1
 .PHONY: help
 help:
 	@printf "SMS++ workflow targets\n"
-	@printf "  smspp-instances-elec: Generate SMS++ instances for electricity\n"
-	@printf "  smspp-instances-sector: Generate SMS++ instances for sector-coupled\n"
-	@printf "  smspp-instances: Generate SMS++ instances for both electricity and sector-coupled\n"
+	@printf "  run-instances-elec: Generate SMS++ instances for electricity\n"
+	@printf "  run-instances-sector: Generate SMS++ instances for sector-coupled\n"
+	@printf "  run-instances: Generate SMS++ instances for both electricity and sector-coupled\n"
 	@printf "\n"
 	@printf "Overrides: CORES=%s \n" "$(CORES)"
 
-.PHONY: smspp-instances-elec
-smspp-instances-elec:
-	pixi run snakemake --cores $(CORES) compare_solver_elec_outputs --configfile config/smspp-IT-elec.yaml
+.PHONY: run-instances-elec
+run-instances-elec:
+	pixi run snakemake --cores $(CORES) compare_solver_elec_outputs --configfile config/instances-IT-elec.yaml
 
-.PHONY: smspp-instances-sector
-smspp-instances-sector:
-	pixi run snakemake --cores $(CORES) compare_solver_sector_outputs --configfile config/smspp-IT-sector.yaml
+.PHONY: run-instances-sector
+run-instances-sector:
+	pixi run snakemake --cores $(CORES) compare_solver_sector_outputs --configfile config/instances-IT-sector.yaml
 
-.PHONY: smspp-instances
-smspp-instances:
-	$(MAKE) smspp-instances-elec
-	$(MAKE) smspp-instances-sector
+.PHONY: run-instances
+run-instances:
+	$(MAKE) run-instances-elec
+	$(MAKE) run-instances-sector
