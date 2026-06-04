@@ -4543,9 +4543,9 @@
             }
           }
         },
-        "tes": {
+        "ttes": {
           "default": true,
-          "description": "Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES).",
+          "description": "Enable tank thermal energy storage (TTES) in district heating and individual heating.",
           "type": "boolean"
         },
         "boilers": {
@@ -11006,9 +11006,9 @@
             }
           }
         },
-        "tes": {
+        "ttes": {
           "default": true,
-          "description": "Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES).",
+          "description": "Enable tank thermal energy storage (TTES) in district heating and individual heating.",
           "type": "boolean"
         },
         "boilers": {

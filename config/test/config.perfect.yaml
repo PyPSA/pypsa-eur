@@ -45,19 +45,16 @@ sector:
   solid_biomass_import:
     enable: true
   district_heating:
-    ptes:
-      supplemental_heating:
-        enable: true
-        booster_heat_pump: true
     ates:
       enable: true
-  heat_pump_sources:
+  heat_sources:
     urban central:
     - air
     - ptes
     - river_water
     - sea_water
     - geothermal
+    - ptes
     urban decentral:
     - air
     rural:

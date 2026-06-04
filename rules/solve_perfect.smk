@@ -43,7 +43,7 @@ rule add_existing_baseyear:
         existing_capacities=config_provider("existing_capacities"),
         carriers=config_provider("electricity", "renewable_carriers"),
         costs=config_provider("costs"),
-        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        heat_sources=config_provider("sector", "heat_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     message:
         "Adding existing infrastructure for base year for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
