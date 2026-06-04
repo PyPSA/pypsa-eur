@@ -89,7 +89,7 @@ jobs:
       run: |
         new=$(comm -23 \
           <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' "${{ needs.scan.outputs.sarif }}" | sort -u) \
-          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' master-baseline/*.sarif | sort -u))
+          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' master-baseline/output/*.sarif | sort -u))
         if [ -n "$new" ]; then
           echo "::error::New high+ CVEs vs master:"
           printf '%s\n' "$new"
