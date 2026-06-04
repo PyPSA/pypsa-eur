@@ -11,32 +11,29 @@ link.
 Outputs
 -------
 
-- ``resources/regions_onshore_base.geojson``:
+- `resources/regions_onshore_base.geojson`:
 
-    .. image:: img/regions_onshore_base_s.png
-            :scale: 33 %
+    ![](img/regions_onshore_base_s.png)
 
-- ``resources/regions_offshore_base.geojson``:
+- `resources/regions_offshore_base.geojson`:
 
-    .. image:: img/regions_offshore_base_s  .png
-            :scale: 33 %
+    ![](img/regions_offshore_base_s.png)
 
-- ``resources/busmap_base_s.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/base_s.nc``;
-- ``networks/base.nc``:
+- `resources/busmap_base_s.csv`: Mapping of buses from `networks/base.nc` to `networks/base_s.nc`;
+- `networks/base.nc`:
 
-    .. image:: img/base_s.png
-        :scale: 33 %
+    ![](img/base_s.png)
 
 Description
 -----------
 
-The rule :mod:`simplify_network` does up to three things:
+The rule [simplify_network][] does up to three things:
 
-1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function ``simplify_network(...)``.
+1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function `simplify_network(...)`.
 
-2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function ``simplify_links(...)``.
+2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function `simplify_links(...)`.
 
-3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function ``remove_stubs(...)`` and ``remove_stubs_within_admin(...)``.
+3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function `remove_stubs(...)` and `remove_stubs_within_admin(...)`.
 """
 
 import logging
@@ -340,10 +337,14 @@ def find_closest_bus(n, x, y, tol=2000):
 
     Parameters
     ----------
-        n (pypsa.Network): The network object.
-        x (float): The x-coordinate (longitude) of the target location.
-        y (float): The y-coordinate (latitude) of the target location.
-        tol (float): The distance tolerance in meters. Default is 2000 meters.
+    n : pypsa.Network
+        The network object.
+    x : float
+        The x-coordinate (longitude) of the target location.
+    y : float
+        The y-coordinate (latitude) of the target location.
+    tol : float
+        The distance tolerance in meters. Default is 2000 meters.
 
     Returns
     -------
@@ -380,7 +381,8 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
 
     Parameters
     ----------
-        n (pypsa.Network): The network object.
+    n : pypsa.Network
+        The network object.
 
     Returns
     -------

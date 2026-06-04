@@ -5,62 +5,61 @@
 
 """
 Retrieves conventional powerplant capacities and locations from
-`powerplantmatching <https://github.com/PyPSA/powerplantmatching>`_, assigns
-these to buses and creates a ``.csv`` file. It is possible to amend the
+[powerplantmatching](https://github.com/PyPSA/powerplantmatching), assigns
+these to buses and creates a `.csv` file. It is possible to amend the
 powerplant database with custom entries provided in
-``data/custom_powerplants.csv``.
+`data/custom_powerplants.csv`.
 Lastly, for every substation, powerplants with zero-initial capacity can be added for certain fuel types automatically.
 
 Outputs
 -------
 
-- ``resource/powerplants_s_{clusters}.csv``: A list of conventional power plants (i.e. neither wind nor solar) with fields for name, fuel type, technology, country, capacity in MW, duration, commissioning year, retrofit year, latitude, longitude, and dam information as documented in the `powerplantmatching README <https://github.com/PyPSA/powerplantmatching/blob/master/README.md>`_; additionally it includes information on the closest substation/bus in ``networks/base_s_{clusters}.nc``.
+- `resource/powerplants_s_{clusters}.csv`: A list of conventional power plants (i.e. neither wind nor solar) with fields for name, fuel type, technology, country, capacity in MW, duration, commissioning year, retrofit year, latitude, longitude, and dam information as documented in the [powerplantmatching README](https://github.com/PyPSA/powerplantmatching/blob/master/README.md); additionally it includes information on the closest substation/bus in `networks/base_s_{clusters}.nc`.
 
-    .. image:: img/powerplantmatching.png
-        :scale: 30 %
+    ![](img/powerplantmatching.png)
 
-    **Source:** `powerplantmatching on GitHub <https://github.com/PyPSA/powerplantmatching>`_
+    **Source:** [powerplantmatching on GitHub](https://github.com/PyPSA/powerplantmatching)
 
 Description
 -----------
 
-The configuration options ``electricity: powerplants_filter`` and ``electricity: custom_powerplants`` can be used to control whether data should be retrieved from the original powerplants database or from custom amendments. These specify `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ commands.
-In addition the configuration option ``electricity: everywhere_powerplants`` can be used to place powerplants with zero-initial capacity of certain fuel types at all substations.
+The configuration options `electricity: powerplants_filter` and `electricity: custom_powerplants` can be used to control whether data should be retrieved from the original powerplants database or from custom amendments. These specify [pandas.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html) commands.
+In addition the configuration option `electricity: everywhere_powerplants` can be used to place powerplants with zero-initial capacity of certain fuel types at all substations.
 
 1. Adding all powerplants from custom:
 
-    .. code:: yaml
-
-        powerplants_filter: false
-        custom_powerplants: true
+    ```yaml
+    powerplants_filter: false
+    custom_powerplants: true
+    ```
 
 2. Replacing powerplants in e.g. Germany by custom data:
 
-    .. code:: yaml
-
-        powerplants_filter: Country not in ['Germany']
-        custom_powerplants: true
+    ```yaml
+    powerplants_filter: Country not in ['Germany']
+    custom_powerplants: true
+    ```
 
     or
 
-    .. code:: yaml
-
-        powerplants_filter: Country not in ['Germany']
-        custom_powerplants: Country in ['Germany']
+    ```yaml
+    powerplants_filter: Country not in ['Germany']
+    custom_powerplants: Country in ['Germany']
+    ```
 
 
 3. Adding additional built year constraints:
 
-    .. code:: yaml
-
-        powerplants_filter: Country not in ['Germany'] and YearCommissioned <= 2015
-        custom_powerplants: YearCommissioned <= 2015
+    ```yaml
+    powerplants_filter: Country not in ['Germany'] and YearCommissioned <= 2015
+    custom_powerplants: YearCommissioned <= 2015
+    ```
 
 4. Adding powerplants at all substations for 4 conventional carrier types:
 
-    .. code:: yaml
-
-        everywhere_powerplants: ['Natural Gas', 'Coal', 'nuclear', 'OCGT']
+    ```yaml
+    everywhere_powerplants: ['Natural Gas', 'Coal', 'nuclear', 'OCGT']
+    ```
 """
 
 import itertools

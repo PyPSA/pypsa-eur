@@ -94,9 +94,12 @@ def build_osm_boundaries(country, adm1_path, offshore_shapes):
 
     Parameters
     ----------
-        - country (str): The country code (e.g., 'DE' for Germany).
-        - adm1_path (str): The file path to the administrative level 1 OSM data in JSON format.
-        - offshore_shapes (GeoDataFrame): A GeoDataFrame containing offshore shapes to clip the boundaries.
+    country : str
+        The country code (e.g., 'DE' for Germany).
+    adm1_path : str
+        The file path to the administrative level 1 OSM data in JSON format.
+    offshore_shapes : GeoDataFrame
+        A GeoDataFrame containing offshore shapes to clip the boundaries.
 
     Returns
     -------

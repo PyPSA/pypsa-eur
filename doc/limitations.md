@@ -1,10 +1,7 @@
-.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-..
-.. SPDX-License-Identifier: CC-BY-4.0
+<!-- SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur> -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-##########################################
-Limitations
-##########################################
+# Limitations
 
 While the benefit of an openly available, functional and partially validated
 model of the European energy system is high, many approximations have
@@ -13,12 +10,10 @@ The limitations of the dataset are listed below,
 both as a warning to the user and as an encouragement to assist in
 improving the approximations.
 
-.. warning::
+!!! warning
+    This list of limitations is incomplete and will be added to over time.
 
-  This list of limitations is incomplete and will be added to over time.
-
-.. seealso::
-  See also the `GitHub repository issues <https://github.com/PyPSA/pypsa-eur/issues>`__.
+See also the [GitHub repository issues](https://github.com/PyPSA/pypsa-eur/issues).
 
 - **Electricity transmission network topology:**
   The grid data is based on a map of the ENTSO-E area that is known

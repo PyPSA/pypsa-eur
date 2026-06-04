@@ -1,36 +1,31 @@
-.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-..
-.. SPDX-License-Identifier: CC-BY-4.0
+<!-- SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur> -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-#############
-Base network
-#############
+# Base network
 
-.. raw:: html
+<iframe src="../base-network-raw.html" width="100%" height="600px"></iframe>
 
-   <iframe src="base-network-raw.html" width="100%" height="600px"></iframe>
+The map might take a moment to load. To view it in full screen, click <a href="../base-network-raw.html">here</a>.
 
-The map might take a moment to load. To view it in full screen, click `here <base-network-raw.html>`__.
-
-``data/osm/0.6/``
+`data/osm/0.6/`
 
 - **Source:** OpenStreetMap; Xiong, B., Fioriti, D., Neumann, F., Riepin I. & Brown, T. (2024).
   Prebuilt Electricity Network for PyPSA-Eur based on OpenStreetMap Data (0.6)
   [Data set]. Zenodo. https://doi.org/10.5281/zenodo.14144752
 - **Link:** https://zenodo.org/records/14144752
-- **License:** ODbL (`reference <https://zenodo.org/records/14144752>`)
+- **License:** ODbL ([reference](https://zenodo.org/records/14144752))
 - **Description:** Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.
 
 This dataset contains a topologically connected representation of the European
 high-voltage grid (220 kV to 750 kV) constructed using OpenStreetMap data. Input data
-was retrieved using the `Overpass turbo API <https://overpass-turbo.eu/>`__. A heurisitic
+was retrieved using the [Overpass turbo API](https://overpass-turbo.eu/). A heurisitic
 cleaning process was used to for lines and links where electrical parameters are
 incomplete, missing, or ambiguous. Close substations within a radius of 500 m are
 aggregated to single buses, exact locations of underlying substations is preserved.
 Unique identifiers for lines and links are preserved.
 
 A detailed explanation on the background, methodology, and validation of this dataset
-can be found in `this paper <https://doi.org/10.48550/arXiv.2408.17178>`__ preprint
+can be found in [this paper](https://doi.org/10.48550/arXiv.2408.17178) preprint
 currently under peer-review.
 
 Countries included in the dataset:

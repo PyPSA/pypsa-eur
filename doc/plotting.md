@@ -1,105 +1,81 @@
-.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-..
-.. SPDX-License-Identifier: CC-BY-4.0
+<!-- SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur> -->
+<!---->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-##########################################
-Plotting and Summaries
-##########################################
+# Plotting and Summaries
 
 
-Rule ``make_summary``
-========================
+## Rule `make_summary`
 
-.. automodule:: make_summary
+::: make_summary
 
 
-Rule ``make_global_summary``
-========================
+## Rule `make_global_summary`
 
-.. automodule:: make_global_summary
+::: make_global_summary
 
-Rule ``make_cumulative_costs``
-==============================
+## Rule `make_cumulative_costs`
 
-.. automodule:: make_cumulative_costs
+::: make_cumulative_costs
 
-.. _summary_plot:
+## Rule `plot_summary` {#summary_plot}
 
-Rule ``plot_summary``
-========================
+::: plot_summary
 
-.. automodule:: plot_summary
+## Rule `plot_base_network`
 
-Rule ``plot_base_network``
-=================================================
+::: plot_base_network
 
-.. automodule:: plot_base_network
+## Rule `plot_power_network_clustered`
 
-Rule ``plot_power_network_clustered``
-=================================================
-
-.. automodule:: plot_power_network_clustered
+::: plot_power_network_clustered
 
 
 
-.. _map_plot:
+## Rule `plot_power_network` {#map_plot}
 
-Rule ``plot_power_network``
-===========================
+::: plot_power_network
 
-.. automodule:: plot_power_network
+## Rule `plot_power_network_perfect`
 
-Rule ``plot_power_network_perfect``
-===================================
+::: plot_power_network_perfect
 
-.. automodule:: plot_power_network_perfect
+## Rule `plot_hydrogen_network`
 
-Rule ``plot_hydrogen_network``
-==============================
+::: plot_hydrogen_network
 
-.. automodule:: plot_hydrogen_network
+## Rule `plot_gas_network`
 
-Rule ``plot_gas_network``
-=========================
+::: plot_gas_network
 
-.. automodule:: plot_gas_network
+## Rule `plot_balance_map`
 
-Rule ``plot_balance_map``
-=================================
+::: plot_balance_map
 
-.. automodule:: plot_balance_map
+## Rule `plot_heat_source_map`
 
-Rule ``plot_heat_source_map``
-=================================
+::: plot_heat_source_map
 
-.. automodule:: plot_heat_source_map
+## Rule `plot_balance_timeseries`
 
-Rule ``plot_balance_timeseries``
-=================================
+::: plot_balance_timeseries
 
-.. automodule:: plot_balance_timeseries
+## Rule `plot_heatmap_timeseries`
 
-Rule ``plot_heatmap_timeseries``
-=================================
+::: plot_heatmap_timeseries
 
-.. automodule:: plot_heatmap_timeseries
+## Rule `plot_base_statistics`
 
-Rule ``plot_base_statistics``
-=================================
+<!-- ::: plot_base_statistics (module not found) -->
 
-.. automodule:: plot_base_statistics
+## Rule `build_ambient_air_temperature_yearly_average`
 
-Rule ``build_ambient_air_temperature_yearly_average``
-======================================================
+::: build_ambient_air_temperature_yearly_average
 
-.. automodule:: build_ambient_air_temperature_yearly_average
+## Rule `plot_cop_profiles`
 
-Rule ``plot_cop_profiles``
-===========================
+<!-- ::: plot_cop_profiles (directory module, not importable) -->
 
-.. automodule:: plot_cop_profiles
+## Rule `plot_interactive_bus_balance`
 
-Rule ``plot_interactive_bus_balance``
-======================================
-
-.. automodule:: plot_interactive_bus_balance
+::: plot_interactive_bus_balance
