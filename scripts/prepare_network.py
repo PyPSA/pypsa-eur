@@ -4,7 +4,7 @@
 
 
 """
-Prepare PyPSA network for solving according to :ref:`opts`, such
+Prepare PyPSA network for solving according to opts, such
 as.
 
 - adding an annual **limit** of carbon-dioxide emissions,
@@ -13,15 +13,15 @@ as.
 - specifying an expansion limit on the **cost** of transmission expansion,
 - specifying an expansion limit on the **volume** of transmission expansion, and
 - reducing the **temporal** resolution by averaging over multiple hours
-  or segmenting time series into chunks of varying lengths using ``tsam``.
+  or segmenting time series into chunks of varying lengths using `tsam`.
 
 Description
 -----------
 
-.. tip::
-    The rule :mod:`prepare_elec_networks` runs
-    for all ``scenario`` s in the configuration file
-    the rule :mod:`prepare_network`.
+!!! tip
+    The rule `prepare_elec_networks` runs
+    for all `scenario` s in the configuration file
+    the rule [prepare_network][].
 """
 
 import logging

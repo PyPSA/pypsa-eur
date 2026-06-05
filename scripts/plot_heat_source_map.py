@@ -20,12 +20,12 @@ data is summed by region to show total potential.
 Relevant Settings
 -----------------
 
-.. code:: yaml
-
-    plotting:
-        heat_source_map:
-            temperature_cmap: "Reds"  # Colormap for temperature data
-            energy_cmap: "Oranges"    # Colormap for energy data
+```yaml
+plotting:
+    heat_source_map:
+        temperature_cmap: "Reds"  # Colormap for temperature data
+        energy_cmap: "Oranges"    # Colormap for energy data
+```
 
 Inputs
 ------

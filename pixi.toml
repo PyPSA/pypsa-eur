@@ -30,8 +30,11 @@ logs, resources, benchmarks, results, and .snakemake directories except \
 """
 
 update-dags = """
-	snakemake results/networks/base_s_128_elec_.nc -F --dag | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png && \
-	snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/workflow.png
+	snakemake results/networks/base_s_128_elec_.nc -F --dag | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/intro-workflow.svg && \
+	snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/workflow.svg && \
+	snakemake --dag --configfile config/test/config.electricity.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_electricity.svg && \
+	snakemake --dag --configfile config/test/config.overnight.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_overnight.svg && \
+	snakemake --dag --configfile config/test/config.myopic.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_myopic.svg
 """
 
 generate-config = "python -c 'from scripts.lib.validation.config import generate_config_defaults, generate_config_schema; generate_config_defaults(); generate_config_schema()'"
@@ -58,8 +61,10 @@ geojson = ">=3.2.0"
 geopandas = ">=1"
 geopy = ">=2.4.1"
 glpk = ">=5.0"
+graphviz = ">=12.2.1"
 gurobi = ">=12.0.3"
 highspy = ">=1.12.0"
+ipython = ">=9.7.0"
 jpype1 = ">=1.6.0"
 libgdal-netcdf = ">=3.10.3"
 linopy = ">=0.6.1"
@@ -117,8 +122,8 @@ ruff = ">=0.14.3"
 jupyter = ">=1.1.1"
 
 [feature.doc.tasks.build-docs]
-args = ["dir", {"arg" = "output", "default" = "html"}]
-cmd = "sphinx-build -T -b {{ output }} doc {{ dir }}/{{ output }} "
+cmd = "mkdocs build -d {{ dir }}/html"
+args = ["dir"]
 
 [feature.doc.dependencies]
 atlite = "==0.4.1"
@@ -129,7 +134,15 @@ fiona = "==1.10.1"
 graphviz = "==13.1.2"
 matplotlib = "==3.10.7"
 memory_profiler = "==0.61.0"
-myst-parser = "==4.0.1"
+mkdocs = ">=1.6"
+mkdocs-material = ">=9.5"
+mkdocstrings = ">=0.29"
+mkdocstrings-python = ">=1.16"
+mkdocs-bibtex = ">=2.16"
+pymdown-extensions = ">=10.0"
+mkdocs-macros-plugin = ">=1.0"
+mkdocs-table-reader-plugin = ">=3.1"
+snakemake-minimal = ">=9"
 powerplantmatching = "==0.7.1"
 pydot = "==4.0.1"
 pypsa = "==1.0.3"
@@ -139,11 +152,6 @@ pyyaml = "==6.0.3"
 requests = "==2.32.5"
 scikit-learn = "==1.7.2"
 seaborn = "==0.13.2"
-sphinx = "==8.2.3"
-sphinx-book-theme = "==1.1.4"
-sphinx-design = "==0.6.1"
-sphinx-jsonschema = "==1.19.2"
-sphinxcontrib-bibtex = "==2.6.5"
 tabula-py = "==2.7.0"
 tenacity = "==9.1.2"
 tsam = "==2.3.9"
