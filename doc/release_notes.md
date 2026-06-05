@@ -5,6 +5,11 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Security: SBOM security scan included in CI.
+
+* Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
+  Removed 62 CVEs from `default` environment.
+
 * Fix: `atlite.plot_availability_matrix` config option for `determine_availability_matrix` and `determine_availability_matrix_MD_UA` scripts, changed their output and behaviour to align consistently ([#2173](https://github.com/PyPSA/pypsa-eur/pull/2173)).
 
 * Fix: Activate losses for `H2 pipeline retrofitted` links by default, to ensure consistency with `H2 pipeline` links.
