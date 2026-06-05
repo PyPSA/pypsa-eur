@@ -23,7 +23,7 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v6
-    - uses: prefix-dev/setup-pixi@v0.9.5
+    - uses: prefix-dev/setup-pixi@v0.9.6
       with:
         pixi-version: v0.68.1
 
@@ -73,7 +73,7 @@ jobs:
     # diff against the master baseline artifact here instead
     - name: Download master baseline (fork PRs only)
       if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
-      uses: dawidd6/action-download-artifact@v11
+      uses: dawidd6/action-download-artifact@v21
       with:
         workflow: security-scan.yaml
         name: master-sarif
