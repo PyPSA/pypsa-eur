@@ -47,7 +47,7 @@ class DataConfig(BaseModel):
         default_factory=lambda: ["data/versions.csv"],
         description="""
         List of paths to version files.
-        If multiple paths are provided, they will be merged with priority given to the first path in the list.
+        If multiple paths are provided, they will be merged with priority given to the later paths in the list.
         This allows for overriding default versions with custom versions, without modifying the default version file.
 
         All filepaths must be relative to the project root or as an absolute path and point to a CSV file with the following columns:

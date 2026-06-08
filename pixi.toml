@@ -178,7 +178,7 @@ unit-tests = "pytest test"
 
 all-tests = {depends-on = ["integration-tests", "clean-tests", "unit-tests"]}
 
-generate-config = "pytest test/test_data_versions_layer.py --fix"
+generate-config = "pytest test/test_config_schema.py --fix"
 
 [feature.test.dependencies]
 pytest = ">=8.4.2"
