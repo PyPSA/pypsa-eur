@@ -7,10 +7,18 @@ from pathlib import Path
 
 import pandas as pd
 import pandera.pandas as pa
+import pytest
 from natsort import natsort_keygen
 from pandera.pandas import Check, Column
 
-VERSIONS_CSV = Path(__file__).parent.parent / "data" / "versions.csv"
+from scripts.lib.validation.config import (
+    validate_config,
+)
+
+VERSIONS_PATHS = [
+    Path(__file__).parent.parent / file if not Path(file).is_absolute() else Path(file)
+    for file in validate_config({}).data.version_files
+]
 VALID_SOURCES = ["primary", "archive", "build"]  # Order defines sort priority
 
 VALID_TAGS = {
@@ -106,29 +114,29 @@ VersionsSchema = pa.DataFrameSchema(
 )
 
 
-def load_versions() -> pd.DataFrame:
-    return pd.read_csv(VERSIONS_CSV, dtype=str, keep_default_na=False)
+def load_versions(file: Path) -> pd.DataFrame:
+    return pd.read_csv(file, dtype=str, keep_default_na=False)
 
 
-def validate_versions(fix: bool = False) -> pd.DataFrame:
-    df = load_versions()
+def validate_versions(file: Path, fix: bool = False) -> pd.DataFrame:
+    df = load_versions(file)
     if fix:
         df = sort_versions(df)
     try:
         df = VersionsSchema.validate(df, lazy=True)
     except pa.errors.SchemaErrors as e:
-        msg = f"{e.message}\n\nTry 'pixi run python test/test_data_versions_layer.py' to auto-fix (sorting, defaults, etc.)."
+        if fix:
+            msg = f"{e.message}\n\nAttempted to automatically fix the `{file.name}` version file but above issues still persist."
+        else:
+            msg = f"{e.message}\n\nTry `pixi run -e test pytest test/test_data_versions_layer.py --fix` to attempt to fix the `{file.name}` version file."
         e.message = msg
         raise
     if fix:
-        df.to_csv(VERSIONS_CSV, index=False)
+        df.to_csv(file, index=False)
     return df
 
 
-def test_versions_csv():
-    validate_versions()
-
-
-if __name__ == "__main__":
-    validate_versions(fix=True)
-    print("versions.csv validated and fixed")
+@pytest.mark.parametrize("file", VERSIONS_PATHS)
+def test_versions_csv(pytestconfig, file):
+    fix = pytestconfig.getoption("fix")
+    validate_versions(file, fix=fix)

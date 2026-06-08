@@ -871,6 +871,14 @@
     "DataConfig": {
       "description": "Configuration for `data` settings.",
       "properties": {
+        "version_files": {
+          "description": "\n        List of paths to version files.\n        If multiple paths are provided, they will be merged with priority given to the first path in the list.\n        This allows for overriding default versions with custom versions, without modifying the default version file.\n\n        All filepaths must be relative to the project root or as an absolute path and point to a CSV file with the following columns:\n        - `dataset`: The name of the dataset (e.g., \"hotmaps_industrial_sites\", \"enspreso_biomass\", etc.).\n        - `version`: The version of the dataset to use (e.g., \"latest\", \"v1.0\", etc.).\n        - `source`: The source of the dataset (e.g., \"archive\", \"primary\", \"build\").\n          \"archive\" retrieves data from an organisation data bucket (e.g. `data.pypsa.org`).\n          \"primary\" retrieves data from the primary source (e.g. Eurostat, OSM, etc.).\n          \"build\" retrieves data from the result of a build script within the PyPSA-Eur workflow itself, rather than a remote source.\n        - `tags`: space separated tags for the dataset, which will become boolean columns when loaded into the workflow.\n          \"supported\" must be a tag on a version if it is supported by the workflow.\n          \"latest\" must be a tag on the version of each `source` that should be used when `version` is set to \"latest\".\n        - `added`: The date when the dataset version was added (e.g., \"2024-01-01\").\n        - `note`: [Optional] notes about the dataset version.\n        - `url`: URL to the dataset version. Optional if data `source` is \"build\", otherwise required.\n        ",
+          "items": {
+            "format": "file-path",
+            "type": "string"
+          },
+          "type": "array"
+        },
         "hotmaps_industrial_sites": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -12662,6 +12670,14 @@
     "data": {
       "description": "Configuration for `data` settings.",
       "properties": {
+        "version_files": {
+          "description": "\n        List of paths to version files.\n        If multiple paths are provided, they will be merged with priority given to the first path in the list.\n        This allows for overriding default versions with custom versions, without modifying the default version file.\n\n        All filepaths must be relative to the project root or as an absolute path and point to a CSV file with the following columns:\n        - `dataset`: The name of the dataset (e.g., \"hotmaps_industrial_sites\", \"enspreso_biomass\", etc.).\n        - `version`: The version of the dataset to use (e.g., \"latest\", \"v1.0\", etc.).\n        - `source`: The source of the dataset (e.g., \"archive\", \"primary\", \"build\").\n          \"archive\" retrieves data from an organisation data bucket (e.g. `data.pypsa.org`).\n          \"primary\" retrieves data from the primary source (e.g. Eurostat, OSM, etc.).\n          \"build\" retrieves data from the result of a build script within the PyPSA-Eur workflow itself, rather than a remote source.\n        - `tags`: space separated tags for the dataset, which will become boolean columns when loaded into the workflow.\n          \"supported\" must be a tag on a version if it is supported by the workflow.\n          \"latest\" must be a tag on the version of each `source` that should be used when `version` is set to \"latest\".\n        - `added`: The date when the dataset version was added (e.g., \"2024-01-01\").\n        - `note`: [Optional] notes about the dataset version.\n        - `url`: URL to the dataset version. Optional if data `source` is \"build\", otherwise required.\n        ",
+          "items": {
+            "format": "file-path",
+            "type": "string"
+          },
+          "type": "array"
+        },
         "hotmaps_industrial_sites": {
           "description": "Configuration for a single data source.",
           "properties": {

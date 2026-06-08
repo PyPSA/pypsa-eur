@@ -37,8 +37,6 @@ update-dags = """
 	snakemake --dag --configfile config/test/config.myopic.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_myopic.svg
 """
 
-generate-config = "python -c 'from scripts.lib.validation.config import generate_config_defaults, generate_config_schema; generate_config_defaults(); generate_config_schema()'"
-
 sync-locks = """
     pixi install -e default && \
     pixi workspace export conda-explicit-spec -e default envs && \
@@ -179,6 +177,8 @@ clean-tests = """
 unit-tests = "pytest test"
 
 all-tests = {depends-on = ["integration-tests", "clean-tests", "unit-tests"]}
+
+generate-config = "pytest test/test_data_versions_layer.py --fix"
 
 [feature.test.dependencies]
 pytest = ">=8.4.2"

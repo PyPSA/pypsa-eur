@@ -103,32 +103,44 @@ def load_data_versions(file_path):
     return data_versions
 
 
-def dataset_version(
-    name: str,
-) -> pd.Series:
+def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
     """
     Return the dataset version information and url for a given dataset name.
 
     The dataset name is used to determine the source and version of the dataset from the configuration.
     Then the 'data/versions.csv' file is queried to find the matching dataset entry.
 
-    Parameters:
-    name: str
+    Parameters
+    ----------
+    name : str
         The name of the dataset to retrieve version information for.
+    **dataset_config_overrides : str
+        entries to override the dataset config for the given `name`.
 
-    Returns:
+    Returns
+    -------
     pd.Series
         A pandas Series containing the dataset version information, including source, version, tags, and URL
     """
-
-    dataset_config = config["data"][
-        name
-    ]  # TODO as is right now, it is not compatible with config_provider
+    # TODO as is right now, it is not compatible with config_provider
+    dataset_config = {**config["data"][name], **dataset_config_overrides}
 
     # To use PyPSA-Eur as a snakemake module, the path to the versions.csv file needs to be
     # registered relative to the current file with Snakemake:
-    fp = workflow.source_path("../data/versions.csv")
-    data_versions = load_data_versions(fp)
+    data_versions_list = []
+    for file in config["data"]["version_files"]:
+        if not (path := Path(file)).is_absolute():
+            path = Path(workflow.snakefile).parent.parent / path
+        data_versions_entry = load_data_versions(path).set_index(
+            ["dataset", "version", "source"]
+        )
+        data_versions_list.append(data_versions_entry)
+    data_versions = pd.concat(data_versions_list)
+    data_versions = (
+        data_versions.loc[~data_versions.index.duplicated(keep="last")]
+        .sort_index()
+        .reset_index()
+    )
 
     dataset = data_versions.loc[
         (data_versions["dataset"] == name)

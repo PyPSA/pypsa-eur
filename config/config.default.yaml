@@ -1284,6 +1284,8 @@ solving:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
 data:
+  version_files:
+  - data/versions.csv
   hotmaps_industrial_sites:
     source: archive
     version: latest

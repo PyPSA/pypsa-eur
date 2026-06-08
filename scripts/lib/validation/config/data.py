@@ -10,7 +10,7 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, FilePath, field_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -31,6 +31,40 @@ class _DataSourceConfig(ConfigModel):
 class DataConfig(BaseModel):
     """Configuration for `data` settings."""
 
+    @field_validator("version_files")
+    @classmethod
+    def check_version_files_are_csv(cls, v: list[FilePath]) -> list[FilePath]:
+        for path in v:
+            if ".csv" not in path.suffixes:
+                raise ValueError(f"Version file '{path}' must be a CSV file.")
+            elif not path.exists():
+                raise ValueError(
+                    f"Version file '{path}' must exist and be specified relative to the project root or as an absolute path."
+                )
+        return v
+
+    version_files: list[FilePath] = Field(
+        default_factory=lambda: ["data/versions.csv"],
+        description="""
+        List of paths to version files.
+        If multiple paths are provided, they will be merged with priority given to the first path in the list.
+        This allows for overriding default versions with custom versions, without modifying the default version file.
+
+        All filepaths must be relative to the project root or as an absolute path and point to a CSV file with the following columns:
+        - `dataset`: The name of the dataset (e.g., "hotmaps_industrial_sites", "enspreso_biomass", etc.).
+        - `version`: The version of the dataset to use (e.g., "latest", "v1.0", etc.).
+        - `source`: The source of the dataset (e.g., "archive", "primary", "build").
+          "archive" retrieves data from an organisation data bucket (e.g. `data.pypsa.org`).
+          "primary" retrieves data from the primary source (e.g. Eurostat, OSM, etc.).
+          "build" retrieves data from the result of a build script within the PyPSA-Eur workflow itself, rather than a remote source.
+        - `tags`: space separated tags for the dataset, which will become boolean columns when loaded into the workflow.
+          "supported" must be a tag on a version if it is supported by the workflow.
+          "latest" must be a tag on the version of each `source` that should be used when `version` is set to "latest".
+        - `added`: The date when the dataset version was added (e.g., "2024-01-01").
+        - `note`: [Optional] notes about the dataset version.
+        - `url`: URL to the dataset version. Optional if data `source` is "build", otherwise required.
+        """,
+    )
     hotmaps_industrial_sites: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="Hotmaps industrial sites data source configuration.",
