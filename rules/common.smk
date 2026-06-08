@@ -8,14 +8,14 @@ from functools import partial, lru_cache
 import os, sys, glob
 import requests
 
-
 import pandas as pd
 import json
+import yaml
 
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
-from scripts._helpers import update_config_from_wildcards
+from scripts._helpers import update_config_from_wildcards, load_data_versions
 from snakemake.utils import update_config
 
 
@@ -81,26 +81,6 @@ def config_provider(*keys, default=None):
         return partial(dynamic_getter, keys=keys, default=default)
     else:
         return partial(static_getter, keys=keys, default=default)
-
-
-@lru_cache
-def load_data_versions(file_path):
-    data_versions = pd.read_csv(
-        file_path,
-        dtype=str,
-        na_filter=False,
-        delimiter=",",
-        comment="#",
-    )
-
-    # Turn space-separated tags into individual columns
-    data_versions["tags"] = data_versions["tags"].str.split()
-    exploded = data_versions.explode("tags")
-    dummies = pd.get_dummies(exploded["tags"], dtype=bool)
-    tags_matrix = dummies.groupby(dummies.index).max()
-    data_versions = data_versions.join(tags_matrix)
-
-    return data_versions
 
 
 def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:

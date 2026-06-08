@@ -1088,3 +1088,40 @@ def load_costs(cost_file: str) -> pd.DataFrame:
     """
 
     return pd.read_csv(cost_file, index_col=0)
+
+
+def load_data_versions(file: str, create_cols_from_tags: bool = True) -> pd.DataFrame:
+    """
+    Load data versions from a CSV or YAML file.
+
+    Parameters
+    ----------
+    file : str
+        Path to the CSV or YAML file containing data version information.
+    create_cols_from_tags : bool, default True
+        If True, creates individual columns for each unique tag found in the 'tags' column.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing the data version information, with, optionally, columns for each tag.
+    """
+    if (file_path := Path(file)).suffix in [".yaml", ".yml", ".YAML", ".YML"]:
+        data_versions = pd.DataFrame(yaml.safe_load(file_path.read_text()))
+    else:
+        data_versions = pd.read_csv(
+            file_path,
+            dtype=str,
+            na_filter=False,
+            delimiter=",",
+            comment="#",
+        )
+    if create_cols_from_tags:
+        # Turn space-separated tags into individual columns
+        data_versions["tags"] = data_versions["tags"].str.split()
+        exploded = data_versions.explode("tags")
+        dummies = pd.get_dummies(exploded["tags"], dtype=bool)
+        tags_matrix = dummies.groupby(dummies.index).max()
+        data_versions = data_versions.join(tags_matrix)
+
+    return data_versions

@@ -8,6 +8,7 @@ Data source configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
 """
 
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field, FilePath, field_validator
@@ -35,8 +36,8 @@ class DataConfig(BaseModel):
     @classmethod
     def check_version_files_are_csv(cls, v: list[FilePath]) -> list[FilePath]:
         for path in v:
-            if ".csv" not in path.suffixes:
-                raise ValueError(f"Version file '{path}' must be a CSV file.")
+            if path.suffix.lower() not in {".csv", ".yaml", ".yml"}:
+                raise ValueError(f"Version file '{path}' must be a CSV or YAML file.")
             elif not path.exists():
                 raise ValueError(
                     f"Version file '{path}' must exist and be specified relative to the project root or as an absolute path."
@@ -44,13 +45,19 @@ class DataConfig(BaseModel):
         return v
 
     version_files: list[FilePath] = Field(
-        default_factory=lambda: ["data/versions.csv"],
+        default_factory=lambda: [Path("data/versions.csv")],
         description="""
         List of paths to version files.
         If multiple paths are provided, they will be merged with priority given to the later paths in the list.
         This allows for overriding default versions with custom versions, without modifying the default version file.
 
-        All filepaths must be relative to the project root or as an absolute path and point to a CSV file with the following columns:
+        All filepaths must be relative to the project root or as an absolute path and point to one of:
+        - a CSV file.
+        - a YAML file with a list of version entries, which will be converted internally to CSV format.
+          This allows for easier editing of versions with comments and multi-line notes.
+          This is equivalent to calling `df.to_dict(orient='records')` on a dataframe with the same structure as the CSV version files, and then dumping to YAML.
+
+        The CSV columns / YAML fields must be:
         - `dataset`: The name of the dataset (e.g., "hotmaps_industrial_sites", "enspreso_biomass", etc.).
         - `version`: The version of the dataset to use (e.g., "latest", "v1.0", etc.).
         - `source`: The source of the dataset (e.g., "archive", "primary", "build").

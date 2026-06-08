@@ -8,9 +8,11 @@ from pathlib import Path
 import pandas as pd
 import pandera.pandas as pa
 import pytest
+import yaml
 from natsort import natsort_keygen
 from pandera.pandas import Check, Column
 
+from scripts._helpers import load_data_versions
 from scripts.lib.validation.config import (
     validate_config,
 )
@@ -50,6 +52,7 @@ def sort_versions(df: pd.DataFrame) -> pd.DataFrame:
         ascending=[True, False, True],
     ).reset_index(drop=True)
     df["source"] = df["source"].astype(str)
+    df = df[VersionsSchema.columns.keys()]  # Ensure column order
     return df
 
 
@@ -114,12 +117,10 @@ VersionsSchema = pa.DataFrameSchema(
 )
 
 
-def load_versions(file: Path) -> pd.DataFrame:
-    return pd.read_csv(file, dtype=str, keep_default_na=False)
-
-
-def validate_versions(file: Path, fix: bool = False) -> pd.DataFrame:
-    df = load_versions(file)
+@pytest.mark.parametrize("file", VERSIONS_PATHS, ids=[str(p) for p in VERSIONS_PATHS])
+def test_versions_csv(pytestconfig, file):
+    fix = pytestconfig.getoption("fix")
+    df = load_data_versions(file, create_cols_from_tags=False)
     if fix:
         df = sort_versions(df)
     try:
@@ -131,12 +132,8 @@ def validate_versions(file: Path, fix: bool = False) -> pd.DataFrame:
             msg = f"{e.message}\n\nTry `pixi run -e test pytest test/test_data_versions_layer.py --fix` to attempt to fix the `{file.name}` version file."
         e.message = msg
         raise
-    if fix:
+    if fix and file.suffix.lower() in {".yaml", ".yml"}:
+        yaml_df = df.to_dict(orient="records")
+        file.write_text(yaml.safe_dump(yaml_df, sort_keys=False))
+    else:
         df.to_csv(file, index=False)
-    return df
-
-
-@pytest.mark.parametrize("file", VERSIONS_PATHS)
-def test_versions_csv(pytestconfig, file):
-    fix = pytestconfig.getoption("fix")
-    validate_versions(file, fix=fix)

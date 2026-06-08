@@ -6,7 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-* feat: data version CSV file can be specified separately or extended by the user in the `data.version_files` config entry ([#2016](https://github.com/PyPSA/pypsa-eur/issues/2016)).
+* feat: data version CSV / YAML file can be specified separately or extended by the user in the `data.version_files` config entry ([#2016](https://github.com/PyPSA/pypsa-eur/issues/2016)).
 
 * Security: SBOM security scan included in CI.
 
