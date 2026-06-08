@@ -4,63 +4,50 @@
 
 
 """
-Creates networks clustered to ``{cluster}`` number of zones with aggregated
+Creates networks clustered to `{cluster}` number of zones with aggregated
 buses and transmission corridors.
 
 Outputs
 -------
 
-- ``resources/regions_onshore_base_s_{clusters}.geojson``:
+- `resources/regions_onshore_base_s_{clusters}.geojson`:
 
-    .. image:: img/regions_onshore_base_s_X.png
-        :scale: 33 %
+    ![](img/regions_onshore_base_s_X.png)
 
-- ``resources/regions_offshore_base_s_{clusters}.geojson``:
+- `resources/regions_offshore_base_s_{clusters}.geojson`:
 
-    .. image:: img/regions_offshore_base_s_X.png
-        :scale: 33 %
+    ![](img/regions_offshore_base_s_X.png)
 
-- ``resources/busmap_base_s_{clusters}.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/base_s_{clusters}.nc``;
-- ``resources/linemap_base_s_{clusters}.csv``: Mapping of lines from ``networks/base.nc`` to ``networks/base_s_{clusters}.nc``;
-- ``networks/base_s_{clusters}.nc``:
+- `resources/busmap_base_s_{clusters}.csv`: Mapping of buses from `networks/base.nc` to `networks/base_s_{clusters}.nc`;
+- `resources/linemap_base_s_{clusters}.csv`: Mapping of lines from `networks/base.nc` to `networks/base_s_{clusters}.nc`;
+- `networks/base_s_{clusters}.nc`:
 
-    .. image:: img/base_s_X.png
-        :scale: 40  %
+    ![](img/base_s_X.png)
 
 Description
 -----------
 
-.. note::
-
-    **Is it possible to run the model without the** ``simplify_network`` **rule?**
+**Note:** **Is it possible to run the model without the** `simplify_network` **rule?**
 
         No, the network clustering methods in the PyPSA module
-        `pypsa.clustering.spatial <https://github.com/PyPSA/PyPSA/blob/master/pypsa/clustering/spatial.py>`_
+        [pypsa.clustering.spatial](https://github.com/PyPSA/PyPSA/blob/master/pypsa/clustering/spatial.py)
         do not work reliably with multiple voltage levels and transformers.
 
 Exemplary unsolved network clustered to 512 nodes:
 
-.. image:: img/base_s_512.png
-    :scale: 40  %
-    :align: center
+![](img/base_s_512.png)
 
 Exemplary unsolved network clustered to 256 nodes:
 
-.. image:: img/base_s_256.png
-    :scale: 40  %
-    :align: center
+![](img/base_s_256.png)
 
 Exemplary unsolved network clustered to 128 nodes:
 
-.. image:: img/base_s_128.png
-    :scale: 40  %
-    :align: center
+![](img/base_s_128.png)
 
 Exemplary unsolved network clustered to 37 nodes:
 
-.. image:: img/base_s_37.png
-    :scale: 40  %
-    :align: center
+![](img/base_s_37.png)
 """
 
 import logging
@@ -298,7 +285,7 @@ def distribute_n_clusters_to_countries(
         .sum()
         .pipe(normed)
     )
-
+    L.index.name = "cluster"
     N = n.buses.groupby(["country", "sub_network"]).size()[L.index]
 
     assert n_clusters >= len(N) and n_clusters <= N.sum(), (
@@ -482,9 +469,12 @@ def cluster_regions(
 
     Parameters
     ----------
-        - busmaps (list) : A list of busmaps used for clustering.
-        - regions (gpd.GeoDataFrame) : The regions to cluster.
-        - with_country (bool) : Whether to keep country column.
+    busmaps : list
+        A list of busmaps used for clustering.
+    regions : gpd.GeoDataFrame
+        The regions to cluster.
+    with_country : bool
+        Whether to keep country column.
 
     Returns
     -------
@@ -508,9 +498,12 @@ def busmap_for_admin_regions(
 
     Parameters
     ----------
-        - n (pypsa.Network) : The network to cluster.
-        - admin_shapes (str) : The path to the administrative regions.
-        - params (dict) : The parameters for clustering.
+    n : pypsa.Network
+        The network to cluster.
+    admin_shapes : str
+        The path to the administrative regions.
+    params : dict
+        The parameters for clustering.
 
     Returns
     -------
@@ -570,7 +563,8 @@ def keep_largest_polygon(geometry: MultiPolygon) -> Polygon:
 
     Parameters
     ----------
-        geometry (MultiPolygon) : The MultiPolygon to check.
+    geometry : MultiPolygon
+        The MultiPolygon to check.
 
     Returns
     -------
@@ -600,12 +594,18 @@ def update_bus_coordinates(
 
     Parameters
     ----------
-        - n (pypsa.Network) : The original network.
-        - busmap (pd.Series) : The busmap mapping each bus to an administrative region.
-        - admin_shapes (str) : The path to the administrative regions.
-        - geo_crs (str) : The geographic coordinate reference system.
-        - distance_crs (str) : The distance coordinate reference system.
-        - tol (float) : The tolerance in meters for the PoI calculation.
+    n : pypsa.Network
+        The original network.
+    busmap : pd.Series
+        The busmap mapping each bus to an administrative region.
+    admin_shapes : str
+        The path to the administrative regions.
+    geo_crs : str
+        The geographic coordinate reference system.
+    distance_crs : str
+        The distance coordinate reference system.
+    tol : float
+        The tolerance in meters for the PoI calculation.
 
     Returns
     -------

@@ -14,17 +14,17 @@ providing both spatial and temporal aggregates. Temporal aggregates are only use
 Relevant Settings
 -----------------
 
-.. code:: yaml
-
-    sector:
-        district_heating:
-            dh_area_buffer: # Buffer around DH areas in meters to include nearby coastal areas
-            heat_source_cooling: # Exploitable temperature delta
-    snapshots:
-        start:
-        end:
-    enable:
-        drop_leap_day:
+```yaml
+sector:
+    district_heating:
+        dh_area_buffer: # Buffer around DH areas in meters to include nearby coastal areas
+        heat_source_cooling: # Exploitable temperature delta
+snapshots:
+    start:
+    end:
+enable:
+    drop_leap_day:
+```
 
 Inputs
 ------

@@ -88,6 +88,6 @@ We strongly welcome anyone interested in contributing to this project. If you ha
 # Licence
 
 The code in PyPSA-Eur is released as free software under the
-[MIT License](https://opensource.org/licenses/MIT), see [`doc/licenses.rst`](doc/licenses.rst).
+[MIT License](https://opensource.org/licenses/MIT), see [`doc/licenses.md`](doc/licenses.md).
 However, different licenses and terms of use may apply to the various
-input data, see [`doc/data_sources.rst`](doc/data_sources.rst).
+input data, see [`doc/data_sources.md`](doc/data_sources.md).
