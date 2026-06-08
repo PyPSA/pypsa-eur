@@ -911,9 +911,7 @@ sector:
     - H2 pipeline
     - H2 pipeline retrofitted
     - gas pipeline
-    - gas pipeline new
     - electricity distribution grid
-    - CO2 pipeline
     DC:
       efficiency_static: 0.98
       efficiency_per_1000km: 0.977
@@ -926,13 +924,8 @@ sector:
     gas pipeline:
       efficiency_per_1000km: 1
       compression_per_1000km: 0.01
-    gas pipeline new:
-      efficiency_per_1000km: 1
-      compression_per_1000km: 0.01
     electricity distribution grid:
       efficiency_static: 0.97
-    CO2 pipeline:
-      efficiency_per_1000km: 1
   H2_network: true
   gas_network: true
   H2_retrofit: false
