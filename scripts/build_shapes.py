@@ -197,7 +197,8 @@ def simplify_europe(regions):
 
     Parameters
     ----------
-        regions (GeoDataFrame): A GeoDataFrame containing the geometries of European regions.
+    regions : GeoDataFrame
+        A GeoDataFrame containing the geometries of European regions.
 
     Returns
     -------
@@ -262,13 +263,30 @@ def create_regions(
 
     Parameters
     ----------
-        - country_list (list): List of country codes to include.
-        - nuts3_path (str): Path to the NUTS3 2021 shapefile.
-        - ba_adm1_path (str): Path to adm1 boundaries for Bosnia and  Herzegovina.
-        - md_adm1_path (str): Path to adm1 boundaries for Moldova.
-        - ua_adm1_path (str): Path to adm1 boundaries for Ukraine.
-        - xk_adm1_path (str): Path to adm1 boundaries for Kosovo.
-        - offshore_shapes (geopandas.GeoDataFrame): Geographical shapes of the exclusive economic zones.
+    country_list : list
+        List of country codes to include.
+    nuts3_path : str
+        Path to the NUTS3 2021 shapefile.
+    ba_adm1_path : str
+        Path to adm1 boundaries for Bosnia and Herzegovina.
+    md_adm1_path : str
+        Path to adm1 boundaries for Moldova.
+    ua_adm1_path : str
+        Path to adm1 boundaries for Ukraine.
+    xk_adm1_path : str
+        Path to adm1 boundaries for Kosovo.
+    offshore_shapes : geopandas.GeoDataFrame
+        Geographical shapes of the exclusive economic zones.
+    nuts3_gdp : str
+        Path to NUTS3 GDP data.
+    nuts3_pop : str
+        Path to NUTS3 population data.
+    bidding_zones_path : str
+        Path to bidding zones shapefile.
+    other_gdp : str
+        Path to GDP data for non-NUTS3 countries.
+    other_pop : str
+        Path to population data for non-NUTS3 countries.
 
     Returns
     -------
@@ -401,12 +419,16 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
 
     Parameters
     ----------
-        - country (str): The two-letter country code of the non-NUTS3 region.
-        - regions (GeoDataFrame): A GeoDataFrame containing the regions.
-        - gdp_non_nuts3 (str): The file path to the dataset containing the GDP p.c values
-          for non NUTS3 countries (e.g. MD, UA)
-        - pop_non_nuts3 (str): The file path to the dataset containing the POP values
-        for non NUTS3 countries (e.g. MD, UA)
+    country : str
+        The two-letter country code of the non-NUTS3 region.
+    regions : GeoDataFrame
+        A GeoDataFrame containing the regions.
+    gdp_non_nuts3 : str
+        The file path to the dataset containing the GDP p.c values
+        for non NUTS3 countries (e.g. MD, UA).
+    pop_non_nuts3 : str
+        The file path to the dataset containing the POP values
+        for non NUTS3 countries (e.g. MD, UA).
 
     Returns
     -------

@@ -186,7 +186,7 @@
         },
         "plot_availability_matrix": {
           "default": false,
-          "description": "Whether to plot the landuse availability matrix.",
+          "description": "Whether to plot the landuse availability matrix. Warning: This requires a significant amount of memory and time and may crash for larger workflows. Use with caution.",
           "type": "boolean"
         },
         "cutouts": {
@@ -564,6 +564,11 @@
                 "hac"
               ],
               "type": "string"
+            },
+            "allow_ac_dc_mixing_in_bus_clusters": {
+              "default": false,
+              "description": "Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+              "type": "boolean"
             },
             "hac_features": {
               "description": "List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
@@ -4890,6 +4895,13 @@
               "description": "H2 pipeline transmission efficiency.",
               "type": "object"
             },
+            "H2 pipeline retrofitted": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "H2 pipeline retrofitted transmission efficiency.",
+              "type": "object"
+            },
             "gas pipeline": {
               "additionalProperties": {
                 "type": "number"
@@ -5965,6 +5977,11 @@
             "hac"
           ],
           "type": "string"
+        },
+        "allow_ac_dc_mixing_in_bus_clusters": {
+          "default": false,
+          "description": "Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+          "type": "boolean"
         },
         "hac_features": {
           "description": "List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
@@ -8107,6 +8124,13 @@
           "description": "H2 pipeline transmission efficiency.",
           "type": "object"
         },
+        "H2 pipeline retrofitted": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "H2 pipeline retrofitted transmission efficiency.",
+          "type": "object"
+        },
         "gas pipeline": {
           "additionalProperties": {
             "type": "number"
@@ -8815,7 +8839,7 @@
         },
         "plot_availability_matrix": {
           "default": false,
-          "description": "Whether to plot the landuse availability matrix.",
+          "description": "Whether to plot the landuse availability matrix. Warning: This requires a significant amount of memory and time and may crash for larger workflows. Use with caution.",
           "type": "boolean"
         },
         "cutouts": {
@@ -11351,6 +11375,13 @@
               "description": "H2 pipeline transmission efficiency.",
               "type": "object"
             },
+            "H2 pipeline retrofitted": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "H2 pipeline retrofitted transmission efficiency.",
+              "type": "object"
+            },
             "gas pipeline": {
               "additionalProperties": {
                 "type": "number"
@@ -12035,6 +12066,11 @@
                 "hac"
               ],
               "type": "string"
+            },
+            "allow_ac_dc_mixing_in_bus_clusters": {
+              "default": false,
+              "description": "Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+              "type": "boolean"
             },
             "hac_features": {
               "description": "List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",

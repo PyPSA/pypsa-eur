@@ -231,6 +231,7 @@ class _TransmissionEfficiencyConfig(BaseModel):
         default_factory=lambda: [
             "DC",
             "H2 pipeline",
+            "H2 pipeline retrofitted",
             "gas pipeline",
             "electricity distribution grid",
         ],
@@ -250,6 +251,14 @@ class _TransmissionEfficiencyConfig(BaseModel):
         },
         alias="H2 pipeline",
         description="H2 pipeline transmission efficiency.",
+    )
+    H2_pipeline_retrofitted: dict[str, float] = Field(
+        default_factory=lambda: {
+            "efficiency_per_1000km": 1,
+            "compression_per_1000km": 0.018,
+        },
+        alias="H2 pipeline retrofitted",
+        description="H2 pipeline retrofitted transmission efficiency.",
     )
     gas_pipeline: dict[str, float] = Field(
         default_factory=lambda: {

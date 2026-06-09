@@ -11,32 +11,29 @@ link.
 Outputs
 -------
 
-- ``resources/regions_onshore_base.geojson``:
+- `resources/regions_onshore_base.geojson`:
 
-    .. image:: img/regions_onshore_base_s.png
-            :scale: 33 %
+    ![](img/regions_onshore_base_s.png)
 
-- ``resources/regions_offshore_base.geojson``:
+- `resources/regions_offshore_base.geojson`:
 
-    .. image:: img/regions_offshore_base_s  .png
-            :scale: 33 %
+    ![](img/regions_offshore_base_s.png)
 
-- ``resources/busmap_base_s.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/base_s.nc``;
-- ``networks/base.nc``:
+- `resources/busmap_base_s.csv`: Mapping of buses from `networks/base.nc` to `networks/base_s.nc`;
+- `networks/base.nc`:
 
-    .. image:: img/base_s.png
-        :scale: 33 %
+    ![](img/base_s.png)
 
 Description
 -----------
 
-The rule :mod:`simplify_network` does up to three things:
+The rule [simplify_network][] does up to three things:
 
-1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function ``simplify_network(...)``.
+1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function `simplify_network(...)`.
 
-2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function ``simplify_links(...)``.
+2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function `simplify_links(...)`.
 
-3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function ``remove_stubs(...)`` and ``remove_stubs_within_admin(...)``.
+3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function `remove_stubs(...)` and `remove_stubs_within_admin(...)`.
 """
 
 import logging
@@ -135,13 +132,14 @@ def simplify_links(
 
         seen = set()
 
-        # Supernodes are endpoints of links, identified by having lass then two neighbours or being an AC Bus
-        # An example for the latter is if two different links are connected to the same AC bus.
+        # Supernodes are buses that are not simple chain nodes within the component.
+        # A chain node has degree 2 inside the component; endpoints (degree 1),
+        # junctions (degree >=3), and AC buses are kept as supernodes.
         supernodes = {
             m
             for m in nodes
             if (
-                (len(G.adj[m]) < 2 or (set(G.adj[m]) - nodes))
+                (len(set(G.adj[m]) & nodes) != 2)
                 or (n.buses.loc[m, "carrier"] == "AC")
                 or (m in added_supernodes)
             )
@@ -241,9 +239,6 @@ def simplify_links(
 
     _remove_clustered_buses_and_branches(n, busmap)
 
-    # Change carrier type of all added super_nodes to "AC"
-    n.buses.loc[added_supernodes, "carrier"] = "AC"
-
     return n, busmap
 
 
@@ -340,10 +335,14 @@ def find_closest_bus(n, x, y, tol=2000):
 
     Parameters
     ----------
-        n (pypsa.Network): The network object.
-        x (float): The x-coordinate (longitude) of the target location.
-        y (float): The y-coordinate (latitude) of the target location.
-        tol (float): The distance tolerance in meters. Default is 2000 meters.
+    n : pypsa.Network
+        The network object.
+    x : float
+        The x-coordinate (longitude) of the target location.
+    y : float
+        The y-coordinate (latitude) of the target location.
+    tol : float
+        The distance tolerance in meters. Default is 2000 meters.
 
     Returns
     -------
@@ -380,7 +379,8 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
 
     Parameters
     ----------
-        n (pypsa.Network): The network object.
+    n : pypsa.Network
+        The network object.
 
     Returns
     -------
