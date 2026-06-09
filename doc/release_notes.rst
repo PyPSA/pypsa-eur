@@ -32,6 +32,7 @@ Release Notes
   - Renamed transmission extension keys. ``lines: max_extension`` → ``s_nom_max_extension``; ``links: max_extension`` → ``p_nom_max_extension``.
   - Added ``sector: enabled`` to control sector coupling. Set to ``false`` for electricity-only models.
   - Added ``existing_capacities:`` keys. New ``enabled`` toggle and ``baseyear`` setting required for brownfield runs.
+  - Moved national policy phase-outs to ``existing_capacities: phase_outs`` as a list of ``{carriers, countries, year}`` rules. Previously hardcoded in ``prepare_perfect_foresight.py``, they now cap conventional asset lifetimes for both generators (electricity-only) and links (sector-coupled) in perfect foresight. Defaults reproduce the previous behaviour.
   - Added ``clustering: cluster_network: n_clusters``. Replaces the ``{clusters}`` wildcard in filenames.
   - Rename ``regions_onshore_base_s_{clusters}.geojson`` to ``onshore_regions.geojson`` and ``regions_offshore_base_s_{clusters}.geojson`` to ``offshore_regions.geojson``. The process chain for shape files is now: ``onshore_shapes``/ ``offshore_shapes`` → ``onshore_regions.geojson``/ ``offshore_regions.geojson``, for shape files for the simplified resolution are now stored at ``onshore_regions_simplified.geojson`` and ``offshore_regions_simplified.geojson``. 
 
