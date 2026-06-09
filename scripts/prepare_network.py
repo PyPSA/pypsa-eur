@@ -13,7 +13,7 @@ temporal adjustments.
 - specifying an expansion limit on the **cost** of transmission expansion,
 - specifying an expansion limit on the **volume** of transmission expansion, and
 - reducing the **temporal** resolution by averaging over multiple hours
-  or segmenting time series into chunks of varying lengths using ``tsam``.
+  or segmenting time series into chunks of varying lengths using `tsam`.
 
 """
 

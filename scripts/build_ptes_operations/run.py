@@ -19,14 +19,15 @@ for PTES systems based on these temperature differences.
 
 Relevant Settings
 -----------------
-.. code:: yaml
-    sector
-        district_heating:
-            ptes:
-                dynamic_ptes_capacity:
-                supplemental_heating:
-                    enable:
-                max_top_temperature:
+```yaml
+sector
+    district_heating:
+        ptes:
+            dynamic_ptes_capacity:
+            supplemental_heating:
+                enable:
+            max_top_temperature:
+```
 
 Inputs
 ------

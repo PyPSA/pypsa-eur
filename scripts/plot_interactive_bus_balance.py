@@ -16,12 +16,12 @@ The scripts does not use `n.statistics.energy_balance` but calculates the balanc
 Relevant Settings
 -----------------
 
-.. code:: yaml
-
-    plotting:
-        tech_colors: # Color mapping for different technologies/carriers
-        balance_timeseries:
-            bus_name_pattern: # Pattern to filter buses (e.g., 'DE*' for German buses)
+```yaml
+plotting:
+    tech_colors: # Color mapping for different technologies/carriers
+    balance_timeseries:
+        bus_name_pattern: # Pattern to filter buses (e.g., 'DE*' for German buses)
+```
 
 Inputs
 ------

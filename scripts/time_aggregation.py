@@ -9,7 +9,7 @@ Description
 Computes a time aggregation scheme for the given network, in the form of a CSV
 file with the snapshot weightings, indexed by the new subset of snapshots. This
 rule only computes said aggregation scheme; aggregation of time-varying network
-data is done in ``prepare_sector_network.py``.
+data is done in `prepare_sector_network.py`.
 """
 
 import logging

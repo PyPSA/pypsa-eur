@@ -89,6 +89,12 @@ CLAUDE.md
 CLAUDE.local.md
 .envrc
 AGENTS.md
+
+# generated DAGs for docs
+doc/img/dag_*.svg
+doc/img/workflow.svg
+doc/img/intro-workflow.svg
+
 # pixi environments
 .pixi/*
 !.pixi/config.toml

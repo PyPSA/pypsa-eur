@@ -31,7 +31,7 @@ clustering:
   temporal:
     resolution: 24h
   simplify_network:
-    remove_stubs: true
+    remove_stubs: false
     remove_stubs_across_borders: false
 
 lines:

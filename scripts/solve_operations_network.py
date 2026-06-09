@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: MIT
 """
 Solves linear optimal dispatch in hourly resolution using the capacities of a
-previous capacity expansion in rule :mod:`solve_network`.
+previous capacity expansion in rule [solve_network][].
 
-Loads ``networks/solved_{horizon}.nc``, fixes the optimal capacities, and
+Loads `networks/solved_{horizon}.nc`, fixes the optimal capacities, and
 re-solves dispatch only (optionally with rolling horizon). Note that
-``load_shedding`` is incompatible with operational solving, as its components
+`load_shedding` is incompatible with operational solving, as its components
 already exist in the solved network.
 """
 

@@ -4,13 +4,11 @@
 """
 Build time series for air and soil temperatures per clustered model region.
 
-Uses ``atlite.Cutout.temperature`` and ``atlite.Cutout.soil_temperature compute temperature ambient air and soil temperature for the respective cutout. The rule is executed in ``build_sector.smk``.
+Uses `atlite.Cutout.temperature` and `atlite.Cutout.soil_temperature compute temperature ambient air and soil temperature for the respective cutout. The rule is executed in `build_sector.smk``.
 
 
-.. seealso::
-    `Atlite.Cutout.temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
-    `Atlite.Cutout.soil_temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
-
+!!! info "See also"
+    [Atlite.Cutout.temperature](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert) [Atlite.Cutout.soil_temperature](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
 """
 
 import logging

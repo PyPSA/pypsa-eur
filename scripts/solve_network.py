@@ -14,10 +14,10 @@ Description
 Total annual system costs are minimised with PyPSA. The full formulation of the
 linear optimal power flow (plus investment planning
 is provided in the
-`documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow>`_.
+[documentation of PyPSA](https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow).
 
-The optimization is based on the :func:`network.optimize` function.
-Additionally, some extra constraints specified in :mod:`solve_network` are added.
+The optimization is based on the `network.optimize` function.
+Additionally, some extra constraints specified in [solve_network][] are added.
 """
 
 import importlib
@@ -756,8 +756,10 @@ def add_SAFE_constraints(n, config):
 
     Parameters
     ----------
-        n : pypsa.Network
-        config : dict
+    n : pypsa.Network
+        The PyPSA network instance.
+    config : dict
+        Configuration dictionary.
 
     Example
     -------
@@ -792,12 +794,15 @@ def add_operational_reserve_margin(n, sns, config):
 
     Parameters
     ----------
-        n : pypsa.Network
-        sns: pd.DatetimeIndex
-        config : dict
+    n : pypsa.Network
+        The PyPSA network instance.
+    sns : pd.DatetimeIndex
+        Snapshots for the simulation.
+    config : dict
+        Configuration dictionary.
 
-    Example:
-    --------
+    Example
+    -------
     config.yaml requires to specify operational_reserve:
     operational_reserve: # like https://genxproject.github.io/GenX/dev/core/#Reserves
         activate: true
@@ -1198,8 +1203,10 @@ def extra_functionality(
     snapshots : pd.DatetimeIndex
         Simulation timesteps
     planning_horizons : str, optional
-        The current planning horizon year or None in perfect foresight
+        The current planning horizon year or None in perfect foresight.
 
+    Notes
+    -----
     Collects supplementary constraints which will be passed to
     ``pypsa.optimization.optimize``.
 

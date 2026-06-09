@@ -10,7 +10,7 @@ This script extracts monthly fuel prices of oil, gas and coal.
 Description
 -----------
 
-The rule :mod:`build_monthly_prices` collects monthly fuel prices
+The rule [build_monthly_prices][] collects monthly fuel prices
 and translates them from different input sources to pypsa syntax.
 """
 

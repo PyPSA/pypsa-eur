@@ -9,7 +9,7 @@ that interpolates between the current average energy consumption (from
 Description
 -------
 
-The config["industry"]["sector_ratios_fraction_future"] parameter determines the progress towards the future best-in-class consumption.
+The `config["industry"]["sector_ratios_fraction_future"]` parameter determines the progress towards the future best-in-class consumption.
 For each bus, the following industry subcategories
 
 - Electric arc

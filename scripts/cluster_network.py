@@ -10,51 +10,41 @@ buses and transmission corridors.
 Outputs
 -------
 
-- ``resources/{run}/networks/onshore_regions.geojson``:
+- `resources/{run}/networks/onshore_regions.geojson`:
   Onshore regions for clustered network
 
-- ``resources/{run}/networks/offshore_regions.geojson``:
+- `resources/{run}/networks/offshore_regions.geojson`:
   Offshore regions for clustered network
 
-- ``resources/{run}/networks/busmap.csv``: Mapping of buses from ``networks/simplified.nc`` to ``networks/clustered.nc``;
-- ``resources/{run}/networks/linemap.csv``: Mapping of lines from ``networks/base.nc`` to ``networks/clustered.nc``;
-- ``resources/{run}/networks/clustered.nc``:
+- `resources/{run}/networks/busmap.csv`: Mapping of buses from `networks/simplified.nc` to `networks/clustered.nc`;
+- `resources/{run}/networks/linemap.csv`: Mapping of lines from `networks/base.nc` to `networks/clustered.nc`;
+- `resources/{run}/networks/clustered.nc`:
   Clustered network with aggregated buses and corridors
 
 Description
 -----------
 
-.. note::
-
-    **Is it possible to run the model without the** ``simplify_network`` **rule?**
+**Note:** **Is it possible to run the model without the** `simplify_network` **rule?**
 
         No, the network clustering methods in the PyPSA module
-        `pypsa.clustering.spatial <https://github.com/PyPSA/PyPSA/blob/master/pypsa/clustering/spatial.py>`_
+        [pypsa.clustering.spatial](https://github.com/PyPSA/PyPSA/blob/master/pypsa/clustering/spatial.py)
         do not work reliably with multiple voltage levels and transformers.
 
 Exemplary unsolved network clustered to 512 nodes:
 
-.. image:: img/clustered_512.png
-    :scale: 40  %
-    :align: center
+![](img/clustered_512.png)
 
 Exemplary unsolved network clustered to 256 nodes:
 
-.. image:: img/clustered_256.png
-    :scale: 40  %
-    :align: center
+![](img/clustered_256.png)
 
 Exemplary unsolved network clustered to 128 nodes:
 
-.. image:: img/clustered_128.png
-    :scale: 40  %
-    :align: center
+![](img/clustered_128.png)
 
 Exemplary unsolved network clustered to 37 nodes:
 
-.. image:: img/clustered_37.png
-    :scale: 40  %
-    :align: center
+![](img/clustered_37.png)
 """
 
 import logging
@@ -292,7 +282,7 @@ def distribute_n_clusters_to_countries(
         .sum()
         .pipe(normed)
     )
-
+    L.index.name = "cluster"
     N = n.buses.groupby(["country", "sub_network"]).size()[L.index]
 
     assert n_clusters >= len(N) and n_clusters <= N.sum(), (
@@ -409,11 +399,6 @@ def clustering_for_n_clusters(
     bus_strategies.setdefault("substation_lv", lambda x: bool(x.sum()))
     bus_strategies.setdefault("substation_off", lambda x: bool(x.sum()))
 
-    # TODO Quick Fix for osm-prebuilt-version 0.6
-    for way_i in ["way/140248154", "way/975637991"]:
-        if way_i in n.buses.index:
-            n.buses.loc[way_i, "carrier"] = "AC"
-
     clustering = get_clustering_from_busmap(
         n,
         busmap,
@@ -425,6 +410,54 @@ def clustering_for_n_clusters(
     return clustering
 
 
+def apply_carrier_mixing_policy(
+    n: pypsa.Network, busmap: pd.Series, allow_ac_dc_mixing_in_bus_clusters: bool
+) -> pd.Series:
+    """
+    Handle AC/DC buses before clustering.
+
+    If ``allow_ac_dc_mixing_in_bus_clusters`` is True, mixed AC/DC clusters are
+    kept as-is. If it is False, buses in mixed clusters are split by appending
+    the carrier directly to the cluster label, for example ``clusterAC`` and
+    ``clusterDC``.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network providing bus carrier information.
+    busmap : pandas.Series
+        Mapping from bus name to cluster label.
+    allow_ac_dc_mixing_in_bus_clusters : bool
+        Whether mixed AC/DC clusters are allowed.
+
+    Returns
+    -------
+    pandas.Series
+        Busmap, possibly with carrier suffixes added.
+    """
+    busmap = busmap.astype(str)
+    carrier_by_bus = n.buses.carrier.reindex(busmap.index).astype(str)
+
+    mixed_clusters = carrier_by_bus.groupby(busmap).nunique().loc[lambda s: s > 1].index
+
+    if allow_ac_dc_mixing_in_bus_clusters:
+        if len(mixed_clusters):
+            logger.warning(
+                "`allow_ac_dc_mixing_in_bus_clusters` is enabled. Coercing bus carrier to AC in %s mixed clusters.",
+                len(mixed_clusters),
+            )
+            mixed_bus_i = busmap.index[busmap.isin(mixed_clusters)]
+            n.buses.loc[mixed_bus_i, "carrier"] = "AC"
+        return busmap
+
+    if len(mixed_clusters):
+        logger.info(
+            "Splitting %s mixed AC/DC clusters by carrier before aggregation.",
+            len(mixed_clusters),
+        )
+    return busmap.str.cat(carrier_by_bus, sep="")
+
+
 def cluster_regions(
     busmaps: tuple | list, regions: gpd.GeoDataFrame, with_country: bool = False
 ) -> gpd.GeoDataFrame:
@@ -433,9 +466,12 @@ def cluster_regions(
 
     Parameters
     ----------
-        - busmaps (list) : A list of busmaps used for clustering.
-        - regions (gpd.GeoDataFrame) : The regions to cluster.
-        - with_country (bool) : Whether to keep country column.
+    busmaps : list
+        A list of busmaps used for clustering.
+    regions : gpd.GeoDataFrame
+        The regions to cluster.
+    with_country : bool
+        Whether to keep country column.
 
     Returns
     -------
@@ -459,9 +495,12 @@ def busmap_for_admin_regions(
 
     Parameters
     ----------
-        - n (pypsa.Network) : The network to cluster.
-        - admin_shapes (str) : The path to the administrative regions.
-        - params (dict) : The parameters for clustering.
+    n : pypsa.Network
+        The network to cluster.
+    admin_shapes : str
+        The path to the administrative regions.
+    params : dict
+        The parameters for clustering.
 
     Returns
     -------
@@ -510,7 +549,7 @@ def busmap_for_admin_regions(
             buses_subset.to_crs(epsg=3857),
             admin_regions.loc[admin_regions["country"] == country].to_crs(epsg=3857),
             how="left",
-        )["admin"]
+        )["admin"].astype(str)
 
     return sanitize_busmap(buses["busmap"])
 
@@ -521,7 +560,8 @@ def keep_largest_polygon(geometry: MultiPolygon) -> Polygon:
 
     Parameters
     ----------
-        geometry (MultiPolygon) : The MultiPolygon to check.
+    geometry : MultiPolygon
+        The MultiPolygon to check.
 
     Returns
     -------
@@ -551,12 +591,18 @@ def update_bus_coordinates(
 
     Parameters
     ----------
-        - n (pypsa.Network) : The original network.
-        - busmap (pd.Series) : The busmap mapping each bus to an administrative region.
-        - admin_shapes (str) : The path to the administrative regions.
-        - geo_crs (str) : The geographic coordinate reference system.
-        - distance_crs (str) : The distance coordinate reference system.
-        - tol (float) : The tolerance in meters for the PoI calculation.
+    n : pypsa.Network
+        The original network.
+    busmap : pd.Series
+        The busmap mapping each bus to an administrative region.
+    admin_shapes : str
+        The path to the administrative regions.
+    geo_crs : str
+        The geographic coordinate reference system.
+    distance_crs : str
+        The distance coordinate reference system.
+    tol : float
+        The tolerance in meters for the PoI calculation.
 
     Returns
     -------
@@ -580,10 +626,25 @@ def update_bus_coordinates(
     admin_regions["y"] = admin_regions["poi"].y
 
     busmap_df = pd.DataFrame(busmap)
+
+    # Determine admin for each bus via spatial join of bus coordinates
+    # to the administrative polygons
+    buses_gdf = gpd.GeoDataFrame(
+        n.buses[["x", "y"]].copy(),
+        geometry=gpd.points_from_xy(n.buses["x"], n.buses["y"]),
+        crs=geo_crs,
+    )
+
+    # Find nearest admin region for each bus
+    admin_geo = admin_regions.copy()
+    admin_geo["admin_id"] = admin_geo.index
+    joined = gpd.sjoin_nearest(buses_gdf, admin_geo, how="left")
+    busmap_df["admin"] = joined["admin_id"].astype(str).reindex(busmap_df.index)
+
     busmap_df = pd.merge(
         busmap_df,
         admin_regions[["x", "y"]],
-        left_on="busmap",
+        left_on="admin",
         right_index=True,
         how="left",
     )
@@ -597,7 +658,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", clusters=60)
+        snakemake = mock_snakemake("cluster_network", clusters=50)
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -690,6 +751,14 @@ if __name__ == "__main__":
                 algorithm=algorithm,
                 features=features,
             )
+
+        allow_ac_dc_mixing_in_bus_clusters = params.cluster_network[
+            "allow_ac_dc_mixing_in_bus_clusters"
+        ]
+
+        busmap = apply_carrier_mixing_policy(
+            n, busmap, allow_ac_dc_mixing_in_bus_clusters
+        )
 
         clustering = clustering_for_n_clusters(
             n,

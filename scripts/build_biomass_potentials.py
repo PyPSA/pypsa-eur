@@ -252,8 +252,8 @@ def add_unsustainable_potentials(df, input_eurostat):
     ----------
     df : pd.DataFrame
         The dataframe with sustainable biomass potentials.
-    unsustainable_biomass : str
-        Path to the file with unsustainable biomass potentials.
+    input_eurostat : str
+        Path to the file with Eurostat biomass data.
 
     Returns
     -------

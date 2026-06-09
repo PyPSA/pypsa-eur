@@ -544,8 +544,8 @@ def add_heating_capacities_installed_before_baseyear(
         Heat pump coefficients of performance
     use_time_dependent_cop : bool
         Use time-dependent COPs
-    heating_default_lifetime : int
-        Default lifetime for heating systems
+    default_lifetime : int
+        Default lifetime for heating systems.
     existing_capacities : pd.DataFrame
         Existing heating capacity distribution
     heat_pump_source_types : dict

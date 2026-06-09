@@ -69,7 +69,7 @@ def energy_atlas_distribution_keys(
 
     Parameters
     ----------
-    fn : str
+    raster_fn : str
         File path to the raster data (GeoTIFF format).
     regions : gpd.GeoDataFrame
         GeoDataFrame containing the regions with a 'country' column.

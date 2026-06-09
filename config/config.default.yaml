@@ -1160,6 +1160,7 @@ clustering:
   cluster_network:
     n_clusters: 50
     algorithm: kmeans
+    allow_ac_dc_mixing_in_bus_clusters: false
     hac_features:
     - wnd100m
     - influx_direct

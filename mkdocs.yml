@@ -1,0 +1,143 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC-BY-4.0
+
+site_name: PyPSA-Eur
+site_url: https://pypsa-eur.readthedocs.io
+repo_url: https://github.com/pypsa/pypsa-eur
+repo_name: pypsa/pypsa-eur
+
+docs_dir: doc
+
+theme:
+  name: material
+  logo: img/logo.svg
+  features:
+  - navigation.tabs
+  - navigation.tabs.sticky
+  - navigation.sections
+  - navigation.expand
+  - navigation.indexes
+  - navigation.top
+  - navigation.tracking
+  - search.suggest
+  - content.code.copy
+  - content.tabs.link
+  - content.action.edit
+  - content.action.view
+  - toc.follow
+  - search.highlight
+  - search.share
+  font:
+    text: Overpass
+
+nav:
+- Home:
+  - Home: index.md
+  - Getting Started:
+    - Introduction: introduction.md
+    - Installation: installation.md
+    - "Tutorial: Electricity-Only": tutorial.md
+    - "Tutorial: Sector-Coupled": tutorial_sector.md
+  - References:
+    - Release Notes: release_notes.md
+    - Migration Guide: migration.md
+    - Licenses: licenses.md
+    - Validation: validation.md
+    - Limitations: limitations.md
+    - Support: support.md
+    - Publications: publications.md
+
+- Design:
+  - Spatial Resolution: spatial_resolution.md
+  - Supply and Demand: supply_demand.md
+  - Foresight Options: foresight.md
+  - Techno-Economic Assumptions: costs.md
+  - OETC Integration: oetc.md
+
+- Configuration:
+  - Wildcards: wildcards.md
+  - Configuration: configuration.md
+
+- Data Sources:
+  - Data Sources: data_sources.md
+  - Base Network: data-base-network.md
+  - Cutouts: data-cutouts.md
+  - Data Repositories: data-repos.md
+
+- Rules Overview:
+  - Retrieving Data: retrieve.md
+  - Building Electricity Networks: preparation.md
+  - Building Sector-Coupled Networks: sector.md
+  - Solving Networks: solving.md
+  - Plotting and Summaries: plotting.md
+
+- Contributing:
+  - contributing.md
+  - Validation Development: validation_dev.md
+
+
+plugins:
+- search
+- autorefs
+- macros:
+    module_name: doc/macros
+    j2_comment_start_string: "{%#"
+    j2_comment_end_string: "#%}"
+- table-reader
+- mkdocstrings:
+    default_handler: python
+    enable_inventory: true
+    handlers:
+      python:
+        paths: [scripts, .]
+        options:
+          docstring_style: numpy
+          show_source: false
+          show_root_heading: false
+          show_root_full_path: false
+          members: false
+          allow_inspection: true
+        inventories:
+        - https://docs.python.org/3/objects.inv
+- bibtex:
+    bib_file: doc/publications.bib
+    enable_inline_citations: false
+
+markdown_extensions:
+- footnotes
+- admonition
+- pymdownx.details
+- pymdownx.caret
+- pymdownx.tilde
+- abbr
+- pymdownx.snippets:
+    base_path: .
+- pymdownx.superfences:
+    custom_fences:
+    - name: mermaid
+      class: mermaid
+      format: !!python/name:pymdownx.superfences.fence_code_format
+- pymdownx.arithmatex:
+    generic: true
+- pymdownx.tabbed:
+    alternate_style: true
+- pymdownx.highlight
+- pymdownx.inlinehilite
+- tables
+- attr_list
+- md_in_html
+- toc:
+    permalink: true
+
+hooks:
+- doc/hooks.py
+
+extra_css:
+- assets/stylesheets/extra.css
+
+extra_javascript:
+- https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+copyright: >-
+  &copy Copyright PyPSA-Eur Contributors | CC-BY-4.0

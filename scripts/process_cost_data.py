@@ -16,13 +16,13 @@ Preparing the cost data includes:
 Inputs
 ------
 
-- ``resources/costs_{horizon}.csv``: Default cost data for specified planning horizon
-- (by default) ``data/custom_costs.csv``: Custom cost modifications (can be configured with `costs:custom_costs:file`
+- `resources/costs_{horizon}.csv`: Default cost data for specified planning horizon
+- (by default) `data/custom_costs.csv`: Custom cost modifications (can be configured with `costs:custom_costs:file`
 
 Outputs
 -------
 
-- ``resources/costs_{horizon}_processed.csv``: Prepared cost data with custom modifications applied
+- `resources/costs_{horizon}_processed.csv`: Prepared cost data with custom modifications applied
 """
 
 import logging
