@@ -16,11 +16,11 @@ Iteration behaviour depends on the foresight mode:
 
 - `overnight` expects a single value and does **not** reuse previous years.
 - `myopic` requires at least two horizons and feeds the solved network from
-  the previous year `RESULTS/networks/solved_{prev}.nc` into the next
+  the previous year `results/{run}/networks/solved_{prev}.nc` into the next
   `compose_network` call.
 - `perfect` also iterates sequentially but consumes
-  `networks/composed_{prev}.nc` to build the full multi-period optimisation,
-  after which the complete network is solved.
+  `resources/{run}/networks/composed_{prev}.nc` to build the full multi-period
+  optimisation, after which the complete network is solved.
 
 ## Overnight (greenfield) scenarios {#overnight}
 
@@ -249,8 +249,9 @@ The myopic workflow iterates through `planning_horizons` inside a single
    built before the base year via `add_existing_capacities` inside
    [compose_network][].
 3. When `w.horizon` is not the first element of `planning_horizons`, import
-   `RESULTS/networks/solved_{prev}.nc` (myopic) or
-   `networks/composed_{prev}.nc` (perfect) as the solution from the previous planning horizon.
+   `results/{run}/networks/solved_{prev}.nc` (myopic) or
+   `resources/{run}/networks/composed_{prev}.nc` (perfect) as the solution from
+   the previous planning horizon.
 4. Store the composed network as `resources/{run}/networks/composed_{horizon}.nc`.
 
 After composition, [solve_network][] optimises every horizon to

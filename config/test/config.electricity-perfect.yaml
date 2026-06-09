@@ -52,7 +52,7 @@ electricity:
   - onwind
   estimate_renewable_capacities:
     enable: true
-    from_gem: false
+    from_powerplantmatching: false
     year: 2020
     expansion_limit: false
     technology_mapping:

@@ -40,7 +40,7 @@ preceding rules which another rule takes as input data.
 
 !!! note
     The dependency graph can be regenerated using
-    `pixi run dot -c && snakemake --dag results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml -F | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/intro-workflow.svg`
+    `pixi run snakemake --dag dot --forceall results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml | sed -n "/digraph/,/}/p" | pixi run dot -Tsvg -o doc/img/intro-workflow.svg`
 
 For the use of `snakemake`, it makes sense to familiarize yourself quickly
 with the [basic tutorial](https://snakemake.readthedocs.io/en/stable/tutorial/basics.html) and then

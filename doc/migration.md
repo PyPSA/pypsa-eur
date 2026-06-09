@@ -52,10 +52,15 @@ The `{run}` prefix is omitted for simplicity.
 | `resources/powerplants_s_{clusters}.csv` | `resources/powerplants.csv` |
 | `resources/regions_onshore_base_s_{clusters}.geojson` | `resources/onshore_regions.geojson` |
 | `resources/regions_offshore_base_s_{clusters}.geojson` | `resources/offshore_regions.geojson` |
+| `resources/regions_onshore_base_s.geojson` | `resources/onshore_regions_simplified.geojson` |
+| `resources/regions_offshore_base_s.geojson` | `resources/offshore_regions_simplified.geojson` |
 | `resources/pop_layout_base_s_{clusters}.csv` | `resources/pop_layout.csv` |
 | `resources/networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc` | `resources/networks/composed_{horizon}.nc` |
 | `results/networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc` | `results/networks/solved_{horizon}.nc` |
-| `results/maps/base_s_*-costs-all_{planning_horizons}.pdf` | `results/maps/power_network_{horizon}.pdf` |
+| `results/maps/base_s_*-costs-all_{planning_horizons}.pdf` | `results/maps/static/power_network_{horizon}.pdf` |
+| `results/graphs/costs.pdf` | `results/graphs/costs.svg` |
+
+Interactive HTML balance maps are additionally written to `results/maps/interactive/`.
 
 ### Configuration Changes
 

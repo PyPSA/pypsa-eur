@@ -42,13 +42,16 @@ electricity:
   - solar
   - solar-hsat
   - onwind
-  - offwind
+  - offwind-ac
+  - offwind-dc
+  - offwind-float
   estimate_renewable_capacities:
     enable: true
     from_powerplantmatching: true
     year: 2020
     expansion_limit: false
     technology_mapping:
+      Offshore: offwind-ac
       Onshore: onwind
       PV: solar
   conventional_carriers: []

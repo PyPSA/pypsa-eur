@@ -98,7 +98,7 @@ as part of the [Stromnetze Research Initiative](http://forschung-stromnetze.info
 
 !!! note
     The graph above was generated using
-    `pixi run snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/workflow.svg`
+    `pixi run snakemake --rulegraph dot --forceall | sed -n "/digraph/,/}/p" | pixi run dot -Tsvg -o doc/img/workflow.svg`
 
 The rule set follows `base → simplified → clustered → composed → solved`.
 Intermediate networks (`networks/simplified.nc`, `networks/clustered.nc`,

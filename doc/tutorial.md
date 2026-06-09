@@ -239,20 +239,20 @@ For example, you can explore the evolution of the PyPSA networks by running
 5. ``snakemake -call results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml``
 
 To run all scenario combinations defined in ``config/scenarios.yaml`` (enable this via ``run.scenarios.enable: true``),
-you can use the collection rule ``solve_elec_networks``.
+you can use the collection rule ``solve_networks``.
 
 ```console
-$ snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml
+$ snakemake -call solve_networks --configfile config/test/config.electricity.yaml
 ```
 
 If you now feel confident and want to tackle runs with larger temporal and
 spatial scope, clean-up the repository and after modifying the ``config/config.yaml`` file
-target the collection rule ``solve_elec_networks`` again without providing the test
+target the collection rule ``solve_networks`` again without providing the test
 configuration file.
 
 ```console
 $ snakemake -call purge
-snakemake -call solve_elec_networks
+snakemake -call solve_networks
 ```
 
 !!! note
@@ -260,7 +260,7 @@ snakemake -call solve_elec_networks
     commit to a run:
 
     ```console
-    $ snakemake -call solve_elec_networks -n
+    $ snakemake -call solve_networks -n
     ```
 
 ## How to analyse results?

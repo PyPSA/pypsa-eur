@@ -10,14 +10,14 @@ buses and transmission corridors.
 Outputs
 -------
 
-- `resources/{run}/networks/onshore_regions.geojson`:
+- `resources/{run}/onshore_regions.geojson`:
   Onshore regions for clustered network
 
-- `resources/{run}/networks/offshore_regions.geojson`:
+- `resources/{run}/offshore_regions.geojson`:
   Offshore regions for clustered network
 
-- `resources/{run}/networks/busmap.csv`: Mapping of buses from `networks/simplified.nc` to `networks/clustered.nc`;
-- `resources/{run}/networks/linemap.csv`: Mapping of lines from `networks/base.nc` to `networks/clustered.nc`;
+- `resources/{run}/busmap_cluster_network.csv`: Mapping of buses from `networks/simplified.nc` to `networks/clustered.nc`;
+- `resources/{run}/linemap_cluster_network.csv`: Mapping of lines from `networks/simplified.nc` to `networks/clustered.nc`;
 - `resources/{run}/networks/clustered.nc`:
   Clustered network with aggregated buses and corridors
 

@@ -205,9 +205,9 @@ Configuration for top level `planning_horizons` settings.
 
 - Overnight runs require a single value.
 - Myopic runs expect strictly ascending values and continue each horizon from
-  `RESULTS/networks/solved_{previous}.nc`.
-- Perfect foresight also iterates over the list but reuses
-  `networks/composed_{previous}.nc` as the brownfield seed.
+  the previous year's `results/{run}/networks/solved_{horizon}.nc`.
+- Perfect foresight also iterates over the list but reuses the previous year's
+  `resources/{run}/networks/composed_{horizon}.nc` as the brownfield seed.
 
 !!! note
     Earlier releases derived planning horizons from `scenario` wildcard
@@ -1094,7 +1094,7 @@ Configuration for `costs` settings.
 | `capital_cost` | dict (str -> number) |  | For the given technologies, assumptions about their capital investment costs are set to the corresponding value. Optional; overwrites cost assumptions from `resources/costs.csv`. |
 | `marginal_cost` | dict (str -> number) |  | For the given technologies, assumptions about their marginal operating costs are set to the corresponding value. Optional; overwrites cost assumptions from `resources/costs.csv`. |
 | `emission_prices` | any |  | Configuration for `costs.emission_prices` settings. |
-| ↳ `enable` | boolean | `false` | Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. Config setting can also be enabled with the keyword `Ep` in the `{opts}` wildcard for electricity-only runs. |
+| ↳ `enable` | boolean | `false` | Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. |
 | ↳ `co2` | number \| dict (str -> number) | `0.0` | Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere. |
 | ↳ `dynamic` | boolean | `false` | Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`. |
 | ↳ `rolling_window` | integer | `90` | Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True. |

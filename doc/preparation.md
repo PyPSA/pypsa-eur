@@ -66,7 +66,7 @@ Once `networks/clustered.nc` and the associated bus/line maps exist, the single 
 
 ::: base_network
 
-## Rule `build_natura`
+## Rule `build_natura_raster`
 
 ::: build_natura
 
@@ -113,7 +113,7 @@ Once `networks/clustered.nc` and the associated bus/line maps exist, the single 
 ::: cluster_network
 
 
-## Rule `build_monthly_prices` {#monthlyprices}
+## Rule `build_fossil_fuel_prices` {#monthlyprices}
 
 ::: build_monthly_prices
 
