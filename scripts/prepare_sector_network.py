@@ -4679,9 +4679,9 @@ def add_industry(
     )
 
     p_set = (
-        industrial_demand.loc[spatial.biomass.industry.locations, "solid biomass"].rename(
-            index=lambda x: x + " solid biomass for industry"
-        )
+        industrial_demand.loc[
+            spatial.biomass.industry.locations, "solid biomass"
+        ].rename(index=lambda x: x + " solid biomass for industry")
         / nhours
     )
 
