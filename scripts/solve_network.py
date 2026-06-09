@@ -1377,8 +1377,12 @@ def collect_kwargs(
     # Handle special modes
     if mode == "rolling_horizon":
         all_kwargs = {**model_kwargs, **solve_kwargs}
-        all_kwargs["horizon"] = horizon if horizon is not None else cf_solving["horizon"]
-        all_kwargs["overlap"] = overlap if overlap is not None else cf_solving["overlap"]
+        all_kwargs["horizon"] = (
+            horizon if horizon is not None else cf_solving["horizon"]
+        )
+        all_kwargs["overlap"] = (
+            overlap if overlap is not None else cf_solving["overlap"]
+        )
         return all_kwargs, {}
 
     elif mode == "iterative":

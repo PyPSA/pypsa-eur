@@ -185,7 +185,9 @@ def calculate_energy(n: pypsa.Network) -> pd.Series:
     Calculate the net energy supply (positive) and consumption (negative) by technology carrier across all ports.
     """
     energy = n.statistics.energy_balance(groupby="carrier")
-    return energy.sort_values(ascending=False) if isinstance(energy, pd.Series) else energy
+    return (
+        energy.sort_values(ascending=False) if isinstance(energy, pd.Series) else energy
+    )
 
 
 @_loop_over_collection
