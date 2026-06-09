@@ -104,6 +104,11 @@ Configuration Changes
 
 - **Sector toggle**: A new ``sector.enabled`` flag controls whether sector coupling is active.
 
+- **National phase-outs**: The policy phase-outs previously hardcoded in ``prepare_perfect_foresight.py``
+  are now configured under ``existing_capacities.phase_outs`` as a list of ``{carriers, countries, year}``
+  rules. They cap conventional asset lifetimes for both generators (electricity-only) and links
+  (sector-coupled) in perfect foresight; the defaults reproduce the previous behaviour.
+
 
 **Before** (legacy)::
 
