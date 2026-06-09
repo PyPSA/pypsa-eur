@@ -793,6 +793,24 @@ rule chain_busmaps:
         "../scripts/chain_busmaps.py"
 
 
+rule cluster_electricity_demand:
+    input:
+        load=resources("electricity_demand_simplified.nc"),
+        busmap=resources("busmap.csv"),
+    output:
+        resources("electricity_demand.nc"),
+    log:
+        logs("cluster_electricity_demand.log"),
+    benchmark:
+        benchmarks("cluster_electricity_demand")
+    resources:
+        mem_mb=3000,
+    message:
+        "Aggregating electricity demand to clustered resolution"
+    script:
+        "../scripts/cluster_electricity_demand.py"
+
+
 def input_profile_tech(w):
     return {
         f"profile_{tech}": resources(

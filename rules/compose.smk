@@ -45,10 +45,9 @@ def get_compose_inputs(w):
             if cfg["co2_budget"]["relative"]
             else []
         ),
-        load=resources("electricity_demand_simplified.nc"),
+        load=resources("electricity_demand.nc"),
         snapshot_weightings=resources("snapshot_weightings.csv"),
         network=resources("networks/clustered.nc"),
-        busmap=resources("busmap.csv"),
         solar_rooftop_potentials=(
             resources("solar_rooftop_potentials.csv")
             if "solar" in cfg["electricity"]["renewable_carriers"]

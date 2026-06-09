@@ -63,7 +63,6 @@ from pypsa.clustering.spatial import DEFAULT_ONE_PORT_STRATEGIES, normed_or_unif
 from scripts._helpers import (
     PYPSA_V1,
     rename_techs,
-    sanitize_busmap,
     update_p_nom_max,
 )
 
@@ -378,34 +377,27 @@ def load_and_aggregate_powerplants(
 def attach_load(
     n: pypsa.Network,
     load_fn: str,
-    busmap_fn: str,
     scaling: float = 1.0,
 ) -> None:
     """
-    Attach load data to the network.
+    Attach clustered load data to the network.
 
     Parameters
     ----------
     n : pypsa.Network
         The PyPSA network to attach the load data to.
     load_fn : str
-        Path to the load data file.
-    busmap_fn : str
-        Path to the busmap file.
+        Path to the clustered load data file.
     scaling : float, optional
         Scaling factor for the load data, by default 1.0.
     """
     load = (
-        xr.open_dataarray(load_fn).to_dataframe().squeeze(axis=1).unstack(level="time")
+        xr.open_dataarray(load_fn)
+        .to_dataframe()
+        .squeeze(axis=1)
+        .unstack(level="time")
+        .T
     )
-
-    # apply clustering busmap
-    busmap = pd.read_csv(busmap_fn, dtype=str)
-    index_col = "name" if PYPSA_V1 else "Bus"
-    busmap = busmap.set_index(index_col).squeeze()
-    busmap = sanitize_busmap(busmap)
-
-    load = load.groupby(busmap).sum().T
 
     logger.info(f"Load data scaled by factor {scaling}.")
     load *= scaling
@@ -1216,7 +1208,6 @@ def main(
     attach_load(
         n,
         inputs["load"],
-        inputs["busmap"],
         params.load["scaling_factor"],
     )
 
