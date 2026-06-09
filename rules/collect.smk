@@ -58,6 +58,21 @@ rule solve_networks:
         "Collecting solved sector-coupled network files with perfect foresight"
 
 
+rule solve_operations_networks:
+    input:
+        expand(
+            RESULTS + "networks/operations_{horizon}.nc",
+            run=config["run"]["name"],
+            horizon=(
+                config["planning_horizons"][-1]
+                if config["foresight"] == "perfect"
+                else config["planning_horizons"]
+            ),
+        ),
+    message:
+        "Collecting operational dispatch network files"
+
+
 def balance_map_paths(kind, w):
     """
     kind = "static" or "interactive"

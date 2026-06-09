@@ -1299,6 +1299,8 @@ def collect_kwargs(
     planning_horizons: str | None = None,
     log_fn: str | None = None,
     mode: str = "single",
+    horizon: int | None = None,
+    overlap: int | None = None,
 ) -> tuple[dict, dict]:
     """
     Prepare keyword arguments separated for model creation and model solving.
@@ -1368,8 +1370,8 @@ def collect_kwargs(
     # Handle special modes
     if mode == "rolling_horizon":
         all_kwargs = {**model_kwargs, **solve_kwargs}
-        all_kwargs["horizon"] = cf_solving.get("horizon", 365)
-        all_kwargs["overlap"] = cf_solving.get("overlap", 0)
+        all_kwargs["horizon"] = horizon if horizon is not None else cf_solving["horizon"]
+        all_kwargs["overlap"] = overlap if overlap is not None else cf_solving["overlap"]
         return all_kwargs, {}
 
     elif mode == "iterative":

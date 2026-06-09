@@ -5363,7 +5363,7 @@
             },
             "rolling_horizon": {
               "default": false,
-              "description": "Switch for rule `solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
+              "description": "Switch for rule `solve_network` whether to optimize the network in a rolling horizon manner instead of capacity expansion, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
               "type": "boolean"
             },
             "seed": {
@@ -5488,6 +5488,26 @@
                   "type": "string"
                 }
               }
+            }
+          }
+        },
+        "operations": {
+          "description": "Configuration for `solving.operations` settings (rule `solve_operations_network`).",
+          "properties": {
+            "rolling_horizon": {
+              "default": false,
+              "description": "Whether rule `solve_operations_network` re-dispatches the fixed-capacity network in a rolling horizon manner, splitting the snapshots into slices of size `horizon` which are solved consecutively. Independent from `solving.options.rolling_horizon`, which controls rule `solve_network`.",
+              "type": "boolean"
+            },
+            "horizon": {
+              "default": 365,
+              "description": "Number of snapshots per slice in rolling horizon operational dispatch.",
+              "type": "integer"
+            },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive slices in rolling horizon operational dispatch.",
+              "type": "integer"
             }
           }
         },
@@ -7400,6 +7420,26 @@
         }
       }
     },
+    "_OperationsConfig": {
+      "description": "Configuration for `solving.operations` settings (rule `solve_operations_network`).",
+      "properties": {
+        "rolling_horizon": {
+          "default": false,
+          "description": "Whether rule `solve_operations_network` re-dispatches the fixed-capacity network in a rolling horizon manner, splitting the snapshots into slices of size `horizon` which are solved consecutively. Independent from `solving.options.rolling_horizon`, which controls rule `solve_network`.",
+          "type": "boolean"
+        },
+        "horizon": {
+          "default": 365,
+          "description": "Number of snapshots per slice in rolling horizon operational dispatch.",
+          "type": "integer"
+        },
+        "overlap": {
+          "default": 0,
+          "description": "Number of overlapping snapshots between consecutive slices in rolling horizon operational dispatch.",
+          "type": "integer"
+        }
+      }
+    },
     "_OrientationConfig": {
       "description": "Configuration for `solar_thermal.orientation` settings.",
       "properties": {
@@ -8003,7 +8043,7 @@
         },
         "rolling_horizon": {
           "default": false,
-          "description": "Switch for rule `solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
+          "description": "Switch for rule `solve_network` whether to optimize the network in a rolling horizon manner instead of capacity expansion, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
           "type": "boolean"
         },
         "seed": {
@@ -12595,7 +12635,7 @@
             },
             "rolling_horizon": {
               "default": false,
-              "description": "Switch for rule `solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
+              "description": "Switch for rule `solve_network` whether to optimize the network in a rolling horizon manner instead of capacity expansion, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
               "type": "boolean"
             },
             "seed": {
@@ -12720,6 +12760,26 @@
                   "type": "string"
                 }
               }
+            }
+          }
+        },
+        "operations": {
+          "description": "Configuration for `solving.operations` settings (rule `solve_operations_network`).",
+          "properties": {
+            "rolling_horizon": {
+              "default": false,
+              "description": "Whether rule `solve_operations_network` re-dispatches the fixed-capacity network in a rolling horizon manner, splitting the snapshots into slices of size `horizon` which are solved consecutively. Independent from `solving.options.rolling_horizon`, which controls rule `solve_network`.",
+              "type": "boolean"
+            },
+            "horizon": {
+              "default": 365,
+              "description": "Number of snapshots per slice in rolling horizon operational dispatch.",
+              "type": "integer"
+            },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive slices in rolling horizon operational dispatch.",
+              "type": "integer"
             }
           }
         },

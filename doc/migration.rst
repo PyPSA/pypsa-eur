@@ -226,7 +226,7 @@ Summary of Structural Changes
 **New Snakemake rule files:**
 
 - ``rules/compose.smk`` - Composition rule ``compose_network`` for all sector and foresight modes
-- ``rules/solve.smk`` - Solve rule ``solve_network`` for all sector and foresight modes
+- ``rules/solve.smk`` - Solve rules ``solve_network`` (all sector and foresight modes) and ``solve_operations_network`` (opt-in dispatch-only re-solve producing ``networks/operations_{horizon}.nc``)
 
 **Script changes:**
 

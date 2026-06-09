@@ -1233,6 +1233,10 @@ solving:
     store_model: false
     model_kwargs:
       solver_dir: ""
+  operations:
+    rolling_horizon: false
+    horizon: 365
+    overlap: 0
   agg_p_nom_limits:
     agg_offwind: false
     agg_solar: false
