@@ -179,7 +179,7 @@ def get_balance_map_plots(w):
             )
         )
 
-    # Interactive balance maps (HTML)
+        # Interactive balance maps (HTML)
     interactive_carriers = config_provider(
         "plotting", "balance_map_interactive", "bus_carriers"
     )(w)
@@ -221,7 +221,6 @@ rule all:
         (expand(MYOPIC_OUTPUTS, run=config["run"]["name"]) if MYOPIC_OUTPUTS else []),
         get_sector_network_plots,
         get_balance_map_plots,
-    default_target: True
 
 
 rule create_scenarios:

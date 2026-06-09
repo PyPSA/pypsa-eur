@@ -447,12 +447,12 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
 ]:
 
     rule retrieve_cost_data:
-        message:
-            "Retrieving cost data for {wildcards.horizon}"
         input:
             costs=storage(COSTS_DATASET["url"] + "/costs_{horizon}.csv"),
         output:
             costs=COSTS_DATASET["folder"] + "/costs_{horizon}.csv",
+        message:
+            "Retrieving cost data for {wildcards.horizon}"
         run:
             copy2(input["costs"], output["costs"])
 

@@ -26,8 +26,6 @@ rule build_population_layouts:
 
 
 rule build_clustered_population_layouts:
-    message:
-        "Clustering population layouts"
     input:
         pop_layout_total=resources("pop_layout_total.nc"),
         pop_layout_urban=resources("pop_layout_urban.nc"),
@@ -38,17 +36,17 @@ rule build_clustered_population_layouts:
         clustered_pop_layout=resources("pop_layout.csv"),
     log:
         logs("build_clustered_population_layouts.log"),
-    resources:
-        mem_mb=10000,
     benchmark:
         benchmarks("build_clustered_population_layouts")
+    resources:
+        mem_mb=10000,
+    message:
+        "Clustering population layouts"
     script:
         scripts("build_clustered_population_layouts.py")
 
 
 rule build_solar_rooftop_potentials:
-    message:
-        "Building solar rooftop potentials"
     input:
         pop_layout=resources("pop_layout_total.nc"),
         class_regions=resources("regions_by_class_solar.geojson"),
@@ -57,10 +55,12 @@ rule build_solar_rooftop_potentials:
         potentials=resources("solar_rooftop_potentials.csv"),
     log:
         logs("build_solar_rooftop_potentials.log"),
-    resources:
-        mem_mb=10000,
     benchmark:
         benchmarks("build_solar_rooftop_potentials")
+    resources:
+        mem_mb=10000,
+    message:
+        "Building solar rooftop potentials"
     script:
         "../scripts/build_solar_rooftop_potentials.py"
 
@@ -74,12 +74,12 @@ rule build_simplified_population_layouts:
         cutout=lambda w: input_cutout(w),
     output:
         clustered_pop_layout=resources("pop_layout_simplified.csv"),
-    resources:
-        mem_mb=10000,
     log:
         logs("build_simplified_population_layouts"),
     benchmark:
         benchmarks("build_simplified_population_layouts")
+    resources:
+        mem_mb=10000,
     script:
         "../scripts/build_population_layouts.py"
 
@@ -102,8 +102,6 @@ rule build_gas_network:
 
 
 rule build_gas_input_locations:
-    message:
-        "Building gas input locations"
     input:
         gem="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         entry=rules.retrieve_gas_infrastructure_data.output["entry"],
@@ -113,41 +111,38 @@ rule build_gas_input_locations:
     output:
         gas_input_nodes=resources("gas_input_locations.geojson"),
         gas_input_nodes_simplified=resources("gas_input_locations_simplified.csv"),
-    resources:
-        mem_mb=2000,
     log:
         logs("build_gas_input_locations.log"),
     benchmark:
         benchmarks("build_gas_input_locations/s")
+    resources:
+        mem_mb=2000,
+    message:
+        "Building gas input locations"
     script:
         scripts("build_gas_input_locations.py")
 
 
 rule cluster_gas_network:
-    message:
-        "Clustering gas network"
     input:
         cleaned_gas_network=resources("gas_network.csv"),
         onshore_regions=resources("onshore_regions.geojson"),
         offshore_regions=resources("offshore_regions.geojson"),
     output:
         clustered_gas_network=resources("gas_network_clustered.csv"),
-    resources:
-        mem_mb=4000,
     log:
         logs("cluster_gas_network.log"),
     benchmark:
         benchmarks("cluster_gas_network")
+    resources:
+        mem_mb=4000,
+    message:
+        "Clustering gas network"
     script:
         scripts("cluster_gas_network.py")
 
 
 rule build_daily_heat_demand:
-    message:
-        "Building daily heat demand profiles"
-    params:
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         pop_layout=resources("pop_layout_total.nc"),
         onshore_regions=resources("onshore_regions.geojson"),
@@ -156,47 +151,47 @@ rule build_daily_heat_demand:
         ),
     output:
         heat_demand=resources("daily_heat_demand_total.nc"),
-    resources:
-        mem_mb=20000,
-    threads: 8
     log:
         logs("build_daily_heat_demand_total.log"),
     benchmark:
         benchmarks("build_daily_heat_demand_total")
+    threads: 8
+    resources:
+        mem_mb=20000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+    message:
+        "Building daily heat demand profiles"
     script:
         "../scripts/build_daily_heat_demand.py"
 
 
 rule build_hourly_heat_demand:
-    message:
-        "Building hourly heat demand profiles from daily demand"
-    params:
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        sector=config_provider("sector"),
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
         heat_demand=resources("daily_heat_demand_total.nc"),
     output:
         heat_demand=resources("hourly_heat_demand_total.nc"),
         heat_dsm_profile=resources("residential_heat_dsm_profile.csv"),
-    resources:
-        mem_mb=2000,
-    threads: 8
     log:
         logs("build_hourly_heat_demand_total.loc"),
     benchmark:
         benchmarks("build_hourly_heat_demand_total")
+    threads: 8
+    resources:
+        mem_mb=2000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        sector=config_provider("sector"),
+    message:
+        "Building hourly heat demand profiles from daily demand"
     script:
         "../scripts/build_hourly_heat_demand.py"
 
 
 rule build_temperature_profiles:
-    message:
-        "Building temperature profiles"
-    params:
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         pop_layout=resources("pop_layout_total.nc"),
         onshore_regions=resources("onshore_regions.geojson"),
@@ -206,20 +201,39 @@ rule build_temperature_profiles:
     output:
         temp_soil=resources("temp_soil_total.nc"),
         temp_air=resources("temp_air_total.nc"),
-    resources:
-        mem_mb=20000,
-    threads: 8
     log:
         logs("build_temperature_profiles_total.log"),
     benchmark:
         benchmarks("build_temperature_profiles/total")
+    threads: 8
+    resources:
+        mem_mb=20000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+    message:
+        "Building temperature profiles"
     script:
         "../scripts/build_temperature_profiles.py"
 
 
 rule build_central_heating_temperature_profiles:
-    message:
-        "Building central heating temperature profiles for {wildcards.horizon} planning horizon"
+    input:
+        temp_air_total=resources("temp_air_total.nc"),
+        onshore_regions=resources("onshore_regions.geojson"),
+    output:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_{horizon}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_{horizon}.nc"
+        ),
+    log:
+        logs("build_central_heating_temperature_profiles_{horizon}.log"),
+    benchmark:
+        benchmarks("build_central_heating_temperature_profiles/s_{horizon}")
+    resources:
+        mem_mb=20000,
     params:
         max_forward_temperature_central_heating_baseyear=config_provider(
             "sector",
@@ -266,22 +280,8 @@ rule build_central_heating_temperature_profiles:
             "relative_annual_temperature_reduction",
         ),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-    input:
-        temp_air_total=resources("temp_air_total.nc"),
-        onshore_regions=resources("onshore_regions.geojson"),
-    output:
-        central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_{horizon}.nc"
-        ),
-        central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_{horizon}.nc"
-        ),
-    resources:
-        mem_mb=20000,
-    log:
-        logs("build_central_heating_temperature_profiles_{horizon}.log"),
-    benchmark:
-        benchmarks("build_central_heating_temperature_profiles/s_{horizon}")
+    message:
+        "Building central heating temperature profiles for {wildcards.horizon} planning horizon"
     script:
         scripts("build_central_heating_temperature_profiles/run.py")
 
@@ -292,19 +292,31 @@ rule build_dh_areas:
         onshore_regions=resources("onshore_regions.geojson"),
     output:
         dh_areas=resources("dh_areas.geojson"),
-    resources:
-        mem_mb=2000,
     log:
         logs("build_dh_areas.log"),
     benchmark:
         benchmarks("build_dh_areas")
+    resources:
+        mem_mb=2000,
     script:
         scripts("build_dh_areas.py")
 
 
 rule build_geothermal_heat_potential:
-    message:
-        "Building geothermal heat potential estimates"
+    input:
+        isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output[
+            "isi_heat_potentials"
+        ],
+        onshore_regions=resources("onshore_regions.geojson"),
+        lau_regions=rules.retrieve_lau_regions.output["zip"],
+    output:
+        heat_source_power=resources("heat_source_power_geothermal.csv"),
+    log:
+        logs("build_heat_source_potentials_geothermal.log"),
+    benchmark:
+        benchmarks("build_heat_source_potentials/geothermal")
+    resources:
+        mem_mb=2000,
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
@@ -322,27 +334,31 @@ rule build_geothermal_heat_potential:
             "geothermal",
             "ignore_missing_regions",
         ),
-    input:
-        isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output[
-            "isi_heat_potentials"
-        ],
-        onshore_regions=resources("onshore_regions.geojson"),
-        lau_regions=rules.retrieve_lau_regions.output["zip"],
-    output:
-        heat_source_power=resources("heat_source_power_geothermal.csv"),
-    resources:
-        mem_mb=2000,
-    log:
-        logs("build_heat_source_potentials_geothermal.log"),
-    benchmark:
-        benchmarks("build_heat_source_potentials/geothermal")
+    message:
+        "Building geothermal heat potential estimates"
     script:
         scripts("build_geothermal_heat_potential.py")
 
 
 rule build_ates_potentials:
-    message:
-        "Building aquifer thermal energy storage (ATES) potentials for {wildcards.horizon} planning horizon"
+    input:
+        aquifer_shapes_shp=rules.retrieve_aquifer_data_bgr.output["aquifer_shapes"][0],
+        dh_areas=resources("dh_areas.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_{horizon}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_{horizon}.nc"
+        ),
+    output:
+        ates_potentials=resources("ates_potentials_{horizon}.csv"),
+    log:
+        logs("build_ates_potentials_{horizon}.log"),
+    benchmark:
+        benchmarks("build_ates_potentials_geothermal_{horizon}")
+    resources:
+        mem_mb=2000,
     params:
         max_top_temperature=config_provider(
             "sector",
@@ -393,24 +409,8 @@ rule build_ates_potentials:
             "ignore_missing_regions",
         ),
         countries=config_provider("countries"),
-    input:
-        aquifer_shapes_shp=rules.retrieve_aquifer_data_bgr.output["aquifer_shapes"][0],
-        dh_areas=resources("dh_areas.geojson"),
-        onshore_regions=resources("onshore_regions.geojson"),
-        central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_{horizon}.nc"
-        ),
-        central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_{horizon}.nc"
-        ),
-    output:
-        ates_potentials=resources("ates_potentials_{horizon}.csv"),
-    resources:
-        mem_mb=2000,
-    log:
-        logs("build_ates_potentials_{horizon}.log"),
-    benchmark:
-        benchmarks("build_ates_potentials_geothermal_{horizon}")
+    message:
+        "Building aquifer thermal energy storage (ATES) potentials for {wildcards.horizon} planning horizon"
     script:
         scripts("build_ates_potentials.py")
 
@@ -618,8 +618,26 @@ rule build_sea_heat_potential:
 
 
 rule build_cop_profiles:
-    message:
-        "Building coefficient of performance (COP) profiles for {wildcards.horizon} planning horizon"
+    input:
+        unpack(input_heat_source_temperature),
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_{horizon}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_{horizon}.nc"
+        ),
+        temp_soil_total=resources("temp_soil_total.nc"),
+        temp_air_total=resources("temp_air_total.nc"),
+        temp_ptes_total=resources("ptes_top_temperature_profiles_{horizon}.nc"),
+        onshore_regions=resources("onshore_regions.geojson"),
+    output:
+        cop_profiles=resources("cop_profiles_{horizon}.nc"),
+    log:
+        logs("build_cop_profiles_{horizon}.log"),
+    benchmark:
+        benchmarks("build_cop_profiles/s_{horizon}")
+    resources:
+        mem_mb=20000,
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
             "sector", "heat_pump_sink_T_individual_heating"
@@ -635,47 +653,13 @@ rule build_cop_profiles:
             "sector", "district_heating", "limited_heat_sources"
         ),
         snapshots=config_provider("snapshots"),
-    input:
-        unpack(input_heat_source_temperature),
-        central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_{horizon}.nc"
-        ),
-        central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_{horizon}.nc"
-        ),
-        temp_soil_total=resources("temp_soil_total.nc"),
-        temp_air_total=resources("temp_air_total.nc"),
-        temp_ptes_total=resources("ptes_top_temperature_profiles_{horizon}.nc"),
-        onshore_regions=resources("onshore_regions.geojson"),
-    output:
-        cop_profiles=resources("cop_profiles_{horizon}.nc"),
-    resources:
-        mem_mb=20000,
-    log:
-        logs("build_cop_profiles_{horizon}.log"),
-    benchmark:
-        benchmarks("build_cop_profiles/s_{horizon}")
+    message:
+        "Building coefficient of performance (COP) profiles for {wildcards.horizon} planning horizon"
     script:
         scripts("build_cop_profiles/run.py")
 
 
 rule build_ptes_operations:
-    message:
-        "Building thermal energy storage operations profiles for {wildcards.horizon} planning horizon"
-    params:
-        max_ptes_top_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "max_top_temperature",
-        ),
-        min_ptes_bottom_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "min_bottom_temperature",
-        ),
-        snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_{horizon}.nc"
@@ -692,27 +676,33 @@ rule build_ptes_operations:
             "ptes_top_temperature_profiles_{horizon}.nc"
         ),
         ptes_e_max_pu_profiles=resources("ptes_e_max_pu_profiles_{horizon}.nc"),
-    resources:
-        mem_mb=2000,
     log:
         logs("build_ptes_operations_{horizon}.log"),
     benchmark:
         benchmarks("build_ptes_operations_{horizon}")
+    resources:
+        mem_mb=2000,
+    params:
+        max_ptes_top_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "max_top_temperature",
+        ),
+        min_ptes_bottom_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "min_bottom_temperature",
+        ),
+        snapshots=config_provider("snapshots"),
+    message:
+        "Building thermal energy storage operations profiles for {wildcards.horizon} planning horizon"
     script:
         scripts("build_ptes_operations/run.py")
 
 
 rule build_direct_heat_source_utilisation_profiles:
-    message:
-        "Building direct heat source utilization profiles for {wildcards.horizon} planning horizon"
-    params:
-        direct_utilisation_heat_sources=config_provider(
-            "sector", "district_heating", "direct_utilisation_heat_sources"
-        ),
-        limited_heat_sources=config_provider(
-            "sector", "district_heating", "limited_heat_sources"
-        ),
-        snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_{horizon}.nc"
@@ -725,30 +715,40 @@ rule build_direct_heat_source_utilisation_profiles:
         logs("build_direct_heat_source_utilisation_profiles_{horizon}.log"),
     benchmark:
         benchmarks("build_direct_heat_source_utilisation_profiles/s_{horizon}")
+    params:
+        direct_utilisation_heat_sources=config_provider(
+            "sector", "district_heating", "direct_utilisation_heat_sources"
+        ),
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
+        ),
+        snapshots=config_provider("snapshots"),
+    message:
+        "Building direct heat source utilization profiles for {wildcards.horizon} planning horizon"
     script:
         scripts("build_direct_heat_source_utilisation_profiles.py")
 
 
 rule build_solar_thermal_profiles:
-    message:
-        "Building solar thermal generation profiles"
-    params:
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        solar_thermal=config_provider("solar_thermal"),
     input:
         pop_layout=resources("pop_layout_total.nc"),
         onshore_regions=resources("onshore_regions.geojson"),
         cutout=lambda w: input_cutout(w, config_provider("solar_thermal", "cutout")(w)),
     output:
         solar_thermal=resources("solar_thermal_total.nc"),
-    resources:
-        mem_mb=20000,
-    threads: 16
     log:
         logs("build_solar_thermal_profiles_total.log"),
     benchmark:
         benchmarks("build_solar_thermal_profiles/total")
+    threads: 16
+    resources:
+        mem_mb=20000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        solar_thermal=config_provider("solar_thermal"),
+    message:
+        "Building solar thermal generation profiles"
     script:
         scripts("build_solar_thermal_profiles.py")
 
@@ -790,12 +790,6 @@ rule build_swiss_energy_balances:
 
 
 rule build_energy_totals:
-    message:
-        "Building energy totals"
-    params:
-        countries=config_provider("countries"),
-        energy=config_provider("energy"),
-        emissions_scope=config_provider("co2_budget", "emissions_scope"),
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         co2=rules.retrieve_ghg_emissions.output["csv"],
@@ -823,6 +817,12 @@ rule build_energy_totals:
     threads: 16
     resources:
         mem_mb=10000,
+    params:
+        countries=config_provider("countries"),
+        energy=config_provider("energy"),
+        emissions_scope=config_provider("co2_budget", "emissions_scope"),
+    message:
+        "Building energy totals"
     script:
         scripts("build_energy_totals.py")
 
@@ -867,10 +867,6 @@ rule build_heat_totals:
 
 
 rule build_biomass_potentials:
-    message:
-        "Building biomass potential estimates for {wildcards.horizon} planning horizon"
-    params:
-        biomass=config_provider("biomass"),
     input:
         enspreso_biomass=rules.retrieve_enspreso_biomass.output["xlsx"],
         eurostat=resources("eurostat_energy_balances.csv"),
@@ -891,13 +887,17 @@ rule build_biomass_potentials:
     output:
         biomass_potentials_all=resources("biomass_potentials_all_{horizon}.csv"),
         biomass_potentials=resources("biomass_potentials_{horizon}.csv"),
-    threads: 8
-    resources:
-        mem_mb=2000,
     log:
         logs("build_biomass_potentials_{horizon}.log"),
     benchmark:
         benchmarks("build_biomass_potentials_{horizon}")
+    threads: 8
+    resources:
+        mem_mb=2000,
+    params:
+        biomass=config_provider("biomass"),
+    message:
+        "Building biomass potential estimates for {wildcards.horizon} planning horizon"
     script:
         scripts("build_biomass_potentials.py")
 
@@ -945,45 +945,45 @@ rule build_co2_sequestration_potentials:
 
 
 rule build_clustered_co2_sequestration_potentials:
-    message:
-        "Clustering CO2 sequestration potentials"
-    params:
-        sequestration_potential=config_provider(
-            "sector", "regional_co2_sequestration_potential"
-        ),
     input:
         sequestration_potential=resources("co2_sequestration_potentials.geojson"),
         onshore_regions=resources("onshore_regions.geojson"),
         offshore_regions=resources("offshore_regions.geojson"),
     output:
         sequestration_potential=resources("co2_sequestration_potential.csv"),
-    threads: 1
-    resources:
-        mem_mb=4000,
     log:
         logs("build_clustered_co2_sequestration_potentials.log"),
     benchmark:
         benchmarks("build_clustered_co2_sequestration_potentials")
+    threads: 1
+    resources:
+        mem_mb=4000,
+    params:
+        sequestration_potential=config_provider(
+            "sector", "regional_co2_sequestration_potential"
+        ),
+    message:
+        "Clustering CO2 sequestration potentials"
     script:
         scripts("build_clustered_co2_sequestration_potentials.py")
 
 
 rule build_salt_cavern_potentials:
-    message:
-        "Building salt cavern potential for hydrogen storage"
     input:
         salt_caverns=rules.retrieve_h2_salt_caverns.output["geojson"],
         onshore_regions=resources("onshore_regions.geojson"),
         offshore_regions=resources("offshore_regions.geojson"),
     output:
         h2_cavern_potential=resources("salt_cavern_potentials.csv"),
-    threads: 1
-    resources:
-        mem_mb=2000,
     log:
         logs("build_salt_cavern_potentials.log"),
     benchmark:
         benchmarks("build_salt_cavern_potentials")
+    threads: 1
+    resources:
+        mem_mb=2000,
+    message:
+        "Building salt cavern potential for hydrogen storage"
     script:
         scripts("build_salt_cavern_potentials.py")
 
@@ -1029,10 +1029,6 @@ rule build_industry_sector_ratios:
 
 
 rule build_industry_sector_ratios_intermediate:
-    message:
-        "Building intermediate industry sector ratios for {wildcards.horizon} planning horizon"
-    params:
-        industry=config_provider("industry"),
     input:
         industry_sector_ratios=resources("industry_sector_ratios.csv"),
         industrial_energy_demand_per_country_today=resources(
@@ -1043,13 +1039,17 @@ rule build_industry_sector_ratios_intermediate:
         ),
     output:
         industry_sector_ratios=resources("industry_sector_ratios_{horizon}.csv"),
-    threads: 1
-    resources:
-        mem_mb=1000,
     log:
         logs("build_industry_sector_ratios_{horizon}.log"),
     benchmark:
         benchmarks("build_industry_sector_ratios_{horizon}")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        industry=config_provider("industry"),
+    message:
+        "Building intermediate industry sector ratios for {wildcards.horizon} planning horizon"
     script:
         scripts("build_industry_sector_ratios_intermediate.py")
 
@@ -1081,10 +1081,6 @@ rule build_industrial_production_per_country:
 
 
 rule build_industrial_production_per_country_tomorrow:
-    message:
-        "Building future industrial production projections for {wildcards.horizon} planning horizon"
-    params:
-        industry=config_provider("industry"),
     input:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
@@ -1097,18 +1093,15 @@ rule build_industrial_production_per_country_tomorrow:
         logs("build_industrial_production_per_country_tomorrow_{horizon}.log"),
     benchmark:
         (benchmarks("build_industrial_production_per_country_tomorrow_{horizon}"))
+    params:
+        industry=config_provider("industry"),
+    message:
+        "Building future industrial production projections for {wildcards.horizon} planning horizon"
     script:
         scripts("build_industrial_production_per_country_tomorrow.py")
 
 
 rule build_industrial_distribution_key:
-    message:
-        "Building industrial activity distribution mapping key"
-    params:
-        hotmaps_locate_missing=config_provider(
-            "industry", "hotmaps_locate_missing", default=False
-        ),
-        countries=config_provider("countries"),
     input:
         onshore_regions=resources("onshore_regions.geojson"),
         clustered_pop_layout=resources("pop_layout.csv"),
@@ -1119,20 +1112,25 @@ rule build_industrial_distribution_key:
         refineries_supplement="data/refineries-noneu.csv",
     output:
         industrial_distribution_key=resources("industrial_distribution_key.csv"),
-    threads: 1
-    resources:
-        mem_mb=1000,
     log:
         logs("build_industrial_distribution_key.log"),
     benchmark:
         benchmarks("build_industrial_distribution_key/s")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        hotmaps_locate_missing=config_provider(
+            "industry", "hotmaps_locate_missing", default=False
+        ),
+        countries=config_provider("countries"),
+    message:
+        "Building industrial activity distribution mapping key"
     script:
         scripts("build_industrial_distribution_key.py")
 
 
 rule build_industrial_production_per_node:
-    message:
-        "Distributing industrial production to network nodes for {wildcards.horizon} planning horizon"
     input:
         industrial_distribution_key=resources("industrial_distribution_key.csv"),
         industrial_production_per_country_tomorrow=resources(
@@ -1140,20 +1138,20 @@ rule build_industrial_production_per_node:
         ),
     output:
         industrial_production_per_node=resources("industrial_production_{horizon}.csv"),
-    threads: 1
-    resources:
-        mem_mb=1000,
     log:
         logs("build_industrial_production_per_node_{horizon}.log"),
     benchmark:
         (benchmarks("build_industrial_production_per_node/s_{horizon}"))
+    threads: 1
+    resources:
+        mem_mb=1000,
+    message:
+        "Distributing industrial production to network nodes for {wildcards.horizon} planning horizon"
     script:
         scripts("build_industrial_production_per_node.py")
 
 
 rule build_industrial_energy_demand_per_node:
-    message:
-        "Building industrial energy demand per network node for {wildcards.horizon} planning horizon"
     input:
         industry_sector_ratios=resources("industry_sector_ratios_{horizon}.csv"),
         industrial_production_per_node=resources("industrial_production_{horizon}.csv"),
@@ -1168,6 +1166,8 @@ rule build_industrial_energy_demand_per_node:
         logs("build_industrial_energy_demand_per_node_{horizon}.log"),
     benchmark:
         (benchmarks("build_industrial_energy_demand_per_node/s_{horizon}"))
+    message:
+        "Building industrial energy demand per network node for {wildcards.horizon} planning horizon"
     script:
         scripts("build_industrial_energy_demand_per_node.py")
 
@@ -1201,8 +1201,6 @@ rule build_industrial_energy_demand_per_country_today:
 
 
 rule build_industrial_energy_demand_per_node_today:
-    message:
-        "Building current industrial energy demand per network node"
     input:
         industrial_distribution_key=resources("industrial_distribution_key.csv"),
         industrial_energy_demand_per_country_today=resources(
@@ -1216,16 +1214,13 @@ rule build_industrial_energy_demand_per_node_today:
         logs("build_industrial_energy_demand_per_node_today.log"),
     benchmark:
         benchmarks("build_industrial_energy_demand_per_node_today/s")
+    message:
+        "Building current industrial energy demand per network node"
     script:
         scripts("build_industrial_energy_demand_per_node_today.py")
 
 
 rule build_retro_cost:
-    message:
-        "Building retrofitting cost estimates for building efficiency improvements"
-    params:
-        retrofitting=config_provider("sector", "retrofitting"),
-        countries=config_provider("countries"),
     input:
         building_stock="data/retro/data_building_stock.csv",
         data_tabula="data/bundle/retro/tabula-calculator-calcsetbuilding.csv",
@@ -1240,41 +1235,44 @@ rule build_retro_cost:
     output:
         retro_cost=resources("retro_cost.csv"),
         floor_area=resources("floor_area.csv"),
-    resources:
-        mem_mb=1000,
     log:
         logs("build_retro_cost.log"),
     benchmark:
         benchmarks("build_retro_cost/s")
+    resources:
+        mem_mb=1000,
+    params:
+        retrofitting=config_provider("sector", "retrofitting"),
+        countries=config_provider("countries"),
+    message:
+        "Building retrofitting cost estimates for building efficiency improvements"
     script:
         scripts("build_retro_cost.py")
 
 
 rule build_population_weighted_energy_totals:
-    message:
-        "Building population-weighted energy demand totals"
-    params:
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         energy_totals=resources("{kind}_totals.csv"),
         clustered_pop_layout=resources("pop_layout.csv"),
     output:
         resources("pop_weighted_{kind}_totals.csv"),
-    threads: 1
-    resources:
-        mem_mb=2000,
     log:
         logs("build_population_weighted_{kind}_totals.log"),
     benchmark:
         benchmarks("build_population_weighted_{kind}_totals")
+    threads: 1
+    resources:
+        mem_mb=2000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+    message:
+        "Building population-weighted energy demand totals"
     script:
         scripts("build_population_weighted_energy_totals.py")
 
 
 rule build_shipping_demand:
-    message:
-        "Building shipping fuel demand projections"
     input:
         ports=rules.retrieve_attributed_ports.output["json"],
         scope=resources("europe_shape.geojson"),
@@ -1282,15 +1280,17 @@ rule build_shipping_demand:
         demand=resources("energy_totals.csv"),
     output:
         resources("shipping_demand.csv"),
-    params:
-        energy_totals_year=config_provider("energy", "energy_totals_year"),
-    threads: 1
-    resources:
-        mem_mb=2000,
     log:
         logs("build_shipping_demand.log"),
     benchmark:
         benchmarks("build_shipping_demand/s")
+    threads: 1
+    resources:
+        mem_mb=2000,
+    params:
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
+    message:
+        "Building shipping fuel demand projections"
     script:
         scripts("build_shipping_demand.py")
 
@@ -1319,13 +1319,6 @@ if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
 
 
 rule build_transport_demand:
-    message:
-        "Building transport energy demand profiles"
-    params:
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        sector=config_provider("sector"),
-        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         network=resources("networks/clustered.nc"),
         clustered_pop_layout=resources("pop_layout.csv"),
@@ -1339,46 +1332,47 @@ rule build_transport_demand:
         transport_data=resources("transport_data.csv"),
         avail_profile=resources("avail_profile.csv"),
         dsm_profile=resources("dsm_profile.csv"),
-    threads: 1
-    resources:
-        mem_mb=2000,
     log:
         logs("build_transport_demand.log"),
     benchmark:
         benchmarks("build_transport_demand")
+    threads: 1
+    resources:
+        mem_mb=2000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        sector=config_provider("sector"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
+    message:
+        "Building transport energy demand profiles"
     script:
         scripts("build_transport_demand.py")
 
 
 rule build_district_heat_share:
-    message:
-        "Building district heating penetration share data for {wildcards.horizon} planning horizon"
-    params:
-        sector=config_provider("sector"),
-        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         district_heat_share=resources("district_heat_share.csv"),
         clustered_pop_layout=resources("pop_layout.csv"),
     output:
         district_heat_share=resources("district_heat_share_{horizon}.csv"),
-    threads: 1
-    resources:
-        mem_mb=1000,
     log:
         logs("build_district_heat_share_{horizon}.log"),
     benchmark:
         benchmarks("build_district_heat_share_{horizon}")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        sector=config_provider("sector"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
+    message:
+        "Building district heating penetration share data for {wildcards.horizon} planning horizon"
     script:
         scripts("build_district_heat_share.py")
 
 
 rule build_existing_heating_distribution:
-    message:
-        "Building existing heating technology distribution data for {wildcards.horizon} planning horizon"
-    params:
-        baseyear=config_provider("planning_horizons", default=0),
-        sector=config_provider("sector"),
-        existing_capacities=config_provider("existing_capacities"),
     input:
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
         clustered_pop_layout=resources("pop_layout.csv"),
@@ -1392,17 +1386,17 @@ rule build_existing_heating_distribution:
         logs("build_existing_heating_distribution_{horizon}.log"),
     benchmark:
         benchmarks("build_existing_heating_distribution/_{horizon}")
+    params:
+        baseyear=config_provider("planning_horizons", default=0),
+        sector=config_provider("sector"),
+        existing_capacities=config_provider("existing_capacities"),
+    message:
+        "Building existing heating technology distribution data for {wildcards.horizon} planning horizon"
     script:
         scripts("build_existing_heating_distribution.py")
 
 
 rule time_aggregation:
-    message:
-        "Performing time series aggregation for temporal resolution reduction"
-    params:
-        time_resolution=config_provider("clustering", "temporal"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        solver_name=config_provider("solving", "solver", "name"),
     input:
         network=resources("networks/clustered.nc"),
         hourly_heat_demand_total=lambda w: (
@@ -1417,13 +1411,19 @@ rule time_aggregation:
         ),
     output:
         snapshot_weightings=resources("snapshot_weightings.csv"),
-    threads: 1
-    resources:
-        mem_mb=5000,
     log:
         logs("time_aggregation_elec.log"),
     benchmark:
         benchmarks("time_aggregation_elec")
+    threads: 1
+    resources:
+        mem_mb=5000,
+    params:
+        time_resolution=config_provider("clustering", "temporal"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        solver_name=config_provider("solving", "solver", "name"),
+    message:
+        "Performing time series aggregation for temporal resolution reduction"
     script:
         scripts("time_aggregation.py")
 
@@ -1437,13 +1437,6 @@ def input_profile_offwind(w):
 
 
 rule build_egs_potentials:
-    message:
-        "Building enhanced geothermal system (EGS) potential estimates"
-    params:
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        sector=config_provider("sector"),
-        costs=config_provider("costs"),
     input:
         egs_cost="data/egs_costs.json",
         regions=resources("onshore_regions.geojson"),
@@ -1456,13 +1449,20 @@ rule build_egs_potentials:
         egs_potentials=resources("egs_potentials.csv"),
         egs_overlap=resources("egs_overlap.csv"),
         egs_capacity_factors=resources("egs_capacity_factors.csv"),
-    threads: 1
-    resources:
-        mem_mb=2000,
     log:
         logs("build_egs_potentials.log"),
     benchmark:
         benchmarks("build_egs_potentials")
+    threads: 1
+    resources:
+        mem_mb=2000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        sector=config_provider("sector"),
+        costs=config_provider("costs"),
+    message:
+        "Building enhanced geothermal system (EGS) potential estimates"
     script:
         scripts("build_egs_potentials.py")
 

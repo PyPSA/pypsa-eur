@@ -4,15 +4,6 @@
 
 
 rule solve_network:
-    params:
-        solving=config_provider("solving"),
-        foresight=config_provider("foresight"),
-        planning_horizons=config_provider("planning_horizons"),
-        sector=config_provider("sector"),
-        co2_sequestration_potential=config_provider(
-            "sector", "co2_sequestration_potential"
-        ),
-        custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=resources("networks/composed_{horizon}.nc"),
     output:
@@ -23,11 +14,20 @@ rule solve_network:
         python=RESULTS + "logs/solve_network/python_{horizon}.log",
     benchmark:
         (RESULTS + "benchmarks/solve_network_{horizon}.log")
+    shadow:
+        shadow_config
     threads: solver_threads
     resources:
         mem_mb=config_provider("solving", "mem_mb"),
         runtime=config_provider("solving", "runtime", default="6h"),
-    shadow:
-        shadow_config
+    params:
+        solving=config_provider("solving"),
+        foresight=config_provider("foresight"),
+        planning_horizons=config_provider("planning_horizons"),
+        sector=config_provider("sector"),
+        co2_sequestration_potential=config_provider(
+            "sector", "co2_sequestration_potential"
+        ),
+        custom_extra_functionality=input_custom_extra_functionality,
     script:
         "../scripts/solve_network.py"

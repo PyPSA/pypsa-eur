@@ -37,8 +37,6 @@ rule cluster_networks:
 
 
 rule compose_networks:
-    message:
-        "Collecting composed network files"
     input:
         expand(
             resources("networks/composed_{horizon}.nc"),
@@ -50,8 +48,6 @@ rule compose_networks:
 
 
 rule solve_networks:
-    message:
-        "Collecting solved network files"
     input:
         expand(
             RESULTS + "networks/solved_{horizon}.nc",
@@ -99,8 +95,6 @@ rule plot_balance_maps_interactive:
 
 
 rule plot_power_networks:
-    message:
-        "Plotting clustered power network topology"
     input:
         (
             expand(

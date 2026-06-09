@@ -33,13 +33,6 @@ rule build_electricity_demand:
 
 
 rule build_powerplants:
-    message:
-        "Building powerplant list"
-    params:
-        powerplants_filter=config_provider("electricity", "powerplants_filter"),
-        custom_powerplants=config_provider("electricity", "custom_powerplants"),
-        everywhere_powerplants=config_provider("electricity", "everywhere_powerplants"),
-        countries=config_provider("countries"),
     input:
         network=resources("networks/clustered.nc"),
         regions_onshore=resources("onshore_regions.geojson"),
@@ -55,6 +48,13 @@ rule build_powerplants:
     threads: 1
     resources:
         mem_mb=7000,
+    params:
+        powerplants_filter=config_provider("electricity", "powerplants_filter"),
+        custom_powerplants=config_provider("electricity", "custom_powerplants"),
+        everywhere_powerplants=config_provider("electricity", "everywhere_powerplants"),
+        countries=config_provider("countries"),
+    message:
+        "Building powerplant list"
     script:
         scripts("build_powerplants.py")
 
@@ -230,11 +230,6 @@ rule build_ship_raster:
 
 
 rule determine_availability_matrix_MD_UA:
-    message:
-        "Determining availability matrix for {wildcards.technology} technology"
-    params:
-        renewable=config_provider("renewable"),
-        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     input:
         copernicus=rules.download_copernicus_land_cover.output["tif"],
         wdpa=lambda w: (
@@ -280,6 +275,11 @@ rule determine_availability_matrix_MD_UA:
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+    params:
+        renewable=config_provider("renewable"),
+        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+    message:
+        "Determining availability matrix for {wildcards.technology} technology"
     script:
         scripts("determine_availability_matrix_MD_UA.py")
 
@@ -297,11 +297,6 @@ def input_ua_md_availability_matrix(w):
 
 
 rule determine_availability_matrix:
-    message:
-        "Determining availability matrix for {wildcards.technology} technology"
-    params:
-        renewable=config_provider("renewable"),
-        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     input:
         unpack(input_ua_md_availability_matrix),
         corine=ancient(rules.retrieve_corine.output["tif_file"]),
@@ -353,17 +348,16 @@ rule determine_availability_matrix:
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+    params:
+        renewable=config_provider("renewable"),
+        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+    message:
+        "Determining availability matrix for {wildcards.technology} technology"
     script:
         scripts("determine_availability_matrix.py")
 
 
 rule build_renewable_profiles:
-    message:
-        "Building renewable profiles for {wildcards.technology} technology"
-    params:
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        renewable=config_provider("renewable"),
     input:
         availability_matrix=resources("availability_matrix_{technology}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -388,6 +382,12 @@ rule build_renewable_profiles:
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        renewable=config_provider("renewable"),
+    message:
+        "Building renewable profiles for {wildcards.technology} technology"
     script:
         scripts("build_renewable_profiles.py")
 
@@ -722,28 +722,6 @@ def input_custom_busmap(w):
 
 
 rule cluster_network:
-    message:
-        "Clustering network"
-    params:
-        countries=config_provider("countries"),
-        mode=config_provider("clustering", "mode"),
-        administrative=config_provider("clustering", "administrative"),
-        cluster_network=config_provider("clustering", "cluster_network"),
-        n_clusters=config_provider(
-            "clustering", "cluster_network", "n_clusters", default="all"
-        ),
-        aggregation_strategies=config_provider(
-            "clustering", "aggregation_strategies", default={}
-        ),
-        focus_weights=config_provider("clustering", "focus_weights", default=None),
-        renewable_carriers=config_provider("electricity", "renewable_carriers"),
-        conventional_carriers=config_provider(
-            "electricity", "conventional_carriers", default=[]
-        ),
-        max_hours=config_provider("electricity", "max_hours"),
-        length_factor=config_provider("lines", "length_factor"),
-        cluster_mode=config_provider("clustering", "mode"),
-        copperplate_regions=config_provider("clustering", "copperplate_regions"),
     input:
         unpack(input_custom_busmap),
         network=resources("networks/simplified.nc"),
@@ -776,6 +754,28 @@ rule cluster_network:
     threads: 1
     resources:
         mem_mb=10000,
+    params:
+        countries=config_provider("countries"),
+        mode=config_provider("clustering", "mode"),
+        administrative=config_provider("clustering", "administrative"),
+        cluster_network=config_provider("clustering", "cluster_network"),
+        n_clusters=config_provider(
+            "clustering", "cluster_network", "n_clusters", default="all"
+        ),
+        aggregation_strategies=config_provider(
+            "clustering", "aggregation_strategies", default={}
+        ),
+        focus_weights=config_provider("clustering", "focus_weights", default=None),
+        renewable_carriers=config_provider("electricity", "renewable_carriers"),
+        conventional_carriers=config_provider(
+            "electricity", "conventional_carriers", default=[]
+        ),
+        max_hours=config_provider("electricity", "max_hours"),
+        length_factor=config_provider("lines", "length_factor"),
+        cluster_mode=config_provider("clustering", "mode"),
+        copperplate_regions=config_provider("clustering", "copperplate_regions"),
+    message:
+        "Clustering network"
     script:
         scripts("cluster_network.py")
 
@@ -867,7 +867,6 @@ if (
         script:
             scripts("clean_osm_data.py")
 
-
     rule build_osm_network:
         input:
             substations=resources(f"osm/clean/substations.geojson"),
@@ -902,7 +901,9 @@ if (
             countries=config_provider("countries"),
             voltages=config_provider("electricity", "voltages"),
             line_types=config_provider("lines", "types"),
-            under_construction=config_provider("osm_network_release", "under_construction"),
+            under_construction=config_provider(
+                "osm_network_release", "under_construction"
+            ),
             remove_after=config_provider("osm_network_release", "remove_after"),
         message:
             "Building OSM network"

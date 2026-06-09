@@ -100,9 +100,9 @@ def concatenate_network_with_previous(
                 continue
 
             default = c.attrs.default[attr]
-            c.dynamic[attr].loc[current_horizon] = c.dynamic[attr].loc[
-                previous_horizon
-            ].values
+            c.dynamic[attr].loc[current_horizon] = (
+                c.dynamic[attr].loc[previous_horizon].values
+            )
             c.dynamic[attr].loc[current_horizon, df.columns] = df.values
 
             persisting = c.dynamic[attr].columns.difference(df.columns)
