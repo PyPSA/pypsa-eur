@@ -109,6 +109,12 @@ Configuration Changes
   rules. They cap conventional asset lifetimes for both generators (electricity-only) and links
   (sector-coupled) in perfect foresight; the defaults reproduce the previous behaviour.
 
+- **Operational dispatch**: ``solve_operations_network`` is retained as an opt-in rule that re-dispatches
+  the fixed-capacity ``solved_{horizon}.nc`` and produces ``networks/operations_{horizon}.nc``. Its rolling
+  horizon settings moved to a dedicated ``solving.operations`` block (``rolling_horizon``, ``horizon``,
+  ``overlap``), so capacity expansion can be followed by rolling-horizon dispatch. ``solving.options.rolling_horizon``
+  now only controls the rolling mode of the capacity-expansion ``solve_network`` rule.
+
 
 **Before** (legacy)::
 

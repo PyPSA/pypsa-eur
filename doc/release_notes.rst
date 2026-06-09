@@ -34,6 +34,7 @@ Release Notes
   - Added ``existing_capacities:`` keys. New ``enabled`` toggle and ``baseyear`` setting required for brownfield runs.
   - Moved national policy phase-outs to ``existing_capacities: phase_outs`` as a list of ``{carriers, countries, year}`` rules. Previously hardcoded in ``prepare_perfect_foresight.py``, they now cap conventional asset lifetimes for both generators (electricity-only) and links (sector-coupled) in perfect foresight. Defaults reproduce the previous behaviour.
   - Added ``clustering: cluster_network: n_clusters``. Replaces the ``{clusters}`` wildcard in filenames.
+  - Retained ``solve_operations_network`` as an opt-in rule that re-dispatches the fixed-capacity ``solved_{horizon}.nc`` into ``operations_{horizon}.nc``. Its rolling horizon settings moved to a new ``solving: operations`` block (``rolling_horizon``, ``horizon``, ``overlap``), enabling capacity expansion followed by rolling-horizon dispatch; ``solving: options: rolling_horizon`` now controls the ``solve_network`` rule only.
   - Rename ``regions_onshore_base_s_{clusters}.geojson`` to ``onshore_regions.geojson`` and ``regions_offshore_base_s_{clusters}.geojson`` to ``offshore_regions.geojson``. The process chain for shape files is now: ``onshore_shapes``/ ``offshore_shapes`` → ``onshore_regions.geojson``/ ``offshore_regions.geojson``, for shape files for the simplified resolution are now stored at ``onshore_regions_simplified.geojson`` and ``offshore_regions_simplified.geojson``. 
 
   **Conventions**:
