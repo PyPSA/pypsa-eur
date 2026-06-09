@@ -323,8 +323,6 @@ def _set_electrical_parameters_lines_raw(lines, config):
     lines["carrier"] = "AC"
     lines["dc"] = False
 
-    breakpoint()
-
     lines.loc[:, "type"] = lines.v_nom.apply(
         lambda x: _get_linetype_by_voltage(x, linetypes)
     )
