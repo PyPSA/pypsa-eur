@@ -47,8 +47,9 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
 
     # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
     # the goal should be to use snake_case consistently
+    # mode='json' serializes enum members (e.g. HeatSource, HeatSystemType) to their string values.
     config = validate_config({})
-    defaults = config.model_dump(by_alias=True)
+    defaults = config.model_dump(by_alias=True, mode="json")
 
     # Create YAML instance with custom settings
     yaml_writer = YAML()
