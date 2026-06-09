@@ -474,15 +474,15 @@ class SectorConfig(BaseModel):
         description="District heating configuration.",
     )
 
-    heat_sources: dict[HeatSystemType, list[HeatSource]] = Field(
+    heat_sources: dict[str, list[str]] = Field(
         default_factory=lambda: {
-            HeatSystemType.URBAN_CENTRAL: [
-                HeatSource.AIR,
-                HeatSource.PTES,
-                HeatSource.GEOTHERMAL,
+            HeatSystemType.URBAN_CENTRAL.value: [
+                HeatSource.AIR.value,
+                HeatSource.PTES.value,
+                HeatSource.GEOTHERMAL.value,
             ],
-            HeatSystemType.URBAN_DECENTRAL: [HeatSource.AIR],
-            HeatSystemType.RURAL: [HeatSource.AIR, HeatSource.GROUND],
+            HeatSystemType.URBAN_DECENTRAL.value: [HeatSource.AIR.value],
+            HeatSystemType.RURAL.value: [HeatSource.AIR.value, HeatSource.GROUND.value],
         },
         description=(
             "Heat sources by heat system type. "

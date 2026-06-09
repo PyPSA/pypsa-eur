@@ -94,13 +94,13 @@ enable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2_budget
 co2_budget:
-  '2020': 0.72
-  '2025': 0.648
-  '2030': 0.45
-  '2035': 0.25
-  '2040': 0.1
-  '2045': 0.05
-  '2050': 0.0
+  2020: 0.72
+  2025: 0.648
+  2030: 0.45
+  2035: 0.25
+  2040: 0.1
+  2045: 0.05
+  2050: 0.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -122,16 +122,16 @@ electricity:
     activate: false
     epsilon_load: 0.02
     epsilon_vres: 0.02
-    contingency: 4000.0
+    contingency: 4000
   max_hours:
-    battery: 6.0
-    "li-ion": 6.0
-    lfp: 6.0
-    vanadium: 10.0
-    lair: 12.0
-    pair: 24.0
-    "iron-air": 100.0
-    H2: 168.0
+    battery: 6
+    "li-ion": 6
+    lfp: 6
+    vanadium: 10
+    lair: 12
+    pair: 24
+    "iron-air": 100
+    H2: 168
   extendable_carriers:
     Generator:
     - solar
@@ -225,7 +225,7 @@ renewable:
       smooth: false
       add_cutout_windspeed: true
     resource_classes: 1
-    capacity_per_sqkm: 3.0
+    capacity_per_sqkm: 3
     correction_factor: 1.0
     corine:
       grid_codes:
@@ -259,7 +259,7 @@ renewable:
       - 6
     luisa: false
     natura: true
-    excluder_resolution: 100.0
+    excluder_resolution: 100
     clip_p_max_pu: 0.01
   "offwind-ac":
     cutout: default
@@ -269,17 +269,17 @@ renewable:
       smooth: false
       add_cutout_windspeed: true
     resource_classes: 1
-    capacity_per_sqkm: 2.0
+    capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: false
     luisa: false
     natura: true
-    ship_threshold: 400.0
+    ship_threshold: 400
     max_depth: 60.0
     min_depth:
     max_shore_distance: 30000.0
     min_shore_distance:
-    excluder_resolution: 200.0
+    excluder_resolution: 200
     clip_p_max_pu: 0.01
     landfall_length: 20.0
   "offwind-dc":
@@ -290,17 +290,17 @@ renewable:
       smooth: false
       add_cutout_windspeed: true
     resource_classes: 1
-    capacity_per_sqkm: 2.0
+    capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: false
     luisa: false
     natura: true
-    ship_threshold: 400.0
+    ship_threshold: 400
     max_depth: 60.0
     min_depth:
     max_shore_distance:
     min_shore_distance: 30000.0
-    excluder_resolution: 200.0
+    excluder_resolution: 200
     clip_p_max_pu: 0.01
     landfall_length: 30.0
   "offwind-float":
@@ -311,17 +311,17 @@ renewable:
       smooth: false
       add_cutout_windspeed: true
     resource_classes: 1
-    capacity_per_sqkm: 2.0
+    capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: false
     luisa: false
     natura: true
-    ship_threshold: 400.0
+    ship_threshold: 400
     max_depth: 1000.0
     min_depth: 60.0
     max_shore_distance:
     min_shore_distance:
-    excluder_resolution: 200.0
+    excluder_resolution: 200
     clip_p_max_pu: 0.01
     landfall_length: 40.0
   solar:
@@ -362,7 +362,7 @@ renewable:
     - 32
     luisa: false
     natura: true
-    excluder_resolution: 100.0
+    excluder_resolution: 100
     clip_p_max_pu: 0.01
   "solar-hsat":
     cutout: default
@@ -402,7 +402,7 @@ renewable:
     - 32
     luisa: false
     natura: true
-    excluder_resolution: 100.0
+    excluder_resolution: 100
     clip_p_max_pu: 0.01
   hydro:
     cutout: default
@@ -410,7 +410,7 @@ renewable:
     - ror
     - PHS
     - hydro
-    PHS_max_hours: 6.0
+    PHS_max_hours: 6
     hydro_max_hours: energy_capacity_totals_by_country
     flatten_dispatch: false
     flatten_dispatch_buffer: 0.2
@@ -430,22 +430,22 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
-    '63.0': "94-AL1/15-ST1A 20.0"
-    '66.0': "94-AL1/15-ST1A 20.0"
-    '90.0': "184-AL1/30-ST1A 110.0"
-    '110.0': "184-AL1/30-ST1A 110.0"
-    '132.0': "243-AL1/39-ST1A 110.0"
-    '150.0': "243-AL1/39-ST1A 110.0"
-    '220.0': "Al/St 240/40 2-bundle 220.0"
-    '300.0': "Al/St 240/40 3-bundle 300.0"
-    '330.0': "Al/St 240/40 3-bundle 300.0"
-    '380.0': "Al/St 240/40 4-bundle 380.0"
-    '400.0': "Al/St 240/40 4-bundle 380.0"
-    '500.0': "Al/St 240/40 4-bundle 380.0"
-    '750.0': "Al/St 560/50 4-bundle 750.0"
+    63.0: "94-AL1/15-ST1A 20.0"
+    66.0: "94-AL1/15-ST1A 20.0"
+    90.0: "184-AL1/30-ST1A 110.0"
+    110.0: "184-AL1/30-ST1A 110.0"
+    132.0: "243-AL1/39-ST1A 110.0"
+    150.0: "243-AL1/39-ST1A 110.0"
+    220.0: "Al/St 240/40 2-bundle 220.0"
+    300.0: "Al/St 240/40 3-bundle 300.0"
+    330.0: "Al/St 240/40 3-bundle 300.0"
+    380.0: "Al/St 240/40 4-bundle 380.0"
+    400.0: "Al/St 240/40 4-bundle 380.0"
+    500.0: "Al/St 240/40 4-bundle 380.0"
+    750.0: "Al/St 560/50 4-bundle 750.0"
   s_max_pu: 0.7
   s_nom_max: .inf
-  max_extension: 20000.0
+  max_extension: 20000
   length_factor: 1.25
   reconnect_crimea: true
   under_construction: keep
@@ -461,7 +461,7 @@ links:
   p_max_pu: 1.0
   p_min_pu: -1.0
   p_nom_max: .inf
-  max_extension: 30000.0
+  max_extension: 30000
   length_factor: 1.25
   under_construction: keep
 
@@ -555,21 +555,21 @@ biomass:
     municipal solid waste:
     - Municipal waste
   share_unsustainable_use_retained:
-    '2020': 1.0
-    '2025': 1.0
-    '2030': 0.66
-    '2035': 0.33
-    '2040': 0.0
-    '2045': 0.0
-    '2050': 0.0
+    2020: 1
+    2025: 1
+    2030: 0.66
+    2035: 0.33
+    2040: 0
+    2045: 0
+    2050: 0
   share_sustainable_potential_available:
-    '2020': 0.0
-    '2025': 0.0
-    '2030': 0.33
-    '2035': 0.66
-    '2040': 1.0
-    '2045': 1.0
-    '2050': 1.0
+    2020: 0
+    2025: 0
+    2030: 0.33
+    2035: 0.66
+    2040: 1
+    2045: 1
+    2050: 1
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar_thermal
 solar_thermal:
@@ -610,7 +610,7 @@ existing_capacities:
   - 2010
   - 2015
   - 2019
-  threshold_capacity: 10.0
+  threshold_capacity: 10
   default_heating_lifetime: 20
   solar_rooftop_ratio: 0.5
   conventional_carriers:
@@ -632,13 +632,13 @@ sector:
   district_heating:
     potential: 0.6
     progress:
-      '2020': 0.0
-      '2025': 0.1
-      '2030': 0.25
-      '2035': 0.4
-      '2040': 0.55
-      '2045': 0.75
-      '2050': 1.0
+      2020: 0.0
+      2025: 0.1
+      2030: 0.25
+      2035: 0.4
+      2040: 0.55
+      2045: 0.75
+      2050: 1.0
     district_heating_loss: 0.15
     supply_temperature_approximation:
       max_forward_temperature_baseyear:
@@ -664,8 +664,8 @@ sector:
       discharge_resistive_boosting: false
       top_temperature: 90
       bottom_temperature: 35
-      design_top_temperature: 90.0
-      design_bottom_temperature: 35.0
+      design_top_temperature: 90
+      design_bottom_temperature: 35
     ates:
       enable: false
       suitable_aquifer_types:
@@ -677,7 +677,7 @@ sector:
       recovery_factor: 0.6
       marginal_cost_charger: 0.035
       ignore_missing_regions: false
-    heat_source_cooling: 6.0
+    heat_source_cooling: 6
     heat_pump_cooling_iterative: true
     log_heat_pump_cooling_iterations: false
     heat_pump_cop_approximation:
@@ -708,20 +708,20 @@ sector:
       - overheat
       - undercool
       restriction_value:
-        '2020': 0.06
-        '2025': 0.16
-        '2030': 0.27
-        '2035': 0.36
-        '2040': 0.38
-        '2045': 0.39
-        '2050': 0.4
+        2020: 0.06
+        2025: 0.16
+        2030: 0.27
+        2035: 0.36
+        2040: 0.38
+        2045: 0.39
+        2050: 0.4
       restriction_time:
       - 10
       - 22
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.8
-  bev_dsm_restriction_time: 7.0
+  bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.0
   transport_heating_deadband_lower: 15.0
   ICE_lower_degree_factor: 0.375
@@ -737,29 +737,29 @@ sector:
   bev_avail_mean: 0.8
   v2g: true
   land_transport_fuel_cell_share:
-    '2020': 0.0
-    '2025': 0.0
-    '2030': 0.0
-    '2035': 0.0
-    '2040': 0.0
-    '2045': 0.0
-    '2050': 0.0
+    2020: 0
+    2025: 0
+    2030: 0
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
   land_transport_electric_share:
-    '2020': 0.0
-    '2025': 0.05
-    '2030': 0.2
-    '2035': 0.45
-    '2040': 0.7
-    '2045': 0.85
-    '2050': 1.0
+    2020: 0
+    2025: 0.05
+    2030: 0.2
+    2035: 0.45
+    2040: 0.7
+    2045: 0.85
+    2050: 1
   land_transport_ice_share:
-    '2020': 1.0
-    '2025': 0.95
-    '2030': 0.8
-    '2035': 0.55
-    '2040': 0.3
-    '2045': 0.15
-    '2050': 0.0
+    2020: 1
+    2025: 0.95
+    2030: 0.8
+    2035: 0.55
+    2040: 0.3
+    2045: 0.15
+    2050: 0
   transport_electric_efficiency: 53.19
   transport_fuel_cell_efficiency: 30.003
   transport_ice_efficiency: 16.0712
@@ -769,29 +769,29 @@ sector:
   agriculture_machinery_electric_efficiency: 0.3
   shipping_hydrogen_liquefaction: false
   shipping_hydrogen_share:
-    '2020': 0.0
-    '2025': 0.0
-    '2030': 0.0
-    '2035': 0.0
-    '2040': 0.0
-    '2045': 0.0
-    '2050': 0.0
+    2020: 0
+    2025: 0
+    2030: 0
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
   shipping_methanol_share:
-    '2020': 0.0
-    '2025': 0.0
-    '2030': 0.15
-    '2035': 0.35
-    '2040': 0.55
-    '2045': 0.8
-    '2050': 1.0
+    2020: 0
+    2025: 0
+    2030: 0.15
+    2035: 0.35
+    2040: 0.55
+    2045: 0.8
+    2050: 1
   shipping_oil_share:
-    '2020': 1.0
-    '2025': 1.0
-    '2030': 0.85
-    '2035': 0.65
-    '2040': 0.45
-    '2045': 0.2
-    '2050': 0.0
+    2020: 1
+    2025: 1
+    2030: 0.85
+    2035: 0.65
+    2040: 0.45
+    2045: 0.2
+    2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.4
   aviation_demand_factor: 1.0
@@ -800,13 +800,13 @@ sector:
   heat_pump_sink_T_individual_heating: 55.0
   reduce_space_heat_exogenously: true
   reduce_space_heat_exogenously_factor:
-    '2020': 0.1
-    '2025': 0.09
-    '2030': 0.09
-    '2035': 0.11
-    '2040': 0.16
-    '2045': 0.21
-    '2050': 0.29
+    2020: 0.1
+    2025: 0.09
+    2030: 0.09
+    2035: 0.11
+    2040: 0.16
+    2045: 0.21
+    2050: 0.29
   retrofitting:
     retro_endogen: false
     cost_factor: 1.0
@@ -858,18 +858,18 @@ sector:
     max_size: 25
     years_of_storage: 25
   co2_sequestration_potential:
-    '2020': 0.0
-    '2025': 0.0
-    '2030': 40.0
-    '2035': 100.0
-    '2040': 180.0
-    '2045': 250.0
-    '2050': 250.0
-  co2_sequestration_cost: 30.0
+    2020: 0
+    2025: 0
+    2030: 40
+    2035: 100
+    2040: 180
+    2045: 250
+    2050: 250
+  co2_sequestration_cost: 30
   co2_sequestration_lifetime: 50
   co2_spatial: true
   co2_network: true
-  co2_network_cost_factor: 1.0
+  co2_network_cost_factor: 1
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
@@ -888,7 +888,7 @@ sector:
     biomass_to_methanol: true
     biomass_to_methanol_cc: false
   ammonia: true
-  min_part_load_electrolysis: 0.0
+  min_part_load_electrolysis: 0
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
@@ -896,7 +896,7 @@ sector:
   use_haber_bosch_waste_heat: 0.25
   use_methanolisation_waste_heat: 0.25
   use_methanation_waste_heat: 0.25
-  use_fuel_cell_waste_heat: 1.0
+  use_fuel_cell_waste_heat: 1
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
@@ -913,13 +913,13 @@ sector:
       efficiency_static: 0.98
       efficiency_per_1000km: 0.977
     H2 pipeline:
-      efficiency_per_1000km: 1.0
+      efficiency_per_1000km: 1
       compression_per_1000km: 0.018
     H2 pipeline retrofitted:
-      efficiency_per_1000km: 1.0
+      efficiency_per_1000km: 1
       compression_per_1000km: 0.018
     gas pipeline:
-      efficiency_per_1000km: 1.0
+      efficiency_per_1000km: 1
       compression_per_1000km: 0.01
     electricity distribution grid:
       efficiency_static: 0.97
@@ -927,7 +927,7 @@ sector:
   gas_network: true
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
-  gas_network_connectivity_upgrade: 1.0
+  gas_network_connectivity_upgrade: 1
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: true
@@ -948,15 +948,15 @@ sector:
     enable: false
     factor: 1.3
     max_growth:
-      onwind: 16.0
-      solar: 28.0
-      "offwind-ac": 35.0
-      "offwind-dc": 35.0
+      onwind: 16
+      solar: 28
+      "offwind-ac": 35
+      "offwind-dc": 35
     max_relative_growth:
-      onwind: 3.0
-      solar: 3.0
-      "offwind-ac": 3.0
-      "offwind-dc": 3.0
+      onwind: 3
+      solar: 3
+      "offwind-ac": 3
+      "offwind-dc": 3
   enhanced_geothermal:
     enable: false
     flexible: true
@@ -966,48 +966,48 @@ sector:
     sustainability_factor: 0.0025
   solid_biomass_import:
     enable: false
-    price: 54.0
-    max_amount: 1390.0
+    price: 54
+    max_amount: 1390
     upstream_emissions_factor: 0.1
   imports:
     enable: false
     limit: .inf
     limit_sense: "<="
     price:
-      H2: 74.0
-      NH3: 97.0
-      methanol: 121.0
-      gas: 122.0
-      oil: 125.0
+      H2: 74
+      NH3: 97
+      methanol: 121
+      gas: 122
+      oil: 125
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
   St_primary_fraction:
-    '2020': 0.6
-    '2025': 0.55
-    '2030': 0.5
-    '2035': 0.45
-    '2040': 0.4
-    '2045': 0.35
-    '2050': 0.3
+    2020: 0.6
+    2025: 0.55
+    2030: 0.5
+    2035: 0.45
+    2040: 0.4
+    2045: 0.35
+    2050: 0.3
   DRI_fraction:
-    '2020': 0.0
-    '2025': 0.0
-    '2030': 0.05
-    '2035': 0.2
-    '2040': 0.4
-    '2045': 0.7
-    '2050': 1.0
+    2020: 0
+    2025: 0
+    2030: 0.05
+    2035: 0.2
+    2040: 0.4
+    2045: 0.7
+    2050: 1
   H2_DRI: 1.7
   elec_DRI: 0.322
   Al_primary_fraction:
-    '2020': 0.4
-    '2025': 0.375
-    '2030': 0.35
-    '2035': 0.325
-    '2040': 0.3
-    '2045': 0.25
-    '2050': 0.2
+    2020: 0.4
+    2025: 0.375
+    2030: 0.35
+    2035: 0.325
+    2040: 0.3
+    2045: 0.25
+    2050: 0.2
   MWh_NH3_per_tNH3: 5.166
   MWh_CH4_per_tNH3_SMR: 10.8
   MWh_elec_per_tNH3_SMR: 0.7
@@ -1017,40 +1017,40 @@ industry:
   NH3_process_emissions: 24.5
   petrochemical_process_emissions: 25.5
   HVC_primary_fraction:
-    '2020': 0.88
-    '2025': 0.85
-    '2030': 0.78
-    '2035': 0.7
-    '2040': 0.6
-    '2045': 0.5
-    '2050': 0.4
+    2020: 0.88
+    2025: 0.85
+    2030: 0.78
+    2035: 0.7
+    2040: 0.6
+    2045: 0.5
+    2050: 0.4
   HVC_mechanical_recycling_fraction:
-    '2020': 0.12
-    '2025': 0.15
-    '2030': 0.18
-    '2035': 0.21
-    '2040': 0.24
-    '2045': 0.27
-    '2050': 0.3
+    2020: 0.12
+    2025: 0.15
+    2030: 0.18
+    2035: 0.21
+    2040: 0.24
+    2045: 0.27
+    2050: 0.3
   HVC_chemical_recycling_fraction:
-    '2020': 0.0
-    '2025': 0.0
-    '2030': 0.04
-    '2035': 0.08
-    '2040': 0.12
-    '2045': 0.16
-    '2050': 0.2
+    2020: 0.0
+    2025: 0.0
+    2030: 0.04
+    2035: 0.08
+    2040: 0.12
+    2045: 0.16
+    2050: 0.2
   HVC_environment_sequestration_fraction: 0.0
   waste_to_energy: false
   waste_to_energy_cc: false
   sector_ratios_fraction_future:
-    '2020': 0.0
-    '2025': 0.05
-    '2030': 0.2
-    '2035': 0.45
-    '2040': 0.7
-    '2045': 0.85
-    '2050': 1.0
+    2020: 0.0
+    2025: 0.05
+    2030: 0.2
+    2035: 0.45
+    2040: 0.7
+    2045: 0.85
+    2050: 1.0
   basic_chemicals_without_NH3_production_today: 69.0
   HVC_production_today: 52.0
   MWh_elec_per_tHVC_mechanical_recycling: 0.547
@@ -1071,15 +1071,15 @@ costs:
   year: 2050
   social_discountrate: 0.02
   fill_values:
-    FOM: 0.0
-    VOM: 0.0
-    efficiency: 1.0
-    fuel: 0.0
-    investment: 0.0
+    FOM: 0
+    VOM: 0
+    efficiency: 1
+    fuel: 0
+    investment: 0
     lifetime: 25
-    CO2 intensity: 0.0
+    CO2 intensity: 0
     discount rate: 0.07
-    standing losses: 0.0
+    standing losses: 0
   custom_cost_fn: data/custom_costs.csv
   overwrites: {}
   capital_cost: {}
@@ -1138,12 +1138,12 @@ solving:
     clip_p_max_pu: 0.01
     load_shedding:
       enable: false
-      default_cost: 100000.0
+      default_cost: 100000
       all_carriers: true
       carriers: {}
     load_sinks:
       enable: false
-      default_cost: 100000.0
+      default_cost: 100000
       all_carriers: false
       carriers: {}
     curtailment_mode: false
@@ -1162,12 +1162,12 @@ solving:
     overlap: 0
     post_discretization:
       enable: false
-      line_unit_size: 1700.0
+      line_unit_size: 1700
       line_threshold: 0.3
       link_unit_size:
-        DC: 2000.0
-        H2 pipeline: 1200.0
-        gas pipeline: 1500.0
+        DC: 2000
+        H2 pipeline: 1200
+        gas pipeline: 1500
       link_threshold:
         DC: 0.3
         H2 pipeline: 0.3
@@ -1272,7 +1272,7 @@ solving:
   check_objective:
     enable: false
     expected_value:
-    atol: 1000000.0
+    atol: 1000000
     rtol: 0.01
   oetc:
   mem_mb: 128000

@@ -8,7 +8,7 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 
-class HeatSource(Enum):
+class HeatSource(str, Enum):
     """
     Enumeration representing different heat sources for heat pumps and utilisation.
 

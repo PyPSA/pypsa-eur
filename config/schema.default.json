@@ -2427,27 +2427,6 @@
       ],
       "type": "string"
     },
-    "HeatSource": {
-      "description": "Enumeration representing different heat sources for heat pumps and utilisation.\n\nHeat sources are categorized by their characteristics:\n\n**Inexhaustible sources** (AIR, GROUND, SEA_WATER):\n    Always available, no resource bus needed, heat pump draws from ambient.\n\n**Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, PTES):\n    Have spatial/temporal constraints, require resource tracking via buses.\n    A utilisation link splits source heat into direct DH contribution\n    and HP input, using the utilisation profiles from\n    ``build_heat_source_profiles``.\n\nAttributes\n----------\nGEOTHERMAL : str\n    Geothermal heat source with constant temperature.\nRIVER_WATER : str\n    River water heat source with time-varying temperature.\nSEA_WATER : str\n    Sea water heat source (treated as inexhaustible).\nAIR : str\n    Ambient air heat source (inexhaustible).\nGROUND : str\n    Ground/soil heat source (inexhaustible).\nPTES : str\n    Pit Thermal Energy Storage discharge as heat source.\n\nSee Also\n--------\nHeatSystem : Defines heat system types (urban central, urban decentral, rural).\nbuild_heat_source_profiles : Calculates COP and utilisation profiles for heat sources.",
-      "enum": [
-        "geothermal",
-        "river_water",
-        "sea_water",
-        "air",
-        "ground",
-        "ptes"
-      ],
-      "type": "string"
-    },
-    "HeatSystemType": {
-      "description": "Enumeration representing different types of heat systems.",
-      "enum": [
-        "urban central",
-        "urban decentral",
-        "rural"
-      ],
-      "type": "string"
-    },
     "IndustryConfig": {
       "description": "Configuration for `industry` settings.",
       "properties": {
@@ -4323,29 +4302,11 @@
         "heat_sources": {
           "additionalProperties": {
             "items": {
-              "description": "Enumeration representing different heat sources for heat pumps and utilisation.\n\nHeat sources are categorized by their characteristics:\n\n**Inexhaustible sources** (AIR, GROUND, SEA_WATER):\n    Always available, no resource bus needed, heat pump draws from ambient.\n\n**Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, PTES):\n    Have spatial/temporal constraints, require resource tracking via buses.\n    A utilisation link splits source heat into direct DH contribution\n    and HP input, using the utilisation profiles from\n    ``build_heat_source_profiles``.\n\nAttributes\n----------\nGEOTHERMAL : str\n    Geothermal heat source with constant temperature.\nRIVER_WATER : str\n    River water heat source with time-varying temperature.\nSEA_WATER : str\n    Sea water heat source (treated as inexhaustible).\nAIR : str\n    Ambient air heat source (inexhaustible).\nGROUND : str\n    Ground/soil heat source (inexhaustible).\nPTES : str\n    Pit Thermal Energy Storage discharge as heat source.\n\nSee Also\n--------\nHeatSystem : Defines heat system types (urban central, urban decentral, rural).\nbuild_heat_source_profiles : Calculates COP and utilisation profiles for heat sources.",
-              "enum": [
-                "geothermal",
-                "river_water",
-                "sea_water",
-                "air",
-                "ground",
-                "ptes"
-              ],
               "type": "string"
             },
             "type": "array"
           },
           "description": "Heat sources by heat system type. District-heating-only sources (`ptes`, `geothermal`, `river_water`, `sea_water`) are restricted to `urban central`. Allowed: urban central: any of {air, ptes, geothermal, river_water, sea_water}; urban decentral: ['air']; rural: ['air', 'ground'].",
-          "propertyNames": {
-            "description": "Enumeration representing different types of heat systems.",
-            "enum": [
-              "urban central",
-              "urban decentral",
-              "rural"
-            ],
-            "type": "string"
-          },
           "type": "object"
         },
         "residential_heat": {
@@ -10979,29 +10940,11 @@
         "heat_sources": {
           "additionalProperties": {
             "items": {
-              "description": "Enumeration representing different heat sources for heat pumps and utilisation.\n\nHeat sources are categorized by their characteristics:\n\n**Inexhaustible sources** (AIR, GROUND, SEA_WATER):\n    Always available, no resource bus needed, heat pump draws from ambient.\n\n**Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, PTES):\n    Have spatial/temporal constraints, require resource tracking via buses.\n    A utilisation link splits source heat into direct DH contribution\n    and HP input, using the utilisation profiles from\n    ``build_heat_source_profiles``.\n\nAttributes\n----------\nGEOTHERMAL : str\n    Geothermal heat source with constant temperature.\nRIVER_WATER : str\n    River water heat source with time-varying temperature.\nSEA_WATER : str\n    Sea water heat source (treated as inexhaustible).\nAIR : str\n    Ambient air heat source (inexhaustible).\nGROUND : str\n    Ground/soil heat source (inexhaustible).\nPTES : str\n    Pit Thermal Energy Storage discharge as heat source.\n\nSee Also\n--------\nHeatSystem : Defines heat system types (urban central, urban decentral, rural).\nbuild_heat_source_profiles : Calculates COP and utilisation profiles for heat sources.",
-              "enum": [
-                "geothermal",
-                "river_water",
-                "sea_water",
-                "air",
-                "ground",
-                "ptes"
-              ],
               "type": "string"
             },
             "type": "array"
           },
           "description": "Heat sources by heat system type. District-heating-only sources (`ptes`, `geothermal`, `river_water`, `sea_water`) are restricted to `urban central`. Allowed: urban central: any of {air, ptes, geothermal, river_water, sea_water}; urban decentral: ['air']; rural: ['air', 'ground'].",
-          "propertyNames": {
-            "description": "Enumeration representing different types of heat systems.",
-            "enum": [
-              "urban central",
-              "urban decentral",
-              "rural"
-            ],
-            "type": "string"
-          },
           "type": "object"
         },
         "residential_heat": {
