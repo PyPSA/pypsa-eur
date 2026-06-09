@@ -297,8 +297,8 @@ produce ``results/{run}/networks/solved_{horizon}.nc``. Downstream plotting and
 reporting stages such as :mod:`make_summary` consume these solved files  
 directly.  
 
-Rule overview
---------------
+Modules overview
+----------------
 
 - :mod:`compose_network`
 
