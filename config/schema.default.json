@@ -2474,6 +2474,38 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "phase_outs": {
+          "description": "National policy phase-outs capping conventional asset lifetimes by carrier and country (applied in perfect foresight).",
+          "items": {
+            "description": "A single national policy phase-out for conventional assets.",
+            "properties": {
+              "carriers": {
+                "description": "Carriers (e.g. nuclear, coal, lignite) subject to the phase-out.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "countries": {
+                "description": "Two-letter country codes to which the phase-out applies.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "year": {
+                "description": "Year by which the listed carriers are fully phased out.",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "carriers",
+              "countries",
+              "year"
+            ]
+          },
+          "type": "array"
         }
       }
     },
@@ -7383,6 +7415,34 @@
         }
       }
     },
+    "_PhaseOutConfig": {
+      "description": "A single national policy phase-out for conventional assets.",
+      "properties": {
+        "carriers": {
+          "description": "Carriers (e.g. nuclear, coal, lignite) subject to the phase-out.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "countries": {
+          "description": "Two-letter country codes to which the phase-out applies.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "year": {
+          "description": "Year by which the listed carriers are fully phased out.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "carriers",
+        "countries",
+        "year"
+      ]
+    },
     "_PostDiscretizationConfig": {
       "description": "Configuration for `solving.options.post_discretization` settings.",
       "properties": {
@@ -10670,6 +10730,38 @@
           "description": "List of conventional power plants to include in the sectoral network.",
           "items": {
             "type": "string"
+          },
+          "type": "array"
+        },
+        "phase_outs": {
+          "description": "National policy phase-outs capping conventional asset lifetimes by carrier and country (applied in perfect foresight).",
+          "items": {
+            "description": "A single national policy phase-out for conventional assets.",
+            "properties": {
+              "carriers": {
+                "description": "Carriers (e.g. nuclear, coal, lignite) subject to the phase-out.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "countries": {
+                "description": "Two-letter country codes to which the phase-out applies.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "year": {
+                "description": "Year by which the listed carriers are fully phased out.",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "carriers",
+              "countries",
+              "year"
+            ]
           },
           "type": "array"
         }

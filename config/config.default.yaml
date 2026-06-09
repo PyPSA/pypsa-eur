@@ -612,6 +612,60 @@ existing_capacities:
   - coal
   - oil
   - uranium
+  phase_outs:
+  - carriers:
+    - nuclear
+    countries:
+    - DE
+    year: 2022
+  - carriers:
+    - nuclear
+    countries:
+    - BE
+    year: 2025
+  - carriers:
+    - nuclear
+    countries:
+    - ES
+    year: 2027
+  - carriers:
+    - coal
+    - lignite
+    countries:
+    - DE
+    - DK
+    - FI
+    - HU
+    - SK
+    - GR
+    - IE
+    - NL
+    - RS
+    year: 2030
+  - carriers:
+    - coal
+    - lignite
+    countries:
+    - ES
+    year: 2027
+  - carriers:
+    - coal
+    - lignite
+    countries:
+    - FR
+    year: 2022
+  - carriers:
+    - coal
+    - lignite
+    countries:
+    - GB
+    year: 2024
+  - carriers:
+    - coal
+    - lignite
+    countries:
+    - IT
+    year: 2025
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:

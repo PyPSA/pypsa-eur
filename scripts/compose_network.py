@@ -29,6 +29,7 @@ from scripts.prepare_network import (
     maybe_adjust_costs_and_potentials,
 )
 from scripts.prepare_network import main as prepare_network_for_solving
+from scripts.prepare_perfect_foresight import apply_phase_outs
 from scripts.prepare_perfect_foresight import main as prepare_perfect_foresight
 from scripts.prepare_sector_network import (
     main as add_sector_components,
@@ -83,6 +84,7 @@ if __name__ == "__main__":
 
     if foresight == "perfect":
         n = prepare_perfect_foresight(n, n_previous, params, current_horizon)
+        apply_phase_outs(n, params.existing_capacities["phase_outs"], horizons)
 
     apply_co2_budget_constraints(
         n, inputs=inputs, params=params, nyears=nyears, current_horizon=current_horizon

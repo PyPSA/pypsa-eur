@@ -575,61 +575,37 @@ def adjust_stores_for_perfect_foresight(n: pypsa.Network) -> None:
     logger.info("Completed store cycling adjustments for perfect foresight")
 
 
-def set_phase_out(
-    n: pypsa.Network, carrier: list[str], ct: str, phase_out_year: int
+def apply_phase_outs(
+    n: pypsa.Network, phase_outs: list[dict], horizons: list[int]
 ) -> None:
     """
-    Set planned phase outs for given assets.
+    Cap conventional asset lifetimes to enforce national policy phase-outs.
 
-    Parameters
-    ----------
-    n : pypsa.Network
-        Network to adjust
-    carrier : list[str]
-        List of carrier names to phase out
-    ct : str
-        Two-letter country code
-    phase_out_year : int
-        Year when phase out should be complete
-
-    Returns
-    -------
-    None
-        Modifies network in place
+    For each phase-out rule, assets of the listed carriers located in the listed
+    countries that would otherwise operate beyond the phase-out year have their
+    lifetime shortened so they retire by that year. Assets retired before the
+    first planning horizon are removed. Applies to both generators
+    (electricity-only) and links (sector-coupled).
     """
-    df = n.links[(n.links.carrier.isin(carrier)) & (n.links.bus1.str[:2] == ct)]
-    # assets which are going to be phased out before end of their lifetime
-    assets_i = df[df[["build_year", "lifetime"]].sum(axis=1) > phase_out_year].index
-    build_year = n.links.loc[assets_i, "build_year"]
-    # adjust lifetime
-    n.links.loc[assets_i, "lifetime"] = (phase_out_year - build_year).astype(float)
 
+    def cap_lifetimes(static: pd.DataFrame, bus: str) -> None:
+        for rule in phase_outs:
+            country = static[bus].str[:2]
+            in_scope = static.carrier.isin(rule["carriers"]) & country.isin(
+                rule["countries"]
+            )
+            retires_late = static.build_year + static.lifetime > rule["year"]
+            assets = static.index[in_scope & retires_late]
+            static.loc[assets, "lifetime"] = (
+                rule["year"] - static.loc[assets, "build_year"]
+            ).astype(float)
 
-def set_all_phase_outs(n: pypsa.Network, years: list[int]) -> None:
-    # TODO move this to a csv or to the config
-    planned = [
-        (["nuclear"], "DE", 2022),
-        (["nuclear"], "BE", 2025),
-        (["nuclear"], "ES", 2027),
-        (["coal", "lignite"], "DE", 2030),
-        (["coal", "lignite"], "ES", 2027),
-        (["coal", "lignite"], "FR", 2022),
-        (["coal", "lignite"], "GB", 2024),
-        (["coal", "lignite"], "IT", 2025),
-        (["coal", "lignite"], "DK", 2030),
-        (["coal", "lignite"], "FI", 2030),
-        (["coal", "lignite"], "HU", 2030),
-        (["coal", "lignite"], "SK", 2030),
-        (["coal", "lignite"], "GR", 2030),
-        (["coal", "lignite"], "IE", 2030),
-        (["coal", "lignite"], "NL", 2030),
-        (["coal", "lignite"], "RS", 2030),
-    ]
-    for carrier, ct, phase_out_year in planned:
-        set_phase_out(n, carrier, ct, phase_out_year)
-    # remove assets which are already phased out
-    remove_i = n.links[n.links[["build_year", "lifetime"]].sum(axis=1) < years[0]].index
-    n.remove("Link", remove_i)
+    cap_lifetimes(n.generators, "bus")
+    cap_lifetimes(n.links, "bus1")
+
+    for component, static in [("Generator", n.generators), ("Link", n.links)]:
+        retired = static.index[static.build_year + static.lifetime < horizons[0]]
+        n.remove(component, retired)
 
 
 def set_carbon_constraints(
