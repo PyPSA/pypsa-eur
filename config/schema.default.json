@@ -4917,7 +4917,7 @@
               },
               "description": "CO2 pipeline transmission efficiency.",
               "type": "object"
-            },
+            }
           }
         },
         "H2_network": {
