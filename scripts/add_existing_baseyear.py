@@ -375,12 +375,16 @@ def add_power_capacities_installed_before_baseyear(
             # check for missing bus
             missing_bus = pd.Index(bus0).difference(n.buses.index)
             if not missing_bus.empty:
-                logger.info(f"add buses {bus0}")
+                logger.info(f"add buses {missing_bus}")
+                spatial_carrier = vars(spatial)[carrier[generator]]
+                locations = pd.Series(
+                    list(spatial_carrier.locations), index=list(spatial_carrier.nodes)
+                )
                 n.add(
                     "Bus",
-                    bus0,
+                    missing_bus,
                     carrier=generator,
-                    location=vars(spatial)[carrier[generator]].locations,
+                    location=locations[missing_bus].values,
                     unit="MWh_el",
                 )
 
@@ -794,7 +798,7 @@ def main(
     costs: pd.DataFrame,
 ) -> None:
     logger.info("Adding existing capacities")
-    baseyear = params.existing_capacities["baseyear"]
+    baseyear = params.horizons[0]
     renewable_carriers = set(params.renewable_carriers)
 
     options = params.sector

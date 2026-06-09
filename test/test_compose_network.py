@@ -2,13 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""Tests for selected functions in scripts/compose_network.py."""
+"""Tests for selected functions of the network composition pipeline."""
 
 import pandas as pd
 import pypsa
 
-from scripts.compose_network import (
-    adjust_renewable_capacity_limits,
+from scripts.add_brownfield import adjust_renewable_capacity_limits
+from scripts.prepare_perfect_foresight import (
     concatenate_network_with_previous,
     extend_snapshot_multiindex,
 )

@@ -61,12 +61,6 @@ existing_capacities:
   threshold_capacity: 0
   default_heating_lifetime: 20
   conventional_carriers: []
-  enabled: false
-
-  emission_prices:
-    enable: false
-    co2: 0.0
-    co2_monthly_prices: false
 
 atlite:
   default_cutout: be-03-2013-era5

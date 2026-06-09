@@ -75,10 +75,6 @@ class ExistingCapacitiesConfig(ConfigModel):
         20,
         description="Default lifetime for heating technologies (years).",
     )
-    baseyear: int = Field(
-        2020,
-        description="Base year for existing capacities.",
-    )
     solar_rooftop_ratio: float = Field(
         0.5,
         description="Ratio of existing solar capacity to assign to rooftop vs utility-scale (between 0 and 1).",

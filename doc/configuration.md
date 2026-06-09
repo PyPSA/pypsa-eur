@@ -789,8 +789,10 @@ Configuration for `solar_thermal` settings.
 
 Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect foresight scenarios.
 
-Activating `enabled` instructs [compose_network][] to merge the historical
-assets stored in `resources/powerplants.csv` into `networks/composed_{horizon}.nc`.
+In myopic and perfect foresight runs, [compose_network][] merges the historical
+assets stored in `resources/powerplants.csv` into `networks/composed_{horizon}.nc`
+at the first planning horizon, which also serves as the base year for existing
+capacities.
 
 Configuration for `existing_capacities` settings.
 

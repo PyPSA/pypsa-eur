@@ -64,7 +64,6 @@ existing_capacities:
   threshold_capacity: 0
   default_heating_lifetime: 20
   conventional_carriers: []
-  enabled: false
 
 costs:
   fill_values:
