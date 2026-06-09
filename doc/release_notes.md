@@ -5,6 +5,9 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+
+* Fix: Set transmission efficiencies for `gas pipeline new` and `CO2 pipeline` links by default, to ensure consistency with other link type carriers.
+
 * Security: SBOM security scan included in CI.
 
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
