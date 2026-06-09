@@ -46,14 +46,14 @@ class _PtesConfig(BaseModel):
         "from resistive heaters accordingly. The required boosting alpha is computed from the unified "
         "heat source utilisation profiles in `build_heat_source_profiles`.",
     )
-    top_temperature: float | Literal["forward"] = Field(
+    top_temperature: float | int | Literal["forward"] = Field(
         90,
         description="PTES top layer temperature in °C. When `top_temperature` falls below the nodal forward "
         "temperature, additional heating (boosting) is needed during discharge following a similar logic as "
         "for other heat sources. If set to 'forward', the PTES top temperature follows the forward temperature "
         "profile dynamically.",
     )
-    bottom_temperature: float | Literal["return"] = Field(
+    bottom_temperature: float | int | Literal["return"] = Field(
         35,
         description="PTES bottom layer temperature in °C. Can be set to 'return' to follow the return "
         "temperature profile dynamically.",
