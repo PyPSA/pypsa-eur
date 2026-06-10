@@ -358,8 +358,6 @@ rule build_geothermal_heat_potential:
         heat_source_power=resources(
             "heat_source_power_geothermal_base_s_{clusters}_{planning_horizons}.csv"
         ),
-    resources:
-        mem_mb=2000,
     log:
         logs(
             "build_heat_source_potentials_geothermal_s_{clusters}_{planning_horizons}.log"
@@ -368,6 +366,29 @@ rule build_geothermal_heat_potential:
         benchmarks(
             "build_heat_source_potentials/geothermal_s_{clusters}_{planning_horizons}"
         )
+    resources:
+        mem_mb=2000,
+    params:
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        countries=config_provider("countries"),
+        constant_temperature_celsius=config_provider(
+            "sector",
+            "district_heating",
+            "geothermal",
+            "constant_temperature_celsius",
+        ),
+        ignore_missing_regions=config_provider(
+            "sector",
+            "district_heating",
+            "limited_heat_sources",
+            "geothermal",
+            "ignore_missing_regions",
+        ),
+        heat_source_cooling=config_provider(
+            "sector", "district_heating", "heat_source_cooling"
+        ),
+    message:
+        "Building geothermal heat potential estimates for {wildcards.clusters} clusters"
     script:
         scripts("build_geothermal_heat_potential.py")
 
@@ -668,8 +689,14 @@ rule build_heat_source_profiles:
             "geothermal",
             "constant_temperature_celsius",
         ),
+    message:
+        "Building coefficient of performance (COP) profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+    script:
+        scripts("build_cop_profiles/run.py")
+
+
+rule build_ptes_operations:
     input:
-        unpack(input_heat_source_temperature),
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
@@ -737,30 +764,8 @@ rule build_ptes_operations:
             "ptes",
             "design_bottom_temperature",
         ),
-    input:
-        central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-    output:
-        ptes_top_temperature_profiles=resources(
-            "temp_ptes_top_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        ptes_e_max_pu_profiles=resources(
-            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        ptes_boost_per_discharge_profiles=resources(
-            "ptes_boost_per_discharge_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-    resources:
-        mem_mb=2000,
-    log:
-        logs("build_ptes_operations_s_{clusters}_{planning_horizons}.log"),
-    benchmark:
-        benchmarks("build_ptes_operations_s_{clusters}_{planning_horizons}")
+    message:
+        "Building thermal energy storage operations profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     script:
         scripts("build_ptes_operations/run.py")
 
