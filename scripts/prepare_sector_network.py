@@ -1549,7 +1549,7 @@ def insert_electricity_distribution_grid(
     - Resistive heaters
     - Micro-CHP units
     """
-    nodes = n.buses.query("carrier == 'AC'").index
+    nodes = n.buses.query("carrier in ['AC', 'DC']").index
 
     n.add(
         "Bus",
