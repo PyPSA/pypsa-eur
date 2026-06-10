@@ -506,6 +506,7 @@ load:
 pypsa_eur:
   Bus:
   - AC
+  - DC
   Link:
   - DC
   Generator:
