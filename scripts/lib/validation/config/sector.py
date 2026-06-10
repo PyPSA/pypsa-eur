@@ -44,16 +44,16 @@ class _PtesConfig(BaseModel):
         "`prepare_sector_network` then adds the links `<node> urban central water pits resistive booster` "
         "and `<node> urban central water pits resistive heater stand-alone` and reroutes heat generation "
         "from resistive heaters accordingly. The required boosting alpha is computed from the unified "
-        "heat source utilisation profiles in `build_heat_source_utilisation_profiles`.",
+        "heat source utilisation profiles in `build_heat_source_profiles`.",
     )
-    top_temperature: float | Literal["forward"] = Field(
+    top_temperature: float | int | Literal["forward"] = Field(
         90,
         description="PTES top layer temperature in °C. When `top_temperature` falls below the nodal forward "
         "temperature, additional heating (boosting) is needed during discharge following a similar logic as "
         "for other heat sources. If set to 'forward', the PTES top temperature follows the forward temperature "
         "profile dynamically.",
     )
-    bottom_temperature: float | Literal["return"] = Field(
+    bottom_temperature: float | int | Literal["return"] = Field(
         35,
         description="PTES bottom layer temperature in °C. Can be set to 'return' to follow the return "
         "temperature profile dynamically.",
@@ -166,6 +166,14 @@ class _DistrictHeatingConfig(ConfigModel):
     )
     heat_source_cooling: float = Field(
         6, description="Cooling of heat source for heat pumps."
+    )
+    heat_pump_cooling_iterative: bool = Field(
+        True,
+        description="Solve the source-side heat pump cooling iteratively for preheating sources (PTES, geothermal). If false, use the flat `heat_source_cooling` value for all sources.",
+    )
+    log_heat_pump_cooling_iterations: bool = Field(
+        False,
+        description="Write the full per-node, per-timestep heat pump cooling iteration trace to a CSV for debugging.",
     )
     heat_pump_cop_approximation: dict[str, Any] = Field(
         default_factory=lambda: {
@@ -466,15 +474,15 @@ class SectorConfig(BaseModel):
         description="District heating configuration.",
     )
 
-    heat_sources: dict[HeatSystemType, list[HeatSource]] = Field(
+    heat_sources: dict[str, list[str]] = Field(
         default_factory=lambda: {
-            HeatSystemType.URBAN_CENTRAL: [
-                HeatSource.AIR,
-                HeatSource.PTES,
-                HeatSource.GEOTHERMAL,
+            HeatSystemType.URBAN_CENTRAL.value: [
+                HeatSource.AIR.value,
+                HeatSource.PTES.value,
+                HeatSource.GEOTHERMAL.value,
             ],
-            HeatSystemType.URBAN_DECENTRAL: [HeatSource.AIR],
-            HeatSystemType.RURAL: [HeatSource.AIR, HeatSource.GROUND],
+            HeatSystemType.URBAN_DECENTRAL.value: [HeatSource.AIR.value],
+            HeatSystemType.RURAL.value: [HeatSource.AIR.value, HeatSource.GROUND.value],
         },
         description=(
             "Heat sources by heat system type. "

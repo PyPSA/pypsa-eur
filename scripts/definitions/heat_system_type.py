@@ -5,7 +5,7 @@
 from enum import Enum
 
 
-class HeatSystemType(Enum):
+class HeatSystemType(str, Enum):
     """
     Enumeration representing different types of heat systems.
     """

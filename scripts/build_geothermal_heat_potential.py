@@ -47,6 +47,7 @@ Inputs
 - ``resources/<run_name>/central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``: Forward temperature profiles
 - ``resources/<run_name>/central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``: Return temperature profiles
 - ``data/lau_regions.zip``: LAU region geometries
+- ``resources/<run_name>/heat_source_cooling_profiles_base_s_{clusters}_{planning_horizons}.nc``: Heat source cooling profiles (K) applied by the heat pump to preheating sources. If not available, the constant value from the config is used.
 
 Outputs
 -------
@@ -100,7 +101,7 @@ def scale_heat_source_power(
     forward_temperature: xr.DataArray,
     return_temperature: xr.DataArray,
     source_temperature: float,
-    heat_source_cooling: float,
+    heat_source_cooling: xr.DataArray,
 ) -> xr.DataArray:
     """
     Scale heat source power based on temperature differences.
@@ -127,8 +128,8 @@ def scale_heat_source_power(
         Return temperature profiles [°C]. Dims: (name,).
     source_temperature : float
         Constant geothermal source temperature [°C].
-    heat_source_cooling : float
-        Temperature drop in heat source when extracting heat via heat pump [K].
+    heat_source_cooling : xr.DataArray
+        Temperature drop in heat source when extracting heat via heat pump [K]. Dims: (time, name).
 
     Returns
     -------
@@ -346,6 +347,11 @@ if __name__ == "__main__":
     regions_onshore.index = regions_onshore.name
     regions_onshore.drop(columns=["name"], inplace=True)
 
+    # get heat source cooling profiles
+    heat_source_cooling = xr.open_dataarray(
+        snakemake.input.heat_source_cooling_profiles
+    ).sel(heat_source="geothermal", heat_system="urban central")
+
     # get LAU regions and index them by LAU-ID
     lau_regions = gpd.read_file(
         f"{snakemake.input.lau_regions}!LAU_RG_01M_2019_3035.geojson",
@@ -407,7 +413,7 @@ if __name__ == "__main__":
         forward_temperature=forward_temperature,
         return_temperature=return_temperature,
         source_temperature=snakemake.params.constant_temperature_celsius,
-        heat_source_cooling=snakemake.params.heat_source_cooling,
+        heat_source_cooling=heat_source_cooling,
     )
 
     # Convert to DataFrame (time x regions) and save as CSV

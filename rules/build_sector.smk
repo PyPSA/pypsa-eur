@@ -333,6 +333,9 @@ rule build_geothermal_heat_potential:
             "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         lau_regions=rules.retrieve_lau_regions.output["zip"],
+        heat_source_cooling_profiles=resources(
+            "heat_source_cooling_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
     output:
         heat_source_power=resources(
             "heat_source_power_geothermal_base_s_{clusters}_{planning_horizons}.csv"
@@ -362,9 +365,6 @@ rule build_geothermal_heat_potential:
             "limited_heat_sources",
             "geothermal",
             "ignore_missing_regions",
-        ),
-        heat_source_cooling=config_provider(
-            "sector", "district_heating", "heat_source_cooling"
         ),
     message:
         "Building geothermal heat potential estimates for {wildcards.clusters} clusters"
@@ -641,7 +641,7 @@ rule build_sea_heat_potential:
         scripts("build_surface_water_heat_potentials/build_sea_water_heat_potential.py")
 
 
-rule build_cop_profiles:
+rule build_heat_source_profiles:
     input:
         unpack(input_heat_source_temperature),
         central_heating_forward_temperature_profiles=resources(
@@ -653,27 +653,39 @@ rule build_cop_profiles:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
+        heat_source_direct_utilisation_profiles=resources(
+            "heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        heat_source_preheater_utilisation_profiles=resources(
+            "heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        heat_source_cooling_profiles=resources(
+            "heat_source_cooling_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
     log:
-        logs("build_cop_profiles_s_{clusters}_{planning_horizons}.log"),
+        logs("build_heat_source_profiles_s_{clusters}_{planning_horizons}.log"),
     benchmark:
-        benchmarks("build_cop_profiles/s_{clusters}_{planning_horizons}")
+        benchmarks("build_heat_source_profiles/s_{clusters}_{planning_horizons}")
     resources:
         mem_mb=20000,
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
             "sector", "heat_pump_sink_T_individual_heating"
         ),
-        heat_source_cooling_central_heating=config_provider(
+        heat_source_cooling=config_provider(
             "sector", "district_heating", "heat_source_cooling"
+        ),
+        heat_pump_cooling_iterative=config_provider(
+            "sector", "district_heating", "heat_pump_cooling_iterative"
         ),
         heat_pump_cop_approximation_central_heating=config_provider(
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
         heat_sources=config_provider("sector", "heat_sources"),
-        heat_source_temperatures=config_provider(
-            "sector", "district_heating", "heat_source_temperatures"
-        ),
         snapshots=config_provider("snapshots"),
+        log_heat_pump_cooling_iterations=config_provider(
+            "sector", "district_heating", "log_heat_pump_cooling_iterations"
+        ),
         constant_temperature_geothermal=config_provider(
             "sector",
             "district_heating",
@@ -681,9 +693,9 @@ rule build_cop_profiles:
             "constant_temperature_celsius",
         ),
     message:
-        "Building coefficient of performance (COP) profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+        "Building heat pump COP and heat source utilisation profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     script:
-        scripts("build_cop_profiles/run.py")
+        scripts("build_heat_source_profiles/run.py")
 
 
 rule build_ptes_operations:
@@ -750,54 +762,6 @@ rule build_ptes_operations:
         "Building thermal energy storage operations profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     script:
         scripts("build_ptes_operations/run.py")
-
-
-rule build_heat_source_utilisation_profiles:
-    input:
-        unpack(input_heat_source_temperature),
-        central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-    output:
-        heat_source_direct_utilisation_profiles=resources(
-            "heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        heat_source_preheater_utilisation_profiles=resources(
-            "heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-    log:
-        logs(
-            "build_heat_source_utilisation_profiles_s_{clusters}_{planning_horizons}.log"
-        ),
-    benchmark:
-        benchmarks(
-            "build_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}"
-        )
-    resources:
-        mem_mb=20000,
-    params:
-        heat_sources=config_provider("sector", "heat_sources", "urban central"),
-        heat_source_cooling=config_provider(
-            "sector", "district_heating", "heat_source_cooling"
-        ),
-        snapshots=config_provider("snapshots"),
-        heat_source_temperatures=config_provider(
-            "sector", "district_heating", "heat_source_temperatures"
-        ),
-        ptes_enable=config_provider("sector", "district_heating", "ptes", "enable"),
-        constant_temperature_geothermal=config_provider(
-            "sector",
-            "district_heating",
-            "geothermal",
-            "constant_temperature_celsius",
-        ),
-    message:
-        "Building heat source utilization profiles for district heating for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
-    script:
-        scripts("build_heat_source_utilisation_profiles.py")
 
 
 rule build_solar_thermal_profiles:

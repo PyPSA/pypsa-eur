@@ -4198,9 +4198,69 @@
               "type": "object"
             },
             "ptes": {
-              "additionalProperties": true,
-              "description": "Pit thermal energy storage settings.",
-              "type": "object"
+              "description": "Configuration for `sector.district_heating.ptes` settings.\n\nPit thermal energy storage [PTES] settings. PTES is used only in district heating.\nSee `prepare_sector_network <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-prepare_sector_network>`_\nand `build_ptes_operations <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ptes_operations>`_.",
+              "markdownDescription": "Configuration for `sector.district_heating.ptes` settings.\n\nPit thermal energy storage [PTES] settings. PTES is used only in district heating.\nSee [prepare_sector_network ](https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-prepare_sector_network)\nand [build_ptes_operations ](https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ptes_operations).",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Enable PTES. The function `add_heat()` in `prepare_sector_network` then adds the stores `<node> urban central water pits` as well as the links `<node> urban central water pits charger` and `<node> urban central water pits discharger`. Important note: PTES discharge must be boosted when its top temperature is below the network forward temperature. This requires adding PTES as a heat source in urban central heating.",
+                  "type": "boolean"
+                },
+                "temperature_dependent_capacity": {
+                  "default": false,
+                  "description": "If True, the p.u. - energy capacity `e_max_pu` is scaled as `(top_temperature - bottom_temperature) / (design_top_temperature - design_bottom_temperature)`. See `build_ptes_operations`.",
+                  "type": "boolean"
+                },
+                "discharge_resistive_boosting": {
+                  "default": false,
+                  "description": "If True, enables boosting by resistive heaters instead of heat pumps. `prepare_sector_network` then adds the links `<node> urban central water pits resistive booster` and `<node> urban central water pits resistive heater stand-alone` and reroutes heat generation from resistive heaters accordingly. The required boosting alpha is computed from the unified heat source utilisation profiles in `build_heat_source_profiles`.",
+                  "type": "boolean"
+                },
+                "top_temperature": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "const": "forward",
+                      "type": "string"
+                    }
+                  ],
+                  "default": 90,
+                  "description": "PTES top layer temperature in \u00b0C. When `top_temperature` falls below the nodal forward temperature, additional heating (boosting) is needed during discharge following a similar logic as for other heat sources. If set to 'forward', the PTES top temperature follows the forward temperature profile dynamically."
+                },
+                "bottom_temperature": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "const": "return",
+                      "type": "string"
+                    }
+                  ],
+                  "default": 35,
+                  "description": "PTES bottom layer temperature in \u00b0C. Can be set to 'return' to follow the return temperature profile dynamically."
+                },
+                "design_top_temperature": {
+                  "default": 90,
+                  "description": "Design top temperature in \u00b0C for capacity calculation.",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                },
+                "design_bottom_temperature": {
+                  "default": 35,
+                  "description": "Design bottom temperature in \u00b0C for capacity calculation.",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
             },
             "ates": {
               "additionalProperties": true,
@@ -4212,46 +4272,41 @@
               "description": "Cooling of heat source for heat pumps.",
               "type": "number"
             },
+            "heat_pump_cooling_iterative": {
+              "default": true,
+              "description": "Solve the source-side heat pump cooling iteratively for preheating sources (PTES, geothermal). If false, use the flat `heat_source_cooling` value for all sources.",
+              "type": "boolean"
+            },
+            "log_heat_pump_cooling_iterations": {
+              "default": false,
+              "description": "Write the full per-node, per-timestep heat pump cooling iteration trace to a CSV for debugging.",
+              "type": "boolean"
+            },
             "heat_pump_cop_approximation": {
               "additionalProperties": true,
               "description": "Heat pump COP approximation settings.",
               "type": "object"
             },
-            "limited_heat_sources": {
-              "additionalProperties": true,
-              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
-              "markdownDescription": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024 ](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
-              "type": "object"
-            },
-            "direct_utilisation_heat_sources": {
-              "description": "List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. `geothermal`).",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "temperature_limited_stores": {
-              "description": "List of names for stores used as limited heat sources.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
             "dh_areas": {
               "additionalProperties": true,
               "description": "District heating areas settings.",
               "type": "object"
+            },
+            "geothermal": {
+              "additionalProperties": true,
+              "description": "Geothermal heat source configuration. Settings: 'constant_temperature_celsius' specifies the assumed constant temperature of geothermal heat (default 65\u00b0C). When geothermal is included in `heat_sources`, this temperature determines whether heat can be used directly (T_source > T_forward) and if not, the ratio for preheating (T_return < T_source < T_forward) and boosting via heat pumps.",
+              "type": "object"
             }
           }
         },
-        "heat_pump_sources": {
+        "heat_sources": {
           "additionalProperties": {
             "items": {
               "type": "string"
             },
             "type": "array"
           },
-          "description": "Heat pump sources by area.",
+          "description": "Heat sources by heat system type. District-heating-only sources (`ptes`, `geothermal`, `river_water`, `sea_water`) are restricted to `urban central`. Allowed: urban central: any of {air, ptes, geothermal, river_water, sea_water}; urban decentral: ['air']; rural: ['air', 'ground'].",
           "type": "object"
         },
         "residential_heat": {
@@ -4545,7 +4600,7 @@
         },
         "ttes": {
           "default": true,
-          "description": "Enable tank thermal energy storage (TTES) in district heating and individual heating.",
+          "description": "Enable tank thermal energy storage (TTES) in district heating and individual heating. ",
           "type": "boolean"
         },
         "boilers": {
@@ -6290,9 +6345,69 @@
           "type": "object"
         },
         "ptes": {
-          "additionalProperties": true,
-          "description": "Pit thermal energy storage settings.",
-          "type": "object"
+          "description": "Configuration for `sector.district_heating.ptes` settings.\n\nPit thermal energy storage [PTES] settings. PTES is used only in district heating.\nSee `prepare_sector_network <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-prepare_sector_network>`_\nand `build_ptes_operations <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ptes_operations>`_.",
+          "markdownDescription": "Configuration for `sector.district_heating.ptes` settings.\n\nPit thermal energy storage [PTES] settings. PTES is used only in district heating.\nSee [prepare_sector_network ](https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-prepare_sector_network)\nand [build_ptes_operations ](https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ptes_operations).",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Enable PTES. The function `add_heat()` in `prepare_sector_network` then adds the stores `<node> urban central water pits` as well as the links `<node> urban central water pits charger` and `<node> urban central water pits discharger`. Important note: PTES discharge must be boosted when its top temperature is below the network forward temperature. This requires adding PTES as a heat source in urban central heating.",
+              "type": "boolean"
+            },
+            "temperature_dependent_capacity": {
+              "default": false,
+              "description": "If True, the p.u. - energy capacity `e_max_pu` is scaled as `(top_temperature - bottom_temperature) / (design_top_temperature - design_bottom_temperature)`. See `build_ptes_operations`.",
+              "type": "boolean"
+            },
+            "discharge_resistive_boosting": {
+              "default": false,
+              "description": "If True, enables boosting by resistive heaters instead of heat pumps. `prepare_sector_network` then adds the links `<node> urban central water pits resistive booster` and `<node> urban central water pits resistive heater stand-alone` and reroutes heat generation from resistive heaters accordingly. The required boosting alpha is computed from the unified heat source utilisation profiles in `build_heat_source_profiles`.",
+              "type": "boolean"
+            },
+            "top_temperature": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "const": "forward",
+                  "type": "string"
+                }
+              ],
+              "default": 90,
+              "description": "PTES top layer temperature in \u00b0C. When `top_temperature` falls below the nodal forward temperature, additional heating (boosting) is needed during discharge following a similar logic as for other heat sources. If set to 'forward', the PTES top temperature follows the forward temperature profile dynamically."
+            },
+            "bottom_temperature": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "const": "return",
+                  "type": "string"
+                }
+              ],
+              "default": 35,
+              "description": "PTES bottom layer temperature in \u00b0C. Can be set to 'return' to follow the return temperature profile dynamically."
+            },
+            "design_top_temperature": {
+              "default": 90,
+              "description": "Design top temperature in \u00b0C for capacity calculation.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "design_bottom_temperature": {
+              "default": 35,
+              "description": "Design bottom temperature in \u00b0C for capacity calculation.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
         },
         "ates": {
           "additionalProperties": true,
@@ -6304,34 +6419,29 @@
           "description": "Cooling of heat source for heat pumps.",
           "type": "number"
         },
+        "heat_pump_cooling_iterative": {
+          "default": true,
+          "description": "Solve the source-side heat pump cooling iteratively for preheating sources (PTES, geothermal). If false, use the flat `heat_source_cooling` value for all sources.",
+          "type": "boolean"
+        },
+        "log_heat_pump_cooling_iterations": {
+          "default": false,
+          "description": "Write the full per-node, per-timestep heat pump cooling iteration trace to a CSV for debugging.",
+          "type": "boolean"
+        },
         "heat_pump_cop_approximation": {
           "additionalProperties": true,
           "description": "Heat pump COP approximation settings.",
           "type": "object"
         },
-        "limited_heat_sources": {
-          "additionalProperties": true,
-          "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
-          "markdownDescription": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024 ](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
-          "type": "object"
-        },
-        "direct_utilisation_heat_sources": {
-          "description": "List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. `geothermal`).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "temperature_limited_stores": {
-          "description": "List of names for stores used as limited heat sources.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "dh_areas": {
           "additionalProperties": true,
           "description": "District heating areas settings.",
+          "type": "object"
+        },
+        "geothermal": {
+          "additionalProperties": true,
+          "description": "Geothermal heat source configuration. Settings: 'constant_temperature_celsius' specifies the assumed constant temperature of geothermal heat (default 65\u00b0C). When geothermal is included in `heat_sources`, this temperature determines whether heat can be used directly (T_source > T_forward) and if not, the ratio for preheating (T_return < T_source < T_forward) and boosting via heat pumps.",
           "type": "object"
         }
       }
@@ -7437,6 +7547,71 @@
           ],
           "default": null,
           "description": "Path to a temporary directory where intermediate files are stored when building the cutout. Helpful when building large cutouts."
+        }
+      }
+    },
+    "_PtesConfig": {
+      "description": "Configuration for `sector.district_heating.ptes` settings.\n\nPit thermal energy storage [PTES] settings. PTES is used only in district heating.\nSee `prepare_sector_network <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-prepare_sector_network>`_\nand `build_ptes_operations <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ptes_operations>`_.",
+      "markdownDescription": "Configuration for `sector.district_heating.ptes` settings.\n\nPit thermal energy storage [PTES] settings. PTES is used only in district heating.\nSee [prepare_sector_network ](https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-prepare_sector_network)\nand [build_ptes_operations ](https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ptes_operations).",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Enable PTES. The function `add_heat()` in `prepare_sector_network` then adds the stores `<node> urban central water pits` as well as the links `<node> urban central water pits charger` and `<node> urban central water pits discharger`. Important note: PTES discharge must be boosted when its top temperature is below the network forward temperature. This requires adding PTES as a heat source in urban central heating.",
+          "type": "boolean"
+        },
+        "temperature_dependent_capacity": {
+          "default": false,
+          "description": "If True, the p.u. - energy capacity `e_max_pu` is scaled as `(top_temperature - bottom_temperature) / (design_top_temperature - design_bottom_temperature)`. See `build_ptes_operations`.",
+          "type": "boolean"
+        },
+        "discharge_resistive_boosting": {
+          "default": false,
+          "description": "If True, enables boosting by resistive heaters instead of heat pumps. `prepare_sector_network` then adds the links `<node> urban central water pits resistive booster` and `<node> urban central water pits resistive heater stand-alone` and reroutes heat generation from resistive heaters accordingly. The required boosting alpha is computed from the unified heat source utilisation profiles in `build_heat_source_profiles`.",
+          "type": "boolean"
+        },
+        "top_temperature": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "const": "forward",
+              "type": "string"
+            }
+          ],
+          "default": 90,
+          "description": "PTES top layer temperature in \u00b0C. When `top_temperature` falls below the nodal forward temperature, additional heating (boosting) is needed during discharge following a similar logic as for other heat sources. If set to 'forward', the PTES top temperature follows the forward temperature profile dynamically."
+        },
+        "bottom_temperature": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "const": "return",
+              "type": "string"
+            }
+          ],
+          "default": 35,
+          "description": "PTES bottom layer temperature in \u00b0C. Can be set to 'return' to follow the return temperature profile dynamically."
+        },
+        "design_top_temperature": {
+          "default": 90,
+          "description": "Design top temperature in \u00b0C for capacity calculation.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "design_bottom_temperature": {
+          "default": 35,
+          "description": "Design bottom temperature in \u00b0C for capacity calculation.",
+          "exclusiveMinimum": 0,
+          "type": "number"
         }
       }
     },
@@ -10661,9 +10836,69 @@
               "type": "object"
             },
             "ptes": {
-              "additionalProperties": true,
-              "description": "Pit thermal energy storage settings.",
-              "type": "object"
+              "description": "Configuration for `sector.district_heating.ptes` settings.\n\nPit thermal energy storage [PTES] settings. PTES is used only in district heating.\nSee `prepare_sector_network <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-prepare_sector_network>`_\nand `build_ptes_operations <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ptes_operations>`_.",
+              "markdownDescription": "Configuration for `sector.district_heating.ptes` settings.\n\nPit thermal energy storage [PTES] settings. PTES is used only in district heating.\nSee [prepare_sector_network ](https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-prepare_sector_network)\nand [build_ptes_operations ](https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ptes_operations).",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Enable PTES. The function `add_heat()` in `prepare_sector_network` then adds the stores `<node> urban central water pits` as well as the links `<node> urban central water pits charger` and `<node> urban central water pits discharger`. Important note: PTES discharge must be boosted when its top temperature is below the network forward temperature. This requires adding PTES as a heat source in urban central heating.",
+                  "type": "boolean"
+                },
+                "temperature_dependent_capacity": {
+                  "default": false,
+                  "description": "If True, the p.u. - energy capacity `e_max_pu` is scaled as `(top_temperature - bottom_temperature) / (design_top_temperature - design_bottom_temperature)`. See `build_ptes_operations`.",
+                  "type": "boolean"
+                },
+                "discharge_resistive_boosting": {
+                  "default": false,
+                  "description": "If True, enables boosting by resistive heaters instead of heat pumps. `prepare_sector_network` then adds the links `<node> urban central water pits resistive booster` and `<node> urban central water pits resistive heater stand-alone` and reroutes heat generation from resistive heaters accordingly. The required boosting alpha is computed from the unified heat source utilisation profiles in `build_heat_source_profiles`.",
+                  "type": "boolean"
+                },
+                "top_temperature": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "const": "forward",
+                      "type": "string"
+                    }
+                  ],
+                  "default": 90,
+                  "description": "PTES top layer temperature in \u00b0C. When `top_temperature` falls below the nodal forward temperature, additional heating (boosting) is needed during discharge following a similar logic as for other heat sources. If set to 'forward', the PTES top temperature follows the forward temperature profile dynamically."
+                },
+                "bottom_temperature": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "const": "return",
+                      "type": "string"
+                    }
+                  ],
+                  "default": 35,
+                  "description": "PTES bottom layer temperature in \u00b0C. Can be set to 'return' to follow the return temperature profile dynamically."
+                },
+                "design_top_temperature": {
+                  "default": 90,
+                  "description": "Design top temperature in \u00b0C for capacity calculation.",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                },
+                "design_bottom_temperature": {
+                  "default": 35,
+                  "description": "Design bottom temperature in \u00b0C for capacity calculation.",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
             },
             "ates": {
               "additionalProperties": true,
@@ -10675,46 +10910,41 @@
               "description": "Cooling of heat source for heat pumps.",
               "type": "number"
             },
+            "heat_pump_cooling_iterative": {
+              "default": true,
+              "description": "Solve the source-side heat pump cooling iteratively for preheating sources (PTES, geothermal). If false, use the flat `heat_source_cooling` value for all sources.",
+              "type": "boolean"
+            },
+            "log_heat_pump_cooling_iterations": {
+              "default": false,
+              "description": "Write the full per-node, per-timestep heat pump cooling iteration trace to a CSV for debugging.",
+              "type": "boolean"
+            },
             "heat_pump_cop_approximation": {
               "additionalProperties": true,
               "description": "Heat pump COP approximation settings.",
               "type": "object"
             },
-            "limited_heat_sources": {
-              "additionalProperties": true,
-              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
-              "markdownDescription": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024 ](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
-              "type": "object"
-            },
-            "direct_utilisation_heat_sources": {
-              "description": "List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. `geothermal`).",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "temperature_limited_stores": {
-              "description": "List of names for stores used as limited heat sources.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
             "dh_areas": {
               "additionalProperties": true,
               "description": "District heating areas settings.",
               "type": "object"
+            },
+            "geothermal": {
+              "additionalProperties": true,
+              "description": "Geothermal heat source configuration. Settings: 'constant_temperature_celsius' specifies the assumed constant temperature of geothermal heat (default 65\u00b0C). When geothermal is included in `heat_sources`, this temperature determines whether heat can be used directly (T_source > T_forward) and if not, the ratio for preheating (T_return < T_source < T_forward) and boosting via heat pumps.",
+              "type": "object"
             }
           }
         },
-        "heat_pump_sources": {
+        "heat_sources": {
           "additionalProperties": {
             "items": {
               "type": "string"
             },
             "type": "array"
           },
-          "description": "Heat pump sources by area.",
+          "description": "Heat sources by heat system type. District-heating-only sources (`ptes`, `geothermal`, `river_water`, `sea_water`) are restricted to `urban central`. Allowed: urban central: any of {air, ptes, geothermal, river_water, sea_water}; urban decentral: ['air']; rural: ['air', 'ground'].",
           "type": "object"
         },
         "residential_heat": {
@@ -11008,7 +11238,7 @@
         },
         "ttes": {
           "default": true,
-          "description": "Enable tank thermal energy storage (TTES) in district heating and individual heating.",
+          "description": "Enable tank thermal energy storage (TTES) in district heating and individual heating. ",
           "type": "boolean"
         },
         "boilers": {

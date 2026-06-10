@@ -9,6 +9,8 @@ Release Notes
 .. Upcoming Release
 .. =================
 
+* feat: Introduce iterative solution for COP and heat-source-side cooling for pre-heating source in district heating
+
 * feat: Update heat source handling in `prepare_sector_network` and introduce preheating of heat sources for more realistic system integrations (https://github.com/PyPSA/pypsa-eur/pull/1893).
 
 * Fix: ``atlite.plot_availability_matrix`` config option for :mod:`determine_availability_matrix` and :mod:`determine_availability_matrix_MD_UA` scripts, changed their output and behaviour to align consistently (https://github.com/PyPSA/pypsa-eur/pull/2173).
