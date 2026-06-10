@@ -666,11 +666,6 @@ if __name__ == "__main__":
     mode = params.mode
     solver_name = snakemake.config["solving"]["solver"]["name"]
 
-    simplified_busmap = pd.read_csv(
-        snakemake.input.simplified_busmap, index_col=0
-    ).squeeze()
-    simplified_busmap = sanitize_busmap(simplified_busmap)
-
     n_clusters_value = params.n_clusters
     if isinstance(n_clusters_value, str) and n_clusters_value.lower() == "all":
         n_clusters_value = "all"
@@ -772,8 +767,8 @@ if __name__ == "__main__":
     if snakemake.params.copperplate_regions:
         copperplate_buses(nc, snakemake.params.copperplate_regions)
 
-    for attr in ["busmap", "linemap"]:
-        getattr(clustering, attr).to_csv(snakemake.output[attr])
+    cluster_busmap.to_csv(snakemake.output.busmap)
+    clustering.linemap.to_csv(snakemake.output.linemap)
 
     # nc.shapes = n.shapes.copy()
     for which in ["onshore_regions", "offshore_regions"]:

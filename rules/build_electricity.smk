@@ -725,7 +725,6 @@ rule cluster_network:
     input:
         unpack(input_custom_busmap),
         network=resources("networks/simplified.nc"),
-        simplified_busmap=resources("busmap_simplify_network.csv"),
         admin_shapes=resources("admin_shapes.geojson"),
         bidding_zones=lambda w: (
             resources("bidding_zones.geojson")
@@ -796,7 +795,7 @@ rule chain_busmaps:
 rule cluster_electricity_demand:
     input:
         load=resources("electricity_demand_simplified.nc"),
-        busmap=resources("busmap.csv"),
+        busmap=resources("busmap_cluster_network.csv"),
     output:
         resources("electricity_demand.nc"),
     log:

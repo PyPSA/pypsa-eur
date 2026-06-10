@@ -5,8 +5,8 @@
 Aggregate simplified electricity demand to clustered resolution.
 
 Maps the per-bus demand of ``electricity_demand_simplified.nc`` onto the
-clustered network buses using ``busmap.csv``, so ``compose_network`` can attach
-the load directly without a clustering step.
+clustered network buses using ``busmap_cluster_network.csv``, so
+``compose_network`` can attach the load directly without a clustering step.
 """
 
 import logging

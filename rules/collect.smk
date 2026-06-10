@@ -32,6 +32,10 @@ rule cluster_networks:
             resources("networks/clustered.nc"),
             run=config["run"]["name"],
         ),
+        expand(
+            resources("busmap.csv"),
+            run=config["run"]["name"],
+        ),
     message:
         "Collecting clustered network files"
 
