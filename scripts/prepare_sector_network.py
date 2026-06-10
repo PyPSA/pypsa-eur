@@ -361,18 +361,8 @@ def add_lifetime_wind_solar(n, costs):
 
 
 def haversine(p, n):
-    def _coords(name):
-        # try bus index first
-        if name in n.buses.index:
-            return n.buses.loc[name, ["x", "y"]].values
-        # fall back to matching the location column
-        matches = n.buses.index[n.buses.location == name]
-        if len(matches) > 0:
-            return n.buses.loc[matches[0], ["x", "y"]].values
-        raise KeyError(f"Bus or location '{name}' not found in network buses")
-
-    coord0 = _coords(p.bus0)
-    coord1 = _coords(p.bus1)
+    coord0 = n.buses.loc[p.bus0, ["x", "y"]].values
+    coord1 = n.buses.loc[p.bus1, ["x", "y"]].values
     return 1.5 * haversine_pts(coord0, coord1)
 
 
