@@ -339,9 +339,6 @@ rule build_geothermal_heat_potential:
             "geothermal",
             "ignore_missing_regions",
         ),
-        heat_source_cooling=config_provider(
-            "sector", "district_heating", "heat_source_cooling"
-        ),
     input:
         isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output[
             "isi_heat_potentials"
@@ -354,6 +351,9 @@ rule build_geothermal_heat_potential:
             "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         lau_regions=rules.retrieve_lau_regions.output["zip"],
+        heat_source_cooling_profiles=resources(
+            "heat_source_cooling_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
     output:
         heat_source_power=resources(
             "heat_source_power_geothermal_base_s_{clusters}_{planning_horizons}.csv"
@@ -684,6 +684,9 @@ rule build_heat_source_profiles:
         ),
         heat_source_preheater_utilisation_profiles=resources(
             "heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        heat_source_cooling_profiles=resources(
+            "heat_source_cooling_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
     resources:
         mem_mb=20000,

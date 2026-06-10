@@ -57,6 +57,7 @@ Outputs
 - ``cop_profiles``: COP indexed by (time, name, heat_source, heat_system).
 - ``heat_source_direct_utilisation_profiles``: 1 where T_source >= T_forward.
 - ``heat_source_preheater_utilisation_profiles``: preheater efficiency in [0, 1].
+- ``heat_source_cooling_profiles``: source-side cooling applied by the heat pump to preheating sources (K).
 
 With ``log_heat_pump_cooling_iterations`` enabled, the per-iteration cooling
 solve is also written to ``heat_pump_cooling_iterations_*.csv`` for inspection.
@@ -123,7 +124,6 @@ def get_source_temperature(
                 f"Missing input temperature for heat source {heat_source_name}."
             )
         return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
-
 
 
 def get_cop(
@@ -424,6 +424,7 @@ if __name__ == "__main__":
     central_heat_pump_cooling: dict[str, float | xr.DataArray] = {}
 
     cop_all_system_types = []
+    heat_pump_cooling_all_system_types = []
     for heat_system_type, system_heat_sources in snakemake.params.heat_sources.items():
         if not system_heat_sources:
             cop_all_system_types.append(
@@ -431,9 +432,15 @@ if __name__ == "__main__":
                     heat_source=pd.Index([], name="heat_source")
                 ).isel(heat_source=slice(0, 0))
             )
+            heat_pump_cooling_all_system_types.append(
+                central_heating_forward_temperature.expand_dims(
+                    heat_source=pd.Index([], name="heat_source")
+                ).isel(heat_source=slice(0, 0))
+            )
             continue
 
         cop_this_system_type = []
+        heat_pump_cooling_this_system_type = []
         for heat_source_name in system_heat_sources:
             source_temperature = get_source_temperature(
                 snakemake_params=snakemake.params,
@@ -459,7 +466,10 @@ if __name__ == "__main__":
                     iteration_log=cooling_iteration_log,
                 )
             else:
-                heat_pump_cooling = snakemake.params.heat_source_cooling
+                heat_pump_cooling = xr.full_like(
+                    central_heating_forward_temperature,
+                    snakemake.params.heat_source_cooling,
+                )
 
             if heat_system_type == HeatSystemType.URBAN_CENTRAL.value:
                 central_heat_pump_cooling[heat_source_name] = heat_pump_cooling
@@ -473,6 +483,7 @@ if __name__ == "__main__":
                     heat_pump_cooling=heat_pump_cooling,
                 )
             )
+            heat_pump_cooling_this_system_type.append(heat_pump_cooling)
 
         cop_all_system_types.append(
             xr.concat(
@@ -480,11 +491,24 @@ if __name__ == "__main__":
                 dim=pd.Index(system_heat_sources, name="heat_source"),
             )
         )
+        heat_pump_cooling_all_system_types.append(
+            xr.concat(
+                heat_pump_cooling_this_system_type,
+                dim=pd.Index(system_heat_sources, name="heat_source"),
+            )
+        )
 
-    xr.concat(
+    cop_profiles = xr.concat(
         cop_all_system_types,
         dim=pd.Index(snakemake.params.heat_sources.keys(), name="heat_system"),
-    ).to_netcdf(snakemake.output.cop_profiles)
+    )
+    cop_profiles.to_netcdf(snakemake.output.cop_profiles)
+
+    heat_pump_cooling = xr.concat(
+        heat_pump_cooling_all_system_types,
+        dim=pd.Index(snakemake.params.heat_sources.keys(), name="heat_system"),
+    )
+    heat_pump_cooling.to_netcdf(snakemake.output.heat_source_cooling_profiles)
 
     # Write the full per-node, per-timestep Picard trace only when logging is on.
     if cooling_iteration_log:
