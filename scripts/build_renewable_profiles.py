@@ -3,47 +3,35 @@
 # SPDX-License-Identifier: MIT
 """
 Calculates for each clustered region the (i) installable capacity (based on
-land-use from :mod:`determine_availability_matrix`), (ii) the available
+land-use from [determine_availability_matrix][]), (ii) the available
 generation time series (based on weather data), and (iii) the average distance
 from the node for onshore wind, AC-connected offshore wind, DC-connected
 offshore wind and solar PV generators.
 
-.. note:: Hydroelectric profiles are built in script :mod:`build_hydro_profiles`.
+**Note:** Hydroelectric profiles are built in script `build_hydro_profiles`.
 
 Outputs
 -------
 
-- ``resources/profile_{technology}.nc`` with the following structure
+- `resources/profile_{technology}.nc` with the following structure
 
-    ===================  ====================  =========================================================
-    Field                Dimensions            Description
-    ===================  ====================  =========================================================
-    profile              year, bus, bin, time  the per unit hourly availability factors for each bus
-    -------------------  --------------------  ---------------------------------------------------------
-    p_nom_max            bus, bin              maximal installable capacity at the bus (in MW)
-    -------------------  --------------------  ---------------------------------------------------------
-    average_distance     bus, bin              average distance of units in the region to the
-                                               grid bus for onshore technologies and to the shoreline
-                                               for offshore technologies (in km)
-    ===================  ====================  =========================================================
+| Field | Dimensions | Description |
+| --- | --- | --- |
+| profile | year, bus, bin, time | the per unit hourly availability factors for each bus |
+| p_nom_max | bus, bin | maximal installable capacity at the bus (in MW) |
+| average_distance | bus, bin | average distance of units in the region to the grid bus for onshore technologies and to the shoreline for offshore technologies (in km) |
 
-    - **profile**
+- **profile**
 
-    .. image:: img/profile_ts.png
-        :scale: 33 %
-        :align: center
+![](img/profile_ts.png)
 
-    - **p_nom_max**
+- **p_nom_max**
 
-    .. image:: img/p_nom_max_hist.png
-        :scale: 33 %
-        :align: center
+![](img/p_nom_max_hist.png)
 
-    - **average_distance**
+- **average_distance**
 
-    .. image:: img/distance_hist.png
-        :scale: 33 %
-        :align: center
+![](img/distance_hist.png)
 
 Description
 -----------
@@ -54,7 +42,7 @@ weather data. Typically the weather data grid is finer than the network regions,
 so we have to work out the distribution of generators across the grid cells
 within each region. This is done by taking account of a combination of the
 available land at each grid cell (computed in
-:mod:`determine_availability_matrix`) and the capacity factor there.
+[determine_availability_matrix][]) and the capacity factor there.
 
 Based on the availability matrix, the script first computes how much of the
 technology can be installed at each cutout grid cell. To compute the layout of
@@ -65,24 +53,16 @@ assume more generators are installed at cells with a higher capacity factor.
 Based on the average capacity factor, the potentials are further divided into a
 configurable number of resource classes (bins).
 
-.. image:: img/offwinddc-gridcell.png
-    :scale: 50 %
-    :align: center
+![](img/offwinddc-gridcell.png)
 
-.. image:: img/offwindac-gridcell.png
-    :scale: 50 %
-    :align: center
+![](img/offwindac-gridcell.png)
 
-.. image:: img/onwind-gridcell.png
-    :scale: 50 %
-    :align: center
+![](img/onwind-gridcell.png)
 
-.. image:: img/solar-gridcell.png
-    :scale: 50 %
-    :align: center
+![](img/solar-gridcell.png)
 
 This layout is then used to compute the generation availability time series from
-the weather data cutout from ``atlite``.
+the weather data cutout from `atlite`.
 
 The maximal installable potential for the node (`p_nom_max`) is computed by
 adding up the installable potentials of the individual grid cells.
@@ -97,13 +77,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from atlite.gis import ExclusionContainer
-from dask.distributed import Client
 
 from scripts._helpers import (
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
+    setup_dask,
 )
 from scripts.build_shapes import _simplify_polys
 
@@ -140,10 +120,7 @@ if __name__ == "__main__":
     if correction_factor != 1.0:
         logger.info(f"correction_factor is set as {correction_factor}")
 
-    if nprocesses > 1:
-        client = Client(n_workers=nprocesses, threads_per_worker=1)
-    else:
-        client = None
+    dask_kwargs = setup_dask(nprocesses)
 
     sns = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
@@ -173,15 +150,17 @@ if __name__ == "__main__":
     )
 
     func = getattr(cutout, resource.pop("method"))
-    if client is not None:
-        resource["dask_kwargs"] = {"scheduler": client}
 
     logger.info(
         f"Calculate average capacity factor per grid cell for technology {technology}..."
     )
     start = time.time()
 
-    capacity_factor = correction_factor * func(capacity_factor=True, **resource)
+    capacity_factor = correction_factor * func(
+        capacity_factor=True,
+        dask_kwargs=dask_kwargs,
+        **resource,
+    )
 
     duration = time.time() - start
     logger.info(
@@ -265,6 +244,7 @@ if __name__ == "__main__":
             index=matrix.indexes["bus_bin"],
             per_unit=True,
             return_capacity=False,
+            dask_kwargs=dask_kwargs,
             **resource,
         )
         profile = profile.unstack("bus_bin")
@@ -326,6 +306,3 @@ if __name__ == "__main__":
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
 
     ds.to_netcdf(snakemake.output.profile)
-
-    if client is not None:
-        client.shutdown()

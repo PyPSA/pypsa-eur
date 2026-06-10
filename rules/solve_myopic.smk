@@ -101,6 +101,8 @@ rule add_brownfield:
         benchmarks(
             "add_brownfield/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
+    message:
+        "Adding brownfield constraints for existing infrastructure for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
         "../scripts/add_brownfield.py"
 

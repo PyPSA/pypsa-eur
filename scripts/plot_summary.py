@@ -270,7 +270,7 @@ def plot_balances():
         )
 
         fig.savefig(
-            snakemake.output.balances[:-10] + bus_carrier + ".svg", bbox_inches="tight"
+            snakemake.output.balances[:-10] + bus_carrier + ".pdf", bbox_inches="tight"
         )
         plt.close(fig)
 
@@ -482,7 +482,7 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     )
 
     plt.grid(axis="y")
-    path = snakemake.output.balances.split("balances")[0] + "carbon_budget.svg"
+    path = snakemake.output.balances.split("balances")[0] + "carbon_budget.pdf"
     plt.savefig(path, bbox_inches="tight")
     plt.close()
 

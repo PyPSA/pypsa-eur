@@ -28,6 +28,7 @@ ignore = [
     ]
 
 
+
 [lint.per-file-ignores]
 # pydocstyle ignores, which could be enabled in future when existing
 # issues are fixed
@@ -51,3 +52,8 @@ ignore = [
     # Include once available
     # https://github.com/astral-sh/ruff/issues/2310
     ]
+
+"scripts/**/__init__.py"= ["F401"]
+
+# The order of imports matters in this file, so we stop ruff from re-ordering them.
+"scripts/lib/validation/config_updates.py"= ["I001", "F401"]

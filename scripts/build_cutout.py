@@ -2,77 +2,51 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create cutouts with `atlite <https://atlite.readthedocs.io/en/latest/>`_.
+Create cutouts with [atlite](https://atlite.readthedocs.io/en/latest/).
 
 For this rule to work you must have
 
-- installed the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu>`_ ``cdsapi`` package  (`install with `pip``) and
-- registered and setup your CDS API key as described `on their website <https://cds.climate.copernicus.eu/api-how-to>`_.
+- installed the [Copernicus Climate Data Store](https://cds.climate.copernicus.eu) `cdsapi` package  (`install with `pip``) and
+- registered and setup your CDS API key as described [on their website](https://cds.climate.copernicus.eu/api-how-to).
 
-.. seealso::
-    For details on the weather data read the `atlite documentation <https://atlite.readthedocs.io/en/latest/>`_.
-    If you need help specifically for creating cutouts `the corresponding section in the atlite documentation <https://atlite.readthedocs.io/en/latest/examples/create_cutout.html>`_ should be helpful.
+!!! info "See also"
+    For details on the weather data read the [atlite documentation](https://atlite.readthedocs.io/en/latest/). If you need help specifically for creating cutouts [the corresponding section in the atlite documentation](https://atlite.readthedocs.io/en/latest/examples/create_cutout.html) should be helpful.
 
 Outputs
 -------
 
-- ``cutouts/{cutout}``: weather data from either the `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`_
-  reanalysis weather dataset or `SARAH-3 <https://wui.cmsaf.eu/safira/action/viewProduktSearch>`_
+- `cutouts/{cutout}`: weather data from either the [ERA5](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5)
+  reanalysis weather dataset or [SARAH-3](https://wui.cmsaf.eu/safira/action/viewProduktSearch)
   satellite-based historic weather data with the following structure:
 
 **ERA5 cutout:**
 
-    ===================  ==========  ==========  =========================================================
-    Field                Dimensions  Unit        Description
-    ===================  ==========  ==========  =========================================================
-    pressure             time, y, x  Pa          Surface pressure
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    temperature          time, y, x  K           Air temperature 2 meters above the surface.
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    soil temperature     time, y, x  K           Soil temperature between 1 meters and 3 meters
-                                                 depth (layer 4).
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    influx_toa           time, y, x  Wm**-2      Top of Earth's atmosphere TOA incident solar radiation
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    influx_direct        time, y, x  Wm**-2      Total sky direct solar radiation at surface
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    runoff               time, y, x  m           `Runoff <https://en.wikipedia.org/wiki/Surface_runoff>`_
-                                                 (volume per area)
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    roughness            y, x        m           Forecast surface roughness
-                                                 (`roughness length <https://en.wikipedia.org/wiki/Roughness_length>`_)
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    height               y, x        m           Surface elevation above sea level
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    albedo               time, y, x  --          `Albedo <https://en.wikipedia.org/wiki/Albedo>`_
-                                                 measure of diffuse reflection of solar radiation.
-                                                 Calculated from relation between surface solar radiation
-                                                 downwards (Jm**-2) and surface net solar radiation
-                                                 (Jm**-2). Takes values between 0 and 1.
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    influx_diffuse       time, y, x  Wm**-2      Diffuse solar radiation at surface.
-                                                 Surface solar radiation downwards minus
-                                                 direct solar radiation.
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    wnd100m              time, y, x  ms**-1      Wind speeds at 100 meters (regardless of direction)
-    ===================  ==========  ==========  =========================================================
+| Field | Dimensions | Unit | Description |
+| --- | --- | --- | --- |
+| pressure | time, y, x | Pa | Surface pressure |
+| temperature | time, y, x | K | Air temperature 2 meters above the surface. |
+| soil temperature | time, y, x | K | Soil temperature between 1 meters and 3 meters depth (layer 4). |
+| influx_toa | time, y, x | Wm**-2 | Top of Earth's atmosphere TOA incident solar radiation |
+| influx_direct | time, y, x | Wm**-2 | Total sky direct solar radiation at surface |
+| runoff | time, y, x | m | [Runoff](https://en.wikipedia.org/wiki/Surface_runoff) (volume per area) |
+| roughness | y, x | m | Forecast surface roughness ([roughness length](https://en.wikipedia.org/wiki/Roughness_length)) |
+| height | y, x | m | Surface elevation above sea level |
+| albedo | time, y, x | -- | [Albedo](https://en.wikipedia.org/wiki/Albedo) measure of diffuse reflection of solar radiation. Calculated from relation between surface solar radiation downwards (Jm**-2) and surface net solar radiation (Jm**-2). Takes values between 0 and 1. |
+| influx_diffuse | time, y, x | Wm**-2 | Diffuse solar radiation at surface. Surface solar radiation downwards minus direct solar radiation. |
+| wnd100m | time, y, x | ms**-1 | Wind speeds at 100 meters (regardless of direction) |
 
-    .. image:: img/era5.png
-        :scale: 40 %
+![](img/era5.png)
 
-A **SARAH-3 cutout** can be used to amend the fields ``temperature``, ``influx_toa``, ``influx_direct``, ``albedo``,
-``influx_diffuse`` of ERA5 using satellite-based radiation observations.
+A **SARAH-3 cutout** can be used to amend the fields `temperature`, `influx_toa`, `influx_direct`, `albedo`,
+`influx_diffuse` of ERA5 using satellite-based radiation observations.
 
-    .. image:: img/sarah.png
-        :scale: 40 %
+![](img/sarah.png)
 
 """
 
 import logging
 
 import atlite
-import geopandas as gpd
-import pandas as pd
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -88,19 +62,12 @@ if __name__ == "__main__":
 
     cutout_params = snakemake.params.cutouts[snakemake.wildcards.cutout]
     cutout_params["time"] = slice(*cutout_params["time"])
+    cutout_params["x"] = slice(*cutout_params["x"])
+    cutout_params["y"] = slice(*cutout_params["y"])
+    prepare_kwargs = cutout_params.pop("prepare_kwargs", {})
 
-    if {"x", "y", "bounds"}.isdisjoint(cutout_params):
-        # Determine the bounds from bus regions with a buffer of two grid cells
-        onshore = gpd.read_file(snakemake.input.regions_onshore)
-        offshore = gpd.read_file(snakemake.input.regions_offshore)
-        regions = pd.concat([onshore, offshore])
-        d = max(cutout_params.get("dx", 0.25), cutout_params.get("dy", 0.25)) * 2
-        cutout_params["bounds"] = regions.total_bounds + [-d, -d, d, d]
-    elif {"x", "y"}.issubset(cutout_params):
-        cutout_params["x"] = slice(*cutout_params["x"])
-        cutout_params["y"] = slice(*cutout_params["y"])
-
-    logger.info(f"Preparing cutout with parameters {cutout_params}.")
-    features = cutout_params.pop("features", None)
+    logger.info(f"Creating cutout with parameters {cutout_params}.")
     cutout = atlite.Cutout(snakemake.output[0], **cutout_params)
-    cutout.prepare(features=features)
+
+    logger.info(f"Preparing cutout the cutout with parameters {prepare_kwargs}.")
+    cutout.prepare(**prepare_kwargs)

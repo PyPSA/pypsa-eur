@@ -10,12 +10,13 @@ It scales the heat source utilisation potentials to technical potentials by divi
 
 Relevant Settings
 -----------------
-.. code:: yaml
-    sector:
-        district_heating:
-            limited_heat_sources:
-                geothermal:
-                    constant_temperature_celsius
+```yaml
+sector:
+    district_heating:
+        limited_heat_sources:
+            geothermal:
+                constant_temperature_celsius
+```
 
 Inputs
 ------

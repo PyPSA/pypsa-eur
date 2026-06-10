@@ -9,7 +9,7 @@ Description
 Computes a time aggregation scheme for the given network, in the form of a CSV
 file with the snapshot weightings, indexed by the new subset of snapshots. This
 rule only computes said aggregation scheme; aggregation of time-varying network
-data is done in ``prepare_sector_network.py``.
+data is done in `prepare_sector_network.py`.
 """
 
 import logging
@@ -104,8 +104,8 @@ if __name__ == "__main__":
         # Get all time-dependent data
         dfs = [
             pnl
-            for c in n.iterate_components()
-            for attr, pnl in c.pnl.items()
+            for c in n.components
+            for attr, pnl in c.dynamic.items()
             if not pnl.empty and attr != "e_min_pu"
         ]
         if snakemake.input.hourly_heat_demand_total:
