@@ -9,9 +9,6 @@ rule add_existing_baseyear:
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
         ),
         powerplants=resources("powerplants_s_{clusters}.csv"),
-        busmap_s=resources("busmap_base_s.csv"),
-        busmap=resources("busmap_base_s_{clusters}.csv"),
-        clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: resources(
             f"costs_{config_provider("scenario", "planning_horizons",0)(w)}_processed.csv"
         ),
@@ -49,7 +46,7 @@ rule add_existing_baseyear:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     script:
-        "../scripts/add_existing_baseyear.py"
+        scripts("add_existing_baseyear.py")
 
 
 def input_profile_tech_brownfield(w):
@@ -63,14 +60,10 @@ def input_profile_tech_brownfield(w):
 rule add_brownfield:
     input:
         unpack(input_profile_tech_brownfield),
-        simplify_busmap=resources("busmap_base_s.csv"),
-        cluster_busmap=resources("busmap_base_s_{clusters}.csv"),
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
         ),
         network_p=solved_previous_horizon,  #solved network at previous time step
-        costs=resources("costs_{planning_horizons}_processed.csv"),
-        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
     output:
         resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
@@ -104,7 +97,7 @@ rule add_brownfield:
     message:
         "Adding brownfield constraints for existing infrastructure for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
-        "../scripts/add_brownfield.py"
+        scripts("add_brownfield.py")
 
 
 ruleorder: add_existing_baseyear > add_brownfield
@@ -121,6 +114,12 @@ rule solve_sector_network_myopic:
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.yaml",
+    model=(
+            RESULTS
+            + "models/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+            if config["solving"]["options"]["store_model"]
+            else []
+        ),
     log:
         solver=RESULTS
         + "logs/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
@@ -146,5 +145,7 @@ rule solve_sector_network_myopic:
             "sector", "co2_sequestration_potential", default=200
         ),
         custom_extra_functionality=input_custom_extra_functionality,
+    message:
+        "Solving sector-coupled network with myopic foresight for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
-        "../scripts/solve_network.py"
+        scripts(solve_network.py)
