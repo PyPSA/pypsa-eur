@@ -816,7 +816,7 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
 
     # define spatial resolution of carriers
-    spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
+    spatial = define_spatial(n.buses.query("carrier in ['AC', 'DC']").index, options)
     add_build_year_to_new_assets(n, baseyear)
 
     costs = load_costs(snakemake.input.costs)
