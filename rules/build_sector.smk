@@ -321,24 +321,6 @@ rule build_dh_areas:
 
 
 rule build_geothermal_heat_potential:
-    message:
-        "Building geothermal heat potential estimates for {wildcards.clusters} clusters"
-    params:
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        countries=config_provider("countries"),
-        constant_temperature_celsius=config_provider(
-            "sector",
-            "district_heating",
-            "geothermal",
-            "constant_temperature_celsius",
-        ),
-        ignore_missing_regions=config_provider(
-            "sector",
-            "district_heating",
-            "limited_heat_sources",
-            "geothermal",
-            "ignore_missing_regions",
-        ),
     input:
         isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output[
             "isi_heat_potentials"
@@ -663,8 +645,6 @@ rule build_sea_heat_potential:
 
 
 rule build_heat_source_profiles:
-    message:
-        "Building heat pump COP and heat source utilisation profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
             "sector", "heat_pump_sink_T_individual_heating"
@@ -715,20 +695,17 @@ rule build_ptes_operations:
         heat_source_cooling_profiles=resources(
             "heat_source_cooling_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
-    resources:
-        mem_mb=20000,
     log:
         logs("build_heat_source_profiles_s_{clusters}_{planning_horizons}.log"),
     benchmark:
         benchmarks("build_heat_source_profiles/s_{clusters}_{planning_horizons}")
+    resources:
+        mem_mb=20000,
     script:
         scripts("build_heat_source_profiles/run.py")
 
 
-
 rule build_ptes_operations:
-    message:
-        "Building thermal energy storage operations profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         top_temperature=config_provider(
             "sector",

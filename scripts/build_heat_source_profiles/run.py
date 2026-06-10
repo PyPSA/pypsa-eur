@@ -20,7 +20,7 @@ For central heating (district heating), the approximation is based on Jensen et 
 
 For pre-heating sources in central heating, the COP is calculated iteratively based on the preheater utilisation and the resulting source cooling, which affects the source temperature and thus the COP. The iteration continues until convergence or a maximum number of iterations is reached.
 
-All profiles are consumed by ``prepare_sector_network.py`` 
+All profiles are consumed by ``prepare_sector_network.py``
 
 Relevant Settings
 -----------------
@@ -77,6 +77,7 @@ from scripts.build_heat_source_profiles.decentral_heating_cop_approximator impor
 )
 from scripts.definitions.heat_source import HeatSource
 from scripts.definitions.heat_system_type import HeatSystemType
+
 
 def get_source_temperature(
     snakemake_params: dict, snakemake_input: dict, heat_source_name: str
@@ -331,6 +332,7 @@ def get_preheater_utilisation_profile(
         0.0,
     )
 
+
 def compute_heat_pump_cooling(
     heat_system_type: str,
     heat_source: str,
@@ -372,7 +374,8 @@ def compute_heat_pump_cooling(
                 xr.Dataset(
                     {
                         "forward_temperature": forward_temperature,
-                        "source_temperature": forward_temperature * 0 + source_temperature,
+                        "source_temperature": forward_temperature * 0
+                        + source_temperature,
                         "heat_pump_cooling": forward_temperature * 0 + cooling,
                         "cop": cop,
                     }
