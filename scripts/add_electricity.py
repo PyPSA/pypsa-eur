@@ -1122,17 +1122,7 @@ def attach_stores(
 
         roundtrip_correction = lookup.get("roundtrip_correction", 1)
 
-        existing_buses_i = [bus for bus in buses_i if bus in n.buses.index]
-        missing_buses_i = [bus for bus in buses_i if bus not in n.buses.index]
-        if missing_buses_i:
-            logger.warning(
-                "attach_stores: skipping storage for missing buses %s",
-                missing_buses_i,
-            )
-        if not existing_buses_i:
-            continue
-
-        bus_names = [bus + f" {carrier}" for bus in existing_buses_i]
+        bus_names = buses_i + f" {carrier}"
         charge_name = "Electrolysis" if lookup_charge == "electrolysis" else "charger"
         discharge_name = (
             "Fuel Cell" if lookup_discharge == "fuel cell" else "discharger"
@@ -1148,10 +1138,10 @@ def attach_stores(
         n.add(
             "Bus",
             bus_names,
-            location=existing_buses_i,
+            location=buses_i,
             carrier=carrier,
-            x=n.buses.loc[existing_buses_i, "x"].values,
-            y=n.buses.loc[existing_buses_i, "y"].values,
+            x=n.buses.loc[list(buses_i)].x.values,
+            y=n.buses.loc[list(buses_i)].y.values,
         )
 
         n.add(
@@ -1171,7 +1161,7 @@ def attach_stores(
             "Link",
             bus_names,
             suffix=f" {charge_name}",
-            bus0=existing_buses_i,
+            bus0=buses_i,
             bus1=bus_names,
             carrier=f"{carrier} {charge_name}",
             efficiency=costs.at[lookup_charge, "efficiency"] ** roundtrip_correction,
@@ -1186,7 +1176,7 @@ def attach_stores(
             bus_names,
             suffix=f" {discharge_name}",
             bus0=bus_names,
-            bus1=existing_buses_i,
+            bus1=buses_i,
             carrier=f"{carrier} {discharge_name}",
             efficiency=costs.at[lookup_discharge, "efficiency"] ** roundtrip_correction,
             capital_cost=discharge_capital_cost,
