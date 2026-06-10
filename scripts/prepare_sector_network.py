@@ -6152,7 +6152,6 @@ def main(
     investment_year = current_horizon
 
     pop_layout = pd.read_csv(inputs.clustered_pop_layout, index_col=0)
-    spatial = define_spatial(pop_layout.index, options)
 
     pop_weighted_energy_totals = (
         pd.read_csv(inputs["pop_weighted_energy_totals"], index_col=0) * nyears

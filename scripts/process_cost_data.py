@@ -260,7 +260,6 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     nyears = n.snapshot_weightings.generators.sum() / 8760.0
-    planning_horizon = str(snakemake.wildcards.horizon)
 
     # Retrieve costs assumptions
     costs = pd.read_csv(snakemake.input.costs, index_col=["technology", "parameter"])
