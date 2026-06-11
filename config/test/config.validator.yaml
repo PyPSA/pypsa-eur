@@ -12,4 +12,4 @@ run:
 
 clustering:
   temporal:
-    resolution: 365H
+    averaging: 365

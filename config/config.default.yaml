@@ -1172,11 +1172,9 @@ clustering:
       ramp_limit_down: max
     buses: {}
   temporal:
-    resolution: false
-    time_segmentation:
-      enable: false
-      resolution:
-      segments:
+    averaging: false
+    segmentation: false
+    representative: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:

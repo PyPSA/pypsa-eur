@@ -7,7 +7,6 @@ Perfect foresight utility functions for multi-period optimization.
 
 import logging
 
-import numpy as np
 import pandas as pd
 import pypsa
 from six import iterkeys
@@ -738,76 +737,6 @@ def add_H2_boilers(n: pypsa.Network) -> None:
     df["p_nom_extendable"] = True
     # add H2 boilers to network
     n.add(c, df.index, **df)
-
-
-def apply_time_segmentation_perfect(
-    n: pypsa.Network, segments: int, solver_name: str = "cbc"
-) -> None:
-    """
-    Aggregate time series to segments with different lengths.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Network to segment
-    segments : int
-        Number of segments for typical period subdivision
-    solver_name : str, default "cbc"
-        Name of solver to use for segmentation
-
-    Returns
-    -------
-    pypsa.Network
-        Network with segmented time series
-    """
-    try:
-        import tsam.timeseriesaggregation as tsam
-    except ImportError:
-        raise ModuleNotFoundError(
-            "Optional dependency 'tsam' not found.Install via 'pip install tsam'"
-        )
-
-    # get all time-dependent data
-    columns = pd.MultiIndex.from_tuples([], names=["component", "key", "asset"])
-    raw = pd.DataFrame(index=n.snapshots, columns=columns)
-    for c in n.components:
-        for attr, pnl in c.dynamic.items():
-            # exclude e_min_pu which is used for SOC of EVs in the morning
-            if not pnl.empty and attr != "e_min_pu":
-                df = pnl.copy()
-                df.columns = pd.MultiIndex.from_product([[c.name], [attr], df.columns])
-                raw = pd.concat([raw, df], axis=1)
-    raw = raw.dropna(axis=1)
-    sn_weightings = {}
-
-    for year in raw.index.levels[0]:
-        logger.info(f"Find representative snapshots for {year}.")
-        raw_t = raw.loc[year]
-        # normalise all time-dependent data
-        annual_max = raw_t.max().replace(0, 1)
-        raw_t = raw_t.div(annual_max, level=0)
-        # get representative segments
-        agg = tsam.TimeSeriesAggregation(
-            raw_t,
-            hoursPerPeriod=len(raw_t),
-            noTypicalPeriods=1,
-            noSegments=int(segments),
-            segmentation=True,
-            solver=solver_name,
-        )
-        segmented = agg.createTypicalPeriods()
-
-        weightings = segmented.index.get_level_values("Segment Duration")
-        offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
-        timesteps = [raw_t.index[0] + pd.Timedelta(f"{offset}h") for offset in offsets]
-        snapshots = pd.DatetimeIndex(timesteps)
-        sn_weightings[year] = pd.Series(
-            weightings, index=snapshots, name="weightings", dtype="float64"
-        )
-
-    sn_weightings = pd.concat(sn_weightings)
-    n.set_snapshots(sn_weightings.index)
-    n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
 
 
 def main(

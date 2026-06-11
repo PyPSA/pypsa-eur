@@ -96,33 +96,20 @@ class _AggregationStrategiesConfig(BaseModel):
     )
 
 
-class _TimeSegmentationConfig(BaseModel):
-    """Configuration for `clustering.temporal.time_segmentation` settings."""
-
-    enable: bool = Field(
-        False,
-        description="Enable time segmentation.",
-    )
-    resolution: bool | str | None = Field(
-        None,
-        description="Resolution for time segmentation.",
-    )
-    segments: list | None = Field(
-        default=None,
-        description="Time segments to use.",
-    )
-
-
 class _TemporalConfig(BaseModel):
-    """Configuration for `clustering.temporal` settings."""
+    """Configuration for `clustering.temporal` settings (at most one may be set)."""
 
-    resolution: bool | str = Field(
+    averaging: Literal[False] | int = Field(
         False,
-        description="Resample the time-resolution by averaging over every `n` snapshots.",
+        description="Average the time series over every `n` hours.",
     )
-    time_segmentation: _TimeSegmentationConfig = Field(
-        default_factory=_TimeSegmentationConfig,
-        description="Time segmentation configuration.",
+    segmentation: Literal[False] | int = Field(
+        False,
+        description="Aggregate the time series into `n` representative segments using `tsam`.",
+    )
+    representative: Literal[False] | int = Field(
+        False,
+        description="Use every `n`-th snapshot as representative.",
     )
 
 

@@ -118,6 +118,30 @@ def rename_network_component(
             dynamic_table.rename(index=mapping, inplace=True)
 
 
+def get_temporal_resolution(temporal: dict) -> tuple[str, int] | None:
+    """
+    Return the active temporal aggregation as ``(method, n)`` or ``None``.
+
+    ``method`` is one of ``"averaging"``, ``"segmentation"`` or
+    ``"representative"`` as configured under ``clustering.temporal``. Raises if
+    more than one method is set.
+    """
+    active = {
+        method: temporal[method]
+        for method in ("averaging", "segmentation", "representative")
+        if temporal[method]
+    }
+    if len(active) > 1:
+        raise ValueError(
+            "clustering.temporal: only one of averaging, segmentation and "
+            f"representative may be set, got {active}."
+        )
+    if not active:
+        return None
+    ((method, value),) = active.items()
+    return method, int(value)
+
+
 def get_scenarios(run):
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):

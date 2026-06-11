@@ -28,6 +28,7 @@ from scipy.stats import beta
 
 from scripts._helpers import (
     get,
+    get_temporal_resolution,
 )
 from scripts.add_electricity import (
     calculate_annuity,
@@ -5678,22 +5679,22 @@ def cluster_heat_buses(n):
         n.add(c.name, df.loc[to_add].index, **df.loc[to_add])
 
 
-def set_temporal_aggregation(n, resolution, snapshot_weightings):
+def set_temporal_aggregation(n, temporal, snapshot_weightings):
     """
-    Aggregate time-varying data to the given snapshots.
+    Aggregate time-varying data according to `clustering.temporal` config.
     """
-    if not resolution:
+    resolution = get_temporal_resolution(temporal)
+    if resolution is None:
         logger.info("No temporal aggregation. Using native resolution.")
         return n
-    elif "sn" in resolution.lower():
-        # Representative snapshots are dealt with directly
-        sn = int(resolution[:-2])
-        logger.info("Use every %s snapshot as representative", sn)
-        n.set_snapshots(n.snapshots[::sn])
-        n.snapshot_weightings *= sn
+    method, value = resolution
+    if method == "representative":
+        logger.info("Use every %s snapshot as representative", value)
+        n.set_snapshots(n.snapshots[::value])
+        n.snapshot_weightings *= value
         return n
     else:
-        # Otherwise, use the provided snapshots
+        # Averaging and segmentation use the precomputed snapshot weightings
         snapshot_weightings = pd.read_csv(
             snapshot_weightings, index_col=0, parse_dates=True
         )

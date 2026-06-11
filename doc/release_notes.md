@@ -38,7 +38,7 @@
     - Inputs to `compose_network` are already regionally clustered and simplified to be processed without further aggregation.
     - Data files that represent a final version of themselves don't have dedicated suffixes (e.g. regionally aggregated shapes are stored at `onshore_regions.geojson`). Ancestor files that are intermediate steps in the processing chain may rely on suffixes (e.g. `onshore_shapes_simplified.geojson`).
 
-* Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into a single `clustering: temporal: resolution` setting.
+* Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive integer options: `averaging` (average over `n` hours), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
 
 * Security: SBOM security scan included in CI.
 

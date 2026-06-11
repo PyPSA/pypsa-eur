@@ -90,8 +90,11 @@ Interactive HTML balance maps are additionally written to `results/maps/interact
   {<horizon>: 0.1}}` (0.1 Gt = 100 Mt).
 
 - **Temporal resolution**: `clustering.temporal.resolution_elec` and `resolution_sector`
-  are merged into a single `clustering.temporal.resolution` setting. A new
-  `time_segmentation` subsection provides `enable`, `resolution`, and `segments`.
+  are merged into `clustering.temporal`, which now exposes three mutually exclusive
+  integer options: `averaging` (average over `n` hours), `segmentation` (aggregate into
+  `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Set the unused
+  ones to `false`. The same aggregation path is used for electricity-only and
+  sector-coupled runs.
 
 - **Line/link extensions**: `lines.max_extension` is renamed to `lines.s_nom_max_extension`
   and `links.max_extension` to `links.p_nom_max_extension`.
@@ -133,7 +136,7 @@ clustering:
   cluster_network:
     n_clusters: 37
   temporal:
-    resolution: 24h
+    averaging: 24
 
 co2_budget:
   emissions_scope: CO2

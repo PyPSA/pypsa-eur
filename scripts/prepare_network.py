@@ -368,74 +368,6 @@ def set_transmission_limit(n, kind, factor, costs, Nyears=1):
     return n
 
 
-def average_every_nhours(n, offset, drop_leap_day=False):
-    logger.info(f"Resampling the network to {offset}")
-    m = n.copy(snapshots=[])
-
-    snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
-    sns = snapshot_weightings.index
-    if drop_leap_day:
-        sns = sns[~((sns.month == 2) & (sns.day == 29))]
-    m.set_snapshots(snapshot_weightings.index)
-    m.snapshot_weightings = snapshot_weightings
-
-    for c in n.components:
-        pnl = getattr(m, c.list_name + "_t")
-        for k, df in c.dynamic.items():
-            if not df.empty:
-                pnl[k] = df.resample(offset).mean()
-
-    return m
-
-
-def apply_time_segmentation(n, segments, solver_name="cbc"):
-    logger.info(f"Aggregating time series to {segments} segments.")
-    try:
-        import tsam.timeseriesaggregation as tsam
-    except ImportError:
-        raise ModuleNotFoundError(
-            "Optional dependency 'tsam' not found.Install via 'pip install tsam'"
-        )
-
-    p_max_pu_norm = n.generators_t.p_max_pu.max()
-    p_max_pu = n.generators_t.p_max_pu / p_max_pu_norm
-
-    load_norm = n.loads_t.p_set.max()
-    load = n.loads_t.p_set / load_norm
-
-    inflow_norm = n.storage_units_t.inflow.max()
-    inflow = n.storage_units_t.inflow / inflow_norm
-
-    raw = pd.concat([p_max_pu, load, inflow], axis=1, sort=False)
-
-    agg = tsam.TimeSeriesAggregation(
-        raw,
-        hoursPerPeriod=len(raw),
-        noTypicalPeriods=1,
-        noSegments=int(segments),
-        segmentation=True,
-        solver=solver_name,
-    )
-
-    segmented = agg.createTypicalPeriods()
-
-    weightings = segmented.index.get_level_values("Segment Duration")
-    offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
-    snapshots = [n.snapshots[0] + pd.Timedelta(f"{offset}h") for offset in offsets]
-
-    n.set_snapshots(pd.DatetimeIndex(snapshots, name="name"))
-    n.snapshot_weightings = pd.Series(
-        weightings, index=snapshots, name="weightings", dtype="float64"
-    )
-
-    segmented.index = snapshots
-    n.generators_t.p_max_pu = segmented[n.generators_t.p_max_pu.columns] * p_max_pu_norm
-    n.loads_t.p_set = segmented[n.loads_t.p_set.columns] * load_norm
-    n.storage_units_t.inflow = segmented[n.storage_units_t.inflow.columns] * inflow_norm
-
-    return n
-
-
 def enforce_autarky(n, only_crossborder=False):
     if only_crossborder:
         lines_rm = n.lines.loc[
@@ -532,46 +464,10 @@ def apply_temporal_aggregation(
     params,
 ) -> None:
     logger.info("Applying temporal aggregation")
-
-    clustering_temporal_cfg = params.clustering_temporal
-    time_resolution = clustering_temporal_cfg["resolution"]
-    time_segmentation = clustering_temporal_cfg["time_segmentation"]
-
-    has_averaging = isinstance(
-        time_resolution, str
-    ) and time_resolution.lower().endswith("h")
-    has_segmentation = time_segmentation["enable"] and time_segmentation["segments"]
-
-    if has_averaging and has_segmentation:
-        raise ValueError(
-            "Cannot use both temporal averaging (resolution) and time "
-            "segmentation simultaneously. Please configure only one method:\n"
-            f"  - resolution: {time_resolution}\n"
-            f"  - time_segmentation.segments: {time_segmentation['segments']}\n"
-            "Set one to False/empty to use the other."
-        )
-
-    if has_averaging:
-        logger.info(f"Applying temporal averaging: {time_resolution}")
-        if params.sector["enabled"]:
-            snapshot_weightings_file = inputs.snapshot_weightings
-            n_new = set_temporal_aggregation(
-                n,
-                time_resolution,
-                snapshot_weightings_file,
-            )
-        else:
-            n_new = average_every_nhours(n, time_resolution, params.drop_leap_day)
-        n.__dict__.update(n_new.__dict__)
-
-    if has_segmentation:
-        logger.info("Applying time segmentation")
-        apply_time_segmentation(
-            n,
-            time_segmentation["segments"],
-            params.solver_name,
-        )
-
+    n_new = set_temporal_aggregation(
+        n, params.clustering_temporal, inputs.snapshot_weightings
+    )
+    n.__dict__.update(n_new.__dict__)
     logger.info("Completed temporal aggregation")
 
 

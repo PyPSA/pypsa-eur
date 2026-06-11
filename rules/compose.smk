@@ -229,7 +229,6 @@ rule compose_network:
         ),
         co2_budget=config_provider("co2_budget"),
         adjustments=config_provider("adjustments"),
-        solver_name=config_provider("solving", "solver", "name"),
     message:
         "Composing network for horizon {wildcards.horizon}"
     script:

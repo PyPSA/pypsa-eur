@@ -626,57 +626,46 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings.\n\nAt most one of `averaging`, `segmentation` and `representative` may be set;\nall others must be `false`.",
           "properties": {
-            "resolution": {
+            "averaging": {
               "anyOf": [
                 {
+                  "const": false,
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "integer"
                 }
               ],
               "default": false,
-              "description": "Resample the time-resolution by averaging over every `n` snapshots."
+              "description": "Average the time series over every `n` hours."
             },
-            "time_segmentation": {
-              "description": "Configuration for `clustering.temporal.time_segmentation` settings.",
-              "properties": {
-                "enable": {
-                  "default": false,
-                  "description": "Enable time segmentation.",
+            "segmentation": {
+              "anyOf": [
+                {
+                  "const": false,
                   "type": "boolean"
                 },
-                "resolution": {
-                  "anyOf": [
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null,
-                  "description": "Resolution for time segmentation."
-                },
-                "segments": {
-                  "anyOf": [
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null,
-                  "description": "Time segments to use."
+                {
+                  "type": "integer"
                 }
-              }
+              ],
+              "default": false,
+              "description": "Aggregate the time series into `n` representative segments using `tsam`."
+            },
+            "representative": {
+              "anyOf": [
+                {
+                  "const": false,
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "default": false,
+              "description": "Use every `n`-th snapshot as representative."
             }
           }
         }
@@ -8197,95 +8186,46 @@
       }
     },
     "_TemporalConfig": {
-      "description": "Configuration for `clustering.temporal` settings.",
+      "description": "Configuration for `clustering.temporal` settings.\n\nAt most one of `averaging`, `segmentation` and `representative` may be set;\nall others must be `false`.",
       "properties": {
-        "resolution": {
+        "averaging": {
           "anyOf": [
             {
+              "const": false,
               "type": "boolean"
             },
             {
-              "type": "string"
+              "type": "integer"
             }
           ],
           "default": false,
-          "description": "Resample the time-resolution by averaging over every `n` snapshots."
+          "description": "Average the time series over every `n` hours."
         },
-        "time_segmentation": {
-          "description": "Configuration for `clustering.temporal.time_segmentation` settings.",
-          "properties": {
-            "enable": {
-              "default": false,
-              "description": "Enable time segmentation.",
+        "segmentation": {
+          "anyOf": [
+            {
+              "const": false,
               "type": "boolean"
             },
-            "resolution": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "description": "Resolution for time segmentation."
-            },
-            "segments": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "description": "Time segments to use."
+            {
+              "type": "integer"
             }
-          }
-        }
-      }
-    },
-    "_TimeSegmentationConfig": {
-      "description": "Configuration for `clustering.temporal.time_segmentation` settings.",
-      "properties": {
-        "enable": {
+          ],
           "default": false,
-          "description": "Enable time segmentation.",
-          "type": "boolean"
+          "description": "Aggregate the time series into `n` representative segments using `tsam`."
         },
-        "resolution": {
+        "representative": {
           "anyOf": [
             {
+              "const": false,
               "type": "boolean"
             },
             {
-              "type": "string"
-            },
-            {
-              "type": "null"
+              "type": "integer"
             }
           ],
-          "default": null,
-          "description": "Resolution for time segmentation."
-        },
-        "segments": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Time segments to use."
+          "default": false,
+          "description": "Use every `n`-th snapshot as representative."
         }
       }
     },
@@ -12340,57 +12280,46 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings.\n\nAt most one of `averaging`, `segmentation` and `representative` may be set;\nall others must be `false`.",
           "properties": {
-            "resolution": {
+            "averaging": {
               "anyOf": [
                 {
+                  "const": false,
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "integer"
                 }
               ],
               "default": false,
-              "description": "Resample the time-resolution by averaging over every `n` snapshots."
+              "description": "Average the time series over every `n` hours."
             },
-            "time_segmentation": {
-              "description": "Configuration for `clustering.temporal.time_segmentation` settings.",
-              "properties": {
-                "enable": {
-                  "default": false,
-                  "description": "Enable time segmentation.",
+            "segmentation": {
+              "anyOf": [
+                {
+                  "const": false,
                   "type": "boolean"
                 },
-                "resolution": {
-                  "anyOf": [
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null,
-                  "description": "Resolution for time segmentation."
-                },
-                "segments": {
-                  "anyOf": [
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null,
-                  "description": "Time segments to use."
+                {
+                  "type": "integer"
                 }
-              }
+              ],
+              "default": false,
+              "description": "Aggregate the time series into `n` representative segments using `tsam`."
+            },
+            "representative": {
+              "anyOf": [
+                {
+                  "const": false,
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "default": false,
+              "description": "Use every `n`-th snapshot as representative."
             }
           }
         }

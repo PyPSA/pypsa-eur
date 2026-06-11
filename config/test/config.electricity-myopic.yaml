@@ -110,11 +110,7 @@ clustering:
   - offwind-ac
   - coal
   temporal:
-    resolution: 24h
-    time_segmentation:
-      enable: false
-      resolution:
-      segments:
+    averaging: 24
   cluster_network:
     n_clusters: 5
 

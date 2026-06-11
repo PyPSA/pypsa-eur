@@ -57,7 +57,7 @@ renewable:
 
 clustering:
   temporal:
-    resolution_sector: 24h
+    averaging: 24
 
 sector:
   gas_network: true
