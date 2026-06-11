@@ -25,8 +25,8 @@ LOG_DIR="$REPO_ROOT/logs/supply_curve_v9_medium"
 mkdir -p "$LOG_DIR"
 
 WALLTIME="72:00"
-CORES=1
-MEM_MB=48000
+CORES=8
+MEM_MB=15000
 QUEUE="hpc"
 
 CLEAN=0

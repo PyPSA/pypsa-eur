@@ -1,27 +1,27 @@
 #!/bin/bash
 # =============================================================================
-# run_supply_curve_v9_low.sh
-# Submit one LSF job per supply curve scenario — v9 LOW cost.
-# Results go to: results/supply_curve_v9/supply_curve_v9_low/<scenario>/
+# run_supply_curve_v12.sh
+# Submit one LSF job per supply curve scenario — v12 = v10-medium + gas-for-industry CC cap (1.0 GW/yr).
+# Results go to: results/supply_curve_v12/<scenario>/
 #
 # Usage (from repo root):
-#   bash jobs/run_supply_curve_v9_low.sh           # submit all scenarios
-#   bash jobs/run_supply_curve_v9_low.sh S01 S03   # submit specific scenarios by prefix
+#   bash jobs/run_supply_curve_v12.sh           # submit all scenarios
+#   bash jobs/run_supply_curve_v12.sh S01 S03   # submit specific scenarios by prefix
 #
 # Flags:
 #   --clean   Delete existing results for selected scenarios before submitting
 #
 # Monitor jobs:
 #   bjobs -w
-#   bjobs -J 'v9lo-*'
+#   bjobs -J 'v12-*'
 # =============================================================================
 
 set -euo pipefail
 shopt -s nullglob
 
 REPO_ROOT="/work3/s240459/pypsa-eur-thesis"
-CONFIG_DIR="$REPO_ROOT/config/Myruns/supply_curve_v9/supply_curve_v9_low"
-LOG_DIR="$REPO_ROOT/logs/supply_curve_v9_low"
+CONFIG_DIR="$REPO_ROOT/config/Myruns/supply_curve_v12/supply_curve_v12_medium"
+LOG_DIR="$REPO_ROOT/logs/supply_curve_v12"
 mkdir -p "$LOG_DIR"
 
 WALLTIME="72:00"
@@ -102,13 +102,13 @@ if [[ "$CLEAN" -eq 1 ]]; then
 fi
 
 echo ""
-echo "Submitting ${#CONFIGS[@]} supply curve scenario(s) [v9 LOW cost]..."
+echo "Submitting ${#CONFIGS[@]} supply curve scenario(s) [v12 = v10-medium + gas-for-industry CC cap (1.0 GW/yr)]..."
 echo ""
 
 for cfg in "${CONFIGS[@]}"; do
     basename_cfg=$(basename "$cfg" .yaml)
     scenario_id="${basename_cfg#config.}"
-    job_name="v9lo-${scenario_id}"
+    job_name="v12-${scenario_id}"
 
     bsub <<BSUB_SCRIPT
 #!/bin/bash
@@ -116,7 +116,7 @@ for cfg in "${CONFIGS[@]}"; do
 #BSUB -q ${QUEUE}
 #BSUB -n ${CORES}
 #BSUB -W ${WALLTIME}
-#BSUB -R "rusage[mem=${MEM_MB}]"
+#BSUB -R "rusage[mem=${MEM_MB}] span[hosts=1]"
 #BSUB -o ${LOG_DIR}/${scenario_id}_%J.out
 #BSUB -e ${LOG_DIR}/${scenario_id}_%J.err
 
@@ -140,7 +140,7 @@ export SNAKEMAKE_OUTPUT_CACHE="\${SNAKEMAKE_OUTPUT_CACHE:-\$WORK_ROOT/.snakemake
 mkdir -p "\$TMPDIR" "\$XDG_CACHE_HOME" "\$SNAKEMAKE_OUTPUT_CACHE"
 
 echo "Host:     \$(hostname)"
-echo "Scenario: ${scenario_id} [v9 LOW cost]"
+echo "Scenario: ${scenario_id} [v12 = v10-medium + gas-for-industry CC cap (1.0 GW/yr)]"
 echo "Config:   ${cfg}"
 echo "Started:  \$(date)"
 
@@ -175,7 +175,7 @@ done
 echo ""
 echo "All jobs submitted. Monitor with:"
 echo "  bjobs -w"
-echo "  bjobs -J 'v9lo-*'"
+echo "  bjobs -J 'v12-*'"
 echo ""
-echo "Results: results/supply_curve_v9/supply_curve_v9_low/"
+echo "Results: results/supply_curve_v12/"
 echo "Logs:    $LOG_DIR"

@@ -1031,29 +1031,56 @@ def export_cdr_credit_accounting(
         return float(series.loc[key]) / 1e6
 
     if solver_values_missing:
-        proxy_dac = capture_proxy["dac"] / 1e6
-        proxy_biogenic = capture_proxy["biogenic"] / 1e6
-        proxy_total = proxy_dac + proxy_biogenic
-        if proxy_total > 0:
-            # Cap proportionally at credit_limit when limit is binding
-            if not np.isnan(credit_limit_mt) and proxy_total > credit_limit_mt:
-                scale = credit_limit_mt / proxy_total
-                credited_dac_mt = proxy_dac * scale
-                credited_biogenic_mt = proxy_biogenic * scale
-            else:
-                credited_dac_mt = proxy_dac
-                credited_biogenic_mt = proxy_biogenic
-            method = "capture_proxy_fallback"
-            solver_values_missing = False  # credited values are now available
-            logger.info(
-                "CDR fallback: credited dac=%.2f Mt, biogenic=%.2f Mt via capture_proxy",
-                credited_dac_mt,
-                credited_biogenic_mt,
-            )
+        # ── Deterministic sequestration proration ────────────────────────────
+        # The "co2 stored" bus is a single fungible commodity: DAC, biogenic and
+        # fossil CO2 are commingled before geological sequestration, and synfuels
+        # (Fischer-Tropsch / Sabatier / methanolisation) draw back out of the same
+        # pool.  There is therefore no physical fact about which captured tonne is
+        # the one that ends up underground, which is exactly why the solver-side
+        # CO2AnnualCDRSeq attribution variable is underdetermined (the optimiser
+        # leaves it at an arbitrary feasible point / its solution is not reliably
+        # recoverable post-solve -> attributed_series is empty here every time).
+        #
+        # With cdr_credit_timing == "sequestration" we instead allocate the *actual*
+        # physical geological sequestration to capture origins pro-rata by captured
+        # volume, and credit only the eligible (DAC + biogenic) shares.  Fossil CO2
+        # is stored but earns no CDR credit.  By construction this guarantees
+        #   credited_origin   <= capture_origin           (seq <= total capture), and
+        #   credited_total    <= physical_sequestration,
+        # so the headline credited CDR can never exceed what is physically stored.
+        cap_dac = capture_proxy.get("dac", 0.0)
+        cap_biogenic = capture_proxy.get("biogenic", 0.0)
+        cap_fossil = capture_proxy.get("fossil", 0.0)
+        cap_total = cap_dac + cap_biogenic + cap_fossil
+        if cap_total > 0 and physical_seq_t > 0:
+            credited_dac_mt = (physical_seq_t * cap_dac / cap_total) / 1e6
+            credited_biogenic_mt = (physical_seq_t * cap_biogenic / cap_total) / 1e6
+            # Respect an explicit (binding) credit limit if one is configured.
+            credited_total_tmp = credited_dac_mt + credited_biogenic_mt
+            if (
+                not np.isnan(credit_limit_mt)
+                and credited_total_tmp > credit_limit_mt
+                and credited_total_tmp > 0
+            ):
+                scale = credit_limit_mt / credited_total_tmp
+                credited_dac_mt *= scale
+                credited_biogenic_mt *= scale
         else:
-            credited_dac_mt = np.nan
-            credited_biogenic_mt = np.nan
-            method = "solver_unavailable"
+            # Nothing eligible captured, or nothing physically sequestered.
+            credited_dac_mt = 0.0
+            credited_biogenic_mt = 0.0
+        method = "sequestration_proration"
+        solver_values_missing = False  # credited values are now available
+        logger.info(
+            "CDR sequestration proration: credited dac=%.2f Mt, biogenic=%.2f Mt "
+            "(physical_seq=%.2f Mt; capture dac/bio/fossil=%.2f/%.2f/%.2f Mt)",
+            credited_dac_mt,
+            credited_biogenic_mt,
+            physical_seq_t / 1e6,
+            cap_dac / 1e6,
+            cap_biogenic / 1e6,
+            cap_fossil / 1e6,
+        )
     elif use_solver_export:
         credited_dac_mt = _mt(credited_series, "dac")
         credited_biogenic_mt = _mt(credited_series, "biogenic")
@@ -1115,6 +1142,13 @@ def export_cdr_credit_accounting(
         False
         if np.isnan(attributed_total)
         else credited_total <= attributed_total + tolerance_mt
+    )
+    # Primary invariant for the sequestration_proration method: the headline
+    # credited CDR must never exceed what is physically sequestered.
+    row["valid_credited_within_physical_sequestration"] = (
+        False
+        if solver_values_missing
+        else credited_total <= physical_seq_mt + tolerance_mt
     )
     row["valid_attributed_within_physical_sequestration"] = (
         False

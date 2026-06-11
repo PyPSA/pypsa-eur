@@ -1522,6 +1522,7 @@ def apply_cdr_credit_to_eligible_capture_links(
     co2_price: float = 0.0,
     cdr_credit_standalone: bool = False,
     solve_time_cdr_accounting: bool = False,
+    fossil_ets_avoidance_factor=None,
 ):
     if "marginal_cost" not in n.links.columns:
         n.links["marginal_cost"] = 0.0
@@ -1538,6 +1539,15 @@ def apply_cdr_credit_to_eligible_capture_links(
     )
     standalone_origins = {"dac", "biogenic"} if cdr_credit_standalone else set()
 
+    # Per-carrier ETS-avoidance factor for FOSSIL point-source capture (f_ETS).
+    # f_ETS < 1 means the captured stream only avoids that fraction of the ETS
+    # price (e.g. the rest is covered by free allocation and never displaced a
+    # purchased allowance). Absent/1.0 -> full avoidance, i.e. unchanged behaviour.
+    fossil_ets_factors = {
+        str(k): float(v) for k, v in (fossil_ets_avoidance_factor or {}).items()
+    }
+    apply_fossil_ets_factor = bool(fossil_ets_factors) and co2_price != 0.0
+
     if cdr_credit_timing != "capture" and solve_time_cdr_accounting and credit_prices:
         logger.info(
             "Capture-link CDR crediting is disabled because sector.cdr_credit_timing=%s.",
@@ -1552,7 +1562,7 @@ def apply_cdr_credit_to_eligible_capture_links(
             cdr_credit_timing,
         )
 
-    if not credit_prices and not standalone_origins:
+    if not credit_prices and not standalone_origins and not apply_fossil_ets_factor:
         return
 
     for link_name in n.links.index:
@@ -1575,6 +1585,15 @@ def apply_cdr_credit_to_eligible_capture_links(
             )
             if atmosphere_withdrawal > 0.0:
                 n.links.at[link_name, "marginal_cost"] += co2_price * atmosphere_withdrawal
+
+        # Partial ETS avoidance for fossil point-source capture. Routing CO2 to
+        # storage instead of the "co2 atmosphere" store already avoids co2_price/t
+        # automatically; adding back (1 - f_ETS) * co2_price per captured tonne
+        # leaves the link with only f_ETS of that avoidance value.
+        if apply_fossil_ets_factor and origin == "fossil":
+            f_ets = fossil_ets_factors.get(str(n.links.at[link_name, "carrier"]), 1.0)
+            if f_ets != 1.0 and co2_out > 0.0:
+                n.links.at[link_name, "marginal_cost"] += (1.0 - f_ets) * co2_price * co2_out
 
 
 def add_co2limit(n, options, co2_totals_file, countries, nyears, limit):
@@ -6739,6 +6758,7 @@ if __name__ == "__main__":
         if raw_by_scope
         else {}
     )
+    fossil_ets_avoidance_factor = options.get("fossil_ets_avoidance_factor", {})
     solve_time_cdr_accounting = (
         cdr_credit_timing == "sequestration"
         and snakemake.params.foresight != "perfect"
@@ -6930,6 +6950,7 @@ if __name__ == "__main__":
         co2_price=co2_price,
         cdr_credit_standalone=options.get("cdr_credit_standalone", False),
         solve_time_cdr_accounting=solve_time_cdr_accounting,
+        fossil_ets_avoidance_factor=fossil_ets_avoidance_factor,
     )
 
     if not options["electricity_transmission_grid"]:
