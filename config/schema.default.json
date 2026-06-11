@@ -626,7 +626,7 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.\n\nAt most one of `averaging`, `segmentation` and `representative` may be set;\nall others must be `false`.",
+          "description": "Configuration for `clustering.temporal` settings (at most one may be set).",
           "properties": {
             "averaging": {
               "anyOf": [
@@ -8186,7 +8186,7 @@
       }
     },
     "_TemporalConfig": {
-      "description": "Configuration for `clustering.temporal` settings.\n\nAt most one of `averaging`, `segmentation` and `representative` may be set;\nall others must be `false`.",
+      "description": "Configuration for `clustering.temporal` settings (at most one may be set).",
       "properties": {
         "averaging": {
           "anyOf": [
@@ -12280,7 +12280,7 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.\n\nAt most one of `averaging`, `segmentation` and `representative` may be set;\nall others must be `false`.",
+          "description": "Configuration for `clustering.temporal` settings (at most one may be set).",
           "properties": {
             "averaging": {
               "anyOf": [
