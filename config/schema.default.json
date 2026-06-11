@@ -5594,19 +5594,25 @@
                   "type": "number"
                 },
                 {
+                  "additionalProperties": {
+                    "type": "number"
+                  },
+                  "type": "object"
+                },
+                {
                   "type": "null"
                 }
               ],
               "default": null,
-              "description": "Expected objective value."
+              "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
             },
             "atol": {
-              "default": 1000000,
+              "default": 10000,
               "description": "Absolute tolerance.",
               "type": "number"
             },
             "rtol": {
-              "default": 0.01,
+              "default": 0.001,
               "description": "Relative tolerance.",
               "type": "number"
             }
@@ -5992,19 +5998,25 @@
               "type": "number"
             },
             {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
               "type": "null"
             }
           ],
           "default": null,
-          "description": "Expected objective value."
+          "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
         },
         "atol": {
-          "default": 1000000,
+          "default": 10000,
           "description": "Absolute tolerance.",
           "type": "number"
         },
         "rtol": {
-          "default": 0.01,
+          "default": 0.001,
           "description": "Relative tolerance.",
           "type": "number"
         }
@@ -12811,19 +12823,25 @@
                   "type": "number"
                 },
                 {
+                  "additionalProperties": {
+                    "type": "number"
+                  },
+                  "type": "object"
+                },
+                {
                   "type": "null"
                 }
               ],
               "default": null,
-              "description": "Expected objective value."
+              "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
             },
             "atol": {
-              "default": 1000000,
+              "default": 10000,
               "description": "Absolute tolerance.",
               "type": "number"
             },
             "rtol": {
-              "default": 0.01,
+              "default": 0.001,
               "description": "Relative tolerance.",
               "type": "number"
             }

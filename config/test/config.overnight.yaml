@@ -20,6 +20,10 @@ snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
+co2_budget:
+  upper:
+    2030: 0.05
+
 electricity:
   extendable_carriers:
     Generator: [solar, onwind, OCGT, CCGT, nuclear]
@@ -52,6 +56,10 @@ clustering:
     averaging: 24
   cluster_network:
     n_clusters: 5
+
+lines:
+  s_nom_max: .inf
+  s_nom_max_extension: 20000
 
 sector:
   enabled: true
@@ -114,8 +122,8 @@ solving:
   mem_mb: 4000
 
   check_objective:
-    enable: false
-    expected_value: 6.96e+08
+    enable: true
+    expected_value: 1546802840.75
 
 plotting:
   map:

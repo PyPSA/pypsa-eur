@@ -104,6 +104,10 @@ clustering:
     - wnd100m
     - influx_direct
 
+lines:
+  s_nom_max: .inf
+  s_nom_max_extension: 20000
+
 industry:
   St_primary_fraction:
     2030: 0.6
@@ -115,6 +119,12 @@ solving:
     name: highs
     options: highs-default
   mem_mb: 4000
+  check_objective:
+    enable: true
+    expected_value:
+      2030: 565539696.01
+      2040: 392486674.10
+      2050: 277157310.64
 
 plotting:
   map:

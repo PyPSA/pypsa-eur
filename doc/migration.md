@@ -112,6 +112,10 @@ Interactive HTML balance maps are additionally written to `results/maps/interact
   `overlap`), so capacity expansion can be followed by rolling-horizon dispatch. `solving.options.rolling_horizon`
   now only controls the rolling mode of the capacity-expansion `solve_network` rule.
 
+- **Objective benchmark check**: `solving.check_objective.expected_value` now accepts either a single
+  value (single-solve modes) or a `{<horizon>: value}` mapping, so each `solved_{horizon}.nc` of a myopic
+  run is checked against its own benchmark.
+
 **Before** (legacy):
 
 ```yaml

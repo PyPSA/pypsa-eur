@@ -280,9 +280,12 @@ class _CheckObjectiveConfig(BaseModel):
     """Configuration for `solving.check_objective` settings."""
 
     enable: bool = Field(False, description="Enable objective value checking.")
-    expected_value: float | None = Field(None, description="Expected objective value.")
-    atol: float = Field(1_000_000, description="Absolute tolerance.")
-    rtol: float = Field(0.01, description="Relative tolerance.")
+    expected_value: float | dict[int, float] | None = Field(
+        None,
+        description="Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight.",
+    )
+    atol: float = Field(10_000, description="Absolute tolerance.")
+    rtol: float = Field(0.001, description="Relative tolerance.")
 
     @field_validator("expected_value", mode="before")
     @classmethod

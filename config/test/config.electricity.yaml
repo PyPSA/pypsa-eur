@@ -21,7 +21,13 @@ snapshots:
 co2_budget:
   relative: false
   upper:
-    2050: 0.1
+    2020: 0.72
+    2025: 0.648
+    2030: 0.45
+    2035: 0.25
+    2040: 0.1
+    2045: 0.05
+    2050: 0.001
 
 electricity:
   gaslimit_enable: false
@@ -32,6 +38,12 @@ electricity:
     - solar
     - solar-hsat
     - onwind
+    - offwind-ac
+    - offwind-dc
+    - offwind-float
+    - OCGT
+    - CCGT
+    - nuclear
     StorageUnit:
     - battery
     Store:
@@ -54,16 +66,6 @@ electricity:
       Offshore: offwind-ac
       Onshore: onwind
       PV: solar
-  conventional_carriers: []
-
-existing_capacities:
-  grouping_years_power:
-  - 2020
-  grouping_years_heat:
-  - 2015
-  threshold_capacity: 0
-  default_heating_lifetime: 20
-  conventional_carriers: []
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -100,6 +102,8 @@ clustering:
     n_clusters: 5
 
 lines:
+  s_nom_max: .inf
+  s_nom_max_extension: 20000
   dynamic_line_rating:
     activate: true
     max_line_rating: 1.3
@@ -112,8 +116,8 @@ solving:
     name: highs
     options: highs-default
   check_objective:
-    enable: false
-    expected_value: 38120188.094
+    enable: true
+    expected_value: 74395010.28
   options:
     transmission_losses: 0
 

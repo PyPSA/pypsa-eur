@@ -1272,7 +1272,7 @@ def extra_functionality(
         custom_extra_functionality(n, snapshots, snakemake)  # pylint: disable=E0601
 
 
-def check_objective_value(n: pypsa.Network, solving: dict) -> None:
+def check_objective_value(n: pypsa.Network, solving: dict, horizon: str) -> None:
     """
     Check if objective value matches expected value within tolerance.
 
@@ -1282,6 +1282,9 @@ def check_objective_value(n: pypsa.Network, solving: dict) -> None:
         Network with solved objective
     solving : Dict
         Dictionary containing objective checking parameters
+    horizon : str
+        Planning horizon of the current solve, used to select the expected
+        value for myopic foresight (per-horizon mapping)
 
     Raises
     ------
@@ -1289,15 +1292,18 @@ def check_objective_value(n: pypsa.Network, solving: dict) -> None:
         If objective value differs from expected value beyond tolerance
     """
     check_objective = solving["check_objective"]
-    if check_objective["enable"]:
-        atol = check_objective["atol"]
-        rtol = check_objective["rtol"]
-        expected_value = check_objective["expected_value"]
-        if not np.isclose(n.objective, expected_value, atol=atol, rtol=rtol):
-            raise ObjectiveValueError(
-                f"Objective value {n.objective} differs from expected value "
-                f"{expected_value} by more than {atol}."
-            )
+    if not check_objective["enable"]:
+        return
+    atol = check_objective["atol"]
+    rtol = check_objective["rtol"]
+    expected_value = check_objective["expected_value"]
+    if isinstance(expected_value, dict):
+        expected_value = expected_value[int(horizon)]
+    if not np.isclose(n.objective, expected_value, atol=atol, rtol=rtol):
+        raise ObjectiveValueError(
+            f"Objective value {n.objective} differs from expected value "
+            f"{expected_value} by more than {atol}."
+        )
 
 
 def collect_kwargs(
@@ -1565,7 +1571,7 @@ if __name__ == "__main__":
             logger.warning(
                 f"Solving status '{status}' with termination condition '{condition}'"
             )
-        check_objective_value(n, snakemake.params.solving)
+        check_objective_value(n, snakemake.params.solving, snakemake.wildcards.horizon)
 
     if "warning" in condition:
         raise RuntimeError("Solving status 'warning'. Discarding solution.")

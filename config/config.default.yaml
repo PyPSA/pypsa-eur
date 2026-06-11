@@ -1330,8 +1330,8 @@ solving:
   check_objective:
     enable: false
     expected_value:
-    atol: 1000000
-    rtol: 0.01
+    atol: 10000
+    rtol: 0.001
   oetc:
   mem_mb: 128000
   memory_logging_frequency: 5
