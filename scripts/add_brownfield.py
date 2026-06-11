@@ -375,7 +375,11 @@ def adjust_renewable_capacity_limits(
     Issues a warning if existing capacities exceed technical potential.
     Clips p_nom_max to non-negative values.
     """
-    for carrier in renewable_carriers:
+    carriers = list(renewable_carriers)
+    if (n.generators.carrier == "solar rooftop").any():
+        carriers.append("solar rooftop")
+
+    for carrier in carriers:
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         grouper = n.generators.loc[ext_i].index.str.replace(
             f" {carrier}.*$", "", regex=True

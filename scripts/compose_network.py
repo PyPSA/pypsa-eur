@@ -16,6 +16,7 @@ from scripts._helpers import (
     sanitize_custom_columns,
     set_scenario_config,
 )
+from scripts.add_brownfield import adjust_renewable_capacity_limits
 from scripts.add_brownfield import main as apply_brownfield
 from scripts.add_electricity import main as add_electricity_components
 from scripts.add_electricity import (
@@ -76,6 +77,10 @@ if __name__ == "__main__":
 
     if foresight != "overnight" and is_first_horizon:
         add_existing_capacities(n, inputs, params, costs)
+        if foresight == "myopic":
+            adjust_renewable_capacity_limits(
+                n, str(current_horizon), params.renewable_carriers
+            )
 
     if foresight == "myopic" and not is_first_horizon:
         apply_brownfield(n, n_previous, inputs, params, current_horizon)

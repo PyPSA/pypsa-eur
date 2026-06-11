@@ -14,6 +14,7 @@
     - A unified `compose_network` rule handles greenfield, brownfield, and perfect foresight network assembly for both electricity-only and sector-coupled models.
     - A single `solve_network` rule replaces the separate `solve_electricity.smk`, `solve_overnight.smk`, `solve_myopic.smk`, and `solve_perfect.smk` rule files (now deleted).
     - **Electricity-only models now support myopic and perfect foresight**, not just overnight optimization. New test configs `config.electricity-myopic.yaml` and `config.electricity-perfect.yaml` added.
+    - **Perfect foresight runs on PyPSA ≥1.0 again.** The previous `prepare_perfect_foresight.py` raised `PyPSA versions >=1.0 are not supported for perfect foresight`; perfect foresight has been ported to the current PyPSA API so it is usable once more.
     - Post-processing (summaries, maps, plots) works uniformly across all foresight modes and model types.
     - Results CSVs (`costs.csv`, `capacities.csv`, `energy.csv`, etc.) are unified across horizons.
     - `make_summary.py` now handles all foresight modes, consolidating the functionality of `make_summary_perfect.py` and `make_global_summary.py`.
@@ -25,6 +26,7 @@
     - Removed `electricity: co2limit_enable`, `electricity: co2limit`, and `electricity: co2base`. Use the unified `co2_budget` section with `upper:`/`lower:` bounds instead. The `Co2L` and `cb*` wildcards (both opts and sector_opts) are also removed.
     - Restructured `co2_budget:`. Now requires `emissions_scope` and `relative` (true/false) plus `upper`/`lower` bounds, where each bound can be `null`, a scalar, or a `{year: value}` mapping.
     - Renamed transmission extension keys. `lines: max_extension` → `s_nom_max_extension`; `links: max_extension` → `p_nom_max_extension`.
+    - Retrofitted H2 pipelines now model directional transmission losses. `H2 pipeline retrofitted` was added to `sector: transmission_efficiency: enable`, so these links are split into two unidirectional lossy links (as already done for `H2 pipeline` and `gas pipeline`) instead of a single lossless bidirectional link. This changes results where H2 pipeline losses are relevant.
     - Added `sector: enabled` to control sector coupling. Set to `false` for electricity-only models.
     - Moved national policy phase-outs to `existing_capacities: phase_outs` as a list of `{carriers, countries, year}` rules. Previously hardcoded in `prepare_perfect_foresight.py`, they now cap conventional asset lifetimes for both generators (electricity-only) and links (sector-coupled) in perfect foresight. Defaults reproduce the previous behaviour.
     - Added `clustering: cluster_network: n_clusters`. Replaces the `{clusters}` wildcard in filenames.

@@ -29,6 +29,7 @@ gurobi.log
 /tmp
 doc/_build
 _build
+benchmark/
 
 /scripts/old
 /scripts/create_scenarios.py

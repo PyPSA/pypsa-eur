@@ -73,10 +73,21 @@ Interactive HTML balance maps are additionally written to `results/maps/interact
 - **Planning horizons**: The `scenario.planning_horizons` setting has moved to `planning_horizons` at the top level.
   This list defines the years for which the model is optimized and directly controls the `{horizon}` wildcard.
 
+- **Cost year for overnight runs**: Technology costs are now always taken from the
+  planning horizon (`costs_{horizon}.csv`). Previously, overnight runs used a fixed
+  `costs.year` (default 2050) regardless of the planning horizon. An overnight run at
+  `planning_horizons: [2030]` therefore now uses 2030 technology costs instead of 2050,
+  which changes objective and capacity results. Set `planning_horizons` to the desired
+  cost year to reproduce previous behaviour.
+
 - **CO₂ handling**: The `electricity.co2limit_enable`, `electricity.co2limit`, and
   `electricity.co2base` settings are removed. CO₂ constraints are now exclusively
   configured via `co2_budget`, which has a new structure with `emissions_scope`,
-  `relative`, `upper`, and `lower` keys.
+  `relative`, `upper`, and `lower` keys. **Note the units**: with `relative: true`,
+  `upper`/`lower` are fractions of the 1990 baseline; with `relative: false` they are
+  absolute limits in **Gt CO₂** (not tonnes). The old `electricity.co2limit` was in
+  tonnes, so migrate e.g. `co2limit: 100e6` to `co2_budget: {relative: false, upper:
+  {<horizon>: 0.1}}` (0.1 Gt = 100 Mt).
 
 - **Temporal resolution**: `clustering.temporal.resolution_elec` and `resolution_sector`
   are merged into a single `clustering.temporal.resolution` setting. A new
