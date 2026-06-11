@@ -95,10 +95,7 @@ Switch to retrieve the tutorial data set instead of the full data set.
 
 Configuration for top level `logging` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `level` | enum (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`) | `INFO` | Restrict console outputs to all infos, warning or errors only |
-| `format` | string | `%(levelname)s:%(name)s:%(message)s` | Custom format for log messages. See [LogRecord ](https://docs.python.org/3/library/logging.html#logging.LogRecord) attributes. |
+{{ schema_table("logging") }}
 
 **YAML Syntax**
 
@@ -113,10 +110,7 @@ Configuration for top level `logging` settings.
 
 Configuration for top level `remote` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `ssh` | string | `""` | Optionally specify the SSH of a remote cluster to be synchronized. |
-| `path` | string | `""` | Optionally specify the file path within the remote cluster to be synchronized. |
+{{ schema_table("remote") }}
 
 **YAML Syntax**
 
@@ -137,18 +131,7 @@ Therefore the user can run different configurations within the same directory.
 
 Configuration for top level `run` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `prefix` | string | `""` | Prefix for the run name which is used as a top-layer directory name in the results and resources folders. |
-| `name` | string \| list of string | `""` | Specify a name for your run. Results will be stored under this name. If `scenario: enable:` is set to `true`, the name must contain a subset of scenario names defined in `scenario: file:`. If the name is 'all', all defined scenarios will be run. |
-| `scenarios` | any |  | Configuration for `run.scenarios` level. |
-| ↳ `enable` | boolean | `false` | Switch to select whether workflow should generate scenarios based on `file`. |
-| ↳ `file` | string | `config/scenarios.yaml` | Path to the scenario yaml file. The scenario file contains config overrides for each scenario. In order to be taken account, `run: scenarios` has to be set to `true` and `run: name` has to be a subset of top level keys given in the scenario file. In order to automatically create a `scenario.yaml` file based on a combination of settings, alter and use the `config/create_scenarios.py` script in the `config` directory. |
-| `disable_progressbar` | boolean | `false` | Switch to select whether progressbar should be disabled. |
-| `shared_resources` | any |  | Configuration for `run.shared_resources` level. |
-| ↳ `policy` | boolean \| string | `false` | Boolean switch to select whether resources should be shared across runs. If a string is passed, this is used as a subdirectory name for shared resources. If set to 'base', only resources before creating the elec.nc file are shared. |
-| ↳ `exclude` | list of string |  | For the case shared_resources=base, specify additional files that should not be shared across runs. |
-| `use_shadow_directory` | boolean | `false` | Set to `true` (default) if snakemake shadow directories (`shallow`) should be used. Set to `false` if problems occur. |
+{{ schema_table("run") }}
 
 **YAML Syntax**
 
@@ -236,11 +219,7 @@ Specifies the temporal range to build an energy system model for as arguments to
 
 Configuration for `snapshots` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `start` | string \| list of string | `2013-01-01` | Left bound of date range. |
-| `end` | string \| list of string | `2014-01-01` | Right bound of date range. |
-| `inclusive` | enum (`left`, `right`, `both`) \| null | `left` | Make the time interval closed to the `left`, `right`, or both sides `both` or neither side `None`. |
+{{ schema_table("snapshots") }}
 
 **YAML Syntax**
 
@@ -255,9 +234,7 @@ Switches for some rules and optional features.
 
 Configuration for `enable` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `drop_leap_day` | boolean | `true` | Switch to drop February 29 from all time-dependent data in leap years. |
+{{ schema_table("enable") }}
 
 **YAML Syntax**
 
@@ -289,51 +266,7 @@ Configuration for `co2_budget` settings.
 
 Configuration for `electricity` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `voltages` | list of number |  | Voltage levels to consider. |
-| `base_network` | enum (`entsoegridkit`, `osm`, `tyndp`) | `osm` | Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP. |
-| `gaslimit_enable` | boolean | `false` | Add an overall absolute gas limit configured in `electricity: gaslimit`. |
-| `gaslimit` | number \| boolean | `false` | Global gas usage limit. |
-| `operational_reserve` | any |  | Configuration for `electricity.operational_reserve` settings. |
-| ↳ `activate` | boolean | `false` | Whether to take operational reserve requirements into account during optimisation. |
-| ↳ `epsilon_load` | number | `0.02` | share of total load. |
-| ↳ `epsilon_vres` | number | `0.02` | share of total renewable supply. |
-| ↳ `contingency` | number | `4000` | Fixed reserve capacity (MW). |
-| `max_hours` | any |  | Configuration for `electricity.max_hours` settings. |
-| ↳ `battery` | number | `6` | Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| ↳ `li-ion` | number | `6` | Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| ↳ `lfp` | number | `6` | Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| ↳ `vanadium` | number | `10` | Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| ↳ `lair` | number | `12` | Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| ↳ `pair` | number | `24` | Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| ↳ `iron-air` | number | `100` | Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| ↳ `H2` | number | `168` | Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| `extendable_carriers` | any |  | Configuration for `electricity.extendable_carriers` settings. |
-| ↳ `Generator` | list of string |  | Defines existing or non-existing conventional and renewable power plants to be extendable during the optimization. Conventional generators can only be built/expanded where already existent today. If a listed conventional carrier is not included in the `conventional_carriers` list, the lower limit of the capacity expansion is set to 0. |
-| ↳ `StorageUnit` | list of string |  | Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air. |
-| ↳ `Store` | list of string |  | Adds extendable storage units at every node/bus after clustering without capacity limits and with zero initial capacity. Supported technologies include battery, H2, li-ion, vanadium, lfp, lair, pair, and iron-air. |
-| ↳ `Link` | list of string |  | Adds extendable links (H2 pipelines only) at every connection where there are lines or HVDC links without capacity limits and with zero initial capacity. Hydrogen pipelines require hydrogen storage to be modelled as `Store`. |
-| `powerplants_filter` | string \| boolean | `(DateOut > 2025 or DateOut != DateOut) and (DateIn < 2026 or DateIn != DateIn)` | Filter query for the default powerplant database. |
-| `custom_powerplants` | string \| boolean | `false` | Filter query for the custom powerplant database. |
-| `everywhere_powerplants` | list of string |  | List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with `extendable_carriers` to allow for building conventional powerplants irrespective of existing locations. |
-| `conventional_carriers` | list of string |  | List of conventional power plants to include in the model from `resources/powerplants_s_{clusters}.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound. |
-| `renewable_carriers` | list of string |  | List of renewable generators to include in the model. |
-| `estimate_renewable_capacities` | any |  | Configuration for `electricity.estimate_renewable_capacities` settings. |
-| ↳ `enable` | boolean | `true` | Activate routine to estimate renewable capacities in rule `add_electricity`. This option should not be used in combination with pathway planning `foresight: myopic` or `foresight: perfect` as renewable capacities are added differently in `add_existing_baseyear`. |
-| ↳ `from_powerplantmatching` | boolean | `true` | Add renewable capacities from powerplantmatching dataset. |
-| ↳ `from_irenastat` | boolean | `false` | Supplement powerplantmatching dataset with heuristics based on country-level renewable capacities from IRENA (IRENASTAT). |
-| ↳ `year` | integer | `2024` | Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year. |
-| ↳ `expansion_limit` | number \| boolean | `false` | Artificially limit maximum IRENA capacities to a factor. For example, an `expansion_limit: 1.1` means 110% of capacities. If false are chosen, the estimated renewable potentials determine by the workflow are used. |
-| ↳ `technology_mapping` | any |  | Configuration for `electricity.estimate_renewable_capacities.technology_mapping` settings. |
-| ↳↳ `Offshore` | string | `offwind-ac` | PyPSA-Eur carrier that is considered for existing offshore wind technology (IRENA, GEM). |
-| ↳↳ `Onshore` | string | `onwind` | PyPSA-Eur carrier that is considered for existing onshore wind capacities (IRENA, GEM). |
-| ↳↳ `PV` | string | `solar` | PyPSA-Eur carrier that is considered for existing solar PV capacities (IRENA, GEM). |
-| `estimate_battery_capacities` | boolean | `false` | Enable estimation of existing battery storage capacities. |
-| `autarky` | any |  | Configuration for `electricity.autarky` settings. |
-| ↳ `enable` | boolean | `false` | Require each node to be autarkic by removing all lines and links. |
-| ↳ `by_country` | boolean | `false` | Require each country to be autarkic by removing all cross-border lines and links. `electricity: autarky` must be enabled. |
-| `transmission_limit` | string | `vopt` | Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system. |
+{{ schema_table("electricity") }}
 
 **YAML Syntax**
 
@@ -348,13 +281,7 @@ Define and specify the `atlite.Cutout` used for calculating renewable potentials
 
 Configuration for `atlite` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `default_cutout` | string \| list of string | `europe-2013-sarah3-era5` | Defines a default cutout. Can refer to a single cutout or a list of cutouts. |
-| `nprocesses` | integer | `1` | Number of parallel processes in cutout preparation. |
-| `show_progress` | boolean | `false` | Whether progressbar for atlite conversion processes should be shown. False saves time. |
-| `plot_availability_matrix` | boolean | `false` | Whether to plot the landuse availability matrix. |
-| `cutouts` | dict (str -> any) |  | Named cutout configurations. |
+{{ schema_table("atlite") }}
 
 **YAML Syntax**
 
@@ -369,134 +296,27 @@ Configuration for `atlite` settings.
 
 Configuration for onshore wind.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `cutout` | string \| list of string | `default` | Specifies the weather data cutout file(s) to use. |
-| `resource` | any |  | Configuration for wind resource settings. |
-| ↳ `method` | string | `wind` | A superordinate technology type. |
-| ↳ `turbine` | string \| dict (str -> string) |  | Specifies the turbine type and its characteristic power curve. Can be a string or a dictionary with years as keys which denote the year another turbine model becomes available. |
-| ↳ `smooth` | boolean | `false` | Switch to apply a gaussian kernel density smoothing to the power curve. |
-| ↳ `add_cutout_windspeed` | boolean | `true` | Whether to add cutout windspeed data. |
-| `resource_classes` | integer | `1` | Number of resource classes per clustered region. |
-| `capacity_per_sqkm` | number | `3` | Allowable density of wind turbine placement. |
-| `correction_factor` | number | `1.0` | Correction factor for capacity factor time series. |
-| `corine` | boolean \| any |  | CORINE land cover configuration. |
-| ↳ `grid_codes` | list of integer |  | Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement. |
-| ↳ `distance` | number | `1000` | Distance in meters to keep from areas specified in `distance_grid_codes`. |
-| ↳ `distance_grid_codes` | list of integer |  | Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting `distance`. |
-| `luisa` | boolean \| object | `false` | LUISA land cover configuration. |
-| `natura` | boolean | `true` | Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`. |
-| `excluder_resolution` | number | `100` | Resolution in meters on which to perform geographical eligibility analysis. |
-| `clip_p_max_pu` | number | `0.01` | To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero. |
+{{ schema_table("renewable.onwind") }}
 
 Configuration for offshore wind.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `cutout` | string \| list of string | `default` | Specifies the weather data cutout file(s) to use. |
-| `resource` | any |  | Configuration for wind resource settings. |
-| ↳ `method` | string | `wind` | A superordinate technology type. |
-| ↳ `turbine` | string \| dict (str -> string) |  | Specifies the turbine type and its characteristic power curve. Can be a string or a dictionary with years as keys which denote the year another turbine model becomes available. |
-| ↳ `smooth` | boolean | `false` | Switch to apply a gaussian kernel density smoothing to the power curve. |
-| ↳ `add_cutout_windspeed` | boolean | `true` | Whether to add cutout windspeed data. |
-| `resource_classes` | integer | `1` | Number of resource classes per clustered region. |
-| `capacity_per_sqkm` | number | `2` | Allowable density of wind turbine placement. |
-| `correction_factor` | number | `0.8855` | Correction factor for capacity factor time series. |
-| `corine` | boolean \| list of integer | `false` | Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement. |
-| `luisa` | boolean \| list of integer | `false` | Specifies areas according to the LUISA Base Map codes which are generally eligible for AC-connected offshore wind turbine placement. |
-| `natura` | boolean | `true` | Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`. |
-| `ship_threshold` | number | `400` | Ship density threshold from which areas are excluded. |
-| `max_depth` | number \| null |  | Maximum sea water depth in meters at which wind turbines can be built. Maritime areas with deeper waters are excluded in the process of calculating the AC-connected offshore wind potential. |
-| `min_depth` | number \| null |  | Minimum water depth in meters. |
-| `max_shore_distance` | number \| null |  | Maximum distance to the shore in meters above which wind turbines cannot be built. Such areas are excluded in the process of calculating the AC-connected offshore wind potential. |
-| `min_shore_distance` | number \| null |  | Minimum distance to the shore in meters below which wind turbines cannot be built. Such areas close to the shore are excluded in the process of calculating the AC-connected offshore wind potential. |
-| `excluder_resolution` | number | `200` | Resolution in meters on which to perform geographical eligibility analysis. |
-| `clip_p_max_pu` | number | `0.01` | To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero. |
-| `landfall_length` | number \| string | `20` | Fixed length of the cable connection that is onshorelandfall in km. If 'centroid', the length is calculated as the distance to centroid of the onshore bus. |
+{{ schema_table("renewable.offwind-ac") }}
 
 Configuration for offshore wind.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `cutout` | string \| list of string | `default` | Specifies the weather data cutout file(s) to use. |
-| `resource` | any |  | Configuration for wind resource settings. |
-| ↳ `method` | string | `wind` | A superordinate technology type. |
-| ↳ `turbine` | string \| dict (str -> string) |  | Specifies the turbine type and its characteristic power curve. Can be a string or a dictionary with years as keys which denote the year another turbine model becomes available. |
-| ↳ `smooth` | boolean | `false` | Switch to apply a gaussian kernel density smoothing to the power curve. |
-| ↳ `add_cutout_windspeed` | boolean | `true` | Whether to add cutout windspeed data. |
-| `resource_classes` | integer | `1` | Number of resource classes per clustered region. |
-| `capacity_per_sqkm` | number | `2` | Allowable density of wind turbine placement. |
-| `correction_factor` | number | `0.8855` | Correction factor for capacity factor time series. |
-| `corine` | boolean \| list of integer | `false` | Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement. |
-| `luisa` | boolean \| list of integer | `false` | Specifies areas according to the LUISA Base Map codes which are generally eligible for AC-connected offshore wind turbine placement. |
-| `natura` | boolean | `true` | Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`. |
-| `ship_threshold` | number | `400` | Ship density threshold from which areas are excluded. |
-| `max_depth` | number \| null |  | Maximum sea water depth in meters at which wind turbines can be built. Maritime areas with deeper waters are excluded in the process of calculating the AC-connected offshore wind potential. |
-| `min_depth` | number \| null |  | Minimum water depth in meters. |
-| `max_shore_distance` | number \| null |  | Maximum distance to the shore in meters above which wind turbines cannot be built. Such areas are excluded in the process of calculating the AC-connected offshore wind potential. |
-| `min_shore_distance` | number \| null |  | Minimum distance to the shore in meters below which wind turbines cannot be built. Such areas close to the shore are excluded in the process of calculating the AC-connected offshore wind potential. |
-| `excluder_resolution` | number | `200` | Resolution in meters on which to perform geographical eligibility analysis. |
-| `clip_p_max_pu` | number | `0.01` | To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero. |
-| `landfall_length` | number \| string | `20` | Fixed length of the cable connection that is onshorelandfall in km. If 'centroid', the length is calculated as the distance to centroid of the onshore bus. |
+{{ schema_table("renewable.offwind-dc") }}
 
 Configuration for offshore wind.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `cutout` | string \| list of string | `default` | Specifies the weather data cutout file(s) to use. |
-| `resource` | any |  | Configuration for wind resource settings. |
-| ↳ `method` | string | `wind` | A superordinate technology type. |
-| ↳ `turbine` | string \| dict (str -> string) |  | Specifies the turbine type and its characteristic power curve. Can be a string or a dictionary with years as keys which denote the year another turbine model becomes available. |
-| ↳ `smooth` | boolean | `false` | Switch to apply a gaussian kernel density smoothing to the power curve. |
-| ↳ `add_cutout_windspeed` | boolean | `true` | Whether to add cutout windspeed data. |
-| `resource_classes` | integer | `1` | Number of resource classes per clustered region. |
-| `capacity_per_sqkm` | number | `2` | Allowable density of wind turbine placement. |
-| `correction_factor` | number | `0.8855` | Correction factor for capacity factor time series. |
-| `corine` | boolean \| list of integer | `false` | Specifies areas according to CORINE Land Cover codes which are generally eligible for AC-connected offshore wind turbine placement. |
-| `luisa` | boolean \| list of integer | `false` | Specifies areas according to the LUISA Base Map codes which are generally eligible for AC-connected offshore wind turbine placement. |
-| `natura` | boolean | `true` | Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`. |
-| `ship_threshold` | number | `400` | Ship density threshold from which areas are excluded. |
-| `max_depth` | number \| null |  | Maximum sea water depth in meters at which wind turbines can be built. Maritime areas with deeper waters are excluded in the process of calculating the AC-connected offshore wind potential. |
-| `min_depth` | number \| null |  | Minimum water depth in meters. |
-| `max_shore_distance` | number \| null |  | Maximum distance to the shore in meters above which wind turbines cannot be built. Such areas are excluded in the process of calculating the AC-connected offshore wind potential. |
-| `min_shore_distance` | number \| null |  | Minimum distance to the shore in meters below which wind turbines cannot be built. Such areas close to the shore are excluded in the process of calculating the AC-connected offshore wind potential. |
-| `excluder_resolution` | number | `200` | Resolution in meters on which to perform geographical eligibility analysis. |
-| `clip_p_max_pu` | number | `0.01` | To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero. |
-| `landfall_length` | number \| string | `20` | Fixed length of the cable connection that is onshorelandfall in km. If 'centroid', the length is calculated as the distance to centroid of the onshore bus. |
+{{ schema_table("renewable.offwind-float") }}
 
 Configuration for solar PV.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `cutout` | string \| list of string | `default` | Specifies the weather data cutout file(s) to use. |
-| `resource` | any |  | Configuration for solar resource settings. |
-| ↳ `method` | string | `pv` | A superordinate technology type. |
-| ↳ `panel` | string \| dict (str -> string) | `CSi` | Specifies the solar panel technology and its characteristic attributes. Can be a string or a dictionary with years as keys which denote the year another panel model becomes available. |
-| ↳ `orientation` | dict (str -> number) |  | Panel orientation with slope and azimuth. |
-| ↳ `tracking` | string \| null |  | Tracking type (e.g., 'horizontal'). |
-| `resource_classes` | integer | `1` | Number of resource classes per clustered region. |
-| `capacity_per_sqkm` | number | `5.1` | Allowable density of solar panel placement. |
-| `correction_factor` | number | `1.0` | A correction factor for the capacity factor (availability) time series. |
-| `corine` | boolean \| list of integer |  | Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement. |
-| `luisa` | boolean \| list of integer | `false` | Specifies areas according to the LUISA Base Map codes which are generally eligible for solar panel placement. |
-| `natura` | boolean | `true` | Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`. |
-| `excluder_resolution` | number | `100` | Resolution in meters on which to perform geographical eligibility analysis. |
-| `clip_p_max_pu` | number | `0.01` | To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero. |
+{{ schema_table("renewable.solar") }}
 
 Configuration for hydropower.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `cutout` | string \| list of string | `default` | Specifies the weather data cutout file(s) to use. |
-| `carriers` | list of string |  | Specifies the types of hydro power plants to build per-unit availability time series for. 'ror' stands for run-of-river plants, 'PHS' represents pumped-hydro storage, and 'hydro' stands for hydroelectric dams. |
-| `PHS_max_hours` | number | `6` | Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| `hydro_max_hours` | string \| number | `energy_capacity_totals_by_country` | Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit). |
-| `flatten_dispatch` | boolean | `false` | Consider an upper limit for the hydro dispatch. The limit is given by the average capacity factor plus the buffer given in `flatten_dispatch_buffer`. |
-| `flatten_dispatch_buffer` | number | `0.2` | If `flatten_dispatch` is true, specify the value added above the average capacity factor. |
-| `clip_min_inflow` | number | `1.0` | To avoid too small values in the inflow time series, values below this threshold (MW) are set to zero. |
-| `eia_norm_year` | boolean \| integer | `false` | To specify a specific year by which hydro inflow is normed that deviates from the snapshots' year. |
-| `eia_correct_by_capacity` | boolean | `false` | Correct EIA annual hydro generation data by installed capacity. |
-| `eia_approximate_missing` | boolean | `false` | Approximate hydro generation data for years not included in EIA dataset through a regression based on annual runoff. |
+{{ schema_table("renewable.hydro") }}
 
 **YAML Syntax**
 
@@ -564,12 +384,7 @@ overwrite the existing values.
 
 Configuration for `conventional` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `unit_commitment` | boolean | `false` | Allow the overwrite of ramp_limit_up, ramp_limit_start_up, ramp_limit_shut_down, p_min_pu, min_up_time, min_down_time, and start_up_cost of conventional generators. Refer to the CSV file 'unit_commitment.csv'. |
-| `dynamic_fuel_price` | boolean | `false` | Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file 'data/validation/monthly_fuel_price.csv'. |
-| `fuel_price_rolling_window` | integer | `6` | Monthly rolling mean window for fossil fuel prices smoothing. |
-| `nuclear` | dict (str -> string \| number) |  | For any carrier/technology overwrite attributes as listed below. |
+{{ schema_table("conventional") }}
 
 **YAML Syntax**
 
@@ -582,21 +397,7 @@ Configuration for `conventional` settings.
 
 Configuration for `lines` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `types` | dict (str -> string) |  | Specifies line types to assume for the different voltage levels of the ENTSO-E grid extraction. Should normally handle voltage levels 220, 300, and 380 kV. |
-| `s_max_pu` | number | `0.7` | Correction factor for line capacities (`s_nom`) to approximate N-1 security and reserve capacity for reactive power flows. |
-| `s_nom_max` | number |  | Global upper limit for the maximum capacity of each extendable line (MW). |
-| `max_extension` | number | `20000` | Upper limit for the extended capacity of each extendable line (MW). |
-| `length_factor` | number | `1.25` | Correction factor to account for the fact that buses are *not* connected by lines through air-line distance. |
-| `reconnect_crimea` | boolean | `true` | Whether to reconnect Crimea to the Ukrainian grid. |
-| `under_construction` | enum (`zero`, `remove`, `keep`) | `keep` | Specifies how to handle lines which are currently under construction. |
-| `dynamic_line_rating` | any |  | Configuration for `lines.dynamic_line_rating` settings. |
-| ↳ `activate` | boolean | `false` | Whether to take dynamic line rating into account. |
-| ↳ `cutout` | string \| list of string | `default` | Specifies the weather data cutout file(s) to use. |
-| ↳ `correction_factor` | number | `0.95` | Factor to compensate for overestimation of wind speeds in hourly averaged wind data. |
-| ↳ `max_voltage_difference` | number \| `False` | `false` | Maximum voltage angle difference in degrees or 'false' to disable. |
-| ↳ `max_line_rating` | number \| `False` | `false` | Maximum line rating relative to nominal capacity without DLR, e.g. 1.3 or 'false' to disable. |
+{{ schema_table("lines") }}
 
 **YAML Syntax**
 
@@ -609,14 +410,7 @@ Configuration for `lines` settings.
 
 Configuration for `links` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `p_max_pu` | number | `1.0` | Correction factor for link capacities `p_nom`. |
-| `p_min_pu` | number | `-1.0` | Correction factor for link capacities `p_nom`. |
-| `p_nom_max` | number |  | Global upper limit for the maximum capacity of each extendable DC link (MW). |
-| `max_extension` | number | `30000` | Upper limit for the extended capacity of each extendable DC link (MW). |
-| `length_factor` | number | `1.25` | Correction factor to account for the fact that buses are *not* connected by links through air-line distance. |
-| `under_construction` | enum (`zero`, `remove`, `keep`) | `keep` | Specifies how to handle lines which are currently under construction. |
+{{ schema_table("links") }}
 
 **YAML Syntax**
 
@@ -631,16 +425,7 @@ Allows to define additional transmission projects that will be added to the base
 
 Configuration for `transmission_projects` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `enable` | boolean | `true` | Whether to integrate this transmission projects or not. |
-| `include` | any |  | Configuration for `transmission_projects.include` settings. |
-| ↳ `tyndp2020` | boolean | `true` | Whether to integrate the TYNDP 2020 dataset. |
-| ↳ `nep` | boolean | `true` | Whether to integrate the German network development plan dataset. |
-| ↳ `manual` | boolean | `true` | Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file. |
-| `skip` | list of string |  | Type of lines to skip from all transmission projects. Possible values are: `upgraded_lines`, `upgraded_links`, `new_lines`, `new_links`. |
-| `status` | list of string \| dict (str -> list of string) |  | Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`. |
-| `new_link_capacity` | enum (`zero`, `keep`) | `zero` | Whether to set the new link capacity to the provided capacity or set it to zero. |
+{{ schema_table("transmission_projects") }}
 
 **YAML Syntax**
 
@@ -653,11 +438,7 @@ Configuration for `transmission_projects` settings.
 
 Configuration for `transformers` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `x` | number | `0.1` | Series reactance in per unit (p.u.), using `s_nom` as base power of the transformer. Overwritten if `type` is specified. |
-| `s_nom` | number | `2000.0` | Limit of apparent power which can pass through branch (MVA). Overwritten if `type` is specified. |
-| `type` | string | `""` | Specifies transformer types to assume for the transformers of the ENTSO-E grid extraction. |
+{{ schema_table("transformers") }}
 
 **YAML Syntax**
 
@@ -670,20 +451,7 @@ Configuration for `transformers` settings.
 
 Configuration for `load` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `fill_gaps` | any |  | Configuration for `load.fill_gaps` settings. |
-| ↳ `enable` | boolean | `true` | Whether to fill gaps using interpolation for small gaps and time shift for large gaps. |
-| ↳ `interpolate_limit` | integer | `6` | Maximum gap size (consecutive nans) which interpolated linearly. |
-| ↳ `time_shift_for_large_gaps` | string | `1w` | Periods which are used for copying time-slices in order to fill large gaps of nans. Have to be valid `pandas` period strings. |
-| `manual_adjustments` | boolean | `true` | Whether to adjust the load data manually according to the function in `manual_adjustment`. |
-| `scaling_factor` | number | `1.0` | Global correction factor for the load time series. |
-| `fixed_year` | integer \| boolean | `false` | To specify a fixed year for the load time series that deviates from the snapshots' year. |
-| `supplement_synthetic` | boolean | `true` | Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928). |
-| `substation_only` | boolean | `true` | Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data. |
-| `distribution_key` | any |  | Configuration for `load.distribution_key` settings. |
-| ↳ `gdp` | number | `0.6` | Weighting factor for the GDP data in the distribution key. |
-| ↳ `population` | number | `0.4` | Weighting factor for the population data in the distribution key. |
+{{ schema_table("load") }}
 
 **YAML Syntax**
 
@@ -698,11 +466,7 @@ Only used for sector-coupling studies.
 
 Configuration for `energy` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `energy_totals_year` | integer | `2023` | The year for the sector energy use. The year must be available in the Eurostat report. |
-| `base_emissions_year` | integer | `1990` | The base year for the sector emissions. See [European Environment Agency (EEA) ](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16). |
-| `emissions` | string | `CO2` | Specify which sectoral emissions are taken into account. Data derived from EEA. Currently only CO2 is implemented. |
+{{ schema_table("energy") }}
 
 **YAML Syntax**
 
@@ -735,17 +499,7 @@ Configuration for `energy` settings.
 
 Configuration for `biomass` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `year` | integer | `2030` | Year for which to retrieve biomass potential according to the assumptions of the [JRC ENSPRESO ](https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f). |
-| `scenario` | enum (`ENS_Low`, `ENS_Med`, `ENS_High`) | `ENS_Med` | Scenario for which to retrieve biomass potential. The scenario definition can be seen in [ENSPRESO_BIOMASS ](https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx). |
-| `classes` | any |  | Configuration for `biomass.classes` settings. |
-| ↳ `solid biomass` | list of string |  | The comodity that are included as solid biomass. |
-| ↳ `not included` | list of string |  | The comodity that are not included as a biomass potential. |
-| ↳ `biogas` | list of string |  | The comodity that are included as biogas. |
-| ↳ `municipal solid waste` | list of string |  | The commodities that are included as municipal solid waste. |
-| `share_unsustainable_use_retained` | dict (str -> number) |  | Share of unsustainable biomass use retained using primary production of Eurostat data as reference. |
-| `share_sustainable_potential_available` | dict (str -> number) |  | Share determines phase-in of ENSPRESO biomass potentials. |
+{{ schema_table("biomass") }}
 
 **YAML Syntax**
 
@@ -767,13 +521,7 @@ Only used for sector-coupling studies.
 
 Configuration for `solar_thermal` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `clearsky_model` | enum (`simple`, `enhanced`) | `simple` | Type of clearsky model for diffuse irradiation. |
-| `orientation` | any |  | Configuration for `solar_thermal.orientation` settings. |
-| ↳ `slope` | number | `45.0` | The angle between the ground and the panels. |
-| ↳ `azimuth` | number | `180.0` | The angle between the North and the sun with panels on the local horizon. |
-| `cutout` | string | `default` | Name of the cutout to use for solar thermal calculations. |
+{{ schema_table("solar_thermal") }}
 
 **YAML Syntax**
 
@@ -796,14 +544,7 @@ capacities.
 
 Configuration for `existing_capacities` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `grouping_years_power` | list of integer |  | Intervals to group existing capacities for power. |
-| `grouping_years_heat` | list of integer |  | Intervals to group existing capacities for heat. |
-| `threshold_capacity` | number | `10` | Capacities (MW) of generators and links below threshold are removed during add_existing_capacities. |
-| `default_heating_lifetime` | integer | `20` | Default lifetime for heating technologies (years). |
-| `solar_rooftop_ratio` | number | `0.5` | Ratio of existing solar capacity to assign to rooftop vs utility-scale (between 0 and 1). |
-| `conventional_carriers` | list of string |  | List of conventional power plants to include in the sectoral network. |
+{{ schema_table("existing_capacities") }}
 
 **YAML Syntax**
 
@@ -1024,42 +765,7 @@ Only used for sector-coupling studies.
 
 Configuration for `industry` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `St_primary_fraction` | dict (str -> number) |  | The fraction of steel produced via primary route versus secondary route (scrap+EAF). Current fraction is 0.6. |
-| `DRI_fraction` | dict (str -> number) |  | The fraction of the primary route DRI + EAF. |
-| `H2_DRI` | number | `1.7` | The hydrogen consumption in Direct Reduced Iron (DRI) Mwh_H2 LHV/ton_Steel from 51kgH2/tSt in [Vogl et al (2018) ](https://doi.org/10.1016/j.jclepro.2018.08.279). |
-| `elec_DRI` | number | `0.322` | The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf). |
-| `Al_primary_fraction` | dict (str -> number) |  | The fraction of aluminium produced via the primary route versus scrap. Current fraction is 0.4. |
-| `MWh_NH3_per_tNH3` | number | `5.166` | The energy amount per ton of ammonia (LHV). |
-| `MWh_CH4_per_tNH3_SMR` | number | `10.8` | The energy amount of methane needed to produce a ton of ammonia using steam methane reforming (SMR). Value derived from 2012's demand from [Center for European Policy Studies (2008) ](https://ec.europa.eu/docsroom/documents/4165/attachments/1/translations/en/renditions/pdf). |
-| `MWh_elec_per_tNH3_SMR` | number | `0.7` | The energy amount of electricity needed to produce a ton of ammonia using steam methane reforming (SMR). same source, assuming 94-6% split methane-elec of total energy demand 11.5 MWh/tNH3. |
-| `MWh_H2_per_tNH3_electrolysis` | number | `5.93` | The energy amount of hydrogen needed to produce a ton of ammonia using Haber–Bosch process. From [Wang et al (2018) ](https://doi.org/10.1016/j.joule.2018.04.017), Base value assumed around 0.197 tH2/tHN3 (>3/17 since some H2 lost and used for energy). |
-| `MWh_elec_per_tNH3_electrolysis` | number | `0.2473` | The energy amount of electricity needed to produce a ton of ammonia using Haber–Bosch process. From [Wang et al (2018) ](https://doi.org/10.1016/j.joule.2018.04.017), Table 13 (air separation and HB). |
-| `MWh_NH3_per_MWh_H2_cracker` | number | `1.46` | The energy amount of amonia needed to produce an energy amount hydrogen using ammonia cracker. |
-| `NH3_process_emissions` | number | `24.5` | The emission of ammonia production from steam methane reforming (SMR). From UNFCCC for 2015 for EU28. |
-| `petrochemical_process_emissions` | number | `25.5` | The emission of petrochemical production. From UNFCCC for 2015 for EU28. |
-| `HVC_primary_fraction` | dict (str -> number) |  | The fraction of high value chemicals (HVC) produced via primary route. |
-| `HVC_mechanical_recycling_fraction` | dict (str -> number) |  | The fraction of high value chemicals (HVC) produced using mechanical recycling. |
-| `HVC_chemical_recycling_fraction` | dict (str -> number) |  | The fraction of high value chemicals (HVC) produced using chemical recycling. |
-| `HVC_environment_sequestration_fraction` | number | `0.0` | The fraction of high value chemicals (HVC) put into landfill resulting in additional carbon sequestration. The default value is 0. |
-| `waste_to_energy` | boolean | `false` | Switch to enable expansion of waste to energy CHPs for conversion of plastics. Default is false. |
-| `waste_to_energy_cc` | boolean | `false` | Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false. |
-| `sector_ratios_fraction_future` | dict (str -> number) |  | The fraction of total progress in fuel and process switching achieved in the industry sector. |
-| `basic_chemicals_without_NH3_production_today` | number | `69.0` | The amount of basic chemicals produced without ammonia (= 86 Mtethylene-equiv - 17 MtNH3). |
-| `HVC_production_today` | number | `52.0` | The amount of high value chemicals (HVC) produced. This includes ethylene, propylene and BTX. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Figure 16, page 107. |
-| `MWh_elec_per_tHVC_mechanical_recycling` | number | `0.547` | The energy amount of electricity needed to produce a ton of high value chemical (HVC) using mechanical recycling. From SI of [Meys et al (2020) ](https://doi.org/10.1016/j.resconrec.2020.105010), Table S5, for HDPE, PP, PS, PET. LDPE would be 0.756. |
-| `MWh_elec_per_tHVC_chemical_recycling` | number | `6.9` | The energy amount of electricity needed to produce a ton of high value chemical (HVC) using chemical recycling. The default value is based on pyrolysis and electric steam cracking. From [Material Economics (2019) ](https://materialeconomics.com/latest-updates/industrial-transformation-2050), page 125. |
-| `chlorine_production_today` | number | `9.58` | The amount of chlorine produced. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 7, page 43. |
-| `MWh_elec_per_tCl` | number | `3.6` | The energy amount of electricity needed to produce a ton of chlorine. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 6 page 43. |
-| `MWh_H2_per_tCl` | number | `-0.9372` | The energy amount of hydrogen needed to produce a ton of chlorine. The value is negative since hydrogen produced in chloralkali process. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 43. |
-| `methanol_production_today` | number | `1.5` | The amount of methanol produced. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 62. |
-| `MWh_elec_per_tMeOH` | number | `0.167` | The energy amount of electricity needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65. |
-| `MWh_CH4_per_tMeOH` | number | `10.25` | The energy amount of methane needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65. |
-| `MWh_MeOH_per_tMeOH` | number | `5.528` | The energy amount per ton of methanol (LHV). From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), page 74. |
-| `hotmaps_locate_missing` | boolean | `false` | Locate industrial sites without valid locations based on city and countries. |
-| `reference_year` | integer | `2023` | The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015 ](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001). |
-| `oil_refining_emissions` | number | `0.013` | The emissions from oil fuel processing (e.g. oil in petrochemical refinieries). The default value of 0.013 tCO2/MWh is based on DE statistics for 2019; the EU value is very similar. |
+{{ schema_table("industry") }}
 
 **YAML Syntax**
 
@@ -1075,29 +781,7 @@ Configuration for `industry` settings.
 
 Configuration for `costs` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `year` | integer | `2050` | Year for which to retrieve cost assumptions of `data/costs/primary/<version>/costs_<year>.csv`. |
-| `social_discountrate` | number | `0.02` | Social discount rate to compare costs in different investment periods. 0.02 corresponds to a social discount rate of 2%. |
-| `fill_values` | any |  | Configuration for `costs.fill_values` settings. |
-| ↳ `FOM` | number | `0` | Default fixed operation and maintenance cost. |
-| ↳ `VOM` | number | `0` | Default variable operation and maintenance cost. |
-| ↳ `efficiency` | number | `1` | Default efficiency. |
-| ↳ `fuel` | number | `0` | Default fuel cost. |
-| ↳ `investment` | number | `0` | Default investment cost. |
-| ↳ `lifetime` | integer | `25` | Default lifetime in years. |
-| ↳ `CO2 intensity` | number | `0` | Default CO2 intensity. |
-| ↳ `discount rate` | number | `0.07` | Default discount rate. |
-| ↳ `standing losses` | number | `0` | Default standing losses. |
-| `custom_cost_fn` | string \| null | `data/custom_costs.csv` | Path to the custom costs file. None if it should not be used. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results. |
-| `overwrites` | dict (str -> dict (str -> number)) |  | For the given parameters and technologies, assumptions about their parameter are overwritten the corresponding value of the technology. |
-| `capital_cost` | dict (str -> number) |  | For the given technologies, assumptions about their capital investment costs are set to the corresponding value. Optional; overwrites cost assumptions from `resources/costs.csv`. |
-| `marginal_cost` | dict (str -> number) |  | For the given technologies, assumptions about their marginal operating costs are set to the corresponding value. Optional; overwrites cost assumptions from `resources/costs.csv`. |
-| `emission_prices` | any |  | Configuration for `costs.emission_prices` settings. |
-| ↳ `enable` | boolean | `false` | Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. |
-| ↳ `co2` | number \| dict (str -> number) | `0.0` | Exogenous price of carbon-dioxide. In electricity-only runs it is added to the marginal costs of fossil-fuelled generators according to their carbon intensity, while for sector networks it applies to emissions ending up in CO2 atmosphere. |
-| ↳ `dynamic` | boolean | `false` | Add time-varying cost for a carbon-dioxide price based on historical values built by the rule `build_co2_prices`. |
-| ↳ `rolling_window` | integer | `90` | Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True. |
+{{ schema_table("costs") }}
 
 **YAML Syntax**
 
@@ -1112,32 +796,7 @@ use `min` in `p_nom_max:` for more conservative assumptions.
 
 Configuration for `clustering` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `mode` | enum (`busmap`, `custom_busmap`, `administrative`, `custom_busshapes`) | `busmap` | 'busmap': Default. 'custom_busmap': Enable the use of custom busmaps in rule `cluster_network`. If activated the rule looks for provided busmaps at `data/busmaps/base_s_{clusters}_{base_network}.csv` which should have the same format as `resources/busmap_base_s_{clusters}.csv`, i.e. the index should contain the buses of `networks/base_s.nc`. {base_network} is the name of the selected base_network in electricity, e.g. `gridkit`, `osm-prebuilt`, or `osm-raw`. 'administrative': Clusters and indexes the network based on the administrative regions of the countries based on `nuts3_shapes.geojson` (level: 1, 2, 3, bz). To activate this, additionally set the `clusters` wildcard in `scenario` to 'adm'. 'custom_busshapes': Enable the use of custom shapes in rule `cluster_network`. If activated the rule looks for provided busshapes at `data/busshapes/base_s_{clusters}_{base_network}.geojson`. |
-| `administrative` | any |  | Configuration for `clustering.administrative` settings. |
-| ↳ `level` | enum (`0`, `1`, `2`, `3`, `bz`) | `1` | Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level, 'bz': Bidding zones. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1. |
-| ↳ `countries` | dict (str -> integer) |  | Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`. |
-| `focus_weights` | boolean \| dict (str -> number) | `false` | Optionally specify the focus weights for the clustering of countries. For instance: `DE: 0.8` will distribute 80% of all nodes to Germany and 20% to the rest of the countries. Only applies when mode is set to `busmap`. |
-| `copperplate_regions` | list of list of string |  | Optionally specify the regions to copperplate as a list of groups. Each group is a list of region codes that will be connected with infinite capacity lines. |
-| `build_bidding_zones` | any |  | Configuration for `clustering.build_bidding_zones` settings. |
-| ↳ `remove_islands` | boolean | `false` | Exclude from the shape file the Balearic Islands, Bornholm, the Canary Islands, the Orkney Islands, the Shetland Islands, the Azores Islands and Madeira. |
-| ↳ `aggregate_to_tyndp` | boolean | `false` | Adjust the shape file to the TYNDP topology. Aggregate the Southern Norwegian bidding zones and extract Crete as a separate zone from the Greek shape. |
-| `simplify_network` | any |  | Configuration for `clustering.simplify_network` settings. |
-| ↳ `to_substations` | boolean | `false` | Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones. |
-| ↳ `remove_stubs` | boolean | `true` | Controls whether radial parts of the network should be recursively aggregated. Defaults to true. |
-| ↳ `remove_stubs_across_borders` | boolean | `false` | Controls whether radial parts of the network should be recursively aggregated across borders. Defaults to true. |
-| `cluster_network` | any |  | Configuration for `clustering.cluster_network` settings. |
-| ↳ `algorithm` | enum (`kmeans`, `hac`) | `kmeans` | Clustering algorithm to use. |
-| ↳ `hac_features` | list of string |  | List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering. |
-| `exclude_carriers` | list of string |  | List of carriers which will not be aggregated. If empty, all carriers will be aggregated. |
-| `consider_efficiency_classes` | boolean \| list of number | `false` | Aggregate each carrier into efficiency classes defined by quantile boundaries. If True, uses [0.1, 0.9] as default quantiles (labels: Q0, Q10, Q90). If a list of floats, defines custom quantile boundaries, e.g. [0.1, 0.5, 0.9]. |
-| `aggregation_strategies` | any |  | Configuration for `clustering.aggregation_strategies` settings. |
-| ↳ `generators` | dict (str -> string) |  | Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new generator. |
-| ↳ `buses` | dict (str -> string) |  | Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new bus. |
-| `temporal` | any |  | Configuration for `clustering.temporal` settings. |
-| ↳ `resolution_elec` | boolean \| string | `false` | Resample the time-resolution by averaging over every `n` snapshots in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks. |
-| ↳ `resolution_sector` | boolean \| string | `false` | Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`. |
+{{ schema_table("clustering") }}
 
 **YAML Syntax**
 
@@ -1153,14 +812,7 @@ Configuration for `clustering` settings.
 
 Configuration for top-level adjustments key.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `electricity` | boolean \| any | `false` | Parameter adjustments applied in `prepare_network`. |
-| ↳ `factor` | boolean \| dict (str -> dict (str -> dict (str -> number \| dict (str -> any)))) | `false` | Multiply original value with given factor |
-| ↳ `absolute` | boolean \| dict (str -> dict (str -> dict (str -> number \| dict (str -> any)))) | `false` | Set attribute to absolute value. Can be also a dictionary with planning horizons as keys. |
-| `sector` | boolean \| any |  | Parameter adjustments applied in `prepare_sector_network`. |
-| ↳ `factor` | boolean \| dict (str -> dict (str -> dict (str -> number \| dict (str -> any)))) | `false` | Multiply original value with given factor |
-| ↳ `absolute` | boolean \| dict (str -> dict (str -> dict (str -> number \| dict (str -> any)))) | `false` | Set attribute to absolute value. Can be also a dictionary with planning horizons as keys. |
+{{ schema_table("adjustments") }}
 
 **YAML Syntax**
 
@@ -1173,74 +825,7 @@ Configuration for top-level adjustments key.
 
 Configuration for `solving` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `options` | any |  | Configuration for `solving.options` settings. |
-| ↳ `clip_p_max_pu` | number | `0.01` | To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero. |
-| ↳ `load_shedding` | any |  | Configuration for `solving.options.load_shedding` settings. |
-| ↳↳ `enable` | boolean | `false` | Enable load shedding by adding high-cost generators to avoid infeasibilities. Requires either all_carriers: true or at least one entry in carriers. |
-| ↳↳ `default_cost` | number | `100000` | The default cost for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive. |
-| ↳↳ `all_carriers` | boolean | `true` | Switch to apply load shedding to all carriers. Otherwise, load shedding will be applied to listed carriers only. |
-| ↳↳ `carriers` | dict (str -> number) | `{}` | Dictionary of carriers and their specific load shedding cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default cost is assumed for non-listed carriers. |
-| ↳ `load_sinks` | any |  | Configuration for `solving.options.load_sinks` settings. |
-| ↳↳ `enable` | boolean | `false` | Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either all_carriers: true or at least one entry in carriers. |
-| ↳↳ `default_cost` | number | `100000` | The default cost for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive. |
-| ↳↳ `all_carriers` | boolean | `false` | Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only. |
-| ↳↳ `carriers` | dict (str -> number) | `{}` | Dictionary of carriers and their specific load sink cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default cost is assumed for non-listed carriers. |
-| ↳ `curtailment_mode` | boolean | `false` | Fixes the dispatch profiles of generators with time-varying p_max_pu by setting `p_min_pu = p_max_pu` and adds an auxiliary curtailment generator (with negative sign to absorb excess power) at every AC bus. This can speed up the solving process as the curtailment decision is aggregated into a single generator per region. Defaults to `false`. |
-| ↳ `noisy_costs` | boolean | `true` | Add random noise to marginal cost of generators by `\mathcal{U}(0.009,0,011)` and capital cost of lines and links by `\mathcal{U}(0.09,0,11)`. |
-| ↳ `skip_iterations` | boolean | `true` | Skip iterating, do not update impedances of branches. Defaults to true. |
-| ↳ `rolling_horizon` | boolean | `false` | Switch for rule `solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks. |
-| ↳ `seed` | integer | `123` | Random seed for increased deterministic behaviour. |
-| ↳ `custom_extra_functionality` | string \| null | `../data/custom_extra_functionality.py` | Path to a Python file with custom extra functionality code to be injected into the solving rules of the workflow relative to `rules` directory. |
-| ↳ `io_api` | string \| null |  | Passed to linopy and determines the API used to communicate with the solver. With the `'lp'` and `'mps'` options linopy passes a file to the solver; with the `'direct'` option (only supported for HIGHS and Gurobi) linopy uses an in-memory python API resulting in better performance. |
-| ↳ `track_iterations` | boolean | `false` | Flag whether to store the intermediate branch capacities and objective function values are recorded for each iteration in `network.lines['s_nom_opt_X']` (where `X` labels the iteration) |
-| ↳ `min_iterations` | integer | `2` | Minimum number of solving iterations in between which resistance and reactence (`x/r`) are updated for branches according to `s_nom_opt` of the previous run. |
-| ↳ `max_iterations` | integer | `3` | Maximum number of solving iterations in between which resistance and reactence (`x/r`) are updated for branches according to `s_nom_opt` of the previous run. |
-| ↳ `transmission_losses` | integer | `2` | Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored. |
-| ↳ `linearized_unit_commitment` | boolean | `true` | Whether to optimise using the linearized unit commitment formulation. |
-| ↳ `horizon` | integer | `365` | Number of snapshots to consider in each iteration. Defaults to 100. |
-| ↳ `overlap` | integer | `0` | Number of overlapping snapshots between consecutive iterations in rolling horizon optimization. Defaults to 0, which means no overlap. |
-| ↳ `post_discretization` | any |  | Configuration for `solving.options.post_discretization` settings. |
-| ↳↳ `enable` | boolean | `false` | Switch to enable post-discretization of the network. Disabled by default. |
-| ↳↳ `line_unit_size` | number | `1700` | Discrete unit size of lines in MW. |
-| ↳↳ `line_threshold` | number | `0.3` | The threshold relative to the discrete line unit size beyond which to round up to the next unit. |
-| ↳↳ `link_unit_size` | dict (str -> number) |  | Discrete unit size of links in MW by carrier (given in dictionary style). |
-| ↳↳ `link_threshold` | dict (str -> number) |  | The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style). |
-| ↳↳ `fractional_last_unit_size` | boolean | `false` | When true, links and lines can be built up to p_nom_max. When false, they can only be built up to a multiple of the unit size. |
-| ↳ `keep_files` | boolean | `false` | Whether to keep LPs and MPS files after solving. |
-| ↳ `store_model` | boolean | `false` | Store the linopy model to a NetCDF file after solving. Not supported with rolling_horizon. Not scenario-aware. |
-| ↳ `model_kwargs` | any |  | Configuration for `solving.options.model_kwargs` settings. |
-| ↳↳ `solver_dir` | string | `""` | Absolute path to the directory where linopy saves files. |
-| `agg_p_nom_limits` | any |  | Configuration for `solving.agg_p_nom_limits` settings. |
-| ↳ `agg_offwind` | boolean | `false` | Aggregate together all the types of offwind when writing the constraint (`offwind-all` as a carrier in the `.csv` file). Default is false. |
-| ↳ `agg_solar` | boolean | `false` | Aggregate together all the types of electric solar when writing the constraint (`solar-all` as a carrier in the `.csv` file). Default is false. |
-| ↳ `include_existing` | boolean | `false` | Take existing capacities into account when writing the constraint. Default is false. |
-| ↳ `file` | string | `data/agg_p_nom_minmax.csv` | Reference to `.csv` file specifying per carrier generator nominal capacity constraints for individual countries and planning horizons. Defaults to `data/agg_p_nom_minmax.csv`. |
-| `constraints` | any |  | Configuration for `solving.constraints` settings. |
-| ↳ `CCL` | boolean | `false` | Add minimum and maximum levels of generator nominal capacity per carrier for individual countries. These can be specified in the file linked at `electricity: agg_p_nom_limits` in the configuration. File defaults to `data/agg_p_nom_minmax.csv`. Does not work with a time resolution resampling. |
-| ↳ `EQ` | boolean \| string | `false` | Require each country or node to on average produce a minimal share of its total consumption itself. Example: `EQ0.5c` demands each country to produce on average at least 50% of its consumption; `EQ0.5` demands each node to produce on average at least 50% of its consumption. |
-| ↳ `BAU` | boolean | `false` | Add a per-`carrier` minimal overall capacity; i.e. at least `40GW` of `OCGT` in Europe; configured in `electricity: BAU_mincapacities` |
-| ↳ `SAFE` | boolean | `false` | Add a capacity reserve margin of a certain fraction above the peak demand to which renewable generators and storage do *not* contribute. Ignores network. |
-| `solver` | any |  | Configuration for `solving.solver` settings. |
-| ↳ `name` | string | `gurobi` | Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow. |
-| ↳ `options` | string | `gurobi-default` | Link to specific parameter settings. |
-| `solver_options` | dict (str -> object) |  | Dictionaries with solver-specific parameter settings. |
-| `check_objective` | any |  | Configuration for `solving.check_objective` settings. |
-| ↳ `enable` | boolean | `false` | Enable objective value checking. |
-| ↳ `expected_value` | number \| null |  | Expected objective value. |
-| ↳ `atol` | number | `1000000` | Absolute tolerance. |
-| ↳ `rtol` | number | `0.01` | Relative tolerance. |
-| `oetc` | any \| null |  | Configuration options for Open Energy Transition Computing (OETC) cluster support. |
-| ↳ `name` | string | `pypsa-eur` | Name identifier for the OETC job. |
-| ↳ `authentication_server_url` | string | `""` | URL of the OETC authentication server for job submission. |
-| ↳ `orchestrator_server_url` | string | `""` | URL of the OETC orchestrator server for job management. |
-| ↳ `cpu_cores` | integer | `8` | Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8) |
-| ↳ `disk_space_gb` | integer | `50` | Amount of disk space in gigabytes to request for the OETC job. |
-| ↳ `delete_worker_on_error` | boolean | `true` | Whether to delete the worker instance when an error occurs during job execution. |
-| `mem_mb` | integer | `128000` | Estimated maximum memory requirement for solving networks (MB). |
-| `memory_logging_frequency` | integer | `5` | Interval in seconds at which memory usage is logged. |
-| `runtime` | string | `48h` | Runtime in humanfriendly style. |
+{{ schema_table("solving") }}
 
 **YAML Syntax**
 
@@ -1457,15 +1042,7 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
 
 Configuration for `overpass_api` settings.
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `url` | string | `https://overpass-api.de/api/interpreter` | Overpass API endpoint URL. See [Overpass API Wiki ](https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances) for available public instances. |
-| `max_tries` | integer | `5` | Maximum retry attempts for Overpass API requests. Please be respectful to the Overpass API fair use policy of the individual instances. |
-| `timeout` | integer | `600` | Timeout in seconds for Overpass API requests. |
-| `user_agent` | any |  | Configuration for `overpass_api.user_agent` settings. |
-| ↳ `project_name` | string | `PyPSA-Eur` | Project name used to identify the user agent of the Overpass API requests. |
-| ↳ `email` | string | `contact@pypsa.org` | Contact email address for the project using the Overpass API. |
-| ↳ `website` | string | `https://github.com/PyPSA/pypsa-eur` | Website URL for the project using the Overpass API. |
+{{ schema_table("overpass_api") }}
 
 **YAML Syntax**
 
