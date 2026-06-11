@@ -367,7 +367,8 @@ def adjust_renewable_capacity_limits(
     horizon : str
         The current planning horizon year as string
     renewable_carriers : list[str]
-        List of renewable carrier names from config
+        Renewable carriers of the composed network (electricity-layer carriers
+        plus sector-layer carriers such as rooftop PV)
 
     Notes
     -----
@@ -375,11 +376,7 @@ def adjust_renewable_capacity_limits(
     Issues a warning if existing capacities exceed technical potential.
     Clips p_nom_max to non-negative values.
     """
-    carriers = list(renewable_carriers)
-    if (n.generators.carrier == "solar rooftop").any():
-        carriers.append("solar rooftop")
-
-    for carrier in carriers:
+    for carrier in renewable_carriers:
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         grouper = n.generators.loc[ext_i].index.str.replace(
             f" {carrier}.*$", "", regex=True
@@ -410,6 +407,7 @@ def main(
     inputs,
     params,
     current_horizon: int,
+    renewable_carriers: list[str],
 ) -> None:
     horizons = params.horizons
 
@@ -436,4 +434,4 @@ def main(
     )
     disable_grid_expansion_if_limit_hit(n)
 
-    adjust_renewable_capacity_limits(n, str(current_horizon), params.renewable_carriers)
+    adjust_renewable_capacity_limits(n, str(current_horizon), renewable_carriers)

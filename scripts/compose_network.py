@@ -38,6 +38,8 @@ from scripts.prepare_sector_network import (
 
 logger = logging.getLogger(__name__)
 
+SECTOR_RENEWABLE_CARRIERS = {"solar rooftop"}
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -75,15 +77,22 @@ if __name__ == "__main__":
 
     apply_temporal_aggregation(n, inputs, params)
 
+    renewable_carriers = sorted(
+        set(params.renewable_carriers)
+        | (SECTOR_RENEWABLE_CARRIERS & set(n.generators.carrier))
+    )
+
     if foresight != "overnight" and is_first_horizon:
         add_existing_capacities(n, inputs, params, costs)
         if foresight == "myopic":
             adjust_renewable_capacity_limits(
-                n, str(current_horizon), params.renewable_carriers
+                n, str(current_horizon), renewable_carriers
             )
 
     if foresight == "myopic" and not is_first_horizon:
-        apply_brownfield(n, n_previous, inputs, params, current_horizon)
+        apply_brownfield(
+            n, n_previous, inputs, params, current_horizon, renewable_carriers
+        )
 
     prepare_network_for_solving(n, inputs, params, costs, nyears)
 
