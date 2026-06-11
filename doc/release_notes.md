@@ -13,6 +13,8 @@
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
   Removed 62 CVEs from `default` environment.
 
+* Fix: Prevent over-aggressive HVDC simplification in `simplify_network` for branched/multi-terminal DC topologies (e.g. UK/Shetland edge cases). Supernode detection now only collapses true chain nodes (degree 2) and preserves DC junctions (degree 3+) so branches are not dropped ([#2147](https://github.com/PyPSA/pypsa-eur/pull/2147)).
+
 * Fix: `atlite.plot_availability_matrix` config option for `determine_availability_matrix` and `determine_availability_matrix_MD_UA` scripts, changed their output and behaviour to align consistently ([#2173](https://github.com/PyPSA/pypsa-eur/pull/2173)).
 
 * Fix: Activate losses for `H2 pipeline retrofitted` links by default, to ensure consistency with `H2 pipeline` links.

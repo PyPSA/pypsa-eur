@@ -402,11 +402,6 @@ def clustering_for_n_clusters(
     bus_strategies.setdefault("substation_lv", lambda x: bool(x.sum()))
     bus_strategies.setdefault("substation_off", lambda x: bool(x.sum()))
 
-    # TODO Quick Fix for osm-prebuilt-version 0.6
-    for way_i in ["way/140248154", "way/975637991"]:
-        if way_i in n.buses.index:
-            n.buses.loc[way_i, "carrier"] = "AC"
-
     clustering = get_clustering_from_busmap(
         n,
         busmap,
@@ -416,6 +411,54 @@ def clustering_for_n_clusters(
     )
 
     return clustering
+
+
+def apply_carrier_mixing_policy(
+    n: pypsa.Network, busmap: pd.Series, allow_ac_dc_mixing_in_bus_clusters: bool
+) -> pd.Series:
+    """
+    Handle AC/DC buses before clustering.
+
+    If ``allow_ac_dc_mixing_in_bus_clusters`` is True, mixed AC/DC clusters are
+    kept as-is. If it is False, buses in mixed clusters are split by appending
+    the carrier directly to the cluster label, for example ``clusterAC`` and
+    ``clusterDC``.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network providing bus carrier information.
+    busmap : pandas.Series
+        Mapping from bus name to cluster label.
+    allow_ac_dc_mixing_in_bus_clusters : bool
+        Whether mixed AC/DC clusters are allowed.
+
+    Returns
+    -------
+    pandas.Series
+        Busmap, possibly with carrier suffixes added.
+    """
+    busmap = busmap.astype(str)
+    carrier_by_bus = n.buses.carrier.reindex(busmap.index).astype(str)
+
+    mixed_clusters = carrier_by_bus.groupby(busmap).nunique().loc[lambda s: s > 1].index
+
+    if allow_ac_dc_mixing_in_bus_clusters:
+        if len(mixed_clusters):
+            logger.warning(
+                "`allow_ac_dc_mixing_in_bus_clusters` is enabled. Coercing bus carrier to AC in %s mixed clusters.",
+                len(mixed_clusters),
+            )
+            mixed_bus_i = busmap.index[busmap.isin(mixed_clusters)]
+            n.buses.loc[mixed_bus_i, "carrier"] = "AC"
+        return busmap
+
+    if len(mixed_clusters):
+        logger.info(
+            "Splitting %s mixed AC/DC clusters by carrier before aggregation.",
+            len(mixed_clusters),
+        )
+    return busmap.str.cat(carrier_by_bus, sep="")
 
 
 def cluster_regions(
@@ -509,7 +552,7 @@ def busmap_for_admin_regions(
             buses_subset.to_crs(epsg=3857),
             admin_regions.loc[admin_regions["country"] == country].to_crs(epsg=3857),
             how="left",
-        )["admin"]
+        )["admin"].astype(str)
 
     return buses["busmap"]
 
@@ -586,10 +629,25 @@ def update_bus_coordinates(
     admin_regions["y"] = admin_regions["poi"].y
 
     busmap_df = pd.DataFrame(busmap)
+
+    # Determine admin for each bus via spatial join of bus coordinates
+    # to the administrative polygons
+    buses_gdf = gpd.GeoDataFrame(
+        n.buses[["x", "y"]].copy(),
+        geometry=gpd.points_from_xy(n.buses["x"], n.buses["y"]),
+        crs=geo_crs,
+    )
+
+    # Find nearest admin region for each bus
+    admin_geo = admin_regions.copy()
+    admin_geo["admin_id"] = admin_geo.index
+    joined = gpd.sjoin_nearest(buses_gdf, admin_geo, how="left")
+    busmap_df["admin"] = joined["admin_id"].astype(str).reindex(busmap_df.index)
+
     busmap_df = pd.merge(
         busmap_df,
         admin_regions[["x", "y"]],
-        left_on="busmap",
+        left_on="admin",
         right_index=True,
         how="left",
     )
@@ -603,7 +661,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", clusters=60)
+        snakemake = mock_snakemake("cluster_network", clusters=50)
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -685,6 +743,14 @@ if __name__ == "__main__":
                 algorithm=algorithm,
                 features=features,
             )
+
+        allow_ac_dc_mixing_in_bus_clusters = params.cluster_network[
+            "allow_ac_dc_mixing_in_bus_clusters"
+        ]
+
+        busmap = apply_carrier_mixing_policy(
+            n, busmap, allow_ac_dc_mixing_in_bus_clusters
+        )
 
         clustering = clustering_for_n_clusters(
             n,
