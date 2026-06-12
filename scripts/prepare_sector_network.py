@@ -5781,7 +5781,7 @@ def cluster_heat_buses(n):
         # cluster heat nodes
         # static dataframe
         agg = define_clustering(df.columns, aggregate_dict)
-        df = df.groupby(level=0).agg(agg, numeric_only=False)
+        df = df.groupby(level=0).agg(agg)
         # time-varying data
         pnl = c.dynamic
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
@@ -5790,7 +5790,7 @@ def cluster_heat_buses(n):
             def renamer(s):
                 return s.replace("residential ", "").replace("services ", "")
 
-            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k], numeric_only=False).T
+            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k]).T
 
         # remove unclustered assets of service/residential
         to_drop = c.static.index.difference(df.index)
