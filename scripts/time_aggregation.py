@@ -22,8 +22,8 @@ import xarray as xr
 
 from scripts._helpers import (
     configure_logging,
+    get_temporal_resolution,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,38 +34,26 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "time_aggregation",
-            configfiles="test/config.overnight.yaml",
-            opts="",
-            clusters="37",
-            sector_opts="Co2L0-24h-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            configfiles="config/test/config.overnight.yaml",
+            horizon=2030,
         )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     n = pypsa.Network(snakemake.input.network)
-    resolution = snakemake.params.time_resolution
+    resolution = get_temporal_resolution(snakemake.params.time_resolution)
 
-    if resolution["resolution_elec"] not in (False, 1, "1h", "1H"):
-        raise ValueError(
-            f"Invalid configuration: expected 'resolution_elec' = False for the "
-            f"sector-coupled model, received {resolution['resolution_elec']!r}. "
-            "Use 'resolution_sector' to define temporal resolution instead."
-        )
-    resolution = resolution["resolution_sector"]
-
-    # Representative snapshots
-    if not resolution or isinstance(resolution, str) and "sn" in resolution.lower():
+    # Representative snapshots and native resolution need no precomputed
+    # weightings; they are handled directly in prepare_sector_network.py.
+    if resolution is None or resolution[0] == "representative":
         logger.info("Use representative snapshot or no aggregation at all")
-        # Output an empty csv; this is taken care of in prepare_sector_network.py
         pd.DataFrame().to_csv(snakemake.output.snapshot_weightings)
 
     # Plain resampling
-    elif isinstance(resolution, str) and "h" in resolution.lower():
-        offset = resolution.lower()
-        logger.info(f"Averaging every {offset} hours")
+    elif resolution[0] == "averaging":
+        offset = f"{resolution[1]}h"
+        logger.info(f"Averaging every {offset}")
 
         # Resample years separately to handle non-contiguous years
         years = pd.DatetimeIndex(n.snapshots).year.unique()
@@ -97,8 +85,8 @@ if __name__ == "__main__":
         snapshot_weightings.to_csv(snakemake.output.snapshot_weightings)
 
     # Temporal segmentation
-    elif isinstance(resolution, str) and "seg" in resolution.lower():
-        segments = int(resolution[:-3])
+    elif resolution[0] == "segmentation":
+        segments = resolution[1]
         logger.info(f"Use temporal segmentation with {segments} segments")
 
         # Get all time-dependent data

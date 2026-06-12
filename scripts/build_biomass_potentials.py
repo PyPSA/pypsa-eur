@@ -45,17 +45,15 @@ def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_ty
     else:
         resource_potential = df_unsustainable[resource_type]
 
+    def _calculate_resource_allocation(c):
+        country = c.name[:2]
+        country_total = df.loc[df.index.str[:2] == country].sum().sum()
+        if country_total == 0:
+            return 0.0
+        return c.sum() / country_total * resource_potential.loc[country]
+
     return (
-        df.apply(
-            lambda c: (
-                c.sum()
-                / df.loc[df.index.str[:2] == c.name[:2]].sum().sum()
-                * resource_potential.loc[c.name[:2]]
-            ),
-            axis=1,
-        )
-        .mul(share_unsus)
-        .clip(lower=0)
+        df.apply(_calculate_resource_allocation, axis=1).mul(share_unsus).clip(lower=0)
     )
 
 
@@ -68,22 +66,20 @@ def build_nuts_population_data(year=2013):
         index_col=1,
     )[str(year)]
 
-    # mapping from Cantons to NUTS3
-    cantons = pd.read_csv(snakemake.input.swiss_cantons)
-    cantons = cantons.set_index(cantons.HASC.str[3:]).NUTS
-    cantons = cantons.str.pad(5, side="right", fillchar="0")
+    if snakemake.input.swiss_cantons:
+        cantons = pd.read_csv(snakemake.input.swiss_cantons)
+        cantons = cantons.set_index(cantons.HASC.str[3:]).NUTS
+        cantons = cantons.str.pad(5, side="right", fillchar="0")
 
-    # get population by NUTS3
-    swiss = pd.read_excel(
-        snakemake.input.swiss_population, skiprows=3, index_col=0
-    ).loc["Residents in 1000"]
-    swiss = swiss.rename(cantons).filter(like="CH")
+        swiss = pd.read_excel(
+            snakemake.input.swiss_population, skiprows=3, index_col=0
+        ).loc["Residents in 1000"]
+        swiss = swiss.rename(cantons).filter(like="CH")
 
-    # aggregate also to higher order NUTS levels
-    swiss = [swiss.groupby(swiss.index.str[:i]).sum() for i in range(2, 6)]
+        swiss = [swiss.groupby(swiss.index.str[:i]).sum() for i in range(2, 6)]
+        pop = pd.concat([pop, pd.concat(swiss)])
 
-    # merge Europe + Switzerland
-    pop = pd.concat([pop, pd.concat(swiss)]).to_frame("total")
+    pop = pop.to_frame("total")
 
     # add missing manually
     pop["AL"] = 2778
@@ -228,7 +224,6 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     """
     # calculate area of nuts2 regions
     bio_nuts2["area_nuts2"] = area(bio_nuts2)
-
     overlay = gpd.overlay(regions, bio_nuts2, keep_geom_type=True)
 
     # calculate share of nuts2 area inside region
@@ -236,7 +231,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
 
     # multiply all nuts2-level values with share of nuts2 inside region
     adjust_cols = overlay.columns.difference(
-        {"name", "area_nuts2", "geometry", "share"}
+        {"name", "area_nuts2", "geometry", "share", "country", "x", "y"}
     )
     overlay[adjust_cols] = overlay[adjust_cols].multiply(overlay["share"], axis=0)
 
@@ -270,7 +265,7 @@ def add_unsustainable_potentials(df, input_eurostat):
     else:
         latest_year = 2021
     idees_rename = {"GR": "EL", "GB": "UK"}
-    year = max(min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990)  # noqa: F841
+    year = max(min(latest_year, int(snakemake.wildcards.horizon)), 1990)  # noqa: F841
     df_unsustainable = (
         pd.read_csv(input_eurostat)
         .query("year == @year and nrg_bal == 'PPRD'")  # Primary production
@@ -340,8 +335,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_biomass_potentials",
-            clusters="39",
-            planning_horizons=2050,
+            horizon=2050,
         )
 
     configure_logging(snakemake)
@@ -349,7 +343,7 @@ if __name__ == "__main__":
 
     overnight = snakemake.config["foresight"] == "overnight"
     params = snakemake.params.biomass
-    investment_year = int(snakemake.wildcards.planning_horizons)
+    investment_year = int(snakemake.wildcards.horizon)
     year = params["year"] if overnight else investment_year
     scenario = params["scenario"]
 
@@ -382,7 +376,7 @@ if __name__ == "__main__":
 
     df_nuts2 = gpd.GeoDataFrame(nuts2.geometry).join(enspreso)
 
-    regions = gpd.read_file(snakemake.input.regions_onshore)
+    regions = gpd.read_file(snakemake.input.onshore_regions)
 
     df = convert_nuts2_to_regions(df_nuts2, regions)
 

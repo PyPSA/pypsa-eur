@@ -25,7 +25,7 @@ scripts were modified.
 For instance, an invocation to
 
 ```console
-$ snakemake -call results/networks/base_s_128_elec_.nc
+$ snakemake -call results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml
 ```
 
 follows this dependency graph
@@ -39,8 +39,8 @@ file referenced in the command above. The **arrows** indicate the outputs from
 preceding rules which another rule takes as input data.
 
 !!! note
-    The dependency graph was generated using
-    `pixi run snakemake --dag results/networks/base_s_128_elec_.nc -F | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/intro-workflow.svg`
+    The dependency graph can be regenerated using
+    `pixi run snakemake --dag dot --forceall results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml | sed -n "/digraph/,/}/p" | pixi run dot -Tsvg -o doc/img/intro-workflow.svg`
 
 For the use of `snakemake`, it makes sense to familiarize yourself quickly
 with the [basic tutorial](https://snakemake.readthedocs.io/en/stable/tutorial/basics.html) and then
@@ -56,7 +56,7 @@ follow a [regular expression](https://en.wikipedia.org/wiki/Regular_expression) 
 a particular scenario. One can think of a wildcard as a parameter that shows
 up in the input/output file names and thereby determines which rules to run,
 what data to retrieve and what files to produce. Details are explained in
-[Wildcards](wildcards.md) and [Scenarios](configuration.md#scenario).
+[Wildcards](wildcards.md) and [Scenarios](configuration.md#run_cf).
 
 The model also has several further configuration options collected in the
 `config/config.default.yaml` file located in the root directory, which can be

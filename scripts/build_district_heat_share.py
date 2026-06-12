@@ -6,12 +6,12 @@ Build district heat shares at each node, depending on investment year.
 
 Inputs:
 -------
-- `resources/<run_name>/pop_layout.csv`: Population layout for each node: Total, urban and rural population.
-- `resources/<run_name>/district_heat_share.csv`: Historical district heat share at each country. Output of `scripts/build_energy_totals.py`.
+- `resources/{run}/pop_layout.csv`: Population layout for each node: Total, urban and rural population.
+- `resources/{run}/district_heat_share.csv`: Historical district heat share at each country. Output of `scripts/build_energy_totals.py`.
 
 Outputs:
 --------
-- `resources/<run_name>/district_heat_share.csv`: District heat share at each node, potential for each investment year.
+- `resources/{run}/district_heat_share.csv`: District heat share at each node, potential for each investment year.
 
 Notes
 -----
@@ -37,12 +37,12 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_district_heat_share",
             clusters=60,
-            planning_horizons="2050",
+            horizon="2050",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    investment_year = int(snakemake.wildcards.planning_horizons)
+    investment_year = int(snakemake.wildcards.horizon)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 

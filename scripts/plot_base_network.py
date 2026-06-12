@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     lw_factor = 1e3 if n.lines.empty else 2e3
 
-    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
+    regions = gpd.read_file(snakemake.input.onshore_regions).set_index("name")
 
     proj = load_projection(snakemake.params.plotting)
 

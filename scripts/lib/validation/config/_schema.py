@@ -5,7 +5,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 from scripts.lib.validation.config.adjustments import AdjustmentsConfig
@@ -30,7 +30,6 @@ from scripts.lib.validation.config.overpass_api import OverpassApiConfig
 from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
 from scripts.lib.validation.config.run import RunConfig
-from scripts.lib.validation.config.scenario import ScenarioConfig
 from scripts.lib.validation.config.sector import SectorConfig
 from scripts.lib.validation.config.snapshots import SnapshotsConfig
 from scripts.lib.validation.config.solar_thermal import SolarThermalConfig
@@ -108,10 +107,18 @@ class ConfigSchema(BaseModel):
         default_factory=ForesightConfig,
         description="Foresight mode for the optimization. See Foresight Options for detailed explanations.",
     )
-    scenario: ScenarioConfig = Field(
-        default_factory=ScenarioConfig,
-        description="Scenario configuration defining wildcards for the workflow.",
+    planning_horizons: list[int] = Field(
+        [2050],
+        description="Planning horizon year(s) for the optimization.",
     )
+
+    @field_validator("planning_horizons", mode="before")
+    @classmethod
+    def normalize_planning_horizons(cls, v):
+        if isinstance(v, (int, str)):
+            return [int(v)]
+        return [int(h) for h in v]
+
     countries: CountriesConfig = Field(
         default_factory=CountriesConfig,
         description="European countries defined by their Two-letter country codes (ISO 3166-1) which should be included in the energy system model.",
@@ -124,7 +131,7 @@ class ConfigSchema(BaseModel):
         default_factory=EnableConfig,
         description="Flags to enable/disable workflow features.",
     )
-    co2_budget: Co2BudgetConfig | None = Field(
+    co2_budget: Co2BudgetConfig = Field(
         default_factory=Co2BudgetConfig,
         description="CO2 budget as fraction of 1990 emissions per planning horizon year.",
     )

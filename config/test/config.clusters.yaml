@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
+planning_horizons: 2050
+
 run:
   name: "test-elec-clusters"
   disable_progressbar: true
@@ -27,10 +29,13 @@ clustering:
   - [DE00, LUG1]
   - [GBNI, IE00]
   temporal:
-    resolution_elec: 24h
+    averaging: 24
   simplify_network:
     remove_stubs: false
     remove_stubs_across_borders: false
+
+lines:
+  s_nom_max: 30_000
 
 solving:
   solver:

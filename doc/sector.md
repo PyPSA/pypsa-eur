@@ -9,18 +9,12 @@ The preparation process of the sector-coupled version of the PyPSA-Eur energy sy
 Not all data dependencies are shipped with the git repository.
 Instead we provide separate data bundles which can be obtained
 using the `retrieve*` rules ([Retrieving Data](retrieve.md)).
-Having downloaded the necessary data,
 
-- [add_brownfield][] builds and stores the base network with all buses, HVAC lines and HVDC links, while
+The sector-specific preprocessing rules generate intermediate data files that are later consumed by [compose_network][], which orchestrates the final network assembly. This includes adding existing capacities (via functions from [add_existing_baseyear][]), applying brownfield developments in myopic foresight optimization (via [add_brownfield][]), and integrating sectoral demand and supply (via functions from [prepare_sector_network][]).
 
+!!! note
 
-## Rule `add_brownfield`
-
-::: add_brownfield
-
-## Rule `add_existing_baseyear`
-
-::: add_existing_baseyear
+    The scripts [add_brownfield][], [add_existing_baseyear][], and [prepare_sector_network][] are now library modules imported by [compose_network][] rather than standalone Snakemake rules. See [preparation](preparation.md) for the updated workflow description.
 
 ## Rule `build_existing_heating_distribution`
 
@@ -51,9 +45,9 @@ Having downloaded the necessary data,
 
 <!-- ::: build_simplified_population_layouts (module not found) -->
 
-## Rule `build_clustered_solar_rooftop_potentials`
+## Rule `build_solar_rooftop_potentials`
 
-::: build_clustered_solar_rooftop_potentials
+::: build_solar_rooftop_potentials
 
 ## Rule `build_cop_profiles`
 
@@ -215,6 +209,19 @@ Having downloaded the necessary data,
 
 ::: time_aggregation
 
-## Rule `prepare_sector_network`
+## Library modules
+
+The following modules are no longer standalone rules; their functions are
+imported and called by [compose_network][] during network assembly.
+
+### `prepare_sector_network`
 
 ::: prepare_sector_network
+
+### `add_existing_baseyear`
+
+::: add_existing_baseyear
+
+### `add_brownfield`
+
+::: add_brownfield

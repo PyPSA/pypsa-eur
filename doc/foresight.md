@@ -3,17 +3,36 @@
 
 # Foresight Options {#foresight}
 
+## Planning horizons
+
+All foresight modes share the same `planning_horizons` list at the top of the
+configuration file. The workflow iterates over this list and composes/solves a
+network for each year:
+
+- `resources/{run}/networks/composed_{horizon}.nc` — output of [compose_network][]
+- `results/{run}/networks/solved_{horizon}.nc` — output of [solve_network][]
+
+Iteration behaviour depends on the foresight mode:
+
+- `overnight` expects a single value and does **not** reuse previous years.
+- `myopic` requires at least two horizons and feeds the solved network from
+  the previous year `results/{run}/networks/solved_{prev}.nc` into the next
+  `compose_network` call.
+- `perfect` also iterates sequentially but consumes
+  `resources/{run}/networks/composed_{prev}.nc` to build the full multi-period
+  optimisation, after which the complete network is solved.
+
 ## Overnight (greenfield) scenarios {#overnight}
 
-The default is to calculate a rebuilding of the energy system to meet demand, a so-called overnight or greenfield approach.
+The default is to calculate a rebuilding of the energy system to meet demand, a
+so-called overnight or greenfield approach.
 
 In this case, the `planning_horizons` parameter specifies the reference year for exogenously given transition paths (e.g. the level of steel recycling).
 It does not affect the year for cost and technology assumptions, which is set separately in the config.
 
 ```yaml
-scenario:
-  planning_horizons:
-  - 2050
+planning_horizons:
+- 2050
 
 costs:
   year: 2030
@@ -85,13 +104,13 @@ foresight: myopic
 The following options included in the `config/config.yaml` file  are relevant for the
 myopic code.
 
-The `{planning_horizons}` wildcard indicates the year in which the network is
-optimized. For a myopic optimization, this is equivalent to the investment year.
-To set the investment years which are sequentially simulated for the myopic
+The `{horizon}` wildcard indicates the year in which the network is optimized.
+For a myopic optimization, this is equivalent to the investment year. To set the
+investment years which are sequentially simulated for the myopic
 investment planning, select for example:
 
 ```yaml
-{{ yaml_section("scenario.planning_horizons", source="test/config.myopic.yaml") }}
+{{ yaml_section("planning_horizons", source="test/config.myopic.yaml") }}
 ```
 
 **existing capacities**
@@ -119,108 +138,167 @@ technologies.
 
     conventional_carriers:
 
-    \- lignite
+    - lignite
 
-    \- coal
+    - coal
 
-    \- oil
+    - oil
 
-    \- uranium
+    - uranium
 
 ### Options
 
-The total carbon budget for the entire transition path can be indicated in the
-[sector_opts](https://github.com/PyPSA/pypsa-eur-sec/blob/f13902510010b734c510c38c4cae99356f683058/config.default.yaml#L25)
-in `config/config.yaml`. The carbon budget can be split among the
-`planning_horizons` following an exponential or beta decay. E.g. `'cb40ex0'`
-splits a carbon budget equal to 40 Gt $_{CO_2}$ following an exponential
-decay whose initial linear growth rate r is zero. They can also follow some
-user-specified path, if defined [here](https://github.com/PyPSA/pypsa-eur-sec/blob/413254e241fb37f55b41caba7264644805ad8e97/config.default.yaml#L56).
-The paper [Speed of technological transformations required in Europe to achieve
-different climate goals (2022)](https://doi.org/10.1016/j.joule.2022.04.016)
-defines CO_2 budgets corresponding to global temperature increases (1.5C -- 2C)
-as response to the emissions. Here, global carbon budgets are converted to
-European budgets assuming equal-per capita distribution which translates into a
-6.43% share for Europe. The carbon budgets are in this paper distributed
-throughout the transition paths assuming an exponential decay. Emissions e(t) in
-every year t are limited by
+#### Carbon Budget Configuration
 
-$$
-e(t) = e_0 (1+ (r+m)t) e^{-mt}
-$$
+The carbon budget for the entire transition path can be specified in the
+`co2_budget` section in `config/config.yaml` for all three foresight modes (overnight, myopic, perfect).
 
-where r is the initial linear growth rate, which here is assumed to be r=0, and
-the decay parameter m is determined by imposing the integral of the path to be
-equal to the budget for Europe. Following this approach, the CO_2 budget is
-defined. Following the same approach as in this paper, add the following to the
-`scenario.sector_opts` E.g.  `-cb25.7ex0` (1.5C increase) Or `cb73.9ex0`
-(2C increase). See details in Supplemental Note S1 [Speed of technological
-transformations required in Europe to achieve different climate goals (2022)](https://doi.org/10.1016/j.joule.2022.04.016).
+```yaml
+co2_budget:
+  emissions_scope: CO2
+  relative: true  # true = fraction of 1990 baseline, false = absolute (Gt CO2/year)
+  upper: null     # null | scalar | {year: value}
+  lower: null     # null | scalar | {year: value}
+```
+
+**Constraint semantics:**
+
+- `upper`/`lower` as a **dict**: apply constraints only for explicitly listed years
+  (omitted years are unconstrained). In perfect foresight, these constraints are attached
+  to the corresponding investment period. Use `<year>: null` to explicitly clear an
+  inherited default bound for a specific year.
+- `upper`/`lower` as a **scalar**: add a single constraint as a budget across all investment periods.
+
+    - **overnight**: one CO₂ constraint for the solved model.
+    - **myopic**: one CO₂ constraint for each solved horizon.
+    - **perfect**: one total CO₂ constraint across all horizons (budget), added when composing the final horizon.
+
+**Example 1: Per-period caps with relative values**
+
+```yaml
+co2_budget:
+  relative: true
+  upper:
+    2030: 0.450  # 45% of 1990 emissions
+    2040: 0.100
+    2050: 0.000
+```
+
+**Example 2: Scalar cap (absolute values)**
+
+```yaml
+co2_budget:
+  relative: false
+  upper: 2.04  # Gt CO2/year, same semantics across foresight modes (see above)
+```
+
+**Example 3: Selective year constraints**
+
+```yaml
+planning_horizons: [2030, 2040, 2050]
+
+co2_budget:
+  relative: false
+  upper:
+    2030: 2.0
+    2050: 0.0
+    # 2040 not specified -> no upper constraint for 2040
+  lower:
+    2030: 0.5
+```
+
+**Emissions scope:**
+
+The `emissions_scope` parameter determines which greenhouse gas(es) are accounted for
+when calculating the 1990 baseline for `relative: true` and applying the corresponding
+budget constraints. This parameter corresponds to the `Pollutant_name` field in the EEA
+UNFCCC emissions database.
+
+Only available options currently is `CO2`, other options that could potentially be tracked
+
+- `All greenhouse gases - (CO2 equivalent)` - All greenhouse gases in CO₂-equivalent,
+  including CO₂, CH₄, N₂O, and fluorinated gases (HFCs, PFCs, SF₆, NF₃)
+- `CH4` - Methane emissions only
+- `N2O` - Nitrous oxide emissions only
+
+The choice of emissions scope affects:
+
+1. **Baseline calculations**: Historical emissions used to calculate budget fractions
+   (e.g., "55% reduction from 1990" requires knowing 1990 emissions)
+2. **Constraint application**: The optimization constraints in the network model apply
+   to the selected emissions scope
+
+!!! note
+    The default uses `CO2` emissions scope, tracking only direct energy-related CO₂ emissions.
+    This aligns with the model's primary focus on optimizing energy system decarbonization.
+    While EU climate policy targets (e.g., Fit for 55) include all greenhouse gases in CO₂-equivalent,
+    the energy system model constraints apply specifically to energy-related CO₂. For analyses
+    requiring broader GHG scope alignment with EU targets, the `emissions_scope` parameter
+    can be set to `All greenhouse gases - (CO2 equivalent)`. Non-energy GHG emissions
+    (e.g., from agriculture, industrial processes) are typically handled as exogenous
+    assumptions or boundary conditions.
 
 ### General myopic code structure
 
-The myopic code solves the network for the time steps included in
-`planning_horizons` in a recursive loop, so that:
+The myopic workflow iterates through `planning_horizons` inside a single
+[compose_network][] entry point. For each horizon the rule performs:
 
-1. The existing capacities (those installed before the base year are added as
-   fixed capacities with p_nom=value, p_nom_extendable=False). E.g. for
-   baseyear=2020, capacities installed before 2020 are added. In addition, the
-   network comprises additional generator, storage, and link capacities with
-   p_nom_extendable=True. The non-solved network is saved in
-   `resources/run_name/networks`.
+1. Load `networks/clustered.nc` together with all derived assets (busmaps,
+   demand profiles, sectoral inputs).
+2. If `existing_capacities.enabled` is `true`, insert the brownfield assets
+   built before the base year via `add_existing_capacities` inside
+   [compose_network][].
+3. When `w.horizon` is not the first element of `planning_horizons`, import
+   `results/{run}/networks/solved_{prev}.nc` (myopic) or
+   `resources/{run}/networks/composed_{prev}.nc` (perfect) as the solution from
+   the previous planning horizon.
+4. Store the composed network as `resources/{run}/networks/composed_{horizon}.nc`.
 
-The base year is the first element in `planning_horizons`. Step 1 is
-implemented with the rule add_baseyear for the base year and with the rule
-add_brownfield for the remaining planning_horizons.
+After composition, [solve_network][] optimises every horizon to
+produce `results/{run}/networks/solved_{horizon}.nc`. Downstream plotting and
+reporting stages such as [make_summary][] consume these solved files
+directly.
 
-2. The 2020 network is optimized. The solved network is saved in
-   `results/run_name/networks`
+### Modules overview
 
-3. For the next planning horizon, e.g. 2030, the capacities from a previous time
-   step are added if they are still in operation (i.e., if they fulfil planning
-   horizon <= commissioned year + lifetime). In addition, the network comprises
-   additional generator, storage, and link capacities with
-   p_nom_extendable=True. The non-solved network is saved in
-   `results/run_name/networks`.
+- [compose_network][]
 
-Steps 2 and 3 are solved recursively for all the planning_horizons included in
-`config/config.yaml`.
+    Performs the per-horizon assembly of simplified assets, existing capacities,
+    and investments from solved previous planning horizons.
+    Custom extensions should hook into the clearly marked sections of
+    `scripts/compose_network.py`.
 
-### Rule overview
+    !!! note
+        Earlier workflows used several `add_*` and `prepare_*` rules, which are
+        now unified in a single [compose_network][] rule.
 
-- rule add_existing baseyear
+    **Existing capacities** (handled by `add_existing_capacities()` in
+    [compose_network][]):
 
-  The rule add_existing_baseyear loads the network in
-  `resources/run_name/networks` and performs the following operations:
+    Existing conventional generators are retrieved from the [powerplants.csv](https://pypsa-eur.readthedocs.io/en/latest/preparation/build_powerplants.html)
+    file generated by pypsa-eur, based on the [powerplantmatching](https://github.com/PyPSA/powerplantmatching) database.
 
-  1. Add the conventional, wind and solar power generators that were installed
-     before the base year.
+    Existing wind and solar capacities are retrieved from [IRENA annual statistics](https://www.irena.org/Statistics/Download-Data) and distributed among the
+    nodes in a country proportional to capacity factor.
 
-  2. Add the heating capacities that were installed before the base year.
+    Existing heating capacities are retrieved from the report [Mapping and
+    analyses of the current and future (2020 - 2030) heating/cooling fuel
+    deployment (fossil/renewables)](https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1).
+    These capacities are assumed to have a lifetime indicated by the `lifetime`
+    parameter in the configuration (e.g. 25 years) and are decommissioned linearly
+    starting from the base year.
 
-  The existing conventional generators are retrieved from the [powerplants.csv
-  file](https://pypsa-eur.readthedocs.io/en/latest/preparation/build_powerplants.html?highlight=powerplants)
-  generated by pypsa-eur which, in turn, is based on the [powerplantmatching](https://github.com/PyPSA/powerplantmatching) database.
+- [solve_network][]
 
-  Existing wind and solar capacities are retrieved from [IRENA annual statistics](https://www.irena.org/Statistics/Download-Data) and distributed among the
-  nodes in a country proportional to capacity factor. (This will be updated to
-  include capacity distributions closer to reality.)
+    Solves each composed network and writes
+    `results/{run}/networks/solved_{horizon}.nc` alongside solver logs stored
+    in `results/{run}/logs/solve_network`.
 
-  Existing heating capacities are retrieved from the report [Mapping and
-  analyses of the current and future (2020 - 2030) heating/cooling fuel
-  deployment (fossil/renewables)](https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1).
+- [make_summary][]
 
-  The heating capacities are assumed to have a lifetime indicated by the
-  parameter lifetime in the configuration file, e.g 25 years. They are assumed
-  to be decommissioned linearly starting on the base year, e.g., from 2020 to
-  2045.
+    Converts the solved networks into CSVs.
 
-  Then, the resulting network is saved in
-  `resources/run_name/networks`.
-
-- rule add_brownfield
-
-  The rule add_brownfield loads the network and reads the capacities optimized
-  in the previous time step and add them to the
-     network if they are still in operation (i.e., if they fulfill planning
-     horizon < commissioned year + lifetime)
+    !!! note
+        Legacy helper scripts such as `make_summary_perfect.py` distinguished
+        between foresight modes. The refactored workflow routes every summary
+        through `scripts/make_summary.py`.

@@ -99,7 +99,7 @@ def get_country_from_node_name(node_name: str) -> str:
 
 def map_temperature_dict_to_onshore_regions(
     supply_temperature_by_country: dict,
-    regions_onshore: pd.Index,
+    onshore_regions: pd.Index,
 ) -> xr.DataArray:
     """
     Map dictionary of temperatures to onshore regions.
@@ -110,7 +110,7 @@ def map_temperature_dict_to_onshore_regions(
     ----------
     supply_temperature_by_country : dictionary
         Dictionary with temperatures as values and country keys as keys.
-    regions_onshore : pd.Index
+    onshore_regions : pd.Index
         Names of onshore regions
 
     Returns
@@ -126,10 +126,10 @@ def map_temperature_dict_to_onshore_regions(
                 in supply_temperature_by_country.keys()
                 else np.mean(list(supply_temperature_by_country.values()))
             )
-            for node_name in regions_onshore.values
+            for node_name in onshore_regions.values
         ],
         dims=["name"],
-        coords={"name": regions_onshore},
+        coords={"name": onshore_regions},
     )
 
 
@@ -204,21 +204,21 @@ if __name__ == "__main__":
     max_forward_temperature_investment_year = scale_temperature_to_investment_year(
         temperature_baseyear=snakemake.params.max_forward_temperature_central_heating_baseyear,
         relative_annual_temperature_reduction=snakemake.params.relative_annual_temperature_reduction,
-        investment_year=int(snakemake.wildcards.planning_horizons),
+        investment_year=int(snakemake.wildcards.horizon),
         current_year=int(snakemake.params.energy_totals_year),
     )
 
     min_forward_temperature_investment_year = scale_temperature_to_investment_year(
         temperature_baseyear=snakemake.params.min_forward_temperature_central_heating_baseyear,
         relative_annual_temperature_reduction=snakemake.params.relative_annual_temperature_reduction,
-        investment_year=int(snakemake.wildcards.planning_horizons),
+        investment_year=int(snakemake.wildcards.horizon),
         current_year=int(snakemake.params.energy_totals_year),
     )
 
     return_temperature_investment_year = scale_temperature_to_investment_year(
         temperature_baseyear=snakemake.params.return_temperature_central_heating_baseyear,
         relative_annual_temperature_reduction=snakemake.params.relative_annual_temperature_reduction,
-        investment_year=int(snakemake.wildcards.planning_horizons),
+        investment_year=int(snakemake.wildcards.horizon),
         current_year=int(snakemake.params.energy_totals_year),
     )
 
@@ -238,26 +238,26 @@ if __name__ == "__main__":
     )
 
     # map forward and return temperatures specified on country-level to onshore regions
-    regions_onshore = gpd.read_file(snakemake.input.regions_onshore)["name"]
+    onshore_regions = gpd.read_file(snakemake.input.onshore_regions)["name"]
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day
     )
     max_forward_temperature_central_heating_by_node_and_time: xr.DataArray = (
         map_temperature_dict_to_onshore_regions(
             supply_temperature_by_country=max_forward_temperature_investment_year,
-            regions_onshore=regions_onshore,
+            onshore_regions=onshore_regions,
         )
     )
     min_forward_temperature_central_heating_by_node_and_time: xr.DataArray = (
         map_temperature_dict_to_onshore_regions(
             supply_temperature_by_country=min_forward_temperature_investment_year,
-            regions_onshore=regions_onshore,
+            onshore_regions=onshore_regions,
         )
     )
     return_temperature_central_heating_by_node_and_time: xr.DataArray = (
         map_temperature_dict_to_onshore_regions(
             supply_temperature_by_country=return_temperature_investment_year,
-            regions_onshore=regions_onshore,
+            onshore_regions=onshore_regions,
         )
     )
 

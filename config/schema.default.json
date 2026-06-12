@@ -556,6 +556,11 @@
         "cluster_network": {
           "description": "Configuration for `clustering.cluster_network` settings.",
           "properties": {
+            "n_clusters": {
+              "default": 50,
+              "description": "Number of clusters to aggregate the network to.",
+              "type": "integer"
+            },
             "algorithm": {
               "default": "kmeans",
               "description": "Clustering algorithm to use.",
@@ -580,7 +585,7 @@
           }
         },
         "exclude_carriers": {
-          "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
+          "description": "List of carriers to exclude from aggregation. Excluded carriers keep individual plant representation instead of being aggregated per bus.",
           "items": {
             "type": "string"
           },
@@ -621,42 +626,101 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings (at most one may be set).",
           "properties": {
-            "resolution_elec": {
+            "averaging": {
               "anyOf": [
                 {
+                  "const": false,
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "integer"
                 }
               ],
               "default": false,
-              "description": "Resample the time-resolution by averaging over every `n` snapshots in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
+              "description": "Average the time series over every `n` hours."
             },
-            "resolution_sector": {
+            "segmentation": {
               "anyOf": [
                 {
+                  "const": false,
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "integer"
                 }
               ],
               "default": false,
-              "description": "Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`."
+              "description": "Aggregate the time series into `n` representative segments using `tsam`."
+            },
+            "representative": {
+              "anyOf": [
+                {
+                  "const": false,
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "default": false,
+              "description": "Use every `n`-th snapshot as representative."
             }
           }
         }
       }
     },
     "Co2BudgetConfig": {
-      "additionalProperties": {
-        "type": "number"
-      },
       "description": "Configuration for `co2_budget` settings.",
-      "type": "object"
+      "properties": {
+        "emissions_scope": {
+          "default": "CO2",
+          "description": "Emissions scope for CO2 budget calculations.",
+          "type": "string"
+        },
+        "relative": {
+          "default": true,
+          "description": "If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",
+          "type": "boolean"
+        },
+        "upper": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": "Upper CO2 budget as fraction of base year emissions per planning horizon. Set to None to disable constraint for a year.",
+          "type": "object"
+        },
+        "lower": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lower CO2 budget limit to prevent unrealistic/too-fast decarbonization. Set individual years to None to disable constraint."
+        }
+      }
     },
     "ConventionalConfig": {
       "additionalProperties": true,
@@ -2095,21 +2159,6 @@
           "default": false,
           "description": "Global gas usage limit."
         },
-        "co2limit_enable": {
-          "default": false,
-          "description": "Add an overall absolute carbon-dioxide emissions limit configured in `electricity: co2limit` in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks.",
-          "type": "boolean"
-        },
-        "co2limit": {
-          "default": 77500000.0,
-          "description": "Cap on total annual system carbon dioxide emissions.",
-          "type": "number"
-        },
-        "co2base": {
-          "default": 1487000000.0,
-          "description": "Reference value of total annual system carbon dioxide emissions if relative emission reduction target is specified in `{opts}` wildcard.",
-          "type": "number"
-        },
         "operational_reserve": {
           "description": "Configuration for `electricity.operational_reserve` settings.",
           "properties": {
@@ -2253,7 +2302,7 @@
           "type": "array"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the model from `resources/powerplants_s_{clusters}.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
+          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
           "items": {
             "type": "string"
           },
@@ -2373,11 +2422,6 @@
           "description": "The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
           "markdownDescription": "The base year for the sector emissions. See [European Environment Agency (EEA) ](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
           "type": "integer"
-        },
-        "emissions": {
-          "default": "CO2",
-          "description": "Specify which sectoral emissions are taken into account. Data derived from EEA. Currently only CO2 is implemented.",
-          "type": "string"
         }
       }
     },
@@ -2417,6 +2461,38 @@
           "description": "List of conventional power plants to include in the sectoral network.",
           "items": {
             "type": "string"
+          },
+          "type": "array"
+        },
+        "phase_outs": {
+          "description": "National policy phase-outs capping conventional asset lifetimes by carrier and country (applied in perfect foresight).",
+          "items": {
+            "description": "A single national policy phase-out for conventional assets.",
+            "properties": {
+              "carriers": {
+                "description": "Carriers (e.g. nuclear, coal, lignite) subject to the phase-out.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "countries": {
+                "description": "Two-letter country codes to which the phase-out applies.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "year": {
+                "description": "Year by which the listed carriers are fully phased out.",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "carriers",
+              "countries",
+              "year"
+            ]
           },
           "type": "array"
         }
@@ -2653,12 +2729,12 @@
           "type": "number"
         },
         "s_nom_max": {
-          "default": null,
+          "default": 10000,
           "description": "Global upper limit for the maximum capacity of each extendable line (MW).",
           "type": "number"
         },
-        "max_extension": {
-          "default": 20000,
+        "s_nom_max_extension": {
+          "default": 8000,
           "description": "Upper limit for the extended capacity of each extendable line (MW).",
           "type": "number"
         },
@@ -2758,7 +2834,7 @@
           "description": "Global upper limit for the maximum capacity of each extendable DC link (MW).",
           "type": "number"
         },
-        "max_extension": {
+        "p_nom_max_extension": {
           "default": 30000,
           "description": "Upper limit for the extended capacity of each extendable DC link (MW).",
           "type": "number"
@@ -4080,91 +4156,52 @@
         }
       }
     },
-    "ScenarioConfig": {
-      "description": "Configuration for top level `scenario` settings.",
-      "properties": {
-        "clusters": {
-          "description": "List of ``{clusters}`` wildcards to run. Use 'adm' for administrative clustering mode, 'all' for all nodes.",
-          "items": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "enum": [
-                  "adm",
-                  "all"
-                ],
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        "opts": {
-          "description": "List of ``{opts}`` wildcards to run.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "sector_opts": {
-          "description": "List of ``{sector_opts}`` wildcards to run.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "planning_horizons": {
-          "description": "List of ``{planning_horizon}`` wildcards to run.",
-          "items": {
-            "type": "integer"
-          },
-          "type": "array"
-        }
-      }
-    },
     "SectorConfig": {
       "description": "Configuration for `sector` settings.",
       "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Master flag to enable sector coupling.",
+          "type": "boolean"
+        },
         "transport": {
           "default": true,
-          "description": "Flag to include transport sector.",
+          "description": "Add transport sector.",
           "type": "boolean"
         },
         "heating": {
           "default": true,
-          "description": "Flag to include heating sector.",
+          "description": "Add heating sector.",
           "type": "boolean"
         },
         "biomass": {
           "default": true,
-          "description": "Flag to include biomass sector.",
+          "description": "Add biomass sector.",
           "type": "boolean"
         },
         "industry": {
           "default": true,
-          "description": "Flag to include industry sector.",
+          "description": "Add industry sector.",
           "type": "boolean"
         },
         "shipping": {
           "default": true,
-          "description": "Flag to include shipping sector.",
+          "description": "Add shipping sector.",
           "type": "boolean"
         },
         "aviation": {
           "default": true,
-          "description": "Flag to include aviation sector.",
+          "description": "Add aviation sector.",
           "type": "boolean"
         },
         "agriculture": {
           "default": true,
-          "description": "Flag to include agriculture sector.",
+          "description": "Add agriculture sector.",
           "type": "boolean"
         },
         "fossil_fuels": {
           "default": true,
-          "description": "Flag to include imports of fossil fuels.",
+          "description": "Allow imports of fossil fuels.",
           "type": "boolean"
         },
         "district_heating": {
@@ -4736,46 +4773,54 @@
           "type": "array"
         },
         "methanol": {
-          "description": "Configuration for `sector.methanol` settings.",
-          "properties": {
-            "regional_methanol_demand": {
-              "default": false,
-              "description": "Spatially resolve methanol demand. Set to true if regional CO2 constraints needed.",
-              "type": "boolean"
+          "anyOf": [
+            {
+              "description": "Configuration for `sector.methanol` settings.",
+              "properties": {
+                "regional_methanol_demand": {
+                  "default": false,
+                  "description": "Spatially resolve methanol demand. Set to true if regional CO2 constraints needed.",
+                  "type": "boolean"
+                },
+                "methanol_reforming": {
+                  "default": false,
+                  "description": "Add methanol reforming.",
+                  "type": "boolean"
+                },
+                "methanol_reforming_cc": {
+                  "default": false,
+                  "description": "Add methanol reforming with carbon capture.",
+                  "type": "boolean"
+                },
+                "methanol_to_kerosene": {
+                  "default": false,
+                  "description": "Add methanol to kerosene.",
+                  "type": "boolean"
+                },
+                "methanol_to_power": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "description": "Add different methanol to power technologies.",
+                  "type": "object"
+                },
+                "biomass_to_methanol": {
+                  "default": true,
+                  "description": "Add biomass to methanol.",
+                  "type": "boolean"
+                },
+                "biomass_to_methanol_cc": {
+                  "default": false,
+                  "description": "Add biomass to methanol with carbon capture.",
+                  "type": "boolean"
+                }
+              }
             },
-            "methanol_reforming": {
-              "default": false,
-              "description": "Add methanol reforming.",
-              "type": "boolean"
-            },
-            "methanol_reforming_cc": {
-              "default": false,
-              "description": "Add methanol reforming with carbon capture.",
-              "type": "boolean"
-            },
-            "methanol_to_kerosene": {
-              "default": false,
-              "description": "Add methanol to kerosene.",
-              "type": "boolean"
-            },
-            "methanol_to_power": {
-              "additionalProperties": {
-                "type": "boolean"
-              },
-              "description": "Add different methanol to power technologies.",
-              "type": "object"
-            },
-            "biomass_to_methanol": {
-              "default": true,
-              "description": "Add biomass to methanol.",
-              "type": "boolean"
-            },
-            "biomass_to_methanol_cc": {
-              "default": false,
-              "description": "Add biomass to methanol with carbon capture.",
+            {
               "type": "boolean"
             }
-          }
+          ],
+          "description": "Methanol configuration."
         },
         "ammonia": {
           "anyOf": [
@@ -4965,11 +5010,19 @@
           "type": "boolean"
         },
         "conventional_generation": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            }
+          ],
+          "description": "Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel."
         },
         "biomass_to_liquid": {
           "default": true,
@@ -5299,7 +5352,7 @@
             },
             "rolling_horizon": {
               "default": false,
-              "description": "Switch for rule `solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
+              "description": "Switch for rule `solve_network` whether to optimize the network in a rolling horizon manner instead of capacity expansion, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
               "type": "boolean"
             },
             "seed": {
@@ -5427,6 +5480,26 @@
             }
           }
         },
+        "operations": {
+          "description": "Configuration for `solving.operations` settings (rule `solve_operations_network`).",
+          "properties": {
+            "rolling_horizon": {
+              "default": false,
+              "description": "Whether rule `solve_operations_network` re-dispatches the fixed-capacity network in a rolling horizon manner, splitting the snapshots into slices of size `horizon` which are solved consecutively. Independent from `solving.options.rolling_horizon`, which controls rule `solve_network`.",
+              "type": "boolean"
+            },
+            "horizon": {
+              "default": 365,
+              "description": "Number of snapshots per slice in rolling horizon operational dispatch.",
+              "type": "integer"
+            },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive slices in rolling horizon operational dispatch.",
+              "type": "integer"
+            }
+          }
+        },
         "agg_p_nom_limits": {
           "description": "Configuration for `solving.agg_p_nom_limits` settings.",
           "properties": {
@@ -5521,19 +5594,25 @@
                   "type": "number"
                 },
                 {
+                  "additionalProperties": {
+                    "type": "number"
+                  },
+                  "type": "object"
+                },
+                {
                   "type": "null"
                 }
               ],
               "default": null,
-              "description": "Expected objective value."
+              "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
             },
             "atol": {
-              "default": 1000000,
+              "default": 10000,
               "description": "Absolute tolerance.",
               "type": "number"
             },
             "rtol": {
-              "default": 0.01,
+              "default": 0.001,
               "description": "Relative tolerance.",
               "type": "number"
             }
@@ -5919,19 +5998,25 @@
               "type": "number"
             },
             {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
               "type": "null"
             }
           ],
           "default": null,
-          "description": "Expected objective value."
+          "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
         },
         "atol": {
-          "default": 1000000,
+          "default": 10000,
           "description": "Absolute tolerance.",
           "type": "number"
         },
         "rtol": {
-          "default": 0.01,
+          "default": 0.001,
           "description": "Relative tolerance.",
           "type": "number"
         }
@@ -5957,6 +6042,11 @@
     "_ClusterNetworkConfig": {
       "description": "Configuration for `clustering.cluster_network` settings.",
       "properties": {
+        "n_clusters": {
+          "default": 50,
+          "description": "Number of clusters to aggregate the network to.",
+          "type": "integer"
+        },
         "algorithm": {
           "default": "kmeans",
           "description": "Clustering algorithm to use.",
@@ -7336,6 +7426,26 @@
         }
       }
     },
+    "_OperationsConfig": {
+      "description": "Configuration for `solving.operations` settings (rule `solve_operations_network`).",
+      "properties": {
+        "rolling_horizon": {
+          "default": false,
+          "description": "Whether rule `solve_operations_network` re-dispatches the fixed-capacity network in a rolling horizon manner, splitting the snapshots into slices of size `horizon` which are solved consecutively. Independent from `solving.options.rolling_horizon`, which controls rule `solve_network`.",
+          "type": "boolean"
+        },
+        "horizon": {
+          "default": 365,
+          "description": "Number of snapshots per slice in rolling horizon operational dispatch.",
+          "type": "integer"
+        },
+        "overlap": {
+          "default": 0,
+          "description": "Number of overlapping snapshots between consecutive slices in rolling horizon operational dispatch.",
+          "type": "integer"
+        }
+      }
+    },
     "_OrientationConfig": {
       "description": "Configuration for `solar_thermal.orientation` settings.",
       "properties": {
@@ -7350,6 +7460,34 @@
           "type": "number"
         }
       }
+    },
+    "_PhaseOutConfig": {
+      "description": "A single national policy phase-out for conventional assets.",
+      "properties": {
+        "carriers": {
+          "description": "Carriers (e.g. nuclear, coal, lignite) subject to the phase-out.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "countries": {
+          "description": "Two-letter country codes to which the phase-out applies.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "year": {
+          "description": "Year by which the listed carriers are fully phased out.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "carriers",
+        "countries",
+        "year"
+      ]
     },
     "_PostDiscretizationConfig": {
       "description": "Configuration for `solving.options.post_discretization` settings.",
@@ -7911,7 +8049,7 @@
         },
         "rolling_horizon": {
           "default": false,
-          "description": "Switch for rule `solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
+          "description": "Switch for rule `solve_network` whether to optimize the network in a rolling horizon manner instead of capacity expansion, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
           "type": "boolean"
         },
         "seed": {
@@ -8060,31 +8198,46 @@
       }
     },
     "_TemporalConfig": {
-      "description": "Configuration for `clustering.temporal` settings.",
+      "description": "Configuration for `clustering.temporal` settings (at most one may be set).",
       "properties": {
-        "resolution_elec": {
+        "averaging": {
           "anyOf": [
             {
+              "const": false,
               "type": "boolean"
             },
             {
-              "type": "string"
+              "type": "integer"
             }
           ],
           "default": false,
-          "description": "Resample the time-resolution by averaging over every `n` snapshots in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
+          "description": "Average the time series over every `n` hours."
         },
-        "resolution_sector": {
+        "segmentation": {
           "anyOf": [
             {
+              "const": false,
               "type": "boolean"
             },
             {
-              "type": "string"
+              "type": "integer"
             }
           ],
           "default": false,
-          "description": "Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`."
+          "description": "Aggregate the time series into `n` representative segments using `tsam`."
+        },
+        "representative": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "default": false,
+          "description": "Use every `n`-th snapshot as representative."
         }
       }
     },
@@ -8341,49 +8494,15 @@
       ],
       "type": "string"
     },
-    "scenario": {
-      "description": "Configuration for top level `scenario` settings.",
-      "properties": {
-        "clusters": {
-          "description": "List of ``{clusters}`` wildcards to run. Use 'adm' for administrative clustering mode, 'all' for all nodes.",
-          "items": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "enum": [
-                  "adm",
-                  "all"
-                ],
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        "opts": {
-          "description": "List of ``{opts}`` wildcards to run.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "sector_opts": {
-          "description": "List of ``{sector_opts}`` wildcards to run.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "planning_horizons": {
-          "description": "List of ``{planning_horizon}`` wildcards to run.",
-          "items": {
-            "type": "integer"
-          },
-          "type": "array"
-        }
-      }
+    "planning_horizons": {
+      "default": [
+        2050
+      ],
+      "description": "Planning horizon year(s) for the optimization.",
+      "items": {
+        "type": "integer"
+      },
+      "type": "array"
     },
     "countries": {
       "default": [
@@ -8491,19 +8610,55 @@
       }
     },
     "co2_budget": {
-      "anyOf": [
-        {
+      "description": "Configuration for `co2_budget` settings.",
+      "properties": {
+        "emissions_scope": {
+          "default": "CO2",
+          "description": "Emissions scope for CO2 budget calculations.",
+          "type": "string"
+        },
+        "relative": {
+          "default": true,
+          "description": "If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",
+          "type": "boolean"
+        },
+        "upper": {
           "additionalProperties": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
-          "description": "Configuration for `co2_budget` settings.",
+          "description": "Upper CO2 budget as fraction of base year emissions per planning horizon. Set to None to disable constraint for a year.",
           "type": "object"
         },
-        {
-          "type": "null"
+        "lower": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lower CO2 budget limit to prevent unrealistic/too-fast decarbonization. Set individual years to None to disable constraint."
         }
-      ],
-      "description": "CO2 budget as fraction of 1990 emissions per planning horizon year."
+      }
     },
     "electricity": {
       "description": "Configuration for `electricity` settings.",
@@ -8541,21 +8696,6 @@
           ],
           "default": false,
           "description": "Global gas usage limit."
-        },
-        "co2limit_enable": {
-          "default": false,
-          "description": "Add an overall absolute carbon-dioxide emissions limit configured in `electricity: co2limit` in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks.",
-          "type": "boolean"
-        },
-        "co2limit": {
-          "default": 77500000.0,
-          "description": "Cap on total annual system carbon dioxide emissions.",
-          "type": "number"
-        },
-        "co2base": {
-          "default": 1487000000.0,
-          "description": "Reference value of total annual system carbon dioxide emissions if relative emission reduction target is specified in `{opts}` wildcard.",
-          "type": "number"
         },
         "operational_reserve": {
           "description": "Configuration for `electricity.operational_reserve` settings.",
@@ -8700,7 +8840,7 @@
           "type": "array"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the model from `resources/powerplants_s_{clusters}.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
+          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
           "items": {
             "type": "string"
           },
@@ -10099,12 +10239,12 @@
           "type": "number"
         },
         "s_nom_max": {
-          "default": null,
+          "default": 10000,
           "description": "Global upper limit for the maximum capacity of each extendable line (MW).",
           "type": "number"
         },
-        "max_extension": {
-          "default": 20000,
+        "s_nom_max_extension": {
+          "default": 8000,
           "description": "Upper limit for the extended capacity of each extendable line (MW).",
           "type": "number"
         },
@@ -10204,7 +10344,7 @@
           "description": "Global upper limit for the maximum capacity of each extendable DC link (MW).",
           "type": "number"
         },
-        "max_extension": {
+        "p_nom_max_extension": {
           "default": 30000,
           "description": "Upper limit for the extended capacity of each extendable DC link (MW).",
           "type": "number"
@@ -10438,11 +10578,6 @@
           "description": "The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
           "markdownDescription": "The base year for the sector emissions. See [European Environment Agency (EEA) ](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
           "type": "integer"
-        },
-        "emissions": {
-          "default": "CO2",
-          "description": "Specify which sectoral emissions are taken into account. Data derived from EEA. Currently only CO2 is implemented.",
-          "type": "string"
         }
       }
     },
@@ -10589,50 +10724,87 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "phase_outs": {
+          "description": "National policy phase-outs capping conventional asset lifetimes by carrier and country (applied in perfect foresight).",
+          "items": {
+            "description": "A single national policy phase-out for conventional assets.",
+            "properties": {
+              "carriers": {
+                "description": "Carriers (e.g. nuclear, coal, lignite) subject to the phase-out.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "countries": {
+                "description": "Two-letter country codes to which the phase-out applies.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "year": {
+                "description": "Year by which the listed carriers are fully phased out.",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "carriers",
+              "countries",
+              "year"
+            ]
+          },
+          "type": "array"
         }
       }
     },
     "sector": {
       "description": "Configuration for `sector` settings.",
       "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Master flag to enable sector coupling.",
+          "type": "boolean"
+        },
         "transport": {
           "default": true,
-          "description": "Flag to include transport sector.",
+          "description": "Add transport sector.",
           "type": "boolean"
         },
         "heating": {
           "default": true,
-          "description": "Flag to include heating sector.",
+          "description": "Add heating sector.",
           "type": "boolean"
         },
         "biomass": {
           "default": true,
-          "description": "Flag to include biomass sector.",
+          "description": "Add biomass sector.",
           "type": "boolean"
         },
         "industry": {
           "default": true,
-          "description": "Flag to include industry sector.",
+          "description": "Add industry sector.",
           "type": "boolean"
         },
         "shipping": {
           "default": true,
-          "description": "Flag to include shipping sector.",
+          "description": "Add shipping sector.",
           "type": "boolean"
         },
         "aviation": {
           "default": true,
-          "description": "Flag to include aviation sector.",
+          "description": "Add aviation sector.",
           "type": "boolean"
         },
         "agriculture": {
           "default": true,
-          "description": "Flag to include agriculture sector.",
+          "description": "Add agriculture sector.",
           "type": "boolean"
         },
         "fossil_fuels": {
           "default": true,
-          "description": "Flag to include imports of fossil fuels.",
+          "description": "Allow imports of fossil fuels.",
           "type": "boolean"
         },
         "district_heating": {
@@ -11204,46 +11376,54 @@
           "type": "array"
         },
         "methanol": {
-          "description": "Configuration for `sector.methanol` settings.",
-          "properties": {
-            "regional_methanol_demand": {
-              "default": false,
-              "description": "Spatially resolve methanol demand. Set to true if regional CO2 constraints needed.",
-              "type": "boolean"
+          "anyOf": [
+            {
+              "description": "Configuration for `sector.methanol` settings.",
+              "properties": {
+                "regional_methanol_demand": {
+                  "default": false,
+                  "description": "Spatially resolve methanol demand. Set to true if regional CO2 constraints needed.",
+                  "type": "boolean"
+                },
+                "methanol_reforming": {
+                  "default": false,
+                  "description": "Add methanol reforming.",
+                  "type": "boolean"
+                },
+                "methanol_reforming_cc": {
+                  "default": false,
+                  "description": "Add methanol reforming with carbon capture.",
+                  "type": "boolean"
+                },
+                "methanol_to_kerosene": {
+                  "default": false,
+                  "description": "Add methanol to kerosene.",
+                  "type": "boolean"
+                },
+                "methanol_to_power": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "description": "Add different methanol to power technologies.",
+                  "type": "object"
+                },
+                "biomass_to_methanol": {
+                  "default": true,
+                  "description": "Add biomass to methanol.",
+                  "type": "boolean"
+                },
+                "biomass_to_methanol_cc": {
+                  "default": false,
+                  "description": "Add biomass to methanol with carbon capture.",
+                  "type": "boolean"
+                }
+              }
             },
-            "methanol_reforming": {
-              "default": false,
-              "description": "Add methanol reforming.",
-              "type": "boolean"
-            },
-            "methanol_reforming_cc": {
-              "default": false,
-              "description": "Add methanol reforming with carbon capture.",
-              "type": "boolean"
-            },
-            "methanol_to_kerosene": {
-              "default": false,
-              "description": "Add methanol to kerosene.",
-              "type": "boolean"
-            },
-            "methanol_to_power": {
-              "additionalProperties": {
-                "type": "boolean"
-              },
-              "description": "Add different methanol to power technologies.",
-              "type": "object"
-            },
-            "biomass_to_methanol": {
-              "default": true,
-              "description": "Add biomass to methanol.",
-              "type": "boolean"
-            },
-            "biomass_to_methanol_cc": {
-              "default": false,
-              "description": "Add biomass to methanol with carbon capture.",
+            {
               "type": "boolean"
             }
-          }
+          ],
+          "description": "Methanol configuration."
         },
         "ammonia": {
           "anyOf": [
@@ -11433,11 +11613,19 @@
           "type": "boolean"
         },
         "conventional_generation": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            }
+          ],
+          "description": "Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel."
         },
         "biomass_to_liquid": {
           "default": true,
@@ -12034,6 +12222,11 @@
         "cluster_network": {
           "description": "Configuration for `clustering.cluster_network` settings.",
           "properties": {
+            "n_clusters": {
+              "default": 50,
+              "description": "Number of clusters to aggregate the network to.",
+              "type": "integer"
+            },
             "algorithm": {
               "default": "kmeans",
               "description": "Clustering algorithm to use.",
@@ -12058,7 +12251,7 @@
           }
         },
         "exclude_carriers": {
-          "description": "List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
+          "description": "List of carriers to exclude from aggregation. Excluded carriers keep individual plant representation instead of being aggregated per bus.",
           "items": {
             "type": "string"
           },
@@ -12099,31 +12292,46 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings (at most one may be set).",
           "properties": {
-            "resolution_elec": {
+            "averaging": {
               "anyOf": [
                 {
+                  "const": false,
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "integer"
                 }
               ],
               "default": false,
-              "description": "Resample the time-resolution by averaging over every `n` snapshots in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
+              "description": "Average the time series over every `n` hours."
             },
-            "resolution_sector": {
+            "segmentation": {
               "anyOf": [
                 {
+                  "const": false,
                   "type": "boolean"
                 },
                 {
-                  "type": "string"
+                  "type": "integer"
                 }
               ],
               "default": false,
-              "description": "Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`."
+              "description": "Aggregate the time series into `n` representative segments using `tsam`."
+            },
+            "representative": {
+              "anyOf": [
+                {
+                  "const": false,
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "default": false,
+              "description": "Use every `n`-th snapshot as representative."
             }
           }
         }
@@ -12373,7 +12581,7 @@
             },
             "rolling_horizon": {
               "default": false,
-              "description": "Switch for rule `solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
+              "description": "Switch for rule `solve_network` whether to optimize the network in a rolling horizon manner instead of capacity expansion, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
               "type": "boolean"
             },
             "seed": {
@@ -12501,6 +12709,26 @@
             }
           }
         },
+        "operations": {
+          "description": "Configuration for `solving.operations` settings (rule `solve_operations_network`).",
+          "properties": {
+            "rolling_horizon": {
+              "default": false,
+              "description": "Whether rule `solve_operations_network` re-dispatches the fixed-capacity network in a rolling horizon manner, splitting the snapshots into slices of size `horizon` which are solved consecutively. Independent from `solving.options.rolling_horizon`, which controls rule `solve_network`.",
+              "type": "boolean"
+            },
+            "horizon": {
+              "default": 365,
+              "description": "Number of snapshots per slice in rolling horizon operational dispatch.",
+              "type": "integer"
+            },
+            "overlap": {
+              "default": 0,
+              "description": "Number of overlapping snapshots between consecutive slices in rolling horizon operational dispatch.",
+              "type": "integer"
+            }
+          }
+        },
         "agg_p_nom_limits": {
           "description": "Configuration for `solving.agg_p_nom_limits` settings.",
           "properties": {
@@ -12595,19 +12823,25 @@
                   "type": "number"
                 },
                 {
+                  "additionalProperties": {
+                    "type": "number"
+                  },
+                  "type": "object"
+                },
+                {
                   "type": "null"
                 }
               ],
               "default": null,
-              "description": "Expected objective value."
+              "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
             },
             "atol": {
-              "default": 1000000,
+              "default": 10000,
               "description": "Absolute tolerance.",
               "type": "number"
             },
             "rtol": {
-              "default": 0.01,
+              "default": 0.001,
               "description": "Relative tolerance.",
               "type": "number"
             }

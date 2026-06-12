@@ -33,17 +33,16 @@ Inputs
 
 - `resources/natura.tiff`: confer natura
 - `resources/offshore_shapes.geojson`: confer shapes
-- `resources/regions_onshore_base_s_{clusters}.geojson`: (if not offshore
+- `resources/{run}/onshore_regions.geojson`: (if not offshore
   wind), confer busregions
-- `resources/regions_offshore_base_s_{clusters}.geojson`: (if offshore wind),
+- `resources/{run}/offshore_regions.geojson`: (if offshore wind),
   busregions
 - `"cutouts/" + params["renewable"][{technology}]['cutout']`: cutout
-- `networks/_base_s_{clusters}.nc`: base
 
 Outputs
 -------
 
-- `resources/availability_matrix_{clusters_{technology}.nc`
+- `resources/{run}/availability_matrix_{technology}.nc`
 """
 
 import functools

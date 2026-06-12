@@ -47,6 +47,22 @@ $ snakemake -call --configfile my_config.yaml
     file exists, snakemake will use it, but no new copy will be created.
 
 
+## Accessing configuration inside Snakemake
+
+Rules should **not** access the `snakemake.config` object directly because overrides from
+`run.scenarios` are only applied through the helpers in `rules/common.smk`:
+
+- `config_provider("electricity", "extendable_carriers")` returns a callable
+  that Snakemake evaluates per wildcard combination. This keeps caching fast and
+  ensures the right scenario is used.
+- `get_config(w)` materialises the fully merged dictionary for a specific set
+  of wildcards. Use this sparingly inside Python helper functions that need to
+  read several keys at once.
+
+Reusing these helpers guarantees that documentation examples, rule
+implementations, and custom extensions all observe the same precedence rules.
+
+
 ## `version` {#version_cf}
 
 Version of PyPSA-Eur. Descriptive only.
@@ -109,7 +125,7 @@ It is common conduct to analyse energy system optimisation models for **multiple
 e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
 investment changes as more ambitious greenhouse-gas emission reduction targets are applied.
 
-The `run` section is used for running and storing scenarios with different configurations which are not covered by [wildcards](#wildcards).
+The `run` section is used for running and storing scenarios with different configurations which are not covered by [wildcards](wildcards.md).
 It determines the path at which resources, networks and results are stored.
 Therefore the user can run different configurations within the same directory.
 
@@ -126,7 +142,7 @@ Configuration for top level `run` settings.
 
 ## `foresight` {#foresight_cf}
 
-[planning_horizons](#planning_horizons) in scenario has to be set.
+[planning_horizons](#planning-horizons) has to be set.
 
 Configuration for `foresight` settings.
 
@@ -140,47 +156,47 @@ Configuration for `foresight` settings.
 ```
 
 !!! note
-    If you use myopic or perfect foresight, the planning horizon in
-    [planning_horizons](#planning_horizons) in scenario has to be set.
+    If you use myopic or perfect foresight, define at least two values in the
+    top-level [planning_horizons](#planning-horizons) list.
+
+!!! note
+    The `foresight` setting cannot vary across scenarios defined in
+    `run.scenarios`. It is evaluated at workflow parsing time
+    to determine which outputs to include. If you need to compare different
+    foresight modes, run them as separate workflows with distinct `run.name`.
 
 
-## `scenario` {#scenario}
+## `planning_horizons` {#planning-horizons}
 
-The `scenario` section is an extraordinary section of the config file
-that is strongly connected to the [wildcards](#wildcards) and is designed to
-facilitate running multiple scenarios through a single command
+Configure planning horizons at the top level rather than through wildcards.
+Provide either a single year (for overnight studies) or a list of investment
+years that should be simulated sequentially:
 
-
-```console
-# for electricity-only studies
-   $ snakemake -call solve_elec_networks
-
-   # for sector-coupling studies
-   $ snakemake -call solve_sector_networks
-
-For each wildcard, a **list of values** is provided. The rule
+```yaml
+planning_horizons: [2030, 2040, 2050]
 ```
 
-`solve_all_elec_networks` will trigger the rules for creating
-`results/networks/base_s_{clusters}_elec_{opts}.nc` for **all
-combinations** of the provided wildcard values as defined by Python's
-[itertools.product(...)
-](https://docs.python.org/2/library/itertools.html#itertools.product) function
-that snakemake's [expand(...) function
-](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets)
-uses.
+Configuration for top level `planning_horizons` settings.
 
-An exemplary dependency graph (starting from the simplification rules) then looks like this:
-
-Configuration for top level `scenario` settings.
-
-{{ schema_table("scenario") }}
+- **Type:** list of integer
 
 **YAML Syntax**
 
 ```yaml
-{{ yaml_section("scenario") }}
+{{ yaml_section("planning_horizons") }}
 ```
+
+- Overnight runs require a single value.
+- Myopic runs expect strictly ascending values and continue each horizon from
+  the previous year's `results/{run}/networks/solved_{horizon}.nc`.
+- Perfect foresight also iterates over the list but reuses the previous year's
+  `resources/{run}/networks/composed_{horizon}.nc` as the brownfield seed.
+
+!!! note
+    Earlier releases derived planning horizons from `scenario` wildcard
+    entries. That block is ignored now; define `planning_horizons` at the top
+    level and keep scenario sweeps inside `run.scenarios`. See
+    [migration](migration.md) for detailed conversion steps.
 
 
 ## `countries` {#countries}
@@ -229,7 +245,11 @@ Configuration for `enable` settings.
 
 ## `co2 budget` {#CO2_budget_cf}
 
-sector_opts.
+Carbon budgets share one schema for all foresight modes. The `relative` flag
+selects whether yearly entries inside `upper`/`lower` are interpreted as
+fractions of the 1990 baseline (`true`) or absolute GtCO₂/year
+(`false`). Enable `upper` and/or `lower` to enforce those caps only for
+the explicitly listed years or a total budget across all [planning_horizons](#planning-horizons).
 
 Configuration for `co2_budget` settings.
 
@@ -240,10 +260,6 @@ Configuration for `co2_budget` settings.
 ```yaml
 {{ yaml_section("co2_budget") }}
 ```
-
-!!! note
-    this parameter is over-ridden if `Co2Lx` or `cb` is set in
-    sector_opts.
 
 
 ## `electricity` {#electricity_cf}
@@ -520,6 +536,11 @@ Configuration for `solar_thermal` settings.
 ## `existing_capacities` {#existing_capacities_cf}
 
 Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect foresight scenarios.
+
+In myopic and perfect foresight runs, [compose_network][] merges the historical
+assets stored in `resources/powerplants.csv` into `networks/composed_{horizon}.nc`
+at the first planning horizon, which also serves as the base year for existing
+capacities.
 
 Configuration for `existing_capacities` settings.
 

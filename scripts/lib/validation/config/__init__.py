@@ -37,6 +37,11 @@ def validate_config(config: dict) -> ConfigSchema:
     return validated_config
 
 
+def normalize_config(config: dict, validated: ConfigSchema) -> None:
+    """Normalize config values in place (e.g., ensure planning_horizons is a list)."""
+    config["planning_horizons"] = validated.planning_horizons
+
+
 def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
     """Generate config defaults YAML file and return the defaults dict."""
     from ruamel.yaml.comments import CommentedMap
@@ -195,6 +200,7 @@ def generate_config_schema(path: str = "config/schema.{configname}.json") -> dic
 __all__ = [
     "ConfigSchema",
     "validate_config",
+    "normalize_config",
     "generate_config_defaults",
     "generate_config_schema",
     "ValidationError",

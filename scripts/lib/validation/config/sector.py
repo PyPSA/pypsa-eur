@@ -375,16 +375,15 @@ class _ImportsConfig(BaseModel):
 class SectorConfig(BaseModel):
     """Configuration for `sector` settings."""
 
-    transport: bool = Field(True, description="Flag to include transport sector.")
-    heating: bool = Field(True, description="Flag to include heating sector.")
-    biomass: bool = Field(True, description="Flag to include biomass sector.")
-    industry: bool = Field(True, description="Flag to include industry sector.")
-    shipping: bool = Field(True, description="Flag to include shipping sector.")
-    aviation: bool = Field(True, description="Flag to include aviation sector.")
-    agriculture: bool = Field(True, description="Flag to include agriculture sector.")
-    fossil_fuels: bool = Field(
-        True, description="Flag to include imports of fossil fuels."
-    )
+    enabled: bool = Field(True, description="Master flag to enable sector coupling.")
+    transport: bool = Field(True, description="Add transport sector.")
+    heating: bool = Field(True, description="Add heating sector.")
+    biomass: bool = Field(True, description="Add biomass sector.")
+    industry: bool = Field(True, description="Add industry sector.")
+    shipping: bool = Field(True, description="Add shipping sector.")
+    aviation: bool = Field(True, description="Add aviation sector.")
+    agriculture: bool = Field(True, description="Add agriculture sector.")
+    fossil_fuels: bool = Field(True, description="Allow imports of fossil fuels.")
 
     district_heating: _DistrictHeatingConfig = Field(
         default_factory=_DistrictHeatingConfig,
@@ -771,7 +770,7 @@ class SectorConfig(BaseModel):
         description="The location where hydrogen underground storage can be located. Onshore, nearshore, offshore means it must be located more than 50 km away from the sea, within 50 km of the sea, or within the sea itself respectively.",
     )
 
-    methanol: _MethanolConfig = Field(
+    methanol: _MethanolConfig | bool = Field(
         default_factory=_MethanolConfig, description="Methanol configuration."
     )
 
@@ -874,7 +873,7 @@ class SectorConfig(BaseModel):
         False, description="Add option to capture CO2 from biomass upgrading."
     )
 
-    conventional_generation: dict[str, str] = Field(
+    conventional_generation: dict[str, str] | list = Field(
         default_factory=lambda: {"OCGT": "gas", "CCGT": "gas"},
         description="Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
     )

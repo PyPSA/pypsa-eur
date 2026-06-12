@@ -5,6 +5,41 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Streamlined workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)). See the [migration guide](migration.md) for detailed migration guidance.
+
+    **Workflow structure:**
+
+    - The network pipeline now follows a 4-stage progression: `base.nc` → `simplified.nc` → `clustered.nc` → `composed_{horizon}.nc` → `solved_{horizon}.nc`.
+    - Cryptic filenames like `elec_s_37_lv1.25_3H_2030.nc` are replaced with readable names. Scenario parameters (clusters, opts, sector_opts) are now set via configuration rather than filename wildcards.
+    - A unified `compose_network` rule handles greenfield, brownfield, and perfect foresight network assembly for both electricity-only and sector-coupled models.
+    - A single `solve_network` rule replaces the separate `solve_electricity.smk`, `solve_overnight.smk`, `solve_myopic.smk`, and `solve_perfect.smk` rule files (now deleted).
+    - **Electricity-only models now support myopic and perfect foresight**, not just overnight optimization. New test configs `config.electricity-myopic.yaml` and `config.electricity-perfect.yaml` added.
+    - **Perfect foresight runs on PyPSA ≥1.0 again.** The previous `prepare_perfect_foresight.py` raised `PyPSA versions >=1.0 are not supported for perfect foresight`; perfect foresight has been ported to the current PyPSA API so it is usable once more.
+    - Post-processing (summaries, maps, plots) works uniformly across all foresight modes and model types.
+    - Results CSVs (`costs.csv`, `capacities.csv`, `energy.csv`, etc.) are unified across horizons.
+    - `make_summary.py` now handles all foresight modes, consolidating the functionality of `make_summary_perfect.py` and `make_global_summary.py`.
+    - A new migration guide documents file name mappings and configuration changes in detail.
+
+    **Breaking configuration changes:**
+
+    - Removed `scenario:` block. The `scenario: clusters/opts/sector_opts/planning_horizons` section is removed. Use `planning_horizons` at top-level and `clustering: cluster_network: n_clusters` for cluster count.
+    - Removed `electricity: co2limit_enable`, `electricity: co2limit`, and `electricity: co2base`. Use the unified `co2_budget` section with `upper:`/`lower:` bounds instead. The `Co2L` and `cb*` wildcards (both opts and sector_opts) are also removed.
+    - Restructured `co2_budget:`. Now requires `emissions_scope` and `relative` (true/false) plus `upper`/`lower` bounds, where each bound can be `null`, a scalar, or a `{year: value}` mapping.
+    - Renamed transmission extension keys. `lines: max_extension` → `s_nom_max_extension`; `links: max_extension` → `p_nom_max_extension`.
+    - Retrofitted H2 pipelines now model directional transmission losses. `H2 pipeline retrofitted` was added to `sector: transmission_efficiency: enable`, so these links are split into two unidirectional lossy links (as already done for `H2 pipeline` and `gas pipeline`) instead of a single lossless bidirectional link. This changes results where H2 pipeline losses are relevant.
+    - Added `sector: enabled` to control sector coupling. Set to `false` for electricity-only models.
+    - Moved national policy phase-outs to `existing_capacities: phase_outs` as a list of `{carriers, countries, year}` rules. Previously hardcoded in `prepare_perfect_foresight.py`, they now cap conventional asset lifetimes for both generators (electricity-only) and links (sector-coupled) in perfect foresight. Defaults reproduce the previous behaviour.
+    - Added `clustering: cluster_network: n_clusters`. Replaces the `{clusters}` wildcard in filenames.
+    - Retained `solve_operations_network` as an opt-in rule that re-dispatches the fixed-capacity `solved_{horizon}.nc` into `operations_{horizon}.nc`. Its rolling horizon settings moved to a new `solving: operations` block (`rolling_horizon`, `horizon`, `overlap`), enabling capacity expansion followed by rolling-horizon dispatch; `solving: options: rolling_horizon` now controls the `solve_network` rule only.
+    - Renamed `regions_onshore_base_s_{clusters}.geojson` to `onshore_regions.geojson` and `regions_offshore_base_s_{clusters}.geojson` to `offshore_regions.geojson`. The process chain for shape files is now: `onshore_shapes`/`offshore_shapes` → `onshore_regions.geojson`/`offshore_regions.geojson`; shape files for the simplified resolution are now stored at `onshore_regions_simplified.geojson` and `offshore_regions_simplified.geojson`.
+
+    **Conventions:**
+
+    - Inputs to `compose_network` are already regionally clustered and simplified to be processed without further aggregation.
+    - Data files that represent a final version of themselves don't have dedicated suffixes (e.g. regionally aggregated shapes are stored at `onshore_regions.geojson`). Ancestor files that are intermediate steps in the processing chain may rely on suffixes (e.g. `onshore_shapes_simplified.geojson`).
+
+* Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive integer options: `averaging` (average over `n` hours), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
+
 * Security: SBOM security scan included in CI.
 
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
@@ -530,7 +565,7 @@
 
     - Additionally, a new `.geojson` file of clustered regions split by resource
       classes is exported, which is is used in [add_electricity][] and
-      [build_clustered_solar_rooftop_potentials][] to assign existing wind and
+      `build_clustered_solar_rooftop_potentials` to assign existing wind and
       solar capacities to the correct combination of bus and resource class.
       Within a clustered region, the resource classes do not have to be
       contiguous.
@@ -622,13 +657,13 @@
 
     - Computes summaries for only a single network at a time.
 
-    - Concatenation is outsourced to new rule [make_global_summary][].
+    - Concatenation is outsourced to new rule `make_global_summary`.
 
     - Rule no longer depends on network plots; use the `all` collection rule to
       generate summaries and plots.
 
     - Calculation of cumulative costs for myopic foresight networks was moved to
-      [make_cumulative_costs][].
+      `make_cumulative_costs`.
 
     - Rewrote functions in [make_summary][] to use PyPSA statistics module
       more.

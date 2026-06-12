@@ -5,7 +5,10 @@
 # Building Electricity Networks
 
 The preparation process of the PyPSA-Eur energy system model consists of a group of `snakemake`
-rules which are briefly outlined and explained in detail in the sections below.
+rules which are briefly outlined and explained in detail in the sections below. The pipeline follows
+the order `base → simplified → clustered → composed → solved`;
+intermediate networks are stored under `resources/{run}/networks`, while solved networks are written to
+`results/{run}/networks/solved_{horizon}.nc`.
 
 Not all data dependencies are shipped with the git repository.
 Instead we provide separate data bundles which can be obtained
@@ -32,8 +35,10 @@ Then, the process continues by calculating conventional power plant capacities, 
 - [build_renewable_profiles][] for the hourly capacity factors and installation potentials constrained by land-use in each substation's Voronoi cell for PV, onshore and offshore wind, and
 - [build_hydro_profile][] for the hourly per-unit hydro power availability time series.
 
-The rules [add_electricity][] and [prepare_network][] then tie all the different data inputs
-together into a detailed PyPSA network stored in `networks/base_s_{clusters}_elec.nc`.
+Once `networks/clustered.nc` and the associated bus/line maps exist, the single rule
+[compose_network][] stitches electricity, sector, and brownfield inputs together into
+`networks/composed_{horizon}.nc`. These per-horizon files are then consumed by
+[solve_network][].
 
 ## Rule `build_cutout` {#cutout}
 
@@ -61,7 +66,7 @@ together into a detailed PyPSA network stored in `networks/base_s_{clusters}_ele
 
 ::: base_network
 
-## Rule `build_natura`
+## Rule `build_natura_raster`
 
 ::: build_natura
 
@@ -108,7 +113,7 @@ together into a detailed PyPSA network stored in `networks/base_s_{clusters}_ele
 ::: cluster_network
 
 
-## Rule `build_monthly_prices` {#monthlyprices}
+## Rule `build_fossil_fuel_prices` {#monthlyprices}
 
 ::: build_monthly_prices
 
@@ -139,10 +144,19 @@ together into a detailed PyPSA network stored in `networks/base_s_{clusters}_ele
 
 ::: build_powerplants
 
-## Rule `add_electricity` {#electricity}
+## Rule `compose_network` {#compose}
+
+::: compose_network
+
+## Library modules
+
+The following modules are no longer standalone rules; their functions are
+imported and called by [compose_network][] during network assembly.
+
+### `add_electricity`
 
 ::: add_electricity
 
-## Rule `prepare_network` {#prepare}
+### `prepare_network`
 
 ::: prepare_network

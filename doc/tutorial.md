@@ -23,7 +23,7 @@ the default config file ``config/config.default.yaml``. To run the tutorial with
 configuration, execute
 
 ```console
-$ snakemake -call results/test-elec/networks/base_s_6_elec_.nc --configfile config/test/config.electricity.yaml
+$ snakemake -call results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml
 ```
 
 This configuration is set to download a reduced cutout via the rule `retrieve_cutout`.
@@ -46,7 +46,7 @@ Likewise, the example's temporal scope can be restricted (e.g. to a single week)
 It is also possible to allow less or more carbon-dioxide emissions. Here, we limit the emissions of Belgium to 100 Mt per year.
 
 ```yaml
-{{ yaml_section("electricity.co2limit_enable", "electricity.co2limit", source="test/config.electricity.yaml") }}
+{{ yaml_section("co2_budget", source="test/config.electricity.yaml") }}
 ```
 
 PyPSA-Eur also includes a database of existing conventional powerplants.
@@ -116,53 +116,48 @@ Let's say based on the modifications above we would like to solve a very simplif
 clustered down to 6 buses and every 24 hours aggregated to one snapshot. The command
 
 ```console
-$ snakemake -call results/test-elec/networks/base_s_6_elec_.nc --configfile config/test/config.electricity.yaml
+$ snakemake -call results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml
 ```
 
-orders ``snakemake`` to run the rule [solve_network][] that produces the solved network and stores it in ``results/test-elec/networks`` with the name ``base_s_6_elec_.nc``:
+orders ``snakemake`` to run the rule [solve_network][] that produces the solved network and stores it in ``results/test-elec/networks`` with the name ``solved_2050.nc``:
 
 ```python
 rule solve_network:
     input:
-        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
+        network=resources("networks/composed_{horizon}.nc"),
     output:
-        network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
-        config=RESULTS + "configs/config.base_s_{clusters}_elec_{opts}.yaml",
-        model=(
-            RESULTS + "models/base_s_{clusters}_elec_{opts}.nc"
-            if config["solving"]["options"]["store_model"]
-            else []
-        ),
+        network=RESULTS + "networks/solved_{horizon}.nc",
     log:
-        solver=normpath(
-            RESULTS + "logs/solve_network/base_s_{clusters}_elec_{opts}_solver.log"
-        ),
-        memory=RESULTS + "logs/solve_network/base_s_{clusters}_elec_{opts}_memory.log",
-        python=RESULTS + "logs/solve_network/base_s_{clusters}_elec_{opts}_python.log",
+        solver=normpath(RESULTS + "logs/solve_network/solver_{horizon}.log"),
+        memory=RESULTS + "logs/solve_network/memory_{horizon}.log",
+        python=RESULTS + "logs/solve_network/python_{horizon}.log",
     benchmark:
-        (RESULTS + "benchmarks/solve_network/base_s_{clusters}_elec_{opts}")
+        (RESULTS + "benchmarks/solve_network_{horizon}.log")
     shadow:
         shadow_config
     threads: solver_threads
     resources:
-        mem_mb=memory,
+        mem_mb=config_provider("solving", "mem_mb"),
         runtime=config_provider("solving", "runtime", default="6h"),
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
+        planning_horizons=config_provider("planning_horizons"),
+        sector=config_provider("sector"),
         co2_sequestration_potential=config_provider(
-            "sector", "co2_sequestration_potential", default=200
+            "sector", "co2_sequestration_potential"
         ),
         custom_extra_functionality=input_custom_extra_functionality,
-    message:
-        "Solving electricity network optimization for {wildcards.clusters} clusters and {wildcards.opts} electric options"
     script:
-        scripts("solve_network.py")
+        "../scripts/solve_network.py"
 ```
 
-This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs:
+This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs.
+Inspect the full directed acyclic graph with:
 
-[![Electricity tutorial DAG](img/dag_electricity.svg)](img/dag_electricity.svg)
+```console
+$ pixi run dot -c && snakemake --dag results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml | dot -Tpng -o dag.png
+```
 
 In the terminal, this will show up as a list of jobs to be run:
 
@@ -171,34 +166,42 @@ Building DAG of jobs...
 Job stats:
 job                                      count
 -------------------------------------  -------
-add_electricity                              1
 add_transmission_projects_and_dlr            1
 base_network                                 1
 build_electricity_demand                     1
 build_electricity_demand_base                1
 build_line_rating                            1
+build_monthly_prices                         1
 build_osm_boundaries                         4
+build_population_layouts                     1
 build_powerplants                            1
-build_renewable_profiles                     6
+build_renewable_profiles                     3
 build_shapes                                 1
-build_ship_raster                            1
+build_solar_rooftop_potentials               1
+build_solar_thermal_profiles                 1
 build_transmission_projects                  1
 cluster_network                              1
-determine_availability_matrix                6
-prepare_network                              1
+compose_network                              1
+determine_availability_matrix                3
+process_cost_data                            1
 retrieve_cost_data                           1
+retrieve_cutout                              1
 retrieve_databundle                          1
 retrieve_eez                                 1
 retrieve_electricity_demand                  1
+retrieve_eurostat_data                       1
 retrieve_jrc_ardeco                          1
+retrieve_monthly_co2_prices                  1
+retrieve_monthly_fuel_prices                 1
 retrieve_nuts_2021_shapes                    1
 retrieve_osm_boundaries                      4
 retrieve_osm_prebuilt                        1
-retrieve_ship_raster                         1
 retrieve_synthetic_electricity_demand        1
+retrieve_worldbank_urban_population          1
 simplify_network                             1
 solve_network                                1
-total                                       43
+time_aggregation                             1
+total                                       46
 ```
 
 
@@ -208,13 +211,12 @@ A job (here ``build_powerplants``) will display its attributes and normally some
 
 ```console
 rule build_powerplants:
-    input: resources/test/networks/base_s_6.nc, data/custom_powerplants.csv
-    output: resources/test/powerplants_s_6.csv
-    log: logs/test/build_powerplants_s_6.log
-    jobid: 43
-    benchmark: benchmarks/test/build_powerplants_s_6
-    reason: Missing output files: resources/test/powerplants_s_6.csv; Input files updated by another job: resources/test/networks/base_s_6.nc
-    wildcards: clusters=6
+    input: resources/test-elec/networks/clustered.nc, data/custom_powerplants.csv
+    output: resources/test-elec/powerplants.csv
+    log: logs/test-elec/build_powerplants.log
+    jobid: 40
+    benchmark: benchmarks/test-elec/build_powerplants
+    reason: Missing output files: resources/test-elec/powerplants.csv
     resources: tmpdir=<TBD>, mem_mb=7000, mem_mib=6676
 ```
 
@@ -230,26 +232,27 @@ $ snakemake -call <output file>
 
 For example, you can explore the evolution of the PyPSA networks by running
 
-1. ``snakemake -call resources/test/networks/base.nc --configfile config/test/config.electricity.yaml``
-2. ``snakemake -call resources/test/networks/base_s.nc --configfile config/test/config.electricity.yaml``
-3. ``snakemake -call resources/test/networks/base_s_6.nc --configfile config/test/config.electricity.yaml``
-4. ``snakemake -call resources/test/networks/base_s_6_elec_.nc --configfile config/test/config.electricity.yaml``
+1. ``snakemake -call resources/test-elec/networks/base.nc --configfile config/test/config.electricity.yaml``
+2. ``snakemake -call resources/test-elec/networks/simplified.nc --configfile config/test/config.electricity.yaml``
+3. ``snakemake -call resources/test-elec/networks/clustered.nc --configfile config/test/config.electricity.yaml``
+4. ``snakemake -call resources/test-elec/networks/composed_2050.nc --configfile config/test/config.electricity.yaml``
+5. ``snakemake -call results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml``
 
-To run all combinations of wildcard values provided in the ``config/config.yaml`` under ``scenario:``,
-you can use the collection rule ``solve_elec_networks``.
+To run all scenario combinations defined in ``config/scenarios.yaml`` (enable this via ``run.scenarios.enable: true``),
+you can use the collection rule ``solve_networks``.
 
 ```console
-$ snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml
+$ snakemake -call solve_networks --configfile config/test/config.electricity.yaml
 ```
 
 If you now feel confident and want to tackle runs with larger temporal and
 spatial scope, clean-up the repository and after modifying the ``config/config.yaml`` file
-target the collection rule ``solve_elec_networks`` again without providing the test
+target the collection rule ``solve_networks`` again without providing the test
 configuration file.
 
 ```console
 $ snakemake -call purge
-snakemake -call solve_elec_networks
+snakemake -call solve_networks
 ```
 
 !!! note
@@ -257,7 +260,7 @@ snakemake -call solve_elec_networks
     commit to a run:
 
     ```console
-    $ snakemake -call solve_elec_networks -n
+    $ snakemake -call solve_networks -n
     ```
 
 ## How to analyse results?
@@ -268,7 +271,7 @@ Jupyter Notebooks).
 ```python
 import pypsa
 
-n = pypsa.Network("results/test-elec/networks/base_s_6_elec_.nc")
+n = pypsa.Network("results/test-elec/networks/solved_2050.nc")
 ```
 
 For inspiration, read the [examples section in the PyPSA documentation](https://pypsa.readthedocs.io/en/latest/examples-basic.html).

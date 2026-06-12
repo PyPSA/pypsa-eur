@@ -61,6 +61,10 @@ class _SimplifyNetworkConfig(BaseModel):
 class _ClusterNetworkConfig(BaseModel):
     """Configuration for `clustering.cluster_network` settings."""
 
+    n_clusters: int = Field(
+        50,
+        description="Number of clusters to aggregate the network to.",
+    )
     algorithm: Literal["kmeans", "hac"] = Field(
         "kmeans",
         description="Clustering algorithm to use.",
@@ -93,15 +97,19 @@ class _AggregationStrategiesConfig(BaseModel):
 
 
 class _TemporalConfig(BaseModel):
-    """Configuration for `clustering.temporal` settings."""
+    """Configuration for `clustering.temporal` settings (at most one may be set)."""
 
-    resolution_elec: bool | str = Field(
+    averaging: Literal[False] | int = Field(
         False,
-        description="Resample the time-resolution by averaging over every `n` snapshots in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks.",
+        description="Average the time series over every `n` hours.",
     )
-    resolution_sector: bool | str = Field(
+    segmentation: Literal[False] | int = Field(
         False,
-        description="Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`.",
+        description="Aggregate the time series into `n` representative segments using `tsam`.",
+    )
+    representative: Literal[False] | int = Field(
+        False,
+        description="Use every `n`-th snapshot as representative.",
     )
 
 
@@ -140,7 +148,7 @@ class ClusteringConfig(BaseModel):
     )
     exclude_carriers: list[str] = Field(
         default_factory=list,
-        description="List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
+        description="List of carriers to exclude from aggregation. Excluded carriers keep individual plant representation instead of being aggregated per bus.",
     )
     consider_efficiency_classes: bool | list[float] = Field(
         False,

@@ -9,7 +9,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pypsa
 from matplotlib.lines import Line2D
-from pypsa.plot import add_legend_lines
+from pypsa.plot.maps.static import add_legend_lines
 
 from scripts._helpers import set_scenario_config
 from scripts.plot_power_network import load_projection
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
-    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
+    regions = gpd.read_file(snakemake.input.regions).set_index("name")
 
     proj = load_projection(snakemake.params.plotting)
 
