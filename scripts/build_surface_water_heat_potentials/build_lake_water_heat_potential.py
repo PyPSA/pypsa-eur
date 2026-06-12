@@ -356,6 +356,7 @@ if __name__ == "__main__":
     # Process regions sequentially but with multi-threaded Dask operations
     results = []
     for i, region_name in enumerate(regions_onshore.index, 1):
+        logger.info(f"Processing region {i}/{len(regions_onshore)}: {region_name}")
         # Extract region geometry and create a copy to avoid modification conflicts
         region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
 
@@ -381,7 +382,7 @@ if __name__ == "__main__":
             region_name: res["spatial aggregate"]["total_power"].to_pandas()
             for region_name, res in zip(regions_onshore.index, results)
         }
-    ).dropna()
+    ).fillna(0)
 
     power = power.reindex(
         snapshots, method="nearest"
@@ -404,7 +405,6 @@ if __name__ == "__main__":
             dim="name",
         )
         .assign_coords(name=regions_onshore.index)
-        .dropna(dim="time")
     )
 
     # Align temperature data to snapshots, use nearest to handle any minor decimal differences
