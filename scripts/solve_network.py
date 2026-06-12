@@ -1188,7 +1188,10 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 
 def extra_functionality(
-    n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
+    n: pypsa.Network,
+    snapshots: pd.DatetimeIndex,
+    planning_horizons: str | None = None,
+    snakemake=None,
 ) -> None:
     """
     Add custom constraints and functionality.
@@ -1266,7 +1269,7 @@ def extra_functionality(
         module_name = os.path.splitext(os.path.basename(source_path))[0]
         module = importlib.import_module(module_name)
         custom_extra_functionality = getattr(module, module_name)
-        custom_extra_functionality(n, snapshots, snakemake)  # pylint: disable=E0601
+        custom_extra_functionality(n, snapshots, snakemake)
 
 
 def check_objective_value(n: pypsa.Network, solving: dict, horizon: str) -> None:
@@ -1411,6 +1414,7 @@ def create_optimization_model(
     model_kwargs: dict,
     solve_kwargs: dict,
     planning_horizons: str | None = None,
+    snakemake=None,
 ) -> None:
     """
     Prepare optimization problem by creating model and adding extra functionality.
@@ -1445,7 +1449,7 @@ def create_optimization_model(
 
     # Add extra functionality (custom constraints)
     logger.info("Adding extra functionality (custom constraints)...")
-    extra_functionality(n, n.snapshots, planning_horizons)
+    extra_functionality(n, n.snapshots, planning_horizons, snakemake=snakemake)
 
 
 if __name__ == "__main__":
@@ -1512,7 +1516,9 @@ if __name__ == "__main__":
             n.config = snakemake.config
             n.params = snakemake.params
             all_kwargs["extra_functionality"] = partial(
-                extra_functionality, planning_horizons=planning_horizons
+                extra_functionality,
+                planning_horizons=planning_horizons,
+                snakemake=snakemake,
             )
             n.optimize.optimize_with_rolling_horizon(**all_kwargs)
             status, condition = "", ""
@@ -1533,6 +1539,7 @@ if __name__ == "__main__":
                 model_kwargs=model_kwargs,
                 solve_kwargs=solve_kwargs,
                 planning_horizons=planning_horizons,
+                snakemake=snakemake,
             )
 
             logger.info("Solving model...")
@@ -1552,7 +1559,9 @@ if __name__ == "__main__":
             n.config = snakemake.config
             n.params = snakemake.params
             all_kwargs["extra_functionality"] = partial(
-                extra_functionality, planning_horizons=planning_horizons
+                extra_functionality,
+                planning_horizons=planning_horizons,
+                snakemake=snakemake,
             )
             status, condition = n.optimize.optimize_transmission_expansion_iteratively(
                 **all_kwargs

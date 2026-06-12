@@ -17,7 +17,6 @@ from functools import partial
 import numpy as np
 import pypsa
 
-import scripts.solve_network as solve_network
 from scripts._benchmark import memory_logger
 from scripts._helpers import configure_logging, set_scenario_config
 from scripts.solve_network import (
@@ -42,7 +41,6 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
-    solve_network.snakemake = snakemake
 
     cf_solving = snakemake.params.solving["options"]
     cf_operations = snakemake.params.solving["operations"]
@@ -87,7 +85,9 @@ if __name__ == "__main__":
             n.config = snakemake.config
             n.params = snakemake.params
             all_kwargs["extra_functionality"] = partial(
-                extra_functionality, planning_horizons=planning_horizons
+                extra_functionality,
+                planning_horizons=planning_horizons,
+                snakemake=snakemake,
             )
             n.optimize.optimize_with_rolling_horizon(**all_kwargs)
         else:
@@ -106,6 +106,7 @@ if __name__ == "__main__":
                 model_kwargs=model_kwargs,
                 solve_kwargs=solve_kwargs,
                 planning_horizons=planning_horizons,
+                snakemake=snakemake,
             )
             n.optimize.solve_model(**solve_kwargs)
 
