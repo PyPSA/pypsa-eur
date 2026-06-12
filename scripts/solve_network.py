@@ -26,7 +26,6 @@ import os
 import re
 import sys
 from functools import partial
-from pathlib import Path
 from typing import Any
 
 import linopy
@@ -440,7 +439,6 @@ def prepare_network(
     planning_horizons: str | None,
     co2_sequestration_potential: dict[str, float],
     limit_max_growth: dict[str, Any] | None = None,
-    resource_dir: Path | None = None,
     rolling_horizon: bool = False,
 ) -> None:
     """
@@ -458,8 +456,6 @@ def prepare_network(
         The current planning horizon year or None for perfect foresight
     co2_sequestration_potential : Dict[str, float]
         CO2 sequestration potential constraints by year
-    resource_dir : Path, optional
-        Directory containing auxiliary resource files for the run (e.g. busmap)
 
     Returns
     -------
@@ -1474,8 +1470,6 @@ if __name__ == "__main__":
         "planning_horizons"
     ) or snakemake.wildcards.get("horizon")
 
-    resource_dir = Path(snakemake.input.network).resolve().parents[1]
-
     # Prepare network (settings before solving)
     prepare_network(
         n,
@@ -1484,12 +1478,11 @@ if __name__ == "__main__":
         planning_horizons=planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
         limit_max_growth=snakemake.params["sector"]["limit_max_growth"],
-        resource_dir=resource_dir,
         rolling_horizon=cf_solving["rolling_horizon"],
     )
 
     # Determine solve mode
-    rolling_horizon = cf_solving.get("rolling_horizon", False)
+    rolling_horizon = cf_solving["rolling_horizon"]
     skip_iterations = cf_solving.get("skip_iterations", False)
 
     if not n.lines.s_nom_extendable.any():

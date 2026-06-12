@@ -1134,63 +1134,6 @@ def add_dac(n, costs):
     )
 
 
-def add_co2limit(n, options, co2_totals_file, countries, nyears, limit):
-    """
-    Add a global CO2 emissions constraint to the network.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        The PyPSA network container object
-    options : dict
-        Dictionary of options determining which sectors to consider for emissions
-    co2_totals_file : str
-        Path to CSV file containing historical CO2 emissions data in Mt
-        (megatonnes) per country and sector
-    countries : list
-        List of country codes to consider for the CO2 limit
-    nyears : float, optional
-        Number of years for the CO2 budget, by default 1.0
-    limit : float, optional
-        CO2 limit as a fraction of 1990 levels
-
-    Returns
-    -------
-    None
-        The function modifies the network object in-place by adding a global
-        CO2 constraint.
-
-    Notes
-    -----
-    The function reads historical CO2 emissions data, calculates a total limit
-    based on the specified countries and sectors, and adds a global constraint
-    to the network. The limit is calculated as a fraction of historical emissions
-    multiplied by the number of years.
-    """
-    if limit is None:
-        return
-
-    logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
-
-    sectors = determine_emission_sectors(options)
-
-    # convert Mt to tCO2
-    co2_totals = 1e6 * pd.read_csv(co2_totals_file, index_col=0)
-
-    co2_limit = co2_totals.loc[countries, sectors].sum().sum()
-
-    co2_limit *= limit * nyears
-
-    n.add(
-        "GlobalConstraint",
-        "CO2Limit",
-        carrier_attribute="co2_emissions",
-        sense="<=",
-        type="co2_atmosphere",
-        constant=co2_limit,
-    )
-
-
 def cycling_shift(df, steps=1):
     """
     Cyclic shift on index of pd.Series|pd.DataFrame by number of steps.

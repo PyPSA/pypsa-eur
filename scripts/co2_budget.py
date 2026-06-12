@@ -46,7 +46,7 @@ def co2_budget_for_horizon(
     upper = bound_value_for_horizon(upper_raw, current_horizon)
     lower = bound_value_for_horizon(lower_raw, current_horizon)
 
-    if relative:
+    if relative and (upper is not None or lower is not None):
         if baseline_1990 is None:
             raise ValueError(
                 "co2_budget.relative is true but no 1990 baseline emissions were provided."

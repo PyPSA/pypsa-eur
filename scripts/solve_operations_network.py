@@ -13,7 +13,6 @@ already exist in the solved network.
 
 import logging
 from functools import partial
-from pathlib import Path
 
 import numpy as np
 import pypsa
@@ -51,7 +50,6 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     planning_horizons = snakemake.wildcards["horizon"]
-    resource_dir = Path(snakemake.input.network).resolve().parents[1]
 
     rolling_horizon = cf_operations["rolling_horizon"]
 
@@ -64,7 +62,6 @@ if __name__ == "__main__":
         planning_horizons=planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
         limit_max_growth=snakemake.params["sector"]["limit_max_growth"],
-        resource_dir=resource_dir,
         rolling_horizon=rolling_horizon,
     )
 

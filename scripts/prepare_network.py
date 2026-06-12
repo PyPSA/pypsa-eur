@@ -493,7 +493,13 @@ def main(
             raise ValueError("CO2 price file for monthly prices not found")
         add_dynamic_emission_prices(n, inputs.co2_price)
     elif emission_prices["enable"]:
-        add_emission_prices(n, {"co2": emission_prices["co2"]}, exclude_co2=False)
+        if isinstance(emission_prices["co2"], dict):
+            logger.warning(
+                "Not setting emission prices specified per planning horizon. "
+                "Use dynamic emission prices instead."
+            )
+        else:
+            add_emission_prices(n, {"co2": emission_prices["co2"]}, exclude_co2=False)
 
     transmission_limit = electricity_cfg["transmission_limit"]
     if isinstance(transmission_limit, str):
