@@ -57,6 +57,7 @@ if __name__ == "__main__":
 
     prepare_network(
         n,
+        config=snakemake.config,
         solve_opts=cf_solving,
         foresight=snakemake.params.foresight,
         planning_horizons=planning_horizons,

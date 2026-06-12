@@ -434,6 +434,7 @@ def add_load_balance_components(n, config, sign=1):
 
 def prepare_network(
     n: pypsa.Network,
+    config: dict,
     solve_opts: dict,
     foresight: str,
     planning_horizons: str | None,
@@ -448,6 +449,8 @@ def prepare_network(
     ----------
     n : pypsa.Network
         The PyPSA network instance
+    config : dict
+        Configuration dictionary
     solve_opts : Dict
         Dictionary of solving options containing clip_p_max_pu, load_shedding etc.
     foresight : str
@@ -529,8 +532,6 @@ def prepare_network(
         )
 
     # Apply autarky constraint if configured
-    # Access config from n.meta (set by compose_network) or n.config (set by solve_network)
-    config = getattr(n, "config", None) or n.meta
     autarky_cfg = config["electricity"]["autarky"]
     if autarky_cfg["enable"]:
         only_crossborder = autarky_cfg["by_country"]
@@ -1101,7 +1102,7 @@ def add_pipe_retrofit_constraint(n):
 
     p_nom = n.model["Link-p_nom"]
 
-    config = getattr(n, "config", None) or n.meta
+    config = n.config
     CH4_per_H2 = 1 / config["sector"]["H2_retrofit_capacity_per_CH4"]
     lhs = p_nom.loc[gas_pipes_i] + CH4_per_H2 * p_nom.loc[h2_retrofitted_i]
     rhs = n.links.p_nom[gas_pipes_i]
@@ -1141,7 +1142,7 @@ def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
     import_links = n.links.loc[n.links.carrier.str.contains("import")].index
     import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
 
-    config = getattr(n, "config", None) or n.meta
+    config = n.config
     limit = config["sector"]["imports"]["limit"]
     limit_sense = config["sector"]["imports"]["limit_sense"]
 
@@ -1473,6 +1474,7 @@ if __name__ == "__main__":
     # Prepare network (settings before solving)
     prepare_network(
         n,
+        config=snakemake.config,
         solve_opts=snakemake.params.solving["options"],
         foresight=snakemake.params.foresight,
         planning_horizons=planning_horizons,
