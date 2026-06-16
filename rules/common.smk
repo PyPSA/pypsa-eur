@@ -102,24 +102,17 @@ def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
     pd.Series
         A pandas Series containing the dataset version information, including source, version, tags, and URL
     """
-    # TODO as is right now, it is not compatible with config_provider
     dataset_config = {**config["data"][name], **dataset_config_overrides}
 
-    # To use PyPSA-Eur as a snakemake module, the path to the versions.csv file needs to be
-    # registered relative to the current file with Snakemake:
-    data_versions_list = []
-    for file in config["data"]["version_files"]:
-        if not (path := Path(file)).is_absolute():
-            path = Path(workflow.snakefile).parent.parent / path
-        data_versions_entry = load_data_versions(path).set_index(
-            ["dataset", "version", "source"]
+    data_versions = load_data_versions(
+        *(
+            (
+                Path(workflow.snakefile).parent.parent / path
+                if (path := Path(file)).is_absolute
+                else path
+            )
+            for file in config["data"]["version_files"]
         )
-        data_versions_list.append(data_versions_entry)
-    data_versions = pd.concat(data_versions_list)
-    data_versions = (
-        data_versions.loc[~data_versions.index.duplicated(keep="last")]
-        .sort_index()
-        .reset_index()
     )
 
     dataset = data_versions.loc[
