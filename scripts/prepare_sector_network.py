@@ -4995,9 +4995,6 @@ def add_industry(
     if options["industry_t"]["endogen"]:
         industrial_demand = industrial_demand.loc[:, "endogenous"]
 
-        logger.warning("Treating process emissions naively.")
-        industrial_demand.loc[:, "process emission"] = 0.0
-
         must_run = options["industry_t"]["must_run"]
 
         add_t_industry100_200(n, nodes, industrial_demand, costs, must_run)

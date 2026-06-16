@@ -127,9 +127,21 @@ if __name__ == "__main__":
 
     nodal_df_endogenous = partial_group(nodal_df_endogenous.T, grouper).T
 
-    logger.warning(
-        "what about methanol, process emissions from feedstock and current electricity?"
-    )
+    # Process emissions (calcination / chemical-reaction CO2) and the naphtha and
+    # methanol feedstocks are non-energy quantities. The endogenous ratios are derived
+    # purely from fuel demand, so these carriers cannot be represented there and would
+    # vanish when `industry_t: endogen` is enabled. They are independent of how process
+    # heat is supplied, so carry them over from the exogenous block. Naphtha is copied
+    # together with the feedstock emissions so the feedstock-emission / naphtha ratio in
+    # prepare_sector_network stays self-consistent.
+    for carrier in [
+        "process emission",
+        "process emission from feedstock",
+        "naphtha",
+        "methanol",
+    ]:
+        nodal_df_endogenous[carrier] = nodal_df_exogenous[carrier]
+
     nodal_df_exogenous["current electricity"] = nodal_today["electricity"]
     nodal_df_endogenous["current electricity"] = nodal_today["electricity"]
 
