@@ -4528,7 +4528,7 @@ def add_t_industry100_200(n, nodes, industrial_demand, costs, must_run):
             "Link",
             nodes,
             suffix=" solid biomass for heat100-200 industry",
-            bus0=spatial.biomass.industry,
+            bus0=spatial.biomass.nodes,
             bus1=nodes + " heat100-200 industry",
             carrier="heat100-200 industry solid biomass",
             p_nom_extendable=True,
@@ -4544,7 +4544,7 @@ def add_t_industry100_200(n, nodes, industrial_demand, costs, must_run):
             "Link",
             nodes,
             suffix=" solid biomass for heat100-200 industry CC",
-            bus0=spatial.biomass.industry,
+            bus0=spatial.biomass.nodes,
             bus1=nodes + " heat100-200 industry",
             bus2="co2 atmosphere",
             bus3=spatial.co2.nodes,
@@ -4560,8 +4560,7 @@ def add_t_industry100_200(n, nodes, industrial_demand, costs, must_run):
             efficiency2=-costs.at["solid biomass", "CO2 intensity"]
             * costs.at["biomass CHP capture", "capture_rate"],
             efficiency3=costs.at["solid biomass", "CO2 intensity"]
-            * (1 - costs.at["biomass CHP capture", "capture_rate"])
-            - costs.at["solid biomass", "CO2 intensity"],
+            * costs.at["biomass CHP capture", "capture_rate"],
             lifetime=costs.at["solid biomass boiler steam CC", "lifetime"],
         )
 
@@ -4683,7 +4682,7 @@ def add_t_industry200_500(n, nodes, industrial_demand, costs, must_run):
             "Link",
             nodes,
             suffix=" heat200-500 industry solid biomass",
-            bus0=spatial.biomass.industry,
+            bus0=spatial.biomass.nodes,
             bus1=nodes + " heat200-500 industry",
             carrier="heat200-500 industry solid biomass",
             p_nom_extendable=True,
@@ -4700,7 +4699,7 @@ def add_t_industry200_500(n, nodes, industrial_demand, costs, must_run):
             "Link",
             nodes,
             suffix=" heat200-500 industry solid biomass CC",
-            bus0=spatial.biomass.industry,
+            bus0=spatial.biomass.nodes,
             bus1=nodes + " heat200-500 industry",
             bus2=spatial.co2.nodes,
             bus3="co2 atmosphere",
