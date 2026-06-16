@@ -102,12 +102,10 @@ if __name__ == "__main__":
         .sum()
     )
 
-    rename_sectors = pd.Series(
-        {
-            "elec": "electricity",
-            "biomass": "solid biomass",
-        }
-    )
+    rename_sectors = {
+        "elec": "electricity",
+        "biomass": "solid biomass",
+    }
 
     nodal_df_exogenous.rename(columns=rename_sectors, inplace=True)
     nodal_df_endogenous.rename(columns=rename_sectors, inplace=True)
@@ -141,7 +139,6 @@ if __name__ == "__main__":
         keys=["exogenous", "endogenous"],
     )
 
-    idx = pd.IndexSlice
     nodal_df.index.name = "TWh/a (MtCO2/a)"
 
     fn = snakemake.output.industrial_energy_demand_per_node
