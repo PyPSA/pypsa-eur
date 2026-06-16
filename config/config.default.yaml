@@ -940,22 +940,40 @@ sector:
   conventional_generation:
     OCGT: gas
     CCGT: gas
-  industry_t:  # heat supply industry
-    endogen: false  # if heat supply for industry should be enodgenously optimised (does not cover steel sector)
-    must_run: 0.8 # NB: industrial heat demand is in reality supplied at site by discrete plants
-    # Options in case of endogenous industry heat supply, heat<100 is unchanged low-temperature heat supply
-    heat100-200:
+  industry_t:
+    endogen: false
+    must_run: 0.8
+    endogenise_sectors:
+      "Aluminium - primary production": true
+      "Aluminium - secondary production": true
+      Alumina production: true
+      "Other non-ferrous metals": true
+      HVC: true
+      Cement: true
+      "Ceramics & other NMM": true
+      Glass production: true
+      Pulp production: true
+      Paper production: true
+      Printing and media reproduction: true
+      Food, beverages and tobacco: true
+      Pharmaceutical products etc.: true
+      Transport equipment: true
+      Machinery equipment: true
+      Wood and wood products: true
+      Textiles and leather: true
+      Other industrial sectors: true
+    "heat100-200":
       biomass: true
       methane: true
       heat_pumps: true
       electric_boiler: true
-    heat200-500:
+    "heat200-500":
       biomass: true
       methane: true
       hydrogen: true
-    heat>500:
-      hydrogen: true
+    "heat>500":
       methane: true
+      hydrogen: true
   biomass_to_liquid: true
   biomass_to_liquid_cc: false
   electrobiofuels: true

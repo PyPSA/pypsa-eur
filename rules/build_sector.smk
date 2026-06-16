@@ -1068,6 +1068,8 @@ rule build_industry_sector_ratios_endogenous:
     threads: 1
     resources:
         mem_mb=1000,
+    params:
+        endogenise_sectors=config_provider("sector", "industry_t", "endogenise_sectors"),
     script:
         "../scripts/build_industry_sector_ratios_endogenous.py"
 

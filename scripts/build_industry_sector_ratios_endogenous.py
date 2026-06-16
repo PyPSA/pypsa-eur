@@ -204,8 +204,25 @@ def build_industry_sector_ratios_endogenous():
         endogenous_sector_ratios.index.union(bands)
     ).replace(np.nan, 0)
 
+    # Per-sector selection: only split the processes flagged true (or omitted) into
+    # temperature bands. Excluded sectors keep their heat/methane/biomass as flat
+    # fuels, so their heat folds into heat<100 (low-temperature heat) and their
+    # gas/biomass feed the flat industry loads in prepare_sector_network -- i.e. the
+    # exogenous treatment, applied per sector.
+    selected = snakemake.params.endogenise_sectors
+    band_mapper = {
+        process: key
+        for process, key in process_temperature_band_mapper.items()
+        if selected.get(process, True)
+    }
+    backup_bands = {
+        process: shares
+        for process, shares in backup_temperature_band_shares.items()
+        if selected.get(process, True)
+    }
+
     # for each heat-endogenous process, split energy in heat carriers into the respective temperature bands
-    for process, key in process_temperature_band_mapper.items():
+    for process, key in band_mapper.items():
         as_fuels = endogenous_sector_ratios.loc[heat_carriers, idx[:, process]]
 
         as_heat = pd.DataFrame(
@@ -220,7 +237,7 @@ def build_industry_sector_ratios_endogenous():
         endogenous_sector_ratios.loc[heat_carriers, idx[:, process]] = 0.0
 
     # for processes not covered by Fleiter et al. 2025
-    for process, band_shares in backup_temperature_band_shares.items():
+    for process, band_shares in backup_bands.items():
         band_shares = pd.Series(band_shares)
 
         as_fuels = endogenous_sector_ratios.loc[heat_carriers, idx[:, process]]
