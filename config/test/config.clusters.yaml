@@ -29,7 +29,7 @@ clustering:
   temporal:
     resolution_elec: 24h
   simplify_network:
-    remove_stubs: true
+    remove_stubs: false
     remove_stubs_across_borders: false
 
 solving:

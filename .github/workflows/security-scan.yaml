@@ -1,0 +1,99 @@
+name: Security scan
+on:
+  push:
+    branches: [master]
+    paths: [pixi.lock]
+  pull_request:
+    branches: [master]
+    paths: [pixi.lock]
+  schedule:
+  - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  scan:
+    name: SBOM and vulnerability scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: write   # required by anchore/sbom-action dependency-snapshot upload
+      actions: read     # required by dawidd6/action-download-artifact on fork PRs
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v6
+    - uses: prefix-dev/setup-pixi@v0.9.6
+      with:
+        pixi-version: v0.68.1
+
+    - name: Generate SBOM # (master only)
+      if: github.ref == 'refs/heads/master'
+      uses: anchore/sbom-action@v0.24.0
+      with:
+        path: ".pixi/envs/default"
+        output-file: sbom.spdx.json
+        dependency-snapshot: true
+
+    - name: Vulnerability Scan
+      id: scan
+      uses: anchore/scan-action@v7.4.0
+      with:
+        path: ".pixi/envs/default"
+        fail-build: false
+        severity-cutoff: high
+        add-cpes-if-none: true
+        output-format: sarif
+
+    # Point alerts to pixi.lock so githubs path scoped PR check registers it
+    - name: Rewrite SARIF locations to pixi.lock
+      run: |
+        jq '.runs[].results[].locations[].physicalLocation.artifactLocation.uri = "pixi.lock"' \
+          "${{ steps.scan.outputs.sarif }}" > rewritten.sarif
+        mv rewritten.sarif "${{ steps.scan.outputs.sarif }}"
+
+    - name: Upload SARIF
+      if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
+        category: pixi-vuln-scan
+
+    # Fork PRs cant upload SARIF (no access to token), so code scannings native diff
+    # does not apply. This builds our own diff from a master-uploaded SARIF artifact instead.
+    - name: Upload SARIF as artifact
+      if: github.ref == 'refs/heads/master'
+      uses: actions/upload-artifact@v7
+      with:
+        name: master-sarif
+        path: ${{ steps.scan.outputs.sarif }}
+        retention-days: 30
+
+    # Fork PRs cant upload SARIF to code scanning (no token write access), so
+    # diff against the master baseline artifact here instead
+    - name: Download master baseline (fork PRs only)
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+      uses: dawidd6/action-download-artifact@v21
+      with:
+        workflow: security-scan.yaml
+        name: master-sarif
+        branch: master
+        if_no_artifact_found: fail
+        path: master-baseline
+
+    - name: Fail on new CVEs (fork PRs only)
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+      env:
+        SARIF_PATH: ${{ steps.scan.outputs.sarif }}
+      run: |
+        [ -s master-baseline/output ] || { echo "::error::baseline SARIF missing"; exit 2; }
+        [ -s "$SARIF_PATH" ]          || { echo "::error::PR SARIF missing"; exit 2; }
+        new=$(comm -23 \
+          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' "$SARIF_PATH"          | sort -u) \
+          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' master-baseline/output | sort -u))
+        if [ -n "$new" ]; then
+          echo "::error::New high+ CVEs vs master:"
+          printf '%s\n' "$new"
+          exit 1
+        fi
+        echo "No new high+ CVEs vs master."
