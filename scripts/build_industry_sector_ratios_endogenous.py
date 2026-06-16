@@ -71,10 +71,10 @@ process_temperature_band_mapper = {
     "Ceramics & other NMM": idx["Non-metallic mineral products", "Ceramics", :],
     "Glass production": idx["Non-metallic mineral products", "Glass", :],
     "Pulp production": idx[
-        "Paper and printing", "Paper products", ["Paper", "Paper Electrical"]
+        "Paper and printing", "Paper products", ["Chemical pulp", "Mechanical pulp"]
     ],
     "Paper production": idx[
-        "Paper and printing", "Paper products", ["Chemical pulp", "Mechanical pulp"]
+        "Paper and printing", "Paper products", ["Paper", "Paper Electrical"]
     ],
     "Printing and media reproduction": idx[
         "Paper and printing", "Paper products", ["Chemical pulp", "Mechanical pulp"]
@@ -94,7 +94,7 @@ backup_temperature_band_shares = {
         "heat<100": 0.3,
         "heat100-200": 0.6,
         "heat200-500": 0.1,
-        "heat>500": 1.0,
+        "heat>500": 0.0,
     },
     # from https://energyinnovation.org/data-explorer/overcoming-all-barriers-to-industrial-electrification
     "Other industrial sectors": {
@@ -185,6 +185,15 @@ def build_industry_sector_ratios_endogenous():
     process_temperature_bands = process_temperature_bands[
         ["heat<100", "heat100-200", "heat200-500", "heat>500"]
     ]
+
+    # Override the Fleiter 2025 Mechanical pulp row, which places 100% of
+    # process heat below 100 °C. TMP/CTMP refiner steam and chip preheat
+    # operate at 130-170 °C (BREF "Production of Pulp, Paper and Board",
+    # Valmet TMP process documentation, ScienceDirect TMP overview), so the
+    # Rehfeldt et al. 2018 value of 100% in 100-200 °C is used instead.
+    process_temperature_bands.loc[
+        idx["Paper and printing", "Paper products", "Mechanical pulp"], :
+    ] = [0.0, 1.0, 0.0, 0.0]
 
     heat_carriers = ["heat", "biomass", "methane"]
     bands = ["heat<100", "heat100-200", "heat200-500", "heat>500"]
