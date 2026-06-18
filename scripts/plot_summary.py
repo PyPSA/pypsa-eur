@@ -60,6 +60,7 @@ preferred_order = pd.Index(
     ]
 )
 
+
 def _get_tech_colors(tech_colors, keys):
     """
     Safely retrieve colors for technology keys with fallback for missing entries.
@@ -72,9 +73,12 @@ def _get_tech_colors(tech_colors, keys):
         if key in tech_colors:
             colors.append(tech_colors[key])
         else:
-            logger.warning(f"tech_colors for carrier '{key}' not defined in plotting config.")
+            logger.warning(
+                f"tech_colors for carrier '{key}' not defined in plotting config."
+            )
             colors.append(fallback)
     return colors
+
 
 def plot_costs():
     cost_df = pd.read_csv(

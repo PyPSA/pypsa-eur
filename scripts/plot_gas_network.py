@@ -123,7 +123,9 @@ def plot_ch4_map(n):
 
     for key in ["fossil gas", "methanation"]:
         if key not in tech_colors:
-            logger.warning(f"tech_colors for carrier '{key}' not defined in plotting config.")
+            logger.warning(
+                f"tech_colors for carrier '{key}' not defined in plotting config."
+            )
 
     bus_color = {
         "fossil gas": tech_colors.get("fossil gas", "#333333"),

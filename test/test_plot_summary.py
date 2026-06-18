@@ -91,7 +91,7 @@ def parse_tech_colors_from_yaml():
     """Custom lightweight YAML parser to extract tech_colors mapping from config."""
     tech_colors = {}
     in_tech_colors = False
-    with open("config/plotting.default.yaml", "r") as f:
+    with open("config/plotting.default.yaml") as f:
         for line in f:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
@@ -126,7 +126,9 @@ def test_regression_rename_techs_heat_dsm():
 
     # 2. Check config has the key 'heat dsm'
     tech_colors = parse_tech_colors_from_yaml()
-    assert "heat dsm" in tech_colors, "heat dsm must have a defined color in tech_colors"
+    assert "heat dsm" in tech_colors, (
+        "heat dsm must have a defined color in tech_colors"
+    )
     assert tech_colors["heat dsm"] == "#ff5c5c"
 
 
