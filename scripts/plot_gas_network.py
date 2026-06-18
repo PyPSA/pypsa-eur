@@ -121,9 +121,13 @@ def plot_ch4_map(n):
     n.links.bus0 = n.links.bus0.str.replace(" gas", "")
     n.links.bus1 = n.links.bus1.str.replace(" gas", "")
 
+    for key in ["fossil gas", "methanation"]:
+        if key not in tech_colors:
+            logger.warning(f"tech_colors for carrier '{key}' not defined in plotting config.")
+
     bus_color = {
-        "fossil gas": tech_colors["fossil gas"],
-        "methanation": tech_colors["methanation"],
+        "fossil gas": tech_colors.get("fossil gas", "#333333"),
+        "methanation": tech_colors.get("methanation", "#333333"),
         "biogas": "seagreen",
     }
 

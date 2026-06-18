@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Resolve plotting crashes from missing `tech_colors` entries by adding `heat dsm` color and implementing safe fallback for missing keys across plotting scripts ([#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
+
 * Security: SBOM security scan included in CI.
 
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.

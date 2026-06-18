@@ -60,6 +60,21 @@ preferred_order = pd.Index(
     ]
 )
 
+def _get_tech_colors(tech_colors, keys):
+    """
+    Safely retrieve colors for technology keys with fallback for missing entries.
+
+    Logs a warning for any key not found in tech_colors and uses a default gray color.
+    """
+    fallback = "#333333"
+    colors = []
+    for key in keys:
+        if key in tech_colors:
+            colors.append(tech_colors[key])
+        else:
+            logger.warning(f"tech_colors for carrier '{key}' not defined in plotting config.")
+            colors.append(fallback)
+    return colors
 
 def plot_costs():
     cost_df = pd.read_csv(
@@ -96,7 +111,7 @@ def plot_costs():
         kind="bar",
         ax=ax,
         stacked=True,
-        color=[snakemake.params.plotting["tech_colors"][i] for i in new_index],
+        color=_get_tech_colors(snakemake.params.plotting["tech_colors"], new_index),
     )
 
     handles, labels = ax.get_legend_handles_labels()
@@ -165,7 +180,7 @@ def plot_energy():
         kind="bar",
         ax=ax,
         stacked=True,
-        color=[snakemake.params.plotting["tech_colors"][i] for i in new_index],
+        color=_get_tech_colors(snakemake.params.plotting["tech_colors"], new_index),
     )
 
     handles, labels = ax.get_legend_handles_labels()
@@ -243,7 +258,7 @@ def plot_balances():
             kind="bar",
             ax=ax,
             stacked=True,
-            color=[snakemake.params.plotting["tech_colors"][i] for i in new_index],
+            color=_get_tech_colors(snakemake.params.plotting["tech_colors"], new_index),
         )
 
         handles, labels = ax.get_legend_handles_labels()
