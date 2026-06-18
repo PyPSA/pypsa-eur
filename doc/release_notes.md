@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Resolve failure to apply individual NUTS level configuration setting (`clustering.administrative.countries`) due to key lookup error ([#2207](https://github.com/PyPSA/pypsa-eur/issues/2207)).
+
 * Security: SBOM security scan included in CI.
 
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
