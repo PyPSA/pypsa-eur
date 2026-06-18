@@ -8,8 +8,8 @@ After filling small gaps linearly and large gaps by copying time-slice of a
 given period, the load data is exported to a `.csv` file.
 """
 
-import logging
 import calendar
+import logging
 
 import numpy as np
 import pandas as pd
