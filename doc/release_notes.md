@@ -42,6 +42,8 @@
 
 - Added solar rooftop ratio setting to `add_existing_baseyear` for heuristically splitting existing solar capacity between rooftop and utility-scale (defaults to a 50:50 split).
 
+- doc: Disable root TOC entries in order to declutter the table of contents for the rules overview ([2216](https://github.com/PyPSA/pypsa-eur/pull/2216)).
+
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 
 **Features**
