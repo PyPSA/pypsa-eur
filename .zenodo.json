@@ -1,0 +1,35 @@
+{
+    "title": "PyPSA-Eur extension for CDR credit pricing: master thesis model and code",
+    "upload_type": "software",
+    "access_right": "restricted",
+    "access_conditions": "Code and data accompany an MSc thesis at the Technical University of Denmark (DTU). Access is granted on request to the authors until the thesis is published.",
+    "license": "MIT",
+    "creators": [
+        {
+            "name": "Theilacker, Felicia",
+            "affiliation": "Technical University of Denmark (DTU)"
+        },
+        {
+            "name": "Hock, Philipp",
+            "affiliation": "Technical University of Denmark (DTU)"
+        }
+    ],
+    "description": "<p><strong>Master Thesis Fork — Felicia &amp; Philipp, DTU, 2026</strong></p><p>A modified version of PyPSA-Eur used for our Master's thesis at the Technical University of Denmark (DTU), extended to investigate <strong>Carbon Dioxide Removal (CDR)</strong> technologies and their role in the European energy system transition. Contributions include an optimisation-layer CDR credit accounting framework, spatially-resolved CO₂ sequestration economics, direct-air-capture enhancements, and the supply-curve scenario analysis that produces the thesis results.</p><p>Every thesis contribution is mapped to the exact code that implements it in <code>CONTRIBUTIONS.md</code>, distinguishing our additions from upstream PyPSA-Eur. For the original model, see <a href=\"https://github.com/PyPSA/pypsa-eur\">PyPSA/pypsa-eur</a>.</p>",
+    "keywords": [
+        "PyPSA-Eur",
+        "carbon dioxide removal",
+        "CDR",
+        "direct air capture",
+        "BECCS",
+        "carbon sequestration",
+        "energy system modelling",
+        "sector coupling"
+    ],
+    "related_identifiers": [
+        {
+            "relation": "isDerivedFrom",
+            "identifier": "https://github.com/PyPSA/pypsa-eur",
+            "scheme": "url"
+        }
+    ]
+}
