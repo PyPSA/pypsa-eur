@@ -529,7 +529,7 @@ def busmap_for_admin_regions(
         )
 
     country_level = {
-        k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
+        k: v for k, v in admin_levels.get("countries", {}).items() if k in countries
     }
     if country_level:
         country_level_list = "\n".join(
