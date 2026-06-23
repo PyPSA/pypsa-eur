@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Resolve silent NaN load data when `fixed_year` differs from snapshot year ([#2187](https://github.com/PyPSA/pypsa-eur/issues/2187)).
+
 * Security: SBOM security scan included in CI.
 
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.

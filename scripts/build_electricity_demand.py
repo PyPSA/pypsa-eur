@@ -8,6 +8,7 @@ After filling small gaps linearly and large gaps by copying time-slice of a
 given period, the load data is exported to a `.csv` file.
 """
 
+import calendar
 import logging
 
 import numpy as np
@@ -322,16 +323,32 @@ if __name__ == "__main__":
     )
 
     fixed_year = snakemake.params["load"].get("fixed_year", False)
-    years = (
-        slice(str(fixed_year), str(fixed_year))
-        if fixed_year
-        else slice(snapshots[0], snapshots[-1])
-    )
 
-    load = load.loc[years].reindex(index=snapshots)
-
-    # need to reindex load time series to target year
     if fixed_year:
-        load.index = load.index.map(lambda t: t.replace(year=snapshots.year[0]))
+        fixed_year = int(fixed_year)
+
+        # Guard against leap year mismatch: if snapshots contain Feb 29
+        # but fixed_year has no Feb 29, there is no load data to map
+        has_feb29 = ((snapshots.month == 2) & (snapshots.day == 29)).any()
+        if has_feb29 and not calendar.isleap(fixed_year):
+            raise ValueError(
+                f"Snapshots contain Feb 29 but fixed_year={fixed_year} is not a "
+                f"leap year. Set 'drop_leap_day: true' in the snapshots config "
+                f"or choose a leap fixed_year."
+            )
+
+        # Map snapshot timestamps to fixed_year to index into load data,
+        # then restore the original snapshot index
+        fixed_year_index = snapshots.map(lambda t: t.replace(year=fixed_year))
+        load = load.loc[fixed_year_index]
+        load.index = snapshots
+    else:
+        years = slice(snapshots[0], snapshots[-1])
+        load = load.loc[years].reindex(index=snapshots)
+
+    assert not load.isna().any().any(), (
+        f"Load data contains NaN after reindexing. Ensure load data "
+        f"covers the requested snapshots (fixed_year={fixed_year})."
+    )
 
     load.to_csv(snakemake.output[0])
