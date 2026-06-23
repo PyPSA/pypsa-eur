@@ -85,6 +85,7 @@ dev/*
 # ai coding tools
 CLAUDE.md
 .claude/
+.claude_tmp/
 .github/copilot-instructions.md
 CLAUDE.local.md
 # team run wrapper artifacts
@@ -95,3 +96,17 @@ CLAUDE.local.md
 
 /cutouts_tmp
 /figures
+
+# Archived/superseded Thesis_Runs experiments — kept on disk, out of the handed-in tree.
+# Canonical thesis scenarios are Scenario_1_Deployment_Response and
+# Robustness_Analysis_ETS only.
+/config/Thesis_Runs/00RunsToLearn/
+/config/Thesis_Runs/01ArchiveSupplyCurve/
+# Intermediate price-sweep / grid variants (final/cited anchors are tracked)
+/config/Thesis_Runs/Scenario_1_Deployment_Response/*/config.G*eur.yaml
+/config/Thesis_Runs/Robustness_Analysis_ETS/ets_high2/
+/config/Thesis_Runs/Robustness_Analysis_ETS/ets_high5*/
+/config/Thesis_Runs/Robustness_Analysis_ETS/ets_low4*/
+
+# Superseded one-off LSF job scripts (L1-L7, v2/v9/v10/v11, test runs) — kept on disk
+/jobs/archive/
