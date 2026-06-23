@@ -8,11 +8,10 @@ SPDX-License-Identifier: CC-BY-4.0
 >
 > This is a modified version of PyPSA-Eur used for our Master's thesis at the Technical University of Denmark (DTU). The model has been extended to investigate **Carbon Dioxide Removal (CDR)** technologies and their role in the European energy system transition.
 >
-> Key modifications include:
-> - Custom cost functions for CDR technologies (Direct Air Capture, BECCS, etc.)
-> - Supply curve analysis for CDR deployment potential
-> - Scenario framework (low / medium / high CDR ambition) based on varying cost assumptions
-> - Additional plotting and analysis scripts for CDR-specific outputs
+> Every thesis contribution is mapped to the exact code that implements it in
+> [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md) — a code map separating our additions
+> (CDR credit accounting, sequestration economics, DAC enhancements, and the
+> supply-curve results) from upstream PyPSA-Eur.
 >
 > For the original PyPSA-Eur model, see [PyPSA/pypsa-eur](https://github.com/PyPSA/pypsa-eur).
 
