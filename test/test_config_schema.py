@@ -63,7 +63,7 @@ def _check_file_in_sync(existing_path: Path, generate_func, file_type: str):
         print("=" * 80)
         pytest.fail(
             f"{existing_path} is out of sync with the Pydantic schema. "
-            "Run `pixi run -e test pytest test/test_config_schema.py --fix` to update. See diff above."
+            "Run `pixi run generate-config` to update. See diff above."
         )
 
 
