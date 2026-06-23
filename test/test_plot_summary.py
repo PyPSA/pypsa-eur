@@ -98,11 +98,13 @@ def test_regression_rename_techs_heat_dsm():
     assert rename_techs("residential urban decentral heat dsm") == "heat dsm"
 
     # 2. Check config has the key 'heat dsm'
-    with open("config/plotting.default.yaml", "r") as f:
+    with open("config/plotting.default.yaml") as f:
         config = yaml.safe_load(f)
     tech_colors = config["plotting"]["tech_colors"]
 
-    assert "heat dsm" in tech_colors, "heat dsm must have a defined color in tech_colors"
+    assert "heat dsm" in tech_colors, (
+        "heat dsm must have a defined color in tech_colors"
+    )
     assert tech_colors["heat dsm"] == "#ff5c5c"
 
 

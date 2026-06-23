@@ -60,6 +60,7 @@ preferred_order = pd.Index(
     ]
 )
 
+
 def check_tech_colors(tech_colors, keys):
     """
     Check if all keys exist in tech_colors mapping, otherwise raise KeyError.
