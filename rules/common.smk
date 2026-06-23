@@ -103,6 +103,7 @@ def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
         A pandas Series containing the dataset version information, including source, version, tags, and URL
     """
     dataset_config = {**config["data"][name], **dataset_config_overrides}
+    data_version_files = config["data"]["version_files"]
 
     data_versions = load_data_versions(
         *(
@@ -111,7 +112,7 @@ def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
                 if (path := Path(file)).is_absolute
                 else path
             )
-            for file in config["data"]["version_files"]
+            for file in data_version_files
         )
     )
 
@@ -129,7 +130,7 @@ def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
 
     if dataset.empty:
         raise ValueError(
-            f"Dataset '{name}' with source '{dataset_config['source']}' for '{dataset_config['version']}' not found in data/versions.csv."
+            f"Dataset '{name}' with source '{dataset_config['source']}' for '{dataset_config['version']}' not found in {data_version_files}."
         )
 
     # Return single-row DataFrame as a Series
