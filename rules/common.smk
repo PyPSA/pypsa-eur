@@ -107,11 +107,7 @@ def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
 
     data_versions = load_data_versions(
         *(
-            (
-                Path(workflow.snakefile).parent.parent / path
-                if (path := Path(file)).is_absolute
-                else path
-            )
+            (PROJ_DIR / path if not (path := Path(file)).is_absolute() else path)
             for file in data_version_files
         )
     )
