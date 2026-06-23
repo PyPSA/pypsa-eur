@@ -5,7 +5,11 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Fix: Resolve plotting crashes from missing `tech_colors` entries by adding `heat dsm` color and implementing safe fallback for missing keys across plotting scripts ([#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
+* Fix: Resolve plotting crashes from missing `tech_colors` entries by adding `heat dsm` color and implementing upfront validation for missing keys in `plot_summary.py` ([#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
+
+* Fix: Keep unset `p_set` (NaN) as NaN when aggregating components in `cluster_heat_buses`, required for [PyPSA#1703](https://github.com/PyPSA/PyPSA/pull/1703).
+
+* Fix: When clustering heat buses, in myopic optimization, and afterwards viewing the heat energy_balance with n.statistics (and with nice_names=True, which is the default), some assets would still be displayed as belonging to "residential" or "services" sectors, because the nice_names still lingered from the unclustered version. This has been fixed.
 
 * Security: SBOM security scan included in CI.
 

@@ -1213,17 +1213,17 @@ if (
             copy2(input["xlsx"], output["xlsx"])
 
 
-if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive"]:
+if (TYNDP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive"]:
 
     rule retrieve_tyndp:
         input:
-            line_data=storage(TYDNP_DATASET["url"] + "/Line-data.zip"),
-            nodes=storage(TYDNP_DATASET["url"] + "/Nodes.zip"),
+            line_data=storage(TYNDP_DATASET["url"] + "/Line-data.zip"),
+            nodes=storage(TYNDP_DATASET["url"] + "/Nodes.zip"),
         output:
-            line_data_zip=f"{TYDNP_DATASET['folder']}/Line-data.zip",
-            nodes_zip=f"{TYDNP_DATASET['folder']}/Nodes.zip",
-            reference_grid=f"{TYDNP_DATASET['folder']}/Line data/ReferenceGrid_Electricity.xlsx",
-            nodes=f"{TYDNP_DATASET['folder']}/Nodes/LIST OF NODES.xlsx",
+            line_data_zip=f"{TYNDP_DATASET['folder']}/Line-data.zip",
+            nodes_zip=f"{TYNDP_DATASET['folder']}/Nodes.zip",
+            reference_grid=f"{TYNDP_DATASET['folder']}/Line data/ReferenceGrid_Electricity.xlsx",
+            nodes=f"{TYNDP_DATASET['folder']}/Nodes/LIST OF NODES.xlsx",
         log:
             "logs/retrieve_tyndp.log",
         message:
