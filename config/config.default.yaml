@@ -419,6 +419,14 @@ renewable:
     eia_correct_by_capacity: false
     eia_approximate_missing: false
 
+# alternative carbon dioxide removal technologies
+perennials:
+  potential_co2: 2 # tCO2e/(ha y) sequestered
+  biofuel_conversion:     # Biofuel conversion factors from JRC Technical Report doi:10.2760/69179
+    MINBIOCRP11: 0.295    # t_ethanol / t_wheat grain (13.5% moisture), Table 93
+    MINBIOCRP21: 0.07777  # t_ethanol / t_sugar beet (16% sugar content), Table 133
+    MINBIORPS1: 0.4176    # t_crude_oil / t_rapeseed (9% moisture) x crude-to-FAME (1/1.0063), Tables 155+159
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
   unit_commitment: false
@@ -836,6 +844,7 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
+  perennials: false
   co2_vent: false
   heat_vent:
     urban central: true
@@ -1307,6 +1316,9 @@ data:
     source: archive
     version: latest
   instrat_co2_prices:
+    source: primary
+    version: latest
+  co2_removal_data:
     source: primary
     version: latest
   co2stop:

@@ -11,6 +11,7 @@ bidding_zones_electricitymaps,v1.238.0,primary,latest supported,2026-01-22,,http
 bidding_zones_electricitymaps,v1.238.0,archive,latest supported,2026-01-22,,https://data.pypsa.org/workflows/eur/bidding_zones_electricitymaps/v1.238.0/world.geojson
 bidding_zones_entsoepy,v0.6.18,primary,latest supported,2026-01-22,,https://raw.githubusercontent.com/EnergieID/entsoe-py/refs/tags/V0.6.18/entsoe/geo/geojson
 bidding_zones_entsoepy,v0.6.18,archive,latest supported,2026-01-22,,https://data.pypsa.org/workflows/eur/bidding_zones_entsoepy/v0.6.18
+co2_removal_data,v1.0.1,primary,latest supported,2026-06-22,"Afforestation and perennialisation input data for the CDR sector technologies, archived from https://github.com/BertoGBG/CO2-removal",https://zenodo.org/records/20799337/files/BertoGBG/CO2-removal-v1.0.1.zip
 co2stop,26-august-2020,primary,latest supported,2025-12-02,,https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip
 co2stop,26-august-2020,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/co2stop/26-august-2020/co2jrc_openformats.zip
 copernicus_land_cover,v3.0.1,primary,latest supported,2025-12-02,"The primary is already from Zenodo, documentation in https://zenodo.org/records/4723921",https://zenodo.org/records/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif

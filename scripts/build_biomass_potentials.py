@@ -12,7 +12,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, resolve_biomass_classes, set_scenario_config
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
@@ -388,7 +388,10 @@ if __name__ == "__main__":
 
     df.to_csv(snakemake.output.biomass_potentials_all)
 
-    grouper = {v: k for k, vv in params["classes"].items() for v in vv}
+    classes = resolve_biomass_classes(
+        params["classes"], snakemake.config["sector"].get("perennials", False)
+    )
+    grouper = {v: k for k, vv in classes.items() for v in vv}
     df = df.T.groupby(grouper).sum().T
 
     input_eurostat = snakemake.input.eurostat
