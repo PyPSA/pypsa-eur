@@ -5767,7 +5767,11 @@ def cluster_heat_buses(n):
         if c.static.empty:
             continue
         df = c.static
-        cols = df.columns[df.columns.str.contains("bus") | (df.columns == "carrier")]
+        cols = df.columns[
+            df.columns.str.contains("bus")
+            | (df.columns == "carrier")
+            | (df.columns == "nice_name")
+        ]
 
         # rename columns and index
         df[cols] = df[cols].apply(
