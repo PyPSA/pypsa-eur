@@ -4971,6 +4971,88 @@
           "description": "Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
           "type": "object"
         },
+        "industry_t": {
+          "description": "Configuration for `sector.industry_t` (endogenous industry process heat).",
+          "properties": {
+            "endogen": {
+              "default": false,
+              "description": "Endogenously optimise the industry process heat supply per temperature band (does not cover the steel sector).",
+              "type": "boolean"
+            },
+            "must_run": {
+              "default": 0.8,
+              "description": "Minimum capacity factor for endogenous industry heat supply links, reflecting that industrial heat is in reality supplied on-site by discrete plants.",
+              "type": "number"
+            },
+            "endogenise_sectors": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "description": "Per-sector switch, only used when `endogen` is true. True splits the sector's process heat into temperature bands so that the supply technology is chosen endogenously; false keeps the sector exogenous (flat low-temperature heat plus gas and biomass loads). Sectors omitted here default to true. Steel, HVC recycling and DRI are handled separately and cannot be configured here.",
+              "type": "object"
+            },
+            "heat100-200": {
+              "description": "Supply technologies allowed for industry process heat at 100-200 \u00b0C.",
+              "properties": {
+                "biomass": {
+                  "default": true,
+                  "description": "Allow solid biomass boilers (with and without carbon capture) to supply 100-200 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "methane": {
+                  "default": true,
+                  "description": "Allow gas boilers (with and without carbon capture) to supply 100-200 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "heat_pumps": {
+                  "default": true,
+                  "description": "Allow high-temperature industrial heat pumps to supply 100-200 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "electric_boiler": {
+                  "default": true,
+                  "description": "Allow electric steam boilers to supply 100-200 \u00b0C process heat.",
+                  "type": "boolean"
+                }
+              }
+            },
+            "heat200-500": {
+              "description": "Supply technologies allowed for industry process heat at 200-500 \u00b0C.",
+              "properties": {
+                "biomass": {
+                  "default": true,
+                  "description": "Allow solid biomass boilers (with and without carbon capture) to supply 200-500 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "methane": {
+                  "default": true,
+                  "description": "Allow gas boilers (with and without carbon capture) to supply 200-500 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "hydrogen": {
+                  "default": true,
+                  "description": "Allow hydrogen boilers to supply 200-500 \u00b0C process heat.",
+                  "type": "boolean"
+                }
+              }
+            },
+            "heat>500": {
+              "description": "Supply technologies allowed for industry process heat above 500 \u00b0C.",
+              "properties": {
+                "methane": {
+                  "default": true,
+                  "description": "Allow gas boilers (with and without carbon capture) to supply >500 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "hydrogen": {
+                  "default": true,
+                  "description": "Allow hydrogen boilers to supply >500 \u00b0C process heat.",
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
         "biomass_to_liquid": {
           "default": true,
           "description": "Add option for transforming solid biomass into liquid fuel with the same properties as oil.",
@@ -6760,6 +6842,148 @@
           "default": true,
           "description": "Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file.",
           "type": "boolean"
+        }
+      }
+    },
+    "_IndustryHeat100200Config": {
+      "description": "Supply technologies allowed for industry process heat at 100-200 \u00b0C.",
+      "properties": {
+        "biomass": {
+          "default": true,
+          "description": "Allow solid biomass boilers (with and without carbon capture) to supply 100-200 \u00b0C process heat.",
+          "type": "boolean"
+        },
+        "methane": {
+          "default": true,
+          "description": "Allow gas boilers (with and without carbon capture) to supply 100-200 \u00b0C process heat.",
+          "type": "boolean"
+        },
+        "heat_pumps": {
+          "default": true,
+          "description": "Allow high-temperature industrial heat pumps to supply 100-200 \u00b0C process heat.",
+          "type": "boolean"
+        },
+        "electric_boiler": {
+          "default": true,
+          "description": "Allow electric steam boilers to supply 100-200 \u00b0C process heat.",
+          "type": "boolean"
+        }
+      }
+    },
+    "_IndustryHeat200500Config": {
+      "description": "Supply technologies allowed for industry process heat at 200-500 \u00b0C.",
+      "properties": {
+        "biomass": {
+          "default": true,
+          "description": "Allow solid biomass boilers (with and without carbon capture) to supply 200-500 \u00b0C process heat.",
+          "type": "boolean"
+        },
+        "methane": {
+          "default": true,
+          "description": "Allow gas boilers (with and without carbon capture) to supply 200-500 \u00b0C process heat.",
+          "type": "boolean"
+        },
+        "hydrogen": {
+          "default": true,
+          "description": "Allow hydrogen boilers to supply 200-500 \u00b0C process heat.",
+          "type": "boolean"
+        }
+      }
+    },
+    "_IndustryHeat500Config": {
+      "description": "Supply technologies allowed for industry process heat above 500 \u00b0C.",
+      "properties": {
+        "methane": {
+          "default": true,
+          "description": "Allow gas boilers (with and without carbon capture) to supply >500 \u00b0C process heat.",
+          "type": "boolean"
+        },
+        "hydrogen": {
+          "default": true,
+          "description": "Allow hydrogen boilers to supply >500 \u00b0C process heat.",
+          "type": "boolean"
+        }
+      }
+    },
+    "_IndustryTConfig": {
+      "description": "Configuration for `sector.industry_t` (endogenous industry process heat).",
+      "properties": {
+        "endogen": {
+          "default": false,
+          "description": "Endogenously optimise the industry process heat supply per temperature band (does not cover the steel sector).",
+          "type": "boolean"
+        },
+        "must_run": {
+          "default": 0.8,
+          "description": "Minimum capacity factor for endogenous industry heat supply links, reflecting that industrial heat is in reality supplied on-site by discrete plants.",
+          "type": "number"
+        },
+        "endogenise_sectors": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "description": "Per-sector switch, only used when `endogen` is true. True splits the sector's process heat into temperature bands so that the supply technology is chosen endogenously; false keeps the sector exogenous (flat low-temperature heat plus gas and biomass loads). Sectors omitted here default to true. Steel, HVC recycling and DRI are handled separately and cannot be configured here.",
+          "type": "object"
+        },
+        "heat100-200": {
+          "description": "Supply technologies allowed for industry process heat at 100-200 \u00b0C.",
+          "properties": {
+            "biomass": {
+              "default": true,
+              "description": "Allow solid biomass boilers (with and without carbon capture) to supply 100-200 \u00b0C process heat.",
+              "type": "boolean"
+            },
+            "methane": {
+              "default": true,
+              "description": "Allow gas boilers (with and without carbon capture) to supply 100-200 \u00b0C process heat.",
+              "type": "boolean"
+            },
+            "heat_pumps": {
+              "default": true,
+              "description": "Allow high-temperature industrial heat pumps to supply 100-200 \u00b0C process heat.",
+              "type": "boolean"
+            },
+            "electric_boiler": {
+              "default": true,
+              "description": "Allow electric steam boilers to supply 100-200 \u00b0C process heat.",
+              "type": "boolean"
+            }
+          }
+        },
+        "heat200-500": {
+          "description": "Supply technologies allowed for industry process heat at 200-500 \u00b0C.",
+          "properties": {
+            "biomass": {
+              "default": true,
+              "description": "Allow solid biomass boilers (with and without carbon capture) to supply 200-500 \u00b0C process heat.",
+              "type": "boolean"
+            },
+            "methane": {
+              "default": true,
+              "description": "Allow gas boilers (with and without carbon capture) to supply 200-500 \u00b0C process heat.",
+              "type": "boolean"
+            },
+            "hydrogen": {
+              "default": true,
+              "description": "Allow hydrogen boilers to supply 200-500 \u00b0C process heat.",
+              "type": "boolean"
+            }
+          }
+        },
+        "heat>500": {
+          "description": "Supply technologies allowed for industry process heat above 500 \u00b0C.",
+          "properties": {
+            "methane": {
+              "default": true,
+              "description": "Allow gas boilers (with and without carbon capture) to supply >500 \u00b0C process heat.",
+              "type": "boolean"
+            },
+            "hydrogen": {
+              "default": true,
+              "description": "Allow hydrogen boilers to supply >500 \u00b0C process heat.",
+              "type": "boolean"
+            }
+          }
         }
       }
     },
@@ -11438,6 +11662,88 @@
           },
           "description": "Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
           "type": "object"
+        },
+        "industry_t": {
+          "description": "Configuration for `sector.industry_t` (endogenous industry process heat).",
+          "properties": {
+            "endogen": {
+              "default": false,
+              "description": "Endogenously optimise the industry process heat supply per temperature band (does not cover the steel sector).",
+              "type": "boolean"
+            },
+            "must_run": {
+              "default": 0.8,
+              "description": "Minimum capacity factor for endogenous industry heat supply links, reflecting that industrial heat is in reality supplied on-site by discrete plants.",
+              "type": "number"
+            },
+            "endogenise_sectors": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "description": "Per-sector switch, only used when `endogen` is true. True splits the sector's process heat into temperature bands so that the supply technology is chosen endogenously; false keeps the sector exogenous (flat low-temperature heat plus gas and biomass loads). Sectors omitted here default to true. Steel, HVC recycling and DRI are handled separately and cannot be configured here.",
+              "type": "object"
+            },
+            "heat100-200": {
+              "description": "Supply technologies allowed for industry process heat at 100-200 \u00b0C.",
+              "properties": {
+                "biomass": {
+                  "default": true,
+                  "description": "Allow solid biomass boilers (with and without carbon capture) to supply 100-200 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "methane": {
+                  "default": true,
+                  "description": "Allow gas boilers (with and without carbon capture) to supply 100-200 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "heat_pumps": {
+                  "default": true,
+                  "description": "Allow high-temperature industrial heat pumps to supply 100-200 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "electric_boiler": {
+                  "default": true,
+                  "description": "Allow electric steam boilers to supply 100-200 \u00b0C process heat.",
+                  "type": "boolean"
+                }
+              }
+            },
+            "heat200-500": {
+              "description": "Supply technologies allowed for industry process heat at 200-500 \u00b0C.",
+              "properties": {
+                "biomass": {
+                  "default": true,
+                  "description": "Allow solid biomass boilers (with and without carbon capture) to supply 200-500 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "methane": {
+                  "default": true,
+                  "description": "Allow gas boilers (with and without carbon capture) to supply 200-500 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "hydrogen": {
+                  "default": true,
+                  "description": "Allow hydrogen boilers to supply 200-500 \u00b0C process heat.",
+                  "type": "boolean"
+                }
+              }
+            },
+            "heat>500": {
+              "description": "Supply technologies allowed for industry process heat above 500 \u00b0C.",
+              "properties": {
+                "methane": {
+                  "default": true,
+                  "description": "Allow gas boilers (with and without carbon capture) to supply >500 \u00b0C process heat.",
+                  "type": "boolean"
+                },
+                "hydrogen": {
+                  "default": true,
+                  "description": "Allow hydrogen boilers to supply >500 \u00b0C process heat.",
+                  "type": "boolean"
+                }
+              }
+            }
+          }
         },
         "biomass_to_liquid": {
           "default": true,
