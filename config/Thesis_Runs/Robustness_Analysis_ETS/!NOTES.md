@@ -12,7 +12,7 @@ Only three things differ from the v12 medium configs:
 2. `run.prefix`: `supply_curve_v12` → `supply_curve_v13_ets`
 3. `costs.emission_prices.co2` triple (see below)
 
-Generated reproducibly by `jobs/gen_supply_curve_v13_ets.sh` from the v12 medium configs.
+Generated reproducibly by `jobs/gen_robustness_ets.sh` from the v12 medium configs.
 
 ## ETS price paths (EUR/tCO₂, 2030 / 2040 / 2050)
 
@@ -71,19 +71,19 @@ price at that ETS level; the flip sits between the two ETS values where that ans
 
 ```bash
 # (re)generate configs from v12 medium
-bash jobs/gen_supply_curve_v13_ets.sh
+bash jobs/gen_robustness_ets.sh
 
 # submit — respect the ~6-7 concurrent-job HPC limit, so go in waves:
-bash jobs/run_supply_curve_v13_ets.sh low       # 11 jobs (S00-S10, low ETS)
-bash jobs/run_supply_curve_v13_ets.sh high      # 11 jobs (S00-S10, high ETS)
-bash jobs/run_supply_curve_v13_ets.sh low430    # 11 jobs (S00-S10, low ETS 2050=430)
-bash jobs/run_supply_curve_v13_ets.sh high525   # 11 jobs (S00-S10, high ETS 2050=525)
+bash jobs/run_robustness_ets.sh low       # 11 jobs (S00-S10, low ETS)
+bash jobs/run_robustness_ets.sh high      # 11 jobs (S00-S10, high ETS)
+bash jobs/run_robustness_ets.sh low430    # 11 jobs (S00-S10, low ETS 2050=430)
+bash jobs/run_robustness_ets.sh high525   # 11 jobs (S00-S10, high ETS 2050=525)
 # or a subset of credit prices:
-bash jobs/run_supply_curve_v13_ets.sh low430 S00 S04 S08
+bash jobs/run_robustness_ets.sh low430 S00 S04 S08
 
 # 2050 infill — only the bracketing credit prices are needed to locate the flip:
-bash jobs/run_supply_curve_v13_ets.sh low405 low420 low435 low450 S02 S03   # 8 jobs
-bash jobs/run_supply_curve_v13_ets.sh high500 high550 S03 S04               # 4 jobs
+bash jobs/run_robustness_ets.sh low405 low420 low435 low450 S02 S03   # 8 jobs
+bash jobs/run_robustness_ets.sh high500 high550 S03 S04               # 4 jobs
 ```
 
 Results: `results/supply_curve_v13_ets/<run.name>/`. Central comparator is the existing

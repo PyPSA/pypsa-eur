@@ -1,12 +1,13 @@
 #!/bin/bash
 # =============================================================================
-# run_supply_curve_v12_low.sh
-# Submit one LSF job per supply curve scenario — v10 LOW B-bracket (loB, ×0.52 net-heat).
+# run_scenario1_low.sh
+# Submit one LSF job per supply curve scenario — Scenario 1 (deployment response), LOW CDR cost.
+# (formerly run_supply_curve_v12_low.sh; v10 LOW B-bracket (loB, ×0.52 net-heat).)
 # Results go to: results/supply_curve_v12/supply_curve_v12_low/<scenario>/
 #
 # Usage (from repo root):
-#   bash jobs/run_supply_curve_v12_low.sh           # submit all scenarios
-#   bash jobs/run_supply_curve_v12_low.sh S01 S03   # submit specific scenarios by prefix
+#   bash jobs/run_scenario1_low.sh           # submit all scenarios
+#   bash jobs/run_scenario1_low.sh S01 S03   # submit specific scenarios by prefix
 #
 # Flags:
 #   --clean   Delete existing results for selected scenarios before submitting
@@ -20,13 +21,13 @@ set -euo pipefail
 shopt -s nullglob
 
 REPO_ROOT="/work3/s240459/pypsa-eur-thesis"
-CONFIG_DIR="$REPO_ROOT/config/Myruns/supply_curve_v12/supply_curve_v12_low"
+CONFIG_DIR="$REPO_ROOT/config/Thesis_Runs/Scenario_1_Deployment_Response/Sensitivity_Low"
 LOG_DIR="$REPO_ROOT/logs/supply_curve_v12_low"
 mkdir -p "$LOG_DIR"
 
-WALLTIME="72:00"
+WALLTIME="36:00"
 CORES=8
-MEM_MB=10000
+MEM_MB=4000
 QUEUE="hpc"
 
 CLEAN=0

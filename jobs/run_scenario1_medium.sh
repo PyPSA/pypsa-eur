@@ -1,12 +1,13 @@
 #!/bin/bash
 # =============================================================================
-# run_supply_curve_v12.sh
-# Submit one LSF job per supply curve scenario — v12 = v10-medium + gas-for-industry CC cap (1.0 GW/yr).
+# run_scenario1_medium.sh
+# Submit one LSF job per supply curve scenario — Scenario 1 (deployment response), MEDIUM CDR cost.
+# (formerly run_supply_curve_v12.sh; v12 = v10-medium + gas-for-industry CC cap (1.0 GW/yr).)
 # Results go to: results/supply_curve_v12/<scenario>/
 #
 # Usage (from repo root):
-#   bash jobs/run_supply_curve_v12.sh           # submit all scenarios
-#   bash jobs/run_supply_curve_v12.sh S01 S03   # submit specific scenarios by prefix
+#   bash jobs/run_scenario1_medium.sh           # submit all scenarios
+#   bash jobs/run_scenario1_medium.sh S01 S03   # submit specific scenarios by prefix
 #
 # Flags:
 #   --clean   Delete existing results for selected scenarios before submitting
@@ -20,13 +21,13 @@ set -euo pipefail
 shopt -s nullglob
 
 REPO_ROOT="/work3/s240459/pypsa-eur-thesis"
-CONFIG_DIR="$REPO_ROOT/config/Myruns/supply_curve_v12/supply_curve_v12_medium"
+CONFIG_DIR="$REPO_ROOT/config/Thesis_Runs/Scenario_1_Deployment_Response/Sensitivity_Medium"
 LOG_DIR="$REPO_ROOT/logs/supply_curve_v12"
 mkdir -p "$LOG_DIR"
 
-WALLTIME="72:00"
+WALLTIME="36:00"
 CORES=8
-MEM_MB=15000
+MEM_MB=4000
 QUEUE="hpc"
 
 CLEAN=0

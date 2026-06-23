@@ -117,7 +117,7 @@ anchor + `S01`–`S10`, currently €0–€500 in €50 steps).*
 **Reproducibility:**
 - Scenario generator (regenerates the numbered configs from a template): [`config/Thesis_Runs/generate_supply_curve_configs.py`](config/Thesis_Runs/generate_supply_curve_configs.py)
 - Custom optimisation hook: [`data/custom_extra_functionality.py`](data/custom_extra_functionality.py)
-- LSF job scripts for the canonical runs: [`jobs/run_supply_curve_v12.sh`](jobs/run_supply_curve_v12.sh) (+ `_high` / `_low` variants), [`jobs/run_supply_curve_v13_ets.sh`](jobs/run_supply_curve_v13_ets.sh), [`jobs/gen_supply_curve_v13_ets.sh`](jobs/gen_supply_curve_v13_ets.sh)
+- LSF job scripts for the canonical runs: [`jobs/run_scenario1_medium.sh`](jobs/run_scenario1_medium.sh) (+ [`run_scenario1_high.sh`](jobs/run_scenario1_high.sh) / [`run_scenario1_low.sh`](jobs/run_scenario1_low.sh)), [`jobs/run_robustness_ets.sh`](jobs/run_robustness_ets.sh), [`jobs/gen_robustness_ets.sh`](jobs/gen_robustness_ets.sh)
 
 ---
 
