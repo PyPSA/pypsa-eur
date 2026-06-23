@@ -60,24 +60,15 @@ preferred_order = pd.Index(
     ]
 )
 
-
-def _get_tech_colors(tech_colors, keys):
+def check_tech_colors(tech_colors, keys):
     """
-    Safely retrieve colors for technology keys with fallback for missing entries.
-
-    Logs a warning for any key not found in tech_colors and uses a default gray color.
+    Check if all keys exist in tech_colors mapping, otherwise raise KeyError.
     """
-    fallback = "#333333"
-    colors = []
-    for key in keys:
-        if key in tech_colors:
-            colors.append(tech_colors[key])
-        else:
-            logger.warning(
-                f"tech_colors for carrier '{key}' not defined in plotting config."
-            )
-            colors.append(fallback)
-    return colors
+    missing = [k for k in keys if k not in tech_colors]
+    if missing:
+        raise KeyError(
+            f"The following technology carrier(s) do not have a defined color in the plotting configuration: {missing}"
+        )
 
 
 def plot_costs():
@@ -109,13 +100,15 @@ def plot_costs():
 
     # new_columns = df.sum().sort_values().index
 
+    check_tech_colors(snakemake.params.plotting["tech_colors"], new_index)
+
     fig, ax = plt.subplots(figsize=(12, 8))
 
     df.loc[new_index].T.plot(
         kind="bar",
         ax=ax,
         stacked=True,
-        color=_get_tech_colors(snakemake.params.plotting["tech_colors"], new_index),
+        color=[snakemake.params.plotting["tech_colors"][i] for i in new_index],
     )
 
     handles, labels = ax.get_legend_handles_labels()
@@ -176,6 +169,8 @@ def plot_energy():
 
     # new_columns = df.columns.sort_values()
 
+    check_tech_colors(snakemake.params.plotting["tech_colors"], new_index)
+
     fig, ax = plt.subplots(figsize=(12, 8))
 
     logger.debug(df.loc[new_index])
@@ -184,7 +179,7 @@ def plot_energy():
         kind="bar",
         ax=ax,
         stacked=True,
-        color=_get_tech_colors(snakemake.params.plotting["tech_colors"], new_index),
+        color=[snakemake.params.plotting["tech_colors"][i] for i in new_index],
     )
 
     handles, labels = ax.get_legend_handles_labels()
@@ -256,13 +251,15 @@ def plot_balances():
 
         new_columns = df.columns.sort_values()
 
+        check_tech_colors(snakemake.params.plotting["tech_colors"], new_index)
+
         fig, ax = plt.subplots(figsize=(12, 8))
 
         df.loc[new_index, new_columns].T.plot(
             kind="bar",
             ax=ax,
             stacked=True,
-            color=_get_tech_colors(snakemake.params.plotting["tech_colors"], new_index),
+            color=[snakemake.params.plotting["tech_colors"][i] for i in new_index],
         )
 
         handles, labels = ax.get_legend_handles_labels()

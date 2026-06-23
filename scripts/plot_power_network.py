@@ -221,10 +221,7 @@ def plot_map(
     )
 
     if with_legend:
-        colors = [tech_colors.get(c, "#333333") for c in carriers] + [
-            ac_color,
-            dc_color,
-        ]
+        colors = [tech_colors[c] for c in carriers] + [ac_color, dc_color]
         labels = carriers + ["HVAC line", "HVDC link"]
 
         add_legend_patches(
