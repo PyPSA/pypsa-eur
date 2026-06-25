@@ -1213,7 +1213,7 @@ solving:
       dual_feasibility_tolerance: 1.0e-05
       random_seed: 123
     "gurobi-default":
-      threads: 32
+      threads: 8
       method: 2
       crossover: 0
       BarConvTol: 1.0e-05
