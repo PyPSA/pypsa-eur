@@ -940,6 +940,15 @@ def sanitize_custom_columns(n: pypsa.Network):
         n.links.reversed = n.links.reversed.astype(bool)
 
 
+def extract_country_level(admin_levels: dict, countries: list) -> dict:
+    """
+    Extract individual country administrative levels from configuration.
+    """
+    return {
+        k: v for k, v in admin_levels.get("countries", {}).items() if k in countries
+    }
+
+
 def rename_techs(label: str) -> str:
     """
     Rename technology labels for better readability.

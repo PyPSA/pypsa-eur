@@ -6,14 +6,7 @@ Tests for individual NUTS country level configuration parsing in build_admin_sha
 """
 
 
-def extract_country_level(admin_levels, countries):
-    """
-    Extracts individual country administrative levels.
-    Mirrors the updated logic in build_admin_shapes and busmap_for_admin_regions.
-    """
-    return {
-        k: v for k, v in admin_levels.get("countries", {}).items() if k in countries
-    }
+from scripts._helpers import extract_country_level
 
 
 def test_extract_country_level_with_overrides():
@@ -38,25 +31,6 @@ def test_extract_country_level_empty_countries_list():
     countries = []
     result = extract_country_level(admin_levels, countries)
     assert result == {}
-
-
-def test_regression_old_code_silently_drops_overrides():
-    """
-    Regression test for #2207: the OLD dict comprehension iterated over
-    top-level admin_levels keys, silently producing an empty dict.
-    """
-    admin_levels = {"level": "bz", "countries": {"DE": 2}}
-    countries = ["DE", "FR", "GB"]
-
-    # OLD buggy code (what was there before):
-    old_result = {
-        k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
-    }
-    assert old_result == {}, "Sanity check: old code must produce empty dict"
-
-    # NEW fixed code:
-    new_result = extract_country_level(admin_levels, countries)
-    assert new_result == {"DE": 2}, "Fix must extract per-country overrides"
 
 
 def test_level_key_does_not_leak():

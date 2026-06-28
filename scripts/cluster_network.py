@@ -72,7 +72,11 @@ from scipy.sparse.csgraph import connected_components
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import MultiPolygon, Polygon
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import (
+    configure_logging,
+    extract_country_level,
+    set_scenario_config,
+)
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -528,9 +532,7 @@ def busmap_for_admin_regions(
             f"Note that the following countries can only be clustered at a maximum administration level of 1: {adm1_countries}."
         )
 
-    country_level = {
-        k: v for k, v in admin_levels.get("countries", {}).items() if k in countries
-    }
+    country_level = extract_country_level(admin_levels, countries)
     if country_level:
         country_level_list = "\n".join(
             [f"- {k}: level {v}" for k, v in country_level.items()]
