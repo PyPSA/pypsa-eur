@@ -27,7 +27,7 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Setup Pixi
       uses: prefix-dev/setup-pixi@v0.9.6
@@ -54,7 +54,7 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - uses: dorny/paths-filter@v4
       id: filter
@@ -100,13 +100,13 @@ jobs:
         echo "MONTH=$(date +'%Y%m')" >> $GITHUB_ENV # cutouts
         echo "VERSIONS_HASH=${{ hashFiles('data/versions.csv') }}" >> $GITHUB_ENV
 
-    - uses: actions/cache@v5
+    - uses: actions/cache@v6
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       with:
         path: data
         key: data-${{ env.WEEK }}-${{ env.VERSIONS_HASH }}
 
-    - uses: actions/cache@v5
+    - uses: actions/cache@v6
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       with:
         path: cutouts
