@@ -440,6 +440,13 @@ if __name__ == "__main__":
     busmaps.append(converter_map)
 
     n, simplify_links_map = simplify_links(n, params.p_max_pu, params.p_min_pu)
+
+    # Rename all DC bus carriers to AC
+    # TODO: long-term, rename all aggregated AC and DC carriers to `electricity` to avoid confusion
+    is_dc_bus_carrier = n.buses["carrier"] == "DC"
+    logger.info(f"Simplifying {is_dc_bus_carrier.sum()} DC bus carriers to AC.")
+    n.buses.loc[is_dc_bus_carrier, "carrier"] = "AC"
+
     busmaps.append(simplify_links_map)
 
     if params.simplify_network["remove_stubs"]:
