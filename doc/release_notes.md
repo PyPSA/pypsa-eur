@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+
+* Adding option to include the compression step in carbon dioxide transport before transporting in dense phase and including electricity demand for post combustion carbon capture. Adjusting the capital costs for post combustion capture that differs depending on the carbon dioxide percentage in the flue gas.
 * Fix: Resolve plotting crashes from missing `tech_colors` entries by adding `heat dsm` color and implementing upfront validation for missing keys in `plot_summary.py` ([#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
 * feat: Make the default target rule configurable (defaults to "all" for backwards compatibility)
 

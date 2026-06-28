@@ -757,11 +757,24 @@ class SectorConfig(BaseModel):
         1,
         description="The cost factor for the capital cost of the carbon dioxide transmission network.",
     )
+    co2_network_liquefaction: bool = Field(
+        False,
+        description="Add option for including compressor stations with investment costs and electricity demand for liquefaction step for carbon dioxide before transport.",
+    )
     cc_fraction: float = Field(
         0.9,
         description="The default fraction of CO2 captured with post-combustion capture.",
     )
-
+    cc_capital_cost_factor: dict[str, float] = Field(
+        default_factory=lambda: {
+            "gas": 2.0,
+            "biomass": 1.1,
+            "coal": 1.1,
+            "waste": 1.2,
+            "cement": 1.0,
+        },
+        description="Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. Factors are given relative to cement capture. The default values are based on the DEA technology-data report on carbon capture, transport and storage Table 8 / Figure 12 (https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage).",
+    )
     hydrogen_underground_storage: bool = Field(
         True,
         description="Add options for storing hydrogen underground. Storage potential depends regionally.",
