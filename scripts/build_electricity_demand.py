@@ -241,7 +241,7 @@ def reindex_load_fixed_year(load: pd.DataFrame, snapshots: pd.DatetimeIndex, fix
         # Map snapshot timestamps to fixed_year to index into load data,
         # then restore the original snapshot index
         fixed_year_index = snapshots.map(lambda t: t.replace(year=fixed_year))
-        load = load.loc[fixed_year_index]
+        load = load.reindex(index=fixed_year_index)
         load.index = snapshots
     else:
         years = slice(snapshots[0], snapshots[-1])
