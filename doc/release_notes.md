@@ -5,7 +5,16 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Resolve plotting crashes from missing `tech_colors` entries by adding `heat dsm` color and implementing upfront validation for missing keys in `plot_summary.py` ([#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
+* feat: Make the default target rule configurable (defaults to "all" for backwards compatibility)
+
+* Fix: Keep unset `p_set` (NaN) as NaN when aggregating components in `cluster_heat_buses`, required for [PyPSA#1703](https://github.com/PyPSA/PyPSA/pull/1703).
+
+* Fix: When clustering heat buses, in myopic optimization, and afterwards viewing the heat energy_balance with n.statistics (and with nice_names=True, which is the default), some assets would still be displayed as belonging to "residential" or "services" sectors, because the nice_names still lingered from the unclustered version. This has been fixed.
+
 * Security: SBOM security scan included in CI.
+
+* Updated contribution guidelines outline what we expect from AI-based contributions.
 
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
   Removed 62 CVEs from `default` environment.
@@ -35,6 +44,8 @@
 * feat: Improve the config validation to cover scenario management ([#2155](https://github.com/PyPSA/pypsa-eur/pull/2155)).
 
 - Added solar rooftop ratio setting to `add_existing_baseyear` for heuristically splitting existing solar capacity between rooftop and utility-scale (defaults to a 50:50 split).
+
+- doc: Disable root TOC entries in order to declutter the table of contents for the rules overview ([2216](https://github.com/PyPSA/pypsa-eur/pull/2216)).
 
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 

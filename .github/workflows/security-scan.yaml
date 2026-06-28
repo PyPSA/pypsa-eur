@@ -22,7 +22,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: prefix-dev/setup-pixi@v0.9.6
       with:
         pixi-version: v0.68.1
@@ -45,12 +45,15 @@ jobs:
         add-cpes-if-none: true
         output-format: sarif
 
-    # Point alerts to pixi.lock so githubs path scoped PR check registers it
-    - name: Rewrite SARIF locations to pixi.lock
+    # Set uri=pixi.lock for a readable location, and fingerprint each alert by
+    # CVE id so code scanning matches against the master baseline by CVE, not line.
+    - name: Normalize SARIF (pixi.lock location + CVE fingerprint)
       run: |
-        jq '.runs[].results[].locations[].physicalLocation.artifactLocation.uri = "pixi.lock"' \
-          "${{ steps.scan.outputs.sarif }}" > rewritten.sarif
-        mv rewritten.sarif "${{ steps.scan.outputs.sarif }}"
+        jq '.runs[].results[] |= (
+              .locations[].physicalLocation.artifactLocation.uri = "pixi.lock"
+              | .partialFingerprints = {"grypeCve/v1": .ruleId}
+            )' "${{ steps.scan.outputs.sarif }}" > normalized.sarif
+        mv normalized.sarif "${{ steps.scan.outputs.sarif }}"
 
     - name: Upload SARIF
       if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
