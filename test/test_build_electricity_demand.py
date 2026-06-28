@@ -9,38 +9,11 @@ NaN load data when fixed_year differed from the snapshot year.
 See https://github.com/PyPSA/pypsa-eur/issues/2187
 """
 
-import calendar
-
 import numpy as np
 import pandas as pd
 import pytest
 
-
-def reindex_load_fixed_year(load, snapshots, fixed_year):
-    """
-    Reindex load data for a fixed_year onto the snapshot timeline.
-
-    Mirrors the logic in build_electricity_demand.py.
-    """
-    if fixed_year:
-        fixed_year = int(fixed_year)
-
-        has_feb29 = ((snapshots.month == 2) & (snapshots.day == 29)).any()
-        if has_feb29 and not calendar.isleap(fixed_year):
-            raise ValueError(
-                f"Snapshots contain Feb 29 but fixed_year={fixed_year} is not a "
-                f"leap year. Set 'drop_leap_day: true' in the snapshots config "
-                f"or choose a leap fixed_year."
-            )
-
-        fixed_year_index = snapshots.map(lambda t: t.replace(year=fixed_year))
-        load = load.loc[fixed_year_index]
-        load.index = snapshots
-    else:
-        years = slice(snapshots[0], snapshots[-1])
-        load = load.loc[years].reindex(index=snapshots)
-
-    return load
+from scripts.build_electricity_demand import reindex_load_fixed_year
 
 
 def _make_load(year, countries=("DE", "FR")):

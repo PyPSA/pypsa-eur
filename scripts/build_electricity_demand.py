@@ -221,6 +221,35 @@ def repeat_years(s: pd.Series, years: list) -> pd.Series:
     )
 
 
+def reindex_load_fixed_year(load: pd.DataFrame, snapshots: pd.DatetimeIndex, fixed_year) -> pd.DataFrame:
+    """
+    Reindex load data for a fixed_year onto the snapshot timeline.
+    """
+    if fixed_year:
+        fixed_year = int(fixed_year)
+
+        # Guard against leap year mismatch: if snapshots contain Feb 29
+        # but fixed_year has no Feb 29, there is no load data to map
+        has_feb29 = ((snapshots.month == 2) & (snapshots.day == 29)).any()
+        if has_feb29 and not calendar.isleap(fixed_year):
+            raise ValueError(
+                f"Snapshots contain Feb 29 but fixed_year={fixed_year} is not a "
+                f"leap year. Set 'drop_leap_day: true' in the snapshots config "
+                f"or choose a leap fixed_year."
+            )
+
+        # Map snapshot timestamps to fixed_year to index into load data,
+        # then restore the original snapshot index
+        fixed_year_index = snapshots.map(lambda t: t.replace(year=fixed_year))
+        load = load.loc[fixed_year_index]
+        load.index = snapshots
+    else:
+        years = slice(snapshots[0], snapshots[-1])
+        load = load.loc[years].reindex(index=snapshots)
+
+    return load
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -324,27 +353,7 @@ if __name__ == "__main__":
 
     fixed_year = snakemake.params["load"].get("fixed_year", False)
 
-    if fixed_year:
-        fixed_year = int(fixed_year)
-
-        # Guard against leap year mismatch: if snapshots contain Feb 29
-        # but fixed_year has no Feb 29, there is no load data to map
-        has_feb29 = ((snapshots.month == 2) & (snapshots.day == 29)).any()
-        if has_feb29 and not calendar.isleap(fixed_year):
-            raise ValueError(
-                f"Snapshots contain Feb 29 but fixed_year={fixed_year} is not a "
-                f"leap year. Set 'drop_leap_day: true' in the snapshots config "
-                f"or choose a leap fixed_year."
-            )
-
-        # Map snapshot timestamps to fixed_year to index into load data,
-        # then restore the original snapshot index
-        fixed_year_index = snapshots.map(lambda t: t.replace(year=fixed_year))
-        load = load.loc[fixed_year_index]
-        load.index = snapshots
-    else:
-        years = slice(snapshots[0], snapshots[-1])
-        load = load.loc[years].reindex(index=snapshots)
+    load = reindex_load_fixed_year(load, snapshots, fixed_year)
 
     assert not load.isna().any().any(), (
         f"Load data contains NaN after reindexing. Ensure load data "
