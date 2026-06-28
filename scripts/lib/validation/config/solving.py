@@ -341,6 +341,14 @@ class SolvingConfig(BaseModel):
                 "dual_feasibility_tolerance": 1e-5,
                 "random_seed": 123,
             },
+            "highs-hipo": {
+                "solver": "hipo",
+                "parallel": "on",
+                "primal_feasibility_tolerance": 1e-5,
+                "dual_feasibility_tolerance": 1e-5,
+                "random_seed": 123,
+                "run_crossover": "off",
+            },
             "gurobi-default": {
                 "threads": 32,
                 "method": 2,
