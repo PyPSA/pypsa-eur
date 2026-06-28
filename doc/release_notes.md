@@ -13,6 +13,8 @@
 
 * Security: SBOM security scan included in CI.
 
+* Updated contribution guidelines outline what we expect from AI-based contributions.
+
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
   Removed 62 CVEs from `default` environment.
 
