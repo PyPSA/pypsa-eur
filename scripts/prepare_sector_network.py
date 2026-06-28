@@ -5796,6 +5796,14 @@ def limit_individual_line_extension(n, maxext):
     n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + maxext
 
 
+def _sum_keep_na(s):
+    """
+    Sum keeping all-NaN groups as NaN instead of collapsing them to 0.
+
+    """
+    return s.sum(min_count=1)
+
+
 aggregate_dict = {
     "p_nom": pd.Series.sum,
     "s_nom": pd.Series.sum,
@@ -5810,13 +5818,13 @@ aggregate_dict = {
     "v_ang_max": "min",
     "terrain_factor": "mean",
     "num_parallel": "sum",
-    "p_set": "sum",
+    "p_set": _sum_keep_na,
     "e_initial": "sum",
     "e_nom": pd.Series.sum,
     "e_nom_max": pd.Series.sum,
     "e_nom_min": pd.Series.sum,
     "state_of_charge_initial": "sum",
-    "state_of_charge_set": "sum",
+    "state_of_charge_set": _sum_keep_na,
     "inflow": "sum",
     "p_max_pu": "first",
     "x": "mean",
@@ -5860,7 +5868,11 @@ def cluster_heat_buses(n):
         if c.static.empty:
             continue
         df = c.static
-        cols = df.columns[df.columns.str.contains("bus") | (df.columns == "carrier")]
+        cols = df.columns[
+            df.columns.str.contains("bus")
+            | (df.columns == "carrier")
+            | (df.columns == "nice_name")
+        ]
 
         # rename columns and index
         df[cols] = df[cols].apply(
@@ -5874,7 +5886,7 @@ def cluster_heat_buses(n):
         # cluster heat nodes
         # static dataframe
         agg = define_clustering(df.columns, aggregate_dict)
-        df = df.groupby(level=0).agg(agg, numeric_only=False)
+        df = df.groupby(level=0).agg(agg)
         # time-varying data
         pnl = c.dynamic
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
@@ -5883,7 +5895,7 @@ def cluster_heat_buses(n):
             def renamer(s):
                 return s.replace("residential ", "").replace("services ", "")
 
-            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k], numeric_only=False).T
+            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k]).T
 
         # remove unclustered assets of service/residential
         to_drop = c.static.index.difference(df.index)

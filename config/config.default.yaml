@@ -30,6 +30,7 @@ run:
     policy: false
     exclude: []
   use_shadow_directory: false
+  default_target_rule: all
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight

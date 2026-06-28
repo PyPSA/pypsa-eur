@@ -4077,6 +4077,18 @@
             true
           ],
           "type": "boolean"
+        },
+        "default_target_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "all",
+          "description": "Default target rule for snakemake. This is the default rule that will be executed if no other rule is specified. If set to ``None``, snakemake will use its default behavior and execute the first rule in the Snakefile. NOTE: This value will be overwritten by any reference to `default_target` made in a specific rule."
         }
       }
     },
@@ -8340,6 +8352,18 @@
             true
           ],
           "type": "boolean"
+        },
+        "default_target_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "all",
+          "description": "Default target rule for snakemake. This is the default rule that will be executed if no other rule is specified. If set to ``None``, snakemake will use its default behavior and execute the first rule in the Snakefile. NOTE: This value will be overwritten by any reference to `default_target` made in a specific rule."
         }
       }
     },
