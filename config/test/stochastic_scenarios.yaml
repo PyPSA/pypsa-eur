@@ -1,0 +1,6 @@
+scenarios:
+  base: 0.25
+  agriculture_full_electric: 0.25
+  agriculture_machinery_full_oil: 0.25
+  urban_heat_full_central: 0.25
+

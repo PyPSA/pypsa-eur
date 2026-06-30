@@ -45,6 +45,18 @@ scenario:
   planning_horizons:
   - 2050
 
+stochastic_scenarios:
+  enable: false
+  file: config/stochastic_scenarios.yaml
+
+  export:
+    average: true
+    scenarios: false
+
+  postprocess:
+    use_average: true
+    scenarios: false
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
 - AL

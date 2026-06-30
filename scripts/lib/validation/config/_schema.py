@@ -35,6 +35,7 @@ from scripts.lib.validation.config.sector import SectorConfig
 from scripts.lib.validation.config.snapshots import SnapshotsConfig
 from scripts.lib.validation.config.solar_thermal import SolarThermalConfig
 from scripts.lib.validation.config.solving import SolvingConfig
+from scripts.lib.validation.config.stochastic_scenarios import StochasticScenariosConfig
 from scripts.lib.validation.config.transformers import TransformersConfig
 from scripts.lib.validation.config.transmission_projects import (
     TransmissionProjectsConfig,
@@ -111,6 +112,10 @@ class ConfigSchema(BaseModel):
     scenario: ScenarioConfig = Field(
         default_factory=ScenarioConfig,
         description="Scenario configuration defining wildcards for the workflow.",
+    )
+    stochastic_scenarios: StochasticScenariosConfig = Field(
+        default_factory=StochasticScenariosConfig,
+        description="Configuration for stochastic scenarios.",
     )
     countries: CountriesConfig = Field(
         default_factory=CountriesConfig,

@@ -23,15 +23,16 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_cumulative_cost(costs, planning_horizons):
+    costs = costs.apply(pd.to_numeric, errors="coerce")
     cumulative_cost = pd.DataFrame(
-        index=costs.sum().index,
+        index=costs.sum(numeric_only=True).index,
         columns=pd.Series(data=np.arange(0, 0.1, 0.01), name="social discount rate"),
     )
 
     # discount cost and express them in money value of planning_horizons[0]
     for r in cumulative_cost.columns:
         cumulative_cost[r] = [
-            costs.sum()[index] / ((1 + r) ** (index[-1] - planning_horizons[0]))
+            costs.sum(numeric_only=True)[index] / ((1 + r) ** (index[-1] - planning_horizons[0]))
             for index in cumulative_cost.index
         ]
 

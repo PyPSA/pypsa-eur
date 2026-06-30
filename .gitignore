@@ -6,6 +6,9 @@ master
 
 .env
 
+screenlog.*
+scripts/analysis.ipynb
+
 .snakemake*
 .ipynb_checkpoints
 __pycache__

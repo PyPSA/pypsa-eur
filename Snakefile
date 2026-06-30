@@ -9,6 +9,7 @@ from os.path import normpath, exists, join
 from shutil import copyfile, move, rmtree
 from dotenv import load_dotenv
 from snakemake.utils import min_version, update_config
+import re
 
 load_dotenv()
 
@@ -60,6 +61,46 @@ scripts = script_path_provider(Path(workflow.snakefile).parent)
 
 RESULTS = "results/" + RDIR
 
+def get_stochastic_scenarios():
+    """Read stochastic scenario names from the external scenario file."""
+    scenario_file = Path(config["stochastic_scenarios"]["file"])
+
+    if not scenario_file.exists():
+        raise FileNotFoundError(f"Stochastic scenario file not found: {scenario_file}")
+
+    with scenario_file.open("r", encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+
+    scenarios = data.get("scenarios", data)
+
+    if not isinstance(scenarios, dict) or not scenarios:
+        raise ValueError(
+            f"Stochastic scenario file must contain a non-empty mapping: {scenario_file}"
+        )
+
+    return [str(scenario) for scenario in scenarios]
+
+
+STOCHASTIC_SCENARIOS = (
+    get_stochastic_scenarios()
+    if config["stochastic_scenarios"]["enable"]
+    and (
+        config["stochastic_scenarios"]["export"]["scenarios"]
+        or config["stochastic_scenarios"]["postprocess"]["scenarios"]
+    )
+    else []
+)
+
+STOCHASTIC_SCENARIO_PATTERN = (
+    "|".join(re.escape(scenario) for scenario in STOCHASTIC_SCENARIOS)
+    if STOCHASTIC_SCENARIOS
+    else r"[^/]+"
+)
+
+RUN_STOCHASTIC_POSTPROCESS = (
+    config["stochastic_scenarios"]["enable"]
+    and config["stochastic_scenarios"]["postprocess"]["scenarios"]
+)
 
 localrules:
     purge,
@@ -75,6 +116,22 @@ wildcard_constraints:
 
 include: "rules/common.smk"
 
+def stochastic_balance_map_paths(kind, w):
+    """Return stochastic scenario-specific balance map paths."""
+    if not RUN_STOCHASTIC_POSTPROCESS:
+        return []
+
+    paths = []
+    for scenario in STOCHASTIC_SCENARIOS:
+        for path in balance_map_paths(kind, w):
+            paths.append(
+                path.replace(
+                    f"maps/{kind}/",
+                    f"maps/{kind}/stochastic_scenarios/{scenario}/",
+                )
+            )
+
+    return paths
 
 # Data constants
 OSM_DATASET = dataset_version("osm")
@@ -86,12 +143,23 @@ include: "rules/build_electricity.smk"
 include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
+
+if RUN_STOCHASTIC_POSTPROCESS:
+
+    include: "rules/postprocess_stochastic.smk"
+
 include: "rules/development.smk"
 
 
 if config["foresight"] == "overnight":
 
-    include: "rules/solve_overnight.smk"
+    if config["stochastic_scenarios"]["enable"]:
+
+        include: "rules/solve_stochastic.smk"
+
+    else:
+
+        include: "rules/solve_overnight.smk"
 
 
 if config["foresight"] == "myopic":
@@ -250,6 +318,77 @@ rule all:
         ),
         lambda w: balance_map_paths("static", w),
         lambda w: balance_map_paths("interactive", w),
+        # Stochastic scenario-specific post-processing
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/static/stochastic_scenarios/{stoch_scenario}/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf"
+                if RUN_STOCHASTIC_POSTPROCESS
+                else []
+            ),
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/static/stochastic_scenarios/{stoch_scenario}/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+                if RUN_STOCHASTIC_POSTPROCESS
+                and config_provider("sector", "H2_network")(w)
+                else []
+            ),
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/static/stochastic_scenarios/{stoch_scenario}/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+                if RUN_STOCHASTIC_POSTPROCESS
+                and config_provider("sector", "gas_network")(w)
+                else []
+            ),
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "graphics/stochastic_scenarios/{stoch_scenario}/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+                if RUN_STOCHASTIC_POSTPROCESS
+                else []
+            ),
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "graphics/stochastic_scenarios/{stoch_scenario}/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+                if RUN_STOCHASTIC_POSTPROCESS
+                else []
+            ),
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "graphics/stochastic_scenarios/{stoch_scenario}/interactive_bus_balance/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+                if RUN_STOCHASTIC_POSTPROCESS
+                else []
+            ),
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: stochastic_balance_map_paths("static", w),
+        lambda w: stochastic_balance_map_paths("interactive", w),
 
 
 rule create_scenarios:

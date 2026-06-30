@@ -16,11 +16,11 @@ help:
 
 .PHONY: run-instances-elec
 run-instances-elec:
-	pixi run snakemake --cores $(CORES) compare_solver_elec_outputs --configfile config/instances-IT-elec.yaml
+	pixi run snakemake --cores $(CORES) compare_solver_elec_outputs --configfile config/instances/instances-IT-elec.yaml
 
 .PHONY: run-instances-sector
 run-instances-sector:
-	pixi run snakemake --cores $(CORES) compare_solver_sector_outputs --configfile config/instances-IT-sector.yaml
+	pixi run snakemake --cores $(CORES) compare_solver_sector_outputs --configfile config/instances/instances-IT-sector.yaml
 
 .PHONY: run-instances
 run-instances:

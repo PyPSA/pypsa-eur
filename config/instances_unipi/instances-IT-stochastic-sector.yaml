@@ -1,0 +1,43 @@
+%YAML 1.1
+---
+# Default configuration for stochastic instance 
+
+run:
+  prefix: "instances_unipi"
+  name: "stochastic"
+
+scenario:
+  clusters:
+  - 5
+
+stochastic_scenarios:
+  enable: true
+  file: config/tests_workflow/stochastic_scenarios.yaml
+  export:
+    average: true
+    scenarios: true
+  postprocess:
+    use_average: true
+    scenarios: true
+
+countries:
+- IT
+
+electricity:
+  extendable_carriers:
+    Generator:
+    - solar
+    - onwind
+    - "offwind-ac"
+    - "offwind-dc"
+    - "offwind-float"
+    - OCGT
+    - CCGT
+
+solving:
+  options:
+    load_shedding:
+      enable: true
+    transmission_losses: 0
+
+  

@@ -1,0 +1,22 @@
+# Default sector-coupled configuration
+
+run:
+  prefix: "instances_unipi"
+  name: "sector-coupled"
+
+electricity:
+  extendable_carriers:
+    Generator:
+    - solar
+    - onwind
+    - "offwind-ac"
+    - "offwind-dc"
+    - "offwind-float"
+    - OCGT
+    - CCGT
+
+solving:
+  options:
+    load_shedding:
+      enable: true
+

@@ -2,6 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 
+def get_network(w):
+    """Return the solved network used by post-processing rules."""
+    network = (
+        RESULTS
+        + f"networks/base_s_{w.clusters}_{w.opts}_{w.sector_opts}_{w.planning_horizons}_{w.solver}.nc"
+    )
+
+    if (
+        config["stochastic_scenarios"]["enable"]
+        and config["stochastic_scenarios"]["postprocess"]["use_average"]
+    ):
+        return network.replace(".nc", "__avg.nc")
+
+    return network
+
 
 if config["foresight"] != "perfect":
 
@@ -43,8 +58,7 @@ if config["foresight"] != "perfect":
 
     rule plot_power_network:
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.nc",
+            network=get_network,
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
@@ -70,8 +84,7 @@ if config["foresight"] != "perfect":
 
     rule plot_hydrogen_network:
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.nc",
+            network=get_network,
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
@@ -97,8 +110,7 @@ if config["foresight"] != "perfect":
 
     rule plot_gas_network:
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.nc",
+            network=get_network,
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
@@ -123,8 +135,7 @@ if config["foresight"] != "perfect":
 
     rule plot_balance_map:
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.nc",
+            network=get_network,
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             RESULTS
@@ -150,8 +161,7 @@ if config["foresight"] != "perfect":
 
     rule plot_balance_map_interactive:
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.nc",
+            network=get_network,
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             RESULTS
@@ -374,8 +384,7 @@ rule make_solver_comparison_sector_perfect:
 
 rule make_summary:
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.nc",
+        network=get_network,
     output:
         nodal_costs=RESULTS
         + "csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.csv",
@@ -607,8 +616,7 @@ rule plot_summary:
 
 rule plot_balance_timeseries:
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.nc",
+        network=get_network,
         rc="matplotlibrc",
     output:
         directory(
@@ -636,8 +644,7 @@ rule plot_balance_timeseries:
 
 rule plot_heatmap_timeseries:
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.nc",
+        network=get_network,
         rc="matplotlibrc",
     output:
         directory(
@@ -735,8 +742,7 @@ rule plot_cop_profiles:
 
 rule plot_interactive_bus_balance:
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{solver}.nc",
+        network=get_network,
         rc="matplotlibrc",
     output:
         directory=directory(

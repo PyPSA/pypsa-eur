@@ -1,0 +1,68 @@
+%YAML 1.1
+---
+# yaml-language-server: $schema=./schema.default.json
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
+run:
+  prefix: "prova"
+  name: "stochastic"
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
+scenario:
+  clusters:
+  - 5
+  opts:
+  - ""
+  sector_opts:
+  - ""
+  planning_horizons:
+  - 2050
+
+stochastic_scenarios:
+  enable: true
+  file: config/test/stochastic_scenarios.yaml
+
+  export:
+    average: true
+    scenarios: true
+
+  postprocess:
+    use_average: true
+    scenarios: true
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
+countries:
+- IT
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
+electricity:
+  extendable_carriers:
+    Generator:
+    - solar
+    - "solar-hsat"
+    - onwind
+    - "offwind-ac"
+    - "offwind-dc"
+    - "offwind-float"
+    - OCGT
+    - CCGT
+    StorageUnit: []
+    Store:
+    - battery
+    - H2
+    Link: []
+  renewable_carriers:
+  - solar
+  - "solar-hsat"
+  - onwind
+  - "offwind-ac"
+  - "offwind-dc"
+  - "offwind-float"
+  - hydro
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
+solving:
+  options:
+    load_shedding:
+      enable: true
+    transmission_losses: 0
