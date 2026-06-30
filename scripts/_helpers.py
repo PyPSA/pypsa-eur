@@ -912,9 +912,7 @@ def get_snapshots(
         )
         time_periods.append(period)
 
-    time = pd.DatetimeIndex([])
-    for period in time_periods:
-        time = time.append(period)
+    time = pd.DatetimeIndex([ts for period in time_periods for ts in period])
 
     if drop_leap_day and time.is_leap_year.any():
         time = time[~((time.month == 2) & (time.day == 29))]
