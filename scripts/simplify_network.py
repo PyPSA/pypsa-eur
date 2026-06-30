@@ -119,6 +119,7 @@ def simplify_links(
     adjacency_matrix = n.adjacency_matrix(
         branch_components=["Link"],
         weights=dict(Link=(n.links.carrier == "DC").astype(float)),
+        return_dataframe=False,
     )
 
     _, labels = connected_components(adjacency_matrix, directed=False)
@@ -296,7 +297,9 @@ def aggregate_to_substations(
         }
     )
 
-    adj = n.adjacency_matrix(branch_components=["Line", "Link"], weights=weight).tocsr()
+    adj = n.adjacency_matrix(
+        branch_components=["Line", "Link"], weights=weight, return_dataframe=False
+    ).tocsr()
 
     no_substation_i = n.buses.index.difference(substation_i)
     bus_indexer = n.buses.index.get_indexer(substation_i)
