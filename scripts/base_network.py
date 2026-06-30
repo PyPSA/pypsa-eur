@@ -424,7 +424,9 @@ def _remove_dangling_branches(branches, buses):
 
 
 def _remove_unconnected_components(network, threshold=6):
-    _, labels = csgraph.connected_components(network.adjacency_matrix(return_dataframe=False), directed=False)
+    _, labels = csgraph.connected_components(
+        network.adjacency_matrix(return_dataframe=False), directed=False
+    )
     component = pd.Series(labels, index=network.buses.index)
 
     component_sizes = component.value_counts()

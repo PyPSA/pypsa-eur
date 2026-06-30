@@ -297,7 +297,9 @@ def aggregate_to_substations(
         }
     )
 
-    adj = n.adjacency_matrix(branch_components=["Line", "Link"], weights=weight, return_dataframe=False).tocsr()
+    adj = n.adjacency_matrix(
+        branch_components=["Line", "Link"], weights=weight, return_dataframe=False
+    ).tocsr()
 
     no_substation_i = n.buses.index.difference(substation_i)
     bus_indexer = n.buses.index.get_indexer(substation_i)
