@@ -1255,42 +1255,10 @@ def get_osm_archive_files(version):
     ]
 
 
-def get_osm_network_incumbent(
-    version: str = "latest",
-    source: str = "archive",
-) -> pd.Series:
-    fp = workflow.source_path("../data/versions.csv")
-    data_versions = load_data_versions(fp)
-    name = "osm"
-
-    dataset = data_versions.loc[
-        (data_versions["dataset"] == name)
-        & (data_versions["source"] == source)
-        & (data_versions["supported"])  # Limit to supported versions only
-        & (data_versions["version"] == version if "latest" != version else True)
-        & (data_versions["latest"] if "latest" == version else True)
-    ]
-
-    if dataset.empty:
-        raise ValueError(
-            f"OSM network for version '{version}' not found in data/versions.csv."
-        )
-
-    # Return single-row DataFrame as a Series
-    dataset = dataset.squeeze()
-
-    # Generate output folder path in the `data` directory
-    dataset["folder"] = Path(
-        "data", name, dataset["source"], dataset["version"]
-    ).as_posix()
-
-    return dataset
-
-
 def input_base_network_incumbent(w):
     version = config_provider("osm_network_release", "compare_to", "version")(w)
     source = config_provider("osm_network_release", "compare_to", "source")(w)
-    osm_dataset = get_osm_network_incumbent(version, source)
+    osm_dataset = dataset_version("osm", version=version, source=source)
     osm_path = osm_dataset["folder"]
     components = {"buses", "lines", "links", "converters", "transformers"}
     inputs = {c: f"{osm_path}/{c}.csv" for c in components}
@@ -1322,7 +1290,8 @@ if OSM_DATASET["source"] in ["archive"]:
 
 
 # Only create incumbent rule if it points to a different folder
-OSM_DATASET_INCUMBENT = get_osm_network_incumbent(
+OSM_DATASET_INCUMBENT = dataset_version(
+    "osm",
     version=config.get("osm_network_release", {})
     .get("compare_to", {})
     .get("version", "latest"),
