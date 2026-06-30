@@ -7,12 +7,16 @@
 <!-- ================= -->
 
 * feat: data version CSV / YAML file can be specified separately or extended by the user in the `data.version_files` config entry ([#2016](https://github.com/PyPSA/pypsa-eur/issues/2016)).
+* Fix: Resolve plotting crashes from missing `tech_colors` entries by adding `heat dsm` color and implementing upfront validation for missing keys in `plot_summary.py` ([#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
+* feat: Make the default target rule configurable (defaults to "all" for backwards compatibility)
 
 * Fix: Keep unset `p_set` (NaN) as NaN when aggregating components in `cluster_heat_buses`, required for [PyPSA#1703](https://github.com/PyPSA/PyPSA/pull/1703).
 
 * Fix: When clustering heat buses, in myopic optimization, and afterwards viewing the heat energy_balance with n.statistics (and with nice_names=True, which is the default), some assets would still be displayed as belonging to "residential" or "services" sectors, because the nice_names still lingered from the unclustered version. This has been fixed.
 
 * Security: SBOM security scan included in CI.
+
+* Updated contribution guidelines outline what we expect from AI-based contributions.
 
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
   Removed 62 CVEs from `default` environment.

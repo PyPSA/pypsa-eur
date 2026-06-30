@@ -586,6 +586,7 @@ plotting:
     heat demand: '#cc1f1f'
     rural heat: '#ff5c5c'
     rural heat dsm: '#ff5c5c'
+    heat dsm: '#ff5c5c'
     residential rural heat: '#ff7c7c'
     services rural heat: '#ff9c9c'
     central heat: '#cc1f1f'
