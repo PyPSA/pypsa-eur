@@ -8,11 +8,111 @@ Data source configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
 """
 
+from datetime import date
+from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+import pandas as pd
+from natsort import natsort_keygen
+from pandera.pandas import Check, Column, DataFrameSchema
+from pydantic import BaseModel, Field, FilePath, field_validator
 
 from scripts.lib.validation.config._base import ConfigModel
+
+VALID_SOURCES = ["primary", "archive", "build"]  # Order defines sort priority
+
+VALID_TAGS = {
+    "latest",
+    "supported",
+    "not-supported",
+    "deprecated",
+    "might-work",
+    "not-tested",
+    "broken-link",
+}
+
+not_empty = [Check.str_length(min_value=1), Check.str_matches(r"\S")]
+valid_tags = Check(lambda s: all(t in VALID_TAGS for t in s.split()), element_wise=True)
+url_safe = Check.str_matches(
+    r"^[a-z0-9_\-\.]+$",
+    error="Version must be URL-safe (only alphanumeric, hyphen, underscore, dot)",
+)
+
+
+def sort_versions(df: pd.DataFrame) -> pd.DataFrame:
+    """Sort by dataset (asc), version (desc, natural), source (as predefined)."""
+    natsort_key = natsort_keygen(key=str.casefold)
+    df = df.copy()
+    df["source"] = pd.Categorical(df["source"], categories=VALID_SOURCES, ordered=True)
+    df = df.sort_values(
+        by=["dataset", "version", "source"],
+        key=lambda c: c.map(natsort_key) if c.name != "source" else c,
+        ascending=[True, False, True],
+    ).reset_index(drop=True)
+    df["source"] = df["source"].astype(str)
+    df = df[VersionsSchema.columns.keys()]  # Ensure column order
+    return df
+
+
+is_sorted = Check(lambda df: df.equals(sort_versions(df)), error="Data must be sorted")
+archive_has_url = Check(
+    lambda df: df.loc[df["source"] == "archive", "url"].str.len().gt(0).all(),
+    error="Archive entries must have a URL",
+)
+one_latest_per_dataset_source = Check(
+    lambda df: (
+        df[df["tags"].str.contains("latest")]
+        .groupby(["dataset", "source"])
+        .size()
+        .eq(1)
+        .all()
+    ),
+    error="Exactly one 'latest' tag required per dataset/source combination",
+)
+latest_same_version_across_sources = Check(
+    lambda df: (
+        df[(df["tags"].str.contains("latest")) & (df["version"] != "unknown")]
+        .groupby("dataset")["version"]
+        .nunique()
+        .le(1)
+        .all()
+    ),
+    error="All 'latest' entries for a dataset must have the same version across sources (excluding 'unknown')",
+)
+VersionsSchema = DataFrameSchema(
+    {
+        "dataset": Column(str, not_empty, nullable=False),
+        "version": Column(str, not_empty + [url_safe], nullable=False),
+        "source": Column(str, Check.isin(VALID_SOURCES)),
+        "tags": Column(str, valid_tags, nullable=False),
+        "added": Column(
+            str,
+            Check.str_matches(r"^\d{4}-\d{2}-\d{2}$"),
+            nullable=False,
+            coerce=True,
+            default=date.today().isoformat(),
+        ),
+        "note": Column(str, nullable=True),
+        "url": Column(
+            str,
+            Check.str_matches(
+                r'^(https?://[^:\s<>"|*]*)?$',
+                error='URL must start with http(s):// and not contain colons (use %3A), spaces, or Windows-invalid characters (<>"|*).',
+            ),
+            nullable=True,
+        ),
+    },
+    checks=[
+        is_sorted,
+        archive_has_url,
+        one_latest_per_dataset_source,
+        latest_same_version_across_sources,
+    ],
+    coerce=True,
+    strict=True,
+    ordered=True,
+    unique=["dataset", "version", "source"],
+)
 
 
 class _DataSourceConfig(ConfigModel):
@@ -31,6 +131,44 @@ class _DataSourceConfig(ConfigModel):
 class DataConfig(BaseModel):
     """Configuration for `data` settings."""
 
+    @field_validator("version_files")
+    @classmethod
+    def check_version_files_are_correct_suffix(
+        cls, v: list[FilePath]
+    ) -> list[FilePath]:
+        for path in v:
+            if path.suffix.lower() not in {".csv", ".yaml", ".yml"}:
+                raise ValueError(f"Version file '{path}' must be a CSV or YAML file.")
+        return v
+
+    version_files: list[FilePath] = Field(
+        default_factory=lambda: [Path("data/versions.csv")],
+        description="""
+        List of paths to version files.
+        If multiple paths are provided, they will be merged with priority given to the later paths in the list.
+        This allows for overriding default versions with custom versions, without modifying the default version file.
+
+        All filepaths must be relative to the project root or as an absolute path and point to one of:
+        - a CSV file.
+        - a YAML file with a list of version entries, which will be converted internally to CSV format.
+          This allows for easier editing of versions with comments and multi-line notes.
+          This is equivalent to calling `df.to_dict(orient='records')` on a dataframe with the same structure as the CSV version files, and then dumping to YAML.
+
+        The CSV columns / YAML fields must be:
+        - `dataset`: The name of the dataset (e.g., "hotmaps_industrial_sites", "enspreso_biomass", etc.).
+        - `version`: The version of the dataset to use (e.g., "latest", "v1.0", etc.).
+        - `source`: The source of the dataset (e.g., "archive", "primary", "build").
+          "archive" retrieves data from an organisation data bucket (e.g. `data.pypsa.org`).
+          "primary" retrieves data from the primary source (e.g. Eurostat, OSM, etc.).
+          "build" retrieves data from the result of a build script within the PyPSA-Eur workflow itself, rather than a remote source.
+        - `tags`: space separated tags for the dataset, which will become boolean columns when loaded into the workflow.
+          "supported" must be a tag on a version if it is supported by the workflow.
+          "latest" must be a tag on the version of each `source` that should be used when `version` is set to "latest".
+        - `added`: The date when the dataset version was added (e.g., "2024-01-01").
+        - `note`: [Optional] notes about the dataset version.
+        - `url`: URL to the dataset version. Optional if data `source` is "build", otherwise required.
+        """,
+    )
     hotmaps_industrial_sites: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="Hotmaps industrial sites data source configuration.",

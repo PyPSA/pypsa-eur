@@ -163,3 +163,11 @@ def italy_shape(download_natural_earth, tmpdir):
     italy_shape_file_path = pathlib.Path(tmpdir, "italy_shape.geojson")
     italy_shape_file.to_file(italy_shape_file_path, driver="GeoJSON")
     yield italy_shape_file_path
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--fix",
+        action="store_true",
+        help="Attempt fix of issues in the data versions layer CSV files and the default config YAML & schema JSON.",
+    )
