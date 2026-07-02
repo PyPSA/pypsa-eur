@@ -715,7 +715,6 @@ class SectorConfig(BaseModel):
         default_factory=lambda: {
             "enable": True,
             "attribute": [
-                "conservative estimate Mt",
                 "conservative estimate GAS Mt",
                 "conservative estimate OIL Mt",
                 "conservative estimate aquifer Mt",
@@ -725,7 +724,7 @@ class SectorConfig(BaseModel):
             "max_size": 25,
             "years_of_storage": 25,
         },
-        description="Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.",
+        description="Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
     )
     co2_sequestration_potential: dict[int, float] = Field(
         default_factory=lambda: {
