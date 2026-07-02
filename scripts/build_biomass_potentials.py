@@ -47,9 +47,11 @@ def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_ty
 
     return (
         df.apply(
-            lambda c: c.sum()
-            / df.loc[df.index.str[:2] == c.name[:2]].sum().sum()
-            * resource_potential.loc[c.name[:2]],
+            lambda c: (
+                c.sum()
+                / df.loc[df.index.str[:2] == c.name[:2]].sum().sum()
+                * resource_potential.loc[c.name[:2]]
+            ),
             axis=1,
         )
         .mul(share_unsus)
@@ -255,8 +257,8 @@ def add_unsustainable_potentials(df, input_eurostat):
     ----------
     df : pd.DataFrame
         The dataframe with sustainable biomass potentials.
-    unsustainable_biomass : str
-        Path to the file with unsustainable biomass potentials.
+    input_eurostat : str
+        Path to the file with Eurostat biomass data.
 
     Returns
     -------

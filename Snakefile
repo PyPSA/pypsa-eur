@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 
+import copy
 from pathlib import Path
 import yaml
 from os.path import normpath, exists, join
 from shutil import copyfile, move, rmtree
 from dotenv import load_dotenv
-from snakemake.utils import min_version
+from snakemake.utils import min_version, update_config
 
 load_dotenv()
 
@@ -36,7 +37,20 @@ validate_config(config)
 
 run = config["run"]
 scenarios = get_scenarios(run)
+
+for scenario_name, scenario_overrides in scenarios.items():
+    merged = copy.deepcopy(config)
+    update_config(merged, scenario_overrides)
+    try:
+        validate_config(merged)
+    except Exception as e:
+        raise ValueError(
+            f"Scenario '{scenario_name}' failed config validation: {e}"
+        ) from e
+
 RDIR = get_rdir(run)
+PROJ_DIR = Path(workflow.snakefile).parent
+
 shadow_config = get_shadow(run)
 
 shared_resources = run["shared_resources"]["policy"]
@@ -44,9 +58,10 @@ exclude_from_shared = run["shared_resources"]["exclude"]
 logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
 benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
 resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
-scripts = script_path_provider(Path(workflow.snakefile).parent)
+scripts = script_path_provider(PROJ_DIR)
 
 RESULTS = "results/" + RDIR
+workflow.default_target = config["run"]["default_target_rule"]
 
 
 localrules:
@@ -222,7 +237,6 @@ rule all:
         ),
         lambda w: balance_map_paths("static", w),
         lambda w: balance_map_paths("interactive", w),
-    default_target: True
 
 
 rule create_scenarios:
@@ -273,8 +287,6 @@ rule dump_graph_config:
 
 rule rulegraph:
     """Generates Rule DAG in DOT, PDF, PNG, and SVG formats using the final configuration."""
-    message:
-        "Creating RULEGRAPH dag in multiple formats using the final configuration."
     input:
         config_file=rules.dump_graph_config.output.config_file,
     output:
@@ -282,6 +294,10 @@ rule rulegraph:
         pdf=resources("dag_rulegraph.pdf"),
         png=resources("dag_rulegraph.png"),
         svg=resources("dag_rulegraph.svg"),
+    params:
+        default_target=workflow.default_target,  # track default target to ensure rule is re-triggered
+    message:
+        "Creating RULEGRAPH dag in multiple formats using the final configuration."
     shell:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
@@ -310,8 +326,6 @@ rule rulegraph:
 
 rule filegraph:
     """Generates File DAG in DOT, PDF, PNG, and SVG formats using the final configuration."""
-    message:
-        "Creating FILEGRAPH dag in multiple formats using the final configuration."
     input:
         config_file=rules.dump_graph_config.output.config_file,
     output:
@@ -319,6 +333,10 @@ rule filegraph:
         pdf=resources("dag_filegraph.pdf"),
         png=resources("dag_filegraph.png"),
         svg=resources("dag_filegraph.svg"),
+    params:
+        default_target=workflow.default_target,  # track default target to ensure rule is re-triggered
+    message:
+        "Creating FILEGRAPH dag in multiple formats using the final configuration."
     shell:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
@@ -345,10 +363,10 @@ rule filegraph:
 
 
 rule doc:
-    message:
-        "Build documentation."
     output:
         directory("doc/_build"),
+    message:
+        "Build documentation."
     shell:
         "pixi run build-docs {output} html"
 

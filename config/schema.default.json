@@ -175,7 +175,7 @@
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
         },
         "nprocesses": {
-          "default": 16,
+          "default": 1,
           "description": "Number of parallel processes in cutout preparation.",
           "type": "integer"
         },
@@ -186,7 +186,7 @@
         },
         "plot_availability_matrix": {
           "default": false,
-          "description": "Whether to plot the landuse availability matrix.",
+          "description": "Whether to plot the landuse availability matrix. Warning: This requires a significant amount of memory and time and may crash for larger workflows. Use with caution.",
           "type": "boolean"
         },
         "cutouts": {
@@ -565,6 +565,11 @@
               ],
               "type": "string"
             },
+            "allow_ac_dc_mixing_in_bus_clusters": {
+              "default": false,
+              "description": "Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+              "type": "boolean"
+            },
             "hac_features": {
               "description": "List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
               "items": {
@@ -871,6 +876,14 @@
     "DataConfig": {
       "description": "Configuration for `data` settings.",
       "properties": {
+        "version_files": {
+          "description": "\n        List of paths to version files.\n        If multiple paths are provided, they will be merged with priority given to the later paths in the list.\n        This allows for overriding default versions with custom versions, without modifying the default version file.\n\n        All filepaths must be relative to the project root or as an absolute path and point to one of:\n        - a CSV file.\n        - a YAML file with a list of version entries, which will be converted internally to CSV format.\n          This allows for easier editing of versions with comments and multi-line notes.\n          This is equivalent to calling `df.to_dict(orient='records')` on a dataframe with the same structure as the CSV version files, and then dumping to YAML.\n\n        The CSV columns / YAML fields must be:\n        - `dataset`: The name of the dataset (e.g., \"hotmaps_industrial_sites\", \"enspreso_biomass\", etc.).\n        - `version`: The version of the dataset to use (e.g., \"latest\", \"v1.0\", etc.).\n        - `source`: The source of the dataset (e.g., \"archive\", \"primary\", \"build\").\n          \"archive\" retrieves data from an organisation data bucket (e.g. `data.pypsa.org`).\n          \"primary\" retrieves data from the primary source (e.g. Eurostat, OSM, etc.).\n          \"build\" retrieves data from the result of a build script within the PyPSA-Eur workflow itself, rather than a remote source.\n        - `tags`: space separated tags for the dataset, which will become boolean columns when loaded into the workflow.\n          \"supported\" must be a tag on a version if it is supported by the workflow.\n          \"latest\" must be a tag on the version of each `source` that should be used when `version` is set to \"latest\".\n        - `added`: The date when the dataset version was added (e.g., \"2024-01-01\").\n        - `note`: [Optional] notes about the dataset version.\n        - `url`: URL to the dataset version. Optional if data `source` is \"build\", otherwise required.\n        ",
+          "items": {
+            "format": "file-path",
+            "type": "string"
+          },
+          "type": "array"
+        },
         "hotmaps_industrial_sites": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -2403,6 +2416,11 @@
           "description": "Default lifetime for heating technologies (years).",
           "type": "integer"
         },
+        "solar_rooftop_ratio": {
+          "default": 0.5,
+          "description": "Ratio of existing solar capacity to assign to rooftop vs utility-scale (between 0 and 1).",
+          "type": "number"
+        },
         "conventional_carriers": {
           "description": "List of conventional power plants to include in the sectoral network.",
           "items": {
@@ -2615,7 +2633,7 @@
           "type": "boolean"
         },
         "reference_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_.",
           "markdownDescription": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015 ](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
           "type": "integer"
@@ -4067,6 +4085,18 @@
             true
           ],
           "type": "boolean"
+        },
+        "default_target_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "all",
+          "description": "Default target rule for snakemake. This is the default rule that will be executed if no other rule is specified. If set to ``None``, snakemake will use its default behavior and execute the first rule in the Snakefile. NOTE: This value will be overwritten by any reference to `default_target` made in a specific rule."
         }
       }
     },
@@ -4873,6 +4903,13 @@
               "description": "H2 pipeline transmission efficiency.",
               "type": "object"
             },
+            "H2 pipeline retrofitted": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "H2 pipeline retrofitted transmission efficiency.",
+              "type": "object"
+            },
             "gas pipeline": {
               "additionalProperties": {
                 "type": "number"
@@ -5206,16 +5243,64 @@
               "type": "number"
             },
             "load_shedding": {
-              "anyOf": [
-                {
+              "description": "Configuration for `solving.options.load_shedding` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Enable load shedding by adding high-cost generators to avoid infeasibilities. Requires either all_carriers: true or at least one entry in carriers.",
                   "type": "boolean"
                 },
-                {
+                "default_cost": {
+                  "default": 100000,
+                  "description": "The default cost for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+                  "exclusiveMinimum": 0,
                   "type": "number"
+                },
+                "all_carriers": {
+                  "default": true,
+                  "description": "Switch to apply load shedding to all carriers. Otherwise, load shedding will be applied to listed carriers only.",
+                  "type": "boolean"
+                },
+                "carriers": {
+                  "additionalProperties": {
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "default": {},
+                  "description": "Dictionary of carriers and their specific load shedding cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default cost is assumed for non-listed carriers.",
+                  "type": "object"
                 }
-              ],
-              "default": false,
-              "description": "Add generators with very high marginal cost to simulate load shedding and avoid problem infeasibilities. If load shedding is a float, it denotes the marginal cost in EUR/kWh."
+              }
+            },
+            "load_sinks": {
+              "description": "Configuration for `solving.options.load_sinks` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either all_carriers: true or at least one entry in carriers.",
+                  "type": "boolean"
+                },
+                "default_cost": {
+                  "default": 100000,
+                  "description": "The default cost for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                },
+                "all_carriers": {
+                  "default": false,
+                  "description": "Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+                  "type": "boolean"
+                },
+                "carriers": {
+                  "additionalProperties": {
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "default": {},
+                  "description": "Dictionary of carriers and their specific load sink cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default cost is assumed for non-listed carriers.",
+                  "type": "object"
+                }
+              }
             },
             "curtailment_mode": {
               "default": false,
@@ -5900,6 +5985,11 @@
             "hac"
           ],
           "type": "string"
+        },
+        "allow_ac_dc_mixing_in_bus_clusters": {
+          "default": false,
+          "description": "Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+          "type": "boolean"
         },
         "hac_features": {
           "description": "List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
@@ -6718,6 +6808,66 @@
             "type": "number"
           },
           "description": "The historic maximum relative growth of a carrier.",
+          "type": "object"
+        }
+      }
+    },
+    "_LoadSheddingConfig": {
+      "description": "Configuration for `solving.options.load_shedding` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Enable load shedding by adding high-cost generators to avoid infeasibilities. Requires either all_carriers: true or at least one entry in carriers.",
+          "type": "boolean"
+        },
+        "default_cost": {
+          "default": 100000,
+          "description": "The default cost for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "all_carriers": {
+          "default": true,
+          "description": "Switch to apply load shedding to all carriers. Otherwise, load shedding will be applied to listed carriers only.",
+          "type": "boolean"
+        },
+        "carriers": {
+          "additionalProperties": {
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "default": {},
+          "description": "Dictionary of carriers and their specific load shedding cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default cost is assumed for non-listed carriers.",
+          "type": "object"
+        }
+      }
+    },
+    "_LoadSinksConfig": {
+      "description": "Configuration for `solving.options.load_sinks` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either all_carriers: true or at least one entry in carriers.",
+          "type": "boolean"
+        },
+        "default_cost": {
+          "default": 100000,
+          "description": "The default cost for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "all_carriers": {
+          "default": false,
+          "description": "Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+          "type": "boolean"
+        },
+        "carriers": {
+          "additionalProperties": {
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "default": {},
+          "description": "Dictionary of carriers and their specific load sink cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default cost is assumed for non-listed carriers.",
           "type": "object"
         }
       }
@@ -7705,16 +7855,64 @@
           "type": "number"
         },
         "load_shedding": {
-          "anyOf": [
-            {
+          "description": "Configuration for `solving.options.load_shedding` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Enable load shedding by adding high-cost generators to avoid infeasibilities. Requires either all_carriers: true or at least one entry in carriers.",
               "type": "boolean"
             },
-            {
+            "default_cost": {
+              "default": 100000,
+              "description": "The default cost for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+              "exclusiveMinimum": 0,
               "type": "number"
+            },
+            "all_carriers": {
+              "default": true,
+              "description": "Switch to apply load shedding to all carriers. Otherwise, load shedding will be applied to listed carriers only.",
+              "type": "boolean"
+            },
+            "carriers": {
+              "additionalProperties": {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              "default": {},
+              "description": "Dictionary of carriers and their specific load shedding cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default cost is assumed for non-listed carriers.",
+              "type": "object"
             }
-          ],
-          "default": false,
-          "description": "Add generators with very high marginal cost to simulate load shedding and avoid problem infeasibilities. If load shedding is a float, it denotes the marginal cost in EUR/kWh."
+          }
+        },
+        "load_sinks": {
+          "description": "Configuration for `solving.options.load_sinks` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either all_carriers: true or at least one entry in carriers.",
+              "type": "boolean"
+            },
+            "default_cost": {
+              "default": 100000,
+              "description": "The default cost for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "all_carriers": {
+              "default": false,
+              "description": "Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+              "type": "boolean"
+            },
+            "carriers": {
+              "additionalProperties": {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              "default": {},
+              "description": "Dictionary of carriers and their specific load sink cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default cost is assumed for non-listed carriers.",
+              "type": "object"
+            }
+          }
         },
         "curtailment_mode": {
           "default": false,
@@ -7934,6 +8132,13 @@
           "description": "H2 pipeline transmission efficiency.",
           "type": "object"
         },
+        "H2 pipeline retrofitted": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "H2 pipeline retrofitted transmission efficiency.",
+          "type": "object"
+        },
         "gas pipeline": {
           "additionalProperties": {
             "type": "number"
@@ -8143,6 +8348,18 @@
             true
           ],
           "type": "boolean"
+        },
+        "default_target_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "all",
+          "description": "Default target rule for snakemake. This is the default rule that will be executed if no other rule is specified. If set to ``None``, snakemake will use its default behavior and execute the first rule in the Snakefile. NOTE: This value will be overwritten by any reference to `default_target` made in a specific rule."
         }
       }
     },
@@ -8631,7 +8848,7 @@
           "description": "Defines a default cutout. Can refer to a single cutout or a list of cutouts."
         },
         "nprocesses": {
-          "default": 16,
+          "default": 1,
           "description": "Number of parallel processes in cutout preparation.",
           "type": "integer"
         },
@@ -8642,7 +8859,7 @@
         },
         "plot_availability_matrix": {
           "default": false,
-          "description": "Whether to plot the landuse availability matrix.",
+          "description": "Whether to plot the landuse availability matrix. Warning: This requires a significant amount of memory and time and may crash for larger workflows. Use with caution.",
           "type": "boolean"
         },
         "cutouts": {
@@ -10393,6 +10610,11 @@
           "description": "Default lifetime for heating technologies (years).",
           "type": "integer"
         },
+        "solar_rooftop_ratio": {
+          "default": 0.5,
+          "description": "Ratio of existing solar capacity to assign to rooftop vs utility-scale (between 0 and 1).",
+          "type": "number"
+        },
         "conventional_carriers": {
           "description": "List of conventional power plants to include in the sectoral network.",
           "items": {
@@ -11161,6 +11383,13 @@
               "description": "H2 pipeline transmission efficiency.",
               "type": "object"
             },
+            "H2 pipeline retrofitted": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "H2 pipeline retrofitted transmission efficiency.",
+              "type": "object"
+            },
             "gas pipeline": {
               "additionalProperties": {
                 "type": "number"
@@ -11589,7 +11818,7 @@
           "type": "boolean"
         },
         "reference_year": {
-          "default": 2019,
+          "default": 2023,
           "description": "The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_.",
           "markdownDescription": "The year used as the baseline for industrial energy demand and production. Data extracted from [JRC-IDEES 2015 ](https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001).",
           "type": "integer"
@@ -11846,6 +12075,11 @@
               ],
               "type": "string"
             },
+            "allow_ac_dc_mixing_in_bus_clusters": {
+              "default": false,
+              "description": "Controls whether clustering is allowed to mix AC and DC buses within a bus cluster. If true, mixed clusters are coerced to AC before aggregation. If false, mixed clusters are kept separate.",
+              "type": "boolean"
+            },
             "hac_features": {
               "description": "List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
               "items": {
@@ -12095,16 +12329,64 @@
               "type": "number"
             },
             "load_shedding": {
-              "anyOf": [
-                {
+              "description": "Configuration for `solving.options.load_shedding` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Enable load shedding by adding high-cost generators to avoid infeasibilities. Requires either all_carriers: true or at least one entry in carriers.",
                   "type": "boolean"
                 },
-                {
+                "default_cost": {
+                  "default": 100000,
+                  "description": "The default cost for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+                  "exclusiveMinimum": 0,
                   "type": "number"
+                },
+                "all_carriers": {
+                  "default": true,
+                  "description": "Switch to apply load shedding to all carriers. Otherwise, load shedding will be applied to listed carriers only.",
+                  "type": "boolean"
+                },
+                "carriers": {
+                  "additionalProperties": {
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "default": {},
+                  "description": "Dictionary of carriers and their specific load shedding cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default cost is assumed for non-listed carriers.",
+                  "type": "object"
                 }
-              ],
-              "default": false,
-              "description": "Add generators with very high marginal cost to simulate load shedding and avoid problem infeasibilities. If load shedding is a float, it denotes the marginal cost in EUR/kWh."
+              }
+            },
+            "load_sinks": {
+              "description": "Configuration for `solving.options.load_sinks` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either all_carriers: true or at least one entry in carriers.",
+                  "type": "boolean"
+                },
+                "default_cost": {
+                  "default": 100000,
+                  "description": "The default cost for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                },
+                "all_carriers": {
+                  "default": false,
+                  "description": "Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+                  "type": "boolean"
+                },
+                "carriers": {
+                  "additionalProperties": {
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "default": {},
+                  "description": "Dictionary of carriers and their specific load sink cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default cost is assumed for non-listed carriers.",
+                  "type": "object"
+                }
+              }
             },
             "curtailment_mode": {
               "default": false,
@@ -12427,6 +12709,14 @@
     "data": {
       "description": "Configuration for `data` settings.",
       "properties": {
+        "version_files": {
+          "description": "\n        List of paths to version files.\n        If multiple paths are provided, they will be merged with priority given to the later paths in the list.\n        This allows for overriding default versions with custom versions, without modifying the default version file.\n\n        All filepaths must be relative to the project root or as an absolute path and point to one of:\n        - a CSV file.\n        - a YAML file with a list of version entries, which will be converted internally to CSV format.\n          This allows for easier editing of versions with comments and multi-line notes.\n          This is equivalent to calling `df.to_dict(orient='records')` on a dataframe with the same structure as the CSV version files, and then dumping to YAML.\n\n        The CSV columns / YAML fields must be:\n        - `dataset`: The name of the dataset (e.g., \"hotmaps_industrial_sites\", \"enspreso_biomass\", etc.).\n        - `version`: The version of the dataset to use (e.g., \"latest\", \"v1.0\", etc.).\n        - `source`: The source of the dataset (e.g., \"archive\", \"primary\", \"build\").\n          \"archive\" retrieves data from an organisation data bucket (e.g. `data.pypsa.org`).\n          \"primary\" retrieves data from the primary source (e.g. Eurostat, OSM, etc.).\n          \"build\" retrieves data from the result of a build script within the PyPSA-Eur workflow itself, rather than a remote source.\n        - `tags`: space separated tags for the dataset, which will become boolean columns when loaded into the workflow.\n          \"supported\" must be a tag on a version if it is supported by the workflow.\n          \"latest\" must be a tag on the version of each `source` that should be used when `version` is set to \"latest\".\n        - `added`: The date when the dataset version was added (e.g., \"2024-01-01\").\n        - `note`: [Optional] notes about the dataset version.\n        - `url`: URL to the dataset version. Optional if data `source` is \"build\", otherwise required.\n        ",
+          "items": {
+            "format": "file-path",
+            "type": "string"
+          },
+          "type": "array"
+        },
         "hotmaps_industrial_sites": {
           "description": "Configuration for a single data source.",
           "properties": {

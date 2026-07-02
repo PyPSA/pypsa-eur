@@ -70,7 +70,9 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    ambient_temperature = xr.open_mfdataset(snakemake.input.cutout).temperature - 273.15
+    ambient_temperature = (
+        xr.open_mfdataset(snakemake.input.cutout, chunks="auto").temperature - 273.15
+    )
 
     # Load onshore regions
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)
@@ -100,6 +102,6 @@ if __name__ == "__main__":
     )
 
     # Save the result
-    average_temperature_by_region.to_netcdf(
-        snakemake.output.average_ambient_air_temperature
+    average_temperature_by_region.compute(scheduler="single-threaded").to_netcdf(
+        snakemake.output.average_ambient_air_temperature,
     )

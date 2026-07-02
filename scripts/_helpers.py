@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import atexit
 import contextlib
 import copy
 import logging
@@ -9,9 +10,10 @@ import os
 import re
 import time
 from collections.abc import Callable
-from functools import partial, wraps
+from functools import lru_cache, partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Literal
 
 import atlite
 import fiona
@@ -21,8 +23,11 @@ import pytz
 import requests
 import xarray as xr
 import yaml
+from dask.distributed import Client, LocalCluster
 from snakemake.utils import update_config
 from tqdm import tqdm
+
+from scripts.lib.validation.config.data import VersionsSchema
 
 logger = logging.getLogger(__name__)
 
@@ -1025,7 +1030,9 @@ def rename_techs(label: str) -> str:
 
 
 def load_cutout(
-    cutout_files: str | list[str], time: None | pd.DatetimeIndex = None
+    cutout_files: str | list[str],
+    time: None | pd.DatetimeIndex = None,
+    chunks: Literal["auto"] | dict | None = "auto",
 ) -> atlite.Cutout:
     """
     Load and optionally combine multiple cutout files.
@@ -1044,9 +1051,9 @@ def load_cutout(
         Merged cutout with optional time selection applied.
     """
     if isinstance(cutout_files, str):
-        cutout = atlite.Cutout(cutout_files)
+        cutout = atlite.Cutout(cutout_files, chunks=chunks)
     elif isinstance(cutout_files, list):
-        cutout_da = [atlite.Cutout(c).data for c in cutout_files]
+        cutout_da = [atlite.Cutout(c, chunks=chunks).data for c in cutout_files]
         combined_data = xr.concat(cutout_da, dim="time", data_vars="minimal")
         cutout = atlite.Cutout(NamedTemporaryFile().name, data=combined_data)
 
@@ -1054,6 +1061,17 @@ def load_cutout(
         cutout.data = cutout.data.sel(time=time)
 
     return cutout
+
+
+def setup_dask(nprocesses: int) -> dict:
+    if nprocesses > 1:
+        cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
+        client = Client(cluster)
+        atexit.register(client.shutdown)
+    else:
+        client = None
+
+    return dict(scheduler=client)
 
 
 def load_costs(cost_file: str) -> pd.DataFrame:
@@ -1072,3 +1090,74 @@ def load_costs(cost_file: str) -> pd.DataFrame:
     """
 
     return pd.read_csv(cost_file, index_col=0)
+
+
+@lru_cache
+def load_data_versions(*files: Path) -> pd.DataFrame:
+    """
+    Load data versions from multiple CSV or YAML files and combine them into a single DataFrame.
+
+    Parameters
+    ----------
+    *files : Path
+        Paths to the CSV or YAML files containing data version information.
+
+    Returns
+    -------
+    pd.DataFrame
+        Combined DataFrame containing the data version information from all files, with, optionally, columns for each tag.
+    """
+    data_versions_list = [
+        _load_data_version(file).set_index(["dataset", "version", "source"])
+        for file in files
+    ]
+    combined_data_versions = pd.concat(data_versions_list)
+
+    deduplicated_data_versions = (
+        combined_data_versions.loc[
+            ~combined_data_versions.index.duplicated(keep="last")
+        ]
+        .sort_index()
+        .reset_index()
+    )
+
+    # Turn space-separated tags into individual columns
+    deduplicated_data_versions["tags"] = deduplicated_data_versions["tags"].str.split()
+    exploded = deduplicated_data_versions.explode("tags")
+    dummies = pd.get_dummies(exploded["tags"], dtype=bool)
+    tags_matrix = dummies.groupby(dummies.index).max()
+    deduplicated_data_versions = deduplicated_data_versions.join(tags_matrix)
+
+    return deduplicated_data_versions
+
+
+def _load_data_version(file: str | Path, validate: bool = True) -> pd.DataFrame:
+    """
+    Load data versions from a CSV or YAML file.
+
+    Parameters
+    ----------
+    file : str
+        Path to the CSV or YAML file containing data version information.
+    validate : bool, default True
+        If True, validate the loaded data against the VersionsSchema.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing the data version information, with, optionally, columns for each tag.
+    """
+    if (file_path := Path(file)).suffix.lower() in [".yaml", ".yml"]:
+        data_versions = pd.DataFrame(yaml.safe_load(file_path.read_text()))
+    else:
+        data_versions = pd.read_csv(
+            file_path,
+            dtype=str,
+            na_filter=False,
+            delimiter=",",
+            comment="#",
+        )
+    if validate:
+        data_versions = VersionsSchema.validate(data_versions)
+
+    return data_versions

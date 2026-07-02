@@ -7,7 +7,7 @@ Build historical annual ammonia production per country in ktonNH3/a.
 Description
 -------
 
-This functions takes data from the `Minerals Yearbook <https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information>`_
+This functions takes data from the [Minerals Yearbook](https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information)
  (July 2024) published by the US Geological Survey (USGS) and the National Minerals Information Center and extracts the annual ammonia production per country in ktonN/a. The data is converted to ktonNH3/a.
 """
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     ammonia.index = cc.convert(ammonia.index, to="iso2")
 
-    years = [str(i) for i in range(2018, 2023)]
+    years = [str(i) for i in range(2019, 2024)]
 
     ammonia = ammonia.rename(columns=lambda x: str(x))[years]
 

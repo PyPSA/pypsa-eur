@@ -114,7 +114,7 @@ class AtliteConfig(BaseModel):
         description="Defines a default cutout. Can refer to a single cutout or a list of cutouts.",
     )
     nprocesses: int = Field(
-        16,
+        1,
         description="Number of parallel processes in cutout preparation.",
     )
     show_progress: bool = Field(
@@ -123,7 +123,7 @@ class AtliteConfig(BaseModel):
     )
     plot_availability_matrix: bool = Field(
         False,
-        description="Whether to plot the landuse availability matrix.",
+        description="Whether to plot the landuse availability matrix. Warning: This requires a significant amount of memory and time and may crash for larger workflows. Use with caution.",
     )
     cutouts: dict[str, _CutoutConfig] = Field(
         default_factory=lambda: {

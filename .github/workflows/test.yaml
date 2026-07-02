@@ -27,12 +27,12 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Setup Pixi
-      uses: prefix-dev/setup-pixi@v0.9.4
+      uses: prefix-dev/setup-pixi@v0.10.0
       with:
-        pixi-version: v0.59.0
+        pixi-version: v0.68.1
         cache: true
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
 
@@ -54,9 +54,9 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
-    - uses: dorny/paths-filter@v3
+    - uses: dorny/paths-filter@v4
       id: filter
       with:
         filters: |
@@ -87,9 +87,9 @@ jobs:
 
     - name: Setup Pixi
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-      uses: prefix-dev/setup-pixi@v0.9.4
+      uses: prefix-dev/setup-pixi@v0.10.0
       with:
-        pixi-version: v0.59.0
+        pixi-version: v0.68.1
         cache: true
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
 
@@ -100,13 +100,13 @@ jobs:
         echo "MONTH=$(date +'%Y%m')" >> $GITHUB_ENV # cutouts
         echo "VERSIONS_HASH=${{ hashFiles('data/versions.csv') }}" >> $GITHUB_ENV
 
-    - uses: actions/cache@v5
+    - uses: actions/cache@v6
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       with:
         path: data
         key: data-${{ env.WEEK }}-${{ env.VERSIONS_HASH }}
 
-    - uses: actions/cache@v5
+    - uses: actions/cache@v6
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       with:
         path: cutouts
@@ -120,7 +120,7 @@ jobs:
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       # check for undefined variables to reuse functions across scripts
       run: |
-        pixi run pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
+        pixi run -e dev pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
 
     - name: Run snakemake test workflows
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -132,7 +132,7 @@ jobs:
 
     - name: Upload artifacts
       if: always()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: results-${{ matrix.os }}
         path: |

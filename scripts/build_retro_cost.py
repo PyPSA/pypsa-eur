@@ -496,9 +496,11 @@ def prepare_cost_retro(country_iso_dic):
         cost_retro[["cost_fix", "cost_var"]] = cost_retro[
             ["cost_fix", "cost_var"]
         ].apply(
-            lambda x: x
-            * interest_rate
-            / (1 - (1 + interest_rate) ** -cost_retro.loc[x.index, "life_time"])
+            lambda x: (
+                x
+                * interest_rate
+                / (1 - (1 + interest_rate) ** -cost_retro.loc[x.index, "life_time"])
+            )
         )
 
     # weightings of costs ---------------------------------------------

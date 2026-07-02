@@ -5,13 +5,12 @@
 This rule builds heat demand time series using heating degree day (HDD)
 approximation.
 
-Snapshots are resampled to daily time resolution and ``Atlite.convert.heat_demand`` is used to convert ambient temperature from the default weather cutout to heat demand time series for the respective cutout.
+Snapshots are resampled to daily time resolution and `Atlite.convert.heat_demand` is used to convert ambient temperature from the default weather cutout to heat demand time series for the respective cutout.
 
 Heat demand is distributed by population to clustered onshore regions.
 
-.. seealso::
-    `Atlite.Cutout.heat_demand <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
-
+!!! info "See also"
+    [Atlite.Cutout.heat_demand](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
 """
 
 import logging
@@ -19,13 +18,13 @@ import logging
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from dask.distributed import Client, LocalCluster
 
 from scripts._helpers import (
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
+    setup_dask,
 )
 
 logger = logging.getLogger(__name__)
@@ -43,8 +42,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
-    client = Client(cluster, asynchronous=True)
+    dask_kwargs = setup_dask(nprocesses)
 
     cutout_name = snakemake.input.cutout
 
@@ -71,7 +69,7 @@ if __name__ == "__main__":
     heat_demand = cutout.heat_demand(
         matrix=M.T,
         index=clustered_regions.index,
-        dask_kwargs=dict(scheduler=client),
+        dask_kwargs=dask_kwargs,
         show_progress=False,
     ).sel(time=daily)
 

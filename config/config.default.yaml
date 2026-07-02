@@ -30,6 +30,7 @@ run:
     policy: false
     exclude: []
   use_shadow_directory: false
+  default_target_rule: all
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
@@ -187,7 +188,7 @@ electricity:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: "europe-2013-sarah3-era5"
-  nprocesses: 16
+  nprocesses: 1
   show_progress: false
   plot_availability_matrix: false
   cutouts:
@@ -582,7 +583,7 @@ solar_thermal:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing_capacities
 existing_capacities:
   grouping_years_power:
-  - 1920
+  - 1900
   - 1950
   - 1955
   - 1960
@@ -612,6 +613,7 @@ existing_capacities:
   - 2019
   threshold_capacity: 10
   default_heating_lifetime: 20
+  solar_rooftop_ratio: 0.5
   conventional_carriers:
   - lignite
   - coal
@@ -907,12 +909,16 @@ sector:
     enable:
     - DC
     - H2 pipeline
+    - H2 pipeline retrofitted
     - gas pipeline
     - electricity distribution grid
     DC:
       efficiency_static: 0.98
       efficiency_per_1000km: 0.977
     H2 pipeline:
+      efficiency_per_1000km: 1
+      compression_per_1000km: 0.018
+    H2 pipeline retrofitted:
       efficiency_per_1000km: 1
       compression_per_1000km: 0.018
     gas pipeline:
@@ -1060,7 +1066,7 @@ industry:
   MWh_CH4_per_tMeOH: 10.25
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
-  reference_year: 2019
+  reference_year: 2023
   oil_refining_emissions: 0.013
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
@@ -1104,6 +1110,7 @@ clustering:
     remove_stubs_across_borders: false
   cluster_network:
     algorithm: kmeans
+    allow_ac_dc_mixing_in_bus_clusters: false
     hac_features:
     - wnd100m
     - influx_direct
@@ -1133,7 +1140,16 @@ adjustments:
 solving:
   options:
     clip_p_max_pu: 0.01
-    load_shedding: false
+    load_shedding:
+      enable: false
+      default_cost: 100000
+      all_carriers: true
+      carriers: {}
+    load_sinks:
+      enable: false
+      default_cost: 100000
+      all_carriers: false
+      carriers: {}
     curtailment_mode: false
     noisy_costs: true
     skip_iterations: true
@@ -1196,6 +1212,13 @@ solving:
       primal_feasibility_tolerance: 1.0e-05
       dual_feasibility_tolerance: 1.0e-05
       random_seed: 123
+    "highs-hipo":
+      solver: hipo
+      parallel: 'on'
+      primal_feasibility_tolerance: 1.0e-05
+      dual_feasibility_tolerance: 1.0e-05
+      random_seed: 123
+      run_crossover: 'off'
     "gurobi-default":
       threads: 32
       method: 2
@@ -1205,6 +1228,7 @@ solving:
       AggFill: 0
       PreDual: 0
       GURO_PAR_BARDENSETHRESH: 200
+      IISMethod: 1
     "gurobi-numeric-focus":
       NumericFocus: 3
       method: 2
@@ -1268,6 +1292,8 @@ solving:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
 data:
+  version_files:
+  - data/versions.csv
   hotmaps_industrial_sites:
     source: archive
     version: latest

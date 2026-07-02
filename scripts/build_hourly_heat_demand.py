@@ -6,7 +6,7 @@ Build hourly heat demand time series from daily heat demand.
 
 Water and space heating demand profiles are generated using intraday profiles from BDEW. Different profiles are used for the residential and services sectors as well as weekdays and weekend.
 
-The daily heat demand is multiplied by the intraday profile to obtain the hourly heat demand time series. The rule is executed in ``build_sector.smk``.
+The daily heat demand is multiplied by the intraday profile to obtain the hourly heat demand time series. The rule is executed in `build_sector.smk`.
 """
 
 import logging
@@ -46,7 +46,7 @@ def heat_dsm_profile(nodes, options):
         Node identifiers for which to generate profiles.
     options : dict
         Configuration dictionary containing:
-        - options['residential_heat']['dsm']['restriction_time']: list of int
+        - ``options["residential_heat"]["dsm"]["restriction_time"]``: list of int
             Hours at which storage must be empty (checkpoint hours).
 
     Returns

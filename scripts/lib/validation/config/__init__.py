@@ -10,6 +10,7 @@ The json schema is also contributed to the schemastore.org and matches
 `**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
 """
 
+import pathlib
 import re
 
 from pydantic import ValidationError
@@ -23,13 +24,17 @@ def validate_config(config: dict) -> ConfigSchema:
     """Validate config dict against schema."""
     config_schema = ConfigSchema
     name = config_schema._name.default
+    docs_url = config_schema._docs_url.default
     for item in _registry:
         updater_config = item(config_schema)
         config_schema = updater_config.update()
+        if updater_config.docs_url is not None:
+            docs_url = updater_config.docs_url
         if updater_config.name:
             name += f".{updater_config.name}"
     validated_config = config_schema(**config)
     validated_config._name = name
+    validated_config._docs_url = docs_url
     return validated_config
 
 
@@ -57,6 +62,7 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
     def str_representer(dumper, data):
         """Use block style for multiline, quotes for special chars, plain otherwise."""
         TAG = "tag:yaml.org,2002:str"
+        data = str(data)  # Ensure it's a plain string (not e.g. Path)
         if "\n" in data:
             return dumper.represent_scalar(TAG, data, style="|")
         if data == "" or any(c in data for c in ":{}[]&*#?|-<>=!%@"):
@@ -64,6 +70,7 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
         return dumper.represent_scalar(TAG, data, style="")
 
     yaml_writer.representer.add_representer(str, str_representer)
+    yaml_writer.representer.add_multi_representer(pathlib.PurePath, str_representer)
 
     # Create a CommentedMap to add comments
     data = CommentedMap()
@@ -77,7 +84,7 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
         data[key] = value
 
         field_name = convert_to_field_name(key)
-        docs_url = f"https://pypsa-eur.readthedocs.io/en/latest/configuration.html#{field_name}"
+        docs_url = config._docs_url.format(field_name=field_name)
         data.yaml_set_comment_before_after_key(key, before=f"\ndocs in {docs_url}")
 
     # Write to file

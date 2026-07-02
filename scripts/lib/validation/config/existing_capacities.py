@@ -18,7 +18,7 @@ class ExistingCapacitiesConfig(ConfigModel):
 
     grouping_years_power: list[int] = Field(
         default_factory=lambda: [
-            1920,
+            1900,
             1950,
             1955,
             1960,
@@ -60,6 +60,10 @@ class ExistingCapacitiesConfig(ConfigModel):
     default_heating_lifetime: int = Field(
         20,
         description="Default lifetime for heating technologies (years).",
+    )
+    solar_rooftop_ratio: float = Field(
+        0.5,
+        description="Ratio of existing solar capacity to assign to rooftop vs utility-scale (between 0 and 1).",
     )
     conventional_carriers: list[str] = Field(
         default_factory=lambda: ["lignite", "coal", "oil", "uranium"],

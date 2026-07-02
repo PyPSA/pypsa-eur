@@ -730,16 +730,15 @@ def add_co2_tracking(
         'CO2 storage tank' with 'capital_cost' column
     options : dict
         Configuration options containing at least:
-        - regional_co2_sequestration_potential: dict with keys
-            - enable: bool
-            - max_size: float
-            - years_of_storage: float
+        - regional_co2_sequestration_potential : dict
+            Dict with keys ``enable`` (bool), ``max_size`` (float),
+            ``years_of_storage`` (float).
         - co2_sequestration_cost: float
         - co2_sequestration_lifetime: float
         - co2_vent: bool
     sequestration_potential_file : str, optional
         Path to CSV file containing regional CO2 sequestration potentials.
-        Required if options['regional_co2_sequestration_potential']['enable'] is True.
+        Required if ``options["regional_co2_sequestration_potential"]["enable"]`` is True.
     co2_price : float, optional
         CO2 price that needs to be paid for emitting into the atmosphere and which is
         gained by removing from the atmosphere.
@@ -1092,7 +1091,8 @@ def add_methanol_to_power(n, costs, pop_layout, types=None):
             carrier="CCGT methanol",
             p_nom_extendable=True,
             capital_cost=capital_cost,
-            marginal_cost=costs.at["CCGT", "VOM"],
+            marginal_cost=costs.at["CCGT", "VOM"]
+            * costs.at["CCGT", "efficiency"],  # NB: VOM is per MWel
             efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
             lifetime=costs.at["CCGT", "lifetime"],
@@ -1125,7 +1125,8 @@ def add_methanol_to_power(n, costs, pop_layout, types=None):
             carrier="CCGT methanol CC",
             p_nom_extendable=True,
             capital_cost=capital_cost_cc,
-            marginal_cost=costs.at["CCGT", "VOM"],
+            marginal_cost=costs.at["CCGT", "VOM"]
+            * costs.at["CCGT", "efficiency"],  # NB: VOM is per MWel
             efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["cement capture", "capture_rate"]
             * costs.at["methanolisation", "carbondioxide-input"],
@@ -1423,8 +1424,6 @@ def add_ammonia(
     cf_industry : dict
         Industry-specific conversion factors including
         'MWh_NH3_per_MWh_H2_cracker' for ammonia cracking efficiency
-    logger : logging.Logger
-        Logger object for output messages
 
     Returns
     -------
@@ -1794,8 +1793,6 @@ def add_h2_gas_infrastructure(
         - SMR : bool
         - min_part_load_methanation : float
         - cc_fraction : float
-    logger : logging.Logger, optional
-        Logger for output messages. If None, no logging is performed.
 
     Returns
     -------
@@ -1866,7 +1863,8 @@ def add_h2_gas_infrastructure(
             efficiency=costs.at["OCGT", "efficiency"],
             capital_cost=costs.at["OCGT", "capital_cost"]
             * costs.at["OCGT", "efficiency"],  # NB: fixed cost is per MWel
-            marginal_cost=costs.at["OCGT", "VOM"],
+            marginal_cost=costs.at["OCGT", "VOM"]
+            * costs.at["OCGT", "efficiency"],  # NB: VOM is per MWel
             lifetime=costs.at["OCGT", "lifetime"],
         )
 
@@ -2790,8 +2788,20 @@ def add_heat(
         Path to NetCDF file containing direct heat source utilisation profiles
     hourly_heat_demand_total_file : str
         Path to CSV file containing hourly heat demand data
-    ptes_supplemental_heating_required_file: str
-        Path to CSV file indicating when supplemental heating for thermal energy storage (TES) is needed
+    ptes_e_max_pu_file : str
+        Path to CSV file containing pit thermal energy storage max energy per unit profiles.
+    ptes_direct_utilisation_profile : str
+        Path to file containing pit thermal energy storage direct utilisation profiles.
+    ates_e_nom_max : str
+        Path to file containing aquifer thermal energy storage nominal max energy.
+    ates_capex_as_fraction_of_geothermal_heat_source : float
+        ATES capital cost as fraction of geothermal heat source cost.
+    ates_recovery_factor : float
+        ATES recovery factor.
+    enable_ates : bool
+        Whether to enable aquifer thermal energy storage.
+    ates_marginal_cost_charger : float
+        Marginal cost for ATES charger.
     district_heat_share_file : str
         Path to CSV file containing district heating share information
     solar_thermal_total_file : str
@@ -3477,7 +3487,8 @@ def add_heat(
                     p_nom_extendable=True,
                     capital_cost=costs.at["central gas CHP", "capital_cost"]
                     * costs.at["central gas CHP", "efficiency"],
-                    marginal_cost=costs.at["central gas CHP", "VOM"],
+                    marginal_cost=costs.at["central gas CHP", "VOM"]
+                    * costs.at["central gas CHP", "efficiency"],  # NB: VOM is per MWel
                     efficiency=costs.at["central gas CHP", "efficiency"],
                     efficiency2=costs.at["central gas CHP", "efficiency"]
                     / costs.at["central gas CHP", "c_b"],
@@ -3499,7 +3510,8 @@ def add_heat(
                     * costs.at["central gas CHP", "efficiency"]
                     + costs.at["biomass CHP capture", "capital_cost"]
                     * costs.at[fuel, "CO2 intensity"],
-                    marginal_cost=costs.at["central gas CHP", "VOM"],
+                    marginal_cost=costs.at["central gas CHP", "VOM"]
+                    * costs.at["central gas CHP", "efficiency"],  # NB: VOM is per MWel
                     efficiency=costs.at["central gas CHP", "efficiency"]
                     - costs.at[fuel, "CO2 intensity"]
                     * (
@@ -4050,7 +4062,8 @@ def add_biomass(
             carrier="biogas to gas",
             capital_cost=costs.at["biogas", "capital_cost"]
             + costs.at["biogas upgrading", "capital_cost"],
-            marginal_cost=costs.at["biogas upgrading", "VOM"],
+            marginal_cost=costs.at["biogas", "efficiency"]
+            * costs.at["biogas upgrading", "VOM"],  # NB: VOM is per MWh output
             efficiency=costs.at["biogas", "efficiency"],
             efficiency2=-costs.at["gas", "CO2 intensity"],
             p_nom_extendable=True,
@@ -4074,7 +4087,9 @@ def add_biomass(
             + costs.at["biomass CHP capture", "capital_cost"]
             * costs.at["biogas CC", "CO2 stored"],
             marginal_cost=costs.at["biogas CC", "VOM"]
-            + costs.at["biogas upgrading", "VOM"],
+            * costs.at["biogas CC", "efficiency"]
+            + costs.at["biogas upgrading", "VOM"]
+            * costs.at["biogas", "efficiency"],  # NB: VOM is per MWh output
             efficiency=costs.at["biogas CC", "efficiency"],
             efficiency2=costs.at["biogas CC", "CO2 stored"]
             * costs.at["biogas CC", "capture rate"],
@@ -4231,7 +4246,8 @@ def add_biomass(
             carrier="urban central solid biomass CHP",
             p_nom_extendable=True,
             capital_cost=costs.at[key, "capital_cost"] * costs.at[key, "efficiency"],
-            marginal_cost=costs.at[key, "VOM"],
+            marginal_cost=costs.at[key, "VOM"]
+            * costs.at[key, "efficiency"],  # NB: VOM is per MWel
             efficiency=costs.at[key, "efficiency"],
             efficiency2=costs.at[key, "efficiency-heat"],
             lifetime=costs.at[key, "lifetime"],
@@ -4251,7 +4267,8 @@ def add_biomass(
             * costs.at[key + " CC", "efficiency"]
             + costs.at["biomass CHP capture", "capital_cost"]
             * costs.at["solid biomass", "CO2 intensity"],
-            marginal_cost=costs.at[key + " CC", "VOM"],
+            marginal_cost=costs.at[key + " CC", "efficiency"]
+            * costs.at[key + " CC", "VOM"],  # NB: VOM is per MWel
             efficiency=costs.at[key + " CC", "efficiency"]
             - costs.at["solid biomass", "CO2 intensity"]
             * (
@@ -4510,8 +4527,6 @@ def add_industry(
         Industry-specific configuration parameters
     investment_year : int
         Year for which investment costs should be considered
-    HeatSystem : Enum
-        Enumeration defining different heat system types
 
     Returns
     -------
@@ -5680,6 +5695,14 @@ def limit_individual_line_extension(n, maxext):
     n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + maxext
 
 
+def _sum_keep_na(s):
+    """
+    Sum keeping all-NaN groups as NaN instead of collapsing them to 0.
+
+    """
+    return s.sum(min_count=1)
+
+
 aggregate_dict = {
     "p_nom": pd.Series.sum,
     "s_nom": pd.Series.sum,
@@ -5694,13 +5717,13 @@ aggregate_dict = {
     "v_ang_max": "min",
     "terrain_factor": "mean",
     "num_parallel": "sum",
-    "p_set": "sum",
+    "p_set": _sum_keep_na,
     "e_initial": "sum",
     "e_nom": pd.Series.sum,
     "e_nom_max": pd.Series.sum,
     "e_nom_min": pd.Series.sum,
     "state_of_charge_initial": "sum",
-    "state_of_charge_set": "sum",
+    "state_of_charge_set": _sum_keep_na,
     "inflow": "sum",
     "p_max_pu": "first",
     "x": "mean",
@@ -5744,7 +5767,11 @@ def cluster_heat_buses(n):
         if c.static.empty:
             continue
         df = c.static
-        cols = df.columns[df.columns.str.contains("bus") | (df.columns == "carrier")]
+        cols = df.columns[
+            df.columns.str.contains("bus")
+            | (df.columns == "carrier")
+            | (df.columns == "nice_name")
+        ]
 
         # rename columns and index
         df[cols] = df[cols].apply(
@@ -5758,7 +5785,7 @@ def cluster_heat_buses(n):
         # cluster heat nodes
         # static dataframe
         agg = define_clustering(df.columns, aggregate_dict)
-        df = df.groupby(level=0).agg(agg, numeric_only=False)
+        df = df.groupby(level=0).agg(agg)
         # time-varying data
         pnl = c.dynamic
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
@@ -5767,7 +5794,7 @@ def cluster_heat_buses(n):
             def renamer(s):
                 return s.replace("residential ", "").replace("services ", "")
 
-            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k], numeric_only=False).T
+            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k]).T
 
         # remove unclustered assets of service/residential
         to_drop = c.static.index.difference(df.index)
