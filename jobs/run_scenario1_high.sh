@@ -20,7 +20,7 @@
 set -euo pipefail
 shopt -s nullglob
 
-REPO_ROOT="/work3/s240459/pypsa-eur-thesis"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_DIR="$REPO_ROOT/config/Thesis_Runs/Scenario_1_Deployment_Response/Sensitivity_High"
 LOG_DIR="$REPO_ROOT/logs/supply_curve_v12_high"
 mkdir -p "$LOG_DIR"

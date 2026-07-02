@@ -51,6 +51,7 @@ and a choice of crediting timing. Not present in upstream.*
 | Capture vs. sequestration crediting timing | [`add_cdr_credit_accounting()`:651](scripts/solve_network.py#L651) (`cdr_credit_timing`) |
 | Physical capture / withdrawal / sequestration tracking | [`_capture_term_data()`](scripts/solve_network.py#L475), [`_withdrawal_term_data()`](scripts/solve_network.py#L539), [`_sequestration_links()`](scripts/solve_network.py#L576) |
 | Annual CO₂ sequestration potential limit | [`add_co2_sequestration_limit()`](scripts/solve_network.py#L372) |
+| ETS-cancellation surcharge for standalone credit (`cdr_credit_standalone`, applied at network construction) | [`apply_cdr_credit_to_eligible_capture_links()`](scripts/prepare_sector_network.py#L1516) in `prepare_sector_network.py` |
 
 **Config interface — [`scripts/lib/validation/config/sector.py`](scripts/lib/validation/config/sector.py):**
 `cdr_credit_price`, `cdr_credit_scope`, `cdr_credit_timing`, `cdr_credit_prices_by_scope`.

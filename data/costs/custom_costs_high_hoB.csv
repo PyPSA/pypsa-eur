@@ -1,0 +1,148 @@
+planning_horizon,technology,parameter,value,unit,source,further description
+all,solar,marginal_cost,0.01,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,onwind,marginal_cost,0.015,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,offwind,marginal_cost,0.015,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,hydro,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,H2,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,electrolysis,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,fuel cell,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,battery,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,battery inverter,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,home battery storage,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,water tank charger,marginal_cost,0.03,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,central water pit charger,marginal_cost,0.025,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+2030,biomass CHP capture,FOM,3.03875,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2030,biomass CHP capture,capture_rate,0.9,per unit,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2030,biomass CHP capture,compression-electricity-input,0.102,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2030,biomass CHP capture,compression-heat-output,0.1615,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2030,biomass CHP capture,electricity-input,0.0271739,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2030,biomass CHP capture,heat-input,0.785455,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2030,biomass CHP capture,heat-output,0.785455,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2030,biomass CHP capture,investment,8459360.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2030,biomass CHP capture,lifetime,25.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2030,cement capture,FOM,3.293,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2030,cement capture,capture_rate,0.938,per unit,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2030,cement capture,compression-electricity-input,0.17,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2030,cement capture,compression-heat-output,0.262,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2030,cement capture,electricity-input,0.0257,MWh_el/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2030,cement capture,heat-input,0.785,MWh_th/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2030,cement capture,heat-output,1.613,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2030,cement capture,investment,4622222.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2030,cement capture,lifetime,25.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2030,direct air capture - solid,FOM,3.777,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2030,direct air capture - solid,compression-electricity-input,0.2,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2030,direct air capture - solid,compression-heat-output,0.29,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2030,direct air capture - solid,electricity-input,0.345,MWh_el/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2030,direct air capture - solid,heat-input,2.25,MWh_th/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2030,direct air capture - solid,heat-output,0.69316,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2030,direct air capture - solid,investment,5355000.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2030,direct air capture - solid,lifetime,25.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2030,direct air capture - liquid,FOM,3.81,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2030,direct air capture - liquid,compression-electricity-input,0.2,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2030,direct air capture - liquid,compression-heat-output,0.29,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2030,direct air capture - liquid,electricity-input,2.074,MWh_el/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2030,direct air capture - liquid,heat-input,0.0,MWh_th/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2030,direct air capture - liquid,heat-output,0.26,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2030,direct air capture - liquid,investment,4943435.897,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2030,direct air capture - liquid,lifetime,35.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2030,direct air capture - electrochemical,FOM,5.0,%/year,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2030,direct air capture - electrochemical,compression-electricity-input,0.11,MWh/tCO2,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2030,direct air capture - electrochemical,compression-heat-output,0.16,MWh/tCO2,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2030,direct air capture - electrochemical,electricity-input,4.375,MWh_el/t_CO2,"FOAK/early-scale penalty on BPMED/ESA hybrid; Sabatino et al. (2022) estimate a minimum energy demand of 24 MJ/kgCO₂ = 6.67 MWh/tCO₂ for BPMED baseline ACS Publications, discounted toward 3.5 for an optimistic ESA/mixed-type system at early commercial scale
+https://pubs.acs.org/doi/10.1021/acs.iecr.2c00889",
+2030,direct air capture - electrochemical,heat-input,0.0,MWh_th/t_CO2,https://pubs.rsc.org/en/content/articlehtml/2025/su/d5su00227c,
+2030,direct air capture - electrochemical,heat-output,0.0,MWh/tCO2,Assumption,
+2030,direct air capture - electrochemical,investment,13000000.0,EUR/(tCO2/h),Assumption,
+2030,direct air capture - electrochemical,lifetime,20.0,years,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2040,biomass CHP capture,FOM,3.02632,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2040,biomass CHP capture,capture_rate,0.95,per unit,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2040,biomass CHP capture,compression-electricity-input,0.09,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2040,biomass CHP capture,compression-heat-output,0.15,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2040,biomass CHP capture,electricity-input,0.025,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2040,biomass CHP capture,heat-input,0.72,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2040,biomass CHP capture,heat-output,0.72,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2040,biomass CHP capture,investment,7600000.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2040,biomass CHP capture,lifetime,25.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2040,cement capture,FOM,3.293,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2040,cement capture,capture_rate,0.990,per unit,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2040,cement capture,compression-electricity-input,0.17,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2040,cement capture,compression-heat-output,0.262,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2040,cement capture,electricity-input,0.0233,MWh_el/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2040,cement capture,heat-input,0.72,MWh_th/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2040,cement capture,heat-output,1.55,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2040,cement capture,investment,4160000.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2040,cement capture,lifetime,25.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2040,direct air capture - solid,FOM,3.852,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2040,direct air capture - solid,compression-electricity-input,0.2,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2040,direct air capture - solid,compression-heat-output,0.29,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2040,direct air capture - solid,electricity-input,0.3,MWh_el/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2040,direct air capture - solid,heat-input,1.899,MWh_th/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2040,direct air capture - solid,heat-output,0.52,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2040,direct air capture - solid,investment,3750000.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2040,direct air capture - solid,lifetime,30.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2040,direct air capture - liquid,FOM,4.052,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2040,direct air capture - liquid,compression-electricity-input,0.2,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2040,direct air capture - liquid,compression-heat-output,0.29,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2040,direct air capture - liquid,electricity-input,2.074,MWh_el/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2040,direct air capture - liquid,heat-input,0.0,MWh_th/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2040,direct air capture - liquid,heat-output,0.26,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2040,direct air capture - liquid,investment,3485948.718,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2040,direct air capture - liquid,lifetime,35.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2040,direct air capture - electrochemical,FOM,5.0,%/year,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2040,direct air capture - electrochemical,compression-electricity-input,0.11,MWh/tCO2,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2040,direct air capture - electrochemical,compression-heat-output,0.16,MWh/tCO2,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2040,direct air capture - electrochemical,electricity-input,3.125,MWh_el/t_CO2,"Mid-trajectory; technology matures, membrane/electrode improvements reduce cell voltage losses",
+2040,direct air capture - electrochemical,heat-input,0.0,MWh_th/t_CO2,https://pubs.rsc.org/en/content/articlehtml/2025/su/d5su00227c,
+2040,direct air capture - electrochemical,heat-output,0.0,MWh/tCO2,Assumption,
+2040,direct air capture - electrochemical,investment,9750000.0,EUR/(tCO2/h),Assumption,
+2040,direct air capture - electrochemical,lifetime,20.0,years,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2050,biomass CHP capture,FOM,3.026316,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2050,biomass CHP capture,capture_rate,0.95,per unit,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2050,biomass CHP capture,compression-electricity-input,0.09,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2050,biomass CHP capture,compression-heat-output,0.15,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2050,biomass CHP capture,electricity-input,0.025,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2050,biomass CHP capture,heat-input,0.72,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2050,biomass CHP capture,heat-output,0.72,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2050,biomass CHP capture,investment,7600000.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2050,biomass CHP capture,lifetime,25.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.a Post comb - small CHP
+2050,cement capture,FOM,3.077,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2050,cement capture,capture_rate,0.99,per unit,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2050,cement capture,compression-electricity-input,0.17,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2050,cement capture,compression-heat-output,0.24,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2050,cement capture,electricity-input,0.021,MWh_el/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2050,cement capture,heat-input,0.72,MWh_th/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2050,cement capture,heat-output,1.55,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2050,cement capture,investment,3900000.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2050,cement capture,lifetime,25.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",401.c Post comb - Cement kiln
+2050,direct air capture - solid,FOM,4.05,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2050,direct air capture - solid,compression-electricity-input,0.2,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2050,direct air capture - solid,compression-heat-output,0.29,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2050,direct air capture - solid,electricity-input,0.27,MWh_el/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2050,direct air capture - solid,heat-input,1.653,MWh_th/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2050,direct air capture - solid,heat-output,0.52,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2050,direct air capture - solid,investment,3210000.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2050,direct air capture - solid,lifetime,30.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.a Liquid Direct air capture
+2050,direct air capture - liquid,FOM,3.75,%/year,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2050,direct air capture - liquid,compression-electricity-input,0.2,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2050,direct air capture - liquid,compression-heat-output,0.29,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2050,direct air capture - liquid,electricity-input,1.97,MWh_el/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2050,direct air capture - liquid,heat-input,0.0,MWh_th/t_CO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2050,direct air capture - liquid,heat-output,0.26,MWh/tCO2,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2050,direct air capture - liquid,investment,2930000.0,EUR/(tCO2/h),"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2050,direct air capture - liquid,lifetime,35.0,years,"Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",403.b Solid Direct air capture
+2050,direct air capture - electrochemical,FOM,5.0,%/year,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2050,direct air capture - electrochemical,compression-electricity-input,0.11,MWh/tCO2,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2050,direct air capture - electrochemical,compression-heat-output,0.16,MWh/tCO2,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+2050,direct air capture - electrochemical,electricity-input,2.25,MWh_el/t_CO2,"Palakkal et al. (2025) model ESA at 0.6 MWh/tCO₂ at 1% CO₂ MDPI concentration; scaling to 400 ppm and adding balance-of-plant gives ~1.5–2.0 MWh/tCO₂ at mature scale — consistent with Sabatino et al.'s minimum projected BPMED energy of 24 MJ/kgCO₂ with a 29% reduction achievable RSC Publishing
+ https://www.mdpi.com/2571-8797/7/1/18
+https://pubs.rsc.org/en/content/articlehtml/2026/el/d6el00018e",
+2050,direct air capture - electrochemical,heat-input,0.0,MWh_th/t_CO2,https://pubs.rsc.org/en/content/articlehtml/2025/su/d5su00227c,
+2050,direct air capture - electrochemical,heat-output,0.0,MWh/tCO2,Assumption,
+2050,direct air capture - electrochemical,investment,7800000.0,EUR/(tCO2/h),Assumption,
+2050,direct air capture - electrochemical,lifetime,20.0,years,"Assumption based on Danish Energy Agency, inputs/technology_data_for_carbon_capture_transport_storage.xlsx",
+all,CO2 pipeline,FOM,0.243,%/year,Danish Energy Agency Technology Data for Energy Transport,
+all,CO2 pipeline,investment,14397,EUR/(tCO2/h)/km,Danish Energy Agency Technology Data for Energy Transport,
+all,CO2 pipeline,lifetime,55,years,Danish Energy Agency Technology Data for Energy Transport,
+all,CO2 submarine pipeline,FOM,0.093,%/year,Danish Energy Agency Technology Data for Energy Transport,
+all,CO2 submarine pipeline,investment,37707,EUR/(tCO2/h)/km,Danish Energy Agency Technology Data for Energy Transport,
+all,CO2 submarine pipeline,lifetime,55,years,Danish Energy Agency Technology Data for Energy Transport,

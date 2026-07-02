@@ -1,8 +1,8 @@
 # ==========================================
 # S02 — CDR CREDIT PRICE €100/tCO₂ (flat across all years)
 # Supply curve HIGH cost scenario (168seg): credit price = €100/tCO₂ for DAC and BECCS.
-# Credit demand cap: 100 Mt/yr (2030), 300 Mt/yr (2040), 500 Mt/yr (2050)
-# based on NZIA / EC ICM Strategy / CATF recommended market demand levels.
+# Policy deployment targets: 22 Mt/yr (2030), 160 Mt/yr (2040), 514 Mt/yr (2050)
+# based on the NEGEM NZE scenario for Europe; plotted as reference lines, not enforced.
 # Planning horizons: 2030, 2040, 2050.
 # Each horizon uses its own previous solve as brownfield (2030→2040→2050),
 # so CDR capacity built in 2030 is correctly inherited into 2040.
@@ -255,7 +255,7 @@ solving:
     agg_offwind: false
     agg_solar: false
     include_existing: false
-    file: config/Myruns/01ArchiveSupplyCurve/supply_curve_v2/nuclear_p_nom_limits.csv
+    file: config/Thesis_Runs/Scenario_1_Deployment_Response/nuclear_p_nom_limits.csv
   constraints:
     CCL: true
     EQ: false

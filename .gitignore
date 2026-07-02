@@ -25,6 +25,11 @@ gurobi.log
 /logs
 /notebooks
 /data/*
+!/data/costs/
+/data/costs/*
+!/data/costs/custom_costs_low_hoB.csv
+!/data/costs/custom_costs_medium_hoB.csv
+!/data/costs/custom_costs_high_hoB.csv
 /cutouts
 /tmp
 doc/_build
