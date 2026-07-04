@@ -1,0 +1,21 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - OSolCfg.txt - - - - - - - - - - - - - - - -
+#
+# A txt description of a SimpleConfiguration<int> to set the type of the
+# output Solution of the UnitBlock
+#
+#   Antonio Frangioni
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+SimpleConfiguration<int> # exact type of the Configuration object
+# the int value is coded bit-wise to specify what is saved:
+15  # = bit 0 (& 1): the solution of all UnitBlock
+   # = bit 1 (& 2): the solution of all NetworkBlock
+   # = bit 2 (& 4): the NetworkBlock are in compressed format
+   # = bit 3 (& 8): the dual variables of the node injection constraints
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - END OSolCfg.txt - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

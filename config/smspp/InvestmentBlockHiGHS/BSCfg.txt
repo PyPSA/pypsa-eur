@@ -1,0 +1,96 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - BSCfg.txt - - - - - - - - - - - - - - - -
+#
+# A txt description of a BlockSolverConfig for the inner UCBlock-style block
+# of an InvestmentBlock, to be solved by a :MILPSolver as the LP relaxation
+# (intRelaxIntVars 1) of the underlying MIP. The LP solver is left at its
+# default settings: forcing presolve off together with the IPM method (which
+# would give a reproducible vertex across CPLEX/Gurobi/HiGHS) makes HiGHS abort
+# on the badly-scaled InvestmentBlock inner LPs, whereas the defaults solve
+# them reliably and return the correct objective. The solver-specific options
+# are kept below as commented hints.
+#
+#   Antonio Frangioni, Donato Meoli
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# BlockSolverConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+1  # the BlockSolverConfig is a "differential" one
+
+1  # number of (the names of) Solver in this BlockSolverConfig
+# now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
+#CPXMILPSolver    # name of Solver
+#GRBMILPSolver    # name of Solver
+HiGHSMILPSolver   # name of Solver
+
+1  # number of ComputeConfig in this BlockSolverConfig
+
+# now all the ComputeConfig
+# 1st ComputeConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ComputeConfig # exact type of the ComputeConfig object
+
+1  # f_diff == 0 ==> all non-provided parameters are set to the default value
+   # f_diff == 1 ==> all non-provided parameters are not changed
+
+3  # number of integer parameters
+
+# now all the integer parameters
+intLogVerb          0    # LogVerb, log verbosity of the MILPSolver
+intRelaxIntVars     1    # nonzero if the continuous relaxation is solved
+intCutSepPar        7    # separate user cuts + lazy constraints
+
+# All specific CPLEX parameter (uncomment based on Solver)
+#CPXPARAM_Preprocessing_Presolve  0   # disable presolve for reproducibility
+#CPXPARAM_Emphasis_Numerical      1   # numerical precision emphasis
+
+# All specific GUROBI parameter (uncomment based on Solver)
+#Method        1   # 0 = primal, 1 = dual simplex (matches CPLEX default)
+#Presolve      0   # 0 = off, 1 = conservative, 2 = aggressive (default -1)
+#NumericFocus  3   # 0 = auto (default), 1..3 = increasing precision focus
+
+0  # number of double parameters
+
+# now all the double parameters
+# All specific HiGHS parameter (uncomment based on Solver)
+#primal_feasibility_tolerance  1e-9
+#dual_feasibility_tolerance    1e-9
+
+0 # number of string parameters
+
+# now all the string parameters
+# All specific HiGHS parameter (uncomment based on Solver). NOTE: enabling both
+# of the following (presolve off + IPM) makes HiGHS abort on these instances.
+#presolve  off    # disable presolve for reproducibility
+#solver    ipm    # interior point: converges to analytic center (unique x*)
+
+#strOutputFile uc_lp.lp
+
+0 # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0 # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0 # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# pointer to the "extra" Configuration
+* # [none]
+
+# end of 1st ComputeConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# end of BlockSolverConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - END BSCfg.txt - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

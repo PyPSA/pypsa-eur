@@ -1,0 +1,21 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - OSolCfg.txt - - - - - - - - - - - - - - - -
+#
+# A txt description of a SimpleConfiguration<int> to set the type of the
+# output Solution of the TwoStageStochasticBlock
+#
+#   Antonio Frangioni
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+SimpleConfiguration<int> # exact type of the Configuration object
+# the int value is coded bit-wise to specify what is saved:
+7  # = bit 0 (& 1): means "store the value of the here_and_now variables"
+   # = bit 1 (& 2): means "store the solutions of each scenario"
+   # = bit 2 (& 4): means "store the dual prices of the non-anticipativity
+   #                       constraints"
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - END OSolCfg.txt - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
