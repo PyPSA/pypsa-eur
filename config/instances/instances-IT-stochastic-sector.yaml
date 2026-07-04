@@ -3,7 +3,7 @@
 # Default configuration for stochastic instance 
 
 run:
-  prefix: "instances_unipi"
+  prefix: "instances"
   name: "stochastic"
 
 scenario:
