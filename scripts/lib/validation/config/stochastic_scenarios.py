@@ -81,7 +81,7 @@ class StochasticScenariosConfig(ConfigModel):
     @classmethod
     def file_must_be_yaml(cls, value: str) -> str:
         """Check that the stochastic scenario file has a YAML extension."""
-        if value.suffix not in {".yaml", ".yml"}:
+        if not value.endswith(".yaml") and not value.endswith(".yml"):
             raise ValueError("stochastic_scenarios.file must be a YAML file.")
         return value
 
