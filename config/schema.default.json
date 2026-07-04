@@ -5615,6 +5615,81 @@
         }
       }
     },
+    "StochasticScenariosConfig": {
+      "description": "Configuration for stochastic scenarios.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Whether to build and solve a stochastic PyPSA network.",
+          "type": "boolean"
+        },
+        "file": {
+          "default": "config/stochastic_scenarios.yaml",
+          "description": "Path to the external YAML file defining stochastic scenarios.",
+          "type": "string"
+        },
+        "export": {
+          "description": "Configuration for exporting deterministic views of stochastic solutions.",
+          "properties": {
+            "average": {
+              "default": true,
+              "description": "Export a probability-weighted average deterministic network view from the stochastic solution.",
+              "type": "boolean"
+            },
+            "scenarios": {
+              "default": false,
+              "description": "Export one deterministic network view for each stochastic scenario.",
+              "type": "boolean"
+            }
+          }
+        },
+        "postprocess": {
+          "description": "Configuration for post-processing stochastic solutions.",
+          "properties": {
+            "use_average": {
+              "default": true,
+              "description": "Use the probability-weighted average deterministic network view as input for standard post-processing rules when stochastic scenarios are enabled.",
+              "type": "boolean"
+            },
+            "scenarios": {
+              "default": false,
+              "description": "Run scenario-specific post-processing for all stochastic scenarios.",
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "StochasticScenariosExportConfig": {
+      "description": "Configuration for exporting deterministic views of stochastic solutions.",
+      "properties": {
+        "average": {
+          "default": true,
+          "description": "Export a probability-weighted average deterministic network view from the stochastic solution.",
+          "type": "boolean"
+        },
+        "scenarios": {
+          "default": false,
+          "description": "Export one deterministic network view for each stochastic scenario.",
+          "type": "boolean"
+        }
+      }
+    },
+    "StochasticScenariosPostprocessConfig": {
+      "description": "Configuration for post-processing stochastic solutions.",
+      "properties": {
+        "use_average": {
+          "default": true,
+          "description": "Use the probability-weighted average deterministic network view as input for standard post-processing rules when stochastic scenarios are enabled.",
+          "type": "boolean"
+        },
+        "scenarios": {
+          "default": false,
+          "description": "Run scenario-specific post-processing for all stochastic scenarios.",
+          "type": "boolean"
+        }
+      }
+    },
     "TransformersConfig": {
       "description": "Configuration for `transformers` settings.",
       "properties": {
@@ -8412,6 +8487,51 @@
             "type": "integer"
           },
           "type": "array"
+        }
+      }
+    },
+    "stochastic_scenarios": {
+      "description": "Configuration for stochastic scenarios.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Whether to build and solve a stochastic PyPSA network.",
+          "type": "boolean"
+        },
+        "file": {
+          "default": "config/stochastic_scenarios.yaml",
+          "description": "Path to the external YAML file defining stochastic scenarios.",
+          "type": "string"
+        },
+        "export": {
+          "description": "Configuration for exporting deterministic views of stochastic solutions.",
+          "properties": {
+            "average": {
+              "default": true,
+              "description": "Export a probability-weighted average deterministic network view from the stochastic solution.",
+              "type": "boolean"
+            },
+            "scenarios": {
+              "default": false,
+              "description": "Export one deterministic network view for each stochastic scenario.",
+              "type": "boolean"
+            }
+          }
+        },
+        "postprocess": {
+          "description": "Configuration for post-processing stochastic solutions.",
+          "properties": {
+            "use_average": {
+              "default": true,
+              "description": "Use the probability-weighted average deterministic network view as input for standard post-processing rules when stochastic scenarios are enabled.",
+              "type": "boolean"
+            },
+            "scenarios": {
+              "default": false,
+              "description": "Run scenario-specific post-processing for all stochastic scenarios.",
+              "type": "boolean"
+            }
+          }
         }
       }
     },
