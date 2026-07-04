@@ -62,8 +62,8 @@ class StochasticScenariosConfig(ConfigModel):
         description="Whether to build and solve a stochastic PyPSA network.",
     )
 
-    file: Path = Field(
-        Path("config/stochastic_scenarios.yaml"),
+    file: str = Field(
+        "config/stochastic_scenarios.yaml",
         description="Path to the external YAML file defining stochastic scenarios.",
     )
 
@@ -79,7 +79,7 @@ class StochasticScenariosConfig(ConfigModel):
 
     @field_validator("file")
     @classmethod
-    def file_must_be_yaml(cls, value: Path) -> Path:
+    def file_must_be_yaml(cls, value: str) -> str:
         """Check that the stochastic scenario file has a YAML extension."""
         if value.suffix not in {".yaml", ".yml"}:
             raise ValueError("stochastic_scenarios.file must be a YAML file.")
