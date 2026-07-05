@@ -261,14 +261,12 @@ rule make_solver_comparison_elec:
             clusters=w.clusters,
             opts=w.opts,
             solver=solver_names(w),
-            run=w.run,
         ),
         benchmarks=lambda w: expand(
             RESULTS + "benchmarks/solve_network/base_s_{clusters}_elec_{opts}_{solver}",
             clusters=w.clusters,
             opts=w.opts,
             solver=solver_names(w),
-            run=w.run,
         ),
     output:
         summary=RESULTS
@@ -304,7 +302,7 @@ rule make_solver_comparison_sector:
             sector_opts=w.sector_opts,
             planning_horizons=w.planning_horizons,
             solver=solver_names(w),
-            run=w.run,
+            run=config["run"]["name"],
         ),
         benchmarks=lambda w: expand(
             RESULTS
@@ -314,7 +312,7 @@ rule make_solver_comparison_sector:
             sector_opts=w.sector_opts,
             planning_horizons=w.planning_horizons,
             solver=solver_names(w),
-            run=w.run,
+            run=config["run"]["name"],
         ),
     output:
         summary=RESULTS
@@ -351,7 +349,7 @@ rule make_solver_comparison_sector_perfect:
             opts=w.opts,
             sector_opts=w.sector_opts,
             solver=solver_names(w),
-            run=w.run,
+            run=config["run"]["name"],
         ),
         benchmarks=lambda w: expand(
             RESULTS
@@ -360,7 +358,7 @@ rule make_solver_comparison_sector_perfect:
             opts=w.opts,
             sector_opts=w.sector_opts,
             solver=solver_names(w),
-            run=w.run,
+            run=config["run"]["name"],
         ),
     output:
         summary=RESULTS
