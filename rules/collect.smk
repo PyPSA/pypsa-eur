@@ -84,6 +84,7 @@ def electricity_solver_comparison_paths(w):
         RESULTS + "csvs/solver_comparison/summary_s_{clusters}_elec_{opts}.csv",
         clusters=config_provider("scenario", "clusters")(w),
         opts=config_provider("scenario", "opts")(w),
+        run=config["run"]["name"],
     )
 
 
@@ -95,6 +96,7 @@ def sector_solver_comparison_paths(w):
             clusters=config_provider("scenario", "clusters")(w),
             opts=config_provider("scenario", "opts")(w),
             sector_opts=config_provider("scenario", "sector_opts")(w),
+            run=config["run"]["name"],
         )
 
     return expand(
@@ -104,6 +106,7 @@ def sector_solver_comparison_paths(w):
         opts=config_provider("scenario", "opts")(w),
         sector_opts=config_provider("scenario", "sector_opts")(w),
         planning_horizons=config_provider("scenario", "planning_horizons")(w),
+        run=config["run"]["name"],
     )
 
 
