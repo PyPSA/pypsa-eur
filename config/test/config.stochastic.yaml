@@ -66,3 +66,8 @@ solving:
     load_shedding:
       enable: true
     transmission_losses: 0
+
+  solver:
+    name: highs
+    options: highs-default
+  mem: 4000
