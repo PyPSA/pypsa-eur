@@ -148,6 +148,30 @@ rule solve_sector_networks_perfect:
     message:
         "Collecting solved sector-coupled network files with perfect foresight"
 
+rule solve_stochastic_networks:
+    input:
+        expand(
+            RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}__sc-{stoch_scenario}.nc",
+            **config["scenario"],
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+        ),
+    message:
+        "Solving stochastic network problems"
+
+rule solve_stochastic_average_networks:
+    input:
+        expand(
+            RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            **config["scenario"],
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+        ),
+    message:
+        "Solving stochastic network problems"
+
 
 def balance_map_paths(kind, w):
     """
