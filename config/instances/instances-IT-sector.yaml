@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=schema.default.json
+
+run:
+  prefix: "instances"
+  name: "IT-sector"
+  scenarios:
+    enable: false
+    file: config/scenarios.yaml
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+    exclude: []
+  use_shadow_directory: false
+
+foresight: overnight
+
+scenario:
+  clusters:
+  - 2
+  # - 5
+  # - 10
+  # - 20
+  # - 50
+  opts:
+  - ''
+
+countries:
+- IT
+
+clustering:
+  temporal:
+    resolution_elec: false
+    resolution_sector: 4c24
+
+solving:
+  options:
+    skip_iterations: true
+    transmission_losses: 0
+    linearized_unit_commitment: false
+    noisy_costs: false
+  solver:
+    name: [gurobi, smspp]  # Note: somehow smspp with investment is not working
+    options: [gurobi-default, smspp-ucblock]
+  solver_options:
+    smspp-ucblock:
+      capacity_expansion_ucblock: true
+    smspp-investmentblock:
+      capacity_expansion_ucblock: false
+
+sector:  # used only when the sector rule is executed
+  gas_network: true
+  H2_retrofit: true
+  hydrogen_turbine: false
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: false
+    biomass_to_methanol: false
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false

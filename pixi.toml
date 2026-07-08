@@ -156,7 +156,7 @@ integration-tests = """
     snakemake -call resources/test-elec-clusters/networks/base_s_adm.nc --configfile config/test/config.clusters.yaml &&
     snakemake -call --configfile config/test/config.scenarios.yaml -n &&
     snakemake -call plot_power_networks_clustered --configfile config/test/config.tyndp.yaml &&
-    snakemake -call export_stochastic_scenario --configfile config/test/config.stochastic.yaml &&
+    snakemake -call solve_stochastic_networks --configfile config/test/config.stochastic.yaml &&
     echo "All tests completed successfully."
 """
 clean-tests = """

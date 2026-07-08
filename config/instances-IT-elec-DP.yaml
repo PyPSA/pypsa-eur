@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=schema.default.json
 
 run:
-  prefix: "instances_unipi"
+  prefix: ""
   name: "IT-elec"
   scenarios:
     enable: false
@@ -31,6 +31,9 @@ clustering:
   temporal:
     resolution_elec: 4c24
 
+conventional:
+  unit_commitment: true
+
 solving:
   options:
     skip_iterations: true
@@ -39,9 +42,14 @@ solving:
     noisy_costs: false
   solver:
     name: [gurobi, smspp, smspp]
-    options: [gurobi-default, smspp-ucblock, smspp-investmentblock]
+    options: [gurobi-default, smspp-ucblock, smspp-ucblock-DP]
   solver_options:
     smspp-ucblock:
       capacity_expansion_ucblock: true
-    smspp-investmentblock:
-      capacity_expansion_ucblock: false
+      enable_thermal_units: true
+    smspp-ucblock-DP:
+      capacity_expansion_ucblock: true
+      enable_thermal_units: true
+      configfile: "config/smspp/Thermal_DynamicProgramming/TUBSCfg-DP.txt"
+      pysmspp_options:
+        "B": "config/smspp/Thermal_DynamicProgramming/TUBCfg-DP.txt"
