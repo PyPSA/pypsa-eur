@@ -10,21 +10,23 @@ NUTS2021 region definitions used by PyPSA-Eur.
 Outputs a single CSV with columns for each crop class (cereals, sugar beet,
 rapeseed, perennials) indexed by NUTS2 region.
 
-Biofuel conversion efficiencies (t_biofuel / t_feedstock) are read from
-``config["perennials"]["biofuel_conversion"]`` and sourced from:
+Biofuel conversion efficiencies (t_biofuel / t_feedstock) are read from the
+``efficiency`` parameter of the ``ethanol from wheat``, ``ethanol from sugar
+beet``, and ``biodiesel from rapeseed`` technologies in the technology-data
+cost assumptions, sourced from:
 
     Banja et al. (2013), "Biofuels in the European Union - A general overview",
     JRC Technical Report, doi:10.2760/69179, Tables 93, 133, 155, 159.
 """
 
 import logging
-import os
 from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import requests
+
+from scripts._helpers import load_costs
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +218,7 @@ def calculate_yields(filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, b
         * unsustainable_biofuels_yields.index.get_level_values("mapping").map(biofuel_yields)
     )
 
-    # yields of perennials per hectar in ton/ha
+    # yields of perennials per hectare in ton/ha
     # standard humidity for perennials = 0.65 (tH2O/t_fresh) -> note production is for fresh until 2025
     std_moist_perennials = 0.65
 
@@ -255,6 +257,11 @@ if __name__ == "__main__":
     CROPS_CSV_NUTS2.parent.mkdir(parents=True, exist_ok=True)
     OUT_CSV_YIELDS_ALL.parent.mkdir(parents=True, exist_ok=True)
 
+    # G0000: total green plants (kept – often the only G-code with NUTS2 coverage, e.g. DK)
+    # G1000: temporary grasses and grazings
+    # G2000: aggregate legumes (G2100 + G2900) – included for NUTS0 fallback coverage;
+    #         does NOT inflate MAX because it is always ≤ max(G2100, G2900)
+    # G2100: lucerne/alfalfa; G2900: clover and other leguminous plants
     perennial_codes = ["G0000", "G1000", "G2000", "G2100", "G2900"]
 
     crops_mapping = dict(
@@ -263,15 +270,16 @@ if __name__ == "__main__":
         MINBIORPS1=["I1110", "I1120", "I1130", "I1110-1130", "I0000"],
         PERENNIALS=perennial_codes,
     )
+    costs = load_costs(snakemake.input.costs)
 
-    conv = snakemake.params.biofuel_conversion
+    #conv = snakemake.params.biofuel_conversion
     # LHV values are fixed physical constants, not parameters: JRC Technical Report doi:10.2760/69179
     LHV_fuels = {"ethanol": 7.447, "biodiesel": 10.194}  # MWh/t (26.81 MJ/kg, 36.7 MJ/kg)
 
     biofuel_yields = {
-        "MINBIOCRP11": conv["MINBIOCRP11"] * LHV_fuels["ethanol"],
-        "MINBIOCRP21": conv["MINBIOCRP21"] * LHV_fuels["ethanol"],
-        "MINBIORPS1":  conv["MINBIORPS1"]  * LHV_fuels["biodiesel"],
+        "MINBIOCRP11": costs.at['ethanol from wheat', 'efficiency'] * LHV_fuels["ethanol"],
+        "MINBIOCRP21": costs.at['ethanol from sugar beet', 'efficiency'] * LHV_fuels["ethanol"],
+        "MINBIORPS1":  costs.at['biodiesel from rapeseed', 'efficiency']  * LHV_fuels["biodiesel"],
     }
 
     other_crops_codes = [
@@ -339,6 +347,8 @@ if __name__ == "__main__":
             "MINBIOCRP11": yield_MINBIOCRP11_full["energy_yields_(MWh/ha)"],
             "MINBIOCRP21": yield_MINBIOCRP21_full["energy_yields_(MWh/ha)"],
             "MINBIORPS1": yield_MINBIORPS1_full["energy_yields_(MWh/ha)"],
+            # Max yield across G-codes: models the best-available perennial crop
+            # choice in each region when substituting 1G biofuel crops.
             "PERENNIALS_MAX": yields_perennials_max_full["YL_(t/ha)"],
         },
         axis=1,

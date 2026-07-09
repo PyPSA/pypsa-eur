@@ -1345,8 +1345,7 @@ def add_perennials(n, costs):
        nodes,
        suffix=" CO2s_perennials",
        bus=nodes + " perennials co2 store",
-       e_nom_extendable=True,
-       e_nom_max=perennials_potentials_spatial.values,
+       e_nom=perennials_potentials_spatial.values,
        carrier="co2 perennials",
        e_cyclic=False,
     )
