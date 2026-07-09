@@ -426,7 +426,7 @@ renewable:
     natura: false
     cutout: default
     excluder_resolution: 250
-    max_mean_temp_C: 10 # exclude grid cells with annual mean air temperature above this
+    min_mean_temp_C: 10 # exclude grid cells with annual mean air temperature below this (weathering kinetics slow in cold climates)
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:

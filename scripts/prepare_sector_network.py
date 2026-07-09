@@ -1253,12 +1253,12 @@ def add_rock_weathering(n, costs):
     to the network as Bus, Store, and Link components, all sharing a single
     "co2 rock weathering" carrier.
 
-    A single Link per node draws electricity and CO2 from the atmosphere
-    (bus1) and deposits it into a fixed-capacity Store (bus2) representing
-    the cumulative mineral-carbonation potential at that node. The store's
-    capacity is dimensioned from the eligible land area (CORINE land cover,
-    filtered by an annual-mean-temperature threshold; see
-    ``determine_rock_weathering_availability_matrix.py`` and
+    A single Link per node draws CO2 from the atmosphere (bus0) and
+    electricity (bus1), depositing the removed CO2 into a fixed-capacity
+    Store (bus2) representing the cumulative mineral-carbonation potential
+    at that node. The store's capacity is dimensioned from the eligible
+    land area (CORINE land cover, filtered by an annual-mean-temperature
+    threshold; see ``determine_rock_weathering_availability_matrix.py`` and
     ``build_available_land.py``) multiplied by a per-km2 CO2 removal rate.
 
     Parameters
@@ -1319,13 +1319,13 @@ def add_rock_weathering(n, costs):
         "Link",
         spatial.nodes,
         suffix=" rock_weathering",
-        bus0=spatial.nodes.values,
-        bus1="co2 atmosphere",
+        bus0="co2 atmosphere",
+        bus1=spatial.nodes.values,
         bus2=spatial.nodes + " co2 rock weathering",
         carrier="co2 rock weathering",
-        marginal_cost=costs.at["Enhanced Weathering", "VOM"] / electricity_input,
-        efficiency=-1 / electricity_input,
-        efficiency2=1 / electricity_input,
+        marginal_cost=costs.at["Enhanced Weathering", "VOM"],
+        efficiency= - electricity_input,
+        efficiency2= 1,
         p_nom_extendable=True,
         lifetime=costs.at["Enhanced Weathering", "lifetime"],
     )
