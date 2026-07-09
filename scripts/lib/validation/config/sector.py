@@ -452,7 +452,7 @@ class SectorConfig(BaseModel):
         description="The share for battery electric vehicles (BEV) that are able to do demand side management (DSM).",
     )
     bev_energy: float = Field(
-        0.05, description="The average size of battery electric vehicles (BEV) in MWh."
+        0.05, description="The average available net battery capacity of battery electric vehicles (BEV) in MWh."
     )
     bev_charge_efficiency: float = Field(
         0.9,
