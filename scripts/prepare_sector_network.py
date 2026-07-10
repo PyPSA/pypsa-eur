@@ -1247,7 +1247,7 @@ def add_dac(n, costs):
     )
 
 
-def add_rock_weathering(n, costs):
+def add_rock_weathering(n, costs, rock_weathering_potentials_file, rock_weathering_config):
     """
     Add enhanced rock weathering (CDR via accelerated mineral carbonation)
     to the network as Bus, Store, and Link components, all sharing a single
@@ -1269,29 +1269,28 @@ def add_rock_weathering(n, costs):
         Costs and parameters for different technologies. Must contain an
         'Enhanced Weathering' entry with 'electricity-input', 'VOM', and
         'lifetime' parameters
+    rock_weathering_potentials_file : str
+        Path to CSV file with eligible area (km2) per node, as produced by
+        ``build_available_land.py`` (``snakemake.input.rock_weathering_potentials``)
+    rock_weathering_config : dict
+        Configuration dict with keys 'co2_removal_per_sqkm' and
+        'max_land_usage' (``snakemake.config["rock_weathering"]``)
 
     Returns
     -------
     None
         Modifies the network object in-place by adding the rock weathering
         Bus, Store, and Link
-
-    Notes
-    -----
-    Reads ``snakemake.input.rock_weathering_potentials`` (eligible area in
-    km2 per node) and
-    ``snakemake.config["rock_weathering"]["co2_removal_per_sqkm"]`` /
-    ``["max_land_usage"]``.
     """
     logger.info("Adding enhanced rock weathering (rock_weathering).")
 
     rock_weathering_potentials = pd.read_csv(
-        snakemake.input.rock_weathering_potentials, index_col=0
+        rock_weathering_potentials_file, index_col=0
     )
     potentials = (
         rock_weathering_potentials["potential [sqkm]"]
-        * snakemake.config["rock_weathering"]["co2_removal_per_sqkm"]
-        * snakemake.config["rock_weathering"]["max_land_usage"]
+        * rock_weathering_config["co2_removal_per_sqkm"]
+        * rock_weathering_config["max_land_usage"]
     )
 
     electricity_input = costs.at["Enhanced Weathering", "electricity-input"]
@@ -6603,7 +6602,12 @@ if __name__ == "__main__":
         add_dac(n, costs)
 
     if options.get("rock_weathering"):
-        add_rock_weathering(n, costs)
+        add_rock_weathering(
+            n,
+            costs,
+            snakemake.input.rock_weathering_potentials,
+            snakemake.config["rock_weathering"],
+        )
 
     if not options["electricity_transmission_grid"]:
         decentral(n)
