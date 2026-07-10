@@ -4,7 +4,6 @@
 
 <a id="config"></a>
 
-# 
 # Configuration
 
 PyPSA-Eur has several configuration options which are documented in this section.
@@ -542,7 +541,7 @@ Only used for sector-coupling studies.
 ??? note "Details"
 
     Configuration for `sector` settings.
-    
+
     | Property | Type | Default | Description |
     |----------|------|---------|-------------|
     | `transport` | boolean | `true` | Flag to include transport sector. |
@@ -725,7 +724,7 @@ Only used for sector-coupling studies.
     |   `limit` | number |  | Maximum allowed renewable energy imports (TWh). |
     |   `limit_sense` | string | `<=` | Sense of the limit. |
     |   `price` | dict (str -> number) |  | Price for importing renewable energy of carrier. |
-    
+
 
 **YAML Syntax**
 
@@ -825,10 +824,11 @@ Some datasets support `primary` or `build` as a source option, meaning that the 
 data source or build it from the latest available data.
 See the `data/versions.csv` file for all available datasets and their sources/versions that are supported.
 
-??? note "Details"
+In your own project, you can define additional version files to modify the contents of `data/versions.csv`.
+See the [data versioning documentation](data_sources.md#managing_data_versions) for more details.
 
-    Configuration for `data` settings.
-    
+??? note "Configuration for `data` settings."
+
     | Property | Type | Default | Description |
     |----------|------|---------|-------------|
     | `hotmaps_industrial_sites` | any |  | Configuration for a single data source. |
@@ -1008,7 +1008,7 @@ See the `data/versions.csv` file for all available datasets and their sources/ve
     | `bidding_zones_entsoepy` | any |  | Configuration for a single data source. |
     |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
     |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    
+
 
 **YAML Syntax**
 

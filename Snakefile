@@ -49,6 +49,8 @@ for scenario_name, scenario_overrides in scenarios.items():
         ) from e
 
 RDIR = get_rdir(run)
+PROJ_DIR = Path(workflow.snakefile).parent
+
 shadow_config = get_shadow(run)
 
 shared_resources = run["shared_resources"]["policy"]
@@ -56,9 +58,10 @@ exclude_from_shared = run["shared_resources"]["exclude"]
 logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
 benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
 resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
-scripts = script_path_provider(Path(workflow.snakefile).parent)
+scripts = script_path_provider(PROJ_DIR)
 
 RESULTS = "results/" + RDIR
+workflow.default_target = config["run"]["default_target_rule"]
 
 
 localrules:
@@ -104,7 +107,6 @@ if config["foresight"] == "perfect":
 
 
 rule all:
-    default_target: True
     input:
         expand(RESULTS + "graphs/costs.pdf", run=config["run"]["name"]),
         expand(resources("maps/power-network.pdf"), run=config["run"]["name"]),
@@ -292,6 +294,8 @@ rule rulegraph:
         pdf=resources("dag_rulegraph.pdf"),
         png=resources("dag_rulegraph.png"),
         svg=resources("dag_rulegraph.svg"),
+    params:
+        default_target=workflow.default_target,  # track default target to ensure rule is re-triggered
     message:
         "Creating RULEGRAPH dag in multiple formats using the final configuration."
     shell:
@@ -329,6 +333,8 @@ rule filegraph:
         pdf=resources("dag_filegraph.pdf"),
         png=resources("dag_filegraph.png"),
         svg=resources("dag_filegraph.svg"),
+    params:
+        default_target=workflow.default_target,  # track default target to ensure rule is re-triggered
     message:
         "Creating FILEGRAPH dag in multiple formats using the final configuration."
     shell:

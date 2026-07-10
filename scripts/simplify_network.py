@@ -119,6 +119,7 @@ def simplify_links(
     adjacency_matrix = n.adjacency_matrix(
         branch_components=["Link"],
         weights=dict(Link=(n.links.carrier == "DC").astype(float)),
+        return_dataframe=False,
     )
 
     _, labels = connected_components(adjacency_matrix, directed=False)
@@ -296,7 +297,9 @@ def aggregate_to_substations(
         }
     )
 
-    adj = n.adjacency_matrix(branch_components=["Line", "Link"], weights=weight).tocsr()
+    adj = n.adjacency_matrix(
+        branch_components=["Line", "Link"], weights=weight, return_dataframe=False
+    ).tocsr()
 
     no_substation_i = n.buses.index.difference(substation_i)
     bus_indexer = n.buses.index.get_indexer(substation_i)
@@ -440,6 +443,13 @@ if __name__ == "__main__":
     busmaps.append(converter_map)
 
     n, simplify_links_map = simplify_links(n, params.p_max_pu, params.p_min_pu)
+
+    # Rename all DC bus carriers to AC
+    # TODO: long-term, rename all aggregated AC and DC carriers to `electricity` to avoid confusion
+    is_dc_bus_carrier = n.buses["carrier"] == "DC"
+    logger.info(f"Simplifying {is_dc_bus_carrier.sum()} DC bus carriers to AC.")
+    n.buses.loc[is_dc_bus_carrier, "carrier"] = "AC"
+
     busmaps.append(simplify_links_map)
 
     if params.simplify_network["remove_stubs"]:
