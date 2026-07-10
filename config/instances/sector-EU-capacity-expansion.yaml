@@ -1,0 +1,142 @@
+# yaml-language-server: $schema=schema.default.json
+
+run:
+  prefix: "dispatch-power-EU"
+  name: all
+  scenarios:
+    enable: true
+    file: config/instances/scenarios/scenarios-power.yaml
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+    exclude: []
+  use_shadow_directory: false
+
+foresight: overnight
+
+scenario:
+  clusters:
+  - 50
+  - 100
+  - 200
+  - 1000
+
+  opts:
+  - ''
+
+sector:
+  land_transport_fuel_cell_share:
+    2020: 0
+    2025: 0
+    2030: 0
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0.05
+  land_transport_electric_share:
+    2020: 0
+    2025: 0.05
+    2030: 0.2
+    2035: 0.45
+    2040: 0.7
+    2045: 0.85
+    2050: 0.70
+  land_transport_ice_share:
+    2020: 1
+    2025: 0.95
+    2030: 0.8
+    2035: 0.55
+    2040: 0.3
+    2045: 0.15
+    2050: 0.25
+  transport_electric_efficiency: 53.19
+  transport_fuel_cell_efficiency: 30.003
+  transport_ice_efficiency: 16.0712
+  agriculture_machinery_electric_share: 0.5
+  agriculture_machinery_oil_share: 0.5
+  agriculture_machinery_fuel_efficiency: 0.7
+  agriculture_machinery_electric_efficiency: 0.3
+  shipping_hydrogen_liquefaction: true
+  shipping_hydrogen_share:
+    2020: 0
+    2025: 0
+    2030: 0
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0.05
+  shipping_methanol_share:
+    2020: 0
+    2025: 0
+    2030: 0.15
+    2035: 0.35
+    2040: 0.55
+    2045: 0.8
+    2050: 0.8
+  shipping_oil_share:
+    2020: 1
+    2025: 1
+    2030: 0.85
+    2035: 0.65
+    2040: 0.45
+    2045: 0.2
+    2050: 0.15
+  shipping_methanol_efficiency: 0.46
+  shipping_oil_efficiency: 0.4
+  allam_cycle_gas: true
+  methanol:
+    regional_methanol_demand: true
+    methanol_reforming: true
+    methanol_reforming_cc: true
+    methanol_to_kerosene: true
+    methanol_to_power:
+      ccgt: true
+      ccgt_cc: false
+      ocgt: true
+      allam: true
+    biomass_to_methanol: false
+    biomass_to_methanol_cc: false
+  H2_network: true
+  gas_network: true
+  H2_retrofit: false
+  H2_retrofit_capacity_per_CH4: 0.6
+  gas_network_connectivity_upgrade: 1
+  gas_distribution_grid: true
+  gas_distribution_grid_cost_factor: 1.0
+  biomass_spatial: true
+  biomass_transport: false
+  biogas_upgrading: true
+  biogas_upgrading_cc: false
+  conventional_generation:
+    OCGT: gas
+    CCGT: gas
+  biomass_to_liquid: true
+  biomass_to_liquid_cc: false
+  electrobiofuels: true
+  biosng: true
+  biosng_cc: false
+  bioH2: false
+
+clustering:
+  temporal:
+    resolution_sector: 48c24
+
+solving:
+  options:
+    load_shedding: 
+      enable: true
+    skip_iterations: true
+    transmission_losses: 0
+    linearized_unit_commitment: false
+    noisy_costs: false
+  solver:
+    name: [gurobi, smspp, smspp]
+    options: [gurobi-default, smspp-ucblock, smspp-investmentblock]
+  solver_options:
+    smspp-ucblock:
+      capacity_expansion_ucblock: true
+      configfile: "UCBlock/uc_solverconfig_grb.txt"
+    smspp-investmentblock:
+      capacity_expansion_ucblock: false
+  runtime: 12H
+  

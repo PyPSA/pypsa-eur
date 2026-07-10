@@ -34,6 +34,10 @@ stochastic_scenarios:
 countries:
 - IT
 
+snapshots:
+  start: "2013-03-01"
+  end: "2013-03-08"
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   extendable_carriers:
@@ -66,3 +70,8 @@ solving:
     load_shedding:
       enable: true
     transmission_losses: 0
+
+  solver:
+    name: highs
+    options: highs-default
+  mem: 4000

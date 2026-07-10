@@ -84,6 +84,7 @@ def electricity_solver_comparison_paths(w):
         RESULTS + "csvs/solver_comparison/summary_s_{clusters}_elec_{opts}.csv",
         clusters=config_provider("scenario", "clusters")(w),
         opts=config_provider("scenario", "opts")(w),
+        run=config["run"]["name"],
     )
 
 
@@ -95,6 +96,7 @@ def sector_solver_comparison_paths(w):
             clusters=config_provider("scenario", "clusters")(w),
             opts=config_provider("scenario", "opts")(w),
             sector_opts=config_provider("scenario", "sector_opts")(w),
+            run=config["run"]["name"],
         )
 
     return expand(
@@ -104,6 +106,7 @@ def sector_solver_comparison_paths(w):
         opts=config_provider("scenario", "opts")(w),
         sector_opts=config_provider("scenario", "sector_opts")(w),
         planning_horizons=config_provider("scenario", "planning_horizons")(w),
+        run=config["run"]["name"],
     )
 
 
@@ -144,6 +147,30 @@ rule solve_sector_networks_perfect:
         ),
     message:
         "Collecting solved sector-coupled network files with perfect foresight"
+
+rule solve_stochastic_networks:
+    input:
+        expand(
+            RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}__sc-{stoch_scenario}.nc",
+            **config["scenario"],
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+        ),
+    message:
+        "Solving stochastic network problems"
+
+rule solve_stochastic_average_networks:
+    input:
+        expand(
+            RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            **config["scenario"],
+            stoch_scenario=STOCHASTIC_SCENARIOS,
+            run=config["run"]["name"],
+        ),
+    message:
+        "Solving stochastic network problems"
 
 
 def balance_map_paths(kind, w):

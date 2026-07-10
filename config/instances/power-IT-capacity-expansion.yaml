@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=schema.default.json
 
 run:
-  prefix: "instances"
-  name: "IT-elec"
+  prefix: "dispatch-power-IT"
+  name: all
   scenarios:
-    enable: false
-    file: config/scenarios.yaml
+    enable: true
+    file: config/instances/scenarios/scenarios-power.yaml
   disable_progressbar: true
   shared_resources:
     policy: false
@@ -17,10 +17,8 @@ foresight: overnight
 scenario:
   clusters:
   - 2
-  # - 5
-  # - 10
-  # - 20
-  # - 50
+  - 20
+  - 50
   opts:
   - ''
 
@@ -29,10 +27,12 @@ countries:
 
 clustering:
   temporal:
-    resolution_elec: 4c24
+    resolution_elec: 48c24
 
 solving:
   options:
+    load_shedding: 
+      enable: true
     skip_iterations: true
     transmission_losses: 0
     linearized_unit_commitment: false
@@ -47,3 +47,4 @@ solving:
     smspp-investmentblock:
       capacity_expansion_ucblock: false
       configfile: config/smspp/InvestmentBlockGrb/BSPar.txt
+  runtime: 12H
