@@ -419,15 +419,15 @@ renewable:
     eia_norm_year: false
     eia_correct_by_capacity: false
     eia_approximate_missing: false
-  # land-eligibility settings for alternative carbon dioxide removal technologies,
-  # feeding determine_rock_weathering_availability_matrix.py the same way onwind/solar
-  # feed determine_availability_matrix.py above
   rock_weathering:
-    corine: [12, 13, 14] # non-irrigated arable land, permanent crops, rice fields
+    corine:
+    - 12
+    - 13
+    - 14
     natura: false
     cutout: default
     excluder_resolution: 250
-    min_mean_temp_C: 10 # exclude grid cells with annual mean air temperature below this (weathering kinetics slow in cold climates)
+    min_mean_temp_C: 10
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -1080,9 +1080,10 @@ industry:
   reference_year: 2023
   oil_refining_emissions: 0.013
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#rock_weathering
 rock_weathering:
-  co2_removal_per_sqkm: 309 # tonnes CO2 sequestered per sqkm (temperate-only rate; hot climate is ~1% of eligible EU area, dropped)
-  max_land_usage: 0.2 # maximum fraction of suitable area used for rock weathering
+  co2_removal_per_sqkm: 309
+  max_land_usage: 0.2
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
