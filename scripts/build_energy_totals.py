@@ -31,6 +31,9 @@ from tqdm import tqdm
 
 from scripts._helpers import configure_logging, mute_print, set_scenario_config
 
+pd.set_option("future.no_silent_downcasting", True)
+
+
 cc = coco.CountryConverter()
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
@@ -657,7 +660,9 @@ def build_energy_totals(
                 df[f"total {sector} {use}"] - df[f"electricity {sector} {use}"]
             )
             nonelectric = df[f"total {sector}"] - df[f"electricity {sector}"]
-            nonelectric = nonelectric.copy().replace(0, np.nan)
+            nonelectric = (
+                nonelectric.copy().replace(0, np.nan).infer_objects(copy=False)
+            )
             avg = nonelectric_use.div(nonelectric).mean()
             logger.debug(
                 f"{sector}: average fraction of non-electric for {use} is {avg:.3f}"
@@ -694,7 +699,9 @@ def build_energy_totals(
                 nonelectric = (
                     no_norway[f"total {sector}"] - no_norway[f"electricity {sector}"]
                 )
-                nonelectric = nonelectric.copy().replace(0, np.nan)
+                nonelectric = (
+                    nonelectric.copy().replace(0, np.nan).infer_objects(copy=False)
+                )
                 fraction = nonelectric_use.div(nonelectric).mean()
                 df.loc["NO", f"total {sector} {use}"] = (
                     total_heating * fraction
@@ -827,6 +834,7 @@ def build_district_heat_share(countries: list[str], idees: pd.DataFrame) -> pd.S
         idees[["thermal uses residential", "thermal uses services"]]
         .sum(axis=1)
         .replace(0, np.nan)
+        .infer_objects(copy=False)
     )
 
     district_heat_share = district_heat / total_heat
@@ -853,7 +861,10 @@ def build_district_heat_share(countries: list[str], idees: pd.DataFrame) -> pd.S
 
     # restrict to available years
     district_heat_share = (
-        district_heat_share.unstack().dropna(how="all", axis=1).ffill(axis=1)
+        district_heat_share.unstack()
+        .dropna(how="all", axis=1)
+        .ffill(axis=1)
+        .infer_objects(copy=False)
     )
 
     return district_heat_share
