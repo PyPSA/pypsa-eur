@@ -1247,7 +1247,9 @@ def add_dac(n, costs):
     )
 
 
-def add_rock_weathering(n, costs, rock_weathering_potentials_file, rock_weathering_config):
+def add_rock_weathering(
+    n, costs, rock_weathering_potentials_file, rock_weathering_config
+):
     """
     Add enhanced rock weathering (CDR via accelerated mineral carbonation)
     to the network as Bus, Store, and Link components, all sharing a single
