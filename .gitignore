@@ -19,6 +19,8 @@ gurobi.log
 *.orig
 .idea
 
+investment_candidates*
+
 /bak
 /resources
 /resources*
