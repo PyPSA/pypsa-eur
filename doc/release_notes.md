@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* feat: Add enhanced rock weathering as a carbon dioxide removal (CDR) technology, with node-level potential derived from CORINE land cover and filtered by mean annual minimum temperature ([#2142](https://github.com/PyPSA/pypsa-eur/issues/2142)).
+
 * Security: SBOM security scan included in CI.
 
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
