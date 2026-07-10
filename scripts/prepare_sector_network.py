@@ -1324,8 +1324,8 @@ def add_rock_weathering(n, costs):
         bus2=spatial.nodes + " co2 rock weathering",
         carrier="co2 rock weathering",
         marginal_cost=costs.at["Enhanced Weathering", "VOM"],
-        efficiency= - electricity_input,
-        efficiency2= 1,
+        efficiency=-electricity_input,
+        efficiency2=1,
         p_nom_extendable=True,
         lifetime=costs.at["Enhanced Weathering", "lifetime"],
     )

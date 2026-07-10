@@ -921,10 +921,6 @@ rule build_biomass_potentials:
 
 
 rule determine_rock_weathering_availability_matrix:
-    message:
-        "Determining availability matrix for {wildcards.clusters} clusters and rock weathering"
-    params:
-        renewable=config_provider("renewable"),
     input:
         corine=ancient(rules.retrieve_corine.output["tif_file"]),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
@@ -932,21 +928,27 @@ rule determine_rock_weathering_availability_matrix:
             w, config_provider("renewable", "rock_weathering", "cutout")(w)
         ),
     output:
-        resources("availability_matrix_carbon_dioxide_removal_{clusters}_rock_weathering.nc"),
+        resources(
+            "availability_matrix_carbon_dioxide_removal_{clusters}_rock_weathering.nc"
+        ),
     log:
         logs("determine_rock_weathering_availability_matrix_{clusters}.log"),
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+    params:
+        renewable=config_provider("renewable"),
+    message:
+        "Determining availability matrix for {wildcards.clusters} clusters and rock weathering"
     script:
         scripts("determine_rock_weathering_availability_matrix.py")
 
 
 rule build_available_land:
-    params:
-        renewable=config_provider("renewable"),
     input:
-        availability_matrix=resources("availability_matrix_carbon_dioxide_removal_{clusters}_{technology}.nc"),
+        availability_matrix=resources(
+            "availability_matrix_carbon_dioxide_removal_{clusters}_{technology}.nc"
+        ),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", w.technology, "cutout")(w)
@@ -959,6 +961,8 @@ rule build_available_land:
         technology="rock_weathering",
     resources:
         mem_mb=8000,
+    params:
+        renewable=config_provider("renewable"),
     script:
         scripts("build_available_land.py")
 
