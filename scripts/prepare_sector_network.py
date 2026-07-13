@@ -1289,7 +1289,9 @@ def add_biochar(n, costs):
     """
     logger.info("Adding biochar.")
 
-    biochar_potentials = pd.read_csv(snakemake.input.biochar_potentials).set_index("node")
+    biochar_potentials = pd.read_csv(snakemake.input.biochar_potentials).set_index(
+        "node"
+    )
 
     n.add("Carrier", "co2 biochar")
 
@@ -1302,8 +1304,10 @@ def add_biochar(n, costs):
     )
 
     co2_per_tonne = (
-        1 / costs.at["biochar pyrolysis", "biomass-input"]
-        * 1 / costs.at["biochar pyrolysis", "yield-biochar"]
+        1
+        / costs.at["biochar pyrolysis", "biomass-input"]
+        * 1
+        / costs.at["biochar pyrolysis", "yield-biochar"]
     )  # tCO2 / t_biochar
 
     n.add(
@@ -1327,7 +1331,10 @@ def add_biochar(n, costs):
         biomass_buses = spatial.nodes + " solid biomass"
 
     # heat output into urban central heat system
-    if snakemake.config["sector"]["heating"] and snakemake.config["sector"]["biochar"]["heat_output"]:
+    if (
+        snakemake.config["sector"]["heating"]
+        and snakemake.config["sector"]["biochar"]["heat_output"]
+    ):
         logger.info("Adding biochar heat output to urban central heat system.")
         biochar_heat_buses = []
         for node in spatial.nodes:

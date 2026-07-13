@@ -921,11 +921,6 @@ rule build_biomass_potentials:
 
 
 rule determine_carbon_dioxide_removal_availability_matrix:
-    message:
-        "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} carbon dioxide removal technology"
-    params:
-        renewable=config_provider("renewable"),
-        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     input:
         corine=ancient(rules.retrieve_corine.output["tif_file"]),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
@@ -933,23 +928,32 @@ rule determine_carbon_dioxide_removal_availability_matrix:
             w, config_provider("renewable", w.technology, "cutout")(w)
         ),
     output:
-        resources("availability_matrix_carbon_dioxide_removal_{clusters}_{technology}.nc"),
+        resources(
+            "availability_matrix_carbon_dioxide_removal_{clusters}_{technology}.nc"
+        ),
     log:
-        logs("determine_carbon_dioxide_removal_availability_matrix_{clusters}_{technology}.log"),
+        logs(
+            "determine_carbon_dioxide_removal_availability_matrix_{clusters}_{technology}.log"
+        ),
     wildcard_constraints:
         technology="biochar",
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+    params:
+        renewable=config_provider("renewable"),
+        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+    message:
+        "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} carbon dioxide removal technology"
     script:
         scripts("determine_availability_matrix.py")
 
 
 rule build_available_land:
-    params:
-        renewable=config_provider("renewable"),
     input:
-        availability_matrix=resources("availability_matrix_carbon_dioxide_removal_{clusters}_{technology}.nc"),
+        availability_matrix=resources(
+            "availability_matrix_carbon_dioxide_removal_{clusters}_{technology}.nc"
+        ),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", w.technology, "cutout")(w)
@@ -962,6 +966,8 @@ rule build_available_land:
         technology="biochar",
     resources:
         mem_mb=8000,
+    params:
+        renewable=config_provider("renewable"),
     script:
         scripts("build_available_land.py")
 
