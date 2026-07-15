@@ -1,0 +1,31 @@
+BlockSolverConfig  # The name of the configuration
+
+1 # The configuration is "differential"
+1 # Number of solvers
+
+# Names of the solvers
+HiGHSMILPSolver
+
+1 # Number of ComputeConfigs
+
+# ------ ComputeConfig 0 ------
+ComputeConfig      # Type of the object
+1                  # Not differential
+
+1  # Number of integer parameters
+intLogVerb 1
+
+2  # Number of double parameters
+dblAAccSol 1e-04
+dblMaxTime 3600
+
+0                  # Number of string parameters
+# strOutputFile uc_output.lp
+
+0  # Number of vector-of-int parameters
+0  # Number of vector-of-double parameters
+0  # Number of vector-of-string parameters
+
+# Extra configuration
+* # [none]
+# -----------------------------

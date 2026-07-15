@@ -1,0 +1,127 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - BSPar.txt - - - - - - - - - - - - - - - - -
+#
+# A txt description of a BlockSolverConfig for a TSSBlock to be solved by a
+# LagrangianDualSolver using a BundleSolver as the inner Solver
+#
+#   Enrico Gorgone, Antonio Frangioni
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+1  # the BlockSolverConfig is a "differential" one
+
+1  # number of (the names of) Solver in this BlockSolverConfig
+# now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
+LagrangianDualSolver    # name of Solver
+
+1  # number of ComputeConfig in this BlockSolverConfig
+
+# now all the ComputeConfig
+# 1st ComputeConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ComputeConfig of the LagrangianDualSolver; it mostly is the
+# ComputeConfig of the inner Solver, which is a [Parallel]BundleSolver
+
+ComputeConfig # exact type of the ComputeConfig object
+
+1  # f_diff == 0 ==> all non-provided parameters are set to the default value
+   # f_diff == 1 ==> all non-provided parameters are not changed
+
+25 # number of integer parameters
+
+# now all the integer parameters
+intPushCostToOwner 1 # whether sub-Block Objective are changed
+intDoEasy 	 0      # do easy components for (some) LagBFunction
+intMaxIter 	 10000  # max number of iterations for each call
+intMaxThread 1	    # MaxThread, max number of new tasks to spawn
+intLogVerb 	 7      # log verbosity of main Bundle algorithm
+intWZNorm   2     # which norm to use in the norm-based stopping condition
+intBPar1   20     # discard items when they have been useless for <this> iterations
+intBPar2  100     # max bundle size per component
+intBPar3    1     # max n. of items to fetch from Fi() at each iteration
+intBPar4    1     # min n. of items to fetch from Fi() at each iteration
+intBPar6    0     # second parameter for dynamic max n. of items per iteration
+intBPar7   11     # how to deal with the global pools
+intMnSSC    0     # min number of consecutive SS with the same t for a t increase
+intMnNSC    1     # min number of consecutive NS with the same t for a t decrease
+inttSPar1  12     # long-term t-strategy (0 = none, 4 = soft, 8 = hard, 12 = balancing)
+intMaxNrEvls 2    # maximum number of function evaluations at each iteration
+intMPName  15     # MP solver: 0 = QPP, 7 = Cplex/Gurobi with quadratic stabilization
+                  # + 8 = check for duplicate linearizations
+intTrgtMng  31    # bit-wise encoding targets and accuracies management:
+                  # bit 0: if lower/upper target is set to each convex/concave component
+                  # bit 1: if upper/lower target is set to each convex/concave component
+                  # bit 2-3: if accuracy is set (2 = upper - lower, 3 = using EpsU)
+                  # bit 4: if Lipschitz constant is used to compute the upper model
+
+# QPPenalty's parameters :- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+intMPlvl   7      # log verbosity of Master Problem
+intQPmp1   0	  # MxAdd, how many variables can be added to the base at each
+      	          # iteration in BMinQuad (0 = at will)
+intQPmp2   0      # MxRmv, how many variables can be removed from the base at each
+      	          # iteration in BMinQuad (0 = at will)
+
+# OSIMPSolver's parameters :- - - - - - - - - - - - - - - - - - - - - - - - -
+
+intOSImp1  0      # Osi(Cpx/Grb)Solver algorithm (0 = auto (default), 1 = primal, 2 = dual, 3 = network, 4 = barrier, 5 = sifting, 6 = concurrent)
+intOSImp2  0      # pre-processing (reduction)
+intOSImp3  1      # threads
+intRstAlg  2      # parameter to handle the reset of the algorithm
+
+16 # number of double parameters
+
+# now all the double parameters
+dblRelAcc  1e-6   # relative accuracy required to solution
+dblNZEps   1e-2   # stopping parameter: threshold to declare 0 the || residual ||
+dbltStar   -1e+0   # stopping parameter: multiplied to || residual || to estimate gap
+dblBPar5   4      # first parameter for dynamic max n. of items per iteration
+dblm1      -0.30  # a NS is possible if (~) Fi( Lambda1 ) >= Fi( Lambda ) + | m1 | v*
+dblm2      0.90   # a SS is possible if Fi( Lambda1 ) <= Fi( Lambda ) + ( 1 - m2 ) v*
+dblm3      0.99   # a NR is computed if \sigma^* < - t * m3 * || z* ||
+dblmxIncr  10     # max increase of t
+dblmnIncr  1.5    # min increase of t (each time it is increased)
+dblmxDecr  0.1    # max decrease of t
+dblmnDecr  0.66   # min decrease of t (each time it is decreased)
+dbltMaior  1e+6   # maximum value for t
+dbltMinor  1e-10  # minimum value for t
+dbltInit   1e-3   # initial value for t
+dbltSPar2  1e-2   # parameter for the long-term t-strategy
+dblCtOff   0.01   # cut-off factor for pricing in MinQuad
+
+2 # number of string parameters
+
+# now all the string parameters
+#strLogFileName      tssb.log              # filename for the Solver log
+#str_LDSlv_ISName   ParallelBundleSolver   # the inner Solver used by LagrangianDualSolver
+str_LDSlv_ISName    BundleSolver          # the inner Solver used by LagrangianDualSolver
+#str_LagBF_BSCfg     LPBSCfg-LD.txt   	  # BlockSolverConfig for the LagBFunctions
+str_LagBF_BSCfg     BSCfg.txt   	  # BlockSolverConfig for the LagBFunctions
+
+0 # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0 # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0 # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# pointer to the "extra" Configuration
+* # [none]
+
+# end of 2nd ComputeConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# end of BlockSolverConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - END BSPar.txt - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

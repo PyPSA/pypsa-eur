@@ -1,0 +1,60 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - TUBCfg-LP.txt - - - - - - - - - - - - - - -
+#
+# A txt description of a BlockConfig for a ThermalUnitBlock that is being
+# solved by a :MILPSolver. As such it is relevant:
+#
+# - if dynamic constraints (Perspective Cuts) are separated, and what are
+#   corresponding tolerances, as controlled by the Configuration of
+#   dynamic constraints
+#
+# - which of the several different available formulation is selected, as
+#   controlled by the Configuration of static variables
+#
+# Note that if the latter does not include P/C (+8), then the former is
+# actually irrelevant
+#
+#   Antonio Frangioni, Donato Meoli
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockConfig # exact type of the ComputeConfig object
+
+1  # the BlockConfig is a "differential" one
+
+# static_constraints
+*    # [none]
+
+# dynamic_constraints
+SimpleConfiguration<std::pair<double,double>>
+1e-6    # threshold parameter for P/C separation
+1e-4    # tolerance value to consider a binary variable
+
+# static_variables
+SimpleConfiguration<int>
+1    # 0 = 3bin, 1 = T, 2 = pt, 3 = DP, 4 = SU, 5 = SD, 6 = SUSD (Formulation)
+#9    # +8 with Perspective Cuts
+#17   # +16: start-up / shut-down variables are continuous
+
+# dynamic_variables
+*    # [none]
+
+# objective
+*    # [none]
+
+# is_feasible
+*    # [none]
+
+# is_optimal
+*    # [none]
+
+# solution
+*    # [none]
+
+# extra
+*    # [none]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - END TUBCfg-LP.txt - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

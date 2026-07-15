@@ -1,0 +1,83 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - BSCfg_grb.txt - - - - - - - - - - - - - - -
+#
+# Gurobi variant of BSCfg.txt: a BlockSolverConfig for the inner UCBlock-style
+# block of an InvestmentBlock, to be solved by GRBMILPSolver as the LP
+# relaxation (intRelaxIntVars 1) of the underlying MIP. Presolve is disabled
+# for reproducibility (it can transform the model and shift the optimal vertex
+# on degenerate LPs), and NumericFocus is raised because the InvestmentBlock
+# inner LPs are badly scaled (capacities, snapshot-weighted costs and VOLL span
+# many orders of magnitude), which makes HiGHS fail on some iterates.
+#
+#   Antonio Frangioni, Donato Meoli
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# BlockSolverConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+1  # the BlockSolverConfig is a "differential" one
+
+1  # number of (the names of) Solver in this BlockSolverConfig
+# now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
+GRBMILPSolver     # name of Solver
+
+1  # number of ComputeConfig in this BlockSolverConfig
+
+# now all the ComputeConfig
+# 1st ComputeConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ComputeConfig # exact type of the ComputeConfig object
+
+1  # f_diff == 0 ==> all non-provided parameters are set to the default value
+   # f_diff == 1 ==> all non-provided parameters are not changed
+
+5  # number of integer parameters
+
+# now all the integer parameters
+intLogVerb          0    # LogVerb, log verbosity of the MILPSolver
+intRelaxIntVars     1    # nonzero if the continuous relaxation is solved
+intCutSepPar        7    # separate user cuts + lazy constraints
+
+# All specific GUROBI parameter
+Presolve      0    # disable presolve for reproducibility
+NumericFocus  3    # maximum numerical precision focus
+
+0  # number of double parameters
+
+# now all the double parameters
+# [none]
+
+0 # number of string parameters
+
+# now all the string parameters
+# [none]
+
+#strOutputFile uc_lp.lp
+
+0 # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0 # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0 # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# pointer to the "extra" Configuration
+* # [none]
+
+# end of 1st ComputeConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# end of BlockSolverConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - END BSCfg_grb.txt - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

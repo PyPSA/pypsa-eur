@@ -43,8 +43,8 @@ solving:
   solver_options:
     smspp-ucblock:
       capacity_expansion_ucblock: true
-      configfile: "UCBlock/uc_solverconfig_grb.txt"
+      configfile: config/smspp/UCBlockGrb/uc_solverconfig.txt
     smspp-investmentblock:
       capacity_expansion_ucblock: false
+      configfile: config/smspp/InvestmentBlockGrb/BSPar.txt
   runtime: 12H
-  

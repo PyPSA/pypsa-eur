@@ -53,5 +53,10 @@ solving:
       configfile: "UCBlock/uc_solverconfig_grb.txt"
     smspp-investmentblock:
       capacity_expansion_ucblock: false
+    smspp-ucblock-DP:
+      capacity_expansion_ucblock: true
+      enable_thermal_units: true
+      configfile: "config/smspp/Thermal_DynamicProgramming/TUBSCfg-DP.txt"
+      pysmspp_options:
+        "B": "config/smspp/Thermal_DynamicProgramming/TUBCfg-DP.txt"
   runtime: 12H
-  
