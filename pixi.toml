@@ -12,6 +12,8 @@ exclude-newer = "7d"
 
 [exclude-newer]
 linopy = "0d"
+pypsa = "0d"
+atlite = "0d"
 
 [tasks]
 
