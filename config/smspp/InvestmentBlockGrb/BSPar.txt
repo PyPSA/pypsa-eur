@@ -65,9 +65,10 @@ intOSImp2  1      # pre-processing (reduction)
 intOSImp3  1      # threads
 intRstAlg  2      # parameter to handle the reset of the algorithm
 
-16 # number of double parameters
+17 # number of double parameters
 
 # now all the double parameters
+dblMaxTime 43200.0
 dblRelAcc  1e-4   # relative accuracy required to solution
 dblNZEps   1e-4   # stopping parameter: threshold to declare 0 the || residual ||
 dbltStar   -100   # stopping parameter: multiplied to || residual || to estimate gap

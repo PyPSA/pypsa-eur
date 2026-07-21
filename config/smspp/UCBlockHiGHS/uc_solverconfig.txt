@@ -17,7 +17,7 @@ intLogVerb 1
 
 2  # Number of double parameters
 dblAAccSol 1e-04
-dblMaxTime 3600
+dblMaxTime 43200.0
 
 0                  # Number of string parameters
 # strOutputFile uc_output.lp

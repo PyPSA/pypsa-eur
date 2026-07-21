@@ -18,10 +18,10 @@ intLogVerb 1
 Method 2
 Crossover 0
 
-0  # Number of double parameters
+1  # Number of double parameters
 #dblAAccSol 1e-08
 #dblRAccSol 1e-08
-#dblMaxTime 20000
+dblMaxTime 43200.0
 
 0  # Number of string parameters
 # strOutputFile uc_lp.lp

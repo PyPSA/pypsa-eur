@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=schema.default.json
 
 run:
-  prefix: "dispatch-power-EU"
+  prefix: "capacity-expansion-power-IT-noUC"
   name: all
   scenarios:
     enable: true
@@ -16,21 +16,14 @@ foresight: overnight
 
 scenario:
   clusters:
+  - 2
+  - 20
   - 50
-  - 100
-  - 200
-  - 1000
-
   opts:
   - ''
 
-electricity:
-  extendable_carriers:
-    Generator: []
-    StorageUnit: []
-    Store: []
-    Link: []
-  transmission_limit: v1.0
+countries:
+- IT
 
 clustering:
   temporal:
@@ -47,16 +40,3 @@ solving:
   solver:
     name: [gurobi, smspp, smspp]
     options: [gurobi-default, smspp-ucblock, smspp-investmentblock]
-  solver_options:
-    smspp-ucblock:
-      capacity_expansion_ucblock: true
-      configfile: "UCBlock/uc_solverconfig_grb.txt"
-    smspp-investmentblock:
-      capacity_expansion_ucblock: false
-    smspp-ucblock-DP:
-      capacity_expansion_ucblock: true
-      enable_thermal_units: true
-      configfile: "config/smspp/Thermal_DynamicProgramming/TUBSCfg-DP.txt"
-      pysmspp_options:
-        "B": "config/smspp/Thermal_DynamicProgramming/TUBCfg-DP.txt"
-  runtime: 12H

@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=schema.default.json
 
 run:
-  prefix: "dispatch-power-IT"
+  prefix: "capacity-expansion-power-EU-UC"
   name: all
   scenarios:
     enable: true
@@ -16,14 +16,14 @@ foresight: overnight
 
 scenario:
   clusters:
-  - 2
-  - 20
   - 50
+  - 100
+  - 200
+  - 1000
+
   opts:
   - ''
 
-countries:
-- IT
 
 clustering:
   temporal:
@@ -38,13 +38,5 @@ solving:
     linearized_unit_commitment: false
     noisy_costs: false
   solver:
-    name: [gurobi, smspp, smspp]
-    options: [gurobi-default, smspp-ucblock, smspp-investmentblock]
-  solver_options:
-    smspp-ucblock:
-      capacity_expansion_ucblock: true
-      configfile: config/smspp/UCBlockGrb/uc_solverconfig.txt
-    smspp-investmentblock:
-      capacity_expansion_ucblock: false
-      configfile: config/smspp/InvestmentBlockGrb/BSPar.txt
-  runtime: 12H
+    name: [gurobi, smspp]
+    options: [gurobi-default, smspp-unitcommitment-capacity-expansion]

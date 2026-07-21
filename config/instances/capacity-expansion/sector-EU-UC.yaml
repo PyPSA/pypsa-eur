@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=schema.default.json
 
 run:
-  prefix: "dispatch-power-EU"
+  prefix: "capacity-expansion-sector-EU-UC"
   name: all
   scenarios:
     enable: true
-    file: config/instances/scenarios/scenarios-power.yaml
+    file: config/instances/scenarios/scenarios-sector.yaml
   disable_progressbar: true
   shared_resources:
     policy: false
@@ -130,12 +130,5 @@ solving:
     linearized_unit_commitment: false
     noisy_costs: false
   solver:
-    name: [gurobi, smspp, smspp]
-    options: [gurobi-default, smspp-ucblock, smspp-investmentblock]
-  solver_options:
-    smspp-ucblock:
-      capacity_expansion_ucblock: true
-      configfile: "UCBlock/uc_solverconfig_grb.txt"
-    smspp-investmentblock:
-      capacity_expansion_ucblock: false
-  runtime: 12H
+    name: [gurobi, smspp]
+    options: [gurobi-default, smspp-unitcommitment-capacity-expansion]

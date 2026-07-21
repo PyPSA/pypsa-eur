@@ -368,6 +368,7 @@ class SolvingConfig(BaseModel):
                 "PreDual": 0,
                 "GURO_PAR_BARDENSETHRESH": 200,
                 "IISMethod": 1,
+                "TimeLimit": 43200,
             },
             "gurobi-numeric-focus": {
                 "NumericFocus": 3,
@@ -429,14 +430,41 @@ class SolvingConfig(BaseModel):
             "glpk-default": {},
             "smspp-ucblock": {
                 "capacity_expansion_ucblock": True,
+                "configfile": "config/smspp/UCBlockGrb/uc_solverconfig.txt",
             },
             "smspp-investmentblock": {
                 "capacity_expansion_ucblock": False,
+                "configfile": "config/smspp/InvestmentBlockGrb/BSPar.txt",
             },
-            "smspp-stochastic": {
+            "smspp-unitcommitment-dispatch-ucblock": {
+                "capacity_expansion_ucblock": True,
+                "enable_thermal_units": True,
+                "configfile": "config/smspp/UCBlockGrb/uc_solverconfig.txt",
+            },
+            "smspp-unitcommitment-dispatch-investmentblock": {
+                "capacity_expansion_ucblock": False,
+                "enable_thermal_units": True,
+                "configfile": "config/smspp/InvestmentBlockGrb/BSPar.txt",
+            },
+            "smspp-unitcommitment-capacity-expansion": {
+                "capacity_expansion_ucblock": False,
+                "enable_thermal_units": True,
+                "configfile": "config/smspp/InvestmentBlockGrb/BSPar.txt",
+            },
+            "smspp-ucblock-DP": {
+                "capacity_expansion_ucblock": False,
+                "enable_thermal_units": True,
+                "configfile": "config/smspp/Thermal_DynamicProgramming/TUBSCfg-DP.txt",
+                "pysmspp_options": {
+                    "B": "config/smspp/Thermal_DynamicProgramming/TUBCfg-DP.txt",
+                },
+            },
+            "smspp-tssb": {
+                "capacity_expansion_ucblock": True,
+                "configfile": "config/smspp/TSSBlock/TSSBCfg_grb.txt",
                 "stochastic_parameters": {
                     "stochastic_type": "tssb",
-                    "parameters": ["demand", "renewables"],
+                    "parameters": ["demand", "renewable_maxpower"],
                 },
             },
         },

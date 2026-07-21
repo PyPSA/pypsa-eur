@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=schema.default.json
+
+run:
+  prefix: "capacity-expansion-power-IT-UC"
+  name: all
+  scenarios:
+    enable: true
+    file: config/instances/scenarios/scenarios-power.yaml
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+    exclude: []
+  use_shadow_directory: false
+
+foresight: overnight
+
+scenario:
+  clusters:
+  - 2
+  - 20
+  - 50
+  opts:
+  - ''
+
+countries:
+- IT
+
+clustering:
+  temporal:
+    resolution_elec: 48c24
+
+conventional:
+  unit_commitment: true
+
+solving:
+  options:
+    load_shedding: 
+      enable: true
+    skip_iterations: true
+    transmission_losses: 0
+    linearized_unit_commitment: false
+    noisy_costs: false
+  solver:
+    name: [gurobi, smspp]
+    options: [gurobi-default, smspp-unitcommitment-capacity-expansion]
+
