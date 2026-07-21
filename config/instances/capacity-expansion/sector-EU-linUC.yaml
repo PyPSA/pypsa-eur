@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=schema.default.json
 
 run:
-  prefix: "capacity-expansion-sector-EU-UC"
+  prefix: "capacity-expansion-sector-EU-linUC"
   name: all
   scenarios:
     enable: true
@@ -130,7 +130,7 @@ solving:
       enable: true
     skip_iterations: true
     transmission_losses: 0
-    linearized_unit_commitment: false
+    linearized_unit_commitment: true
     noisy_costs: false
   solver:
     name: [gurobi, smspp]

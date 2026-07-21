@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=schema.default.json
 
 run:
-  prefix: "capacity-expansion-power-EU-UC"
+  prefix: "capacity-expansion-power-IT-linUC"
   name: all
   scenarios:
     enable: true
@@ -16,13 +16,14 @@ foresight: overnight
 
 scenario:
   clusters:
+  - 2
+  - 20
   - 50
-  - 100
-  - 200
-  - 1000
-
   opts:
   - ''
+
+countries:
+- IT
 
 clustering:
   temporal:
@@ -37,8 +38,9 @@ solving:
       enable: true
     skip_iterations: true
     transmission_losses: 0
-    linearized_unit_commitment: false
+    linearized_unit_commitment: true
     noisy_costs: false
   solver:
     name: [gurobi, smspp]
     options: [gurobi-default, smspp-unitcommitment-capacity-expansion]
+

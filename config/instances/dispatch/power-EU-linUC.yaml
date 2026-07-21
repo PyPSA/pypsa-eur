@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=schema.default.json
 
 run:
-  prefix: "capacity-expansion-power-EU-UC"
+  prefix: "dispatch-power-EU-linUC"
   name: all
   scenarios:
     enable: true
@@ -24,6 +24,14 @@ scenario:
   opts:
   - ''
 
+electricity:
+  extendable_carriers:
+    Generator: []
+    StorageUnit: []
+    Store: []
+    Link: []
+  transmission_limit: v1.0
+
 clustering:
   temporal:
     resolution_elec: 48c24
@@ -37,8 +45,8 @@ solving:
       enable: true
     skip_iterations: true
     transmission_losses: 0
-    linearized_unit_commitment: false
+    linearized_unit_commitment: true
     noisy_costs: false
   solver:
-    name: [gurobi, smspp]
-    options: [gurobi-default, smspp-unitcommitment-capacity-expansion]
+    name: [gurobi, smspp, smspp]
+    options: [gurobi-default, smspp-unitcommitment-dispatch-ucblock, smspp-unitcommitment-dispatch-investmentblock]

@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=schema.default.json
 
 run:
-  prefix: "capacity-expansion-power-EU-linear"
+  prefix: "capacity-expansion-power-EU-noUC"
   name: all
   scenarios:
     enable: true
