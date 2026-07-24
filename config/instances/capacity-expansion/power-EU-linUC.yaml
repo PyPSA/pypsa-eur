@@ -41,5 +41,5 @@ solving:
     linearized_unit_commitment: true
     noisy_costs: false
   solver:
-    name: [gurobi, smspp]
-    options: [gurobi-default, smspp-unitcommitment-capacity-expansion]
+    name: [gurobi]
+    options: [gurobi-default]

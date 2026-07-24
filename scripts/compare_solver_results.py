@@ -194,14 +194,58 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    solver_specs = list(snakemake.params.solver_specs)
-    if len(solver_specs) != len(snakemake.input.networks) or len(
-        solver_specs
-    ) != len(snakemake.input.benchmarks):
-        raise ValueError(
-            "Solver specs, solved networks and benchmark files must have matching lengths."
+    configured_solver_specs = list(snakemake.params.solver_specs)
+    network_paths = {
+        solver["label"]: path
+        for path in snakemake.input.networks
+        for solver in configured_solver_specs
+        if Path(path).stem.endswith(f'_{solver["label"]}')
+    }
+    benchmark_paths = {
+        solver["label"]: path
+        for path in snakemake.input.benchmarks
+        for solver in configured_solver_specs
+        if Path(path).stem.endswith(f'_{solver["label"]}')
+    }
+    solver_inputs = [
+        (solver, network_paths[solver["label"]], benchmark_paths[solver["label"]])
+        for solver in configured_solver_specs
+        if solver["label"] in network_paths and solver["label"] in benchmark_paths
+    ]
+    if not solver_inputs:
+        logger.warning(
+            "No successful solver results are available for comparison; "
+            "writing empty comparison outputs."
         )
-    reference_solver = solver_specs[0]["label"]
+        reference_solver = (
+            configured_solver_specs[0]["label"]
+            if configured_solver_specs
+            else "reference"
+        )
+        empty_outputs = {
+            "optimal_capacity": ["item", reference_solver],
+            "energy_balance": ["item", reference_solver],
+            "benchmarks": ["metric", reference_solver],
+            "summary": ["solver", "solver_name", "solver_options"],
+        }
+        for name, columns in empty_outputs.items():
+            output = Path(getattr(snakemake.output, name))
+            output.parent.mkdir(parents=True, exist_ok=True)
+            pd.DataFrame(columns=columns).to_csv(output, index=False)
+        raise SystemExit(0)
+
+    solver_specs = [solver for solver, _, _ in solver_inputs]
+    reference_solver = configured_solver_specs[0]["label"]
+    if reference_solver != solver_specs[0]["label"]:
+        raise ValueError(
+            f"Reference solver '{reference_solver}' did not produce a successful result."
+        )
+
+    skipped = {solver["label"] for solver in configured_solver_specs} - {
+        solver["label"] for solver in solver_specs
+    }
+    if skipped:
+        logger.warning("Skipping unsuccessful solver results: %s", sorted(skipped))
 
     pypsa.set_option("params.statistics.nice_names", False)
     pypsa.set_option("params.statistics.drop_zero", False)
@@ -210,7 +254,7 @@ if __name__ == "__main__":
     energy_balance = {}
     metadata = []
 
-    for solver, network_path in zip(solver_specs, snakemake.input.networks):
+    for solver, network_path, _ in solver_inputs:
         logger.info("Loading solved network for solver %s", solver["label"])
         n = pypsa.Network(network_path)
         if "carrier" not in n.lines:
@@ -227,12 +271,12 @@ if __name__ == "__main__":
     optimal_capacity_compared = compare_series(optimal_capacity, reference_solver)
     energy_balance_compared = compare_series(energy_balance, reference_solver)
 
-    reference_benchmark = pd.read_csv(snakemake.input.benchmarks[0], sep="\t").iloc[-1]
+    reference_benchmark = pd.read_csv(solver_inputs[0][2], sep="\t").iloc[-1]
     reference_seconds = reference_benchmark.get("s")
     benchmarks = pd.DataFrame(
         [
             read_benchmark(path, solver, reference_seconds)
-            for solver, path in zip(solver_specs, snakemake.input.benchmarks)
+            for solver, _, path in solver_inputs
         ]
     )
     benchmark_compared = compare_benchmarks(

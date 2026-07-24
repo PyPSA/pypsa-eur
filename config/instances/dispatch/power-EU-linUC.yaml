@@ -48,5 +48,5 @@ solving:
     linearized_unit_commitment: true
     noisy_costs: false
   solver:
-    name: [gurobi, smspp, smspp]
-    options: [gurobi-default, smspp-unitcommitment-dispatch-ucblock, smspp-unitcommitment-dispatch-investmentblock]
+    name: [gurobi]
+    options: [gurobi-default]
