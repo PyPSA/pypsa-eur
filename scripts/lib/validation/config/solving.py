@@ -467,6 +467,7 @@ class SolvingConfig(BaseModel):
                     "parameters": ["demand", "renewable_maxpower"],
                 },
             },
+            # Luca aggiungi
         },
         description="Dictionaries with solver-specific parameter settings.",
     )
