@@ -57,6 +57,8 @@
 * doc: Add FAQ section to docs (`faq.md`) with troubleshooting for `SSL: CERTIFICATE_VERIFY_FAILED` during data retrieval behind proxy servers ([#2228](https://github.com/PyPSA/pypsa-eur/pull/2228)).
 * Fix Ultranet (TYNDP 254) to end in Philippsburg (#2236)
 
+* chore: Bump the python version to 3.12 ([#2235](https://github.com/PyPSA/pypsa-eur/pull/2235)). This does not increase the real requirement, because 3.12 is already the effective minimum.
+
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 
 **Features**
