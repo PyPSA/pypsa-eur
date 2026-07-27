@@ -51,6 +51,8 @@
 
 * Add missing regex anchor with `re.fullmatch` to `create_zenodo_deposition_cli` utils script ([#2225](https://github.com/PyPSA/pypsa-eur/pull/2225)).
 
+* Fix Ultranet (TYNDP 254) to end in Philippsburg (#2236)
+
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 
 **Features**
