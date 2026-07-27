@@ -1109,6 +1109,7 @@ if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
         output:
             zip_file=f"{WDPA_DATASET['folder']}/WDPA_shp.zip",
             gpkg=f"{WDPA_DATASET['folder']}/WDPA.gpkg",
+        retries: 2
         message:
             "Downloading protected area database from WDPA"
         run:
@@ -1143,6 +1144,7 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
         output:
             zip_file=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.zip",
             gpkg=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.gpkg",
+        retries: 2
         # Downloading Marine protected area database from WDPA
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
