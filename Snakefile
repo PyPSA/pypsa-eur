@@ -246,6 +246,7 @@ rule create_scenarios:
         "config/create_scenarios.py"
 
 
+# fmt: off[next]
 rule purge:
     run:
         import builtins
