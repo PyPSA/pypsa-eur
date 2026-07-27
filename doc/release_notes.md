@@ -54,6 +54,7 @@
 * fix: Ensure `inflow_t` is always defined in `attach_hydro`, resolving a pylint use-before-assignment issue ([#2224](https://github.com/PyPSA/pypsa-eur/pull/2224)).
 * Add missing regex anchor with `re.fullmatch` to `create_zenodo_deposition_cli` utils script ([#2225](https://github.com/PyPSA/pypsa-eur/pull/2225)).
 
+* doc: Add note about deep-discharge protection for BEV available battery capacity ([#2227](https://github.com/PyPSA/pypsa-eur/pull/2227)).
 * doc: Add FAQ section to docs (`faq.md`) with troubleshooting for `SSL: CERTIFICATE_VERIFY_FAILED` during data retrieval behind proxy servers ([#2228](https://github.com/PyPSA/pypsa-eur/pull/2228)).
 * Fix Ultranet (TYNDP 254) to end in Philippsburg (#2236)
 
