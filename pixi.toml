@@ -10,6 +10,11 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "2025.07.0"
 exclude-newer = "7d"
 
+[exclude-newer]
+linopy = "0d"
+pypsa = "0d"
+atlite = "0d"
+
 [tasks]
 
 reset = """bash -c '
@@ -65,7 +70,7 @@ highspy = ">=1.12.0"
 ipython = ">=9.7.0"
 jpype1 = ">=1.6.0"
 libgdal-netcdf = ">=3.10.3"
-linopy = ">=0.6.1"
+linopy = ">=0.8,<0.9"
 lxml = ">=6.0.2"
 matplotlib = ">=3.10.7"
 memory_profiler = ">=0.61.0"
@@ -83,7 +88,7 @@ pydeck = ">0.6"  # pypsa fails to import with pydeck <0.6, lower bound was only 
 pypsa = ">=0.35.2"
 pyscipopt = ">=5.6.0"
 pytables = ">=3.10.2"
-python = ">=3.10"
+python = ">=3.12"
 pytz = ">=2025.2"
 pyxlsb = ">=1.0.10"
 rasterio = ">=1.4.3"

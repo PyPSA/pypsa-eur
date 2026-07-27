@@ -4379,7 +4379,7 @@
         },
         "bev_energy": {
           "default": 0.05,
-          "description": "The average size of battery electric vehicles (BEV) in MWh.",
+          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh.",
           "type": "number"
         },
         "bev_charge_efficiency": {
@@ -10859,7 +10859,7 @@
         },
         "bev_energy": {
           "default": 0.05,
-          "description": "The average size of battery electric vehicles (BEV) in MWh.",
+          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh.",
           "type": "number"
         },
         "bev_charge_efficiency": {
