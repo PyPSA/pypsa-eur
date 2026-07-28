@@ -61,6 +61,8 @@
 
 * chore: Bump the python version to 3.12 ([#2235](https://github.com/PyPSA/pypsa-eur/pull/2235)). This does not increase the real requirement, because 3.12 is already the effective minimum.
 
+* Fix: `build_electricity_demand_base` fetched the non-existent `load.distribution_key.pop` key instead of correct `population`, silently ignoring the configured value.
+
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 
 **Features**
