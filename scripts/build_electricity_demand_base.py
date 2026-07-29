@@ -141,7 +141,7 @@ def nuts3_distribution_keys(
         File path to the NUTS3 GeoJSON file containing geometries and attributes.
     distribution_key : dict[str, float]
         Weights for GDP and population in the distribution key calculation.
-        Example: {"gdp": 0.6, "pop": 0.4}
+        Example: {"gdp": 0.6, "population": 0.4}
     regions : gpd.GeoDataFrame
         GeoDataFrame containing the regions with a 'country' column.
 
@@ -151,8 +151,8 @@ def nuts3_distribution_keys(
         Series of distribution keys indexed by region names.
     """
 
-    gdp_weight = distribution_key.get("gdp", 0.6)
-    pop_weight = distribution_key.get("pop", 0.4)
+    gdp_weight = distribution_key["gdp"]
+    pop_weight = distribution_key["population"]
 
     nuts3 = gpd.read_file(nuts3_fn).to_crs(epsg=3035)
     nuts3.rename(columns={"name": "nuts3_name"}, inplace=True)
