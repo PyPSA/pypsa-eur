@@ -486,24 +486,27 @@ def fill_missing_years(fill_values: pd.Series) -> pd.Series:
     ----------
     fill_values : pd.Series
         A pandas Series with a MultiIndex (levels: country and year) representing
-        energy values, where some values may be zero and need to be filled.
+        energy values, where some values may be missing and need to be filled.
 
     Returns
     -------
     pd.Series
-        A pandas Series with zero values replaced by the forward-filled and
+        A pandas Series with missing values replaced by the forward-filled and
         backward-filled values of the corresponding country.
 
     Notes
     -----
     - The function groups the data by the 'country' level and performs forward fill
-      and backward fill to fill zero values.
-    - Zero values in the original Series are replaced by the ffilled and bfilled
-      value of their respective country group.
+      and backward fill to fill missing values.
+    - Missing values in the original Series are replaced by the ffilled and bfilled
+      value of their respective country group. Countries without any value remain
+      missing.
     """
 
     # Forward fill and then backward fill within each country group
-    fill_values = fill_values.groupby(level="country").ffill().bfill()
+    fill_values = fill_values.groupby(level="country").transform(
+        lambda x: x.ffill().bfill()
+    )
 
     return fill_values
 
