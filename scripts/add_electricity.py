@@ -493,9 +493,6 @@ def attach_wind_and_solar(
     landfall_lengths : dict, optional
         Dictionary containing the landfall lengths for offshore wind, by default None.
     """
-    if ppl.empty:
-        return
-
     add_missing_carriers(n, carriers)
 
     if landfall_lengths is None:
