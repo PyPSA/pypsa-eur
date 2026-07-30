@@ -6,7 +6,11 @@ rule add_existing_baseyear:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
         ),
-        powerplants=resources("powerplants_s_{clusters}.csv"),
+        powerplants=branch(
+            lambda w: config_provider("electricity", "conventional_carriers")(w)
+            or config_provider("electricity", "extendable_carriers", "Generator")(w),
+            resources("powerplants_s_{clusters}.csv"),
+        ),
         busmap_s=resources("busmap_base_s.csv"),
         busmap=resources("busmap_base_s_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
