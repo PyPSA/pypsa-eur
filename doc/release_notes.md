@@ -61,7 +61,8 @@
 
 * chore: Bump the python version to 3.12 ([#2235](https://github.com/PyPSA/pypsa-eur/pull/2235)). This does not increase the real requirement, because 3.12 is already the effective minimum.
 
-* Fix: `fill_missing_years` applied the backward fill across country boundaries, so countries without any Eurostat value silently inherited the values of the next country.
+* Fix: `build_electricity_demand_base` fetched the non-existent `load.distribution_key.pop` key instead of correct `population`, silently ignoring the configured value ([#2241](https://github.com/PyPSA/pypsa-eur/pull/2241)).
+* Fix: `fill_missing_years` applied the backward fill across country boundaries, so countries without any Eurostat value silently inherited the values of the next country ([#2242](https://github.com/PyPSA/pypsa-eur/pull/2242)).
 
 * chore: Drop the `grpcio < 1.78` pin and add a temporary `python < 3.14` pin ([#2244](https://github.com/PyPSA/pypsa-eur/pull/2244)). The upper bound on python will be lifted once [#2245](https://github.com/PyPSA/pypsa-eur/issues/2245) is resolved.
 
