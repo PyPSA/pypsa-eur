@@ -1331,13 +1331,16 @@ if __name__ == "__main__":
     )
     district_heat_share.to_csv(snakemake.output.district_heat_share)
 
-    base_year_emissions = params["base_emissions_year"]
-    emissions_scope = snakemake.params.energy["emissions"]
-    eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)
-    eurostat_co2 = build_eurostat_co2(eurostat, base_year_emissions)
+    if co2_fn := snakemake.input.co2:
+        base_year_emissions = params["base_emissions_year"]
+        emissions_scope = snakemake.params.energy["emissions"]
+        eea_co2 = build_eea_co2(co2_fn, base_year_emissions, emissions_scope)
+        eurostat_co2 = build_eurostat_co2(eurostat, base_year_emissions)
 
-    co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
-    co2.to_csv(snakemake.output.co2_name)
+        co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
+        co2.to_csv(snakemake.output.co2_name)
+    else:
+        pd.DataFrame().to_csv(snakemake.output.co2_name)
 
     transport = build_transport_data(countries, population, idees)
     transport.to_csv(snakemake.output.transport_name)

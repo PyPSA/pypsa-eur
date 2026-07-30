@@ -493,6 +493,9 @@ def attach_wind_and_solar(
     landfall_lengths : dict, optional
         Dictionary containing the landfall lengths for offshore wind, by default None.
     """
+    if ppl.empty:
+        return
+
     add_missing_carriers(n, carriers)
 
     if landfall_lengths is None:
@@ -609,6 +612,9 @@ def attach_conventional_generators(
     fuel_price : pd.DataFrame, optional
         DataFrame containing fuel price data, by default None.
     """
+    if ppl.empty:
+        return
+
     carriers = list(
         set(conventional_carriers)
         | set(extendable_carriers["Generator"]) - set(renewable_carriers)
@@ -700,6 +706,9 @@ def attach_existing_batteries(
     ppl: pd.DataFrame,
 ) -> None:
     """Attach existing battery storage units from the power plant dataset."""
+    if ppl.empty:
+        return
+
     batt = ppl.query('carrier == "battery"')
     if batt.empty:
         return
@@ -760,6 +769,9 @@ def attach_hydro(
     **params :
         Additional parameters for hydro units.
     """
+    if ppl.empty:
+        return
+
     add_missing_carriers(n, carriers)
     add_co2_emissions(n, costs, carriers)
 
@@ -1215,13 +1227,16 @@ if __name__ == "__main__":
 
     costs = load_costs(snakemake.input.costs)
 
-    ppl = load_and_aggregate_powerplants(
-        snakemake.input.powerplants,
-        costs,
-        params.consider_efficiency_classes,
-        params.aggregation_strategies,
-        params.exclude_carriers,
-    )
+    if ppl_fn := snakemake.input.powerplants:
+        ppl = load_and_aggregate_powerplants(
+            ppl_fn,
+            costs,
+            params.consider_efficiency_classes,
+            params.aggregation_strategies,
+            params.exclude_carriers,
+        )
+    else:
+        ppl = pd.DataFrame()
 
     attach_load(
         n,

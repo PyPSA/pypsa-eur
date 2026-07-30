@@ -804,7 +804,21 @@ rule add_electricity:
             f"costs_{config_provider('costs', 'year')(w)}_processed.csv"
         ),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
-        powerplants=resources("powerplants_s_{clusters}.csv"),
+        powerplants=branch(
+            lambda w: config_provider("electricity", "conventional_carriers")(w)
+            or config_provider("electricity", "extendable_carriers", "Generator")(w)
+            or (
+                config_provider(
+                    "electricity", "estimate_renewable_capacities", "enable"
+                )(w)
+                and config_provider(
+                    "electricity",
+                    "estimate_renewable_capacities",
+                    "from_powerplantmatching",
+                )(w)
+            ),
+            resources("powerplants_s_{clusters}.csv"),
+        ),
         hydro_capacities=ancient("data/hydro_capacities.csv"),
         unit_commitment="data/unit_commitment.csv",
         fuel_price=lambda w: (
