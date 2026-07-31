@@ -1255,6 +1255,91 @@ def add_dac(n, costs, spatial):
     )
 
 
+def add_rock_weathering(
+    n, costs, rock_weathering_potentials_file, rock_weathering_config
+):
+    """
+    Add enhanced rock weathering (CDR via accelerated mineral carbonation)
+    to the network as Bus, Store, and Link components, all sharing a single
+    "co2 rock weathering" carrier.
+
+    A single Link per node draws CO2 from the atmosphere (bus0) and
+    electricity (bus1), depositing the removed CO2 into a fixed-capacity
+    Store (bus2) representing the cumulative mineral-carbonation potential
+    at that node. The store's capacity is dimensioned from the eligible
+    land area (CORINE land cover, filtered by an annual-mean-temperature
+    threshold; see ``determine_rock_weathering_availability_matrix.py`` and
+    ``build_available_land.py``) multiplied by a per-km2 CO2 removal rate.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Costs and parameters for different technologies. Must contain an
+        'Enhanced Weathering' entry with 'electricity-input', 'VOM', and
+        'lifetime' parameters
+    rock_weathering_potentials_file : str
+        Path to CSV file with eligible area (km2) per node, as produced by
+        ``build_available_land.py`` (``snakemake.input.rock_weathering_potentials``)
+    rock_weathering_config : dict
+        Configuration dict with keys 'co2_removal_per_sqkm' and
+        'max_land_usage' (``snakemake.config["rock_weathering"]``)
+
+    Returns
+    -------
+    None
+        Modifies the network object in-place by adding the rock weathering
+        Bus, Store, and Link
+    """
+    logger.info("Adding enhanced rock weathering (rock_weathering).")
+
+    rock_weathering_potentials = pd.read_csv(
+        rock_weathering_potentials_file, index_col=0
+    )
+    potentials = (
+        rock_weathering_potentials["potential [sqkm]"]
+        * rock_weathering_config["co2_removal_per_sqkm"]
+        * rock_weathering_config["max_land_usage"]
+    )
+
+    electricity_input = costs.at["Enhanced Weathering", "electricity-input"]
+
+    n.add("Carrier", "co2 rock weathering")
+
+    n.add(
+        "Bus",
+        spatial.nodes + " co2 rock weathering",
+        location=spatial.nodes,
+        carrier="co2 rock weathering",
+        unit="t_co2",
+    )
+
+    n.add(
+        "Store",
+        spatial.nodes,
+        suffix=" co2 rock weathering",
+        bus=spatial.nodes + " co2 rock weathering",
+        e_nom=potentials,
+        carrier="co2 rock weathering",
+    )
+
+    n.add(
+        "Link",
+        spatial.nodes,
+        suffix=" rock_weathering",
+        bus0="co2 atmosphere",
+        bus1=spatial.nodes.values,
+        bus2=spatial.nodes + " co2 rock weathering",
+        carrier="co2 rock weathering",
+        marginal_cost=costs.at["Enhanced Weathering", "VOM"],
+        efficiency=-electricity_input,
+        efficiency2=1,
+        p_nom_extendable=True,
+        lifetime=costs.at["Enhanced Weathering", "lifetime"],
+    )
+
+
 def add_co2limit(n, options, co2_totals_file, countries, nyears, limit):
     """
     Add a global CO2 emissions constraint to the network.
@@ -1750,7 +1835,7 @@ def add_electricity_grid_connection(n, costs):
     gens = n.generators.index[n.generators.carrier.isin(carriers)]
 
     n.generators.loc[gens, "capital_cost"] += costs.at[
-        "electricity grid connection", "capital_cost"
+        "distribution grid reinforcement", "capital_cost"
     ]
 
 
@@ -6538,6 +6623,14 @@ if __name__ == "__main__":
 
     if options["dac"]:
         add_dac(n, costs, spatial)
+
+    if options.get("rock_weathering"):
+        add_rock_weathering(
+            n,
+            costs,
+            snakemake.input.rock_weathering_potentials,
+            snakemake.config["rock_weathering"],
+        )
 
     if not options["electricity_transmission_grid"]:
         decentral(n)

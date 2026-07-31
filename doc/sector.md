@@ -187,6 +187,14 @@ Having downloaded the necessary data,
 
 ::: build_clustered_co2_sequestration_potentials
 
+## Rule `determine_rock_weathering_availability_matrix`
+
+::: determine_rock_weathering_availability_matrix
+
+## Rule `build_available_land`
+
+::: build_available_land
+
 ## Rule `build_shipping_demand`
 
 ::: build_shipping_demand

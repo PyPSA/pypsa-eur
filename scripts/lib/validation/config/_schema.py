@@ -29,6 +29,7 @@ from scripts.lib.validation.config.load import LoadConfig
 from scripts.lib.validation.config.overpass_api import OverpassApiConfig
 from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
+from scripts.lib.validation.config.rock_weathering import RockWeatheringConfig
 from scripts.lib.validation.config.run import RunConfig
 from scripts.lib.validation.config.scenario import ScenarioConfig
 from scripts.lib.validation.config.sector import SectorConfig
@@ -191,6 +192,10 @@ class ConfigSchema(BaseModel):
     industry: IndustryConfig = Field(
         default_factory=IndustryConfig,
         description="Industry sector configuration.",
+    )
+    rock_weathering: RockWeatheringConfig = Field(
+        default_factory=RockWeatheringConfig,
+        description="Enhanced rock weathering configuration.",
     )
     costs: CostsConfig = Field(
         default_factory=CostsConfig,

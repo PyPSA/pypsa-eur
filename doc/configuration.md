@@ -301,6 +301,12 @@ Configuration for hydropower.
 
 {{ schema_table("renewable.hydro") }}
 
+Land-eligibility settings for enhanced rock weathering, reusing the same land-eligibility
+analysis machinery as `onwind`/`offwind`/`solar` above (see [determine_rock_weathering_availability_matrix][]).
+Intended to be shared by future land-based CDR technologies (e.g. biochar, afforestation) too.
+
+{{ schema_table("renewable.rock_weathering") }}
+
 **YAML Syntax**
 
 ```yaml
@@ -634,6 +640,7 @@ Only used for sector-coupling studies.
     | `methanation` | boolean | `true` | Add option for transforming hydrogen and CO2 into methane using methanation. |
     | `coal_cc` | boolean | `false` | Add option for coal CHPs with carbon capture. |
     | `dac` | boolean | `true` | Add option for Direct Air Capture (DAC). |
+    | `rock_weathering` | boolean | `false` | Add option for enhanced rock weathering as a carbon dioxide removal (CDR) technology. |
     | `co2_vent` | boolean | `false` | Add option for vent out CO2 from storages to the atmosphere. |
     | `heat_vent` | dict (str -> boolean) |  | Heat venting by area. |
     | `marginal_cost_heat_vent` | number | `0.02` | The marginal cost of heat-venting in all heating systems. |
@@ -749,6 +756,24 @@ Configuration for `industry` settings.
 
 ```yaml
 {{ yaml_section("industry") }}
+```
+
+!!! note
+    Only used for sector-coupling studies.
+
+
+## `rock_weathering` {#rock_weathering_cf}
+
+Only used if `sector.rock_weathering` is enabled. Sets the per-area removal rate and
+maximum land-use share applied to the eligible land area computed via [build_available_land][]
+(see the `renewable.rock_weathering` land-eligibility settings above).
+
+{{ schema_table("rock_weathering") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("rock_weathering") }}
 ```
 
 !!! note

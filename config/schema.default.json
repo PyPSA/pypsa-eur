@@ -3998,6 +3998,64 @@
               "type": "boolean"
             }
           }
+        },
+        "rock_weathering": {
+          "description": "Configuration for enhanced rock weathering land-eligibility settings.",
+          "properties": {
+            "corine": {
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for enhanced rock weathering (non-irrigated arable land, permanent crops, rice fields).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "type": "boolean"
+            },
+            "cutout": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ],
+              "default": "default",
+              "description": "Specifies the weather data cutout file(s) to use."
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters on which to perform geographical eligibility analysis.",
+              "type": "number"
+            },
+            "min_mean_temp_C": {
+              "default": 10,
+              "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since weathering kinetics slow down in cold climates.",
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "RockWeatheringConfig": {
+      "description": "Configuration for `rock_weathering` settings.",
+      "properties": {
+        "co2_removal_per_sqkm": {
+          "default": 309,
+          "description": "Tonnes of CO2 sequestered per square kilometre of eligible land per year (temperate-only rate; hot climate is ~1% of eligible EU area, dropped).",
+          "type": "number"
+        },
+        "max_land_usage": {
+          "default": 0.2,
+          "description": "Maximum fraction of suitable area used for rock weathering.",
+          "type": "number"
         }
       }
     },
@@ -4645,6 +4703,11 @@
         "dac": {
           "default": true,
           "description": "Add option for Direct Air Capture (DAC).",
+          "type": "boolean"
+        },
+        "rock_weathering": {
+          "default": false,
+          "description": "Add option for enhanced rock weathering as a carbon dioxide removal (CDR) technology.",
           "type": "boolean"
         },
         "co2_vent": {
@@ -7572,6 +7635,49 @@
         }
       }
     },
+    "_RockWeatheringEligibilityConfig": {
+      "description": "Configuration for enhanced rock weathering land-eligibility settings.",
+      "properties": {
+        "corine": {
+          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for enhanced rock weathering (non-irrigated arable land, permanent crops, rice fields).",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "natura": {
+          "default": false,
+          "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+          "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+          "type": "boolean"
+        },
+        "cutout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": "default",
+          "description": "Specifies the weather data cutout file(s) to use."
+        },
+        "excluder_resolution": {
+          "default": 250,
+          "description": "Resolution in meters on which to perform geographical eligibility analysis.",
+          "type": "number"
+        },
+        "min_mean_temp_C": {
+          "default": 10,
+          "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since weathering kinetics slow down in cold climates.",
+          "type": "number"
+        }
+      }
+    },
     "_ScenariosConfig": {
       "description": "Configuration for `run.scenarios` level.",
       "properties": {
@@ -10076,6 +10182,49 @@
               "type": "boolean"
             }
           }
+        },
+        "rock_weathering": {
+          "description": "Configuration for enhanced rock weathering land-eligibility settings.",
+          "properties": {
+            "corine": {
+              "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for enhanced rock weathering (non-irrigated arable land, permanent crops, rice fields).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "type": "boolean"
+            },
+            "cutout": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ],
+              "default": "default",
+              "description": "Specifies the weather data cutout file(s) to use."
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters on which to perform geographical eligibility analysis.",
+              "type": "number"
+            },
+            "min_mean_temp_C": {
+              "default": 10,
+              "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since weathering kinetics slow down in cold climates.",
+              "type": "number"
+            }
+          }
         }
       }
     },
@@ -11127,6 +11276,11 @@
           "description": "Add option for Direct Air Capture (DAC).",
           "type": "boolean"
         },
+        "rock_weathering": {
+          "default": false,
+          "description": "Add option for enhanced rock weathering as a carbon dioxide removal (CDR) technology.",
+          "type": "boolean"
+        },
         "co2_vent": {
           "default": false,
           "description": "Add option for vent out CO2 from storages to the atmosphere.",
@@ -11826,6 +11980,21 @@
         "oil_refining_emissions": {
           "default": 0.013,
           "description": "The emissions from oil fuel processing (e.g. oil in petrochemical refinieries). The default value of 0.013 tCO2/MWh is based on DE statistics for 2019; the EU value is very similar.",
+          "type": "number"
+        }
+      }
+    },
+    "rock_weathering": {
+      "description": "Configuration for `rock_weathering` settings.",
+      "properties": {
+        "co2_removal_per_sqkm": {
+          "default": 309,
+          "description": "Tonnes of CO2 sequestered per square kilometre of eligible land per year (temperate-only rate; hot climate is ~1% of eligible EU area, dropped).",
+          "type": "number"
+        },
+        "max_land_usage": {
+          "default": 0.2,
+          "description": "Maximum fraction of suitable area used for rock weathering.",
           "type": "number"
         }
       }
