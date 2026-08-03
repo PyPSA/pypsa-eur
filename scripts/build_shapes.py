@@ -276,9 +276,9 @@ def create_regions(
     nuts["level2"] = nuts["id"].str[:4]
     nuts["level3"] = nuts["id"]
 
-    # Non-NUTS regions (module `parent == "geoboundaries"`, e.g. BA, MD, UA, XK).
     logger.info("Processing non-NUTS regions.")
-    non_nuts = land[land["parent"] == "geoboundaries"].copy()
+    non_nuts = land[land["parent"] != "nuts"].copy()
+    non_nuts_countries = non_nuts.country.unique()
     non_nuts["id"] = non_nuts["parent_id"].apply(normalise_text)
     non_nuts = non_nuts.rename(columns={"parent_name": "name"})[
         ["id", "country", "name", "geometry"]
@@ -318,13 +318,11 @@ def create_regions(
     regions["pop"] = nuts3_pop.div(1e3).round(0)
 
     # GDP and POP for non-NUTS3 regions
-    other_countries = {"BA", "MD", "UA", "XK"}
-
-    if any(country in country_list for country in other_countries):
+    if non_nuts_countries.any():
         gdp_pop = pd.concat(
             [
                 calc_gdp_pop(country, regions, other_gdp, other_pop)
-                for country in other_countries
+                for country in non_nuts_countries
             ],
             axis=0,
         )
