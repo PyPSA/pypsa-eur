@@ -181,16 +181,23 @@ def simplify_europe(regions):
         .groupby("country")["geometry"]
         .apply(lambda x: x.union_all())
     )
-    coverage_dk = coverage.loc[["DK"]]
-    coverage = coverage.apply(_simplify_polys, minarea=500 * 1e6, maxdistance=200 * 1e3)
-    coverage_dk = coverage_dk.apply(
-        _simplify_polys, minarea=65 * 1e6, maxdistance=200 * 1e3
+    coverage_simplified = coverage.apply(
+        _simplify_polys, minarea=500 * 1e6, maxdistance=200 * 1e3
     )
-    coverage.loc["DK"] = coverage_dk.values[0]
-    coverage = gpd.GeoDataFrame(geometry=coverage, crs=DISTANCE_CRS).to_crs(GEO_CRS)
+    if "DK" in coverage_simplified.index:
+        coverage_dk = coverage.loc[["DK"]].apply(
+            _simplify_polys, minarea=65 * 1e6, maxdistance=200 * 1e3
+        )
+        coverage_simplified.loc["DK"] = coverage_dk.values[0]
+
+    coverage = gpd.GeoDataFrame(geometry=coverage_simplified, crs=DISTANCE_CRS).to_crs(
+        GEO_CRS
+    )
 
     # Re-add selected regions manually
-    coverage = pd.concat([coverage, regions.loc[NUTS3_INCLUDE, ["geometry"]]])
+    coverage = pd.concat(
+        [coverage, regions.loc[regions.index.isin(NUTS3_INCLUDE), ["geometry"]]]
+    )
     shape = coverage.union_all()
 
     regions_polygon = regions.explode()
