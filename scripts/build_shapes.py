@@ -573,9 +573,9 @@ if __name__ == "__main__":
 
     shapes = gpd.read_parquet(snakemake.input.shapes)
     shapes["country"] = cc.convert(list(shapes["country_id"]), src="ISO3", to="ISO2")
-
-    land = shapes[shapes["shape_class"] == "land"].copy()
-    maritime = shapes[shapes["shape_class"] == "maritime"].copy()
+    shapes_filtered = shapes[shapes.country.isin(snakemake.params.countries)]
+    land = shapes_filtered[shapes_filtered["shape_class"] == "land"].copy()
+    maritime = shapes_filtered[shapes_filtered["shape_class"] == "maritime"].copy()
 
     # Offshore regions
     offshore_shapes = build_offshore_shapes(maritime)
