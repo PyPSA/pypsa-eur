@@ -8,7 +8,6 @@ from functools import partial, lru_cache
 import os, sys, glob
 import requests
 
-import country_converter as coco
 import pandas as pd
 import json
 import yaml
