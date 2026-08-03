@@ -12,7 +12,7 @@ from snakemake.utils import min_version, update_config
 
 load_dotenv()
 
-min_version("8.11")
+min_version("9.19")
 
 from scripts._helpers import (
     get_rdir,
@@ -20,6 +20,7 @@ from scripts._helpers import (
     get_shadow,
     path_provider,
     script_path_provider,
+    add_module_config,
 )
 from scripts.lib.validation.config import validate_config
 
@@ -32,6 +33,8 @@ if Path("config/config.yaml").exists():
 
     configfile: "config/config.yaml"
 
+
+add_module_config(config)
 
 validate_config(config)
 
@@ -82,6 +85,7 @@ include: "rules/common.smk"
 OSM_DATASET = dataset_version("osm")
 
 
+include: "rules/modules/geo_boundaries.smk"
 include: "rules/collect.smk"
 include: "rules/retrieve.smk"
 include: "rules/build_electricity.smk"
