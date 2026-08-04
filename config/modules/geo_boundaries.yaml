@@ -21,6 +21,7 @@ scenarios:
       BGR: *nuts3
       CHE: *nuts3
       CZE: *nuts3
+      CYP: *nuts3
       DEU: *nuts3
       DNK: *nuts3
       EST: *nuts3
@@ -36,6 +37,7 @@ scenarios:
       LTU: *nuts3
       LUX: *nuts3
       LVA: *nuts3
+      MLT: *nuts3
       MNE: *nuts3
       MKD: *nuts3
       NLD: *nuts3
