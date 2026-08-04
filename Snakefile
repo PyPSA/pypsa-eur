@@ -20,7 +20,6 @@ from scripts._helpers import (
     get_shadow,
     path_provider,
     script_path_provider,
-    add_module_config,
 )
 from scripts.lib.validation.config import validate_config
 
@@ -33,8 +32,6 @@ if Path("config/config.yaml").exists():
 
     configfile: "config/config.yaml"
 
-
-add_module_config(config)
 
 validate_config(config)
 

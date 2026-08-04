@@ -138,7 +138,7 @@ rule build_bidding_zones:
 
 rule build_shapes:
     input:
-        shapes=resources("shapes/pypsa-eur.parquet"),
+        shapes=f"resources/modules/geo_boundaries/{config['modules']['geo_boundaries']['scenario']}.parquet",
         nuts3_gdp=rules.retrieve_jrc_ardeco.output["ardeco_gdp"],
         nuts3_pop=rules.retrieve_jrc_ardeco.output["ardeco_pop"],
         bidding_zones=lambda w: (

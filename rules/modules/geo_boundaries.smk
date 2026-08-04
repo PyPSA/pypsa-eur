@@ -7,10 +7,10 @@ MODULE_NAME = "geo_boundaries"
 
 module geo_boundaries:
     pathvars:
-        shapes=resources("shapes/{scenario}.parquet"),
-        logs=logs(MODULE_NAME),
-        resources=resources(MODULE_NAME),
-        results=resources(f"{MODULE_NAME}/results"),
+        shapes=f"resources/modules/{MODULE_NAME}/{{scenario}}.parquet",
+        logs=f"logs/modules/{MODULE_NAME}",
+        resources=f"data/modules/{MODULE_NAME}",
+        results=f"resources/modules/{MODULE_NAME}/results",
     snakefile:
         github(
             "modelblocks-org/module_geo_boundaries",
@@ -18,7 +18,7 @@ module geo_boundaries:
             tag=config["modules"][MODULE_NAME]["version"],
         )
     config:
-        config["modules"][MODULE_NAME]["config"]
+        module_config(MODULE_NAME)
 
 
 use rule * from geo_boundaries exclude all as geo_boundaries_*

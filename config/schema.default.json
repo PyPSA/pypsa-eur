@@ -2830,7 +2830,7 @@
         "geo_boundaries": {
           "description": "Configuration for module settings",
           "properties": {
-            "default_config": {
+            "config_path": {
               "description": "Path to module default configuration file. Can be relative to the project directory or absolute.",
               "format": "file-path",
               "type": "string"
@@ -2839,14 +2839,14 @@
               "description": "Module version to use.",
               "type": "string"
             },
-            "config": {
-              "additionalProperties": true,
-              "description": "Module configuration overrides. Overrides the default configuration.",
-              "type": "object"
+            "scenario": {
+              "default": "default",
+              "description": "Scenario to use for the geo_boundaries module.",
+              "type": "string"
             }
           },
           "required": [
-            "default_config",
+            "config_path",
             "version"
           ]
         }
@@ -6621,6 +6621,29 @@
         }
       }
     },
+    "_GeoBoundariesModuleConfig": {
+      "description": "Configuration for module settings",
+      "properties": {
+        "config_path": {
+          "description": "Path to module default configuration file. Can be relative to the project directory or absolute.",
+          "format": "file-path",
+          "type": "string"
+        },
+        "version": {
+          "description": "Module version to use.",
+          "type": "string"
+        },
+        "scenario": {
+          "default": "default",
+          "description": "Scenario to use for the geo_boundaries module.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "config_path",
+        "version"
+      ]
+    },
     "_HydroConfig": {
       "description": "Configuration for hydropower.",
       "properties": {
@@ -6944,29 +6967,6 @@
           "type": "string"
         }
       }
-    },
-    "_ModuleConfig": {
-      "description": "Configuration for module settings",
-      "properties": {
-        "default_config": {
-          "description": "Path to module default configuration file. Can be relative to the project directory or absolute.",
-          "format": "file-path",
-          "type": "string"
-        },
-        "version": {
-          "description": "Module version to use.",
-          "type": "string"
-        },
-        "config": {
-          "additionalProperties": true,
-          "description": "Module configuration overrides. Overrides the default configuration.",
-          "type": "object"
-        }
-      },
-      "required": [
-        "default_config",
-        "version"
-      ]
     },
     "_OETCConfig": {
       "description": "Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support).",
@@ -8261,7 +8261,7 @@
         "geo_boundaries": {
           "description": "Configuration for module settings",
           "properties": {
-            "default_config": {
+            "config_path": {
               "description": "Path to module default configuration file. Can be relative to the project directory or absolute.",
               "format": "file-path",
               "type": "string"
@@ -8270,14 +8270,14 @@
               "description": "Module version to use.",
               "type": "string"
             },
-            "config": {
-              "additionalProperties": true,
-              "description": "Module configuration overrides. Overrides the default configuration.",
-              "type": "object"
+            "scenario": {
+              "default": "default",
+              "description": "Scenario to use for the geo_boundaries module.",
+              "type": "string"
             }
           },
           "required": [
-            "default_config",
+            "config_path",
             "version"
           ]
         }

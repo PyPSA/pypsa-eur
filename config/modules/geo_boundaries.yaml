@@ -9,7 +9,7 @@ crs:
 voronoi_eez:
   enabled: false
 scenarios:
-  pypsa-eur:
+  default:
     countries:
       ALB: &nuts3
         source: "nuts"

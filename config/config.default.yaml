@@ -21,9 +21,9 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#modules
 modules:
   geo_boundaries:
-    default_config: config/modules/geo_boundaries.yaml
+    config_path: config/modules/geo_boundaries.yaml
     version: v1.0.1
-    config: {}
+    scenario: default
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
