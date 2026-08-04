@@ -40,10 +40,6 @@ together into a detailed PyPSA network stored in `networks/base_s_{clusters}_ele
 ::: build_cutout
 
 
-## Rule `build_osm_boundaries`
-
-::: build_osm_boundaries
-
 ## Rule `clean_osm_data`
 
 ::: clean_osm_data

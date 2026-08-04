@@ -85,7 +85,6 @@ build_industrial_production_per_country_tomorrow        1
 build_industrial_production_per_node                    1
 build_industry_sector_ratios                            1
 build_industry_sector_ratios_intermediate               1
-build_osm_boundaries                                    4
 build_population_layouts                                1
 build_population_weighted_energy_totals                 2
 build_powerplants                                       1
