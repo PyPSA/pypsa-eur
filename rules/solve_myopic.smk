@@ -10,7 +10,7 @@ rule add_existing_baseyear:
         ),
         powerplants=resources("powerplants_s_{clusters}.csv"),
         costs=lambda w: resources(
-            f"costs_{config_provider('scenario', 'planning_horizons',0)(w)}_processed.csv"
+            f"costs_{config_provider("scenario", "planning_horizons",0)(w)}_processed.csv"
         ),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         existing_heating_distribution=resources(
@@ -95,6 +95,7 @@ rule add_brownfield:
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
+        transmission_limit=config_provider("electricity", "transmission_limit_myopic"),
     message:
         "Adding brownfield constraints for existing infrastructure for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
