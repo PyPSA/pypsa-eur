@@ -1104,26 +1104,6 @@
             }
           }
         },
-        "eu_nuts2021": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
         "eurostat_balances": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -1424,26 +1404,6 @@
             }
           }
         },
-        "eez": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
         "nuts3_population": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -1645,26 +1605,6 @@
           }
         },
         "aquifer_data": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
-        "osm_boundaries": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -2881,6 +2821,34 @@
           "description": "Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.",
           "markdownDescription": "Custom format for log messages. See [LogRecord ](https://docs.python.org/3/library/logging.html#logging.LogRecord) attributes.",
           "type": "string"
+        }
+      }
+    },
+    "ModulesConfig": {
+      "description": "Configuration for modules.",
+      "properties": {
+        "geo_boundaries": {
+          "description": "Configuration for module settings",
+          "properties": {
+            "config_path": {
+              "description": "Path to module default configuration file. Can be relative to the project directory or absolute.",
+              "format": "file-path",
+              "type": "string"
+            },
+            "version": {
+              "description": "Module version to use.",
+              "type": "string"
+            },
+            "scenario": {
+              "default": "default",
+              "description": "Scenario to use for the geo_boundaries module.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "config_path",
+            "version"
+          ]
         }
       }
     },
@@ -6653,6 +6621,29 @@
         }
       }
     },
+    "_GeoBoundariesModuleConfig": {
+      "description": "Configuration for module settings",
+      "properties": {
+        "config_path": {
+          "description": "Path to module default configuration file. Can be relative to the project directory or absolute.",
+          "format": "file-path",
+          "type": "string"
+        },
+        "version": {
+          "description": "Module version to use.",
+          "type": "string"
+        },
+        "scenario": {
+          "default": "default",
+          "description": "Scenario to use for the geo_boundaries module.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "config_path",
+        "version"
+      ]
+    },
     "_HydroConfig": {
       "description": "Configuration for hydropower.",
       "properties": {
@@ -8261,6 +8252,34 @@
           "default": "",
           "description": "Optionally specify the file path within the remote cluster to be synchronized.",
           "type": "string"
+        }
+      }
+    },
+    "modules": {
+      "description": "Configuration for modules.",
+      "properties": {
+        "geo_boundaries": {
+          "description": "Configuration for module settings",
+          "properties": {
+            "config_path": {
+              "description": "Path to module default configuration file. Can be relative to the project directory or absolute.",
+              "format": "file-path",
+              "type": "string"
+            },
+            "version": {
+              "description": "Module version to use.",
+              "type": "string"
+            },
+            "scenario": {
+              "default": "default",
+              "description": "Scenario to use for the geo_boundaries module.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "config_path",
+            "version"
+          ]
         }
       }
     },
@@ -12937,26 +12956,6 @@
             }
           }
         },
-        "eu_nuts2021": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
         "eurostat_balances": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -13257,26 +13256,6 @@
             }
           }
         },
-        "eez": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
         "nuts3_population": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -13478,26 +13457,6 @@
           }
         },
         "aquifer_data": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
-        "osm_boundaries": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

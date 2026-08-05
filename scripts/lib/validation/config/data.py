@@ -213,10 +213,6 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="EU NUTS 2013 data source configuration.",
     )
-    eu_nuts2021: _DataSourceConfig = Field(
-        default_factory=_DataSourceConfig,
-        description="EU NUTS 2021 data source configuration.",
-    )
     eurostat_balances: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="Eurostat balances data source configuration.",
@@ -277,10 +273,6 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="Ship raster data source configuration.",
     )
-    eez: _DataSourceConfig = Field(
-        default_factory=_DataSourceConfig,
-        description="EEZ data source configuration.",
-    )
     nuts3_population: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="NUTS3 population data source configuration.",
@@ -324,10 +316,6 @@ class DataConfig(BaseModel):
     aquifer_data: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="Aquifer data source configuration.",
-    )
-    osm_boundaries: _DataSourceConfig = Field(
-        default_factory=_DataSourceConfig,
-        description="OSM boundaries data source configuration.",
     )
     gem_gspt: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,

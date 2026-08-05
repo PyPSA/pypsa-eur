@@ -305,30 +305,6 @@ if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [
             unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
 
-if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
-    "primary",
-    "archive",
-]:
-
-    rule retrieve_eu_nuts_2021:
-        input:
-            shapes=storage(EU_NUTS2021_DATASET["url"]),
-        output:
-            zip_file=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson.zip",
-            folder=directory(
-                f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson"
-            ),
-            shapes_level_3=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-            shapes_level_2=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
-            shapes_level_1=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
-            shapes_level_0=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
-        message:
-            "Retrieving EU NUTS 2021 data"
-        run:
-            copy2(input["shapes"], output["zip_file"])
-            unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
-
-
 if (
     BIDDING_ZONES_ELECTRICITYMAPS_DATASET := dataset_version(
         "bidding_zones_electricitymaps"
@@ -856,55 +832,6 @@ if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] i
             copy2(input["tif"], output["tif"])
 
 
-if (EEZ_DATASET := dataset_version("eez"))["source"] in ["primary"]:
-
-    rule retrieve_eez:
-        output:
-            zip_file=f"{EEZ_DATASET['folder']}/World_EEZ_{EEZ_DATASET['version']}_LR.zip",
-            gpkg=f"{EEZ_DATASET['folder']}/World_EEZ_{EEZ_DATASET['version']}_LR/eez_{EEZ_DATASET['version'].split('_')[0]}_lowres.gpkg",
-        message:
-            "Retrieving EEZ data"
-        run:
-            from uuid import uuid4
-
-            name = str(uuid4())[:8]
-            org = str(uuid4())[:8]
-            response = requests.post(
-                f"{EEZ_DATASET['url']}",
-                params={"name": f"World_EEZ_{EEZ_DATASET['version']}_LR.zip"},
-                data={
-                    "name": name,
-                    "organisation": org,
-                    "email": f"{name}@{org}.org",
-                    "country": "Germany",
-                    "user_category": "academia",
-                    "purpose_category": "Research",
-                    "agree": "1",
-                },
-            )
-            with open(output["zip_file"], "wb") as f:
-                f.write(response.content)
-            output_folder = Path(output["zip_file"]).parent
-            unpack_archive(output["zip_file"], output_folder)
-
-elif (EEZ_DATASET := dataset_version("eez"))["source"] in ["archive"]:
-
-    rule retrieve_eez:
-        input:
-            zip_file=storage(
-                EEZ_DATASET["url"],
-            ),
-        output:
-            zip_file=f"{EEZ_DATASET['folder']}/World_EEZ_{EEZ_DATASET['version']}_LR.zip",
-            gpkg=f"{EEZ_DATASET['folder']}/World_EEZ_{EEZ_DATASET['version']}_LR/eez_{EEZ_DATASET['version'].split('_')[0]}_lowres.gpkg",
-        message:
-            "Retrieving EEZ data"
-        run:
-            output_folder = Path(output["zip_file"]).parent
-            copy2(input["zip_file"], output["zip_file"])
-            unpack_archive(output["zip_file"], output_folder)
-
-
 if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source"] in [
     "primary",
     "archive",
@@ -1373,44 +1300,6 @@ elif NATURA_DATASET["source"] == "build":
             "Building Natura 2000 raster data"
         script:
             scripts("build_natura.py")
-
-
-if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in [
-    "primary"
-]:
-
-    rule retrieve_osm_boundaries:
-        output:
-            json=f"{OSM_BOUNDARIES_DATASET['folder']}/{country}_adm1.json",
-        log:
-            "logs/retrieve_osm_boundaries_{country}_adm1.log",
-        threads: 1
-        message:
-            "Retrieving OSM admin boundaries for {wildcards.country}"
-        script:
-            scripts("retrieve_osm_boundaries.py")
-
-elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in [
-    "archive"
-]:
-
-    rule retrieve_osm_boundaries:
-        input:
-            storage(
-                f"{OSM_BOUNDARIES_DATASET['url']}",
-            ),
-        output:
-            json1=f"{OSM_BOUNDARIES_DATASET['folder']}/XK_adm1.json",
-            json2=f"{OSM_BOUNDARIES_DATASET['folder']}/UA_adm1.json",
-            json3=f"{OSM_BOUNDARIES_DATASET['folder']}/MD_adm1.json",
-            json4=f"{OSM_BOUNDARIES_DATASET['folder']}/BA_adm1.json",
-            zip_file=f"{OSM_BOUNDARIES_DATASET['folder']}/osm_boundaries.zip",
-        message:
-            "Retrieving OSM admin boundaries data"
-        run:
-            output_folder = Path(output["zip_file"]).parent
-            copy2(input[0], output["zip_file"])
-            unpack_archive(output["zip_file"], output_folder)
 
 
 if (

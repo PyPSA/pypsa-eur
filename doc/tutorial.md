@@ -177,7 +177,6 @@ base_network                                 1
 build_electricity_demand                     1
 build_electricity_demand_base                1
 build_line_rating                            1
-build_osm_boundaries                         4
 build_powerplants                            1
 build_renewable_profiles                     6
 build_shapes                                 1

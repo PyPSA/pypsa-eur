@@ -208,3 +208,8 @@ def input_cutout(wildcards, cutout_names="default"):
         return [f"{cutouts_path}/{cn}.nc" for cn in cutout_names]
     else:
         return f"{cutouts_path}/{cutout_names}.nc"
+
+
+def module_config(module: str) -> dict:
+    """Get module config from path"""
+    return yaml.safe_load(Path(config["modules"][module]["config_path"]).read_text())

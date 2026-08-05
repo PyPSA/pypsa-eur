@@ -26,6 +26,7 @@ from scripts.lib.validation.config.industry import IndustryConfig
 from scripts.lib.validation.config.lines import LinesConfig
 from scripts.lib.validation.config.links import LinksConfig
 from scripts.lib.validation.config.load import LoadConfig
+from scripts.lib.validation.config.modules import ModulesConfig
 from scripts.lib.validation.config.overpass_api import OverpassApiConfig
 from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
@@ -99,7 +100,10 @@ class ConfigSchema(BaseModel):
         default_factory=RemoteConfig,
         description="Configuration for remote workflow execution",
     )
-
+    modules: ModulesConfig = Field(
+        default_factory=ModulesConfig,
+        description="Modules configuration for the workflow",
+    )
     run: RunConfig = Field(
         default_factory=RunConfig,
         description="Run configuration for PyPSA-EUR workflow execution.",
