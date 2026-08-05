@@ -1159,20 +1159,3 @@ def _load_data_version(file: str | Path, validate: bool = True) -> pd.DataFrame:
         data_versions = VersionsSchema.validate(data_versions)
 
     return data_versions
-
-
-def add_module_config(config: dict) -> None:
-    """
-    Add the default config for each module to the main configuration dictionary.
-
-    Parameters
-    ----------
-    config : dict
-        The main configuration dictionary to which the module configurations will be added.
-    """
-    for module_config in config["modules"].values():
-        default_config = yaml.safe_load(
-            Path(module_config["default_config"]).read_text()
-        )
-        update_config(default_config, module_config["config"])
-        module_config["config"] = default_config
