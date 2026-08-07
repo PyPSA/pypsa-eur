@@ -1255,6 +1255,150 @@ def add_dac(n, costs, spatial):
     )
 
 
+def add_biochar(n, costs):
+    """
+    Add biochar (CDR via biomass pyrolysis and stable-carbon soil storage)
+    to the network as Bus, Store, and Link components, all sharing a single
+    "co2 biochar" carrier; optionally exports pyrolysis waste heat to urban
+    central heating.
+
+    A single pyrolysis Link per node converts solid biomass (bus2) and
+    electricity (bus3) into stored biochar-carbon (bus1, drawn from the
+    atmosphere via bus0) and, if enabled, district heat (bus4, with an
+    overflow Store for heat that cannot be absorbed by the local heat
+    network). The store's capacity is dimensioned from the eligible CORINE
+    land area (see ``determine_availability_matrix.py`` and
+    ``build_available_land.py``) multiplied by a per-km2 application rate
+    and the stable-carbon fraction (``co2_per_tonne``), amortised over an
+    assumed storage horizon.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Costs and parameters for different technologies. Must contain a
+        'biochar pyrolysis' entry with 'biomass-input', 'yield-biochar',
+        'electricity-input', 'heat-output', 'capital_cost', and 'VOM'
+        parameters
+
+    Returns
+    -------
+    None
+        Modifies the network object in-place by adding the biochar Bus,
+        Store, and Link (and, if enabled, heat-output Bus/Link/Store)
+
+    Notes
+    -----
+    Reads ``snakemake.input.biochar_potentials`` (eligible area in km2 per
+    node) and ``snakemake.config["biochar"]["application_per_sqkm"]`` /
+    ``["max_land_usage"]`` / ``["number_years"]``. Heat output is gated by
+    ``sector.heating`` and ``sector.biochar.heat_output``.
+    """
+    logger.info("Adding biochar.")
+
+    biochar_potentials = pd.read_csv(snakemake.input.biochar_potentials).set_index(
+        "node"
+    )
+
+    n.add("Carrier", "co2 biochar")
+
+    n.add(
+        "Bus",
+        spatial.nodes + " co2 biochar",
+        location=spatial.nodes,
+        carrier="co2 biochar",
+        unit="t_co2",
+    )
+
+    co2_per_tonne = (
+        1
+        / costs.at["biochar pyrolysis", "biomass-input"]
+        * 1
+        / costs.at["biochar pyrolysis", "yield-biochar"]
+    )  # tCO2 / t_biochar
+
+    n.add(
+        "Store",
+        spatial.nodes + " co2 biochar",
+        bus=spatial.nodes + " co2 biochar",
+        carrier="co2 biochar",
+        e_nom_extendable=True,
+        e_nom_max=(
+            biochar_potentials["potential [sqkm]"].values
+            * co2_per_tonne
+            * snakemake.config["biochar"]["application_per_sqkm"]
+            * snakemake.config["biochar"]["max_land_usage"]
+            / snakemake.config["biochar"]["number_years"]
+        ),
+    )
+
+    if len(spatial.biomass.nodes) == 1:
+        biomass_buses = spatial.biomass.nodes
+    else:
+        biomass_buses = spatial.nodes + " solid biomass"
+
+    # heat output into urban central heat system
+    if (
+        snakemake.config["sector"]["heating"]
+        and snakemake.config["sector"]["biochar"]["heat_output"]
+    ):
+        logger.info("Adding biochar heat output to urban central heat system.")
+        biochar_heat_buses = []
+        for node in spatial.nodes:
+            if (node + " urban central heat") in n.buses.index:
+                biochar_heat_bus = node + " biochar heat"
+                biochar_heat_buses.append(biochar_heat_bus)
+                n.add("Bus", biochar_heat_bus, carrier="biochar heat")
+                n.add(
+                    "Link",
+                    biochar_heat_bus,
+                    bus0=biochar_heat_bus,
+                    bus1=node + " urban central heat",
+                    p_nom_extendable=True,
+                    carrier="biochar heat",
+                )
+                biochar_heat_bus_waste = node + " biochar heat waste"
+                n.add("Bus", biochar_heat_bus_waste, carrier="biochar heat")
+                n.add(
+                    "Store",
+                    biochar_heat_bus_waste,
+                    bus=biochar_heat_bus_waste,
+                    e_nom_extendable=True,
+                    carrier="biochar heat",
+                )
+                n.add(
+                    "Link",
+                    biochar_heat_bus_waste,
+                    bus0=biochar_heat_bus,
+                    bus1=biochar_heat_bus_waste,
+                    p_nom_extendable=True,
+                    carrier="biochar heat",
+                )
+            else:
+                biochar_heat_buses.append(None)
+    else:
+        biochar_heat_buses = [None]
+
+    n.add(
+        "Link",
+        spatial.nodes + " biochar",
+        bus0="co2 atmosphere",
+        bus1=spatial.nodes + " co2 biochar",
+        bus2=biomass_buses,
+        bus3=spatial.nodes,
+        bus4=biochar_heat_buses,
+        carrier="co2 biochar",
+        capital_cost=costs.at["biochar pyrolysis", "capital_cost"],
+        marginal_cost=costs.at["biochar pyrolysis", "VOM"],
+        efficiency=1.0,
+        efficiency2=-costs.at["biochar pyrolysis", "biomass-input"],
+        efficiency3=-costs.at["biochar pyrolysis", "electricity-input"],
+        efficiency4=costs.at["biochar pyrolysis", "heat-output"],
+        p_nom_extendable=True,
+    )
+
+
 def add_co2limit(n, options, co2_totals_file, countries, nyears, limit):
     """
     Add a global CO2 emissions constraint to the network.
@@ -6538,6 +6682,9 @@ if __name__ == "__main__":
 
     if options["dac"]:
         add_dac(n, costs, spatial)
+
+    if options.get("biochar", {}).get("enable"):
+        add_biochar(n, costs)
 
     if not options["electricity_transmission_grid"]:
         decentral(n)

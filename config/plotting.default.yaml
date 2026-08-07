@@ -738,3 +738,5 @@ plotting:
     import NH3: '#e2ed74'
     import oil: '#93eda2'
     import methanol: '#87d0e6'
+    biochar heat: '#228B22'
+    co2 biochar: '#005000'
