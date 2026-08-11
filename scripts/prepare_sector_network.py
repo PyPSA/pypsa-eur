@@ -711,7 +711,12 @@ def add_eu_bus(n, x=-5.5, y=46):
 
 
 def add_co2_tracking(
-    n, costs, options, sequestration_potential_file=None, co2_price: float = 0.0
+    n,
+    costs,
+    options,
+    spatial,
+    sequestration_potential_file=None,
+    co2_price: float = 0.0,
 ):
     """
     Add CO2 tracking components to the network including atmospheric CO2,
@@ -726,16 +731,18 @@ def add_co2_tracking(
         'CO2 storage tank' with 'capital_cost' column
     options : dict
         Configuration options containing at least:
-        - regional_co2_sequestration_potential: dict with keys
-            - enable: bool
-            - max_size: float
-            - years_of_storage: float
+        - regional_co2_sequestration_potential : dict
+            Dict with keys ``enable`` (bool), ``max_size`` (float),
+            ``years_of_storage`` (float).
         - co2_sequestration_cost: float
         - co2_sequestration_lifetime: float
         - co2_vent: bool
+    spatial : SimpleNamespace
+        Configuration options containing at least:
+        - co2.df: DataFrame with CO2 network nodes, locations, vents (optional)
     sequestration_potential_file : str, optional
         Path to CSV file containing regional CO2 sequestration potentials.
-        Required if options['regional_co2_sequestration_potential']['enable'] is True.
+        Required if ``options["regional_co2_sequestration_potential"]["enable"]`` is True.
     co2_price : float, optional
         CO2 price that needs to be paid for emitting into the atmosphere and which is
         gained by removing from the atmosphere.
@@ -996,7 +1003,7 @@ def add_allam_gas(
     )
 
 
-def add_biomass_to_methanol(n, costs):
+def add_biomass_to_methanol(n, costs, spatial):
     n.add(
         "Link",
         spatial.biomass.nodes,
@@ -1017,7 +1024,7 @@ def add_biomass_to_methanol(n, costs):
     )
 
 
-def add_biomass_to_methanol_cc(n, costs):
+def add_biomass_to_methanol_cc(n, costs, spatial):
     n.add(
         "Link",
         spatial.biomass.nodes,
@@ -1044,7 +1051,7 @@ def add_biomass_to_methanol_cc(n, costs):
     )
 
 
-def add_methanol_to_power(n, costs, pop_layout, types=None):
+def add_methanol_to_power(n, costs, pop_layout, spatial, types=None):
     if types is None:
         types = {}
 
@@ -1153,7 +1160,7 @@ def add_methanol_to_power(n, costs, pop_layout, types=None):
         )
 
 
-def add_methanol_reforming(n, costs):
+def add_methanol_reforming(n, costs, spatial):
     logger.info("Adding methanol steam reforming.")
 
     tech = "Methanol steam reforming"
@@ -1176,7 +1183,7 @@ def add_methanol_reforming(n, costs):
     )
 
 
-def add_methanol_reforming_cc(n, costs):
+def add_methanol_reforming_cc(n, costs, spatial):
     logger.info("Adding methanol steam reforming with carbon capture.")
 
     tech = "Methanol steam reforming"
@@ -1213,7 +1220,7 @@ def add_methanol_reforming_cc(n, costs):
     )
 
 
-def add_dac(n, costs):
+def add_dac(n, costs, spatial):
     heat_carriers = ["urban central heat", "services urban decentral heat"]
     heat_buses = n.buses.index[n.buses.carrier.isin(heat_carriers)]
     locations = n.buses.location[heat_buses]
@@ -1421,8 +1428,6 @@ def add_ammonia(
     cf_industry : dict
         Industry-specific conversion factors including
         'MWh_NH3_per_MWh_H2_cracker' for ammonia cracking efficiency
-    logger : logging.Logger
-        Logger object for output messages
 
     Returns
     -------
@@ -1792,8 +1797,6 @@ def add_h2_gas_infrastructure(
         - SMR : bool
         - min_part_load_methanation : float
         - cc_fraction : float
-    logger : logging.Logger, optional
-        Logger for output messages. If None, no logging is performed.
 
     Returns
     -------
@@ -2575,6 +2578,7 @@ def add_land_transport(
     temp_air_total_file,
     cf_industry,
     options,
+    spatial,
     investment_year,
     nodes,
 ) -> None:
@@ -2602,6 +2606,8 @@ def add_land_transport(
         - land_transport_fuel_cell_share
         - land_transport_electric_share
         - land_transport_ice_share
+    spatial : SimpleNamespace
+        Configuration options containing at least spatial information on nodes, h2 and oil
     investment_year : int
         Year for which to get the transport shares
     nodes : list-like
@@ -2789,8 +2795,20 @@ def add_heat(
         Path to NetCDF file containing direct heat source utilisation profiles
     hourly_heat_demand_total_file : str
         Path to CSV file containing hourly heat demand data
-    ptes_supplemental_heating_required_file: str
-        Path to CSV file indicating when supplemental heating for thermal energy storage (TES) is needed
+    ptes_e_max_pu_file : str
+        Path to CSV file containing pit thermal energy storage max energy per unit profiles.
+    ptes_direct_utilisation_profile : str
+        Path to file containing pit thermal energy storage direct utilisation profiles.
+    ates_e_nom_max : str
+        Path to file containing aquifer thermal energy storage nominal max energy.
+    ates_capex_as_fraction_of_geothermal_heat_source : float
+        ATES capital cost as fraction of geothermal heat source cost.
+    ates_recovery_factor : float
+        ATES recovery factor.
+    enable_ates : bool
+        Whether to enable aquifer thermal energy storage.
+    ates_marginal_cost_charger : float
+        Marginal cost for ATES charger.
     district_heat_share_file : str
         Path to CSV file containing district heating share information
     solar_thermal_total_file : str
@@ -3723,24 +3741,25 @@ def add_methanol(
 
     if options["biomass"]:
         if methanol_options["biomass_to_methanol"]:
-            add_biomass_to_methanol(n=n, costs=costs)
+            add_biomass_to_methanol(n=n, costs=costs, spatial=spatial)
 
         if methanol_options["biomass_to_methanol_cc"]:
-            add_biomass_to_methanol_cc(n=n, costs=costs)
+            add_biomass_to_methanol_cc(n=n, costs=costs, spatial=spatial)
 
     if methanol_options["methanol_to_power"]:
         add_methanol_to_power(
             n=n,
             costs=costs,
             pop_layout=pop_layout,
+            spatial=spatial,
             types=methanol_options["methanol_to_power"],
         )
 
     if methanol_options["methanol_reforming"]:
-        add_methanol_reforming(n=n, costs=costs)
+        add_methanol_reforming(n=n, costs=costs, spatial=spatial)
 
     if methanol_options["methanol_reforming_cc"]:
-        add_methanol_reforming_cc(n=n, costs=costs)
+        add_methanol_reforming_cc(n=n, costs=costs, spatial=spatial)
 
 
 def add_biomass(
@@ -4516,8 +4535,6 @@ def add_industry(
         Industry-specific configuration parameters
     investment_year : int
         Year for which investment costs should be considered
-    HeatSystem : Enum
-        Enumeration defining different heat system types
 
     Returns
     -------
@@ -5686,6 +5703,14 @@ def limit_individual_line_extension(n, maxext):
     n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + maxext
 
 
+def _sum_keep_na(s):
+    """
+    Sum keeping all-NaN groups as NaN instead of collapsing them to 0.
+
+    """
+    return s.sum(min_count=1)
+
+
 aggregate_dict = {
     "p_nom": pd.Series.sum,
     "s_nom": pd.Series.sum,
@@ -5700,13 +5725,13 @@ aggregate_dict = {
     "v_ang_max": "min",
     "terrain_factor": "mean",
     "num_parallel": "sum",
-    "p_set": "sum",
+    "p_set": _sum_keep_na,
     "e_initial": "sum",
     "e_nom": pd.Series.sum,
     "e_nom_max": pd.Series.sum,
     "e_nom_min": pd.Series.sum,
     "state_of_charge_initial": "sum",
-    "state_of_charge_set": "sum",
+    "state_of_charge_set": _sum_keep_na,
     "inflow": "sum",
     "p_max_pu": "first",
     "x": "mean",
@@ -5750,7 +5775,11 @@ def cluster_heat_buses(n):
         if c.static.empty:
             continue
         df = c.static
-        cols = df.columns[df.columns.str.contains("bus") | (df.columns == "carrier")]
+        cols = df.columns[
+            df.columns.str.contains("bus")
+            | (df.columns == "carrier")
+            | (df.columns == "nice_name")
+        ]
 
         # rename columns and index
         df[cols] = df[cols].apply(
@@ -5764,7 +5793,7 @@ def cluster_heat_buses(n):
         # cluster heat nodes
         # static dataframe
         agg = define_clustering(df.columns, aggregate_dict)
-        df = df.groupby(level=0).agg(agg, numeric_only=False)
+        df = df.groupby(level=0).agg(agg)
         # time-varying data
         pnl = c.dynamic
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
@@ -5773,7 +5802,7 @@ def cluster_heat_buses(n):
             def renamer(s):
                 return s.replace("residential ", "").replace("services ", "")
 
-            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k], numeric_only=False).T
+            pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k]).T
 
         # remove unclustered assets of service/residential
         to_drop = c.static.index.difference(df.index)
@@ -5892,6 +5921,7 @@ def add_enhanced_geothermal(
     egs_potentials,
     egs_overlap,
     egs_config,
+    spatial,
     egs_capacity_factors=None,
 ):
     """
@@ -5923,6 +5953,9 @@ def add_enhanced_geothermal(
         General cost configuration containing:
         - fill_values : dict
             With key 'discount rate' for financial calculations
+    spatial : SimpleNamespace
+        Configuration options containing at least:
+            - geothermal_heat.df: DataFrame with geothermal_heat network nodes
     egs_capacity_factors : str, optional
         Path to CSV file with time-varying capacity factors.
         Required if egs_config['var_cf'] is True.
@@ -6136,6 +6169,7 @@ def add_import_options(
     n: pypsa.Network,
     costs: pd.DataFrame,
     options: dict,
+    spatial: SimpleNamespace,
     gas_input_nodes: pd.DataFrame,
 ):
     """
@@ -6147,6 +6181,8 @@ def add_import_options(
     costs : pd.DataFrame
     options : dict
         Options from snakemake.params["sector"].
+    spatial : SimpleNamespace
+        Configuration options containing spatial information on methanol, oil, gas and ammonia nodes
     gas_input_nodes : pd.DataFrame
         Locations of gas input nodes split by LNG and pipeline.
     """
@@ -6327,6 +6363,7 @@ if __name__ == "__main__":
         n,
         costs,
         options,
+        spatial,
         sequestration_potential_file=snakemake.input.sequestration_potential,
         co2_price=co2_price,
     )
@@ -6383,6 +6420,7 @@ if __name__ == "__main__":
             temp_air_total_file=snakemake.input.temp_air_total,
             cf_industry=cf_industry,
             options=options,
+            spatial=spatial,
             investment_year=investment_year,
             nodes=spatial.nodes,
         )
@@ -6495,7 +6533,7 @@ if __name__ == "__main__":
         )
 
     if options["dac"]:
-        add_dac(n, costs)
+        add_dac(n, costs, spatial)
 
     if not options["electricity_transmission_grid"]:
         decentral(n)
@@ -6566,11 +6604,12 @@ if __name__ == "__main__":
             egs_potentials=snakemake.input["egs_potentials"],
             egs_overlap=snakemake.input["egs_overlap"],
             egs_config=snakemake.params["sector"]["enhanced_geothermal"],
+            spatial=spatial,
             egs_capacity_factors="path/to/capacity_factors.csv",
         )
 
     if options["imports"]["enable"]:
-        add_import_options(n, costs, options, gas_input_nodes)
+        add_import_options(n, costs, options, spatial, gas_input_nodes)
 
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs, options=options)

@@ -7,20 +7,15 @@ Build hydroelectric inflow time-series for each country.
 Outputs
 -------
 
-- ``resources/profile_hydro.nc``:
+- `resources/profile_hydro.nc`:
 
-    ===================  ================  =========================================================
-    Field                Dimensions        Description
-    ===================  ================  =========================================================
-    inflow               countries, time   Inflow to the state of charge (in MW),
-                                           e.g. due to river inflow in hydro reservoir.
-    ===================  ================  =========================================================
+| Field | Dimensions | Description |
+| --- | --- | --- |
+| inflow | countries, time | Inflow to the state of charge (in MW), e.g. due to river inflow in hydro reservoir. |
 
-    .. image:: img/inflow-ts.png
-        :scale: 33 %
+![](img/inflow-ts.png)
 
-    .. image:: img/inflow-box.png
-        :scale: 33 %
+![](img/inflow-box.png)
 """
 
 import logging

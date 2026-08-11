@@ -14,7 +14,10 @@ from tempfile import NamedTemporaryFile
 import atlite
 import fiona
 import geopandas as gpd
+import matplotlib.pyplot as plt
 import numpy as np
+from atlite.gis import shape_availability
+from rasterio.plot import show
 
 from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
@@ -168,5 +171,17 @@ if __name__ == "__main__":
 
     availability = availability.sel(bus=buses)
 
+    if snakemake.params.plot_availability_matrix:
+        logger.info(
+            f"Plotting landuse availability matrix for {snakemake.wildcards.technology}."
+        )
+        band, transform = shape_availability(
+            regions.geometry.to_crs(excluder.crs), excluder
+        )
+        fig, ax = plt.subplots(figsize=(10, 10))
+        regions.to_crs(excluder.crs).plot(ax=ax, color="none")
+        show(band, transform=transform, cmap="Greens", ax=ax)
+        plt.savefig(snakemake.output["plot"], dpi=300)
+
     # Save and plot for verification
-    availability.to_netcdf(snakemake.output.availability_matrix)
+    availability.to_netcdf(snakemake.output["nc"])

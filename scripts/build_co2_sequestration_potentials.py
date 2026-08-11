@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MIT
 """
 Build regionalised geological sequestration potential for carbon dioxide using
-data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
-database_en>`_.
+data from [CO2Stop](https://setis.ec.europa.eu/european-co2-storage-
+database_en).
 """
 
 from typing import Any

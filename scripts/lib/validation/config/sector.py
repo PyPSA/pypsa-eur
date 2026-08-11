@@ -231,6 +231,7 @@ class _TransmissionEfficiencyConfig(BaseModel):
         default_factory=lambda: [
             "DC",
             "H2 pipeline",
+            "H2 pipeline retrofitted",
             "gas pipeline",
             "electricity distribution grid",
         ],
@@ -250,6 +251,14 @@ class _TransmissionEfficiencyConfig(BaseModel):
         },
         alias="H2 pipeline",
         description="H2 pipeline transmission efficiency.",
+    )
+    H2_pipeline_retrofitted: dict[str, float] = Field(
+        default_factory=lambda: {
+            "efficiency_per_1000km": 1,
+            "compression_per_1000km": 0.018,
+        },
+        alias="H2 pipeline retrofitted",
+        description="H2 pipeline retrofitted transmission efficiency.",
     )
     gas_pipeline: dict[str, float] = Field(
         default_factory=lambda: {
@@ -443,7 +452,8 @@ class SectorConfig(BaseModel):
         description="The share for battery electric vehicles (BEV) that are able to do demand side management (DSM).",
     )
     bev_energy: float = Field(
-        0.05, description="The average size of battery electric vehicles (BEV) in MWh."
+        0.05,
+        description="The average available net battery capacity of battery electric vehicles (BEV) in MWh.",
     )
     bev_charge_efficiency: float = Field(
         0.9,
