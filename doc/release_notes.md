@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* feat: Add enhanced rock weathering as a carbon dioxide removal (CDR) technology, with node-level potential derived from CORINE land cover and filtered by mean annual minimum temperature ([#2142](https://github.com/PyPSA/pypsa-eur/issues/2142)).
 
 * refactor: `prepare_sector_network.py` functions now take `spatial` as an explicit parameter instead of a module-level global.
 * fix: update stale contribution docs (linting and formatting ruff)

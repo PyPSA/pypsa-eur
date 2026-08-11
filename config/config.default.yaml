@@ -419,6 +419,15 @@ renewable:
     eia_norm_year: false
     eia_correct_by_capacity: false
     eia_approximate_missing: false
+  rock_weathering:
+    corine:
+    - 12
+    - 13
+    - 14
+    natura: false
+    cutout: default
+    excluder_resolution: 250
+    min_mean_temp_C: 10
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -837,6 +846,7 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
+  rock_weathering: false
   co2_vent: false
   heat_vent:
     urban central: true
@@ -1069,6 +1079,11 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2023
   oil_refining_emissions: 0.013
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#rock_weathering
+rock_weathering:
+  co2_removal_per_sqkm: 309
+  max_land_usage: 0.2
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
