@@ -1,4 +1,3 @@
-# temp 
 version: 7
 platforms:
 - name: linux-64
