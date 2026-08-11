@@ -31,7 +31,6 @@ from tqdm import tqdm
 
 from scripts._helpers import configure_logging, mute_print, set_scenario_config
 
-
 cc = coco.CountryConverter()
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
