@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/modelblocks-org/module_geo_boundaries/refs/tags/v1.0.1/workflow/internal/config.schema.yaml
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+crs:
+  projected: "epsg:3035"
+  geographic: "epsg:4326"
+voronoi_eez:
+  enabled: false
+scenarios:
+  default:
+    countries:
+      ALB: &nuts3
+        source: "nuts"
+        subtype: "3"
+        resolution: "01M"
+        year: 2021
+      AUT: *nuts3
+      BEL: *nuts3
+      BGR: *nuts3
+      CHE: *nuts3
+      CZE: *nuts3
+      CYP: *nuts3
+      DEU: *nuts3
+      DNK: *nuts3
+      EST: *nuts3
+      ESP: *nuts3
+      FIN: *nuts3
+      FRA: *nuts3
+      GBR: *nuts3
+      GRC: *nuts3
+      HRV: *nuts3
+      HUN: *nuts3
+      IRL: *nuts3
+      ITA: *nuts3
+      LTU: *nuts3
+      LUX: *nuts3
+      LVA: *nuts3
+      MLT: *nuts3
+      MNE: *nuts3
+      MKD: *nuts3
+      NLD: *nuts3
+      NOR: *nuts3
+      POL: *nuts3
+      PRT: *nuts3
+      ROU: *nuts3
+      SRB: *nuts3
+      SWE: *nuts3
+      SVN: *nuts3
+      SVK: *nuts3
+
+      BIH: &not_nuts3
+        source: "geoboundaries"
+        subtype: "1"
+        release_type: "gbOpen"
+      MDA: *not_nuts3
+      UKR: *not_nuts3
+      XKX: *not_nuts3

@@ -38,8 +38,6 @@ desnz_electricity_consumption,unknown,primary,latest supported,2026-02-02,,https
 desnz_electricity_consumption,2026-02-16,archive,latest supported,2026-02-16,,https://data.pypsa.org/workflows/eur/desnz_electricity_consumption/2026-02-16/Subnational_electricity_consumption_statistics_2005-2024.xlsx
 dh_areas,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg
 dh_areas,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/dh_areas/341.5/dh_areas.gpkg
-eez,v12_20231025,primary,latest supported,2025-12-02,API request used,https://www.marineregions.org/download_file.php
-eez,v12_20231025,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eez/v12_20231025/World_EEZ_v12_20231025_LR.zip
 emobility,28-08-2016,primary,latest supported,2025-12-02,,https://zenodo.org/records/16899168/files/emobility.zip
 emobility,28-08-2016,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/emobility/28-08-2016/emobility.zip
 enspreso_biomass,unknown,primary,latest supported,2025-12-02,"2019 version was changed in 2023 with negligible differences, but since the version is not frozen we label it as 'unknown'.",https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx
@@ -48,8 +46,6 @@ entsoe_electricity_demand,unknown,build,latest supported,2026-02-02,API request 
 entsoe_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,API request using entsoe-py package,https://data.pypsa.org/workflows/eur/entsoe_electricity_demand/2026-02-02/electricity_demand_entsoe_raw.csv
 eu_nuts2013,2015-12-03,primary,latest supported,2025-12-02, ,https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip
 eu_nuts2013,2015-12-03,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eu_nuts2013/2015-12-03/ref-nuts-2013-03m.geojson.zip
-eu_nuts2021,2021-01-01,primary,latest supported,2025-12-02,,https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip
-eu_nuts2021,2021-01-01,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eu_nuts2021/2021-01-01/ref-nuts-2021-01m.geojson.zip
 eurostat_balances,unknown,primary,latest supported,2026-02-04,,https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nrg_bal_c?format=TSV&compressed=true
 eurostat_balances,2026-02,archive,latest supported,2026-02-09,,https://data.pypsa.org/workflows/eur/eurostat_balances/2026-02/nrg_bal_c
 eurostat_balances,2023-04,primary,not-supported,2025-12-02,"The link is broken, use the archived versions instead.",https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip
@@ -126,8 +122,6 @@ osm,0.2,primary,supported,2026-01-13,,https://zenodo.org/records/13342577/files
 osm,0.2,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.2
 osm,0.1,primary,supported,2026-01-13,,https://zenodo.org/records/12799202/files
 osm,0.1,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.1
-osm_boundaries,unknown,primary,latest supported,2025-12-02,Overpass API is used to fetch the latest available data,
-osm_boundaries,unknown,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm_boundaries/unknown/osm_boundaries.zip
 population_count,2018-11-01,primary,latest supported,2025-12-02,,https://data.worldpop.org/GIS/Population/Global_2000_2020/2019/0_Mosaicked/ppp_2019_1km_Aggregated.tif
 population_count,2018-11-01,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/population_count/2018-11-01/ppp_2019_1km_Aggregated.tif
 powerplants,0.8.1,primary,latest supported,2026-02-11,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.1/powerplants.csv

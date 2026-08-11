@@ -12,7 +12,7 @@ from snakemake.utils import min_version, update_config
 
 load_dotenv()
 
-min_version("8.11")
+min_version("9.19")
 
 from scripts._helpers import (
     get_rdir,
@@ -82,6 +82,7 @@ include: "rules/common.smk"
 OSM_DATASET = dataset_version("osm")
 
 
+include: "rules/modules/geo_boundaries.smk"
 include: "rules/collect.smk"
 include: "rules/retrieve.smk"
 include: "rules/build_electricity.smk"

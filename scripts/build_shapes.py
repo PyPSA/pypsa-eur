@@ -2,9 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates GIS shape files of the countries, exclusive economic zones and `NUTS3 <
-https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>
-`_ and OSM ADM1 areas (for BA, MD, UA, and XK).
+Enriches regional GIS data (harmonised land + maritime shapes) with population, GDP, and bidding zone information.
 """
 
 import logging
@@ -31,44 +29,6 @@ GEO_CRS = "EPSG:4326"
 DISTANCE_CRS = "EPSG:3035"
 GDP_YEAR = 2019
 POP_YEAR = 2019
-EUROPE_COUNTRIES = [
-    "AL",
-    "AT",
-    "BA",
-    "BE",
-    "BG",
-    "CH",
-    "CZ",
-    "DE",
-    "DK",
-    "EE",
-    "ES",
-    "FI",
-    "FR",
-    "GB",
-    "GR",
-    "HR",
-    "HU",
-    "IE",
-    "IT",
-    "LT",
-    "LU",
-    "LV",
-    "ME",
-    "MK",
-    "NL",
-    "NO",
-    "PL",
-    "PT",
-    "RO",
-    "RS",
-    "SE",
-    "SI",
-    "SK",
-    "XK",
-    "UA",
-    "MD",
-]
 DROP_REGIONS = [
     "ES703",
     "ES704",
@@ -145,16 +105,25 @@ def _simplify_polys(
     return polys
 
 
-def eez(eez, country_list=EUROPE_COUNTRIES):
-    df = gpd.read_file(eez)
-    iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")  # noqa: F841
-    pol_type = ["200NM", "Overlapping claim"]  # noqa: F841
-    df = df.query("ISO_TER1 in @iso3_list and POL_TYPE in @pol_type").copy()
-    df["name"] = cc.convert(df.ISO_TER1, src="ISO3", to="ISO2")
-    s = df.set_index("name").geometry.map(
-        lambda s: _simplify_polys(s, minarea=0.1, filterremote=False)
+def build_offshore_shapes(maritime: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """
+    Build per-country offshore (EEZ) shapes from the module's maritime rows.
+
+    Parameters
+    ----------
+    maritime : geopandas.GeoDataFrame
+        Maritime (``shape_class == "maritime"``) rows of the geo_boundaries
+        module output, with an ISO2 ``country`` column.
+
+    Returns
+    -------
+    geopandas.GeoDataFrame
+        Offshore shapes dissolved per country, indexed by ISO2 ``name``.
+    """
+    s = maritime.dissolve(by="country")["geometry"].map(
+        lambda g: _simplify_polys(g, minarea=0.1, filterremote=False)
     )
-    s = s.to_frame("geometry").set_crs(df.crs)
+    s = gpd.GeoDataFrame(geometry=s, crs=maritime.crs)
     s.index.name = "name"
     return s
 
@@ -212,16 +181,23 @@ def simplify_europe(regions):
         .groupby("country")["geometry"]
         .apply(lambda x: x.union_all())
     )
-    coverage_dk = coverage.loc[["DK"]]
-    coverage = coverage.apply(_simplify_polys, minarea=500 * 1e6, maxdistance=200 * 1e3)
-    coverage_dk = coverage_dk.apply(
-        _simplify_polys, minarea=65 * 1e6, maxdistance=200 * 1e3
+    coverage_simplified = coverage.apply(
+        _simplify_polys, minarea=500 * 1e6, maxdistance=200 * 1e3
     )
-    coverage.loc["DK"] = coverage_dk.values[0]
-    coverage = gpd.GeoDataFrame(geometry=coverage, crs=DISTANCE_CRS).to_crs(GEO_CRS)
+    if "DK" in coverage_simplified.index:
+        coverage_dk = coverage.loc[["DK"]].apply(
+            _simplify_polys, minarea=65 * 1e6, maxdistance=200 * 1e3
+        )
+        coverage_simplified.loc["DK"] = coverage_dk.values[0]
+
+    coverage = gpd.GeoDataFrame(geometry=coverage_simplified, crs=DISTANCE_CRS).to_crs(
+        GEO_CRS
+    )
 
     # Re-add selected regions manually
-    coverage = pd.concat([coverage, regions.loc[NUTS3_INCLUDE, ["geometry"]]])
+    coverage = pd.concat(
+        [coverage, regions.loc[regions.index.isin(NUTS3_INCLUDE), ["geometry"]]]
+    )
     shape = coverage.union_all()
 
     regions_polygon = regions.explode()
@@ -246,12 +222,7 @@ def simplify_europe(regions):
 
 def create_regions(
     country_list,
-    nuts3_path,
-    ba_adm1_path,
-    md_adm1_path,
-    ua_adm1_path,
-    xk_adm1_path,
-    offshore_shapes,
+    land,
     nuts3_gdp,
     nuts3_pop,
     bidding_zones_path,
@@ -259,24 +230,16 @@ def create_regions(
     other_pop,
 ):
     """
-    Create regions by processing NUTS and non-NUTS geographical shapes.
+    Create regions from the harmonised land shapes of the geo_boundaries module.
 
     Parameters
     ----------
     country_list : list
-        List of country codes to include.
-    nuts3_path : str
-        Path to the NUTS3 2021 shapefile.
-    ba_adm1_path : str
-        Path to adm1 boundaries for Bosnia and Herzegovina.
-    md_adm1_path : str
-        Path to adm1 boundaries for Moldova.
-    ua_adm1_path : str
-        Path to adm1 boundaries for Ukraine.
-    xk_adm1_path : str
-        Path to adm1 boundaries for Kosovo.
-    offshore_shapes : geopandas.GeoDataFrame
-        Geographical shapes of the exclusive economic zones.
+        List of ISO2 country codes to include.
+    land : geopandas.GeoDataFrame
+        Land (``shape_class == "land"``) rows of the geo_boundaries module
+        output, with columns ``parent`` (source dataset), ``parent_id``,
+        ``parent_name`` and an ISO2 ``country`` column.
     nuts3_gdp : str
         Path to NUTS3 GDP data.
     nuts3_pop : str
@@ -299,67 +262,43 @@ def create_regions(
             - level2: Level 2 region identifier.
             - level3: Level 3 region identifier.
     """
-    # Prepare NUTS shapes
+    # NUTS regions (module `parent == "nuts"`). The module keeps the original
+    # NUTS codes, which use "EL"/"UK" for Greece/UK; rename to "GR"/"GB" to match
+    # pypsa-eur conventions (and the ARDECO, DROP_REGIONS and NUTS3_INCLUDE keys).
     logger.info("Processing NUTS regions.")
-    regions = gpd.read_file(nuts3_path)
-    regions.loc[regions.CNTR_CODE == "EL", "CNTR_CODE"] = "GR"  # Rename "EL" to "GR
-    regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("EL", "GR")
-    regions.loc[regions.CNTR_CODE == "UK", "CNTR_CODE"] = "GB"  # Rename "UK" to "GB"
-    regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("UK", "GB")
+    nuts = land[land["parent"] == "nuts"].copy()
+    nuts["id"] = nuts["parent_id"].str.replace("EL", "GR").str.replace("UK", "GB")
+    nuts["id"] = nuts["id"].apply(normalise_text)
+    nuts = nuts.rename(columns={"parent_name": "name"})[
+        ["id", "country", "name", "geometry"]
+    ]
+    nuts["level1"] = nuts["id"].str[:3]
+    nuts["level2"] = nuts["id"].str[:4]
+    nuts["level3"] = nuts["id"]
 
-    # Create new df
-    regions = regions[["NUTS_ID", "CNTR_CODE", "NAME_LATN", "geometry"]]
-
-    # Rename columns and add level columns
-    regions = regions.rename(
-        columns={"NUTS_ID": "id", "CNTR_CODE": "country", "NAME_LATN": "name"}
-    )
-
-    # Normalise text
-    regions["id"] = regions["id"].apply(normalise_text)
-
-    regions["level1"] = regions["id"].str[:3]
-    regions["level2"] = regions["id"].str[:4]
-    regions["level3"] = regions["id"]
-
-    # Non NUTS countries
     logger.info("Processing non-NUTS regions.")
-
-    ba_adm1 = gpd.read_file(ba_adm1_path)
-    md_adm1 = gpd.read_file(md_adm1_path)
-    ua_adm1 = gpd.read_file(ua_adm1_path)
-    xk_adm1 = gpd.read_file(xk_adm1_path)
-
-    regions_non_nuts = pd.concat([ba_adm1, md_adm1, ua_adm1, xk_adm1])
-    regions_non_nuts = regions_non_nuts.drop(columns=["osm_id"])
-
-    # Normalise text
-    regions_non_nuts["id"] = regions_non_nuts["id"].apply(normalise_text)
-    regions_non_nuts["name"] = regions_non_nuts["name"].apply(normalise_text)
-
-    # Add level columns
-    regions_non_nuts["level1"] = regions_non_nuts["id"]
-    regions_non_nuts["level2"] = regions_non_nuts["id"]
-    regions_non_nuts["level3"] = regions_non_nuts["id"]
-
-    # Clip regions by non-NUTS shapes
-    regions["geometry"] = regions["geometry"].difference(
-        regions_non_nuts.geometry.union_all()
-    )
+    non_nuts = land[land["parent"] != "nuts"].copy()
+    non_nuts_countries = non_nuts.country.unique()
+    non_nuts["id"] = non_nuts["parent_id"].apply(normalise_text)
+    non_nuts = non_nuts.rename(columns={"parent_name": "name"})[
+        ["id", "country", "name", "geometry"]
+    ]
+    non_nuts["name"] = non_nuts["name"].apply(normalise_text)
+    non_nuts["level1"] = non_nuts["id"]
+    non_nuts["level2"] = non_nuts["id"]
+    non_nuts["level3"] = non_nuts["id"]
 
     # Concatenate NUTS and non-NUTS regions
     logger.info("Harmonising NUTS and non-NUTS regions.")
-    regions = pd.concat([regions, regions_non_nuts])
+    regions = gpd.GeoDataFrame(
+        pd.concat([nuts, non_nuts], ignore_index=True),
+        geometry="geometry",
+        crs=land.crs,
+    )
     regions.set_index("id", inplace=True)
 
     # Drop regions out of geographical scope
     regions = regions.drop(DROP_REGIONS, errors="ignore")
-
-    # Clip regions by offshore shapes
-    logger.info("Clipping regions by offshore shapes.")
-    regions["geometry"] = regions["geometry"].difference(
-        offshore_shapes.geometry.union_all()
-    )
 
     # GDP and POP for NUTS3 regions
     # GDP
@@ -379,13 +318,11 @@ def create_regions(
     regions["pop"] = nuts3_pop.div(1e3).round(0)
 
     # GDP and POP for non-NUTS3 regions
-    other_countries = {"BA", "MD", "UA", "XK"}
-
-    if any(country in country_list for country in other_countries):
+    if non_nuts_countries.any():
         gdp_pop = pd.concat(
             [
                 calc_gdp_pop(country, regions, other_gdp, other_pop)
-                for country in other_countries
+                for country in non_nuts_countries
             ],
             axis=0,
         )
@@ -639,19 +576,20 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    shapes = gpd.read_parquet(snakemake.input.shapes)
+    shapes["country"] = cc.convert(list(shapes["country_id"]), src="ISO3", to="ISO2")
+    shapes_filtered = shapes[shapes.country.isin(snakemake.params.countries)]
+    land = shapes_filtered[shapes_filtered["shape_class"] == "land"].copy()
+    maritime = shapes_filtered[shapes_filtered["shape_class"] == "maritime"].copy()
+
     # Offshore regions
-    offshore_shapes = eez(snakemake.input.eez, snakemake.params.countries)
+    offshore_shapes = build_offshore_shapes(maritime)
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 
     # Onshore regions
     regions = create_regions(
         snakemake.params.countries,
-        snakemake.input.nuts3_2021,
-        snakemake.input.ba_adm1,
-        snakemake.input.md_adm1,
-        snakemake.input.ua_adm1,
-        snakemake.input.xk_adm1,
-        offshore_shapes,
+        land,
         snakemake.input.nuts3_gdp,
         snakemake.input.nuts3_pop,
         snakemake.input.bidding_zones,
