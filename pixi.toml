@@ -10,6 +10,12 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "2025.07.0"
 exclude-newer = "7d"
 
+[exclude-newer]
+linopy = "0d"
+pypsa = "0d"
+atlite = "0d"
+snakemake-executor-plugin-slurm = "0d"  # drop once the pandas 3 build is older than 7d
+
 [tasks]
 
 reset = """bash -c '
@@ -30,11 +36,12 @@ logs, resources, benchmarks, results, and .snakemake directories except \
 """
 
 update-dags = """
-	snakemake results/networks/base_s_128_elec_.nc -F --dag | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png && \
-	snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/workflow.png
+	snakemake results/networks/base_s_128_elec_.nc -F --dag | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/intro-workflow.svg && \
+	snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/workflow.svg && \
+	snakemake --dag --configfile config/test/config.electricity.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_electricity.svg && \
+	snakemake --dag --configfile config/test/config.overnight.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_overnight.svg && \
+	snakemake --dag --configfile config/test/config.myopic.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_myopic.svg
 """
-
-generate-config = "python -c 'from scripts.lib.validation.config import generate_config_defaults, generate_config_schema; generate_config_defaults(); generate_config_schema()'"
 
 sync-locks = """
     pixi install -e default && \
@@ -63,9 +70,8 @@ gurobi = ">=12.0.3"
 highspy = ">=1.12.0"
 ipython = ">=9.7.0"
 jpype1 = ">=1.6.0"
-jupyter = ">=1.1.1"
 libgdal-netcdf = ">=3.10.3"
-linopy = ">=0.6.1"
+linopy = ">=0.8,<0.9"
 lxml = ">=6.0.2"
 matplotlib = ">=3.10.7"
 memory_profiler = ">=0.61.0"
@@ -73,25 +79,22 @@ netcdf4 = ">=1.7.2,!=1.7.4"
 networkx = ">=3.5"
 numpy = ">=1.26.4"
 openpyxl = ">=3.1.5"
-pandas = ">=2.1"
+pandas = ">=3"
 plotly = ">=6.4.0"
 powerplantmatching = ">=0.5.15"
 pydantic = ">=2"
 python-dotenv = ">=1.0"
-pre-commit = ">=4.3.0"
 proj = ">=9.6.2"
-pylint = ">=4.0.2"
 pydeck = ">0.6"  # pypsa fails to import with pydeck <0.6, lower bound was only added from pypsa 1.0.6
 pypsa = ">=0.35.2"
 pyscipopt = ">=5.6.0"
 pytables = ">=3.10.2"
-python = ">=3.10"
+python = ">=3.12,<3.14"  # remove upper bound once issue has been fixed https://github.com/PyPSA/pypsa-eur/issues/2245
 pytz = ">=2025.2"
 pyxlsb = ">=1.0.10"
 rasterio = ">=1.4.3"
 rasterstats = ">=0.10.3"
 rioxarray = ">=0.20.0"
-ruff = ">=0.14.3"
 "ruamel.yaml" = ">=0.18.0"
 scipy = ">=1.16.3"
 seaborn = ">=0.13.2"
@@ -102,7 +105,7 @@ snakemake-storage-plugin-http = ">=0.3"
 tenacity = ">=9.1.2"
 tqdm = ">=4.67.1"
 tsam = ">=2.3.1"
-xarray = ">=2024.3.0,<2025.7.0"
+xarray = ">=2026.1"
 xlrd = ">=2.0.2"
 yaml = ">=0.2.5"
 snakemake-storage-plugin-cached-http = ">=0.2.1"
@@ -110,43 +113,51 @@ pandera = ">=0.28.1"
 natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
 pydeflate = ">=2.3.4"
-grpcio = "<1.78"
 snakemake-logger-plugin-snkmt = "==0.1.6" # For better pypsa-app integration
 
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"
 
+[feature.dev.dependencies]
+pre-commit = ">=4.3.0"
+pylint = ">=4.0.2"
+ruff = ">=0.14.3"
+jupyter = ">=1.1.1"
+
 [feature.doc.tasks.build-docs]
-args = ["dir", {"arg" = "output", "default" = "html"}]
-cmd = "sphinx-build -T -b {{ output }} doc {{ dir }}/{{ output }} "
+cmd = "mkdocs build -d {{ dir }}/html"
+args = ["dir"]
 
 [feature.doc.dependencies]
-atlite = "==0.4.1"
-cartopy = "==0.25.0"
-dask = "==2025.11.0"
-descartes = "==1.1.0"
-fiona = "==1.10.1"
-graphviz = "==13.1.2"
-matplotlib = "==3.10.7"
-memory_profiler = "==0.61.0"
-myst-parser = "==4.0.1"
-powerplantmatching = "==0.7.1"
-pydot = "==4.0.1"
-pypsa = "==1.0.3"
-pytables = "==3.10.2"
-python = "==3.12.12"
-pyyaml = "==6.0.3"
-requests = "==2.32.5"
-scikit-learn = "==1.7.2"
-seaborn = "==0.13.2"
-sphinx = "==8.2.3"
-sphinx-book-theme = "==1.1.4"
-sphinx-design = "==0.6.1"
-sphinx-jsonschema = "==1.19.2"
-sphinxcontrib-bibtex = "==2.6.5"
-tabula-py = "==2.7.0"
-tenacity = "==9.1.2"
-tsam = "==2.3.9"
+atlite = ">=0.3,!=0.5.0"
+cartopy = ">=0.25.0"
+dask = ">=2025.10.0"
+descartes = ">=1.1.0"
+fiona = ">=1.10.1"
+graphviz = ">=12.2.1"
+matplotlib = ">=3.10.7"
+memory_profiler = ">=0.61.0"
+mkdocs = ">=1.6"
+mkdocs-material = ">=9.5"
+mkdocstrings = ">=0.29"
+mkdocstrings-python = ">=1.16"
+mkdocs-bibtex = ">=2.16"
+pymdown-extensions = ">=10.0"
+mkdocs-macros-plugin = ">=1.0"
+mkdocs-table-reader-plugin = ">=3.1"
+snakemake-minimal = ">=9"
+powerplantmatching = ">=0.5.15"
+pydot = ">=4.0.1"
+pypsa = ">=0.35.2"
+pytables = ">=3.10.2"
+python = ">=3.10"
+pyyaml = ">=6.0.3"
+requests = ">=2.32.5"
+scikit-learn = ">=1.7.2"
+seaborn = ">=0.13.2"
+tabula-py = ">=2.7.0"
+tenacity = ">=9.1.2"
+tsam = ">=2.3.1"
 
 [feature.test.tasks]
 
@@ -172,9 +183,12 @@ unit-tests = "pytest test"
 
 all-tests = {depends-on = ["integration-tests", "clean-tests", "unit-tests"]}
 
+generate-config = "pytest test/test_config_schema.py --fix"
+
 [feature.test.dependencies]
 pytest = ">=8.4.2"
 
 [environments]
 doc = { features = ["doc"], no-default-feature = true }
-test = ["test"]
+test = ["test", "dev"]
+dev = ["dev"]

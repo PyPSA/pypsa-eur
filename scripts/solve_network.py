@@ -14,16 +14,14 @@ Description
 Total annual system costs are minimised with PyPSA. The full formulation of the
 linear optimal power flow (plus investment planning
 is provided in the
-`documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow>`_.
+[documentation of PyPSA](https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow).
 
-The optimization is based on the :func:`network.optimize` function.
-Additionally, some extra constraints specified in :mod:`solve_network` are added.
+The optimization is based on the `network.optimize` function.
+Additionally, some extra constraints specified in [solve_network][] are added.
 
-.. note::
-
-    The rules ``solve_elec_networks`` and ``solve_sector_networks`` run
-    the workflow for all scenarios in the configuration file (``scenario:``)
-    based on the rule :mod:`solve_network`.
+**Note:** The rules `solve_elec_networks` and `solve_sector_networks` run
+    the workflow for all scenarios in the configuration file (`scenario:`)
+    based on the rule [solve_network][].
 """
 
 import importlib
@@ -40,6 +38,7 @@ import pandas as pd
 import pypsa
 import xarray as xr
 import yaml
+from linopy.constants import SolverStatus, TerminationCondition
 from linopy.remote.oetc import OetcCredentials, OetcHandler, OetcSettings
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
@@ -579,7 +578,7 @@ def prepare_network(
 
     # rolling horizon disables cyclic storage
     if rolling_horizon:
-        n.storage_units.state_of_charge_cyclic = False
+        n.storage_units.cyclic_state_of_charge = False
         n.storage_units.state_of_charge_initial = 0
         n.stores.e_cyclic = False
         n.stores.e_initial = 0
@@ -793,8 +792,10 @@ def add_SAFE_constraints(n, config):
 
     Parameters
     ----------
-        n : pypsa.Network
-        config : dict
+    n : pypsa.Network
+        The PyPSA network instance.
+    config : dict
+        Configuration dictionary.
 
     Example
     -------
@@ -829,12 +830,15 @@ def add_operational_reserve_margin(n, sns, config):
 
     Parameters
     ----------
-        n : pypsa.Network
-        sns: pd.DatetimeIndex
-        config : dict
+    n : pypsa.Network
+        The PyPSA network instance.
+    sns : pd.DatetimeIndex
+        Snapshots for the simulation.
+    config : dict
+        Configuration dictionary.
 
-    Example:
-    --------
+    Example
+    -------
     config.yaml requires to specify operational_reserve:
     operational_reserve: # like https://genxproject.github.io/GenX/dev/core/#Reserves
         activate: true
@@ -1233,8 +1237,10 @@ def extra_functionality(
     snapshots : pd.DatetimeIndex
         Simulation timesteps
     planning_horizons : str, optional
-        The current planning horizon year or None in perfect foresight
+        The current planning horizon year or None in perfect foresight.
 
+    Notes
+    -----
     Collects supplementary constraints which will be passed to
     ``pypsa.optimization.optimize``.
 
@@ -1582,20 +1588,23 @@ if __name__ == "__main__":
 
     # Check results
     if not rolling_horizon:
-        if status != "ok":
+        if status != SolverStatus.ok:
             logger.warning(
                 f"Solving status '{status}' with termination condition '{condition}'"
             )
         check_objective_value(n, snakemake.params.solving)
 
-    if "warning" in condition:
-        raise RuntimeError("Solving status 'warning'. Discarding solution.")
-
-    if "infeasible" in condition:
+    if condition in [
+        TerminationCondition.infeasible,
+        TerminationCondition.infeasible_or_unbounded,
+    ]:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
+
+    if status == SolverStatus.warning:
+        raise RuntimeError("Solving status 'warning'. Discarding solution.")
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)

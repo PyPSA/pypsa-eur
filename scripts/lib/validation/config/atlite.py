@@ -123,7 +123,7 @@ class AtliteConfig(BaseModel):
     )
     plot_availability_matrix: bool = Field(
         False,
-        description="Whether to plot the landuse availability matrix.",
+        description="Whether to plot the landuse availability matrix. Warning: This requires a significant amount of memory and time and may crash for larger workflows. Use with caution.",
     )
     cutouts: dict[str, _CutoutConfig] = Field(
         default_factory=lambda: {

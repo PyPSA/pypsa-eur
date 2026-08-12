@@ -9,7 +9,7 @@ Description
 
 The industrial production is taken from the `JRC-IDEES <https://joint-research-centre.ec.europa.eu/potencia-policy-oriented-tool-energy-and-climate-change-impact-assessment/jrc-idees_en)>`.
 This dataset provides detailed information about the consumption of energy for various processes.
-If the country is not part of the EU28, the energy consumption in the industrial sectors is taken from the `Eurostat <https://ec.europa.eu/eurostat/de/data/database>` dataset. The industrial production is calculated for the year specified in the config["industry"]["reference_year"].
+If the country is not part of the EU28, the energy consumption in the industrial sectors is taken from the `Eurostat <https://ec.europa.eu/eurostat/de/data/database>` dataset. The industrial production is calculated for the year specified in the `config["industry"]["reference_year"]`.
 
 The ammonia production is provided by the rule `build_ammonia_production <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ammonia_production>`. Since Switzerland is not part of the EU28 nor reported by eurostat, the energy consumption in the industrial sectors is taken from the `BFE <https://pubdb.bfe.admin.ch/de/publication/download/11817> dataset.
 After the industrial production is calculated, the basic chemicals are separated into ammonia, chlorine, methanol and HVC. The production of these chemicals is assumed to be proportional to the production of basic chemicals without ammonia.

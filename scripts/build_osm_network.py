@@ -242,10 +242,14 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
 
     Parameters
     ----------
-        - lines (GeoDataFrame): The lines to be split.
-        - buses (GeoDataFrame): The buses representing nodes.
-        - distance_crs (str): The coordinate reference system (CRS) for distance calculations.
-        - tol (float): The tolerance distance in meters for determining if a bus is within a line.
+    lines : GeoDataFrame
+        The lines to be split.
+    buses : GeoDataFrame
+        The buses representing nodes.
+    distance_crs : str
+        The coordinate reference system (CRS) for distance calculations.
+    tol : float
+        The tolerance distance in meters for determining if a bus is within a line.
 
     Returns
     -------
