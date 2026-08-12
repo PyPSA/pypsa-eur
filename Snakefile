@@ -49,6 +49,8 @@ for scenario_name, scenario_overrides in scenarios.items():
         ) from e
 
 RDIR = get_rdir(run)
+PROJ_DIR = Path(workflow.snakefile).parent
+
 shadow_config = get_shadow(run)
 
 shared_resources = run["shared_resources"]["policy"]
@@ -56,7 +58,7 @@ exclude_from_shared = run["shared_resources"]["exclude"]
 logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
 benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
 resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
-scripts = script_path_provider(Path(workflow.snakefile).parent)
+scripts = script_path_provider(PROJ_DIR)
 
 RESULTS = "results/" + RDIR
 workflow.default_target = config["run"]["default_target_rule"]
@@ -244,6 +246,7 @@ rule create_scenarios:
         "config/create_scenarios.py"
 
 
+# fmt: off[next]
 rule purge:
     run:
         import builtins
@@ -300,7 +303,7 @@ rule rulegraph:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
         echo "[Rule rulegraph] Using final config file: {input.config_file}"
-        snakemake --rulegraph --configfile {input.config_file} --quiet | sed -n "/digraph/,\$p" > {output.dot}
+        snakemake --rulegraph --configfile {input.config_file} --quiet | sed -n "/digraph/,\$p" >{output.dot}
 
         # Generate visualizations from the DOT file
         if [ -s {output.dot} ]; then
@@ -339,7 +342,7 @@ rule filegraph:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
         echo "[Rule filegraph] Using final config file: {input.config_file}"
-        snakemake --filegraph all --configfile {input.config_file} --quiet | sed -n "/digraph/,\$p" > {output.dot}
+        snakemake --filegraph all --configfile {input.config_file} --quiet | sed -n "/digraph/,\$p" >{output.dot}
 
         # Generate visualizations from the DOT file
         if [ -s {output.dot} ]; then

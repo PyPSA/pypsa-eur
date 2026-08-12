@@ -329,7 +329,11 @@ def add_unsustainable_potentials(df, input_eurostat):
     share_sus = params.get("share_sustainable_potential_available").get(investment_year)
     df.loc[df_wo_ch.index] *= share_sus
 
-    df = df.join(df_wo_ch.filter(like="unsustainable")).fillna(0)
+    df = (
+        df.join(df_wo_ch.filter(like="unsustainable"))
+        .fillna(0)
+        .infer_objects(copy=False)
+    )
 
     return df
 

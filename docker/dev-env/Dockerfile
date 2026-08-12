@@ -2,14 +2,13 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-FROM ghcr.io/prefix-dev/pixi:0.63.2
+FROM ghcr.io/prefix-dev/pixi:0.76.1
 
 LABEL org.opencontainers.image.source=https://github.com/PyPSA/pypsa-eur
 
-RUN pixi self-update
-
+# ca-certificates: pixi >=0.64 uses system CA certs, base image ships none
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends bash git && \
+    apt-get install -y --no-install-recommends ca-certificates bash git && \
     rm -rf /var/lib/apt/lists/*
 
 # Install pixi env at /opt/pixi-env (allow for bind mounts)

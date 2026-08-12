@@ -8,14 +8,14 @@ from functools import partial, lru_cache
 import os, sys, glob
 import requests
 
-
 import pandas as pd
 import json
+import yaml
 
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
-from scripts._helpers import update_config_from_wildcards
+from scripts._helpers import update_config_from_wildcards, load_data_versions
 from snakemake.utils import update_config
 
 
@@ -83,52 +83,34 @@ def config_provider(*keys, default=None):
         return partial(static_getter, keys=keys, default=default)
 
 
-@lru_cache
-def load_data_versions(file_path):
-    data_versions = pd.read_csv(
-        file_path,
-        dtype=str,
-        na_filter=False,
-        delimiter=",",
-        comment="#",
-    )
-
-    # Turn space-separated tags into individual columns
-    data_versions["tags"] = data_versions["tags"].str.split()
-    exploded = data_versions.explode("tags")
-    dummies = pd.get_dummies(exploded["tags"], dtype=bool)
-    tags_matrix = dummies.groupby(dummies.index).max()
-    data_versions = data_versions.join(tags_matrix)
-
-    return data_versions
-
-
-def dataset_version(
-    name: str,
-) -> pd.Series:
+def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
     """
     Return the dataset version information and url for a given dataset name.
 
     The dataset name is used to determine the source and version of the dataset from the configuration.
     Then the 'data/versions.csv' file is queried to find the matching dataset entry.
 
-    Parameters:
-    name: str
+    Parameters
+    ----------
+    name : str
         The name of the dataset to retrieve version information for.
+    **dataset_config_overrides : str
+        entries to override the dataset config for the given `name`.
 
-    Returns:
+    Returns
+    -------
     pd.Series
         A pandas Series containing the dataset version information, including source, version, tags, and URL
     """
+    dataset_config = {**config["data"][name], **dataset_config_overrides}
+    data_version_files = config["data"]["version_files"]
 
-    dataset_config = config["data"][
-        name
-    ]  # TODO as is right now, it is not compatible with config_provider
-
-    # To use PyPSA-Eur as a snakemake module, the path to the versions.csv file needs to be
-    # registered relative to the current file with Snakemake:
-    fp = workflow.source_path("../data/versions.csv")
-    data_versions = load_data_versions(fp)
+    data_versions = load_data_versions(
+        *(
+            (PROJ_DIR / path if not (path := Path(file)).is_absolute() else path)
+            for file in data_version_files
+        )
+    )
 
     dataset = data_versions.loc[
         (data_versions["dataset"] == name)
@@ -144,7 +126,7 @@ def dataset_version(
 
     if dataset.empty:
         raise ValueError(
-            f"Dataset '{name}' with source '{dataset_config['source']}' for '{dataset_config['version']}' not found in data/versions.csv."
+            f"Dataset '{name}' with source '{dataset_config['source']}' for '{dataset_config['version']}' not found in {data_version_files}."
         )
 
     # Return single-row DataFrame as a Series
