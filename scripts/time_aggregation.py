@@ -17,7 +17,7 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-import tsam.timeseriesaggregation as tsam
+import tsam
 import xarray as xr
 
 from scripts._helpers import (
@@ -130,14 +130,23 @@ if __name__ == "__main__":
         df = df.div(annual_max, level=0)
 
         # Get representative segments
-        agg = tsam.TimeSeriesAggregation(
-            df,
-            hoursPerPeriod=len(df),
-            noTypicalPeriods=1,
-            noSegments=segments,
-            segmentation=True,
-            solver=snakemake.params.solver_name,
-        )
+        if hasattr(tsam, "aggregate"):  # tsam >= 3.0
+            agg = tsam.aggregate(
+                df,
+                n_clusters=1,
+                period_duration=len(df),
+                segments=tsam.SegmentConfig(n_segments=int(segments)),
+                solver=snakemake.params.solver_name,
+            )
+        else:  # tsam < 3.0
+            agg = tsam.timeseriesaggregation.TimeSeriesAggregation(
+                df,
+                hoursPerPeriod=len(df),
+                noTypicalPeriods=1,
+                noSegments=segments,
+                segmentation=True,
+                solver=snakemake.params.solver_name,
+            )
         agg = agg.createTypicalPeriods()
 
         weightings = agg.index.get_level_values("Segment Duration")

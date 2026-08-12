@@ -3,8 +3,10 @@
 
 # Release Notes
 
-<!-- Upcoming Release -->
-<!-- ================= -->
+Upcoming Release
+=================
+
+* compat: Compatibility with `tsam` v4.0.
 * fix: `solve_network.py` now raises an error if solver status is `warning`
 * refactor: `prepare_sector_network.py` functions now take `spatial` as an explicit parameter instead of a module-level global.
 * fix: update stale contribution docs (linting and formatting ruff)
