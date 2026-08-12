@@ -245,6 +245,10 @@ class _ConstraintsConfig(BaseModel):
         False,
         description="Add a capacity reserve margin of a certain fraction above the peak demand to which renewable generators and storage do *not* contribute. Ignores network.",
     )
+    co2_budget_national: dict[str, dict[int, float]] = Field(
+        default_factory=dict,
+        description="Per-country CO2 budget constraints for myopic foresight, keyed by two-letter country code and then by planning horizon year. Values are the allowed emissions as a fraction of the country's 1990 emissions (e.g. `0.0` for net-zero, negative for net-negative). Emissions are balanced over all links of a country connecting to the `co2 atmosphere` bus, with aviation scaled by the domestic share. Leave empty to disable.",
+    )
 
 
 class _SolverConfig(BaseModel):
