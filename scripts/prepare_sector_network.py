@@ -1814,7 +1814,11 @@ def add_electricity_grid_connection(n, costs):
 
     gens = n.generators.index[n.generators.carrier.isin(carriers)]
 
-    name = next(c for c in ["distribution grid reinforcement", "electricity grid connection"] if c in costs.index)
+    name = next(
+        c
+        for c in ["distribution grid reinforcement", "electricity grid connection"]
+        if c in costs.index
+    )
     n.generators.loc[gens, "capital_cost"] += costs.at[name, "capital_cost"]
 
 
