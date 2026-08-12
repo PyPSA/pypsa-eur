@@ -30,9 +30,6 @@ from tqdm import tqdm
 
 from scripts._helpers import configure_logging, mute_print, set_scenario_config
 
-pd.set_option("future.no_silent_downcasting", True)
-
-
 cc = coco.CountryConverter()
 logger = logging.getLogger(__name__)
 
