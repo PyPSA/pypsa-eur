@@ -66,6 +66,8 @@
 
 * chore: Drop the `grpcio < 1.78` pin and add a temporary `python < 3.14` pin ([#2244](https://github.com/PyPSA/pypsa-eur/pull/2244)). The upper bound on python will be lifted once [#2245](https://github.com/PyPSA/pypsa-eur/issues/2245) is resolved.
 
+* Fix: Operational reserve margin constraints now work for PyPSA v1.0. Load shedding generators are now excluded from reserve margin calculations. Renewable generators are now identified based on the configuration rather than presence of ``p_max_pu`` data. Fixed for networks without extendable generators ([#2178](https://github.com/PyPSA/pypsa-eur/pull/2178)). 
+
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 
 **Features**
