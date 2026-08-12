@@ -997,8 +997,6 @@ def update_residential_from_eurostat(
     )
 
 
-
-
 def build_transformation_output_coke(eurostat, fn):
     """
     Extracts and builds the transformation output data for coke ovens from the
