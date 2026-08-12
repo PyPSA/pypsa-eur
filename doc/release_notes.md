@@ -7,6 +7,9 @@
 <!-- ================= -->
 
 * Adding option to include the compression step in carbon dioxide transport before transporting in dense phase and including electricity demand for post combustion carbon capture. Adjusting the capital costs for post combustion capture that differs depending on the carbon dioxide percentage in the flue gas ([#2161](https://github.com/PyPSA/pypsa-eur/pull/2161)).
+Upcoming Release
+
+* compat: Compatibility with `tsam` v4.0.
 * fix: `solve_network.py` now raises an error if solver status is `warning`
 * refactor: `prepare_sector_network.py` functions now take `spatial` as an explicit parameter instead of a module-level global.
 * fix: update stale contribution docs (linting and formatting ruff)
@@ -67,6 +70,10 @@
 * Fix: `fill_missing_years` applied the backward fill across country boundaries, so countries without any Eurostat value silently inherited the values of the next country ([#2242](https://github.com/PyPSA/pypsa-eur/pull/2242)).
 
 * chore: Drop the `grpcio < 1.78` pin and add a temporary `python < 3.14` pin ([#2244](https://github.com/PyPSA/pypsa-eur/pull/2244)). The upper bound on python will be lifted once [#2245](https://github.com/PyPSA/pypsa-eur/issues/2245) is resolved.
+
+* refactor: Split `build_shapes` into three independent rules: `build_offshore_shapes` (EEZ only), `build_nuts3_shapes` (NUTS3/ADM1 regions with GDP/population data), and `build_shapes` (country and Europe boundary aggregation).
+* refactor: Split `build_energy_totals` into three rules: `build_co2_totals` (CO2 emissions from EEA and Eurostat, no IDEES dependency) and `build_transformation_output_coke` (coke oven transformation output from Eurostat only) run independently of the remaining `build_energy_totals` (IDEES-based energy totals, transport data, district heat share, and heating efficiencies).
+* Fix: Operational reserve margin constraints now work for PyPSA v1.0. Load shedding generators are now excluded from reserve margin calculations. Renewable generators are now identified based on the configuration rather than presence of ``p_max_pu`` data. Fixed for networks without extendable generators ([#2178](https://github.com/PyPSA/pypsa-eur/pull/2178)). 
 
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 
