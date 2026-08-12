@@ -56,8 +56,10 @@ jobs:
     - name: Vulnerability Scan
       id: scan
       uses: anchore/scan-action@v7.4.0
-      with:
-        sbom: sbom.spdx.json
+      env:
+        SBOM: sbom.spdx.json
+      with: &scan_settings
+        sbom: ${{ env.SBOM }}
         fail-build: false
         severity-cutoff: high
         add-cpes-if-none: true
@@ -105,13 +107,9 @@ jobs:
       id: baseline
       if: github.event_name == 'pull_request'
       uses: anchore/scan-action@v7.4.0
-      with:  # must match the PR scan above
-        sbom: master-baseline/sbom.spdx.json
-        fail-build: false
-        severity-cutoff: high
-        add-cpes-if-none: true
-        by-cve: true
-        output-format: sarif
+      env:
+        SBOM: master-baseline/sbom.spdx.json
+      with: *scan_settings
 
     - name: Fail on new CVEs
       if: github.event_name == 'pull_request'
