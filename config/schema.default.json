@@ -621,7 +621,7 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods.",
           "properties": {
             "resolution_elec": {
               "anyOf": [
@@ -8092,7 +8092,7 @@
       }
     },
     "_TemporalConfig": {
-      "description": "Configuration for `clustering.temporal` settings.",
+      "description": "Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods.",
       "properties": {
         "resolution_elec": {
           "anyOf": [
@@ -12155,7 +12155,7 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods.",
           "properties": {
             "resolution_elec": {
               "anyOf": [
