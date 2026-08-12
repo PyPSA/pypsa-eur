@@ -14,9 +14,6 @@ import pandas as pd
 
 from scripts._helpers import configure_logging, set_scenario_config
 
-pd.set_option("future.no_silent_downcasting", True)
-
-
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
 
