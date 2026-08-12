@@ -5,7 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-
+* fix: `solve_network.py` now raises an error if solver status is `warning`
 * refactor: `prepare_sector_network.py` functions now take `spatial` as an explicit parameter instead of a module-level global.
 * fix: update stale contribution docs (linting and formatting ruff)
 * feat: data version CSV / YAML file can be specified separately or extended by the user in the `data.version_files` config entry ([#2016](https://github.com/PyPSA/pypsa-eur/issues/2016)).

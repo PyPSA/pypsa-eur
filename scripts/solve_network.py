@@ -38,6 +38,7 @@ import pandas as pd
 import pypsa
 import xarray as xr
 import yaml
+from linopy.constants import SolverStatus, TerminationCondition
 from linopy.remote.oetc import OetcCredentials, OetcHandler, OetcSettings
 from pypsa.descriptors import get_activity_mask
 
@@ -1591,20 +1592,23 @@ if __name__ == "__main__":
 
     # Check results
     if not rolling_horizon:
-        if status != "ok":
+        if status != SolverStatus.ok:
             logger.warning(
                 f"Solving status '{status}' with termination condition '{condition}'"
             )
         check_objective_value(n, snakemake.params.solving)
 
-    if "warning" in condition:
-        raise RuntimeError("Solving status 'warning'. Discarding solution.")
-
-    if "infeasible" in condition:
+    if condition in [
+        TerminationCondition.infeasible,
+        TerminationCondition.infeasible_or_unbounded,
+    ]:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
+
+    if status == SolverStatus.warning:
+        raise RuntimeError("Solving status 'warning'. Discarding solution.")
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
