@@ -66,6 +66,8 @@
 
 * chore: Drop the `grpcio < 1.78` pin and add a temporary `python < 3.14` pin ([#2244](https://github.com/PyPSA/pypsa-eur/pull/2244)). The upper bound on python will be lifted once [#2245](https://github.com/PyPSA/pypsa-eur/issues/2245) is resolved.
 
+* refactor: Split `build_energy_totals` into three rules: `build_co2_totals` (CO2 emissions from EEA and Eurostat, no IDEES dependency) and `build_transformation_output_coke` (coke oven transformation output from Eurostat only) run independently of the remaining `build_energy_totals` (IDEES-based energy totals, transport data, district heat share, and heating efficiencies).
+
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 
 **Features**
