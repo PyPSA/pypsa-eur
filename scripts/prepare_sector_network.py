@@ -1316,10 +1316,8 @@ def cycling_shift(df, steps=1):
     """
     Cyclic shift on index of pd.Series|pd.DataFrame by number of steps.
     """
-    df = df.copy()
     new_index = np.roll(df.index, steps)
-    df.values[:] = df.reindex(index=new_index).values
-    return df
+    return df.reindex(index=new_index).set_axis(df.index)
 
 
 def add_generation(
