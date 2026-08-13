@@ -56,8 +56,7 @@ renewable:
 
 clustering:
   temporal:
-    resolution_sector: 24h
-
+    resolution_sector: 7seg
 sector:
   gas_network: true
   H2_retrofit: true
