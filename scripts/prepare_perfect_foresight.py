@@ -584,6 +584,7 @@ def apply_time_segmentation_perfect(
                 period_duration=len(raw_t),
                 segments=tsam.SegmentConfig(n_segments=int(segments)),
             )
+            segmented = agg.cluster_representatives
         else:  # tsam < 3.0
             from tsam import timeseriesaggregation
 
@@ -595,7 +596,7 @@ def apply_time_segmentation_perfect(
                 segmentation=True,
                 solver=solver_name,
             )
-        segmented = agg.createTypicalPeriods()
+            segmented = agg.createTypicalPeriods()
 
         weightings = segmented.index.get_level_values("Segment Duration")
         offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
