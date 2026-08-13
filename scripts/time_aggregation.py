@@ -139,7 +139,9 @@ if __name__ == "__main__":
                 solver=snakemake.params.solver_name,
             )
         else:  # tsam < 3.0
-            agg = tsam.timeseriesaggregation.TimeSeriesAggregation(
+            from tsam import timeseriesaggregation
+
+            agg = timeseriesaggregation.TimeSeriesAggregation(
                 df,
                 hoursPerPeriod=len(df),
                 noTypicalPeriods=1,

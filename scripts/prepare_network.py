@@ -246,7 +246,9 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
             solver=solver_name,
         )
     else:  # tsam < 3.0
-        agg = tsam.timeseriesaggregation.TimeSeriesAggregation(
+        from tsam import timeseriesaggregation
+
+        agg = timeseriesaggregation.TimeSeriesAggregation(
             raw,
             hoursPerPeriod=len(raw),
             noTypicalPeriods=1,

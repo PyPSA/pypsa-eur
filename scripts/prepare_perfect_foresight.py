@@ -586,7 +586,9 @@ def apply_time_segmentation_perfect(
                 solver=solver_name,
             )
         else:  # tsam < 3.0
-            agg = tsam.timeseriesaggregation.TimeSeriesAggregation(
+            from tsam import timeseriesaggregation
+
+            agg = timeseriesaggregation.TimeSeriesAggregation(
                 raw_t,
                 hoursPerPeriod=len(raw_t),
                 noTypicalPeriods=1,
