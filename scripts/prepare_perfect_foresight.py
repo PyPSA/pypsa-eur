@@ -583,7 +583,6 @@ def apply_time_segmentation_perfect(
                 n_clusters=1,
                 period_duration=len(raw_t),
                 segments=tsam.SegmentConfig(n_segments=int(segments)),
-                solver=solver_name,
             )
         else:  # tsam < 3.0
             from tsam import timeseriesaggregation

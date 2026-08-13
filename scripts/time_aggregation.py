@@ -136,7 +136,6 @@ if __name__ == "__main__":
                 n_clusters=1,
                 period_duration=len(df),
                 segments=tsam.SegmentConfig(n_segments=int(segments)),
-                solver=snakemake.params.solver_name,
             )
         else:  # tsam < 3.0
             from tsam import timeseriesaggregation

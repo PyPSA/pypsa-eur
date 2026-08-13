@@ -243,7 +243,6 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
             n_clusters=1,
             period_duration=len(raw),
             segments=tsam.SegmentConfig(n_segments=int(segments)),
-            solver=solver_name,
         )
     else:  # tsam < 3.0
         from tsam import timeseriesaggregation
