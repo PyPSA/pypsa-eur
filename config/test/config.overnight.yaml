@@ -53,10 +53,6 @@ clustering:
   cluster_network:
     n_clusters: 5
 
-lines:
-  s_nom_max: .inf
-  s_nom_max_extension: 20000
-
 sector:
   enabled: true
   gas_network: true

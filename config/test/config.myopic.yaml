@@ -104,10 +104,6 @@ clustering:
     - wnd100m
     - influx_direct
 
-lines:
-  s_nom_max: .inf
-  s_nom_max_extension: 20000
-
 industry:
   St_primary_fraction:
     2030: 0.6

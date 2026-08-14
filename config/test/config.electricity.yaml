@@ -95,8 +95,6 @@ clustering:
     n_clusters: 5
 
 lines:
-  s_nom_max: .inf
-  s_nom_max_extension: 20000
   dynamic_line_rating:
     activate: true
     max_line_rating: 1.3

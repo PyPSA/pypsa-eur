@@ -66,11 +66,11 @@ class LinesConfig(BaseModel):
         description="Correction factor for line capacities (`s_nom`) to approximate N-1 security and reserve capacity for reactive power flows.",
     )
     s_nom_max: float = Field(
-        10_000,
+        float("inf"),
         description="Global upper limit for the maximum capacity of each extendable line (MW).",
     )
     s_nom_max_extension: float = Field(
-        8_000,
+        20_000,
         description="Upper limit for the extended capacity of each extendable line (MW).",
     )
     length_factor: float = Field(
