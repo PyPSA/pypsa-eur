@@ -72,7 +72,7 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
 
     For reference, PyPSA-Eur typically solves efficiently with 128 spatial clusters and 4-hour temporal resolution, assuming no custom constraints are added. If you increase either the temporal or spatial resolution, you may need to decrease the other to keep solution times manageable.
 
-!!! note "What can I do if my dispatch model reports “infeasible or unbounded”?"
+!!! note "What can I do if my dispatch model reports 'infeasible or unbounded'?"
     This message typically indicates that the model cannot satisfy demand in all timesteps or that some generators have lower bounds exceeding the available load. If not already enabled, activate `load_shedding` and curtailment mode in the [solving](solving.md) configuration. These options introduce a high-cost load-shedding generator and a curtailment generator, allowing the optimisation to remain feasible.
 
     If enabling these options resolves the issue, examine the resulting dispatch to determine the bus regions and snapshots where the system was unable to meet demand. A simple way to quantify the total load shedding is:
@@ -116,7 +116,7 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
     Possible steps: Use `n.statistics.energy_balance` ([docs](https://docs.pypsa.org/latest/api/networks/statistics/#pypsa.Network.statistics.energy_balance)) to ensure that the technology you added is expanded and dispatched. Use `n.statistics.opex` ([docs](https://docs.pypsa.org/latest/api/networks/statistics/#pypsa.Network.statistics.opex)) and `n.statistics.capex` ([docs](https://docs.pypsa.org/latest/api/networks/statistics/#pypsa.Network.statistics.capex)) to ensure that the overall system costs stay in a reasonable range compared to the previous (or counterfactual) run.
 
 !!! note "How can I resample an hourly time series to match my model's time resolution?"
-    Use PyPSA's built-in [resampling functions](https://docs.pypsa.org/latest/api/other/common/#pypsa.common.resample_timeseries), which correctly aggregate time series and preserves all required metadata. For example, to convert an hourly profile to 4-hour resolution:
+    Use PyPSA's built-in [resampling functions](https://docs.pypsa.org/latest/api/other/common/#pypsa.common.resample_timeseries), which correctly aggregate time series and preserve all required metadata. For example, to convert an hourly profile to 4-hour resolution:
 
     ```python
     from pypsa.common import resample_timeseries

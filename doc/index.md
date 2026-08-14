@@ -74,7 +74,7 @@ of the individual parts.
 !!! warning
     PyPSA-Eur is under active development and has several
     [limitations](limitations.md) which
-    you should understand before using the model. The Github repository
+    you should understand before using the model. The GitHub repository
     [issues](https://github.com/PyPSA/pypsa-eur/issues) collect known
     topics we are working on. Please feel free to help or make suggestions.
 
