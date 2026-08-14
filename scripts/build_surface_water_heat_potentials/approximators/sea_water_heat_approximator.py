@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 import logging
-from typing import Union
 
 import geopandas as gpd
 import shapely
@@ -30,7 +29,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
     def __init__(
         self,
         water_temperature: xr.DataArray,
-        region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
+        region: shapely.geometry.polygon.Polygon | gpd.GeoSeries,
         min_inlet_temperature: float = 1,
     ) -> None:
         # buffer the region geometry by half the data resolution

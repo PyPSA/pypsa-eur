@@ -9,7 +9,7 @@ Description
 Computes a time aggregation scheme for the given network, in the form of a CSV
 file with the snapshot weightings, indexed by the new subset of snapshots. This
 rule only computes said aggregation scheme; aggregation of time-varying network
-data is done in ``prepare_sector_network.py``.
+data is done in `prepare_sector_network.py`.
 """
 
 import logging
@@ -17,7 +17,7 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-import tsam.timeseriesaggregation as tsam
+import tsam
 import xarray as xr
 
 from scripts._helpers import (
@@ -104,8 +104,8 @@ if __name__ == "__main__":
         # Get all time-dependent data
         dfs = [
             pnl
-            for c in n.iterate_components()
-            for attr, pnl in c.pnl.items()
+            for c in n.components
+            for attr, pnl in c.dynamic.items()
             if not pnl.empty and attr != "e_min_pu"
         ]
         if snakemake.input.hourly_heat_demand_total:
@@ -130,14 +130,23 @@ if __name__ == "__main__":
         df = df.div(annual_max, level=0)
 
         # Get representative segments
-        agg = tsam.TimeSeriesAggregation(
-            df,
-            hoursPerPeriod=len(df),
-            noTypicalPeriods=1,
-            noSegments=segments,
-            segmentation=True,
-            solver=snakemake.params.solver_name,
-        )
+        if hasattr(tsam, "aggregate"):  # tsam >= 3.0
+            agg = tsam.aggregate(
+                df,
+                n_clusters=1,
+                period_duration=len(df),
+                segments=tsam.SegmentConfig(n_segments=int(segments)),
+                solver=snakemake.params.solver_name,
+            )
+        else:  # tsam < 3.0
+            agg = tsam.timeseriesaggregation.TimeSeriesAggregation(
+                df,
+                hoursPerPeriod=len(df),
+                noTypicalPeriods=1,
+                noSegments=segments,
+                segmentation=True,
+                solver=snakemake.params.solver_name,
+            )
         agg = agg.createTypicalPeriods()
 
         weightings = agg.index.get_level_values("Segment Duration")

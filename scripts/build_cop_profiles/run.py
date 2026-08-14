@@ -10,23 +10,24 @@ For central heating, this is based on Jensen et al. (2018) (c.f. `CentralHeating
 Relevant Settings
 -----------------
 
-.. code:: yaml
-    sector:
-        heat_pump_sink_T_decentral_heating:
-        district_heating:
-            forward_temperature:
-            return_temperature:
-            heat_source_cooling:
-            heat_pump_cop_approximation:
-                refrigerant:
-                heat_exchanger_pinch_point_temperature_difference
-                isentropic_compressor_efficiency:
-                heat_loss:
-                min_delta_t_lift:
-            heat_pump_sources:
-                urban central:
-                urban decentral:
-                rural:
+```yaml
+sector:
+    heat_pump_sink_T_decentral_heating:
+    district_heating:
+        forward_temperature:
+        return_temperature:
+        heat_source_cooling:
+        heat_pump_cop_approximation:
+            refrigerant:
+            heat_exchanger_pinch_point_temperature_difference
+            isentropic_compressor_efficiency:
+            heat_loss:
+            min_delta_t_lift:
+        heat_pump_sources:
+            urban central:
+            urban decentral:
+            rural:
+```
 Inputs
 ------
 - `resources/<run_name>/temp_soil_total`: Ground temperature
@@ -159,7 +160,9 @@ if __name__ == "__main__":
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(
             xr.concat(
-                cop_this_system_type, dim=pd.Index(heat_sources, name="heat_source")
+                cop_this_system_type,
+                # object dtype since xarray cannot join pandas 3 str-dtype indexes
+                dim=pd.Index(heat_sources, name="heat_source", dtype=object),
             )
         )
 

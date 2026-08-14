@@ -7,15 +7,12 @@ Build country-level heating degree days in Europe for each country. Used for res
 Outputs
 -------
 
-- ``data/country_runoff/build/unknown/era5-hdd-per-country.csv``:
+- `data/country_runoff/build/unknown/era5-hdd-per-country.csv`:
 
-    ===================  ==========  ===========  =========================================================
-    Field                Dimensions  Unit         Description
-    ===================  ==========  ===========  =========================================================
-    index/time           time        day          Datestamp, YYYY-MM-DD
-    -------------------  ----------  -----------  ---------------------------------------------------------
-    <columns>            country     ISO-3166 A2  Aggregated HDDs per country
-    ===================  ==========  ===========  =========================================================
+| Field | Dimensions | Unit | Description |
+| --- | --- | --- | --- |
+| index/time | time | day | Datestamp, YYYY-MM-DD |
+| &lt;columns&gt; | country | ISO-3166 A2 | Aggregated HDDs per country |
 
 """
 

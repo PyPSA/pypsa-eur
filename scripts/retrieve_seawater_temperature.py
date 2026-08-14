@@ -14,10 +14,10 @@ includes near-surface depths (5-15m) suitable for heat pump applications.
 Relevant Settings
 -----------------
 
-.. code:: yaml
-
-    # No specific configuration required
-    # Uses year wildcard from Snakemake rule
+```yaml
+# No specific configuration required
+# Uses year wildcard from Snakemake rule
+```
 
 Inputs
 ------
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     if snakemake.params.default_cutout == "be-03-2013-era5":
         logger.info("Retrieving test-cutout seawater temperature data.")
 
-        url = "https://zenodo.org/records/15828866/files/seawater_temperature.nc"
+        url = snakemake.params.test_data_url
 
         response = requests.get(url, stream=True)
         response.raise_for_status()

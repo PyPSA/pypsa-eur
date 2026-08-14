@@ -1,2 +1,0 @@
-,Unit,Values,Description
-drop_leap_day,bool,"{true, false}","Switch to drop February 29 from all time-dependent data in leap years"

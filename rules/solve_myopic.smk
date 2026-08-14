@@ -4,24 +4,13 @@
 
 
 rule add_existing_baseyear:
-    params:
-        baseyear=config_provider("scenario", "planning_horizons", 0),
-        sector=config_provider("sector"),
-        existing_capacities=config_provider("existing_capacities"),
-        carriers=config_provider("electricity", "renewable_carriers"),
-        costs=config_provider("costs"),
-        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
         ),
         powerplants=resources("powerplants_s_{clusters}.csv"),
-        busmap_s=resources("busmap_base_s.csv"),
-        busmap=resources("busmap_base_s_{clusters}.csv"),
-        clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: resources(
-            f"costs_{config_provider("scenario", "planning_horizons",0)(w)}_processed.csv"
+            f"costs_{config_provider('scenario', 'planning_horizons',0)(w)}_processed.csv"
         ),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         existing_heating_distribution=resources(
@@ -32,14 +21,6 @@ rule add_existing_baseyear:
         resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
         ),
-    wildcard_constraints:
-        # TODO: The first planning_horizon needs to be aligned across scenarios
-        # snakemake does not support passing functions to wildcard_constraints
-        # reference: https://github.com/snakemake/snakemake/issues/2703
-        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
-    threads: 1
-    resources:
-        mem_mb=3000,
     log:
         logs(
             "add_existing_baseyear_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
@@ -48,8 +29,26 @@ rule add_existing_baseyear:
         benchmarks(
             "add_existing_baseyear/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
+    wildcard_constraints:
+        # TODO: The first planning_horizon needs to be aligned across scenarios
+        # snakemake does not support passing functions to wildcard_constraints
+        # reference: https://github.com/snakemake/snakemake/issues/2703
+        planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
+    threads: 1
+    resources:
+        mem_mb=3000,
+    params:
+        baseyear=config_provider("scenario", "planning_horizons", 0),
+        sector=config_provider("sector"),
+        existing_capacities=config_provider("existing_capacities"),
+        carriers=config_provider("electricity", "renewable_carriers"),
+        costs=config_provider("costs"),
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
+    message:
+        "Adding existing infrastructure for base year for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
-        "../scripts/add_existing_baseyear.py"
+        scripts("add_existing_baseyear.py")
 
 
 def input_profile_tech_brownfield(w):
@@ -61,6 +60,27 @@ def input_profile_tech_brownfield(w):
 
 
 rule add_brownfield:
+    input:
+        unpack(input_profile_tech_brownfield),
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
+        network_p=solved_previous_horizon,  #solved network at previous time step
+    output:
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
+        ),
+    log:
+        logs(
+            "add_brownfield_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
+        ),
+    benchmark:
+        benchmarks(
+            "add_brownfield/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
+    threads: 4
+    resources:
+        mem_mb=10000,
     params:
         H2_retrofit=config_provider("sector", "H2_retrofit"),
         H2_retrofit_capacity_per_CH4=config_provider(
@@ -75,58 +95,31 @@ rule add_brownfield:
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
-    input:
-        unpack(input_profile_tech_brownfield),
-        simplify_busmap=resources("busmap_base_s.csv"),
-        cluster_busmap=resources("busmap_base_s_{clusters}.csv"),
-        network=resources(
-            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
-        ),
-        network_p=solved_previous_horizon,  #solved network at previous time step
-        costs=resources("costs_{planning_horizons}_processed.csv"),
-        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
-    output:
-        resources(
-            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
-        ),
-    threads: 4
-    resources:
-        mem_mb=10000,
-    log:
-        logs(
-            "add_brownfield_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
-        ),
-    benchmark:
-        benchmarks(
-            "add_brownfield/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-        )
+    message:
+        "Adding brownfield constraints for existing infrastructure for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
-        "../scripts/add_brownfield.py"
+        scripts("add_brownfield.py")
 
 
 ruleorder: add_existing_baseyear > add_brownfield
 
 
 rule solve_sector_network_myopic:
-    params:
-        solving=config_provider("solving"),
-        foresight=config_provider("foresight"),
-        co2_sequestration_potential=config_provider(
-            "sector", "co2_sequestration_potential", default=200
-        ),
-        custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
         ),
-        costs=resources("costs_{planning_horizons}_processed.csv"),
     output:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.yaml",
-    shadow:
-        shadow_config
+        model=(
+            RESULTS
+            + "models/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+            if config["solving"]["options"]["store_model"]
+            else []
+        ),
     log:
         solver=RESULTS
         + "logs/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
@@ -134,14 +127,25 @@ rule solve_sector_network_myopic:
         + "logs/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
         python=RESULTS
         + "logs/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_python.log",
-    threads: solver_threads
-    resources:
-        mem_mb=config_provider("solving", "mem_mb"),
-        runtime=config_provider("solving", "runtime", default="6h"),
     benchmark:
         (
             RESULTS
             + "benchmarks/solve_sector_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
+    shadow:
+        shadow_config
+    threads: solver_threads
+    resources:
+        mem_mb=config_provider("solving", "mem_mb"),
+        runtime=config_provider("solving", "runtime", default="6h"),
+    params:
+        solving=config_provider("solving"),
+        foresight=config_provider("foresight"),
+        co2_sequestration_potential=config_provider(
+            "sector", "co2_sequestration_potential", default=200
+        ),
+        custom_extra_functionality=input_custom_extra_functionality,
+    message:
+        "Solving sector-coupled network with myopic foresight for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")
