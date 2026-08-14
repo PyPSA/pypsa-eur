@@ -39,12 +39,12 @@ nav:
     - Installation: installation.md
     - "Tutorial: Electricity-Only": tutorial.md
     - "Tutorial: Sector-Coupled": tutorial_sector.md
-    - "FAQ and Troubleshooting": faq.md
   - References:
     - Release Notes: release_notes.md
     - Licenses: licenses.md
     - Validation: validation.md
     - Limitations: limitations.md
+    - FAQ and Troubleshooting: faq.md
     - Support: support.md
     - Publications: publications.md
 
