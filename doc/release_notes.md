@@ -3,8 +3,11 @@
 
 # Release Notes
 
+<!-- Upcoming Release -->
+<!-- ================= -->
+
+* Adding option to include the compression step in carbon dioxide transport before transporting in dense phase and including electricity demand for post combustion carbon capture. Adjusting the capital costs for post combustion capture that differs depending on the carbon dioxide percentage in the flue gas ([#2161](https://github.com/PyPSA/pypsa-eur/pull/2161)).
 Upcoming Release
-=================
 
 * compat: Compatibility with `tsam` v4.0.
 * fix: `solve_network.py` now raises an error if solver status is `warning`
