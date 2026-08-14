@@ -4,6 +4,7 @@
 
 import itertools
 import logging
+import re
 import string
 
 import geopandas as gpd
@@ -12,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 from pyproj import Transformer
-from shapely import prepare
+from shapely import get_point, prepare
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge, split
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 GEO_CRS = "EPSG:4326"
 DISTANCE_CRS = "EPSG:3035"
 BUS_TOL = 500  # meters
+COORD_PRECISION = 8  # decimals to round coordinates to, avoiding potential errors in voronoi calculations
 BUSES_COLUMNS = [
     "station_id",
     "voltage",
@@ -130,7 +132,7 @@ def _merge_identical_lines(lines):
     return lines_all
 
 
-def _add_line_endings(buses, lines, add=0, name="line-end"):
+def _add_line_endings(lines):
     """
     Adds virtual buses based on line endings to the set of buses.
 
@@ -139,29 +141,71 @@ def _add_line_endings(buses, lines, add=0, name="line-end"):
 
     Parameters
     ----------
-        - buses (pd.DataFrame): DataFrame containing bus information.
         - lines (pd.DataFrame): DataFrame containing line information, including 'voltage' and 'geometry' columns.
-        - add (int, optional): Offset to add to the bus index for generating unique bus IDs. Default is 0.
         - name (str, optional): Name to assign to the 'contains' column for the virtual buses. Default is "line-end".
 
     Returns
     -------
         - pd.DataFrame: DataFrame containing the virtual bus endpoints with columns 'bus_id', 'voltage', 'geometry', and 'contains'.
     """
-    endpoints0 = lines[["voltage", "geometry"]].copy()
-    endpoints0["geometry"] = endpoints0["geometry"].apply(lambda x: x.boundary.geoms[0])
 
-    endpoints1 = lines[["voltage", "geometry"]].copy()
-    endpoints1["geometry"] = endpoints1["geometry"].apply(lambda x: x.boundary.geoms[1])
+    line_data = lines[["voltage", "geometry", "line_id"]]
+    line_geoms = line_data["geometry"].apply(_remove_loops_from_multiline)
 
+    endpoints0 = line_data.assign(
+        geometry=get_point(line_geoms.geometry, 0), endpoint=0
+    )
+    endpoints1 = line_data.assign(
+        geometry=get_point(line_geoms.geometry, -1), endpoint=1
+    )
     endpoints = pd.concat([endpoints0, endpoints1], ignore_index=True)
-    endpoints.drop_duplicates(subset=["geometry", "voltage"], inplace=True)
-    endpoints.reset_index(drop=True, inplace=True)
 
-    endpoints["bus_id"] = endpoints.index + add + 1
-    endpoints["bus_id"] = "virtual" + "-" + endpoints["bus_id"].astype(str)
+    # Clean line_id (remove voltage suffix)
+    endpoints["line_id"] = endpoints["line_id"].str.split("-").str[0]
+    endpoints["osm_id"] = endpoints["line_id"].str.extract(
+        r"((?:way|relation)/\d+)", expand=False
+    )
+    # Create endpoint names: line_id + endpoint number
+    endpoints["endpoint_name"] = (
+        endpoints["line_id"] + ":" + endpoints["endpoint"].astype(str)
+    )
 
-    endpoints["contains"] = name
+    # Create deterministic bus ids and tags
+    def create_bus_data(group):
+        endpoint_names = group["endpoint_name"]
+
+        # Extract numeric parts
+        numeric_parts = endpoint_names.str.extract(r"/(\d+)", expand=False).astype(int)
+
+        # Find all with minimum numeric value
+        min_numeric = numeric_parts.min()
+        candidates = endpoint_names[numeric_parts == min_numeric]
+
+        # Among those, sort alphabetically and take first
+        bus_id = candidates.sort_values().iloc[0]
+        osm_ids = list(set(group["osm_id"].tolist()))
+
+        return pd.Series(
+            {
+                "bus_id": bus_id,
+                "contains": osm_ids,
+            }
+        )
+
+    # Group by voltage and geometry, and apply create_bus_data to get bus_id and tags
+    endpoints = (
+        endpoints.groupby(["voltage", "geometry"])
+        .apply(create_bus_data, include_groups=False)
+        .reset_index()
+    )
+
+    # Now add voltage prefix, now bus_ids are persistent and unique
+    endpoints["bus_id"] = (
+        "virtual_"
+        + endpoints["bus_id"]
+        + "-"
+        + (endpoints["voltage"] / 1000).astype(int).astype(str)
+    )
 
     return endpoints[["bus_id", "voltage", "geometry", "contains"]]
 
@@ -198,41 +242,55 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
 
     Parameters
     ----------
-        - lines (GeoDataFrame): The lines to be split.
-        - buses (GeoDataFrame): The buses representing nodes.
-        - distance_crs (str): The coordinate reference system (CRS) for distance calculations.
-        - tol (float): The tolerance distance in meters for determining if a bus is within a line.
+    lines : GeoDataFrame
+        The lines to be split.
+    buses : GeoDataFrame
+        The buses representing nodes.
+    distance_crs : str
+        The coordinate reference system (CRS) for distance calculations.
+    tol : float
+        The tolerance distance in meters for determining if a bus is within a line.
 
     Returns
     -------
         - lines (GeoDataFrame): The split lines.
-        - buses (GeoDataFrame): The buses representing nodes.
     """
     lines = lines.copy()
     logger.info(f"Splitting lines over overpassing nodes (Tolerance {tol} m).")
-    lines_to_add = []  # list of lines to be added
-    lines_to_split = []  # list of lines that have been split
+    lines_to_add = []
+    lines_to_split = []
 
-    lines_epsgmod = lines.to_crs(distance_crs)
+    # TODO: In first draft, skip line splitting for lower voltage levels
+    high_voltage_lines = lines.query("voltage >= 220000")
+    if high_voltage_lines.empty:
+        return lines
+
+    lines_epsgmod = high_voltage_lines.to_crs(distance_crs)
     buses_epsgmod = buses.to_crs(distance_crs)
+    buses_sindex = buses_epsgmod.sindex
 
     # set tqdm options for substation ids
     tqdm_kwargs_substation_ids = dict(
         ascii=False,
         unit=" lines",
-        total=lines.shape[0],
+        total=high_voltage_lines.shape[0],
         desc="Splitting lines",
     )
 
-    for l in tqdm(lines.index, **tqdm_kwargs_substation_ids):
-        # bus indices being within tolerance from the line
-        bus_in_tol_epsg = buses_epsgmod[
-            buses_epsgmod.geometry.distance(lines_epsgmod.geometry.loc[l]) <= tol
-        ]
+    for l in tqdm(high_voltage_lines.index, **tqdm_kwargs_substation_ids):
+        line_geom = lines_epsgmod.geometry.loc[l]
+
+        # Use spatial index for initial filtering
+        possible_matches = list(buses_sindex.intersection(line_geom.bounds))
+        if not possible_matches:
+            continue
+
+        nearby_buses = buses_epsgmod.iloc[possible_matches]
+        bus_in_tol_epsg = nearby_buses[nearby_buses.geometry.distance(line_geom) <= tol]
 
         # Get boundary points
-        endpoint0 = lines_epsgmod.geometry.loc[l].boundary.geoms[0]
-        endpoint1 = lines_epsgmod.geometry.loc[l].boundary.geoms[1]
+        endpoint0 = line_geom.boundary.geoms[0]
+        endpoint1 = line_geom.boundary.geoms[1]
 
         # Calculate distances
         dist_to_ep0 = bus_in_tol_epsg.geometry.distance(endpoint0)
@@ -256,9 +314,14 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
             # update geometries
             df_append["geometry"] = new_geometries
             # update name of the line if there are multiple line segments
+            original_line_id = str(df_append["line_id"].iloc[0])
+            # Split to separate base ID from voltage: "way/123456-220" -> ["way/123456", "220"]
+            parts = original_line_id.rsplit("-", 1)
+            base_id = parts[0]  # e.g., "way/123456"
+            voltage = parts[1] if len(parts) > 1 else ""  # e.g., "220"
+
             df_append["line_id"] = [
-                str(df_append["line_id"].iloc[0])
-                + (f"-{letter}" if n_geoms > 1 else "")
+                f"{base_id}:{letter}-{voltage}" if n_geoms > 1 else original_line_id
                 for letter in string.ascii_lowercase[:n_geoms]
             ]
 
@@ -290,7 +353,7 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
         - Identifies shared buses to remove using networkx.
         - Creates a network graph of lines to be merged using networkx
         - Identifies connected components in the graph and merges lines within each component.
-        - Note that only lines that unambigruosly can be merged are considered.
+        - Note that only lines that unambiguously can be merged are considered.
 
     Parameters
     ----------
@@ -393,25 +456,19 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
     # Add all edges at once
     G.add_edges_from(edges)
 
-    connected_components = nx.connected_components(G)
+    connected_components = list(nx.connected_components(G))
 
-    # Create empty
-    merged_lines = pd.DataFrame(
-        columns=[
-            "line_id",
-            "circuits",
-            "voltage",
-            "geometry",
-            "underground",
-            "contains_lines",
-            "contains_buses",
-        ]
+    tqdm_args = dict(
+        ascii=False,
+        unit=" components",
+        total=len(connected_components),
+        desc="Merging lines",
     )
 
+    subgraph_data = []
+
     # Iterate over each connected component
-    for component in tqdm(
-        connected_components, desc="Merging lines", unit=" components"
-    ):
+    for component in tqdm(connected_components, **tqdm_args):
         # Create a subgraph for the current component
         subgraph = G.subgraph(component)
 
@@ -444,28 +501,38 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
         for edge in subgraph.edges():
             contains_buses.append(G.edges[edge].get("bus_id", None))
 
-        subgraph_data = {
-            "line_id": [
-                "merged_" + str(node_longest) + "+" + str(number_of_lines - 1)
-            ],  # line_id
-            "circuits": [circuits],
-            "voltage": [voltage],
-            "geometry": [geometry],
-            "underground": [underground],
-            "contains_lines": [contains_lines],
-            "contains_buses": [contains_buses],
-        }
+        # Skip closed linestrings (circles)
+        if geometry.is_closed:
+            continue
 
-        # Convert to DataFrame and append to the merged_lines DataFrame
-        merged_lines = pd.concat(
-            [merged_lines, pd.DataFrame(subgraph_data)], ignore_index=True
+        subgraph_data.append(
+            {
+                "line_id": "merged_"
+                + str(node_longest)
+                + "+"
+                + str(number_of_lines - 1),
+                "circuits": circuits,
+                "voltage": voltage,
+                "geometry": geometry,
+                "underground": underground,
+                "contains_lines": contains_lines,
+                "contains_buses": contains_buses,
+            }
         )
-        merged_lines = gpd.GeoDataFrame(merged_lines, geometry="geometry", crs=geo_crs)
 
-        # Drop all closed linestrings (circles)
-        merged_lines = merged_lines[
-            merged_lines["geometry"].apply(lambda x: not x.is_closed)
+    if subgraph_data:
+        merged_lines = gpd.GeoDataFrame(subgraph_data, crs=geo_crs)
+    else:
+        cols = [
+            "line_id",
+            "circuits",
+            "voltage",
+            "geometry",
+            "underground",
+            "contains_lines",
+            "contains_buses",
         ]
+        merged_lines = gpd.GeoDataFrame(columns=cols, crs=geo_crs)
 
     return merged_lines
 
@@ -513,6 +580,7 @@ def _merge_lines_over_virtual_buses(
     lines_to_add["bus0"] = None
     lines_to_add["bus1"] = None
     lines_to_add["length"] = lines_to_add["geometry"].to_crs(distance_crs).length
+    lines_to_add["contains"] = lines_to_add["contains_lines"]
 
     # Reorder
     lines_to_add = lines_to_add[lines_merged.columns]
@@ -621,33 +689,6 @@ def _create_station_seeds(
 
     buses_all_agg["country"] = updated_country_mapping
 
-    # Rename rows virtual buses that are not actual substations
-    buses_to_rename = buses_all_agg.loc[
-        (
-            ~buses_all_agg.index.str.startswith("way/")
-            & ~buses_all_agg.index.str.startswith("relation/")
-        ),
-        ["country", "poi"],
-    ]
-
-    buses_to_rename["lat"] = buses_to_rename["poi"].apply(lambda p: p.y)
-    buses_to_rename["lon"] = buses_to_rename["poi"].apply(lambda p: p.x)
-
-    # Now sort by country, latitude (north to south), and longitude (west to east)
-    buses_to_rename = buses_to_rename.sort_values(
-        by=["country", "lat", "lon"], ascending=[True, False, True]
-    )
-    buses_to_rename["bus_id"] = buses_to_rename.groupby("country").cumcount() + 1
-    buses_to_rename["bus_id"] = buses_to_rename["country"] + buses_to_rename[
-        "bus_id"
-    ].astype(str)
-
-    # Dict to rename virtual buses
-    dict_rename = buses_to_rename["bus_id"].to_dict()
-
-    # Rename virtual buses in buses_all_agg with dict
-    buses_all_agg.rename(index=dict_rename, inplace=True)
-
     # extract substring before - from index
     buses_all_agg["osm_identifier"] = buses_all_agg.index.str.split("-").str[0]
     buses_all_agg.reset_index(inplace=True)
@@ -715,7 +756,7 @@ def _merge_buses_to_stations(
         voltages = sorted(
             g_value["voltage"].unique(), reverse=True
         )  # Sort voltags in descending order
-
+        not_virtual = ~g_value.bus_id.str.startswith("virtual_")
         if len(voltages) > 1:
             poi_x, poi_y = geo_to_dist.transform(
                 g_value["poi"].values[0].x, g_value["poi"].values[0].y
@@ -731,10 +772,11 @@ def _merge_buses_to_stations(
 
                 poi_offset = Point(dist_to_geo.transform(poi_x_offset, poi_y_offset))
 
-                # Update bus_name
-                g_value.loc[g_value["voltage"] == v, "bus_id"] = (
-                    g_name + "-" + str(int(v / 1000))
-                )
+                # Update bus_name if not virtual (in which case the voltage suffix is already present)
+                g_value.loc[
+                    (g_value["voltage"] == v) & not_virtual,
+                    "bus_id",
+                ] = g_name + "-" + str(int(v / 1000))
 
                 # Update geometry
                 g_value.loc[g_value["voltage"] == v, "geometry"] = poi_offset
@@ -743,7 +785,9 @@ def _merge_buses_to_stations(
             buses_all.loc[g_value.index, "geometry"] = g_value["geometry"]
         else:
             v = voltages[0]
-            buses_all.loc[g_value.index, "bus_id"] = g_name + "-" + str(int(v / 1000))
+            buses_all.loc[g_value.loc[not_virtual].index, "bus_id"] = (
+                g_name + "-" + str(int(v / 1000))
+            )
             buses_all.loc[g_value.index, "geometry"] = g_value["poi"]
 
     return buses_all
@@ -875,8 +919,9 @@ def _map_endpoints_to_buses(
     for coord in range(2):
         # Obtain endpoints
         endpoints = lines_all[["voltage", "geometry"]].copy()
-        endpoints["geometry"] = endpoints["geometry"].apply(
-            lambda x: x.boundary.geoms[coord]
+        # -1 * coord returns 0 for coord=0 and -1 for coord=1
+        endpoints["geometry"] = get_point(
+            endpoints.geometry.apply(_remove_loops_from_multiline), -1 * coord
         )
         if sjoin == "intersects":
             endpoints = gpd.sjoin(
@@ -1059,6 +1104,12 @@ def _extend_lines_to_buses(connection, buses):
     lines_all.drop(columns=["bus_id"], inplace=True)
     lines_all.rename(columns={"geometry_right": "bus1_point"}, inplace=True)
 
+    # TODO: Relevant only for sub 220 kV AC lines: Implement fix for MultiLineStrings
+    # For now, remove MultiLineStrings, only 5 elements in Europe
+    b_multi = lines_all["geometry"].apply(lambda x: isinstance(x, MultiLineString))
+    if b_multi.any():
+        lines_all = lines_all[~b_multi]
+
     lines_all["geometry"] = lines_all.apply(
         lambda row: _add_point_to_line(row["geometry"], row["bus0_point"]), axis=1
     )
@@ -1148,7 +1199,11 @@ def _add_transformers(buses, geo_crs=GEO_CRS):
 
     for g_name, g_value in buses_all.groupby("station_id"):
         if g_value["voltage"].nunique() > 1:
-            combinations = list(itertools.combinations(sorted(g_value.index), 2))
+            combinations = list(
+                itertools.combinations(
+                    g_value.sort_values("voltage", ascending=False).index, 2
+                )
+            )
 
             station_transformers = pd.DataFrame(combinations, columns=["bus0", "bus1"])
             station_transformers["voltage_bus0"] = station_transformers["bus0"].map(
@@ -1426,6 +1481,47 @@ def _closest_voltage(voltage, voltage_list):
     return min(voltage_list, key=lambda x: abs(x - voltage))
 
 
+def _treat_under_construction(
+    df, decision, remove_after
+):  # decision is "keep" or "remove"
+    """
+    Keep or remove elements that are under construction based on the provided boolean flag.
+
+    Parameters
+    ----------
+    df (pandas.DataFrame): The input DataFrame containing the data.
+    decision (str): A string indicating whether to "keep" or "remove" elements under construction.
+    remove_after (str): A date-time string in 'YYYY-MM-DD' format. Elements under construction with a date after this will be removed.
+
+    Returns
+    -------
+    pandas.DataFrame: The DataFrame with under construction elements removed if the flag is True.
+    """
+    if decision == "keep":
+        logger.info("Keeping elements under construction.")
+
+    elif decision == "remove":
+        logger.info("Removing elements under construction...")
+        len_before = len(df)
+        idx_remove = df.index[df["under_construction"]]
+        df = df.drop(index=idx_remove)
+        len_after = len(df)
+        logger.info(f"Removed {len_before - len_after} elements under construction.")
+
+    if remove_after is not None:
+        logger.info(f"Removing elements with a start date after {remove_after}...")
+        df["start_date"] = pd.to_datetime(df["start_date"], errors="coerce")
+        len_before = len(df)
+        idx_remove = df.index[df["start_date"] > pd.to_datetime(remove_after)]
+        df = df.drop(index=idx_remove)
+        len_after = len(df)
+        logger.info(
+            f"Removed {len_before - len_after} elements with start date after {remove_after}."
+        )
+
+    return df
+
+
 def _finalise_network(all_buses, converters, lines, links, transformers):
     """
     Finalises network components and prepares for export.
@@ -1442,6 +1538,22 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
     -------
         - tuple: A tuple containing the updated DataFrames for buses, converters, lines, links, and transformers
     """
+
+    def _contains_to_tags(x):
+        if isinstance(x, list):
+            return ";".join(
+                set(item.split("-")[0] for item in x if isinstance(item, str))
+            )
+        elif isinstance(x, str):
+            return x.split("-")[0]
+        else:
+            return ""  # handles NaN / float from concat of AC+DC buses
+
+    def _tags_to_osm_ids(tags: str) -> str:
+        if not isinstance(tags, str) or not tags:
+            return ""
+        return ";".join(sorted(set(re.findall(r"(?:way|relation)/\d+", tags))))
+
     logger.info("Finalising network components and preparing for export.")
     buses_all = all_buses.copy()
     converters_all = converters.copy()
@@ -1453,7 +1565,8 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
     logger.info("- buses")
     buses_all["symbol"] = "Substation"
     buses_all["under_construction"] = False
-    buses_all["tags"] = buses_all["bus_id"].str.split("-").str[0]
+    buses_all["tags"] = buses_all["contains"].apply(_contains_to_tags)
+    buses_all["tags"] = buses_all["tags"].apply(_tags_to_osm_ids)
     buses_all["voltage"] = buses_all["voltage"] / 1000
     buses_all["x"] = buses_all["geometry"].x
     buses_all["y"] = buses_all["geometry"].y
@@ -1467,7 +1580,8 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
     lines_all["voltage"] = lines_all["voltage"] / 1000
     lines_all["length"] = lines_all["length"].round(2)
     lines_all["under_construction"] = False
-    lines_all["tags"] = lines_all["contains_lines"].apply(lambda x: ";".join(x))
+    lines_all["tags"] = lines_all["contains_lines"].apply(_contains_to_tags)
+    lines_all["tags"] = lines_all["tags"].apply(_tags_to_osm_ids)
     lines_all["underground"] = lines_all["underground"].replace({True: "t", False: "f"})
     lines_all["under_construction"] = lines_all["under_construction"].replace(
         {True: "t", False: "f"}
@@ -1489,6 +1603,7 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
         links_all["length"] = links_all["length"].round(2)
         links_all["under_construction"] = False
         links_all["tags"] = links_all["link_id"].str.split("-").str[0]
+        links_all["tags"] = links_all["tags"].apply(_tags_to_osm_ids)
         links_all = links_all.replace({True: "t", False: "f"})
         links_all = links_all[["link_id"] + LINKS_COLUMNS]
         links_all.set_index("link_id", inplace=True)
@@ -1509,23 +1624,44 @@ def build_network(
     country_shapes,
     voltages,
     line_types,
+    under_construction,
+    remove_after,
 ):
     logger.info("Reading input data.")
 
     # Buses
     buses = gpd.read_file(inputs["substations"])
     buses.drop(columns=["country"], inplace=True)
+    buses = _treat_under_construction(
+        buses, decision=under_construction, remove_after=remove_after
+    ).drop(columns=["start_date"])
+
     buses_polygon = gpd.read_file(inputs["substations_polygon"])
+    buses_polygon = buses_polygon[
+        buses_polygon["bus_id"].isin(buses["bus_id"])
+    ]  # Only keep buses that are in buses
     buses_polygon["bus_id"] = buses_polygon["bus_id"].apply(lambda x: x.split("-")[0])
     buses_polygon.drop_duplicates(subset=["bus_id", "geometry"], inplace=True)
     buses_polygon.drop(columns=["voltage"], inplace=True)
 
     # Lines
     lines = gpd.read_file(inputs["lines"])
+    lines = _treat_under_construction(
+        lines, decision=under_construction, remove_after=remove_after
+    ).drop(columns=["start_date"])
     lines = _merge_identical_lines(lines)
 
+    # Floor voltages to 3 decimal places (e.g., 66600 becomes 66000, 220000 stays 220000)
+    buses["voltage"] = (np.floor(buses["voltage"] / 1000) * 1000).astype(
+        buses["voltage"].dtype
+    )
+    lines["voltage"] = (np.floor(lines["voltage"] / 1000) * 1000).astype(
+        lines["voltage"].dtype
+    )
+
     ### DATA PROCESSING (AC)
-    buses_line_endings = _add_line_endings(buses, lines)
+    buses_line_endings = _add_line_endings(lines)
+
     buses = pd.concat([buses, buses_line_endings], ignore_index=True)
 
     # Split lines overpassing nearby buses (tolerance 1 m)
@@ -1534,19 +1670,33 @@ def build_network(
     # Update end points
     bool_virtual_buses = buses["bus_id"].str.startswith("virtual")
     buses = buses[~bool_virtual_buses]
-    buses_updated_line_endings = _add_line_endings(buses, lines)
+    buses_updated_line_endings = _add_line_endings(lines)
     buses = pd.concat([buses, buses_updated_line_endings], ignore_index=True)
 
     # Update length of lines
     lines["length"] = lines.to_crs(DISTANCE_CRS).length
 
-    # Merging lines over virtual buses (buses that are not designated as substations, e.g. junctions)
+    # Merging lines over virtual buses (buses that are not designated as substations, e.g. junctions)<
     merged_lines_map = _create_merge_mapping(lines, buses, buses_polygon)
     lines, buses = _merge_lines_over_virtual_buses(lines, buses, merged_lines_map)
 
     # Create station seeds
     stations = _create_station_seeds(buses, buses_polygon, country_shapes)
     buses = _merge_buses_to_stations(buses, stations)
+
+    # Round stations to 8 decimals to avoid floating point errors (e.g. voronoi creation)
+    # Round POINT in "geometry" and "poi"
+    buses["geometry"] = gpd.points_from_xy(
+        buses.geometry.x.round(COORD_PRECISION),
+        buses.geometry.y.round(COORD_PRECISION),
+        crs=buses.crs,
+    )
+
+    buses["poi"] = gpd.points_from_xy(
+        buses.poi.x.round(COORD_PRECISION),
+        buses.poi.y.round(COORD_PRECISION),
+        crs=buses.crs,
+    )
 
     # Drop lines that are fully within stations.polygon
     internal_lines = gpd.sjoin(lines, stations, how="inner", predicate="within").line_id
@@ -1590,27 +1740,70 @@ def build_network(
 
     ### DATA PROCESSING (DC)
     links = gpd.read_file(inputs["links"])
+    links = _treat_under_construction(
+        links, decision=under_construction, remove_after=remove_after
+    ).drop(columns=["start_date"])
+
     converters_polygon = gpd.read_file(inputs["converters_polygon"])
+    converters_polygon = _treat_under_construction(
+        converters_polygon, decision=under_construction, remove_after=remove_after
+    ).drop(columns=["start_date"])
 
     # Create DC buses
     dc_buses = _add_dc_buses(converters_polygon, links, buses, country_shapes)
+
+    # Import DC switching stations
+    dc_switching = gpd.read_file(inputs["dc_switching"])
+
+    if not dc_switching.empty:
+        dc_switching = _treat_under_construction(
+            dc_switching,
+            decision=under_construction,
+            remove_after=remove_after,
+        ).drop(columns=["start_date"])
+        dc_switching_polygon = gpd.read_file(inputs["dc_switching_polygon"])
+        dc_switching_polygon = dc_switching_polygon[
+            dc_switching_polygon["bus_id"].isin(dc_switching["bus_id"])
+        ]
+        dc_switching["polygon"] = (
+            dc_switching_polygon.set_index("bus_id")
+            .loc[dc_switching["bus_id"], "geometry"]
+            .values
+        )
+        dc_switching["poi"] = dc_switching["geometry"]
+        dc_switching["station_id"] = dc_switching["bus_id"]
+        dc_switching = dc_switching[
+            [col for col in dc_switching.columns if col in dc_buses.columns]
+        ]
+        dc_buses = pd.concat([dc_buses, dc_switching], ignore_index=True)
+
     links, dc_buses = _map_links_to_dc_buses(links, dc_buses)
+
+    # Drop incomplete links (missing buses), relevant if network is built for single (islanded) regions
+    bool_incomplete_links = links["bus0"].isna() | links["bus1"].isna()
+    if bool_incomplete_links.any():
+        logger.info(
+            f"Dropping {bool_incomplete_links.sum()} incomplete links that could not be mapped to two DC buses."
+        )
+        links = links[~bool_incomplete_links].reset_index(drop=True)
 
     # Concatenate AC and DC buses
     buses["dc"] = False
     dc_buses["dc"] = True
+    dc_buses["contains"] = dc_buses["bus_id"].str.split("-").str[0]
     all_buses = pd.concat([buses, dc_buses], ignore_index=True)
 
-    # Add suffix
-    links["link_id"] = (
-        links["link_id"]
-        + "-"
-        + links["voltage"].div(1e3).astype(int).astype(str)
-        + "-DC"
-    )
+    if not links.empty:
+        # Add suffix
+        links["link_id"] = (
+            links["link_id"]
+            + "-"
+            + links["voltage"].div(1e3).astype(int).astype(str)
+            + "-DC"
+        )
 
-    # Extend DC links to DC buses
-    links = _extend_lines_to_buses(links, dc_buses)
+        # Extend DC links to DC buses
+        links = _extend_lines_to_buses(links, dc_buses)
 
     # Add PyPSA converter links between DC buses and AC buses
     converters = _add_converter_links(dc_buses, buses)
@@ -1658,17 +1851,22 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     # Parameters
+    inputs = snakemake.input
+    country_shapes = gpd.read_file(snakemake.input["country_shapes"]).set_index("name")
     voltages = snakemake.params.voltages
     line_types = snakemake.params.line_types
-    country_shapes = gpd.read_file(snakemake.input["country_shapes"]).set_index("name")
+    under_construction = snakemake.params.under_construction
+    remove_after = snakemake.params.remove_after
 
     # Build network
     buses, converters, lines, links, transformers, stations_polygon, buses_polygon = (
         build_network(
-            snakemake.input,
+            inputs,
             country_shapes,
             voltages,
             line_types,
+            under_construction,
+            remove_after,
         )
     )
 

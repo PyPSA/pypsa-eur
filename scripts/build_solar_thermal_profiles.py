@@ -5,10 +5,10 @@
 Build solar thermal collector profile time series.
 
 Uses ``atlite.Cutout.solar_thermal` to compute heat generation for clustered onshore regions from population layout and weather data cutout.
-The rule is executed in ``build_sector.smk``.
+The rule is executed in `build_sector.smk`.
 
-.. seealso::
-    `Atlite.Cutout.solar_thermal <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
+!!! info "See also"
+    [Atlite.Cutout.solar_thermal](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
 """
 
 import logging
@@ -16,13 +16,13 @@ import logging
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from dask.distributed import Client, LocalCluster
 
 from scripts._helpers import (
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
+    setup_dask,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,8 +36,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
-    client = Client(cluster, asynchronous=True)
+    dask_kwargs = setup_dask(nprocesses)
 
     config = snakemake.params.solar_thermal
     config.pop("cutout", None)
@@ -65,7 +64,7 @@ if __name__ == "__main__":
         **config,
         matrix=M_tilde.T,
         index=clustered_regions.index,
-        dask_kwargs=dict(scheduler=client),
+        dask_kwargs=dask_kwargs,
         show_progress=False,
     )
 

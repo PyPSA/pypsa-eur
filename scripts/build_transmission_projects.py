@@ -5,24 +5,24 @@
 
 """
 Gets the transmission projects defined in the config file, concatenates and
-deduplicates them. Projects are later included in :mod:`add_electricity.py`.
+deduplicates them. Projects are later included in [add_electricity][].
 
 Inputs
 ------
 
-- ``networks/base_network.nc``:  Base network topology for the electricity grid. This is processed in :mod:`base_network.py`.
-- ``data/transmission_projects/"project_name"/``: Takes the transmission projects from the subfolder of data/transmission_projects. The subfolder name is the project name.
-- ``offshore_shapes.geojson``: Shapefile containing the offshore regions. Used to determine if a new bus should be added for a new line or link.
-- ``europe_shape.geojson``: Shapefile containing the shape of Europe. Used to determine if a project is within the considered countries.
+- `networks/base_network.nc`:  Base network topology for the electricity grid. This is processed in [base_network][].
+- `data/transmission_projects/"project_name"/`: Takes the transmission projects from the subfolder of data/transmission_projects. The subfolder name is the project name.
+- `offshore_shapes.geojson`: Shapefile containing the offshore regions. Used to determine if a new bus should be added for a new line or link.
+- `europe_shape.geojson`: Shapefile containing the shape of Europe. Used to determine if a project is within the considered countries.
 
 Outputs
 -------
 
-- ``transmission_projects/new_lines.csv``: New project lines to be added to the network. This includes new lines and upgraded lines.
-- ``transmission_projects/new_links.csv``: New project links to be added to the network. This includes new links and upgraded links.
-- ``transmission_projects/adjust_lines.csv``: For lines which are upgraded, the decommissioning year of the existing line is adjusted to the build year of the upgraded line.
-- ``transmission_projects/adjust_links.csv``: For links which are upgraded, the decommissioning year of the existing link is adjusted to the build year of the upgraded link.
-- ``transmission_projects/new_buses.csv``: For some links, we have to add new buses (e.g. North Sea Wind Power Hub).
+- `transmission_projects/new_lines.csv`: New project lines to be added to the network. This includes new lines and upgraded lines.
+- `transmission_projects/new_links.csv`: New project links to be added to the network. This includes new links and upgraded links.
+- `transmission_projects/adjust_lines.csv`: For lines which are upgraded, the decommissioning year of the existing line is adjusted to the build year of the upgraded line.
+- `transmission_projects/adjust_links.csv`: For links which are upgraded, the decommissioning year of the existing link is adjusted to the build year of the upgraded link.
+- `transmission_projects/new_buses.csv`: For some links, we have to add new buses (e.g. North Sea Wind Power Hub).
 """
 
 import logging
@@ -37,9 +37,12 @@ from pypsa.descriptors import nominal_attrs
 from scipy import spatial
 from shapely.geometry import LineString, Point
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import PYPSA_V1, configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
+
+if PYPSA_V1:
+    pypsa.options.params.add.return_names = True
 
 
 def add_new_buses(n, new_ports):
@@ -48,7 +51,7 @@ def add_new_buses(n, new_ports):
     to_add = new_ports[~duplicated]
     added_buses = n.add(
         "Bus",
-        names=to_add.index,
+        name=to_add.index,
         suffix=" bus",
         x=to_add.x,
         y=to_add.y,
@@ -123,7 +126,7 @@ def connect_new_lines(
                 new_buses_df = pd.concat([new_buses_df, new_buses])
 
         if not lines_port.match_distance.all():
-            logging.warning(
+            logger.warning(
                 "Could not find bus close enough to connect the the following lines:\n"
                 + str(lines_port[~lines_port.match_distance].index.to_list())
                 + "\n Lines will be ignored."
@@ -145,13 +148,16 @@ def get_branch_coords_from_geometry(linestring, reversed=False):
 
     Parameters
     ----------
-    linestring: Shapely linestring
-    reversed (bool, optional): If True, returns the end and start points instead of the start and end points.
-                               Defaults to False.
+    linestring : Shapely linestring
+        The linestring to reduce.
+    reversed : bool, optional
+        If True, returns the end and start points instead of the start and end points.
+        Defaults to False.
 
     Returns
     -------
-    numpy.ndarray: Flattened array of start and end coordinates.
+    numpy.ndarray
+        Flattened array of start and end coordinates.
     """
     coords = np.asarray(linestring.coords)
     ind = [0, -1] if not reversed else [-1, 0]
@@ -165,9 +171,8 @@ def get_branch_coords_from_buses(line):
 
     Parameters
     ----------
-    linestring: shapely linestring
-    reversed (bool, optional): If True, returns the end and start points instead of the start and end points.
-                               Defaults to False.
+    line : pandas.Series
+        A row from a branch component DataFrame with bus0 and bus1 attributes.
 
     Returns
     -------
@@ -389,7 +394,7 @@ def add_projects(
 ):
     lines_dict = get_project_files(path, skip=skip)
     for key, lines in lines_dict.items():
-        logging.info(f"Processing {key.replace('_', ' ')} projects from {plan}.")
+        logger.info(f"Processing {key.replace('_', ' ')} projects from {plan}.")
         lines = remove_projects_outside_countries(lines, europe_shape)
         if isinstance(status, dict):
             status = status[plan]

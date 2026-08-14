@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../schema.default.json
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
@@ -9,7 +10,6 @@ run:
   disable_progressbar: true
   shared_resources:
     policy: false
-  shared_cutouts: true
 
 foresight: myopic
 
@@ -33,11 +33,42 @@ sector:
   central_heat_vent: true
   solid_biomass_import:
     enable: true
+  district_heating:
+    ates:
+      enable: true
+    ptes:
+      supplemental_heating:
+        enable: true
+        booster_heat_pump: true
+  heat_pump_sources:
+    urban central:
+    - air
+    - geothermal
+    - river_water
+    - sea_water
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
+  hydrogen_turbine: false
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: false
+    biomass_to_methanol: false
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false
 
 electricity:
-
   extendable_carriers:
-    Generator: [OCGT]
+    Generator: [solar, onwind, OCGT, CCGT, nuclear]
     StorageUnit: [battery]
     Store: [H2]
     Link: [H2 pipeline]
@@ -78,7 +109,7 @@ industry:
 solving:
   solver:
     name: highs
-    options: highs-simplex
+    options: highs-default
   mem: 4000
 
 plotting:
@@ -92,3 +123,6 @@ plotting:
   energy_max:
   energy_min:
   energy_threshold: 0.000001
+  interactive_bus_balance:
+    bus_name_pattern: "*central heat*"
+  enable_heat_source_maps: true

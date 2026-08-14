@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../schema.default.json
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
@@ -10,7 +11,6 @@ run:
   disable_progressbar: true
   shared_resources:
     policy: false
-  shared_cutouts: true
 
 scenario:
   clusters:
@@ -29,13 +29,21 @@ electricity:
   co2limit: 100.e+6
 
   extendable_carriers:
-    Generator: [OCGT]
+    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT, nuclear]
     StorageUnit: [battery]
     Store: [H2]
     Link: [H2 pipeline]
 
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
-
+  estimate_renewable_capacities:
+    enable: true
+    from_powerplantmatching: true
+    year: 2020
+    expansion_limit: false
+    technology_mapping:
+      Offshore: offwind-ac
+      Onshore: onwind
+      PV: solar
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -55,7 +63,6 @@ renewable:
     max_depth: false
     min_depth: false
 
-
 clustering:
   exclude_carriers: ["OCGT", "offwind-ac", "coal"]
   temporal:
@@ -70,20 +77,8 @@ lines:
 solving:
   solver:
     name: highs
-    options: highs-simplex
+    options: highs-default
 
   check_objective:
     enable: false
     expected_value: 3.8120188094e+07
-
-plotting:
-  map:
-    boundaries:
-  eu_node_location:
-    x: -5.5
-    y: 46.
-  costs_max: 1000
-  costs_threshold: 0.0000001
-  energy_max:
-  energy_min:
-  energy_threshold: 0.000001

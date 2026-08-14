@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+pinning-strategy = "latest-up"
+
+# This aligns with default `conda` behaviour.
+# Set to "false" to stop post-link scripts from running.
+run-post-link-scripts = "insecure"

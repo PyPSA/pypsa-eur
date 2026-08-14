@@ -1,0 +1,13 @@
+planning_horizon,technology,parameter,value,unit,source,further description
+all,solar,marginal_cost,0.01,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,onwind,marginal_cost,0.015,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,offwind,marginal_cost,0.015,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,hydro,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,H2,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,electrolysis,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,fuel cell,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,battery,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,battery inverter,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,home battery storage,marginal_cost,0,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,water tank charger,marginal_cost,0.03,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,
+all,central water pit charger,marginal_cost,0.025,EUR/MWh,Default value to prevent mathematical degeneracy in optimisation,

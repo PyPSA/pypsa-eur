@@ -2,31 +2,25 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-FROM condaforge/mambaforge
+FROM ghcr.io/prefix-dev/pixi:0.76.1
 
-LABEL org.opencontainers.image.source https://github.com/PyPSA/pypsa-eur
+LABEL org.opencontainers.image.source=https://github.com/PyPSA/pypsa-eur
 
-RUN conda update -n base conda
-RUN conda install -n base conda-libmamba-solver
-RUN conda config --set solver libmamba
+# ca-certificates: pixi >=0.64 uses system CA certs, base image ships none
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates bash git && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y bash git make
+# Install pixi env at /opt/pixi-env (allow for bind mounts)
+COPY pixi.toml pixi.lock /opt/pixi-env/
+RUN cd /opt/pixi-env && pixi install -e default && pixi clean cache --yes
 
-RUN conda --version
+WORKDIR /workspace
 
-WORKDIR /pypsa-eur
+# Link pre-installed pixi env into workspace, activate environment and run command
+RUN echo '[ ! -e /workspace/.pixi ] && ln -s /opt/pixi-env/.pixi /workspace/.pixi' > /entrypoint.sh && \
+    pixi shell-hook -e default --manifest-path /opt/pixi-env/pixi.toml >> /entrypoint.sh && \
+    echo 'exec "$@"' >> /entrypoint.sh
 
-COPY ./envs ./temp
-
-RUN conda env create -n pypsa-eur -f temp/linux-pinned.yaml
-RUN conda init bash
-RUN echo "conda activate pypsa-eur" >> ~/.bashrc
-
-SHELL ["/bin/bash", "--login", "-c"]
-ENV PATH=/opt/conda/envs/pypsa-eur/bin:$PATH
-
-RUN rm -r temp
-RUN conda clean -afy && \
-    rm -rf /tmp/*
-
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
 CMD ["bash"]

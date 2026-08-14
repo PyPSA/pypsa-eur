@@ -4,7 +4,7 @@
 
 
 """
-Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such
+Prepare PyPSA network for solving according to opts, such
 as.
 
 - adding an annual **limit** of carbon-dioxide emissions,
@@ -13,15 +13,15 @@ as.
 - specifying an expansion limit on the **cost** of transmission expansion,
 - specifying an expansion limit on the **volume** of transmission expansion, and
 - reducing the **temporal** resolution by averaging over multiple hours
-  or segmenting time series into chunks of varying lengths using ``tsam``.
+  or segmenting time series into chunks of varying lengths using `tsam`.
 
 Description
 -----------
 
-.. tip::
-    The rule :mod:`prepare_elec_networks` runs
-    for all ``scenario`` s in the configuration file
-    the rule :mod:`prepare_network`.
+!!! tip
+    The rule `prepare_elec_networks` runs
+    for all `scenario` s in the configuration file
+    the rule [prepare_network][].
 """
 
 import logging
@@ -29,15 +29,23 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.descriptors import expand_series
 
 from scripts._helpers import (
+    PYPSA_V1,
     configure_logging,
     get,
+    load_costs,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from scripts.add_electricity import load_costs, set_transmission_costs
+from scripts.add_electricity import set_transmission_costs
+
+# Allow for PyPSA versions <0.35
+if PYPSA_V1:
+    from pypsa.common import expand_series
+else:
+    from pypsa.descriptors import expand_series
+
 
 idx = pd.IndexSlice
 
@@ -49,15 +57,17 @@ def modify_attribute(n, adjustments, investment_year, modification="factor"):
         return
     change_dict = adjustments[modification]
     for c in change_dict.keys():
-        if c not in n.components.keys():
+        if c not in n.component_attrs.keys():
             logger.warning(f"{c} needs to be a PyPSA Component")
             continue
         for carrier in change_dict[c].keys():
-            ind_i = n.df(c)[n.df(c).carrier == carrier].index
+            ind_i = (
+                n.components[c].static[n.components[c].static.carrier == carrier].index
+            )
             if ind_i.empty:
                 continue
             for parameter in change_dict[c][carrier].keys():
-                if parameter not in n.df(c).columns:
+                if parameter not in n.components[c].static.columns:
                     logger.warning(f"Attribute {parameter} needs to be in {c} columns.")
                     continue
                 if investment_year:
@@ -66,10 +76,10 @@ def modify_attribute(n, adjustments, investment_year, modification="factor"):
                     factor = change_dict[c][carrier][parameter]
                 if modification == "factor":
                     logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
-                    n.df(c).loc[ind_i, parameter] *= factor
+                    n.components[c].static.loc[ind_i, parameter] *= factor
                 elif modification == "absolute":
                     logger.info(f"Set {parameter} of {carrier} to {factor} ")
-                    n.df(c).loc[ind_i, parameter] = factor
+                    n.components[c].static.loc[ind_i, parameter] = factor
                 else:
                     logger.warning(
                         f"{modification} needs to be either 'absolute' or 'factor'."
@@ -121,20 +131,24 @@ def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
 
 
 def add_dynamic_emission_prices(n, fn):
-    co2_price = pd.read_csv(fn, index_col=0, parse_dates=True)
-    co2_price = co2_price[~co2_price.index.duplicated()]
-    co2_price = co2_price.reindex(n.snapshots).ffill().bfill()
+    co2_price = (
+        pd.read_csv(fn, index_col=0, parse_dates=True).squeeze().reindex(n.snapshots)
+    )
 
     emissions = (
         n.generators.carrier.map(n.carriers.co2_emissions) / n.generators.efficiency
     )
-    co2_cost = expand_series(emissions, n.snapshots).T.mul(co2_price.iloc[:, 0], axis=0)
+    co2_cost = expand_series(emissions, n.snapshots).T.mul(co2_price, axis=0)
 
     static = n.generators.marginal_cost
     dynamic = n.get_switchable_as_dense("Generator", "marginal_cost")
 
     marginal_cost = dynamic + co2_cost.reindex(columns=dynamic.columns, fill_value=0)
     n.generators_t.marginal_cost = marginal_cost.loc[:, marginal_cost.ne(static).any()]
+
+    # remove the static marginal cost from generators with dynamic marginal cost
+    affected = co2_cost.where(co2_cost > 0).dropna(axis=1).columns
+    n.generators.loc[affected, "marginal_cost"] = 0.0
 
 
 def set_line_s_max_pu(n, s_max_pu=0.7):
@@ -185,7 +199,7 @@ def set_transmission_limit(n, kind, factor, costs, Nyears=1):
 
 def average_every_nhours(n, offset, drop_leap_day=False):
     logger.info(f"Resampling the network to {offset}")
-    m = n.copy(with_time=False)
+    m = n.copy(snapshots=[])
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
     sns = snapshot_weightings.index
@@ -194,9 +208,9 @@ def average_every_nhours(n, offset, drop_leap_day=False):
     m.set_snapshots(snapshot_weightings.index)
     m.snapshot_weightings = snapshot_weightings
 
-    for c in n.iterate_components():
+    for c in n.components:
         pnl = getattr(m, c.list_name + "_t")
-        for k, df in c.pnl.items():
+        for k, df in c.dynamic.items():
             if not df.empty:
                 pnl[k] = df.resample(offset).mean()
 
@@ -206,7 +220,7 @@ def average_every_nhours(n, offset, drop_leap_day=False):
 def apply_time_segmentation(n, segments, solver_name="cbc"):
     logger.info(f"Aggregating time series to {segments} segments.")
     try:
-        import tsam.timeseriesaggregation as tsam
+        import tsam
     except ImportError:
         raise ModuleNotFoundError(
             "Optional dependency 'tsam' not found.Install via 'pip install tsam'"
@@ -223,16 +237,27 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
 
     raw = pd.concat([p_max_pu, load, inflow], axis=1, sort=False)
 
-    agg = tsam.TimeSeriesAggregation(
-        raw,
-        hoursPerPeriod=len(raw),
-        noTypicalPeriods=1,
-        noSegments=int(segments),
-        segmentation=True,
-        solver=solver_name,
-    )
+    if hasattr(tsam, "aggregate"):  # tsam >= 3.0
+        agg = tsam.aggregate(
+            raw,
+            n_clusters=1,
+            period_duration=len(raw),
+            segments=tsam.SegmentConfig(n_segments=int(segments)),
+        )
+        agg = agg.cluster_representatives
+    else:  # tsam < 3.0
+        from tsam import timeseriesaggregation
 
-    segmented = agg.createTypicalPeriods()
+        agg = timeseriesaggregation.TimeSeriesAggregation(
+            raw,
+            hoursPerPeriod=len(raw),
+            noTypicalPeriods=1,
+            noSegments=int(segments),
+            segmentation=True,
+            solver=solver_name,
+        )
+
+        segmented = agg.createTypicalPeriods()
 
     weightings = segmented.index.get_level_values("Segment Duration")
     offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
@@ -292,8 +317,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_network",
-            clusters="37",
-            opts="Co2L-4H",
+            clusters="50",
+            opts="",
         )
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
@@ -301,12 +326,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input[0])
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
-    costs = load_costs(
-        snakemake.input.tech_costs,
-        snakemake.params.costs,
-        snakemake.params.max_hours,
-        Nyears,
-    )
+    costs = load_costs(snakemake.input.costs)
 
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
@@ -330,16 +350,20 @@ if __name__ == "__main__":
 
     maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
 
-    emission_prices = snakemake.params.costs["emission_prices"]
-    if emission_prices["co2_monthly_prices"]:
+    emission_prices = snakemake.params.emission_prices
+    if emission_prices["dynamic"]:
         logger.info(
             "Setting time dependent emission prices according spot market price"
         )
         add_dynamic_emission_prices(n, snakemake.input.co2_price)
     elif emission_prices["enable"]:
-        add_emission_prices(
-            n, dict(co2=snakemake.params.costs["emission_prices"]["co2"])
-        )
+        if isinstance(emission_prices["co2"], dict):
+            logger.warning(
+                "Not setting emission prices on generators and storage units, "
+                "due to their configuration per planning horizon"
+            )
+        elif isinstance(emission_prices["co2"], float):
+            add_emission_prices(n, dict(co2=emission_prices["co2"]))
 
     kind = snakemake.params.transmission_limit[0]
     factor = snakemake.params.transmission_limit[1:]

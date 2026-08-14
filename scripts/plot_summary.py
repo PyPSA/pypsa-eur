@@ -61,6 +61,17 @@ preferred_order = pd.Index(
 )
 
 
+def check_tech_colors(tech_colors, keys):
+    """
+    Check if all keys exist in tech_colors mapping, otherwise raise KeyError.
+    """
+    missing = [k for k in keys if k not in tech_colors]
+    if missing:
+        raise KeyError(
+            f"The following technology carrier(s) do not have a defined color in the plotting configuration: {missing}"
+        )
+
+
 def plot_costs():
     cost_df = pd.read_csv(
         snakemake.input.costs, index_col=list(range(3)), header=list(range(n_header))
@@ -89,6 +100,8 @@ def plot_costs():
     )
 
     # new_columns = df.sum().sort_values().index
+
+    check_tech_colors(snakemake.params.plotting["tech_colors"], new_index)
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -156,6 +169,8 @@ def plot_energy():
     )
 
     # new_columns = df.columns.sort_values()
+
+    check_tech_colors(snakemake.params.plotting["tech_colors"], new_index)
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -237,6 +252,8 @@ def plot_balances():
 
         new_columns = df.columns.sort_values()
 
+        check_tech_colors(snakemake.params.plotting["tech_colors"], new_index)
+
         fig, ax = plt.subplots(figsize=(12, 8))
 
         df.loc[new_index, new_columns].T.plot(
@@ -270,7 +287,7 @@ def plot_balances():
         )
 
         fig.savefig(
-            snakemake.output.balances[:-10] + bus_carrier + ".svg", bbox_inches="tight"
+            snakemake.output.balances[:-10] + bus_carrier + ".pdf", bbox_inches="tight"
         )
         plt.close(fig)
 
@@ -482,7 +499,7 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     )
 
     plt.grid(axis="y")
-    path = snakemake.output.balances.split("balances")[0] + "carbon_budget.svg"
+    path = snakemake.output.balances.split("balances")[0] + "carbon_budget.pdf"
     plt.savefig(path, bbox_inches="tight")
     plt.close()
 

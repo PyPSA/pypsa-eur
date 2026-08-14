@@ -1,0 +1,129 @@
+name: Security scan
+on:
+  push:
+    branches: [master]
+    paths: [pixi.lock]
+  # No path filter, a required check must report on every PR
+  pull_request:
+    branches: [master]
+  schedule:
+  - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  changes:
+    name: Detect pixi.lock changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      pixi: ${{ steps.diff.outputs.pixi }}
+    steps:
+    - id: diff
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        files=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --paginate --jq '.[].filename')
+        grep -qxF pixi.lock <<< "$files" && pixi=true || pixi=false
+        echo "pixi=$pixi" >> "$GITHUB_OUTPUT"
+
+  scan:
+    name: SBOM and vulnerability scan
+    needs: changes
+    # Skip only when pixi.lock is confirmed unchanged
+    if: ${{ !cancelled() && !(needs.changes.result == 'success' && needs.changes.outputs.pixi == 'false') }}
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: write   # required by anchore/sbom-action dependency-snapshot upload
+      actions: read     # required by dawidd6/action-download-artifact on fork PRs
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v7
+    - uses: prefix-dev/setup-pixi@v0.10.1
+      with:
+        pixi-version: v0.68.1
+
+    - name: Generate SBOM
+      uses: anchore/sbom-action@v0.24.0
+      with:
+        path: ".pixi/envs/default"
+        output-file: sbom.spdx.json
+        dependency-snapshot: ${{ github.ref == 'refs/heads/master' }}
+        upload-artifact: false  # uploaded explicitly below, master only
+
+    - name: Vulnerability Scan
+      id: scan
+      uses: anchore/scan-action@v7.4.0
+      env:
+        SBOM: sbom.spdx.json
+      with: &scan_settings
+        sbom: ${{ env.SBOM }}
+        fail-build: false
+        severity-cutoff: high
+        add-cpes-if-none: true
+        by-cve: true
+        output-format: sarif
+
+    # Set uri=pixi.lock for a readable location, and fingerprint each alert by
+    # CVE id so code scanning matches against the master baseline by CVE, not line.
+    - name: Normalize SARIF (pixi.lock location + CVE fingerprint)
+      run: |
+        jq '.runs[].results[] |= (
+              .locations[].physicalLocation.artifactLocation.uri = "pixi.lock"
+              | .partialFingerprints = {"grypeCve/v1": .ruleId}
+            )' "${{ steps.scan.outputs.sarif }}" > normalized.sarif
+        mv normalized.sarif "${{ steps.scan.outputs.sarif }}"
+
+    - name: Upload SARIF
+      if: github.ref == 'refs/heads/master'
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
+        category: pixi-vuln-scan
+
+    # Baseline for the PR CVE diff. PR runs rescan it with their own vuln DB.
+    - name: Upload SBOM as artifact
+      if: github.ref == 'refs/heads/master'
+      uses: actions/upload-artifact@v7
+      with:
+        name: master-sbom
+        path: sbom.spdx.json
+        retention-days: 30
+
+    # All PRs gate on new CVEs vs the master baseline
+    - name: Download master baseline
+      if: github.event_name == 'pull_request'
+      uses: dawidd6/action-download-artifact@v21
+      with:
+        workflow: security-scan.yaml
+        name: master-sbom
+        branch: master
+        if_no_artifact_found: fail
+        path: master-baseline
+
+    - name: Scan master baseline
+      id: baseline
+      if: github.event_name == 'pull_request'
+      uses: anchore/scan-action@v7.4.0
+      env:
+        SBOM: master-baseline/sbom.spdx.json
+      with: *scan_settings
+
+    - name: Fail on new CVEs
+      if: github.event_name == 'pull_request'
+      env:
+        PR_SARIF: ${{ steps.scan.outputs.sarif }}
+        BASE_SARIF: ${{ steps.baseline.outputs.sarif }}
+      run: |
+        [ -s "$BASE_SARIF" ] || { echo "::error::baseline SARIF missing"; exit 2; }
+        [ -s "$PR_SARIF" ]   || { echo "::error::PR SARIF missing"; exit 2; }
+        ids() { jq -r '.runs[].results[] | select(.level == "error") | .ruleId' "$1" | sort -u; }
+        new=$(comm -23 <(ids "$PR_SARIF") <(ids "$BASE_SARIF"))
+        if [ -n "$new" ]; then
+          echo "::error::New high+ CVEs vs master:"
+          printf '%s\n' "$new"
+          exit 1
+        fi
+        echo "No new high+ CVEs vs master."

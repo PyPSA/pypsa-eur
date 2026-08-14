@@ -7,7 +7,7 @@ Build future industrial production per country.
 Description
 -------
 
-This rule uses the ``industrial_production_per_country.csv`` file and the expected recycling rates to calculate the future production of the industrial sectors.
+This rule uses the `industrial_production_per_country.csv` file and the expected recycling rates to calculate the future production of the industrial sectors.
 
 **St_primary_fraction**
 The fraction of steel that is coming from primary production. This is more energy intensive than recycling steel (secondary production).
@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     al_primary_fraction = get(params["Al_primary_fraction"], investment_year)
     fraction_persistent_primary = (
-        al_primary_fraction * total_aluminium.sum() / production[key_pri].sum()
+        al_primary_fraction * total_aluminium.sum() / (production[key_pri].sum() or 1)
     )
 
     production[key_pri] = fraction_persistent_primary * production[key_pri]

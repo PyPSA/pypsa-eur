@@ -4,9 +4,12 @@
 
 master
 
+.env
+
 .snakemake*
 .ipynb_checkpoints
 __pycache__
+*.egg-info
 *dconf
 gurobi.log
 .vscode
@@ -21,10 +24,11 @@ gurobi.log
 /benchmarks
 /logs
 /notebooks
-/data
+/data/*
 /cutouts
 /tmp
 doc/_build
+_build
 
 /scripts/old
 /scripts/create_scenarios.py
@@ -33,10 +37,6 @@ doc/_build
 config/config.yaml
 config/scenarios.yaml
 
-config.yaml
-config/config.yaml
-
-dconf
 /data/links_p_nom.csv
 /data/*totals.csv
 /data/biomass*
@@ -49,9 +49,9 @@ dconf
 /data/transport_data.csv
 /data/.nfs*
 /data/retro/*
-/data/bundle/nuts*
 data/gas_network/scigrid-gas/
 data/costs_*.csv
+!/data/custom_costs.csv
 
 dask-worker-space/
 publications.jrc.ec.europa.eu/
@@ -62,6 +62,8 @@ d1gam3xoknrgr2.cloudfront.net/
 *.nc
 
 *~
+
+*.egg-info
 
 *.pyc
 
@@ -76,5 +78,20 @@ d1gam3xoknrgr2.cloudfront.net/
 merger-todos.md
 
 *.html
+
 # private dev folder
 dev/*
+
+# ai coding tools
+CLAUDE.md
+.claude/
+.github/copilot-instructions.md
+CLAUDE.local.md
+# generated DAGs for docs
+doc/img/dag_*.svg
+doc/img/workflow.svg
+doc/img/intro-workflow.svg
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml

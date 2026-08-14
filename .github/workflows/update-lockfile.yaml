@@ -1,0 +1,46 @@
+name: Update locked envs
+on:
+  schedule:
+  - cron: "0 8 1,16 * *" # Bi-weekly
+  workflow_dispatch:
+
+jobs:
+  update-lockfiles:
+    if: ${{ github.ref == 'refs/heads/master' }}
+    name: Update lockfiles
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.10.1
+      with:
+        pixi-version: v0.68.1
+
+    - name: Full resolve
+      run: |
+        rm pixi.lock
+        pixi install --all
+        git checkout pixi.toml
+
+    - name: Export conda environment files
+      if: ${{ !vars.PYPSA_BOT_ID }}
+      run: pixi run sync-locks
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v8
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: update-locked-environment
+        title: "[github-actions.ci] Update locked envs"
+        body: |
+          Automatically generated PR to update the pixi lockfile.
+
+          **Note: Do not merge without manual test execution, unless pypsa-bot has already exported the environment files and triggered tests.**
+        commit-message: "Update locked environment files for all platforms"

@@ -10,10 +10,10 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.descriptors import expand_series
 from six import iterkeys
 
 from scripts._helpers import (
+    PYPSA_V1,
     configure_logging,
     sanitize_custom_columns,
     set_scenario_config,
@@ -22,7 +22,22 @@ from scripts._helpers import (
 from scripts.add_electricity import sanitize_carriers
 from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
+# Allow for PyPSA versions <0.35
+if PYPSA_V1:
+    from pypsa.common import expand_series
+else:
+    from pypsa.descriptors import expand_series
+
 logger = logging.getLogger(__name__)
+
+logger.warning(
+    "Running perfect foresight is not properly tested and may not work as expected. "
+    "Use at your own risk!"
+)
+
+if PYPSA_V1:
+    msg = "PyPSA versions >=1.0 are not supported for perfect foresight."
+    raise UserWarning(msg)
 
 
 # helper functions ---------------------------------------------------
@@ -105,9 +120,11 @@ def add_year_to_constraints(n: pypsa.Network, baseyear: int) -> None:
         year in which optimized assets are built
     """
 
-    for c in n.iterate_components(["GlobalConstraint"]):
-        c.df["investment_period"] = baseyear
-        c.df.rename(index=lambda x: x + "-" + str(baseyear), inplace=True)
+    for c in n.components[["GlobalConstraint"]]:
+        if c.static.empty:
+            continue
+        c.static["investment_period"] = baseyear
+        c.static.rename(index=lambda x: x + "-" + str(baseyear), inplace=True)
 
 
 def hvdc_transport_model(n: pypsa.Network) -> None:
@@ -197,6 +214,7 @@ def concat_networks(
     """
     n = pypsa.Network()
 
+    # Loop over each input network file and its corresponding investment year
     for i, network_path in enumerate(network_paths):
         year = years[i]
         network = pypsa.Network(network_path)
@@ -204,7 +222,7 @@ def concat_networks(
         add_build_year_to_new_assets(network, year)
 
         # static ----------------------------------
-        for component in network.iterate_components(
+        for component in network.components[
             [
                 "Bus",
                 "Carrier",
@@ -215,8 +233,10 @@ def concat_networks(
                 "Line",
                 "StorageUnit",
             ]
-        ):
-            df_year = component.df.copy()
+        ]:
+            if component.static.empty:
+                continue
+            df_year = component.static.copy()
             missing = get_missing(df_year, n, component.list_name)
 
             n.add(component.name, missing.index, **missing)
@@ -226,12 +246,17 @@ def concat_networks(
         snapshots = n.snapshots.drop("now", errors="ignore").union(network_sns)
         n.set_snapshots(snapshots)
 
-        for component in network.iterate_components():
+        # Iterate all component types in the loaded network
+        for component in network.components:
             pnl = getattr(n, component.list_name + "_t")
-            for k in iterkeys(component.pnl):
-                pnl_year = component.pnl[k].copy().reindex(snapshots, level=1)
+            for k in iterkeys(component.dynamic):
+                pnl_year = component.dynamic[k].copy().reindex(snapshots, level=1)
                 if pnl_year.empty and (not (component.name == "Load" and k == "p_set")):
                     continue
+                if k not in pnl:
+                    # TODO: for some reason efficiency2 isn't available, used this workaround:
+                    #  initialize an empty time-series DataFrame for any missing key in pnl (e.g., 'efficiency2')
+                    pnl[k] = pd.DataFrame(index=snapshots)
                 if component.name == "Load":
                     static_load = network.loads.loc[network.loads.p_set != 0]
                     static_load_t = expand_series(static_load.p_set, network_sns).T
@@ -256,9 +281,11 @@ def concat_networks(
         n.snapshot_weightings.loc[year, :] = network.snapshot_weightings.values
 
         # (3) global constraints
-        for component in network.iterate_components(["GlobalConstraint"]):
+        for component in network.components[["GlobalConstraint"]]:
+            if component.static.empty:
+                continue
             add_year_to_constraints(network, year)
-            n.add(component.name, component.df.index, **component.df)
+            n.add(component.name, component.static.index, **component.static)
 
     # set investment periods
     n.investment_periods = n.snapshots.levels[0]
@@ -391,7 +418,7 @@ def set_carbon_constraints(
     pypsa.Network
         Network with carbon constraints added
     """
-    if co2_budget and isinstance(co2_budget, float):
+    if co2_budget is not None and isinstance(co2_budget, float):
         budget = co2_budget * 1e9  # convert to t CO2
 
         logger.info(f"add carbon budget of {budget}")
@@ -448,10 +475,17 @@ def adjust_lvlimit(n: pypsa.Network) -> None:
     c = "GlobalConstraint"
     cols = ["carrier_attribute", "sense", "constant", "type"]
     glc_type = "transmission_volume_expansion_limit"
-    if (n.df(c)[n.df(c).type == glc_type][cols].nunique() == 1).all():
-        glc = n.df(c)[n.df(c).type == glc_type][cols].iloc[[0]]
+    if (
+        n.components[c].static[n.components[c].static.type == glc_type][cols].nunique()
+        == 1
+    ).all():
+        glc = (
+            n.components[c]
+            .static[n.components[c].static.type == glc_type][cols]
+            .iloc[[0]]
+        )
         glc.index = pd.Index(["lv_limit"])
-        remove_i = n.df(c)[n.df(c).type == glc_type].index
+        remove_i = n.components[c].static[n.components[c].static.type == glc_type].index
         n.remove(c, remove_i)
         n.add(c, glc.index, **glc)
 
@@ -460,8 +494,10 @@ def adjust_CO2_glc(n: pypsa.Network) -> None:
     c = "GlobalConstraint"
     glc_name = "CO2Limit"
     glc_type = "primary_energy"
-    mask = (n.df(c).index.str.contains(glc_name)) & (n.df(c).type == glc_type)
-    n.df(c).loc[mask, "type"] = "co2_limit"
+    mask = (n.components[c].static.index.str.contains(glc_name)) & (
+        n.components[c].static.type == glc_type
+    )
+    n.components[c].static.loc[mask, "type"] = "co2_limit"
 
 
 def add_H2_boilers(n: pypsa.Network) -> None:
@@ -515,7 +551,7 @@ def apply_time_segmentation_perfect(
         Network with segmented time series
     """
     try:
-        import tsam.timeseriesaggregation as tsam
+        import tsam
     except ImportError:
         raise ModuleNotFoundError(
             "Optional dependency 'tsam' not found.Install via 'pip install tsam'"
@@ -524,8 +560,8 @@ def apply_time_segmentation_perfect(
     # get all time-dependent data
     columns = pd.MultiIndex.from_tuples([], names=["component", "key", "asset"])
     raw = pd.DataFrame(index=n.snapshots, columns=columns)
-    for c in n.iterate_components():
-        for attr, pnl in c.pnl.items():
+    for c in n.components:
+        for attr, pnl in c.dynamic.items():
             # exclude e_min_pu which is used for SOC of EVs in the morning
             if not pnl.empty and attr != "e_min_pu":
                 df = pnl.copy()
@@ -541,15 +577,26 @@ def apply_time_segmentation_perfect(
         annual_max = raw_t.max().replace(0, 1)
         raw_t = raw_t.div(annual_max, level=0)
         # get representative segments
-        agg = tsam.TimeSeriesAggregation(
-            raw_t,
-            hoursPerPeriod=len(raw_t),
-            noTypicalPeriods=1,
-            noSegments=int(segments),
-            segmentation=True,
-            solver=solver_name,
-        )
-        segmented = agg.createTypicalPeriods()
+        if hasattr(tsam, "aggregate"):  # tsam >= 3.0
+            agg = tsam.aggregate(
+                raw_t,
+                n_clusters=1,
+                period_duration=len(raw_t),
+                segments=tsam.SegmentConfig(n_segments=int(segments)),
+            )
+            segmented = agg.cluster_representatives
+        else:  # tsam < 3.0
+            from tsam import timeseriesaggregation
+
+            agg = timeseriesaggregation.TimeSeriesAggregation(
+                raw_t,
+                hoursPerPeriod=len(raw_t),
+                noTypicalPeriods=1,
+                noSegments=int(segments),
+                segmentation=True,
+                solver=solver_name,
+            )
+            segmented = agg.createTypicalPeriods()
 
         weightings = segmented.index.get_level_values("Segment Duration")
         offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
