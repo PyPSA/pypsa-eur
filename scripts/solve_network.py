@@ -1343,7 +1343,6 @@ def check_objective_value(n: pypsa.Network, solving: dict) -> None:
 def collect_kwargs(
     config: dict,
     solving: dict,
-    snakemake: Snakemake,
     planning_horizons: str | None = None,
     log_fn: str | None = None,
     mode: str = "single",
@@ -1357,8 +1356,6 @@ def collect_kwargs(
         Configuration dictionary containing solver settings
     solving : dict
         Dictionary of solving options and configuration
-    snakemake : snakemake.script.Snakemake
-        Snakemake instance for accessing workflow parameters
     planning_horizons : str, optional
         The current planning horizon year or None in perfect foresight
     log_fn : str, optional
@@ -1467,7 +1464,7 @@ def create_optimization_model(
     model_kwargs : dict
         Arguments for n.optimize.create_model()
     solve_kwargs : dict
-        Arguments for n.optimize.solve_model()#
+        Arguments for n.optimize.solve_model()
     snakemake : snakemake.script.Snakemake
         Snakemake instance for accessing workflow parameters
     planning_horizons : str, optional
