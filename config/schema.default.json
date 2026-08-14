@@ -685,21 +685,34 @@
           "type": "boolean"
         },
         "upper": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "description": "Upper CO2 budget as fraction of base year emissions per planning horizon. Set to None to disable constraint for a year.",
-          "type": "object"
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Upper CO2 budget as fraction of base year emissions, either as a single value for all horizons or per planning horizon. Set to None to disable the constraint."
         },
         "lower": {
           "anyOf": [
+            {
+              "type": "number"
+            },
             {
               "additionalProperties": {
                 "anyOf": [
@@ -8667,21 +8680,34 @@
           "type": "boolean"
         },
         "upper": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "description": "Upper CO2 budget as fraction of base year emissions per planning horizon. Set to None to disable constraint for a year.",
-          "type": "object"
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Upper CO2 budget as fraction of base year emissions, either as a single value for all horizons or per planning horizon. Set to None to disable the constraint."
         },
         "lower": {
           "anyOf": [
+            {
+              "type": "number"
+            },
             {
               "additionalProperties": {
                 "anyOf": [

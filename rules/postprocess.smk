@@ -261,7 +261,6 @@ rule plot_summary:
         emissions_scope=config_provider("co2_budget", "emissions_scope"),
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),
-        co2_budget=config_provider("co2_budget"),
         sector=config_provider("sector"),
         RDIR=RDIR,
     message:

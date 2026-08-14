@@ -31,6 +31,8 @@ from scripts._helpers import (
     get_temporal_resolution,
 )
 from scripts.add_electricity import (
+    attach_storageunits,
+    attach_stores,
     calculate_annuity,
     flatten,
 )
@@ -6293,6 +6295,26 @@ def main(
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
+    )
+
+    # Hydrogen already implemented in add_h2_gas_infrastructure
+    extendable_carriers = params.electricity["extendable_carriers"]
+    extendable_storageunits = set(extendable_carriers["StorageUnit"]) - {"H2"}
+    extendable_stores = set(extendable_carriers["Store"]) - {"H2"}
+
+    attach_storageunits(
+        n=n,
+        costs=costs,
+        buses_i=pop_layout.index,
+        extendable_carriers=sorted(extendable_storageunits),
+        max_hours=params.electricity["max_hours"],
+    )
+
+    attach_stores(
+        n=n,
+        costs=costs,
+        buses_i=pop_layout.index,
+        extendable_carriers=sorted(extendable_stores),
     )
 
     if options["transport"]:

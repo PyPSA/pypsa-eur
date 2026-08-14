@@ -24,7 +24,7 @@ class Co2BudgetConfig(ConfigModel):
         True,
         description="If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",
     )
-    upper: dict[int, float | None] = Field(
+    upper: float | dict[int, float | None] | None = Field(
         default_factory=lambda: {
             2020: 0.72,
             2025: 0.648,
@@ -34,9 +34,9 @@ class Co2BudgetConfig(ConfigModel):
             2045: 0.05,
             2050: 0.0,
         },
-        description="Upper CO2 budget as fraction of base year emissions per planning horizon. Set to None to disable constraint for a year.",
+        description="Upper CO2 budget as fraction of base year emissions, either as a single value for all horizons or per planning horizon. Set to None to disable the constraint.",
     )
-    lower: dict[int, float | None] | None = Field(
+    lower: float | dict[int, float | None] | None = Field(
         default=None,
         description="Lower CO2 budget limit to prevent unrealistic/too-fast decarbonization. Set individual years to None to disable constraint.",
     )

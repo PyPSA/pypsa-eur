@@ -20,10 +20,6 @@ snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
-co2_budget:
-  upper:
-    2030: 0.05
-
 electricity:
   extendable_carriers:
     Generator: [solar, onwind, OCGT, CCGT, nuclear]
@@ -123,7 +119,7 @@ solving:
 
   check_objective:
     enable: true
-    expected_value: 1546802840.75
+    expected_value: 568751130.55
 
 plotting:
   map:

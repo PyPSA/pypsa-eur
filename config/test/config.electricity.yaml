@@ -20,14 +20,7 @@ snapshots:
 
 co2_budget:
   relative: false
-  upper:
-    2020: 0.72
-    2025: 0.648
-    2030: 0.45
-    2035: 0.25
-    2040: 0.1
-    2045: 0.05
-    2050: 0.001
+  upper: 0.1
 
 electricity:
   gaslimit_enable: false
@@ -117,7 +110,7 @@ solving:
     options: highs-default
   check_objective:
     enable: true
-    expected_value: 74395010.28
+    expected_value: 50009078.82
   options:
     transmission_losses: 0
 

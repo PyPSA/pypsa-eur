@@ -304,12 +304,16 @@ def add_retrofit_gas_boiler_constraint(
         The snapshots of the network
     """
     c = "Link"
-    logger.info("Add constraint for retrofitting gas boilers to H2 boilers.")
     # existing gas boilers
     mask = n.links.carrier.str.contains("gas boiler") & ~n.links.p_nom_extendable
     gas_i = n.links[mask].index
     mask = n.links.carrier.str.contains("retrofitted H2 boiler")
     h2_i = n.links[mask].index
+
+    if gas_i.empty or h2_i.empty:
+        return
+
+    logger.info("Add constraint for retrofitting gas boilers to H2 boilers.")
 
     n.links.loc[gas_i, "p_nom_extendable"] = True
     p_nom = n.links.loc[gas_i, "p_nom"]

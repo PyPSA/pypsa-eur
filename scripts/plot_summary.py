@@ -345,8 +345,7 @@ def historical_emissions(countries):
     # https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
     # downloaded 201228 (modified by EEA last on 201221)
     df = pd.read_csv(snakemake.input.co2, encoding="latin-1", low_memory=False)
-    df.loc[df["Year"] == "1985-1987", "Year"] = 1986
-    df["Year"] = df["Year"].astype(int)
+    df["Year"] = df["Year"].replace("1985-1987", "1986").astype(int)
     df = df.set_index(
         ["Year", "Sector_name", "Country_code", "Pollutant_name"]
     ).sort_index()
@@ -575,9 +574,6 @@ if __name__ == "__main__":
 
     plot_balances()
 
-    co2_budget = snakemake.params["co2_budget"]
-    if (
-        isinstance(co2_budget, str) and co2_budget.startswith("cb")
-    ) or snakemake.params["foresight"] == "perfect":
+    if snakemake.params["foresight"] == "perfect":
         options = snakemake.params.sector
         plot_carbon_budget_distribution(snakemake.input.eurostat, options)

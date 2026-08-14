@@ -65,6 +65,7 @@ def build_nuts_population_data(year=2013):
         na_values=[":"],
         index_col=1,
     )[str(year)]
+    pop = pop.str.split().str[0].astype(float)
 
     if snakemake.input.swiss_cantons:
         cantons = pd.read_csv(snakemake.input.swiss_cantons)
