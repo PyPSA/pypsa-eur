@@ -136,10 +136,12 @@ if __name__ == "__main__":
                 n_clusters=1,
                 period_duration=len(df),
                 segments=tsam.SegmentConfig(n_segments=int(segments)),
-                solver=snakemake.params.solver_name,
             )
+            agg = agg.cluster_representatives
         else:  # tsam < 3.0
-            agg = tsam.timeseriesaggregation.TimeSeriesAggregation(
+            from tsam import timeseriesaggregation
+
+            agg = timeseriesaggregation.TimeSeriesAggregation(
                 df,
                 hoursPerPeriod=len(df),
                 noTypicalPeriods=1,
@@ -147,7 +149,7 @@ if __name__ == "__main__":
                 segmentation=True,
                 solver=snakemake.params.solver_name,
             )
-        agg = agg.createTypicalPeriods()
+            agg = agg.createTypicalPeriods()
 
         weightings = agg.index.get_level_values("Segment Duration")
         offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)

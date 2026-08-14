@@ -243,10 +243,12 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
             n_clusters=1,
             period_duration=len(raw),
             segments=tsam.SegmentConfig(n_segments=int(segments)),
-            solver=solver_name,
         )
+        agg = agg.cluster_representatives
     else:  # tsam < 3.0
-        agg = tsam.timeseriesaggregation.TimeSeriesAggregation(
+        from tsam import timeseriesaggregation
+
+        agg = timeseriesaggregation.TimeSeriesAggregation(
             raw,
             hoursPerPeriod=len(raw),
             noTypicalPeriods=1,
@@ -255,7 +257,7 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
             solver=solver_name,
         )
 
-    segmented = agg.createTypicalPeriods()
+        segmented = agg.createTypicalPeriods()
 
     weightings = segmented.index.get_level_values("Segment Duration")
     offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
