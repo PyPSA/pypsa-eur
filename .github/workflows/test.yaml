@@ -21,6 +21,8 @@ jobs:
   unit-tests:
     name: Unit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     defaults:
       run:
@@ -43,6 +45,8 @@ jobs:
   integration-tests:
     name: Integration
     runs-on: ${{ matrix.os }}-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:

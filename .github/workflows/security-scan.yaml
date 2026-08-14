@@ -15,6 +15,9 @@ jobs:
     name: Detect pixi.lock changes
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       pixi: ${{ steps.diff.outputs.pixi }}
     steps:
