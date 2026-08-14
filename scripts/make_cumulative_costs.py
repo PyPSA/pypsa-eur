@@ -10,6 +10,12 @@ import logging
 import numpy as np
 import pandas as pd
 
+try:
+    from numpy import trapezoid
+except ImportError:
+    # before numpy 2.0
+    from numpy import trapz as trapezoid
+
 from scripts._helpers import configure_logging, set_scenario_config
 
 idx = pd.IndexSlice
@@ -34,7 +40,7 @@ def calculate_cumulative_cost(costs, planning_horizons):
         for cluster in cumulative_cost.index.get_level_values(level=0).unique():
             for sector_opts in cumulative_cost.index.get_level_values(level=1).unique():
                 cumulative_cost.loc[(cluster, sector_opts, "cumulative cost"), r] = (
-                    np.trapz(
+                    trapezoid(
                         cumulative_cost.loc[
                             idx[cluster, sector_opts, planning_horizons], r
                         ].values,

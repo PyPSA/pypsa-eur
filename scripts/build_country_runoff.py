@@ -7,15 +7,12 @@ Build daily hydro runoff for each country to fill missing EIA statistics for hyd
 Outputs
 -------
 
-- ``data/country_runoff/build/unknown/era5-runoff-per-country.csv``:
+- `data/country_runoff/build/unknown/era5-runoff-per-country.csv`:
 
-    ===================  ==========  ===========  =========================================================
-    Field                Dimensions  Unit         Description
-    ===================  ==========  ===========  =========================================================
-    index/time           time        day          Datestamp, YYYY-MM-DD
-    -------------------  ----------  -----------  ---------------------------------------------------------
-    <columns>            country     ISO-3166 A2  Daily total runoff (volume per area) per country
-    ===================  ==========  ===========  =========================================================
+| Field | Dimensions | Unit | Description |
+| --- | --- | --- | --- |
+| index/time | time | day | Datestamp, YYYY-MM-DD |
+| &lt;columns&gt; | country | ISO-3166 A2 | Daily total runoff (volume per area) per country |
 
 
 """

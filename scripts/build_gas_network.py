@@ -23,10 +23,10 @@ def diameter_to_capacity(pipe_diameter_mm):
     """
     Calculate pipe capacity in MW based on diameter in mm.
 
-    20 inch (500 mm)  50 bar -> 1.5   GW CH4 pipe capacity (LHV) 24 inch
-    (600 mm)  50 bar -> 5     GW CH4 pipe capacity (LHV) 36 inch (900
-    mm)  50 bar -> 11.25 GW CH4 pipe capacity (LHV) 48 inch (1200 mm) 80
-    bar -> 21.7  GW CH4 pipe capacity (LHV)
+    20 inch (500 mm)  50 bar -> 1.5   GW CH4 pipe capacity (LHV)
+    24 inch (600 mm)  50 bar -> 5     GW CH4 pipe capacity (LHV)
+    36 inch (900 mm)  50 bar -> 11.25 GW CH4 pipe capacity (LHV)
+    48 inch (1200 mm) 80 bar -> 21.7  GW CH4 pipe capacity (LHV)
 
     Based on p.15 of
     https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
@@ -131,8 +131,10 @@ def prepare_dataset(
     # lines which have way too discrepant line lengths
     # get assigned haversine length * length factor
     df["length_haversine"] = df.apply(
-        lambda p: length_factor
-        * haversine_pts([p.point0.x, p.point0.y], [p.point1.x, p.point1.y]),
+        lambda p: (
+            length_factor
+            * haversine_pts([p.point0.x, p.point0.y], [p.point1.x, p.point1.y])
+        ),
         axis=1,
     )
     ratio = df.eval("length / length_haversine")

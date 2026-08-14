@@ -13,14 +13,15 @@ Future district heating areas are sourced from Manz et al. (2024), based on Fall
 Relevant Settings
 -----------------
 
-.. code:: yaml
-    sector:
-        aquifer_thermal_energy_storage:
-            aquifer_volumetric_heat_capacity:
-            fraction_of_aquifer_area_available:
-            effective_screen_length:
-            suitable_aquifer_types:
-            dh_area_buffer:
+```yaml
+sector:
+    aquifer_thermal_energy_storage:
+        aquifer_volumetric_heat_capacity:
+        fraction_of_aquifer_area_available:
+        effective_screen_length:
+        suitable_aquifer_types:
+        dh_area_buffer:
+```
 
 Inputs
 ------
@@ -233,7 +234,7 @@ def ates_potential_per_onshore_region(
             if missing_regions:
                 logger.info(f"{len(missing_regions)} regions have no ATES potential")
 
-            ret_val["ates_potential"] = 0  # Default value
+            ret_val["ates_potential"] = 0.0  # Default value
             ret_val.loc[aquifers_in_dh_areas.index, "ates_potential"] = (
                 aquifers_in_dh_areas * mwh_per_m2
             )

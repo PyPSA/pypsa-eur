@@ -18,13 +18,13 @@ The script supports three strategies for handling missing countries:
 Relevant Settings
 -----------------
 
-.. code:: yaml
-
-    countries: ['DE', 'FR', 'ES', ...]  # List of modeled countries
-    sector:
-        district_heating:
-            dh_areas:
-                handle_missing_countries: 'ignore'  # or 'fill' or 'raise'
+```yaml
+countries: ['DE', 'FR', 'ES', ...]  # List of modeled countries
+sector:
+    district_heating:
+        dh_areas:
+            handle_missing_countries: 'ignore'  # or 'fill' or 'raise'
+```
 
 Inputs
 ------
