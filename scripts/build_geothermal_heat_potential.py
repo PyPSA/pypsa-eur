@@ -245,7 +245,7 @@ if __name__ == "__main__":
             "Unnamed: 2_level_0",
             "Unit",
         )
-    ][0]
+    ].iloc[0]
     geothermal_supply_potentials = isi_heat_potentials[
         (
             f"Supply_potentials_{this_temperature_scenario}",

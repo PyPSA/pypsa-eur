@@ -40,7 +40,24 @@
 
 * Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive integer options: `averaging` (average over `n` hours), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
 
+* Adding option to include the compression step in carbon dioxide transport before transporting in dense phase and including electricity demand for post combustion carbon capture. Adjusting the capital costs for post combustion capture that differs depending on the carbon dioxide percentage in the flue gas ([#2161](https://github.com/PyPSA/pypsa-eur/pull/2161)).
+
+* compat: Compatibility with `tsam` v4.0.
+* fix: `solve_network.py` now raises an error if solver status is `warning`
+* refactor: `prepare_sector_network.py` functions now take `spatial` as an explicit parameter instead of a module-level global.
+* fix: update stale contribution docs (linting and formatting ruff)
+* feat: data version CSV / YAML file can be specified separately or extended by the user in the `data.version_files` config entry ([#2016](https://github.com/PyPSA/pypsa-eur/issues/2016)).
+* Fix: Resolve plotting crashes from missing `tech_colors` entries by adding `heat dsm` color and implementing upfront validation for missing keys in `plot_summary.py` ([#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
+* Fix: Retry interrupted WDPA and WDPA-marine downloads ([#2138](https://github.com/PyPSA/pypsa-eur/issues/2138)).
+* feat: Make the default target rule configurable (defaults to "all" for backwards compatibility)
+
+* Fix: Keep unset `p_set` (NaN) as NaN when aggregating components in `cluster_heat_buses`, required for [PyPSA#1703](https://github.com/PyPSA/PyPSA/pull/1703).
+
+* Fix: When clustering heat buses, in myopic optimization, and afterwards viewing the heat energy_balance with n.statistics (and with nice_names=True, which is the default), some assets would still be displayed as belonging to "residential" or "services" sectors, because the nice_names still lingered from the unclustered version. This has been fixed.
+
 * Security: SBOM security scan included in CI.
+
+* Updated contribution guidelines outline what we expect from AI-based contributions.
 
 * Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
   Removed 62 CVEs from `default` environment.
@@ -70,6 +87,26 @@
 * feat: Improve the config validation to cover scenario management ([#2155](https://github.com/PyPSA/pypsa-eur/pull/2155)).
 
 - Added solar rooftop ratio setting to `add_existing_baseyear` for heuristically splitting existing solar capacity between rooftop and utility-scale (defaults to a 50:50 split).
+
+- doc: Disable root TOC entries in order to declutter the table of contents for the rules overview ([2216](https://github.com/PyPSA/pypsa-eur/pull/2216)).
+
+* fix: Ensure `inflow_t` is always defined in `attach_hydro`, resolving a pylint use-before-assignment issue ([#2224](https://github.com/PyPSA/pypsa-eur/pull/2224)).
+* Add missing regex anchor with `re.fullmatch` to `create_zenodo_deposition_cli` utils script ([#2225](https://github.com/PyPSA/pypsa-eur/pull/2225)).
+
+* doc: Add note about deep-discharge protection for BEV available battery capacity ([#2227](https://github.com/PyPSA/pypsa-eur/pull/2227)).
+* doc: Add FAQ section to docs (`faq.md`) with troubleshooting for `SSL: CERTIFICATE_VERIFY_FAILED` during data retrieval behind proxy servers ([#2228](https://github.com/PyPSA/pypsa-eur/pull/2228)).
+* Fix Ultranet (TYNDP 254) to end in Philippsburg (#2236)
+
+* chore: Bump the python version to 3.12 ([#2235](https://github.com/PyPSA/pypsa-eur/pull/2235)). This does not increase the real requirement, because 3.12 is already the effective minimum.
+
+* Fix: `build_electricity_demand_base` fetched the non-existent `load.distribution_key.pop` key instead of correct `population`, silently ignoring the configured value ([#2241](https://github.com/PyPSA/pypsa-eur/pull/2241)).
+* Fix: `fill_missing_years` applied the backward fill across country boundaries, so countries without any Eurostat value silently inherited the values of the next country ([#2242](https://github.com/PyPSA/pypsa-eur/pull/2242)).
+
+* chore: Drop the `grpcio < 1.78` pin and add a temporary `python < 3.14` pin ([#2244](https://github.com/PyPSA/pypsa-eur/pull/2244)). The upper bound on python will be lifted once [#2245](https://github.com/PyPSA/pypsa-eur/issues/2245) is resolved.
+
+* refactor: Split `build_shapes` into three independent rules: `build_offshore_shapes` (EEZ only), `build_nuts3_shapes` (NUTS3/ADM1 regions with GDP/population data), and `build_shapes` (country and Europe boundary aggregation).
+* refactor: Split `build_energy_totals` into three rules: `build_co2_totals` (CO2 emissions from EEA and Eurostat, no IDEES dependency) and `build_transformation_output_coke` (coke oven transformation output from Eurostat only) run independently of the remaining `build_energy_totals` (IDEES-based energy totals, transport data, district heat share, and heating efficiencies).
+* Fix: Operational reserve margin constraints now work for PyPSA v1.0. Load shedding generators are now excluded from reserve margin calculations. Renewable generators are now identified based on the configuration rather than presence of ``p_max_pu`` data. Fixed for networks without extendable generators ([#2178](https://github.com/PyPSA/pypsa-eur/pull/2178)). 
 
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 

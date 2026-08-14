@@ -760,6 +760,7 @@ def attach_hydro(
     country = ppl["bus"].map(n.buses.country).rename("country")
 
     inflow_idx = ror.index.union(hydro.index)
+    inflow_t = pd.DataFrame()
     if not inflow_idx.empty:
         dist_key = ppl.loc[inflow_idx, "p_nom"].groupby(country).transform(normed)
 
@@ -793,7 +794,7 @@ def attach_hydro(
             capital_cost=costs.at["ror", "capital_cost"],
             weight=ror["p_nom"],
             p_max_pu=(
-                inflow_t[ror.index]  # pylint: disable=E0606
+                inflow_t[ror.index]
                 .divide(ror["p_nom"], axis=1)
                 .where(lambda df: df <= 1.0, other=1.0)
             ),
