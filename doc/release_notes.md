@@ -6,6 +6,9 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 * feat: Add enhanced rock weathering as a carbon dioxide removal (CDR) technology, with node-level potential derived from CORINE land cover and filtered by mean annual minimum temperature ([#2142](https://github.com/PyPSA/pypsa-eur/issues/2142)).
+* 
+
+For this PR we acknowledge funding to Alberto Alamia from [CORC](https://corc.au.dk/).
 
 * feat: data version CSV / YAML file can be specified separately or extended by the user in the `data.version_files` config entry ([#2016](https://github.com/PyPSA/pypsa-eur/issues/2016)).
 * Fix: Resolve plotting crashes from missing `tech_colors` entries by adding `heat dsm` color and implementing upfront validation for missing keys in `plot_summary.py` ([#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
