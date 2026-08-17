@@ -161,42 +161,53 @@ def fill_unoccupied_holes(gdf: gpd.GeoDataFrame) -> gpd.GeoSeries:
 
 
 def map_to_country_bus(
-    ppl: gpd.GeoDataFrame, regions: gpd.GeoDataFrame, max_distance: float = 10000
-) -> gpd.GeoDataFrame:
-    """
-    Assign power plants to region buses of the same country.
+    ppl: gpd.GeoDataFrame,
+    regions: gpd.GeoDataFrame,
+    bus_country: pd.Series,
+    max_distance: float = 10000,
+    ) -> gpd.GeoDataFrame:
 
-    First, spatial join is performed per country to avoid cross-border
-    misassignment. Remaining unmatched plants are assigned via nearest
-    neighbor (max 10000m) within the same country.
-    """
     assigned = []
     unmatched = []
 
     for country, plants in ppl.groupby("Country"):
-        country_regions = regions[regions.index.str[:2] == country]
+
+        country_regions = regions[bus_country.reindex(regions.index) == country]
+
         joined = (
             plants.sjoin(country_regions)
             .rename(columns={"name": "bus"})
             .reindex(plants.index)
         )
+
         assigned.append(joined.dropna(subset=["bus"]))
+
         missing = joined[joined["bus"].isna()]
+
         if not missing.empty:
             unmatched.append(plants.loc[missing.index])
 
     if unmatched:
         unmatched = pd.concat(unmatched)
+
         for country, plants in unmatched.groupby("Country"):
-            country_regions = regions[regions.index.str[:2] == country]
+
+            country_regions = regions[bus_country.reindex(regions.index) == country]
+
             nearest = (
                 plants.to_crs(3035)
-                .sjoin_nearest(country_regions.to_crs(3035), max_distance=max_distance)
+                .sjoin_nearest(
+                    country_regions.to_crs(3035),
+                    max_distance=max_distance,
+                )
                 .rename(columns={"name": "bus"})
                 .to_crs(4326)
             )
+
             missing = plants.index.difference(nearest.index)
+
             print(country, missing)
+
             nearest = pd.concat([nearest, plants.loc[missing]])
             assigned.append(nearest)
 
@@ -257,7 +268,7 @@ if __name__ == "__main__":
 
     ppl = gpd.GeoDataFrame(ppl, geometry=gpd.points_from_xy(ppl.lon, ppl.lat), crs=4326)
 
-    ppl = map_to_country_bus(ppl, regions)
+    ppl = ppl = map_to_country_bus(ppl, regions, n.buses["country"])
 
     bus_null_b = ppl["bus"].isnull()
     if bus_null_b.any():

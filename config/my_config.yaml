@@ -1,0 +1,39 @@
+run:
+  name: my_run
+
+snapshots:
+  start: "2009-01-01"
+  end: "2010-01-01"
+  inclusive: left
+
+scenario:
+  clusters:
+    - all
+  opts:
+    - ""
+  sector_opts:
+    - ""
+  planning_horizons:
+    - 2050
+
+load:
+  fixed_year: 2024
+
+atlite:
+  default_cutout: "europe-2009-sarah3-era5"
+
+transmission_projects:
+  enable: true
+  include:
+    tyndp2020: false
+    tyndp2024: false
+    nep: false
+    manual: false
+    personally_filtered_projects : false
+
+  skip: []
+  status:
+    - under_construction
+    - in_permitting
+    - confirmed
+  new_link_capacity: zero

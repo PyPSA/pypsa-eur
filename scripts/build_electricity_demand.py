@@ -315,22 +315,28 @@ if __name__ == "__main__":
         synthetic_load = synthetic_load.loc[snapshots, countries]
         load = load.combine_first(synthetic_load)
 
-    assert not load.isna().any().any(), (
-        "Load data contains nans. Adjust the parameters "
-        "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
-        "for implementing the needed load data modifications."
-    )
-
     fixed_year = snakemake.params["load"].get("fixed_year", False)
+
     years = (
         slice(str(fixed_year), str(fixed_year))
         if fixed_year
         else slice(snapshots[0], snapshots[-1])
     )
 
-    load = load.loc[years].reindex(index=snapshots)
+    # Only keep the year that is actually required.
+    # This is important when fixed_year is used, since we don't
+    # need complete load data for all other years.
+    load = load.loc[years]
 
-    # need to reindex load time series to target year
+    assert not load.isna().any().any(), (
+        "Load data contains nans. Adjust the parameters "
+        "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
+        "for implementing the needed load data modifications."
+    )
+
+    load = load.reindex(index=snapshots)
+
+    # Map the fixed-year load profile onto the model year.
     if fixed_year:
         load.index = load.index.map(lambda t: t.replace(year=snapshots.year[0]))
 
