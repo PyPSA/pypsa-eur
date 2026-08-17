@@ -1470,7 +1470,7 @@ if __name__ == "__main__":
             configfiles="config/test/config.overnight.yaml",
             horizon=2030,
         )
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     solve_opts = snakemake.params.solving["options"]
