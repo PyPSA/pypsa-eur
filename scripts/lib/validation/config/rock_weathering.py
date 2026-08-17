@@ -18,7 +18,7 @@ class RockWeatheringConfig(ConfigModel):
 
     co2_removal_per_sqkm: float = Field(
         309,
-        description="Tonnes of CO2 sequestered per square kilometre of eligible land per year (temperate-only rate; hot climate is ~1% of eligible EU area, dropped).",
+        description="Tonnes of CO2 sequestered per square kilometre of eligible land per year (temperate-only rate).",
     )
     max_land_usage: float = Field(
         0.2,
