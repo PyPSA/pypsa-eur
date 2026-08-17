@@ -1,0 +1,84 @@
+Investment number,Investment Name,This investment belongs to project number…,Description of the investment,Commissioning Year,"Status ID
+1 : Under Consideration,
+2 : In Planning but not permitting,
+3 : In permitting,
+4 : Under Construction
+5 : Commissioned
+6 : Completed",Is Main Investment(s),Progress of the investment since TYNDP2022,Explanation in case of delay or reclustering,Type of Element,Substation From,Substation To,Technology,Type of HVDC,Total route length (km),Nominal voltage (kV) ,Capacity of the investment (MW) ,MVA,Type of converter,Mvar,Estimated CAPEX (MEUR),Sustaining CAPEX (Meuro),Estimated OPEX (MEUR),Cost Uncertainty Range,Transient stability,Voltage stability,Frequency stability,Distance (km),Type of sensitivity,Additional information,Distance (km).1,Type of sensitivity.1,Additional information.1,Other residual impact,investmentId,geometry_type,coordinates
+635,Elmed Project,29,New interconnection between Italy and Tunisia - New HVDC submarine cable and conventer stations at both ending points,01-2028,3,True,Investment on time,,OffshoreDCTransmissionCable,Partanna (IT),Mlaabi (TN),DC,Monopolar,220.0,500,600,,VCS,,850.0,0.0,2.97,10%,++,++,+ (between sync areas),"13
+","Other
+","-
+","0
+","None
+","
+",,635,MultiPolygon,"[[[[10.838452, 37.072623], [10.98501, 36.913886], [12.88927, 37.712768], [12.763696, 37.886387], [10.838452, 37.072623]]]]"
+90,Voltage upgrade of the existing 80km Calenzano-Colunga 220kV OHL to 400kV,33,"Voltage upgrade of the existing 80km Calenzano-Colunga 220kV OHL to 400kV, providing in and out connection to the existing 220/150kV substation of S. Benedetto del Querceto (which already complies with 400kV standards).",12-2025,4,True,Investment on time,,ACTransmissionLine,Calenzano (IT),Colunga (IT),AC,,80.0,400,0,1850,,,277.0,0.0,0.3,10%,++,++,0,"27
+","Other
+","-
+","3
+","Other
+","
+",,90,MultiPolygon,"[[[[11.230692, 44.507182], [11.343164, 44.497857], [11.152194, 43.80153], [11.099899, 43.803413], [11.230692, 44.507182]]]]"
+810,France Ireland Interconnector,107,A new HVDC subsea connection between Ireland and France,03-2027,4,True,Rescheduled,delay due to COVID crisis and to time required for the contractualisation of the 2 main EPC contracts,OffshoreDCTransmissionCable,Knockraha (IE),La Martyre (FR),DC,Monopolar,575.0,320,700,,VCS,,1623.0,0.0,6.5,+/- 0%%,++,++,+ (between sync areas),"33.277
+","Other
+","offshore and onshore sensitivity
+","10.072
+","Other
+","offshore and onshore sensitivity
+",,810,MultiPolygon,"[[[[-4.252138, 48.710391], [-4.170942, 48.731964], [-3.953705, 48.49363], [-4.150772, 48.427606], [-4.357796, 48.685238], [-4.26012, 48.708578], [-6.729126, 49.79279], [-8.011436, 51.811374], [-8.199234, 51.768902], [-8.413811, 52.049112], [-8.083878, 52.103342], [-7.818146, 51.862924], [-8.005257, 51.813072], [-6.71196, 49.797223], [-4.393433, 48.77632], [-4.252138, 48.710391]]]]"
+934,Nautilus multi purpose interconnection UK - BE,121,This investment item envisions the possibility of a second  HVDC connection between UK and Belgian offshore substation (project 120)  near the coast.,12-2030,2,True,Investment on time,,OffshoreDCTransmissionCable,Leiston (UK),Princess Elisabeth Island,DC,Bipolar,140.0,1050,1400,,VCS,,1000.0,0.0,25.0,25%%,++,++,+ (between sync areas),"
+","None
+","
+",,,,,934,MultiPolygon,"[[[[0.941162, 51.197705], [1.706543, 51.346626], [2.032471, 51.362635], [3.222656, 51.19082], [3.347168, 51.3329], [2.06543, 51.668013], [0.794678, 51.380924], [0.941162, 51.197705]]]]"
+86,"New 66km double circuit 400kV OHL between existing Foggia and Villanova 400kV substations, also connected in and out to the Larino and Gissi substations",127,"New 66km double circuit 400kV OHL between existing Foggia and Villanova 400kV substations, also connected in and out to the Larino and Gissi substations",12-2028,3,True,Investment on time,,ACTransmissionLine,Foggia (IT),Villanova (IT),AC,,178.0,400,0,2078,,,520.0,0.0,0.35,10%,++,++,0,"8
+","Other
+","-
+","0
+","None
+","
+",,86,MultiPolygon,"[[[[14.055304, 42.443728], [13.955878, 42.370314], [15.609046, 41.329884], [15.682324, 41.384846], [14.055304, 42.443728]]]]"
+273,400kV OHL Cernavoda-Stalpu,138,"Reinforcement of the cross-section between the Western coast of the Black Sea (Eastern Romania) and the rest of the system. A new 400 kV AC OHL double circuit of 159 km shall be built between the 400 kV substation Cernavoda and the existing 220/110 kV Stalpu substation, which shall be replaced with a 400/110 kV substation (onshore). One of the two circuits shall be connected in-out to the 400 kV substation Gura Ialomitei, situated in the vicinity of the new line.",12-2022,5,False,Investment on time,,ACTransmissionLine,Cernavoda (RO),Stalpu (RO),AC,,159.0,400,0,1741,,,77.56,1.24,0.42,"-5%, +5%%",++,++,0,"1
+","HabitatsDirective
+","
+","0
+","None
+","
+",,273,MultiPolygon,"[[[[28.06921, 44.37884], [26.789303, 45.1123], [26.756344, 45.116177], [27.712154, 44.527843], [27.640743, 44.484749], [27.717648, 44.508259], [28.06921, 44.37884]]]]"
+270,Upgrade of the existing 220kV double circuit OHL Resita -Timisoara - Sacalaz to 400kV,144,"Upgrade of an existing 220 kV AC double circuit line (OHL) between Resita - Timisoara (RO) to 400 kV double circuit line Resita-Timisoara/Sacalaz of which: 74 km from Resita to Timisoara and 92 km from Resita to Sacalaz , both overhead lines will be built on common towers up to Icloda on 58 km.",12-2029,3,False,Rescheduled,,ACTransmissionLine,Resita (RO),Timisoara-Sacalaz (RO),AC,,166.0,400,0,1741,,,59.96,0.75,0.36,"-5%, +5%%",++,++,0,"17.5
+","HabitatsDirective
+","
+","0
+","None
+","
+",,270,MultiPolygon,"[[[[22.029181, 45.303311], [20.997427, 45.914817], [21.355664, 45.957986], [21.357559, 45.961709], [21.402933, 46.175466], [21.338443, 45.753794], [21.977216, 45.345351], [21.977216, 45.345351], [22.029181, 45.303311]]]]"
+1384,"Merchant line ""Castasegna (CH) - Mese (IT)""",250,"The planned Transmission project is a merchant line on the swiss-italian border between Castasegna (CH) and Mese (IT). The planned Cable connection in 220 kV AC has a length of around 14 km, 13.5 of witch in Italy. In connection with the realisation of the project a Rationalisation of the 380 and 132 kV Grid in the region Mese (Provincia di Sondrio) is planned. The expected NTC increase is around 200 MW.The main Project elements are (merchant line): 220 kV Connection to the Swiss HVG in Castasegna; 220 kV Cable line of around 14 km between Castasegna and Mese; 220/380 kV Substation with PST 250 MVA in Mese. The Grid Rationalisation in the Region of Mese foresees the following actions: Displacement of 2 km of the 380 kV Line ""Soazza - Bulciago""; ""Realisation of a new 380/132 kV Substation in Mese (Transformation 2 x 250 MVA); Displacement of 0.8 km of 132 kV Lines; Realisation of 2.6 km of 132 kV Cable connections; Demolition of 2.45 km of 380 kV line and 2.3 km of 132 kV lines.""",03-2025,3,True,Delayed,The permitting phase in Italy is ongoing since April 2014 but we are still facing some challenges regarding Environmental impact of the 380/132kV Substation Terna in Mese. Commissioning expected in 2025.,ACTransmissionLine,Castasegna,Mese,AC,,14.0,220,0,250,,,90.0,0.0,0.1,+/-15%,,,,,,,,,,Environmental positive impact due to the connected grid rationalisation 380/132kV in the region of Mese. Improvement N-1 security for hydro power plant production transmission in Castasegna (CH).,1384,MultiPolygon,"[[[[9.493137, 46.369643], [9.427952, 46.340829], [9.394993, 46.304916], [9.368626, 46.253283], [9.37888, 46.214779], [9.440403, 46.233528], [9.503391, 46.276068], [9.521702, 46.330209], [9.51804, 46.355996], [9.493137, 46.369643]]]]"
+1255,Interconnector GB-NL,260,Multi-purpose interconnector between GB and NL also connecting GB and NL windfarms.,12-2030,1,True,Investment on time,,OffshoreDCTransmissionCable,TBD,TBD,DC,,0.0,525,1800,,VCS,,1200.0,0.0,35.004,±10%%,++,++,+ (between sync areas),,,,,,,,1255,MultiPolygon,"[[[[3.80127, 52.99495], [4.515381, 52.822683], [5.08667, 52.609719], [4.855408, 51.620813], [3.789734, 51.34029], [3.229431, 51.429423], [0.823425, 50.864287], [0.065369, 51.518383], [0.361999, 53.004273], [1.460632, 53.010884], [3.80127, 52.99495]]]]"
+1212,New axis Ejea-Aragon region 400 kV,270,New AC line (double circuit 400kV) between Ejea and Aragon region where the converter station is located,09-2030,2,False,Investment on time,,ACTransmissionLine,Ejea de los Caballeros,Aragon region,AC,,110.0,400,0,,,,62.0,0.0,0.899992,10%%,++,++,0,,,,,,,,1212,MultiPolygon,"[[[[-1.659775, 41.937913], [-1.61705, 42.209745], [-0.85411, 42.592845], [-0.518417, 42.588351], [-0.457382, 42.318151], [-0.469589, 42.214265], [-1.159286, 41.906124], [-1.659775, 41.937913]]]]"
+1518,Stevin-Izegem/Avelgem: new corridor,329,Realisation of a new AC corridor up to 6 GW capacity,12-2028,3,True,Investment on time,,ACTransmissionLine,Stevin,Avelgem,AC,,82.0,380,0,3000,,,700.0,0.0,0.6,25%%,++,++,0,,,,,,,,1518,MultiPolygon,"[[[[3.497388, 50.829049], [3.219488, 51.332465], [3.064361, 51.271848], [2.980371, 51.000171], [3.426306, 50.751437], [3.497388, 50.829049]]]]"
+1521,New HVDC line between Villanova and Fano existing 400 kV substations,338,HVDC lines,12-2028,3,True,New Investment,,OffshoreDCTransmissionCable,Villanova,Fano,DC,,560.0,500,1000,,VCS,,1506.0,0.0,3.53,10%,++,++,+ (between sync areas),,,,,,,,1521,MultiPolygon,"[[[[14.331006, 42.285803], [14.822754, 42.613911], [13.682263, 43.871485], [12.908002, 43.84883], [14.331006, 42.285803]]]]"
+1557,Tyrrhenian HVDC link - West,339,Italian HVDC tri-terminal link,12-2027,4,True,Investment on time,,OffshoreDCTransmissionCable,Caracoli,Selargius,DC,,900.0,500,1000,,VCS,,1900.0,0.0,3.6,0%,++,++,+ (between sync areas),"43
+","Other
+","-
+","36
+","Other
+","-
+",,1557,MultiPolygon,"[[[[9.205224, 39.296984], [13.463745, 37.890462], [14.813415, 40.778878], [9.131946, 39.377961], [9.205224, 39.296984]]]]"
+1519,Avelgem-Courcelles,340,Realisation of a 6 GW new corridor,12-2030,3,True,Delayed,Permitting procedure,ACTransmissionLine,Avelgem,Courcelles,AC,,90.0,380,0,3000,,,510.0,0.0,0.6,25%%,++,++,0,,,,,,,,1519,MultiPolygon,"[[[[3.44155, 50.77687], [3.554654, 50.825891], [4.184747, 50.762574], [4.184747, 50.54337], [3.44155, 50.77687]]]]"
+1544,ZuidWest380 Oost,346,New 380 kV substation Tilburg; New 380 kV double circuit line 2645MVA between Rilland and Tilburg,06-2029,3,True,Delayed,Complicated permitting procedures,ACTransmissionLine,Rilland,Tilburg,AC,,80.0,380,0,2630,,,1090.0,0.0,5.5,10%%,++,++,0,,,,,,,,1544,MultiPolygon,"[[[[4.94529, 51.700379], [4.129005, 51.444319], [4.210304, 51.3559], [5.091408, 51.604269], [4.94529, 51.700379]]]]"
+1677,LirIC,1040,New HVDC VSC Monopole sub sea cable between Kilroot 275kV substation in Northern Ireland (TBC) and Hunterston 400kV sub station in Scotland (TBC),09-2030,1,True,New Investment,,OffshoreDCTransmissionCable,NI Kilroot 275kV (TBC),GB Hunterston 400kV (TBC),DC,Monopolar,142.0,320,700,,VCS,,710.0,0.0,15.00017,20%,++,++,+ (between sync areas),,,,,,,,1677,MultiPolygon,"[[[[-4.906254, 55.730203], [-4.422855, 55.547281], [-4.373417, 55.347889], [-5.878544, 54.680183], [-5.779667, 54.870285], [-4.906254, 55.730203]]]]"
+1798,New  400 kV submarine cable Bolano-Annunziata,1110,New  400 kV submarine cable Bolano-Annunziata,12-2026,3,True,New Investment,,ACTransmissionLine,Bolano,Annunziata,AC,,9.0,400,0,1040,,,226.0,0.0,0.4,0%,++,++,0,"2
+","Other
+","
+","2
+","Other
+","
+",,1798,MultiPolygon,"[[[[15.549774, 38.164795], [15.549774, 38.307181], [15.729675, 38.307181], [15.729675, 38.164795], [15.549774, 38.164795]]]]"
+1812,Offshore Wind Connection South Britanny,1124,HVAC offshore platform + onshore and offshore cables + onshore substation,09-2030,2,True,Investment on time,,OffshoreACTransmissionCable,Bretagne Sud,Pluvigner,AC,,80.0,225,0,TBD,,,1520.0,0.0,11.00024,40%,++,++,0,,,,,,,,1812,MultiPolygon,"[[[[-2.949829, 47.763945], [-3.634643, 47.032695], [-4.198608, 47.065133], [-4.151, 47.502359], [-3.762817, 47.980117], [-2.949829, 47.763945]]]]"
+1889,HVDC Milano-Montalto,1157,HVDC Milano-Montalto,12-2030,2,True,New Investment,,DCTransmissionLine,Montalto,Avenza,DC,Bipolar,440.0,500,2000,,VCS,,2675.0,0.0,12.305,0%,,,,,,,,,,,1889,MultiPolygon,"[[[[12.278322, 42.173174], [11.610352, 41.872832], [10.538087, 42.316315], [9.940431, 42.808298], [9.711915, 43.398661], [9.606447, 44.0718], [9.764649, 44.587337], [9.536134, 45.22229], [9.325196, 45.53098], [9.729494, 45.580214], [10.151368, 45.048688], [10.344728, 44.724881], [10.081056, 43.983329], [10.098634, 43.487999], [10.239259, 42.988576], [10.907227, 42.394253], [11.715822, 42.251291], [12.278322, 42.173174]]]]"
+1917,HG Central link,1167,HG Central link,12-2030,2,True,New Investment,,DCTransmissionLine,Villavalle (IT),S. Barbara (IT),AC,Bipolar,150.0,220,0,,,,280.0,0.0,1.12,0%,,,,,,,,,,,1917,MultiPolygon,"[[[[12.590332, 43.161917], [12.133301, 43.225993], [11.412598, 43.596306], [10.73584, 43.995976], [10.73584, 44.260937], [11.184082, 44.292401], [11.816895, 43.80599], [12.265137, 43.609035], [12.590332, 43.161917]]]]"
+1980,Offshore Wind Connection Viana do Castelo,1220,Offshore Wind Connection (to be confirmed technical details\type of element),12-2030,1,True,New Investment,,OffshoreDCTransmissionCable,tbc,tbc,AC,,0.0,0,0,0,,,2000.0,0.0,0.0,100%,,,,,,,,,,,1980,MultiPolygon,"[[[[-9.588318, 41.611335], [-8.539124, 41.613389], [-8.55011, 41.397415], [-9.602051, 41.397415], [-9.588318, 41.611335]]]]"
+1989,Offshore Wind Connection Leixões,1221,Offshore Wind Connection (to be confirmed technical details\type of element),12-2030,1,True,New Investment,,OffshoreDCTransmissionCable,tbc,tbc,AC,,0.0,0,0,0,,,1500.0,0.0,0.0,100%,,,,,,,,,,,1989,MultiPolygon,"[[[[-8.364716, 41.010993], [-8.367462, 40.874065], [-9.423523, 40.873026], [-9.389191, 41.076246], [-8.364716, 41.010993]]]]"
+1998,Offshore Wind Connection Figueira da Foz (North),1222,Offshore Wind Connection (to be confirmed technical details\type of element),12-2030,1,True,New Investment,,OffshoreDCTransmissionCable,tbc,tbc,AC,,0.0,0,0,0,,,2000.0,0.0,0.0,100%,,,,,,,,,,,1998,MultiPolygon,"[[[[-10.761108, 40.619751], [-8.596802, 40.276972], [-8.701172, 39.928234], [-10.975342, 40.016638], [-10.761108, 40.619751]]]]"
+1999,Offshore Wind Connection Figueira da Foz,1223,Offshore Wind Connection (to be confirmed technical details\type of element),12-2030,1,True,New Investment,,OffshoreDCTransmissionCable,tbc,tbc,AC,,0.0,0,0,0,,,2000.0,0.0,0.0,100%,,,,,,,,,,,1999,MultiPolygon,"[[[[-10.371094, 40.329796], [-8.464966, 40.124291], [-8.772583, 39.59299], [-10.640259, 39.512517], [-10.371094, 40.329796]]]]"
+2000,Offshore Wind Connection Ericeira,1224,Offshore Wind Connection (to be confirmed technical details\type of element),12-2030,1,True,New Investment,,OffshoreACTransmissionCable,tbc,tbc,AC,,0.0,0,0,0,,,1000.0,0.0,0.0,100%,,,,,,,,,,,2000,MultiPolygon,"[[[[-9.687195, 39.162011], [-9.157104, 39.078908], [-9.264221, 38.886757], [-9.846497, 38.920955], [-9.687195, 39.162011]]]]"
+2006,Offshore Wind Connection Sines,1225,Offshore Wind Connection (to be confirmed technical details\type of element),12-2030,1,True,New Investment,,OffshoreDCTransmissionCable,tbc,tbc,AC,,0.0,0,0,0,,,1500.0,0.0,0.0,100%,,,,,,,,,,,2006,MultiPolygon,"[[[[-9.18457, 38.151837], [-9.173584, 37.753344], [-8.676453, 37.907367], [-8.698425, 38.084851], [-9.18457, 38.151837]]]]"
