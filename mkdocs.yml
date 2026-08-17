@@ -45,8 +45,8 @@ nav:
     - Licenses: licenses.md
     - Validation: validation.md
     - Limitations: limitations.md
+    - FAQ and Troubleshooting: faq.md
     - Support: support.md
-    - FAQ: faq.md
     - Publications: publications.md
 
 - Design:
