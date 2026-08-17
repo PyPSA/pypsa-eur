@@ -1085,7 +1085,7 @@ industry:
 biochar:
   application_per_sqkm: 1500 # tonnes of biochar per km² (≈15 t/ha)
   max_land_usage: 0.2 # maximum fraction of suitable CORINE area used for biochar
-  number_years: 25 # amortisation period (years) for biochar CO2 storage
+  number_years: 25 # years to exhaust the maximum biochar that can be spread per sqkm
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
