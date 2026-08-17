@@ -4049,7 +4049,7 @@
       "properties": {
         "co2_removal_per_sqkm": {
           "default": 309,
-          "description": "Tonnes of CO2 sequestered per square kilometre of eligible land per year (temperate-only rate; hot climate is ~1% of eligible EU area, dropped).",
+          "description": "Tonnes of CO2 sequestered per square kilometre of eligible land per year ",
           "type": "number"
         },
         "max_land_usage": {
