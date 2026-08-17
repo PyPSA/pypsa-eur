@@ -4037,7 +4037,7 @@
             },
             "min_mean_temp_C": {
               "default": 10,
-              "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since weathering kinetics slow down in cold climates.",
+              "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since rock weathering kinetics slow down in cold climates.",
               "type": "number"
             }
           }
