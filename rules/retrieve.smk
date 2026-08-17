@@ -1162,6 +1162,7 @@ if (INSTRAT_CO2_PRICES_DATASET := dataset_version("instrat_co2_prices"))["source
         message:
             "Retrieving CO2 emission allowances price in EU ETS system"
         run:
+            from io import StringIO
             import pandas as pd
 
             url = "https://energy-api.instrat.pl/api/prices/co2?all=1"
@@ -1172,7 +1173,7 @@ if (INSTRAT_CO2_PRICES_DATASET := dataset_version("instrat_co2_prices"))["source
             }
             r = requests.get(url, headers=headers)
             r.raise_for_status()
-            df = pd.read_json(r.text)
+            df = pd.read_json(StringIO(r.text))
             df.to_csv(output["csv"], index=False)
 
 
