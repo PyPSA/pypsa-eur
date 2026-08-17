@@ -11,7 +11,7 @@ two differences:
   LUISA, bathymetry, shipping, or shore-distance exclusions, none of which
   are relevant to land-based rock weathering).
 - An additional exclusion removes grid cells whose annual mean air
-  temperature (from the atlite cutout) is below ``min_mean_temp_C`` --
+  temperature (from the atlite cutout) is below ``min_mean_temp`` --
   weathering kinetics slow down in cold climates, so only warm-enough regions
   are eligible. Replaces the previous CORINE+bioclimate-zone "hot"/"temperate"
   subclass split.
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     )
 
     temp_raster_path = _mean_temperature_raster(cutout)
-    min_mean_temp_K = params["min_mean_temp_C"] + 273.15
+    min_mean_temp_K = params["min_mean_temp"] + 273.15
     excluder.add_raster(
         temp_raster_path,
         codes=functools.partial(np.greater, min_mean_temp_K),

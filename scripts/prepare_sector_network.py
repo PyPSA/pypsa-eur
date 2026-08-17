@@ -1286,11 +1286,9 @@ def add_rock_weathering(
     """
     logger.info("Adding enhanced rock weathering (rock_weathering).")
 
-    rock_weathering_potentials = pd.read_csv(
-        rock_weathering_potentials_file, index_col=0
-    )
+    rock_weathering_land = pd.read_csv(rock_weathering_potentials_file, index_col=0)
     potentials = (
-        rock_weathering_potentials["potential [sqkm]"]
+        rock_weathering_land["potential [sqkm]"]
         * rock_weathering_config["co2_removal_per_sqkm"]
         * rock_weathering_config["max_land_usage"]
     )
@@ -1827,7 +1825,7 @@ def add_electricity_grid_connection(n, costs):
     gens = n.generators.index[n.generators.carrier.isin(carriers)]
 
     n.generators.loc[gens, "capital_cost"] += costs.at[
-        "distribution grid reinforcement", "capital_cost"
+        "electricity grid connection", "capital_cost"
     ]
 
 

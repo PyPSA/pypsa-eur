@@ -4035,7 +4035,7 @@
               "description": "Resolution in meters on which to perform geographical eligibility analysis.",
               "type": "number"
             },
-            "min_mean_temp_C": {
+            "min_mean_temp": {
               "default": 10,
               "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since rock weathering kinetics slow down in cold climates.",
               "type": "number"
@@ -4049,7 +4049,7 @@
       "properties": {
         "co2_removal_per_sqkm": {
           "default": 309,
-          "description": "Tonnes of CO2 sequestered per square kilometre of eligible land per year ",
+          "description": "Tonnes of CO2 sequestered per square kilometre of eligible land per year (temperate-only rate).",
           "type": "number"
         },
         "max_land_usage": {
@@ -7671,9 +7671,9 @@
           "description": "Resolution in meters on which to perform geographical eligibility analysis.",
           "type": "number"
         },
-        "min_mean_temp_C": {
+        "min_mean_temp": {
           "default": 10,
-          "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since weathering kinetics slow down in cold climates.",
+          "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since rock weathering kinetics slow down in cold climates.",
           "type": "number"
         }
       }
@@ -10219,9 +10219,9 @@
               "description": "Resolution in meters on which to perform geographical eligibility analysis.",
               "type": "number"
             },
-            "min_mean_temp_C": {
+            "min_mean_temp": {
               "default": 10,
-              "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since weathering kinetics slow down in cold climates.",
+              "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since rock weathering kinetics slow down in cold climates.",
               "type": "number"
             }
           }
@@ -11989,7 +11989,7 @@
       "properties": {
         "co2_removal_per_sqkm": {
           "default": 309,
-          "description": "Tonnes of CO2 sequestered per square kilometre of eligible land per year (temperate-only rate; hot climate is ~1% of eligible EU area, dropped).",
+          "description": "Tonnes of CO2 sequestered per square kilometre of eligible land per year (temperate-only rate).",
           "type": "number"
         },
         "max_land_usage": {

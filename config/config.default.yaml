@@ -427,7 +427,7 @@ renewable:
     natura: false
     cutout: default
     excluder_resolution: 250
-    min_mean_temp_C: 10
+    min_mean_temp: 10
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:

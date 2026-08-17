@@ -320,9 +320,9 @@ class _RockWeatheringEligibilityConfig(BaseModel):
         250,
         description="Resolution in meters on which to perform geographical eligibility analysis.",
     )
-    min_mean_temp_C: float = Field(
+    min_mean_temp: float = Field(
         10,
-        description="Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since weathering kinetics slow down in cold climates.",
+        description="Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since rock weathering kinetics slow down in cold climates.",
     )
 
 
