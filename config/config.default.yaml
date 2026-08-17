@@ -422,7 +422,10 @@ renewable:
   # land-eligibility settings for alternative carbon dioxide removal technologies,
   # feeding determine_availability_matrix.py the same way onwind/solar do above
   biochar:
-    corine: [12, 13, 14] # CORINE Land Cover codes for non-irrigated arable land (potential biochar feedstock land)
+    corine: 
+    - 12
+    - 13
+    - 14
     natura: false
     cutout: default
     excluder_resolution: 250
