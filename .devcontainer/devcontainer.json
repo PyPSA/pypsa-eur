@@ -1,0 +1,20 @@
+{
+    "name": "pixi-project",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "..",
+        "args": {
+            "PIXI_VERSION": "v0.41.4"
+        }
+    },
+   
+  "customizations" : {
+    "jetbrains" : {
+      "backend" : "IntelliJ"
+    }
+  },
+    "mounts": [
+        "source=${localWorkspaceFolderBasename}-pixi,target=${containerWorkspaceFolder}/.pixi,type=volume"
+    ],
+    "postCreateCommand": "sudo chown vscode .pixi && if [ ! -f pixi.toml ]; then cp /workspaces/pixi-project/pixi.toml .; fi && pixi install"
+}

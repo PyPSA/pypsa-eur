@@ -4929,11 +4929,25 @@
               "description": "Gas pipeline transmission efficiency.",
               "type": "object"
             },
+            "gas pipeline new": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Gas pipeline new transmission efficiency.",
+              "type": "object"
+            },
             "electricity distribution grid": {
               "additionalProperties": {
                 "type": "number"
               },
               "description": "Electricity distribution grid efficiency.",
+              "type": "object"
+            },
+            "CO2 pipeline": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "CO2 pipeline transmission efficiency.",
               "type": "object"
             }
           }
@@ -8158,11 +8172,25 @@
           "description": "Gas pipeline transmission efficiency.",
           "type": "object"
         },
+        "gas pipeline new": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Gas pipeline new transmission efficiency.",
+          "type": "object"
+        },
         "electricity distribution grid": {
           "additionalProperties": {
             "type": "number"
           },
           "description": "Electricity distribution grid efficiency.",
+          "type": "object"
+        },
+        "CO2 pipeline": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "CO2 pipeline transmission efficiency.",
           "type": "object"
         }
       }
@@ -11421,11 +11449,25 @@
               "description": "Gas pipeline transmission efficiency.",
               "type": "object"
             },
+            "gas pipeline new": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Gas pipeline new transmission efficiency.",
+              "type": "object"
+            },
             "electricity distribution grid": {
               "additionalProperties": {
                 "type": "number"
               },
               "description": "Electricity distribution grid efficiency.",
+              "type": "object"
+            },
+            "CO2 pipeline": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "CO2 pipeline transmission efficiency.",
               "type": "object"
             }
           }
