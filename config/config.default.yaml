@@ -419,7 +419,6 @@ renewable:
     eia_norm_year: false
     eia_correct_by_capacity: false
     eia_approximate_missing: false
-  # land-eligibility settings for alternative carbon dioxide removal technologies,
   # feeding determine_availability_matrix.py the same way onwind/solar do above
   biochar:
     corine: 
