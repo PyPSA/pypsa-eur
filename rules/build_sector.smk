@@ -928,7 +928,7 @@ rule determine_carbon_dioxide_removal_availability_matrix:
             w, config_provider("renewable", w.technology, "cutout")(w)
         ),
     output:
-        resources(
+        nc=resources(
             "availability_matrix_carbon_dioxide_removal_{clusters}_{technology}.nc"
         ),
     log:

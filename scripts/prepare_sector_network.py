@@ -1297,9 +1297,7 @@ def add_biochar(n, costs):
     """
     logger.info("Adding biochar.")
 
-    biochar_potentials = pd.read_csv(snakemake.input.biochar_potentials).set_index(
-        "node"
-    )
+    biochar_land = pd.read_csv(snakemake.input.biochar_potentials).set_index("node")
 
     n.add("Carrier", "co2 biochar")
 
@@ -1325,7 +1323,7 @@ def add_biochar(n, costs):
         carrier="co2 biochar",
         e_nom_extendable=True,
         e_nom_max=(
-            biochar_potentials["potential [sqkm]"].values
+            biochar_land["potential [sqkm]"].values
             * co2_per_tonne
             * snakemake.config["biochar"]["application_per_sqkm"]
             * snakemake.config["biochar"]["max_land_usage"]
@@ -1358,20 +1356,20 @@ def add_biochar(n, costs):
                     p_nom_extendable=True,
                     carrier="biochar heat",
                 )
-                biochar_heat_bus_waste = node + " biochar heat waste"
-                n.add("Bus", biochar_heat_bus_waste, carrier="biochar heat")
+                biochar_heat_waste = node + " biochar heat waste"
+                n.add("Bus", biochar_heat_waste, carrier="biochar heat")
                 n.add(
                     "Store",
-                    biochar_heat_bus_waste,
-                    bus=biochar_heat_bus_waste,
+                    biochar_heat_waste,
+                    bus=biochar_heat_waste,
                     e_nom_extendable=True,
                     carrier="biochar heat",
                 )
                 n.add(
                     "Link",
-                    biochar_heat_bus_waste,
+                    biochar_heat_waste,
                     bus0=biochar_heat_bus,
-                    bus1=biochar_heat_bus_waste,
+                    bus1=biochar_heat_waste,
                     p_nom_extendable=True,
                     carrier="biochar heat",
                 )
