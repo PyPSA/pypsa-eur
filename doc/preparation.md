@@ -12,7 +12,9 @@ Instead we provide separate data bundles which can be obtained
 using the `retrieve*` rules ([Retrieving Data](retrieve.md)).
 Having downloaded the necessary data, it can build a base PyPSA network with the following rules
 
-- [build_shapes][] generates GeoJSON files with shapes of the countries, exclusive economic zones and [NUTS3](https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics) areas.
+- [build_offshore_shapes][]  generates GeoJSON files of offshore exclusive economic zones (EEZ).
+- [build_nuts3_shapes][] generates GeoJSON files of `NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`__ and OSM ADM1 areas enriched with GDP and population data.
+- [build_shapes][]  generates GeoJSON files of country boundaries and the Europe bounding shape.
 - [base_network][] builds and stores the base network with all buses, HVAC lines and HVDC links, and determines [Voronoi cells](https://en.wikipedia.org/wiki/Voronoi_diagram) for all substations.
 
 The network is then simplified by preparing **approximations** of the network model, for which it is computationally viable to co-optimize generation, storage and transmission capacities.

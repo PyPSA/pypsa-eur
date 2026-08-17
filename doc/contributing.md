@@ -18,7 +18,7 @@ repository](https://github.com/PyPSA/PyPSA-Eur).
 ## Setting up the development environment
 
 For linting, formatting and checking your code contributions
-against our guidelines (e.g. we use [Black](https://github.com/psf/black) as code style
+against our guidelines (e.g. we use [Ruff](https://github.com/astral-sh/ruff) as code style)
 use [pre-commit](https://pre-commit.com/index.html):
 
 1. Install [pixi](https://pixi.sh/latest/).
