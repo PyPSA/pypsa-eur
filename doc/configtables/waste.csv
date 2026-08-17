@@ -1,0 +1,4 @@
+,Unit,Values,Description
+transport:--,"{true, false}", Switch to enable the transport of waste between bus regions. Only works if config["sector"]["waste_spatial"] is activated. Default is false.
+waste_to_energy,--,"{true, false}", Switch to enable expansion of waste to energy CHPs for conversion of plastics. Default is false.
+waste_to_energy_cc,--,"{true, false}", Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.
