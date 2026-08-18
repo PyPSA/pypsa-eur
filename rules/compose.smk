@@ -180,6 +180,8 @@ rule compose_network:
         resources("networks/composed_{horizon}.nc"),
     log:
         logs("compose_network_{horizon}.log"),
+    benchmark:
+        benchmarks("compose_network_{horizon}")
     threads: 1
     resources:
         mem_mb=8000,

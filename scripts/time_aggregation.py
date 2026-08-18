@@ -13,6 +13,7 @@ data is done in `prepare_sector_network.py`.
 """
 
 import logging
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -27,6 +28,14 @@ from scripts._helpers import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def align_basis(data: pd.DataFrame, name: str, snapshots: pd.Index) -> pd.DataFrame:
+    """Restrict a time series frame to the snapshots and flatten its columns."""
+    data = data.loc[snapshots]
+    data.columns = [f"{name}-{i}" for i in range(data.shape[1])]
+    return data
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -89,24 +98,50 @@ if __name__ == "__main__":
         segments = resolution[1]
         logger.info(f"Use temporal segmentation with {segments} segments")
 
-        # Get all time-dependent data
+        # The clustered network carries no time series yet, so the segmentation
+        # basis is read from the resources that compose_network.py attaches later.
+        sns = n.snapshots
         dfs = [
-            pnl
+            align_basis(pnl, f"{c.name}-{attr}", sns)
             for c in n.components
             for attr, pnl in c.dynamic.items()
             if not pnl.empty and attr != "e_min_pu"
         ]
+
+        for fn in snakemake.input.profiles:
+            with xr.open_dataset(fn) as ds:
+                if ds.indexes["bus"].empty:
+                    continue
+                if "year" in ds.indexes:
+                    ds = ds.sel(year=ds.year.min(), drop=True)
+                profile = ds.stack(bus_bin=["bus", "bin"])["profile"].to_pandas()
+                dfs.append(align_basis(profile, Path(fn).stem, sns))
+
+        if snakemake.input.hydro_profile:
+            inflow = xr.open_dataarray(snakemake.input.hydro_profile).to_pandas()
+            dfs.append(align_basis(inflow, "inflow", sns))
+
+        demand = xr.open_dataarray(snakemake.input.electricity_demand).to_pandas()
+        dfs.append(align_basis(demand, "electricity-demand", sns))
+
         if snakemake.input.hourly_heat_demand_total:
-            dfs.append(
+            heat_demand = (
                 xr.open_dataset(snakemake.input.hourly_heat_demand_total)
                 .to_dataframe()
                 .unstack(level=1)
             )
+            dfs.append(align_basis(heat_demand, "heat-demand", sns))
         if snakemake.input.solar_thermal_total:
-            dfs.append(
+            solar_thermal = (
                 xr.open_dataset(snakemake.input.solar_thermal_total)
                 .to_dataframe()
                 .unstack(level=1)
+            )
+            dfs.append(align_basis(solar_thermal, "solar-thermal", sns))
+
+        if not dfs:
+            raise ValueError(
+                "No time series available to derive the temporal segmentation from."
             )
         df = pd.concat(dfs, axis=1)
 

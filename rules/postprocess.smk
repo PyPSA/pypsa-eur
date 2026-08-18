@@ -172,31 +172,6 @@ if config["foresight"] != "perfect":
             scripts("plot_heat_source_map.py")
 
 
-if config["foresight"] == "perfect":
-
-    def output_map_year(w):
-        return {
-            f"map_{year}": RESULTS + "maps/static/costs_all_{year}.pdf"
-            for year in config_provider("planning_horizons")(w)
-        }
-
-    rule plot_power_network_perfect:
-        input:
-            network=RESULTS + "networks_brownfield_all_years.nc",
-            regions=resources("onshore_regions.geojson"),
-        output:
-            unpack(output_map_year),
-        threads: 2
-        resources:
-            mem_mb=10000,
-        params:
-            plotting=config_provider("plotting"),
-        message:
-            "Plotting power network with perfect foresight"
-        script:
-            scripts("plot_power_network_perfect.py")
-
-
 rule make_summary:
     input:
         networks=lambda w: (

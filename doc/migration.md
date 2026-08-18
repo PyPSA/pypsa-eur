@@ -231,7 +231,7 @@ co2_budget:
   upper:
     2030: 0.45
     2050: 0.0
-  lower:                   # optional floor, see the warning below
+  lower:                   # optional floor, unset by default
 ```
 
 There are three traps here.
@@ -265,14 +265,6 @@ in each mode.
     interpolated between the neighbouring years instead. So make sure that every
     entry of `planning_horizons` also appears in `upper` (and in `lower`, if you use
     it).
-
-!!! note "`lower` only works for electricity-only runs"
-    For electricity-only runs, `lower` is added as a `primary_energy` constraint,
-    and PyPSA respects its `>=` sense. In sector-coupled runs the constraint is a
-    `co2_atmosphere` one (or `Co2Budget` for a scalar budget under perfect
-    foresight), and those routines build `lhs <= rhs` no matter which sense is
-    stored. A `lower` value then acts as a second, tighter *upper* limit. Leave
-    `co2_budget.lower` unset in sector-coupled runs.
 
 ### Temporal resolution {#temporal}
 
@@ -501,10 +493,10 @@ reported costs are undiscounted and not split by period activity. Concretely:
 If you run perfect foresight, also read
 [If you use perfect foresight](#perfect).
 
-Two per-solve outputs are no longer written: the config dumps
-`results/configs/config.*.yaml`, and `results/models/*.nc` for
-`solving.options.store_model`. The effective config is still stored inside each
-solved network as `n.meta`.
+One per-solve output is no longer written: the config dumps
+`results/configs/config.*.yaml`. The effective config is still stored inside each
+solved network as `n.meta`. `solving.options.store_model` still writes the linopy
+model, now to `results/models/solved_{horizon}.nc`.
 
 ### Reusing solved networks from an old run {#reusing-solved-networks}
 
@@ -622,12 +614,6 @@ horizons follow from the dependency chain. `compose_networks` expands over the f
 `foresight: overnight`, where it still derives a single file from `costs.year`.
 Composition always reads `costs_{horizon}_processed.csv`, so on an overnight run this
 collect target can build a cost file that the run itself never uses.
-
-!!! warning "`plot_power_networks` currently fails"
-    The `plot_power_networks` collect rule asks for a filename that the producing rule
-    does not write, so it fails while building the DAG. Until this is fixed, request
-    `resources/maps/clustered_network.pdf` or the `plot_clustered_network` rule
-    directly.
 
 If you target files directly:
 

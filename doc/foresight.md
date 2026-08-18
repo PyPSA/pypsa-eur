@@ -28,14 +28,11 @@ The default is to calculate a rebuilding of the energy system to meet demand, a
 so-called overnight or greenfield approach.
 
 In this case, the `planning_horizons` parameter specifies the reference year for exogenously given transition paths (e.g. the level of steel recycling).
-It does not affect the year for cost and technology assumptions, which is set separately in the config.
+It also determines the year for cost and technology assumptions, which are retrieved as `resources/costs_{horizon}.csv`.
 
 ```yaml
 planning_horizons:
 - 2050
-
-costs:
-  year: 2030
 ```
 
 For running overnight scenarios, use in the `config/config.yaml`:

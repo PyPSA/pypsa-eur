@@ -8,6 +8,11 @@ rule solve_network:
         network=resources("networks/composed_{horizon}.nc"),
     output:
         network=RESULTS + "networks/solved_{horizon}.nc",
+        model=(
+            RESULTS + "models/solved_{horizon}.nc"
+            if config["solving"]["options"]["store_model"]
+            else []
+        ),
     log:
         solver=normpath(RESULTS + "logs/solve_network/solver_{horizon}.log"),
         memory=RESULTS + "logs/solve_network/memory_{horizon}.log",

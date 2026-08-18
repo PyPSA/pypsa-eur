@@ -216,6 +216,20 @@ def add_co2_sequestration_limit(
     )
 
 
+VALID_GLC_SENSES = {"<=", ">=", "=="}
+
+
+def get_glc_sense(glc: pd.Series) -> str:
+    """Return the validated sense of a global constraint."""
+    sense = glc.loc["sense"]
+    if sense not in VALID_GLC_SENSES:
+        raise ValueError(
+            f"Unsupported sense {sense!r} for global constraint {glc.name!r}. "
+            f"Expected one of {sorted(VALID_GLC_SENSES)}."
+        )
+    return sense
+
+
 def add_carbon_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None:
     glcs = n.global_constraints.query('type == "co2_atmosphere"')
     if glcs.empty:
@@ -239,7 +253,9 @@ def add_carbon_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None
             lhs = final_e.loc[time_i, :] - final_e.shift(snapshot=1).loc[time_i, :]
 
             rhs = glc.constant
-            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+            n.model.add_constraints(
+                lhs, get_glc_sense(glc), rhs, name=f"GlobalConstraint-{name}"
+            )
 
 
 def add_carbon_budget_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None:
@@ -266,7 +282,9 @@ def add_carbon_budget_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) 
             lhs = final_e.loc[time_i, :] * weighting
 
             rhs = glc.constant
-            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+            n.model.add_constraints(
+                lhs, get_glc_sense(glc), rhs, name=f"GlobalConstraint-{name}"
+            )
 
 
 def add_max_growth(n: pypsa.Network, opts: dict) -> None:
@@ -1193,7 +1211,9 @@ def add_co2_atmosphere_constraint(n, snapshots):
             lhs = n.model["Store-e"].loc[last_i, stores.index]
             rhs = glc.constant
 
-            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+            n.model.add_constraints(
+                lhs, get_glc_sense(glc), rhs, name=f"GlobalConstraint-{name}"
+            )
 
 
 def extra_functionality(

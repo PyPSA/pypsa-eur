@@ -10,9 +10,6 @@ import logging
 import pandas as pd
 import pypsa
 
-from scripts._helpers import (
-    PYPSA_V1,
-)
 from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
@@ -88,42 +85,50 @@ def concatenate_network_with_previous(
         n.add(c_current.name, new_static.index, **new_static)
 
         for attr, df in c_current.dynamic.items():
-            if df.empty:
+            twin_updated = pd.Index([], dtype=object)
+
+            if not df.empty:
+                default = c.attrs.default[attr]
+                c.dynamic[attr].loc[current_horizon] = (
+                    c.dynamic[attr].loc[previous_horizon].values
+                )
+                c.dynamic[attr].loc[current_horizon, df.columns] = df.values
+
+                persisting = c.dynamic[attr].columns.difference(df.columns)
+                twins = persisting.str.replace(
+                    r"-\d{4}$", f"-{current_horizon}", regex=True
+                )
+                has_twin = twins.isin(df.columns)
+                if has_twin.any():
+                    twin_updated = persisting[has_twin]
+                    c.dynamic[attr].loc[current_horizon, twin_updated] = df[
+                        twins[has_twin]
+                    ].values
+
+                c.dynamic[attr] = c.dynamic[attr].fillna(default)
+
+            if attr not in c_current.static.columns:
                 continue
 
-            default = c.attrs.default[attr]
-            c.dynamic[attr].loc[current_horizon] = (
-                c.dynamic[attr].loc[previous_horizon].values
-            )
-            c.dynamic[attr].loc[current_horizon, df.columns] = df.values
+            static_only = overlap_comps.difference(df.columns).difference(twin_updated)
+            current_values = c_current.static.loc[static_only, attr]
 
-            persisting = c.dynamic[attr].columns.difference(df.columns)
-            twins = persisting.str.replace(
-                r"-\d{4}$", f"-{current_horizon}", regex=True
-            )
-            has_twin = twins.isin(df.columns)
-            if has_twin.any():
-                c.dynamic[attr].loc[current_horizon, persisting[has_twin]] = df[
-                    twins[has_twin]
-                ].values
+            already_dynamic = static_only.intersection(c.dynamic[attr].columns)
+            if not already_dynamic.empty:
+                c.dynamic[attr].loc[current_horizon, already_dynamic] = current_values[
+                    already_dynamic
+                ].to_numpy()
 
-            c.dynamic[attr] = c.dynamic[attr].fillna(default)
-
-            overlap_non_equal_static_only = c_current.static.loc[
-                overlap_comps, attr
-            ].ne(c.static.loc[overlap_comps, attr]) & ~overlap_comps.isin(
-                c.dynamic[attr].columns
-            )
-            if overlap_non_equal_static_only.any():
-                if PYPSA_V1:
-                    casted = c._as_dynamic(
-                        attr, n.snapshots, overlap_non_equal_static_only
-                    )
-                else:
-                    casted = n.get_switchable_as_dense(
-                        c.name, attr, inds=overlap_non_equal_static_only
-                    )
-                casted.loc[current_horizon] = c_current.static.loc[overlap_comps]
+            to_densify = static_only.difference(already_dynamic)
+            previous_values = c.static.loc[to_densify, attr]
+            to_densify = to_densify[current_values[to_densify].ne(previous_values)]
+            if not to_densify.empty:
+                expanded = pd.DataFrame(
+                    index=n.snapshots, columns=to_densify, dtype=float
+                )
+                expanded.loc[:] = previous_values[to_densify].to_numpy()
+                expanded.loc[current_horizon] = current_values[to_densify].to_numpy()
+                c.dynamic[attr] = pd.concat([c.dynamic[attr], expanded], axis=1)
 
     n.meta = {**n_previous.meta, **n_current.meta}
 
@@ -382,6 +387,34 @@ def apply_phase_outs(
         n.remove(component, retired)
 
 
+def add_H2_boilers(n: pypsa.Network) -> None:
+    """
+    Add retrofitting option of existing gas boilers to H2 boilers.
+
+    For every existing (non-extendable) gas boiler an extendable link with the
+    same heat output bus is added, fed from the H2 bus at the same location.
+    The retrofitted capacity is tied to the gas boiler fleet by the
+    `gas_retrofit` constraint in `solve_network.py`.
+    """
+    existing_gas_boilers = n.links.index[
+        n.links.carrier.str.contains("gas boiler") & ~n.links.p_nom_extendable
+    ]
+    if existing_gas_boilers.empty:
+        logger.info("No existing gas boilers found, skipping H2 boiler retrofitting")
+        return
+
+    logger.info(f"Adding {len(existing_gas_boilers)} retrofitted H2 boilers")
+
+    df = n.links.loc[existing_gas_boilers]
+    df["bus0"] = df.bus1.map(n.buses.location) + " H2"
+    df["carrier"] = df.carrier.str.replace("gas boiler", "retrofitted H2 boiler")
+    df = df.rename(index=lambda x: x.replace("gas boiler", "retrofitted H2 boiler"))
+    df["p_nom"] = 0.0
+    df["p_nom_extendable"] = True
+
+    n.add("Link", df.index, **df)
+
+
 def main(
     n: pypsa.Network,
     n_previous: pypsa.Network | None,
@@ -391,6 +424,8 @@ def main(
     is_first_horizon = current_horizon == params.horizons[0]
 
     add_build_year_to_new_assets(n, current_horizon)
+
+    add_H2_boilers(n)
 
     adjust_stores_for_perfect_foresight(n)
 

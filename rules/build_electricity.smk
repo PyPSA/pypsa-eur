@@ -735,13 +735,9 @@ def input_custom_busmap(w):
     custom_busshapes = []
 
     mode = config_provider("clustering", "mode", default="busmap")(w)
-    n_clusters = config_provider(
-        "clustering", "cluster_network", "n_clusters", default="all"
-    )(w)
-    if n_clusters is None:
-        n_clusters_label = "all"
-    else:
-        n_clusters_label = str(n_clusters)
+    n_clusters_label = str(
+        config_provider("clustering", "cluster_network", "n_clusters")(w)
+    )
 
     if mode == "custom_busmap":
         base_network = config_provider("electricity", "base_network")(w)
