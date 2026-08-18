@@ -165,6 +165,7 @@ integration-tests = """
     snakemake -call --configfile config/test/config.electricity.yaml &&
     snakemake -call --configfile config/test/config.overnight.yaml &&
     snakemake -call --configfile config/test/config.myopic.yaml &&
+    snakemake -call --configfile config/test/config.perfect.yaml &&
     snakemake -call resources/test-elec-clusters/networks/simplified.nc --configfile config/test/config.clusters.yaml &&
     snakemake -call resources/test-elec-segmentation/snapshot_weightings.csv --configfile config/test/config.segmentation.yaml &&
     snakemake -call --configfile config/test/config.scenarios.yaml -n &&
@@ -180,6 +181,7 @@ clean-tests = """
     snakemake -call --configfile config/test/config.electricity.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.overnight.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.myopic.yaml --delete-all-output ;
+    snakemake -call --configfile config/test/config.perfect.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.electricity-perfect.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.electricity-myopic.yaml --delete-all-output ;
     snakemake -call resources/test-elec-clusters/networks/base.nc --configfile config/test/config.clusters.yaml --delete-all-output ;

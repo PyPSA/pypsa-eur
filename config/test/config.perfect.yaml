@@ -116,6 +116,9 @@ solving:
     name: highs
     options: highs-simplex
   mem_mb: 4000
+  check_objective:
+    enable: true
+    expected_value: 12200407202.89
 
 plotting:
   map:
