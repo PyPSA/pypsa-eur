@@ -11,11 +11,6 @@ run:
   shared_resources:
     policy: false
 
-scenario:
-  clusters:
-  - all
-  planning_horizons:
-  - 2030
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'CY', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
@@ -70,6 +65,8 @@ clustering:
   mode: administrative
   administrative:
     level: bz
+  cluster_network:
+    n_clusters: all
   build_bidding_zones:
     remove_islands: true
     aggregate_to_tyndp: true

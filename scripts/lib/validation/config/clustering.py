@@ -61,9 +61,9 @@ class _SimplifyNetworkConfig(BaseModel):
 class _ClusterNetworkConfig(BaseModel):
     """Configuration for `clustering.cluster_network` settings."""
 
-    n_clusters: int = Field(
+    n_clusters: int | Literal["all"] = Field(
         50,
-        description="Number of clusters to aggregate the network to.",
+        description="Number of clusters to aggregate the network to. Set to 'all' to skip clustering and keep every bus of the simplified network.",
     )
     algorithm: Literal["kmeans", "hac"] = Field(
         "kmeans",

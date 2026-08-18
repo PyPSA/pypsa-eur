@@ -658,19 +658,13 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", clusters=50)
+        snakemake = mock_snakemake("cluster_network")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     params = snakemake.params
     mode = params.mode
     solver_name = snakemake.config["solving"]["solver"]["name"]
-
-    n_clusters_value = params.n_clusters
-    if isinstance(n_clusters_value, str) and n_clusters_value.lower() == "all":
-        n_clusters_value = "all"
-    else:
-        n_clusters_value = int(n_clusters_value)
 
     n = pypsa.Network(snakemake.input.network)
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
@@ -682,7 +676,7 @@ if __name__ == "__main__":
         .reindex(n.buses.index, fill_value=0.0)
     )
 
-    if n_clusters_value == "all":
+    if params.n_clusters == "all":
         # Fast-path if no clustering is necessary
         busmap = sanitize_busmap(n.buses.index.to_series())
         linemap = n.lines.index.to_series()
@@ -722,7 +716,7 @@ if __name__ == "__main__":
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
             busmap = sanitize_busmap(custom_busmap)
         else:
-            n_clusters = int(n_clusters_value)
+            n_clusters = params.n_clusters
             algorithm = params.cluster_network["algorithm"]
             features = None
             if algorithm == "hac":

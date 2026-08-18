@@ -557,9 +557,17 @@
           "description": "Configuration for `clustering.cluster_network` settings.",
           "properties": {
             "n_clusters": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "const": "all",
+                  "type": "string"
+                }
+              ],
               "default": 50,
-              "description": "Number of clusters to aggregate the network to.",
-              "type": "integer"
+              "description": "Number of clusters to aggregate the network to. Set to 'all' to skip clustering and keep every bus of the simplified network."
             },
             "algorithm": {
               "default": "kmeans",
@@ -6088,9 +6096,17 @@
       "description": "Configuration for `clustering.cluster_network` settings.",
       "properties": {
         "n_clusters": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "const": "all",
+              "type": "string"
+            }
+          ],
           "default": 50,
-          "description": "Number of clusters to aggregate the network to.",
-          "type": "integer"
+          "description": "Number of clusters to aggregate the network to. Set to 'all' to skip clustering and keep every bus of the simplified network."
         },
         "algorithm": {
           "default": "kmeans",
@@ -12305,9 +12321,17 @@
           "description": "Configuration for `clustering.cluster_network` settings.",
           "properties": {
             "n_clusters": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "const": "all",
+                  "type": "string"
+                }
+              ],
               "default": 50,
-              "description": "Number of clusters to aggregate the network to.",
-              "type": "integer"
+              "description": "Number of clusters to aggregate the network to. Set to 'all' to skip clustering and keep every bus of the simplified network."
             },
             "algorithm": {
               "default": "kmeans",

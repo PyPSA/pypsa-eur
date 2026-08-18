@@ -137,10 +137,12 @@ removed, so the block is not read any more. Move its content as follows:
 the `{horizon}` wildcard. A single year may be written as a scalar
 (`planning_horizons: 2030`); it is turned into a list for you.
 
-`n_clusters` takes one integer, not a list, because the wildcard sweep is gone. To
-compare several cluster counts, write one scenario per count under `run.scenarios`
-(see [configuration](configuration.md)). For administrative clustering, set
-`clustering.mode: administrative` instead of the former `clusters: [adm]`.
+`n_clusters` takes one integer or `all`, not a list, because the wildcard sweep is
+gone. `all` skips clustering and keeps every bus of the simplified network, as the
+former `clusters: [all]` did. To compare several cluster counts, write one scenario
+per count under `run.scenarios` (see [configuration](configuration.md)). For
+administrative clustering, set `clustering.mode: administrative` instead of the
+former `clusters: [adm]`.
 
 !!! warning "Overnight runs need exactly one horizon"
     With `foresight: overnight`, `planning_horizons` must contain exactly one year.
@@ -642,7 +644,7 @@ The `**config["scenario"]` expansion pattern is gone. Collection rules take the
 | Grid expansion larger than expected | `max_extension` was not renamed, so the default 20000/30000 MW applies |
 | `MissingInputException` on a `data/busmaps/…` or `data/busshapes/…` path | rename your custom busmap or bus shapes file, see [before you start](#before-you-start) |
 | `ValueError: Overnight optimization can only be run for a single planning horizon.` | `foresight: overnight` with several horizons; use one horizon or `run.scenarios` |
-| `ValidationError` on `clustering.cluster_network.n_clusters` | `n_clusters` must be an integer; `all` and `null` are rejected by the schema |
+| `ValidationError` on `clustering.cluster_network.n_clusters` | `n_clusters` must be an integer or `all`; lists and `null` are rejected by the schema |
 | `ValidationError` on `sector.district_heating.progress` | it has to stay a year-to-value mapping, not a scalar |
 | `ValueError: clustering.temporal: only one of averaging, segmentation and representative may be set, got …` | more than one temporal option is set |
 | Analysis script reads garbage from `csvs/*.csv` | the header is a single row now, not a three-level MultiIndex; see [summary outputs](#summaries) |
