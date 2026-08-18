@@ -28,10 +28,6 @@
 
 ::: plot_power_network
 
-## Rule `plot_power_network_perfect`
-
-::: plot_power_network_perfect
-
 ## Rule `plot_hydrogen_network`
 
 ::: plot_hydrogen_network

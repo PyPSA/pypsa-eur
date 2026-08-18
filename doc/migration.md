@@ -726,6 +726,8 @@ disambiguation is not needed any more, because both are branches inside one rule
 **Deleted:** `make_summary_perfect.py`, `make_global_summary.py` and
 `make_cumulative_costs.py`, all folded into `make_summary.py`, where cumulative costs
 are computed by `calculate_cumulative_costs()`.
+`plot_power_network_perfect.py` is deleted too: `plot_power_network.py` covers every
+foresight mode.
 
 **Renamed:** `build_clustered_solar_rooftop_potentials.py` →
 `build_solar_rooftop_potentials.py` (content unchanged).
