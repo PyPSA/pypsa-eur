@@ -290,9 +290,10 @@ may be set`.
 
 !!! note
     `averaging` and `representative` reproduce the previous numbers exactly.
-    `segmentation` does not: the segments are now derived from
-    `networks/clustered.nc` rather than from the fully prepared network, so segment
-    boundaries and weights differ.
+    `segmentation` does not: the segments are now derived from the renewable profile,
+    electricity demand, heat demand and solar thermal resources rather than from the
+    time series of the fully prepared network, so segment boundaries and weights
+    differ.
 
 ### Other renamed keys {#other-keys}
 
@@ -423,8 +424,9 @@ electricity-only runs also pick up `adjustments.sector`, and Line/Link
 *Old behaviour:* keep entries only in the block that your model type used before, and
 drop Line/Link `capital_cost` adjustments.
 
-**`segmentation` is computed from the clustered network**, so segment boundaries and
-weights differ, and with them capacity factors and the objective.
+**`segmentation` is computed from the profile and demand resources** rather than from
+the prepared network's time series, so segment boundaries and weights differ, and with
+them capacity factors and the objective.
 *Old behaviour:* use `averaging` or `representative`; both are numerically unchanged.
 
 **Electricity-only myopic and perfect foresight now run.** An electricity-only config
