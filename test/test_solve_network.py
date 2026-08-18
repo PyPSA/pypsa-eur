@@ -6,7 +6,7 @@ import pandas as pd
 import pypsa
 import pytest
 
-from scripts.solve_network import add_co2_atmosphere_constraint
+from scripts.solve_network import add_co2_atmosphere_constraint, emission_stores
 
 
 @pytest.fixture(scope="function")
@@ -57,3 +57,24 @@ def test_add_co2_atmosphere_constraint_rejects_unknown_sense(
     co2_network.optimize.create_model()
     with pytest.raises(ValueError, match="Unsupported sense"):
         add_co2_atmosphere_constraint(co2_network, co2_network.snapshots)
+
+
+@pytest.mark.parametrize(
+    "attr,value", [("e_initial", 5.0), ("e_initial_per_period", True)]
+)
+def test_emission_stores_rejects_seeded_level(
+    co2_network: pypsa.Network, attr: str, value: float | bool
+) -> None:
+    co2_network.stores.loc["co2 atmosphere", attr] = value
+    with pytest.raises(ValueError, match="non-zero level"):
+        emission_stores(co2_network, pd.Index(["co2"]))
+
+
+def test_emission_stores_selects_accumulating_stores(
+    co2_network: pypsa.Network,
+) -> None:
+    assert list(emission_stores(co2_network, pd.Index(["co2"])).index) == [
+        "co2 atmosphere"
+    ]
+    co2_network.stores.loc["co2 atmosphere", "e_cyclic"] = True
+    assert emission_stores(co2_network, pd.Index(["co2"])).empty

@@ -230,6 +230,20 @@ def get_glc_sense(glc: pd.Series) -> str:
     return sense
 
 
+def emission_stores(n: pypsa.Network, emissions: pd.Index) -> pd.DataFrame:
+    """Return the non-cyclic stores that accumulate emissions on their bus."""
+    bus_carrier = n.stores.bus.map(n.buses.carrier)
+    stores = n.stores[bus_carrier.isin(emissions) & ~n.stores.e_cyclic]
+    seeded = stores.index[stores.e_initial.ne(0) | stores.e_initial_per_period]
+    if not seeded.empty:
+        raise ValueError(
+            f"Emission stores {list(seeded)} start from a non-zero level "
+            "(e_initial or e_initial_per_period). The CO2 constraints read the "
+            "store level as cumulative emissions, which only holds from zero."
+        )
+    return stores
+
+
 def add_carbon_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None:
     glcs = n.global_constraints.query('type == "co2_atmosphere"')
     if glcs.empty:
@@ -241,9 +255,7 @@ def add_carbon_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None
         if emissions.empty:
             continue
 
-        # stores
-        bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
+        stores = emission_stores(n, emissions.index)
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -269,9 +281,7 @@ def add_carbon_budget_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) 
         if emissions.empty:
             continue
 
-        # stores
-        bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
+        stores = emission_stores(n, emissions.index)
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -1203,9 +1213,7 @@ def add_co2_atmosphere_constraint(n, snapshots):
         if emissions.empty:
             continue
 
-        # stores
-        bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
+        stores = emission_stores(n, emissions.index)
         if not stores.empty:
             last_i = snapshots[-1]
             lhs = n.model["Store-e"].loc[last_i, stores.index]
