@@ -65,7 +65,7 @@ co2_budget:
     2040:
     2050: 0.0
   lower:
-    2030: 0.5
+    2030: 0.15
 
 electricity:
   extendable_carriers:
