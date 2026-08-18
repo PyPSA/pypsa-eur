@@ -925,7 +925,7 @@ rule determine_carbon_dioxide_removal_availability_matrix:
         corine=ancient(rules.retrieve_corine.output["tif_file"]),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         cutout=lambda w: input_cutout(
-            w, config_provider("renewable", w.technology, "cutout")(w)
+            w, config_provider("sector", w.technology, "cutout")(w)
         ),
     output:
         nc=resources(
@@ -941,7 +941,11 @@ rule determine_carbon_dioxide_removal_availability_matrix:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     params:
-        renewable=config_provider("renewable"),
+        # determine_availability_matrix.py reads params.renewable[technology];
+        # biochar's land-eligibility settings live under sector.biochar, so
+        # reshape it into the same {technology: {...}} lookup the shared
+        # script expects.
+        renewable=lambda w: {"biochar": config_provider("sector", "biochar")(w)},
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     message:
         "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} carbon dioxide removal technology"
@@ -956,7 +960,7 @@ rule build_available_land:
         ),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         cutout=lambda w: input_cutout(
-            w, config_provider("renewable", w.technology, "cutout")(w)
+            w, config_provider("sector", w.technology, "cutout")(w)
         ),
     output:
         csv_file=resources("{technology}_available_land_s_{clusters}.csv"),
@@ -966,8 +970,6 @@ rule build_available_land:
         technology="biochar",
     resources:
         mem_mb=8000,
-    params:
-        renewable=config_provider("renewable"),
     script:
         scripts("build_available_land.py")
 

@@ -419,15 +419,6 @@ renewable:
     eia_norm_year: false
     eia_correct_by_capacity: false
     eia_approximate_missing: false
-  # feeding determine_availability_matrix.py the same way onwind/solar do above
-  biochar:
-    corine: 
-    - 12
-    - 13
-    - 14
-    natura: false
-    cutout: default
-    excluder_resolution: 250
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -846,9 +837,20 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
+  # feeding determine_availability_matrix.py the same way onwind/solar do above
   biochar:
     enable: false
     heat_output: false
+    corine:
+    - 12
+    - 13
+    - 14
+    natura: false
+    cutout: default
+    excluder_resolution: 250
+    application_per_sqkm: 1500 # tonnes of biochar per km² (≈15 t/ha)
+    max_land_usage: 0.2 # maximum fraction of suitable CORINE area used for biochar
+    number_years: 25 # years to exhaust the maximum biochar that can be spread per sqkm
   co2_vent: false
   heat_vent:
     urban central: true
@@ -1081,11 +1083,6 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2023
   oil_refining_emissions: 0.013
-
-biochar:
-  application_per_sqkm: 1500 # tonnes of biochar per km² (≈15 t/ha)
-  max_land_usage: 0.2 # maximum fraction of suitable CORINE area used for biochar
-  number_years: 25 # years to exhaust the maximum biochar that can be spread per sqkm
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:

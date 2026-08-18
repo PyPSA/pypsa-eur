@@ -1291,8 +1291,8 @@ def add_biochar(n, costs):
     Notes
     -----
     Reads ``snakemake.input.biochar_potentials`` (eligible area in km2 per
-    node) and ``snakemake.config["biochar"]["application_per_sqkm"]`` /
-    ``["max_land_usage"]`` / ``["number_years"]``. Heat output is gated by
+    node) and ``snakemake.config["sector"]["biochar"]["application_per_sqkm"]``
+    / ``["max_land_usage"]`` / ``["number_years"]``. Heat output is gated by
     ``sector.heating`` and ``sector.biochar.heat_output``.
     """
     logger.info("Adding biochar.")
@@ -1325,9 +1325,9 @@ def add_biochar(n, costs):
         e_nom_max=(
             biochar_land["potential [sqkm]"].values
             * co2_per_tonne
-            * snakemake.config["biochar"]["application_per_sqkm"]
-            * snakemake.config["biochar"]["max_land_usage"]
-            / snakemake.config["biochar"]["number_years"]
+            * snakemake.config["sector"]["biochar"]["application_per_sqkm"]
+            * snakemake.config["sector"]["biochar"]["max_land_usage"]
+            / snakemake.config["sector"]["biochar"]["number_years"]
         ),
     )
 
