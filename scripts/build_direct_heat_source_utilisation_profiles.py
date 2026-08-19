@@ -7,11 +7,11 @@ When direct utilisation is possible, heat pump COPs are set to zero (c.f. `build
 
 Inputs
 ------
-- `resources/<run_name>/central_heating_forward_temperatures_base_s_{clusters}_{planning_horizons}.nc`: Central heating forward temperature profiles
+- `resources/{run}/central_heating_forward_temperatures_{horizon}.nc`: Central heating forward temperature profiles
 
 Outputs
 -------
-- `resources/<run_name>/direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc`: Direct heat source utilisation profiles
+- `resources/{run}/direct_heat_source_utilisation_profiles_{horizon}.nc`: Direct heat source utilisation profiles
 """
 
 import logging
@@ -81,8 +81,8 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_cop_profiles",
-            clusters=48,
+            "build_direct_heat_source_utilisation_profiles",
+            horizon=2030,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

@@ -1,0 +1,130 @@
+# yaml-language-server: $schema=../schema.default.json
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+tutorial: true
+
+run:
+  name: test-elec-segmentation
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+
+countries:
+- BE
+
+snapshots:
+  start: "2013-03-01"
+  end: "2013-03-08"
+
+co2_budget:
+  relative: false
+  upper: 0.1
+
+electricity:
+  gaslimit_enable: false
+  gaslimit: 0
+  transmission_limit: vopt
+  extendable_carriers:
+    Generator:
+    - solar
+    - solar-hsat
+    - onwind
+    - offwind-ac
+    - offwind-dc
+    - offwind-float
+    - OCGT
+    - CCGT
+    - nuclear
+    StorageUnit:
+    - battery
+    Store:
+    - H2
+    Link:
+    - H2 pipeline
+  renewable_carriers:
+  - solar
+  - solar-hsat
+  - onwind
+  - offwind-ac
+  - offwind-dc
+  - offwind-float
+  estimate_renewable_capacities:
+    enable: true
+    from_powerplantmatching: true
+    year: 2020
+    expansion_limit: false
+    technology_mapping:
+      Offshore: offwind-ac
+      Onshore: onwind
+      PV: solar
+
+atlite:
+  default_cutout: be-03-2013-era5
+  cutouts:
+    be-03-2013-era5:
+      module: era5
+      x:
+      - 4.0
+      - 15.0
+      y:
+      - 46.0
+      - 56.0
+      time:
+      - "2013-03-01"
+      - "2013-03-08"
+
+renewable:
+  offwind-ac:
+    max_depth: false
+  offwind-dc:
+    max_depth: false
+  offwind-float:
+    max_depth: false
+    min_depth: false
+
+clustering:
+  exclude_carriers:
+  - OCGT
+  - offwind-ac
+  - coal
+  temporal:
+    segmentation: 24
+  cluster_network:
+    n_clusters: 5
+
+lines:
+  dynamic_line_rating:
+    activate: false
+
+sector:
+  enabled: false
+
+solving:
+  solver:
+    name: highs
+    options: highs-default
+  check_objective:
+    enable: false
+  options:
+    transmission_losses: 0
+
+conventional:
+  dynamic_fuel_price: false
+  unit_commitment: false
+  nuclear:
+    p_max_pu: data/nuclear_p_max_pu.csv
+
+plotting:
+  costs_max: auto
+  costs_threshold: 0.001
+  energy_max: auto
+  energy_min: auto
+  energy_threshold: 0.00001
+  balance_map:
+    bus_carriers:
+    - AC
+  balance_map_interactive:
+    bus_carriers:
+    - AC
