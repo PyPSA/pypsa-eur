@@ -184,7 +184,7 @@ rule compose_network:
         benchmarks("compose_network_{horizon}")
     threads: 1
     resources:
-        mem_mb=8000,
+        mem_mb=10000,
     params:
         foresight=config_provider("foresight"),
         electricity=config_provider("electricity"),
