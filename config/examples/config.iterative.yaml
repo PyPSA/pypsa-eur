@@ -12,14 +12,7 @@ run:
     policy: false
   shared_cutouts: true
 
-
-scenario:
-  clusters:
-  - 5
-  sector_opts:
-  - ''
-  planning_horizons:
-  - 2030
+planning_horizons: 2030
 
 countries: ['BE']
 
@@ -56,10 +49,13 @@ renewable:
     min_depth: false
 
 clustering:
+  cluster_network:
+    n_clusters: 5
   temporal:
     averaging: 24
 
 sector:
+  enabled: true
   gas_network: true
   H2_retrofit: true
   district_heating:

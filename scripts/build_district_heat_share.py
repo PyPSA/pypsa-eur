@@ -36,7 +36,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_district_heat_share",
-            clusters=60,
             horizon="2050",
         )
     configure_logging(snakemake)

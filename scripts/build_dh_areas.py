@@ -149,7 +149,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_dh_areas",  # Rule name for testing
-            clusters=48,  # Number of network clusters
         )
 
     # Apply scenario configuration from Snakemake workflow

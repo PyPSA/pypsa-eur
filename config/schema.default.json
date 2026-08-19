@@ -883,7 +883,7 @@
           "properties": {
             "enable": {
               "default": false,
-              "description": "Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. Config setting can also be enabled with the keyword `Ep` in the `{opts}` wildcard for electricity-only runs.",
+              "description": "Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. For a static price, only enable this setting; for a time-varying price, also set `costs.emission_prices.dynamic` to True.",
               "type": "boolean"
             },
             "co2": {
@@ -6558,7 +6558,7 @@
       "properties": {
         "enable": {
           "default": false,
-          "description": "Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. Config setting can also be enabled with the keyword `Ep` in the `{opts}` wildcard for electricity-only runs.",
+          "description": "Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. For a static price, only enable this setting; for a time-varying price, also set `costs.emission_prices.dynamic` to True.",
           "type": "boolean"
         },
         "co2": {
@@ -12188,7 +12188,7 @@
           "properties": {
             "enable": {
               "default": false,
-              "description": "Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. Config setting can also be enabled with the keyword `Ep` in the `{opts}` wildcard for electricity-only runs.",
+              "description": "Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. For a static price, only enable this setting; for a time-varying price, also set `costs.emission_prices.dynamic` to True.",
               "type": "boolean"
             },
             "co2": {

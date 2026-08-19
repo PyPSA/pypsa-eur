@@ -254,7 +254,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("process_cost_data", planning_horizons=2030)
+        snakemake = mock_snakemake("process_cost_data", horizon=2030)
 
     cost_params = snakemake.params["costs"]
 

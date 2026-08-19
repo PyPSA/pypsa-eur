@@ -62,10 +62,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_ambient_air_temperature_yearly_average",
-            clusters="48",
-        )
+        snakemake = mock_snakemake("build_ambient_air_temperature_yearly_average")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

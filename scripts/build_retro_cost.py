@@ -1054,11 +1054,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_retro_cost",
-            clusters=48,
-            sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
-        )
+        snakemake = mock_snakemake("build_retro_cost")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

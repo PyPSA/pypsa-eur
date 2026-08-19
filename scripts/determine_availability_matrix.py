@@ -67,7 +67,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "determine_availability_matrix", clusters="adm", technology="offwind-dc"
+            "determine_availability_matrix", technology="offwind-dc"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

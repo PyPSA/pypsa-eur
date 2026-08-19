@@ -52,7 +52,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "retrieve_seawater_temperature",
-            ll="vopt",
             horizon=2050,
         )
 

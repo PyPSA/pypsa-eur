@@ -31,7 +31,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_solar_thermal_profiles", clusters=48)
+        snakemake = mock_snakemake("build_solar_thermal_profiles")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

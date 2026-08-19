@@ -7,39 +7,29 @@ run:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: perfect
+planning_horizons: [2020, 2025, 2030, 2035, 2040, 2045, 2050]
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
-# Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
-scenario:
-  ll:
-  - v1.0
-  clusters:
-  - 37
-  opts:
-  - ''
-  sector_opts:
-  - 1p5-4380H-T-H-B-I-A-dist1
-  - 1p7-4380H-T-H-B-I-A-dist1
-  - 2p0-4380H-T-H-B-I-A-dist1
-  planning_horizons:
-  - 2020
-  - 2025
-  - 2030
-  - 2035
-  - 2040
-  - 2045
-  - 2050
+electricity:
+  transmission_limit: v1.0
 
+clustering:
+  cluster_network:
+    n_clusters: 37
+  temporal:
+    averaging: 4380
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
+# update of IPCC 6th AR compared to the 1.5SR. (discussed here: https://twitter.com/JoeriRogelj/status/1424743828339167233)
+# 1.7 degree budget for Europe, global 800 Gt, assuming per capita share.
+# A scalar co2_budget.upper is an ANNUAL rate in Gt CO2/year, applied as one cumulative
+# constraint across all periods under perfect foresight (upper * total modelled years).
+# The old `1p7` token gave a cumulative TOTAL of 51.4 Gt over 2020-2050 (~7.0 modelled
+# years here), so the equivalent annual rate is 51.4 / 7.0 ~= 7.34.
 co2_budget:
-  # update of IPCC 6th AR compared to the 1.5SR. (discussed here: https://twitter.com/JoeriRogelj/status/1424743828339167233)
-  1p5: 34.2  # 25.7 # Budget in Gt CO2 for 1.5 for Europe, global 420 Gt, assuming per capita share
-  1p6: 43.259666  # 35  # Budget in Gt CO2 for 1.6 for Europe, global 580 Gt
-  1p7: 51.4  # 45  # Budget in Gt CO2 for 1.7 for Europe, global 800 Gt
-  2p0: 69.778  # 73.9 # Budget in Gt CO2 for 2 for Europe, global 1170 Gt
-
+  relative: false
+  upper: 7.34
 
 sector:
+  enabled: true
   min_part_load_fischer_tropsch: 0
   min_part_load_methanolisation: 0

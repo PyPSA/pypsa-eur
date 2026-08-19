@@ -19,9 +19,8 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_power_network_clustered",
-            clusters=128,
-            configfiles=["../../config/config.test.yaml"],
+            "plot_clustered_network",
+            configfiles=["../../config/test/config.electricity.yaml"],
         )
     set_scenario_config(snakemake)
 

@@ -356,14 +356,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_river_water_heat_potential",
-            clusters="39",
-            opts="",
-            ll="vopt",
-            sector_opts="",
-            planning_horizons=2050,
-        )
+        snakemake = mock_snakemake("build_river_water_heat_potential")
 
     # Configure logging and scenario
     configure_logging(snakemake)

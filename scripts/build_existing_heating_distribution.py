@@ -161,8 +161,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_existing_heating_distribution",
-            clusters=48,
-            planning_horizons=2050,
+            horizon=2050,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

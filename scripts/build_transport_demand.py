@@ -167,7 +167,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_transport_demand", clusters=128)
+        snakemake = mock_snakemake("build_transport_demand")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

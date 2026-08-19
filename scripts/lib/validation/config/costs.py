@@ -18,7 +18,7 @@ class _EmissionPricesConfig(ConfigModel):
 
     enable: bool = Field(
         False,
-        description="Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. Config setting can also be enabled with the keyword `Ep` in the `{opts}` wildcard for electricity-only runs.",
+        description="Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. For a static price, only enable this setting; for a time-varying price, also set `costs.emission_prices.dynamic` to True.",
     )
     co2: float | dict[int, float] = Field(
         0.0,
