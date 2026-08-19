@@ -1455,6 +1455,7 @@ rule time_aggregation:
             and config_provider("sector", "solar_thermal")(w)
             else []
         ),
+        # TODO: add cop and transport profiles, search for others in prepare_sectcor (like master considers them) 
     output:
         snapshot_weightings=resources("snapshot_weightings.csv"),
     log:

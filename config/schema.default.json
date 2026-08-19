@@ -783,9 +783,16 @@
       "description": "Configuration for `costs` settings.",
       "properties": {
         "year": {
-          "default": 2050,
-          "description": "Year for which to retrieve cost assumptions of `data/costs/primary/<version>/costs_<year>.csv`.",
-          "type": "integer"
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Year of the cost assumptions `data/costs/primary/<version>/costs_<year>.csv` used for all planning horizons. If null, each planning horizon uses the cost assumptions of its own year."
         },
         "social_discountrate": {
           "default": 0.02,
@@ -12088,9 +12095,16 @@
       "description": "Configuration for `costs` settings.",
       "properties": {
         "year": {
-          "default": 2050,
-          "description": "Year for which to retrieve cost assumptions of `data/costs/primary/<version>/costs_<year>.csv`.",
-          "type": "integer"
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Year of the cost assumptions `data/costs/primary/<version>/costs_<year>.csv` used for all planning horizons. If null, each planning horizon uses the cost assumptions of its own year."
         },
         "social_discountrate": {
           "default": 0.02,

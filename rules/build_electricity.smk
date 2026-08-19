@@ -675,7 +675,9 @@ rule build_hac_features:
 rule process_cost_data:
     input:
         network=resources("networks/simplified.nc"),
-        costs=rules.retrieve_cost_data.output["costs"],
+        costs=lambda w: rules.retrieve_cost_data.output["costs"].format(
+            horizon=cost_year(w)
+        ),
         custom_costs=config_provider("costs", "custom_cost_fn"),
     output:
         resources("costs_{horizon}_processed.csv"),
@@ -689,6 +691,7 @@ rule process_cost_data:
     params:
         costs=config_provider("costs"),
         max_hours=config_provider("electricity", "max_hours"),
+        cost_year=cost_year,
     script:
         scripts("process_cost_data.py")
 

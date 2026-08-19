@@ -1126,7 +1126,7 @@ industry:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
-  year: 2050
+  year:
   social_discountrate: 0.02
   fill_values:
     FOM: 0

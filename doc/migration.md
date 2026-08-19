@@ -387,13 +387,15 @@ The changes below are not renames. Even with an equivalent config the model itse
 changes, so do not expect to reproduce old numbers unless you act on them. Each item
 says how to get the old behaviour back, where that is possible.
 
-**Overnight runs now use per-horizon costs.** Every layer is costed with
-`costs_{horizon}_processed.csv`, and `costs.year` no longer influences composition.
-Previously an overnight run used `costs.year` (default 2050) regardless of the
-horizon, and in myopic and perfect runs the electricity layer used `costs.year` while
-the sector layer used the horizon. Wherever those two years differed, all costs,
-efficiencies and lifetimes change.
-*Old behaviour:* set `planning_horizons: [<old costs.year>]`.
+**Costs follow the planning horizon by default.** Every layer is costed with
+`costs_{horizon}_processed.csv`. Previously an overnight run used `costs.year`
+(default 2050) regardless of the horizon, and in myopic and perfect runs the
+electricity layer used `costs.year` while the sector layer used the horizon.
+Wherever those two years differed, all costs, efficiencies and lifetimes change.
+`costs.year` now defaults to `null` and acts as an override: set it to a year to cost
+*all* horizons with that year's assumptions, e.g. a 2050 horizon with conservative
+2030 cost assumptions. The override also selects which `planning_horizon` entries of
+`data/custom_costs.csv` apply.
 
 **Electricity-only runs are CO₂-capped by default**, and absolute caps are given in
 Gt instead of tonnes. A default electricity-only run therefore changes from
@@ -614,10 +616,7 @@ The collection rules were unified:
 
 `solve_networks` only asks for the solved network of the last horizon; the earlier
 horizons follow from the dependency chain. `compose_networks` expands over the full
-`planning_horizons` list, and so does `process_costs` — except under
-`foresight: overnight`, where it still derives a single file from `costs.year`.
-Composition always reads `costs_{horizon}_processed.csv`, so on an overnight run this
-collect target can build a cost file that the run itself never uses.
+`planning_horizons` list, and so does `process_costs`.
 
 If you target files directly:
 

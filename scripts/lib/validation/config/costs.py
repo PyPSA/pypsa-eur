@@ -61,9 +61,9 @@ class _FillValuesConfig(BaseModel):
 class CostsConfig(BaseModel):
     """Configuration for `costs` settings."""
 
-    year: int = Field(
-        2050,
-        description="Year for which to retrieve cost assumptions of `data/costs/primary/<version>/costs_<year>.csv`.",
+    year: int | None = Field(
+        None,
+        description="Year of the cost assumptions `data/costs/primary/<version>/costs_<year>.csv` used for all planning horizons. If null, each planning horizon uses the cost assumptions of its own year.",
     )
     social_discountrate: float = Field(
         0.02,

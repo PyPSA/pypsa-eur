@@ -10,19 +10,10 @@ localrules:
 
 rule process_costs:
     input:
-        lambda w: (
-            expand(
-                resources(
-                    f"costs_{config_provider('costs', 'year')(w)}_processed.csv"
-                ),
-                run=config["run"]["name"],
-            )
-            if config_provider("foresight")(w) == "overnight"
-            else expand(
-                resources("costs_{horizon}_processed.csv"),
-                run=config["run"]["name"],
-                horizon=config["planning_horizons"],
-            )
+        expand(
+            resources("costs_{horizon}_processed.csv"),
+            run=config["run"]["name"],
+            horizon=config["planning_horizons"],
         ),
 
 

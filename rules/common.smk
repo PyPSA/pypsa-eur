@@ -216,6 +216,11 @@ def input_custom_extra_functionality(w):
     return []
 
 
+def cost_year(w):
+    """Return the year of the cost assumptions used for the requested horizon."""
+    return config_provider("costs", "year")(w) or w.horizon
+
+
 def solved_previous_horizon(w):
     horizons = config_provider("planning_horizons")(w)
     i = horizons.index(int(w.horizon))
