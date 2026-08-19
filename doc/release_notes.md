@@ -207,7 +207,7 @@
   ([#2173](https://github.com/PyPSA/pypsa-eur/pull/2173)).
 
 * Fixed handling of `corine: false` for offshore technologies in [determine_availability_matrix_MD_UA][]
-  ([#2265](https://github.com/PyPSA/pypsa-eur/pull/2265).
+  ([#2265](https://github.com/PyPSA/pypsa-eur/pull/2265)).
 
 * Removed the explicit Dask `client.shutdown()` in [build_renewable_profiles][], which could turn a completed
   run into a spurious Snakemake failure on shared filesystems
@@ -220,7 +220,7 @@
   ([#2197](https://github.com/PyPSA/pypsa-eur/pull/2197)).
 
 * Added retries for interrupted WDPA and WDPA-marine downloads
-  ([#2238](https://github.com/PyPSA/pypsa-eur/pull/2238).
+  ([#2238](https://github.com/PyPSA/pypsa-eur/pull/2238)).
 
 * Fixed the URLs for the SCIGRID gas 1.1.2 archive and the synthetic electricity demand data on
   `data.pypsa.org` ([#2165](https://github.com/PyPSA/pypsa-eur/pull/2165)).
