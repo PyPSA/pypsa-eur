@@ -22,7 +22,7 @@ clustering:
   - [DE00, LUG1]
   - [GBNI, IE00]
   temporal:
-    averaging: 24
+    averaging: 24h
   simplify_network:
     remove_stubs: false
     remove_stubs_across_borders: false

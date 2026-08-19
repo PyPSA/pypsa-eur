@@ -149,7 +149,7 @@ rule solve_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")
 ```
 
 This triggers a workflow of multiple preceding jobs that depend on each rule's inputs and outputs.

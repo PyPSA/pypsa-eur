@@ -35,7 +35,7 @@ rule solve_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     script:
-        "../scripts/solve_network.py"
+        scripts("solve_network.py")
 
 
 rule solve_operations_network:
@@ -65,4 +65,4 @@ rule solve_operations_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     script:
-        "../scripts/solve_operations_network.py"
+        scripts("solve_operations_network.py")

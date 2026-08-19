@@ -20,7 +20,7 @@ if config["foresight"] != "perfect":
         message:
             "Plotting base power network"
         script:
-            "../scripts/plot_base_network.py"
+            scripts("plot_base_network.py")
 
     rule plot_clustered_network:
         input:
@@ -38,7 +38,7 @@ if config["foresight"] != "perfect":
         message:
             "Plotting clustered network clusters"
         script:
-            "../scripts/plot_power_network_clustered.py"
+            scripts("plot_power_network_clustered.py")
 
     rule plot_power_network:
         input:
@@ -59,7 +59,7 @@ if config["foresight"] != "perfect":
         message:
             "Plotting power network for {wildcards.horizon} planning horizon"
         script:
-            "../scripts/plot_power_network.py"
+            scripts("plot_power_network.py")
 
     rule plot_hydrogen_network:
         input:
@@ -80,7 +80,7 @@ if config["foresight"] != "perfect":
         message:
             "Plotting hydrogen network for {wildcards.horizon} planning horizon"
         script:
-            "../scripts/plot_hydrogen_network.py"
+            scripts("plot_hydrogen_network.py")
 
     rule plot_gas_network:
         input:
@@ -100,7 +100,7 @@ if config["foresight"] != "perfect":
         message:
             "Plotting methane network for {wildcards.horizon} planning horizon"
         script:
-            "../scripts/plot_gas_network.py"
+            scripts("plot_gas_network.py")
 
     rule plot_balance_map:
         input:
@@ -121,7 +121,7 @@ if config["foresight"] != "perfect":
         message:
             "Plotting balance map for {wildcards.horizon} planning horizon and {wildcards.carrier} carrier"
         script:
-            "../scripts/plot_balance_map.py"
+            scripts("plot_balance_map.py")
 
     rule plot_balance_map_interactive:
         input:
@@ -211,7 +211,7 @@ rule make_summary:
     message:
         "Creating optimization results summary statistics"
     script:
-        "../scripts/make_summary.py"
+        scripts("make_summary.py")
 
 
 rule plot_summary:
@@ -222,9 +222,9 @@ rule plot_summary:
         eurostat=resources("eurostat_energy_balances.csv"),
         co2=rules.retrieve_ghg_emissions.output["csv"],
     output:
-        costs=RESULTS + "graphs/costs.svg",
-        energy=RESULTS + "graphs/energy.svg",
-        balances=RESULTS + "graphs/balances_energy.svg",
+        costs=RESULTS + "graphs/costs.pdf",
+        energy=RESULTS + "graphs/energy.pdf",
+        balances=RESULTS + "graphs/balances_energy.pdf",
     log:
         RESULTS + "logs/plot_summary.log",
     threads: 2
@@ -241,7 +241,7 @@ rule plot_summary:
     message:
         "Plotting summary statistics and results"
     script:
-        "../scripts/plot_summary.py"
+        scripts("plot_summary.py")
 
 
 rule plot_balance_timeseries:
@@ -264,7 +264,7 @@ rule plot_balance_timeseries:
     message:
         "Plotting energy balance time series for {wildcards.horizon} planning horizon"
     script:
-        "../scripts/plot_balance_timeseries.py"
+        scripts("plot_balance_timeseries.py")
 
 
 rule plot_heatmap_timeseries:
@@ -287,7 +287,7 @@ rule plot_heatmap_timeseries:
     message:
         "Plotting heatmap time series visualization for {wildcards.horizon} planning horizon"
     script:
-        "../scripts/plot_heatmap_timeseries.py"
+        scripts("plot_heatmap_timeseries.py")
 
 
 STATISTICS_BARPLOTS = [

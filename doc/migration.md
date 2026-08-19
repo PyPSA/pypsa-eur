@@ -18,7 +18,8 @@ workflow runs through five stages with fixed, readable names:
 base → simplified → clustered → composed_{horizon} → solved_{horizon}
 ```
 
-Only one wildcard is left: `{horizon}`, the planning year.
+Only two wildcards are left: `{horizon}`, the planning year, and `{run}`, which
+appears when `run.scenarios.enable` is true.
 
 All three foresight modes use these same stages. They differ only in how they
 loop over the horizons:
@@ -170,7 +171,7 @@ have no effect at all.
 | Old token | New config |
 |--------------|-----------|
 | `Co2L<x>` | `co2_budget.upper` (see [CO₂](#co2-budget)) |
-| `<n>h` | `clustering.temporal.averaging: <n>` |
+| `<n>h` | `clustering.temporal.averaging: <n>h` |
 | `<n>seg` | `clustering.temporal.segmentation: <n>` |
 | `CH4L<x>` | `electricity.gaslimit_enable: true` + `electricity.gaslimit` |
 | `Ep<x>` | `costs.emission_prices.enable: true` + `costs.emission_prices.co2` |
@@ -271,9 +272,9 @@ in each mode.
 ### Temporal resolution {#temporal}
 
 `clustering.temporal.resolution_elec` and `resolution_sector` are replaced by three
-integer options under `clustering.temporal`, of which you may set only one:
+options under `clustering.temporal`, of which you may set only one:
 
-- `averaging: <n>` averages over `n` hours,
+- `averaging: <offset>` averages over a pandas offset such as `3h` or `1d`,
 - `segmentation: <n>` aggregates the year into `n` segments using `tsam`,
 - `representative: <n>` keeps every `n`-th snapshot.
 
@@ -284,8 +285,8 @@ may be set`.
 
 | Old string | New |
 |---------------|-----|
-| `resolution_elec: 24h` / `resolution_sector: 24H` | `averaging: 24` |
-| `resolution_sector: 8760h` | `averaging: 8760` |
+| `resolution_elec: 24h` / `resolution_sector: 24H` | `averaging: 24h` |
+| `resolution_sector: 8760h` | `averaging: 8760h` |
 | `resolution_*: 4380seg` | `segmentation: 4380` |
 | `resolution_*: 3sn` | `representative: 3` |
 | `resolution_*: false` | leave all three `false` |
@@ -363,7 +364,7 @@ clustering:
   cluster_network:
     n_clusters: 37
   temporal:
-    averaging: 24
+    averaging: 24h
 
 co2_budget:
   emissions_scope: CO2
@@ -455,7 +456,7 @@ results rather than comparable ones. Three points in particular:
   the cross-border flows. You cannot recover the old behaviour from the config; the
   conversion code no longer exists.
 - **Per-horizon maps are not produced.** In this mode only the summary CSVs and the
-  `graphs/*.svg` summary plots are created.
+  `graphs/*.pdf` summary plots are created.
 - **The summary CSVs changed**, both in content and in which files exist. See
   [Summary outputs](#summaries).
 
@@ -585,9 +586,7 @@ dropped and `{planning_horizons}` becomes `{horizon}`. For example
 | `results/maps/static/base_s_…-costs-all_{planning_horizons}.pdf` | `results/maps/static/power_network_{horizon}.pdf` |
 | `results/maps/static/base_s_…-h2_network_{planning_horizons}.pdf` | `results/maps/static/h2_network_{horizon}.pdf` |
 | `results/maps/interactive/base_s_…_{planning_horizons}-balance_map_{carrier}.html` | `results/maps/interactive/balance_map_{carrier}_{horizon}.html` |
-| `results/graphs/costs.pdf` | `results/graphs/costs.svg` |
-| `results/graphs/energy.pdf` | `results/graphs/energy.svg` |
-| `results/graphs/balances-energy.pdf` | `results/graphs/balances_energy.svg` (note the underscore) |
+| `results/graphs/balances-energy.pdf` | `results/graphs/balances_energy.pdf` (note the underscore) |
 | `results/graphs/cop_profiles_s_{clusters}_{planning_horizons}.html` | `results/graphs/cop_profiles_{horizon}.html` |
 | `results/graphics/balance_timeseries/s_{clusters}_…_{planning_horizons}/` | `results/graphs/balance_timeseries_{horizon}/` |
 | `results/graphics/heatmap_timeseries/s_{clusters}_…_{planning_horizons}/` | `results/graphs/heatmap_timeseries_{horizon}/` |

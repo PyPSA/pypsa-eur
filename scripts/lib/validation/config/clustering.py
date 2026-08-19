@@ -10,7 +10,8 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#cluste
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pandas.tseries.frequencies import to_offset
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -99,9 +100,9 @@ class _AggregationStrategiesConfig(BaseModel):
 class _TemporalConfig(BaseModel):
     """Configuration for `clustering.temporal` settings (at most one may be set)."""
 
-    averaging: Literal[False] | int = Field(
+    averaging: Literal[False] | str = Field(
         False,
-        description="Average the time series over every `n` hours.",
+        description="Average the time series over the given pandas offset, e.g. `3h` or `1d`.",
     )
     segmentation: Literal[False] | int = Field(
         False,
@@ -111,6 +112,28 @@ class _TemporalConfig(BaseModel):
         False,
         description="Use every `n`-th snapshot as representative.",
     )
+
+    @field_validator("averaging")
+    @classmethod
+    def check_offset(cls, value: bool | str) -> bool | str:
+        if value:
+            to_offset(value)
+        return value
+
+    @model_validator(mode="after")
+    def check_mutually_exclusive(self):
+        fields = {
+            "averaging": self.averaging,
+            "segmentation": self.segmentation,
+            "representative": self.representative,
+        }
+        active = [name for name, value in fields.items() if value]
+        if len(active) > 1:
+            raise ValueError(
+                "clustering.temporal: only one of averaging, segmentation and "
+                f"representative may be set, got {active}."
+            )
+        return self
 
 
 class ClusteringConfig(BaseModel):

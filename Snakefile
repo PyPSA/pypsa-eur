@@ -110,9 +110,9 @@ include: "rules/development.smk"
 
 # Core outputs that always run
 CORE_OUTPUTS = [
-    RESULTS + "graphs/costs.svg",
-    RESULTS + "graphs/energy.svg",
-    RESULTS + "graphs/balances_energy.svg",
+    RESULTS + "graphs/costs.pdf",
+    RESULTS + "graphs/energy.pdf",
+    RESULTS + "graphs/balances_energy.pdf",
 ]
 
 # Network and timeseries plots (excluded for perfect foresight)

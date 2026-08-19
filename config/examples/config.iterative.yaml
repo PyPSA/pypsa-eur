@@ -52,7 +52,7 @@ clustering:
   cluster_network:
     n_clusters: 5
   temporal:
-    averaging: 24
+    averaging: 24h
 
 sector:
   enabled: true

@@ -96,7 +96,7 @@ renewable:
 
 clustering:
   temporal:
-    averaging: 24
+    averaging: 24h
   cluster_network:
     algorithm: kmeans
     n_clusters: 5 # Small number for testing

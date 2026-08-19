@@ -62,7 +62,7 @@ rule build_solar_rooftop_potentials:
     message:
         "Building solar rooftop potentials"
     script:
-        "../scripts/build_solar_rooftop_potentials.py"
+        scripts("build_solar_rooftop_potentials.py")
 
 
 rule build_simplified_population_layouts:
@@ -81,7 +81,7 @@ rule build_simplified_population_layouts:
     resources:
         mem_mb=10000,
     script:
-        "../scripts/build_population_layouts.py"
+        scripts("build_population_layouts.py")
 
 
 rule build_gas_network:
@@ -164,7 +164,7 @@ rule build_daily_heat_demand:
     message:
         "Building daily heat demand profiles"
     script:
-        "../scripts/build_daily_heat_demand.py"
+        scripts("build_daily_heat_demand.py")
 
 
 rule build_hourly_heat_demand:
@@ -188,7 +188,7 @@ rule build_hourly_heat_demand:
     message:
         "Building hourly heat demand profiles from daily demand"
     script:
-        "../scripts/build_hourly_heat_demand.py"
+        scripts("build_hourly_heat_demand.py")
 
 
 rule build_temperature_profiles:
@@ -214,7 +214,7 @@ rule build_temperature_profiles:
     message:
         "Building temperature profiles"
     script:
-        "../scripts/build_temperature_profiles.py"
+        scripts("build_temperature_profiles.py")
 
 
 rule build_central_heating_temperature_profiles:
@@ -715,6 +715,8 @@ rule build_direct_heat_source_utilisation_profiles:
         logs("build_direct_heat_source_utilisation_profiles_{horizon}.log"),
     benchmark:
         benchmarks("build_direct_heat_source_utilisation_profiles/s_{horizon}")
+    resources:
+        mem_mb=20000,
     params:
         direct_utilisation_heat_sources=config_provider(
             "sector", "district_heating", "direct_utilisation_heat_sources"
@@ -1126,6 +1128,9 @@ rule build_industrial_production_per_country_tomorrow:
         logs("build_industrial_production_per_country_tomorrow_{horizon}.log"),
     benchmark:
         (benchmarks("build_industrial_production_per_country_tomorrow_{horizon}"))
+    threads: 1
+    resources:
+        mem_mb=1000,
     params:
         industry=config_provider("industry"),
     message:
@@ -1199,6 +1204,9 @@ rule build_industrial_energy_demand_per_node:
         logs("build_industrial_energy_demand_per_node_{horizon}.log"),
     benchmark:
         (benchmarks("build_industrial_energy_demand_per_node/s_{horizon}"))
+    threads: 1
+    resources:
+        mem_mb=1000,
     message:
         "Building industrial energy demand per network node for {wildcards.horizon} planning horizon"
     script:
@@ -1347,6 +1355,9 @@ if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
             logs("build_mobility_profiles.log"),
         benchmark:
             benchmarks("build_mobility_profiles")
+        threads: 1
+        resources:
+            mem_mb=5000,
         script:
             scripts("build_mobility_profiles.py")
 
@@ -1419,6 +1430,9 @@ rule build_existing_heating_distribution:
         logs("build_existing_heating_distribution_{horizon}.log"),
     benchmark:
         benchmarks("build_existing_heating_distribution/_{horizon}")
+    threads: 1
+    resources:
+        mem_mb=2000,
     params:
         baseyear=config_provider("planning_horizons", default=0),
         sector=config_provider("sector"),

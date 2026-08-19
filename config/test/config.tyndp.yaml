@@ -71,7 +71,7 @@ clustering:
     remove_islands: true
     aggregate_to_tyndp: true
   temporal:
-    averaging: 24
+    averaging: 24h
 
 solving:
   solver:

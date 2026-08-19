@@ -110,7 +110,7 @@ clustering:
   - offwind-ac
   - coal
   temporal:
-    averaging: 24
+    averaging: 24h
   cluster_network:
     n_clusters: 5
 

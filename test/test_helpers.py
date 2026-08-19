@@ -5,8 +5,10 @@
 import pandas as pd
 import pypsa
 import pytest
+from pydantic import ValidationError
 
-from scripts._helpers import rename_network_component
+from scripts._helpers import get_temporal_resolution, rename_network_component
+from scripts.lib.validation.config.clustering import _TemporalConfig
 
 
 def _build_network_with_generators() -> pypsa.Network:
@@ -54,3 +56,27 @@ def test_rename_network_component_rejects_missing_keys():
 
     with pytest.raises(KeyError, match="missing keys"):
         rename_network_component(network, "Generator", rename_map)
+
+
+@pytest.mark.parametrize(
+    ("temporal", "expected"),
+    [
+        ({"averaging": "24h"}, ("averaging", "24h")),
+        ({"averaging": "1d"}, ("averaging", "1d")),
+        ({"segmentation": 4380}, ("segmentation", 4380)),
+        ({"representative": 3}, ("representative", 3)),
+        ({}, None),
+    ],
+)
+def test_get_temporal_resolution(temporal, expected):
+    config = _TemporalConfig(**temporal)
+    assert get_temporal_resolution(config.model_dump()) == expected
+
+
+@pytest.mark.parametrize(
+    "temporal",
+    [{"averaging": "banana"}, {"averaging": "24h", "segmentation": 4380}],
+)
+def test_temporal_config_rejects_invalid_settings(temporal):
+    with pytest.raises(ValidationError):
+        _TemporalConfig(**temporal)

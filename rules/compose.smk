@@ -234,4 +234,4 @@ rule compose_network:
     message:
         "Composing network for horizon {wildcards.horizon}"
     script:
-        "../scripts/compose_network.py"
+        scripts("compose_network.py")

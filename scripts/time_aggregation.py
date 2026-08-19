@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     # Plain resampling
     elif resolution[0] == "averaging":
-        offset = f"{resolution[1]}h"
+        offset = resolution[1]
         logger.info(f"Averaging every {offset}")
 
         # Resample years separately to handle non-contiguous years

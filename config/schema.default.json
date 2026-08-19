@@ -643,11 +643,11 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "integer"
+                  "type": "string"
                 }
               ],
               "default": false,
-              "description": "Average the time series over every `n` hours."
+              "description": "Average the time series over the given pandas offset, e.g. `3h` or `1d`."
             },
             "segmentation": {
               "anyOf": [
@@ -8275,11 +8275,11 @@
               "type": "boolean"
             },
             {
-              "type": "integer"
+              "type": "string"
             }
           ],
           "default": false,
-          "description": "Average the time series over every `n` hours."
+          "description": "Average the time series over the given pandas offset, e.g. `3h` or `1d`."
         },
         "segmentation": {
           "anyOf": [
@@ -12421,11 +12421,11 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "integer"
+                  "type": "string"
                 }
               ],
               "default": false,
-              "description": "Average the time series over every `n` hours."
+              "description": "Average the time series over the given pandas offset, e.g. `3h` or `1d`."
             },
             "segmentation": {
               "anyOf": [

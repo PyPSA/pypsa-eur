@@ -16,7 +16,7 @@ clustering:
   cluster_network:
     n_clusters: 37
   temporal:
-    averaging: 4380
+    averaging: 4380h
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 # update of IPCC 6th AR compared to the 1.5SR. (discussed here: https://twitter.com/JoeriRogelj/status/1424743828339167233)

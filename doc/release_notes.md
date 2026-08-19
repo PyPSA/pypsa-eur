@@ -5,13 +5,13 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Streamlined workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)). See the [migration guide](migration.md) for detailed migration guidance.
+* Streamlined workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)): overnight, myopic, and perfect foresight are now handled by a unified set of rules for both electricity-only and sector-coupled models. See the [migration guide](migration.md) for detailed migration guidance.
 
     **Workflow structure:**
 
     - The network pipeline now follows a 4-stage progression: `base.nc` → `simplified.nc` → `clustered.nc` → `composed_{horizon}.nc` → `solved_{horizon}.nc`.
     - Cryptic filenames like `elec_s_37_lv1.25_3H_2030.nc` are replaced with readable names. Scenario parameters (clusters, opts, sector_opts) are now set via configuration rather than filename wildcards.
-    - A unified `compose_network` rule handles greenfield, brownfield, and perfect foresight network assembly for both electricity-only and sector-coupled models.
+    - A unified `compose_network` rule handles overnight, myopic, and perfect foresight network assembly for both electricity-only and sector-coupled models.
     - A single `solve_network` rule replaces the separate `solve_electricity.smk`, `solve_overnight.smk`, `solve_myopic.smk`, and `solve_perfect.smk` rule files (now deleted).
     - **Electricity-only models now support myopic and perfect foresight**, not just overnight optimization. New test configs `config.electricity-myopic.yaml` and `config.electricity-perfect.yaml` added.
     - **Perfect foresight runs on PyPSA ≥1.0 again.** The previous `prepare_perfect_foresight.py` raised `PyPSA versions >=1.0 are not supported for perfect foresight`; perfect foresight has been ported to the current PyPSA API so it is usable once more.
@@ -39,7 +39,7 @@
     - Inputs to `compose_network` are already regionally clustered and simplified to be processed without further aggregation.
     - Data files that represent a final version of themselves don't have dedicated suffixes (e.g. regionally aggregated shapes are stored at `onshore_regions.geojson`). Ancestor files that are intermediate steps in the processing chain may rely on suffixes (e.g. `onshore_shapes_simplified.geojson`).
 
-* Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive integer options: `averaging` (average over `n` hours), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
+* Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive options: `averaging` (average over a pandas offset such as `24h`), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
 
 * Adding option to include the compression step in carbon dioxide transport before transporting in dense phase and including electricity demand for post combustion carbon capture. Adjusting the capital costs for post combustion capture that differs depending on the carbon dioxide percentage in the flue gas ([#2161](https://github.com/PyPSA/pypsa-eur/pull/2161)).
 
