@@ -96,7 +96,8 @@ plugins:
           show_source: false
           show_root_heading: false
           show_root_full_path: false
-          show_root_toc_entry: false
+          show_root_toc_entry: true
+          heading_level: 6
           members: false
           allow_inspection: true
         inventories:
@@ -130,6 +131,7 @@ markdown_extensions:
 - md_in_html
 - toc:
     permalink: true
+    toc_depth: 5
 
 hooks:
 - doc/hooks.py
