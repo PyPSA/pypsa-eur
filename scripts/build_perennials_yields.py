@@ -2,23 +2,37 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Reproject NUTS2-level 1st-generation (1G) biofuel and perennial crop yields
-(from ``build_perennials_crop_yields_nuts2.py``) onto the clustered network
+Reproject NUTS2-level 1st-generation (1G) biofuel and perennial crop YIELDS
+(from ``build_perennials_yields_eurostat_average.py``) onto the clustered network
 regions, for use by ``add_perennials()`` in ``prepare_sector_network.py``.
 
-NUTS2 yields (MWh/ha/y for 1G biofuels, t/ha/y for perennials) are mapped to
-clustered regions via an area-weighted overlay (NUTS2 geometries intersected
-with cluster region geometries, weighted by intersection area); NUTS2
-regions not covered by Eurostat data (non-EU countries, small islands,
-city-states) are first filled from the nearest valid NUTS2 centroid.
-Resulting columns are then grouped into biomass classes
-(``resolve_biomass_classes()``) to match the class structure used by
-``build_biomass_potentials.py``.
+Output units, NOT an area or a potential
+-----------------------------------------
+The output CSV holds per-hectare yield RATES, not land area or a CO2
+potential: MWh/ha/y for the 1G biofuel crop columns (cereals, sugar beet,
+rapeseed) and t/ha/y for the ``perennials`` column. The land area available
+for conversion to perennial grasses, and the resulting CO2 sequestration
+potential, are only derived later - see "Downstream usage" below.
 
-``add_perennials()`` later combines this script's clustered-region 1G yields
-with the ENSPRESO 1G biomass potential (MWh/y) to back out the land area
-available for conversion to perennial grasses, and converts that area into a
-CO2 sequestration potential via ``perennials.potential_co2`` (tCO2/ha/y).
+Method
+------
+NUTS2 yields are mapped to clustered regions via an area-weighted average
+over the NUTS2/region overlay (NUTS2 geometries intersected with cluster
+region geometries, weighted by intersection area) - see
+``convert_nuts2_to_regions_yields()``. NUTS2 regions not covered by
+Eurostat data (non-EU countries, small islands, city-states) are first
+filled from the nearest valid NUTS2 centroid - see
+``impute_missing_values()``. Resulting columns are then grouped into
+biomass classes (``resolve_biomass_classes()``) to match the class
+structure used by ``build_biomass_potentials.py``.
+
+Downstream usage
+-----------------
+``add_perennials()`` divides the ENSPRESO 1G biomass potential (MWh/y, an
+extensive quantity from ``build_biomass_potentials.py``) by this script's
+1G yields (MWh/ha/y) to back out the land area (ha) available for
+conversion to perennial grasses, then converts that area into a CO2
+sequestration potential via ``perennials.sequestration_co2`` (tCO2e/ha/y).
 
 Outputs a single CSV with one column per crop class (cereals, sugar beet,
 rapeseed, perennials) indexed by clustered region name.
@@ -28,36 +42,42 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, resolve_biomass_classes, set_scenario_config
+
+from scripts._helpers import (
+    configure_logging,
+    resolve_biomass_classes,
+    set_scenario_config,
+)
+from scripts.build_biomass_potentials import build_nuts2_shapes
 
 logger = logging.getLogger(__name__)
 
 
-def build_nuts2_shapes():
-    """
-    - load NUTS2 geometries
-    - add RS, AL, BA country shapes (not covered in NUTS 2013)
-    - consistently name ME, MK
-    """
-    nuts2 = gpd.GeoDataFrame(
-        gpd.read_file(snakemake.input.nuts2).set_index("NUTS_ID").geometry
-    )
-
-    countries = gpd.read_file(snakemake.input.country_shapes).set_index("name")
-    missing_iso2 = countries.index.intersection(["AL", "RS", "XK", "BA"])
-    missing = countries.loc[missing_iso2]
-
-    nuts2.rename(index={"ME00": "ME", "MK00": "MK"}, inplace=True)
-
-    return pd.concat([nuts2, missing])
-
-
-def area(gdf):
-    return gdf.to_crs(epsg=3035).area.div(1e6)
-
-
 def impute_missing_values(df_nuts2, missing_shapes, yield_cols):
+    """
+    Fill missing yield values for NUTS2 regions not covered by Eurostat data
+    (non-EU countries, small islands, city-states) by copying the values from
+    the nearest NUTS2 region that does have valid (non-NaN) yields.
 
+    Nearest is determined by centroid distance in an equal-area CRS (EPSG:3035).
+
+    Parameters
+    ----------
+    df_nuts2 : gpd.GeoDataFrame
+        NUTS2 geometries joined with yield columns; rows for regions without
+        Eurostat coverage are entirely NaN in ``yield_cols``.
+    missing_shapes : gpd.GeoDataFrame
+        Geometries of the NUTS2 (or country-level substitute) regions to
+        impute, indexed the same way as ``df_nuts2``.
+    yield_cols : list of str
+        Columns in ``df_nuts2`` to impute.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        One row per entry in ``missing_shapes``, with ``yield_cols`` filled
+        from the nearest valid NUTS2 neighbour.
+    """
     # Keep only rows that have valid yields (drop NaN rows!)
     df_valid = df_nuts2.dropna(subset=yield_cols).copy()
 
@@ -91,12 +111,35 @@ def impute_missing_values(df_nuts2, missing_shapes, yield_cols):
 
 def convert_nuts2_to_regions_yields(df_nuts2, regions, yield_cols=None):
     """
-    Convert NUTS2-level yields (intensive) to PyPSA regions using:
+    Convert NUTS2-level yields (intensive, e.g. MWh/ha/y or t/ha/y) to
+    PyPSA-Eur clustered regions via an area-weighted average over the
+    NUTS2/region overlay:
 
         y_n = Σ_i (y_i * A_i∩n) / Σ_i A_i∩n
 
+    Unlike an extensive quantity (a total, e.g. MWh), a yield is a rate and
+    must be area-weighted-averaged rather than redistributed by area share
+    - see ``convert_nuts2_to_regions`` in ``build_biomass_potentials.py`` for
+    the extensive-quantity equivalent.
+
     Only NUTS2 rows with non-NaN yields are used. Regions with no
     overlapping valid NUTS2 get NaN.
+
+    Parameters
+    ----------
+    df_nuts2 : gpd.GeoDataFrame
+        NUTS2 geometries joined with yield columns.
+    regions : gpd.GeoDataFrame
+        PyPSA-Eur clustered onshore regions, with a ``name`` column.
+    yield_cols : list of str, optional
+        Columns in ``df_nuts2`` to convert. Defaults to all columns except
+        ``geometry`` and ``NUTS_ID``.
+
+    Returns
+    -------
+    pd.DataFrame
+        Area-weighted-average yields indexed by region name, one row per
+        entry in ``regions``.
     """
 
     nuts = df_nuts2.copy()
@@ -147,10 +190,10 @@ def convert_nuts2_to_regions_yields(df_nuts2, regions, yield_cols=None):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_perennials_potentials",
+            "build_perennials_yields",
             clusters="39",
             planning_horizons=2050,
         )
@@ -159,7 +202,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     regions = gpd.read_file(snakemake.input.regions_onshore)
-    nuts2 = build_nuts2_shapes()
+    nuts2 = build_nuts2_shapes(snakemake.input.nuts2, snakemake.input.country_shapes)
 
     yields = pd.read_csv(snakemake.input.perennials_yields_1G_biofuels, index_col=0)
 

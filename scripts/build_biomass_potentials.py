@@ -184,17 +184,15 @@ def disaggregate_nuts0(bio):
     return bio
 
 
-def build_nuts2_shapes():
+def build_nuts2_shapes(nuts2_fn, country_shapes_fn):
     """
     - load NUTS2 geometries
     - add RS, AL, BA country shapes (not covered in NUTS 2013)
     - consistently name ME, MK
     """
-    nuts2 = gpd.GeoDataFrame(
-        gpd.read_file(snakemake.input.nuts2).set_index("NUTS_ID").geometry
-    )
+    nuts2 = gpd.GeoDataFrame(gpd.read_file(nuts2_fn).set_index("NUTS_ID").geometry)
 
-    countries = gpd.read_file(snakemake.input.country_shapes).set_index("name")
+    countries = gpd.read_file(country_shapes_fn).set_index("name")
     missing_iso2 = countries.index.intersection(["AL", "RS", "XK", "BA"])
     missing = countries.loc[missing_iso2]
 
@@ -378,7 +376,7 @@ if __name__ == "__main__":
 
     enspreso = disaggregate_nuts0(enspreso)
 
-    nuts2 = build_nuts2_shapes()
+    nuts2 = build_nuts2_shapes(snakemake.input.nuts2, snakemake.input.country_shapes)
 
     df_nuts2 = gpd.GeoDataFrame(nuts2.geometry).join(enspreso)
 

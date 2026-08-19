@@ -920,7 +920,7 @@ rule build_biomass_potentials:
         scripts("build_biomass_potentials.py")
 
 
-rule build_perennials_yields_nuts_file:
+rule build_perennials_yields_eurostat_average:
     input:
         nuts2021=rules.retrieve_eu_nuts_2021.output.shapes_level_2,
         crops_nuts2=rules.retrieve_co2_removal_data.output.eurostat_crops_nuts2,
@@ -929,12 +929,12 @@ rule build_perennials_yields_nuts_file:
     output:
         yields_all=resources("perennials_yields_1G_biofuels.csv"),
     log:
-        logs("build_perennials_yields_nuts_file.log"),
+        logs("build_perennials_yields_eurostat_average.log"),
     script:
-        scripts("build_perennials_crop_yields_nuts2.py")
+        scripts("build_perennials_yields_eurostat_average.py")
 
 
-rule build_perennial_potentials:
+rule build_perennials_yields:
     params:
         biomass=config_provider("biomass"),
     input:
@@ -945,11 +945,11 @@ rule build_perennial_potentials:
     output:
         csv_file=resources("perennials_yields_1G_biofuels_s_{clusters}.csv"),
     log:
-        logs("build_perennial_potentials_s_{clusters}.log"),
+        logs("build_perennials_yields_s_{clusters}.log"),
     resources:
         mem_mb=8000,
     script:
-        scripts("build_perennials_potentials.py")
+        scripts("build_perennials_yields.py")
 
 
 rule build_biomass_transport_costs:

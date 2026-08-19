@@ -1258,7 +1258,7 @@ def add_perennials(n, costs):
     potential already allocated to 1G biofuels (``biomass_potentials``,
     MWh/y) divided by the 1G crop yield (MWh/ha/y) at that node, giving a
     displaced area in ha; multiplying by a fixed CO2 sequestration rate per
-    hectare (``perennials.potential_co2``) gives the store's CO2 potential.
+    hectare (``perennials.sequestration_co2``) gives the store's CO2 potential.
     A single "co2 perennials" Link models the harvesting process: CO2 drawn
     from the atmosphere (bus0) is converted into biogas (bus3) and stored CO2
     (bus1), with capacity restricted to the April-October harvesting season
@@ -1270,7 +1270,7 @@ def add_perennials(n, costs):
         The PyPSA network container object
     costs : pd.DataFrame
         Costs and parameters for different technologies. Must contain a
-        'perennials gbr' entry with 'electricity-input', 'biogas-output',
+        'perennials refining' entry with 'electricity-input', 'biogas-output',
         'capital_cost', 'VOM', and 'lifetime' parameters
 
     Returns
@@ -1284,9 +1284,9 @@ def add_perennials(n, costs):
     Reads ``snakemake.input.biomass_potentials`` and
     ``snakemake.input.perennials_yields_1G_biofuels`` (NUTS2-derived crop
     yields aggregated to clustered network regions, see
-    ``build_perennials_crop_yields_nuts2.py`` and
-    ``build_perennials_potentials.py``), and
-    ``snakemake.config["perennials"]["potential_co2"]``.
+    ``build_perennials_yields_eurostat_average.py`` and
+    ``build_perennials_yields.py``), and
+    ``snakemake.config["perennials"]["sequestration_co2"]``.
     """
 
     logger.info("Adding perennials.")
@@ -1295,57 +1295,58 @@ def add_perennials(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
     perennials_yields_1G_biofuels = pd.read_csv(snakemake.input.perennials_yields_1G_biofuels).set_index("name")
 
-    # calculate CO2 sequestration per tDM perennials
-    perennial_CO2_seq = perennials_yields_1G_biofuels["perennials"] / snakemake.config["perennials"]["potential_co2"] # (tDM/tCO2 seq)
-
-    # calculate perennials potential based on conversion on first generation biofuels
-    perennials_area_spatial = (biomass_potentials.filter(regex='biofuels_1G') / perennials_yields_1G_biofuels.filter(regex='biofuels_1G')).sum(axis=1)
+    # calculate perennials potential based on the conversion on first generation biofuels for equal area
+    perennials_area = (biomass_potentials.filter(regex='biofuels_1G') / perennials_yields_1G_biofuels.filter(regex='biofuels_1G')).sum(axis=1)
     # (MWh/y) / (MWh / ha / y) = (ha) returns the area used by sum of the 3 biofuels_1G classes which can be assigned for perennials
-    perennials_potentials_spatial = perennials_area_spatial * snakemake.config["perennials"]["potential_co2"]  # (tCO2seq)  =  (ha) * (tCO2 seq/ha)
+    perennials_potentials = perennials_area * snakemake.config["perennials"]["sequestration_co2"]  # (tCO2seq)  =  (ha) * (tCO2 seq/ha)
 
     nodes = pop_layout.index
     n.add("Carrier", "co2 perennials")
 
     n.add(
        "Bus",
-       nodes + " perennials co2 store",
+       nodes,
+       suffix=" co2 perennials",
        location=nodes,
        carrier="co2 perennials",
        unit="t_co2",
     )
 
+    # calculate CO2 sequestration per tDM perennials
+    perennial_CO2_seq = perennials_yields_1G_biofuels["perennials"] / snakemake.config["perennials"]["sequestration_co2"] # (tDM/tCO2 seq)
+
     # calculate biogas production based on harvesting time (in month)
-    df_gbr = pd.DataFrame(index=n.snapshots, columns=["harvest"])
-    df_gbr["harvest"] = df_gbr.index.month.isin([4, 5, 6, 7, 8, 9, 10]).astype(int)
+    df_harvest = pd.DataFrame(index=n.snapshots, columns=["harvest"])
+    df_harvest["harvest"] = df_harvest.index.month.isin([4, 5, 6, 7, 8, 9, 10]).astype(int)
     p_max_pu = pd.DataFrame(index=n.snapshots, columns=nodes)
     for node in nodes:
-        p_max_pu[node] = df_gbr["harvest"]
+        p_max_pu[node] = df_harvest["harvest"]
 
     n.add(
        "Link",
        nodes,
-       suffix=" perennials GBR",
+       suffix=" perennials refining",
        bus0="co2 atmosphere",
-       bus1=nodes + " perennials co2 store",
+       bus1=nodes + " co2 perennials",
        bus2=nodes.values,
        bus3=spatial.gas.biogas,
        efficiency=1,
-       efficiency2=-costs.at["perennials gbr", "electricity-input"] * perennial_CO2_seq,
-       efficiency3=costs.at["perennials gbr", "biogas-output"] * perennial_CO2_seq,
+       efficiency2=-costs.at["perennials refining", "electricity-input"] * perennial_CO2_seq,
+       efficiency3=costs.at["perennials refining", "biogas-output"] * perennial_CO2_seq,
        carrier="co2 perennials",
        p_nom_extendable=True,
        p_max_pu=p_max_pu,
-       capital_cost=costs.at["perennials gbr", "capital_cost"] * perennial_CO2_seq,
-       marginal_cost=costs.at["perennials gbr", "VOM"] * perennial_CO2_seq,
-       lifetime=costs.at["perennials gbr", "lifetime"],
+       capital_cost=costs.at["perennials refining", "capital_cost"] * perennial_CO2_seq,
+       marginal_cost=costs.at["perennials refining", "VOM"] * perennial_CO2_seq,
+       lifetime=costs.at["perennials refining", "lifetime"],
     )
 
     n.add(
        "Store",
        nodes,
-       suffix=" CO2s_perennials",
-       bus=nodes + " perennials co2 store",
-       e_nom=perennials_potentials_spatial.values,
+       suffix=" CO2s perennials",
+       bus=nodes + " co2 perennials",
+       e_nom=perennials_potentials.values,
        carrier="co2 perennials",
        e_cyclic=False,
     )

@@ -3,9 +3,19 @@
 # SPDX-License-Identifier: MIT
 """
 Retrieve crop harvest data from the Eurostat API (dataset ``apro_cpshr``) at
-NUTS2 and NUTS0 resolution, compute area-weighted yields for 1st-generation
-biofuel feedstocks and perennial grasses, and harmonize the results to the
-NUTS2021 region definitions used by PyPSA-Eur.
+NUTS2 and NUTS0 resolution, and compute production-weighted average yields
+(t/ha, then converted to MWh/ha for 1G biofuel crops) per NUTS2 region for
+1st-generation biofuel feedstocks and perennial grasses.
+
+"Eurostat average" in the name refers to this production-weighted averaging
+across crop codes and years - not the geometric area-weighted overlay used
+downstream in ``build_perennials_yields.py`` to reproject these NUTS2-level
+yields onto clustered network regions; do not confuse the two.
+
+Missing NUTS2 coverage is filled via a three-tier fallback (NUTS2 data ->
+NUTS0 country-level data -> spatial neighbor mean or nearest valid NUTS2 for
+islands - see ``harmonize_to_nuts2021()``), and results are harmonized to
+the NUTS2021 region definitions used by PyPSA-Eur.
 
 Outputs a single CSV with columns for each crop class (cereals, sugar beet,
 rapeseed, perennials) indexed by NUTS2 region.
@@ -242,7 +252,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_perennials_yields_nuts_file")
+        snakemake = mock_snakemake("build_perennials_yields_eurostat_average")
 
     from scripts._helpers import configure_logging, set_scenario_config
 

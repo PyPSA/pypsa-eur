@@ -421,7 +421,7 @@ renewable:
 
 # alternative carbon dioxide removal technologies
 perennials:
-  potential_co2: 2 # tCO2e/(ha y) sequestered
+  sequestration_co2: 2 # tCO2e/(ha y) sequestered
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
