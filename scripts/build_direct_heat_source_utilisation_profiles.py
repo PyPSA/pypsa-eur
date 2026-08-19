@@ -81,7 +81,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_cop_profiles",
+            "build_direct_heat_source_utilisation_profiles",
             horizon=2030,
         )
     configure_logging(snakemake)

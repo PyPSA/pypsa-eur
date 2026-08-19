@@ -34,7 +34,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_daily_heat_demands",
+            "build_daily_heat_demand",
             scope="total",
         )
     configure_logging(snakemake)

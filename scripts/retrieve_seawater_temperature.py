@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "retrieve_seawater_temperature",
-            horizon=2050,
+            year=2050,
         )
 
     # Configure logging and scenario
