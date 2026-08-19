@@ -12,7 +12,6 @@ technologies for the buildings, transport and industry sectors.
 """
 
 import logging
-import os
 from itertools import product
 from types import SimpleNamespace
 
@@ -24,7 +23,6 @@ import xarray as xr
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from pypsa.geo import haversine_pts
-from scipy.stats import beta
 
 from scripts._helpers import (
     get,
@@ -264,84 +262,6 @@ def co2_emissions_year(
     co2_emissions *= 0.001
 
     return co2_emissions
-
-
-# TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(
-    o,
-    input_eurostat,
-    fn,
-    emissions_scope,
-    input_co2,
-    options,
-    countries,
-    planning_horizons,
-):
-    """
-    Distribute carbon budget following beta or exponential transition path.
-    """
-
-    if "be" in o:
-        # beta decay
-        carbon_budget = float(o[o.find("cb") + 2 : o.find("be")])
-        be = float(o[o.find("be") + 2 :])
-    if "ex" in o:
-        # exponential decay
-        carbon_budget = float(o[o.find("cb") + 2 : o.find("ex")])
-        r = float(o[o.find("ex") + 2 :])
-
-    e_1990 = co2_emissions_year(
-        countries,
-        input_eurostat,
-        options,
-        emissions_scope,
-        input_co2,
-        year=1990,
-    )
-
-    # emissions at the beginning of the path (last year available 2018)
-    e_0 = co2_emissions_year(
-        countries,
-        input_eurostat,
-        options,
-        emissions_scope,
-        input_co2,
-        year=2018,
-    )
-
-    if not isinstance(planning_horizons, list):
-        planning_horizons = [planning_horizons]
-    t_0 = planning_horizons[0]
-
-    if "be" in o:
-        # final year in the path
-        t_f = t_0 + (2 * carbon_budget / e_0).round(0)
-
-        def beta_decay(t):
-            cdf_term = (t - t_0) / (t_f - t_0)
-            return (e_0 / e_1990) * (1 - beta.cdf(cdf_term, be, be))
-
-        # emissions (relative to 1990)
-        co2_cap = pd.Series({t: beta_decay(t) for t in planning_horizons}, name=o)
-
-    elif "ex" in o:
-        T = carbon_budget / e_0
-        m = (1 + np.sqrt(1 + r * T)) / T
-
-        def exponential_decay(t):
-            return (e_0 / e_1990) * (1 + (m + r) * (t - t_0)) * np.exp(-m * (t - t_0))
-
-        co2_cap = pd.Series(
-            {t: exponential_decay(t) for t in planning_horizons}, name=o
-        )
-    else:
-        raise ValueError("Transition path must be either beta or exponential decay")
-
-    # TODO log in Snakefile
-    csvs_folder = fn.rsplit("/", 1)[0]
-    if not os.path.exists(csvs_folder):
-        os.makedirs(csvs_folder)
-    co2_cap.to_csv(fn, float_format="%.3f")
 
 
 def haversine(p, n):
