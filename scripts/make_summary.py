@@ -21,6 +21,7 @@ except ImportError:
 from pypsa import NetworkCollection
 
 from scripts._helpers import configure_logging, set_scenario_config
+from scripts.co2_budget import co2_limit_name
 
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
@@ -246,8 +247,21 @@ def calculate_metrics(n: pypsa.Network) -> pd.Series:
                 "lv_limit", "constant"
             ]
             metrics["line_volume_shadow"] = n.global_constraints.at["lv_limit", "mu"]
-        if "CO2Limit" in n.global_constraints.index:
-            metrics["co2_shadow"] = n.global_constraints.at["CO2Limit", "mu"]
+        for bound, key in [("upper", "co2_shadow"), ("lower", "co2_shadow_lower")]:
+            # perfect foresight names the constraints per investment period
+            name = next(
+                (
+                    candidate
+                    for candidate in (
+                        co2_limit_name(bound, period),
+                        co2_limit_name(bound),
+                    )
+                    if candidate in n.global_constraints.index
+                ),
+                None,
+            )
+            if name is not None:
+                metrics[key] = n.global_constraints.at[name, "mu"]
         if "co2_sequestration_limit" in n.global_constraints.index:
             metrics["co2_storage_shadow"] = n.global_constraints.at[
                 "co2_sequestration_limit", "mu"

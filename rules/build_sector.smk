@@ -75,7 +75,7 @@ rule build_simplified_population_layouts:
     output:
         clustered_pop_layout=resources("pop_layout_simplified.csv"),
     log:
-        logs("build_simplified_population_layouts"),
+        logs("build_simplified_population_layouts.log"),
     benchmark:
         benchmarks("build_simplified_population_layouts")
     resources:

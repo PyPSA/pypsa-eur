@@ -30,7 +30,11 @@ from scripts._helpers import (
     get,
 )
 from scripts.add_electricity import set_transmission_costs
-from scripts.co2_budget import bound_value_for_horizon, co2_budget_for_horizon
+from scripts.co2_budget import (
+    bound_value_for_horizon,
+    co2_budget_for_horizon,
+    co2_limit_name,
+)
 from scripts.prepare_sector_network import co2_emissions_year, set_temporal_aggregation
 
 # Allow for PyPSA versions <0.35
@@ -91,7 +95,7 @@ def maybe_adjust_costs_and_potentials(n, adjustments, investment_year=None):
 
 def add_co2limit(
     n: pypsa.Network,
-    co2_max: float,
+    co2_max: float | None = None,
     co2_min: float | None = None,
     nyears: float = 1.0,
     suffix: str = "",
@@ -105,7 +109,7 @@ def add_co2limit(
     ----------
     n : pypsa.Network
         Network to add constraints to
-    co2_max : float
+    co2_max : float or None, default None
         Annual CO2 emissions limit in Gt CO2/a.
     co2_min : float or None, default None
         Annual minimum CO2 emissions limit in Gt CO2/a.
@@ -124,38 +128,22 @@ def add_co2limit(
         foresight budget).
 
     """
-    # FAIL FAST: Validate inputs
-    if pd.isna(co2_max):
-        raise ValueError(
-            f"co2_max cannot be NaN. Received: {co2_max}. "
-            "Ensure CO2 upper constraint is properly configured."
-        )
 
-    if co2_min is not None and pd.isna(co2_min):
-        raise ValueError(
-            f"co2_min cannot be NaN. Received: {co2_min}. "
-            "Ensure CO2 lower constraint is properly configured."
-        )
+    for value, sense, bound in [(co2_max, "<=", "upper"), (co2_min, ">=", "lower")]:
+        if value is None:
+            continue
 
-    n.add(
-        "GlobalConstraint",
-        "CO2Limit" + suffix,
-        type=glc_type,
-        investment_period=investment_period,
-        carrier_attribute="co2_emissions",
-        sense="<=",
-        constant=co2_max * GT_TO_TONNES * nyears,
-    )
+        if pd.isna(value):
+            raise ValueError(f"CO2 {bound} limit value cannot be NaN.")
 
-    if co2_min is not None:
         n.add(
             "GlobalConstraint",
-            "CO2Min" + suffix,
+            co2_limit_name(bound) + suffix,
             type=glc_type,
             investment_period=investment_period,
             carrier_attribute="co2_emissions",
-            sense=">=",
-            constant=co2_min * GT_TO_TONNES * nyears,
+            sense=sense,
+            constant=value * GT_TO_TONNES * nyears,
         )
 
 
@@ -182,27 +170,33 @@ def apply_co2_budget_constraints(
     upper_cfg = co2_budget["upper"]
     lower_cfg = co2_budget["lower"]
 
-    if upper_cfg is None:
+    if upper_cfg is None and lower_cfg is None:
         logger.info(
-            f"CO2 budget upper constraint not specified for horizon {current_horizon}. "
-            "Skipping CO2 constraint for this horizon."
+            f"No CO2 budget specified for horizon {current_horizon}. "
+            "Skipping CO2 constraints for this horizon."
         )
         return
 
-    upper_is_scalar = _is_scalar_bound(upper_cfg)
-    upper_is_mapping = _is_mapping_bound(upper_cfg)
+    for bound, cfg in [("upper", upper_cfg), ("lower", lower_cfg)]:
+        if cfg is not None and not (_is_scalar_bound(cfg) or _is_mapping_bound(cfg)):
+            raise TypeError(
+                f"co2_budget.{bound} must be null, a number, or a dict mapping year "
+                f"to value. Received {type(cfg).__name__}."
+            )
 
-    if not (upper_is_scalar or upper_is_mapping):
-        raise TypeError(
-            "co2_budget.upper must be null, a number, or a dict mapping year to value. "
-            f"Received {type(upper_cfg).__name__}."
-        )
-
-    if upper_is_scalar and _is_mapping_bound(lower_cfg):
+    if (
+        upper_cfg is not None
+        and lower_cfg is not None
+        and _is_scalar_bound(upper_cfg) != _is_scalar_bound(lower_cfg)
+    ):
         raise ValueError(
-            "Invalid co2_budget configuration: when co2_budget.upper is a scalar, "
-            "co2_budget.lower must be null or a scalar (not a dict)."
+            "Invalid co2_budget configuration: co2_budget.upper and co2_budget.lower "
+            "must both be scalars or both be dicts mapping year to value."
         )
+
+    budget_is_scalar = _is_scalar_bound(
+        upper_cfg if upper_cfg is not None else lower_cfg
+    )
 
     baseline_1990 = None
     if co2_budget["relative"]:
@@ -224,18 +218,11 @@ def apply_co2_budget_constraints(
         baseline_1990=baseline_1990,
     )
 
-    if upper is None:
-        logger.info(
-            f"CO2 budget upper constraint not specified for horizon {current_horizon}. "
-            "Skipping CO2 constraint for this horizon."
-        )
-        return
-
     is_last_horizon = current_horizon == horizons[-1]
     elec_only = not params.sector["enabled"]
     glc_type = "primary_energy" if elec_only else "co2_atmosphere"
 
-    if upper_is_scalar:
+    if budget_is_scalar:
         if foresight == "perfect" and not is_last_horizon:
             logger.info(
                 f"Deferring scalar CO2 constraint until final horizon {horizons[-1]}."

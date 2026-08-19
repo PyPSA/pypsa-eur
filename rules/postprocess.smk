@@ -273,7 +273,6 @@ rule plot_heatmap_timeseries:
         rc="matplotlibrc",
     output:
         directory(RESULTS + "graphs/heatmap_timeseries_{horizon}"),
-        {},
     log:
         RESULTS + "logs/plot_heatmap_timeseries_{horizon}.log",
     benchmark:
@@ -306,13 +305,13 @@ STATISTICS_BARPLOTS = [
 
 rule plot_base_statistics:
     input:
-        network=RESULTS + "networks/solved.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
     output:
         **{
-            f"{plot}_bar": RESULTS + f"figures/statistics_{plot}_bar.pdf"
+            f"{plot}_bar": RESULTS + f"figures/statistics_{plot}_bar_{{horizon}}.pdf"
             for plot in STATISTICS_BARPLOTS
         },
-        barplots_touch=RESULTS + "figures/.statistics_plots",
+        barplots_touch=RESULTS + "figures/.statistics_plots_{horizon}",
     params:
         plotting=config_provider("plotting"),
         barplots=STATISTICS_BARPLOTS,

@@ -4,7 +4,11 @@
 
 import pytest
 
-from scripts.co2_budget import bound_value_for_horizon, co2_budget_for_horizon
+from scripts.co2_budget import (
+    bound_value_for_horizon,
+    co2_budget_for_horizon,
+    co2_limit_name,
+)
 
 
 def test_bound_value_for_horizon_null():
@@ -60,14 +64,27 @@ def test_co2_budget_for_horizon_relative_applies_baseline():
     assert lower == 1.0
 
 
-def test_co2_budget_for_horizon_rejects_lower_without_upper():
+def test_co2_budget_for_horizon_lower_without_upper():
     co2_budget = {
         "relative": False,
         "upper": None,
         "lower": 0.1,
     }
-    with pytest.raises(ValueError, match="requires an upper constraint"):
-        co2_budget_for_horizon(co2_budget, current_horizon=2030)
+    upper, lower = co2_budget_for_horizon(co2_budget, current_horizon=2030)
+    assert upper is None
+    assert lower == 0.1
+
+
+@pytest.mark.parametrize(
+    ("bound", "horizon", "expected"),
+    [
+        ("upper", None, "CO2Limit-upper"),
+        ("lower", None, "CO2Limit-lower"),
+        ("upper", 2030, "CO2Limit-upper-2030"),
+    ],
+)
+def test_co2_limit_name(bound, horizon, expected):
+    assert co2_limit_name(bound, horizon) == expected
 
 
 def test_co2_budget_for_horizon_rejects_lower_greater_equal_upper():

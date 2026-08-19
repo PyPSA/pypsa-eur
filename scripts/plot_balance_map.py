@@ -24,6 +24,7 @@ from scripts._helpers import (
     set_scenario_config,
 )
 from scripts.add_electricity import sanitize_carriers
+from scripts.co2_budget import co2_limit_name
 from scripts.plot_power_network import load_projection
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
@@ -166,8 +167,9 @@ if __name__ == "__main__":
     level = "name" if PYPSA_V1 else "Bus"
     price = prices.rename(n.buses.location).groupby(level=level).mean()
 
-    if carrier == "co2 stored" and "CO2Limit" in n.global_constraints.index:
-        co2_price = n.global_constraints.loc["CO2Limit", "mu"]
+    co2_limit = co2_limit_name("upper")
+    if carrier == "co2 stored" and co2_limit in n.global_constraints.index:
+        co2_price = n.global_constraints.loc[co2_limit, "mu"]
         price = price - co2_price
 
     # if only one price is available, use this price for all regions

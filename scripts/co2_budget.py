@@ -7,6 +7,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+CO2_LIMIT_PREFIX = "CO2Limit"
+
+
+def co2_limit_name(bound: str, horizon: int | None = None) -> str:
+    """Return the name of the CO2 global constraint for a bound and horizon."""
+    name = f"{CO2_LIMIT_PREFIX}-{bound}"
+    return name if horizon is None else f"{name}-{horizon}"
+
 
 def bound_value_for_horizon(bound: Any, current_horizon: int) -> float | None:
     if bound is None:
@@ -55,18 +63,6 @@ def co2_budget_for_horizon(
             upper *= baseline_1990
         if lower is not None:
             lower *= baseline_1990
-
-    if upper is None:
-        # If upper is explicitly disabled but a lower bound is provided, this is invalid.
-        if upper_raw is None and lower is not None:
-            raise ValueError(
-                f"Cannot apply only lower CO2 constraint for horizon {current_horizon}. "
-                "The model requires an upper constraint to apply a lower constraint."
-            )
-
-        # When no upper bound is configured for this horizon (e.g. missing mapping entry),
-        # skip CO2 constraints entirely, regardless of whether a lower bound was provided.
-        return None, None
 
     if lower is not None and upper is not None and lower >= upper:
         raise ValueError(

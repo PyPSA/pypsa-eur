@@ -121,8 +121,9 @@ if config["foresight"] != "perfect":
         resources("maps/base_network.pdf"),
         resources("maps/clustered_network.pdf"),
         RESULTS + "maps/static/power_network_{horizon}.pdf",
-        RESULTS + "graphs/cop_profiles_{horizon}.html",
     ]
+    if config["sector"]["enabled"]:
+        NETWORK_PLOT_OUTPUTS.append(RESULTS + "graphs/cop_profiles_{horizon}.html")
     TIMESERIES_OUTPUTS = [
         RESULTS + "graphs/balance_timeseries_{horizon}",
         RESULTS + "graphs/heatmap_timeseries_{horizon}",
@@ -140,7 +141,7 @@ else:
 
 def get_sector_network_plots(w):
     """Returns sector-specific network plots if enabled and not perfect foresight."""
-    if config["foresight"] == "perfect":
+    if config["foresight"] == "perfect" or not config_provider("sector", "enabled")(w):
         return []
 
     plots = []
