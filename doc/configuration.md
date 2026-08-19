@@ -51,7 +51,7 @@ $ snakemake -call --configfile my_config.yaml
 Version of PyPSA-Eur. Descriptive only.
 
 - **Type:** string
-- **Default:** `v2026.02.0`
+- **Default:** `v2026.08.0`
 
 **YAML Syntax**
 
