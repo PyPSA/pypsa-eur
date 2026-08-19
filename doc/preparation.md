@@ -16,7 +16,7 @@ using the `retrieve*` rules ([Retrieving Data](retrieve.md)).
 Having downloaded the necessary data, it can build a base PyPSA network with the following rules
 
 - [build_offshore_shapes][]  generates GeoJSON files of offshore exclusive economic zones (EEZ).
-- [build_nuts3_shapes][] generates GeoJSON files of `NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`__ and OSM ADM1 areas enriched with GDP and population data.
+- [build_nuts3_shapes][] generates GeoJSON files of [NUTS3](https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics) and OSM ADM1 areas enriched with GDP and population data.
 - [build_shapes][]  generates GeoJSON files of country boundaries and the Europe bounding shape.
 - [base_network][] builds and stores the base network with all buses, HVAC lines and HVDC links, and determines [Voronoi cells](https://en.wikipedia.org/wiki/Voronoi_diagram) for all substations.
 
@@ -88,6 +88,14 @@ Once `networks/clustered.nc` and the associated bus/line maps exist, the single 
 ## Rule `build_bidding_zones`
 
 ::: build_bidding_zones
+
+## Rule `build_offshore_shapes` {#offshore_shapes}
+
+::: build_offshore_shapes
+
+## Rule `build_nuts3_shapes` {#nuts3_shapes}
+
+::: build_nuts3_shapes
 
 ## Rule `build_shapes` {#shapes}
 

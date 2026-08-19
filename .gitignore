@@ -30,6 +30,7 @@ gurobi.log
 doc/_build
 _build
 benchmark/
+/site
 
 /scripts/old
 /scripts/create_scenarios.py
