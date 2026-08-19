@@ -114,7 +114,7 @@ rule build_gas_input_locations:
     log:
         logs("build_gas_input_locations.log"),
     benchmark:
-        benchmarks("build_gas_input_locations/s")
+        benchmarks("build_gas_input_locations")
     resources:
         mem_mb=2000,
     message:
@@ -231,7 +231,7 @@ rule build_central_heating_temperature_profiles:
     log:
         logs("build_central_heating_temperature_profiles_{horizon}.log"),
     benchmark:
-        benchmarks("build_central_heating_temperature_profiles/s_{horizon}")
+        benchmarks("build_central_heating_temperature_profiles_{horizon}")
     resources:
         mem_mb=20000,
     params:
@@ -635,7 +635,7 @@ rule build_cop_profiles:
     log:
         logs("build_cop_profiles_{horizon}.log"),
     benchmark:
-        benchmarks("build_cop_profiles/s_{horizon}")
+        benchmarks("build_cop_profiles_{horizon}")
     resources:
         mem_mb=20000,
     params:
@@ -714,7 +714,7 @@ rule build_direct_heat_source_utilisation_profiles:
     log:
         logs("build_direct_heat_source_utilisation_profiles_{horizon}.log"),
     benchmark:
-        benchmarks("build_direct_heat_source_utilisation_profiles/s_{horizon}")
+        benchmarks("build_direct_heat_source_utilisation_profiles_{horizon}")
     resources:
         mem_mb=20000,
     params:
@@ -1153,7 +1153,7 @@ rule build_industrial_distribution_key:
     log:
         logs("build_industrial_distribution_key.log"),
     benchmark:
-        benchmarks("build_industrial_distribution_key/s")
+        benchmarks("build_industrial_distribution_key")
     threads: 1
     resources:
         mem_mb=1000,
@@ -1179,7 +1179,7 @@ rule build_industrial_production_per_node:
     log:
         logs("build_industrial_production_per_node_{horizon}.log"),
     benchmark:
-        (benchmarks("build_industrial_production_per_node/s_{horizon}"))
+        (benchmarks("build_industrial_production_per_node_{horizon}"))
     threads: 1
     resources:
         mem_mb=1000,
@@ -1203,7 +1203,7 @@ rule build_industrial_energy_demand_per_node:
     log:
         logs("build_industrial_energy_demand_per_node_{horizon}.log"),
     benchmark:
-        (benchmarks("build_industrial_energy_demand_per_node/s_{horizon}"))
+        (benchmarks("build_industrial_energy_demand_per_node_{horizon}"))
     threads: 1
     resources:
         mem_mb=1000,
@@ -1254,7 +1254,10 @@ rule build_industrial_energy_demand_per_node_today:
     log:
         logs("build_industrial_energy_demand_per_node_today.log"),
     benchmark:
-        benchmarks("build_industrial_energy_demand_per_node_today/s")
+        benchmarks("build_industrial_energy_demand_per_node_today")
+    threads: 1
+    resources:
+        mem_mb=1000,
     message:
         "Building current industrial energy demand per network node"
     script:
@@ -1279,7 +1282,7 @@ rule build_retro_cost:
     log:
         logs("build_retro_cost.log"),
     benchmark:
-        benchmarks("build_retro_cost/s")
+        benchmarks("build_retro_cost")
     resources:
         mem_mb=1000,
     params:
@@ -1324,7 +1327,7 @@ rule build_shipping_demand:
     log:
         logs("build_shipping_demand.log"),
     benchmark:
-        benchmarks("build_shipping_demand/s")
+        benchmarks("build_shipping_demand")
     threads: 1
     resources:
         mem_mb=2000,
@@ -1429,7 +1432,7 @@ rule build_existing_heating_distribution:
     log:
         logs("build_existing_heating_distribution_{horizon}.log"),
     benchmark:
-        benchmarks("build_existing_heating_distribution/_{horizon}")
+        benchmarks("build_existing_heating_distribution_{horizon}")
     threads: 1
     resources:
         mem_mb=2000,
@@ -1475,7 +1478,7 @@ rule time_aggregation:
     log:
         logs("time_aggregation_elec.log"),
     benchmark:
-        benchmarks("time_aggregation_elec")
+        benchmarks("time_aggregation")
     threads: 1
     resources:
         mem_mb=5000,

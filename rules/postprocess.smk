@@ -333,6 +333,9 @@ rule build_ambient_air_temperature_yearly_average:
         RESULTS + "logs/build_ambient_air_temperature_yearly_average.log",
     benchmark:
         (RESULTS + "benchmarks/build_ambient_air_temperature_yearly_average")
+    threads: 1
+    resources:
+        mem_mb=5000,
     script:
         scripts("build_ambient_air_temperature_yearly_average.py")
 
