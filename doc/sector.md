@@ -35,6 +35,14 @@ Having downloaded the necessary data,
 
 ::: build_biomass_potentials
 
+## Rule `build_perennials_yields_eurostat_average`
+
+::: build_perennials_yields_eurostat_average
+
+## Rule `build_perennials_yields`
+
+::: build_perennials_yields
+
 ## Rule `build_egs_potentials`
 
 ::: build_egs_potentials

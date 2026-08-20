@@ -669,6 +669,10 @@ class SectorConfig(BaseModel):
         False, description="Add option for coal CHPs with carbon capture."
     )
     dac: bool = Field(True, description="Add option for Direct Air Capture (DAC).")
+    perennials: bool = Field(
+        False,
+        description="Add option for perennialisation (converting 1st-generation biofuel cropland to perennial grasses) as a carbon dioxide removal (CDR) technology.",
+    )
     co2_vent: bool = Field(
         False,
         description="Add option for vent out CO2 from storages to the atmosphere.",

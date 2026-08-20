@@ -1093,6 +1093,51 @@ def load_costs(cost_file: str) -> pd.DataFrame:
     return pd.read_csv(cost_file, index_col=0)
 
 
+# 1G biofuel crop groups and their target biomass class names.
+# In the upstream default config these sit in "not included".
+# When sector: perennials=True, resolve_biomass_classes() moves them automatically.
+ONE_G_BIOFUEL_CLASSES = {
+    "Bioethanol barley, wheat, grain maize, oats, other cereals and rye": "biofuels_1G_bioethanol_cereals",
+    "Sugar from sugar beet": "biofuels_1G_bioethanol_sugar",
+    "Rape seed": "biofuels_1G_biodiesel",
+    "Sunflower, soya seed ": "biofuels_1G_biodiesel",
+}
+
+
+def resolve_biomass_classes(classes, perennials_enabled):
+    """
+    Auto-reallocate 1G biofuel crop groups from 'not included' into their
+    biofuels_1G_* target classes when perennials are enabled.
+
+    Cases:
+      perennials=False  → return classes unchanged.
+      perennials=True, all groups in 'not included' → move them (normal case).
+      perennials=True, no groups in 'not included' → raise AssertionError.
+      perennials=True, some groups elsewhere → move available ones, warn about rest.
+    """
+    if not perennials_enabled:
+        return classes
+    classes = copy.deepcopy(classes)
+    not_incl = classes.get("not included", [])
+    in_ni = [g for g in ONE_G_BIOFUEL_CLASSES if g in not_incl]
+    elsewhere = [g for g in ONE_G_BIOFUEL_CLASSES if g not in not_incl]
+    if not in_ni:
+        raise AssertionError(
+            "sector: perennials=true but no 1G-biofuel groups are in "
+            "biomass: classes: 'not included'. Restore upstream defaults "
+            "so the groups can be reallocated automatically."
+        )
+    if elsewhere:
+        logger.warning(
+            "perennials: 1G groups already allocated outside 'not included' "
+            f"— skipped (running perennials only for available groups): {elsewhere}"
+        )
+    for g in in_ni:
+        classes["not included"].remove(g)
+        classes.setdefault(ONE_G_BIOFUEL_CLASSES[g], []).append(g)
+    return classes
+
+
 def _simplify_polys(
     polys, minarea=100 * 1e6, maxdistance=None, tolerance=None, filterremote=True
 ):  # 100*1e6 = 100 km² if CRS is DISTANCE_CRS

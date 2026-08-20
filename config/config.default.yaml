@@ -420,6 +420,10 @@ renewable:
     eia_correct_by_capacity: false
     eia_approximate_missing: false
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#perennials
+perennials:
+  sequestration_co2: 2
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
   unit_commitment: false
@@ -837,6 +841,7 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
+  perennials: false
   co2_vent: false
   heat_vent:
     urban central: true
@@ -1323,6 +1328,9 @@ data:
     source: archive
     version: latest
   instrat_co2_prices:
+    source: primary
+    version: latest
+  co2_removal_data:
     source: primary
     version: latest
   co2stop:
