@@ -420,9 +420,9 @@ renewable:
     eia_correct_by_capacity: false
     eia_approximate_missing: false
 
-# alternative carbon dioxide removal technologies
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#perennials
 perennials:
-  sequestration_co2: 2 # tCO2e/(ha y) sequestered
+  sequestration_co2: 2
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:

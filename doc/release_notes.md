@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* feat: Add perennialisation as a carbon dioxide removal (CDR) technology, converting 1st-generation biofuel cropland to perennial grasses, with node-level potential derived from NUTS2-resolved Eurostat crop yields ([#2143](https://github.com/PyPSA/pypsa-eur/issues/2143)).
 
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
