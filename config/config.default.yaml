@@ -837,7 +837,6 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
-  # feeding determine_availability_matrix.py the same way onwind/solar do above
   biochar:
     enable: false
     heat_output: false
@@ -848,9 +847,9 @@ sector:
     natura: false
     cutout: default
     excluder_resolution: 250
-    application_per_sqkm: 1500 # tonnes of biochar per km² (≈15 t/ha)
-    max_land_usage: 0.2 # maximum fraction of suitable CORINE area used for biochar
-    number_years: 25 # years to exhaust the maximum biochar that can be spread per sqkm
+    application_per_sqkm: 1500
+    max_land_usage: 0.2
+    number_years: 25
   co2_vent: false
   heat_vent:
     urban central: true
