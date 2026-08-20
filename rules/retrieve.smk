@@ -1637,17 +1637,23 @@ if (CO2_REMOVAL_DATASET := dataset_version("co2_removal_data"))["source"] in [
 ]:
 
     rule retrieve_co2_removal_data:
-        message:
-            "Downloading carbon dioxide removal data (afforestation, perennialisation inputs)"
         input:
             zip=storage(CO2_REMOVAL_DATASET["url"]),
         output:
-            afforestation_nuts_biomass_densities=resources("afforestation_nuts_biomass_densities.xlsx"),
-            afforestation_nuts2_afforestation_rates=resources("afforestation_rates_nuts2_full.csv"),
-            afforestation_nuts2_monthly_weights=resources("afforestation_nuts2_monthly_weights.csv"),
+            afforestation_nuts_biomass_densities=resources(
+                "afforestation_nuts_biomass_densities.xlsx"
+            ),
+            afforestation_nuts2_afforestation_rates=resources(
+                "afforestation_rates_nuts2_full.csv"
+            ),
+            afforestation_nuts2_monthly_weights=resources(
+                "afforestation_nuts2_monthly_weights.csv"
+            ),
             eurostat_crops_nuts2=resources("eurostat_apro_cpshr_nuts2_raw.csv"),
             eurostat_crops_nuts0=resources("eurostat_apro_cpshr_nuts0_raw.csv"),
         retries: 2
+        message:
+            "Downloading carbon dioxide removal data (afforestation, perennialisation inputs)"
         run:
             with ZipFile(input.zip) as z:
                 # GitHub's release archive nests everything under a single
@@ -1655,11 +1661,29 @@ if (CO2_REMOVAL_DATASET := dataset_version("co2_removal_data"))["source"] in [
                 # changes with every release, so resolve it at runtime.
                 top_dir = z.namelist()[0].split("/")[0]
                 for src_path, dest in [
-                    ("outputs/afforestation/afforestation_nuts_biomass_densities.xlsx", output.afforestation_nuts_biomass_densities),
-                    ("outputs/afforestation/afforestation_rates_nuts2_full.csv", output.afforestation_nuts2_afforestation_rates),
-                    ("outputs/afforestation/afforestation_nuts2_monthly_weights.csv", output.afforestation_nuts2_monthly_weights),
-                    ("outputs/perennialisation/eurostat_apro_cpshr_nuts2_raw.csv", output.eurostat_crops_nuts2),
-                    ("outputs/perennialisation/eurostat_apro_cpshr_nuts0_raw.csv", output.eurostat_crops_nuts0),
+                    (
+                        "outputs/afforestation/afforestation_nuts_biomass_densities.xlsx",
+                        output.afforestation_nuts_biomass_densities,
+                    ),
+                    (
+                        "outputs/afforestation/afforestation_rates_nuts2_full.csv",
+                        output.afforestation_nuts2_afforestation_rates,
+                    ),
+                    (
+                        "outputs/afforestation/afforestation_nuts2_monthly_weights.csv",
+                        output.afforestation_nuts2_monthly_weights,
+                    ),
+                    (
+                        "outputs/perennialisation/eurostat_apro_cpshr_nuts2_raw.csv",
+                        output.eurostat_crops_nuts2,
+                    ),
+                    (
+                        "outputs/perennialisation/eurostat_apro_cpshr_nuts0_raw.csv",
+                        output.eurostat_crops_nuts0,
+                    ),
                 ]:
-                    with z.open(f"{top_dir}/{src_path}") as src, open(dest, "wb") as dst:
+                    with (
+                        z.open(f"{top_dir}/{src_path}") as src,
+                        open(dest, "wb") as dst,
+                    ):
                         dst.write(src.read())

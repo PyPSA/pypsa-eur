@@ -968,8 +968,6 @@ rule build_perennials_yields_eurostat_average:
 
 
 rule build_perennials_yields:
-    params:
-        biomass=config_provider("biomass"),
     input:
         nuts2=rules.retrieve_eu_nuts_2021.output.shapes_level_2,
         country_shapes=resources("country_shapes.geojson"),
@@ -981,6 +979,8 @@ rule build_perennials_yields:
         logs("build_perennials_yields_s_{clusters}.log"),
     resources:
         mem_mb=8000,
+    params:
+        biomass=config_provider("biomass"),
     script:
         scripts("build_perennials_yields.py")
 

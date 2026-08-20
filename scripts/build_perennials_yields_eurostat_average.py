@@ -40,9 +40,10 @@ from scripts._helpers import load_costs
 
 logger = logging.getLogger(__name__)
 
+
 def harmonize_to_nuts2021(df, keep_col, nuts2021_n2):
     """
-    df : DataFrame indexed by ['geo', 'TIME_PERIOD', 'mapping']
+    Df : DataFrame indexed by ['geo', 'TIME_PERIOD', 'mapping']
          contains both NUTS2 and NUTS0 rows
     keep_col : column to harmonize (e.g. 'weighted_YL_(t/ha)')
     nuts2021_n2 : GeoDataFrame with index=NUTS2_ID and geometry
@@ -108,7 +109,10 @@ def harmonize_to_nuts2021(df, keep_col, nuts2021_n2):
     result.sort_index()
     return result
 
-def calculate_yields(filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, biofuel_yields):
+
+def calculate_yields(
+    filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, biofuel_yields
+):
     # filter columns - keep only relevant
     df_crops_raw_nuts2 = pd.read_csv(filepath_nuts2)
     df_crops_raw_nuts2["TIME_PERIOD"] = df_crops_raw_nuts2["TIME_PERIOD"].astype(int)
@@ -116,7 +120,9 @@ def calculate_yields(filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, b
     df_crops_raw_nuts0 = pd.read_csv(filepath_nuts0)
     df_crops_raw_nuts0["TIME_PERIOD"] = df_crops_raw_nuts0["TIME_PERIOD"].astype(int)
 
-    df_crops_raw = pd.concat([df_crops_raw_nuts0, df_crops_raw_nuts2], ignore_index=True)
+    df_crops_raw = pd.concat(
+        [df_crops_raw_nuts0, df_crops_raw_nuts2], ignore_index=True
+    )
 
     # drop empty and irrelevant columns
     columns_to_drop = [
@@ -146,7 +152,8 @@ def calculate_yields(filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, b
 
     # Step 1: Filter to relevant rows for 2023 and strucpro of interest
     df_sub = df_crops[
-        (df_crops["strucpro"].isin(["AR", "PR_HU_EU"])) & (df_crops["crops"].isin(crops_sel))
+        (df_crops["strucpro"].isin(["AR", "PR_HU_EU"]))
+        & (df_crops["crops"].isin(crops_sel))
     ][["crops", "geo", "TIME_PERIOD", "strucpro", "OBS_VALUE"]]
 
     # Pivot so AR and PR_HU_EU are columns for each (crop, geo, year)
@@ -169,10 +176,9 @@ def calculate_yields(filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, b
     )
 
     # Average data across years
-    df_avg_yield = (
-        df_pivot.groupby(["crops", "geo"], as_index=False)[["AR", "PR_HU_EU", "YL_(t/ha)"]]
-        .mean()
-    )
+    df_avg_yield = df_pivot.groupby(["crops", "geo"], as_index=False)[
+        ["AR", "PR_HU_EU", "YL_(t/ha)"]
+    ].mean()
 
     min_year = df_pivot["TIME_PERIOD"].min()
     max_year = df_pivot["TIME_PERIOD"].max()
@@ -193,7 +199,9 @@ def calculate_yields(filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, b
     df_avg_yield["PR_share"] = df_avg_yield["PR_share"].fillna(0)
 
     # calculated average weighted yield
-    df_avg_yield["weighted_YL_(t/ha)"] = df_avg_yield["YL_(t/ha)"] * df_avg_yield["PR_share"]
+    df_avg_yield["weighted_YL_(t/ha)"] = (
+        df_avg_yield["YL_(t/ha)"] * df_avg_yield["PR_share"]
+    )
 
     # sanity check for very low yields due to small productions
     thresholds = {
@@ -205,9 +213,11 @@ def calculate_yields(filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, b
 
     # Apply crop-specific minimum threshold
     df_avg_yield["weighted_YL_(t/ha)"] = df_avg_yield.apply(
-        lambda row: row["weighted_YL_(t/ha)"]
-        if row["weighted_YL_(t/ha)"] >= thresholds.get(row["mapping"], 0)
-        else 0,
+        lambda row: (
+            row["weighted_YL_(t/ha)"]
+            if row["weighted_YL_(t/ha)"] >= thresholds.get(row["mapping"], 0)
+            else 0
+        ),
         axis=1,
     )
 
@@ -225,7 +235,9 @@ def calculate_yields(filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, b
 
     unsustainable_biofuels_yields["energy_yields_(MWh/ha)"] = (
         unsustainable_biofuels_yields["weighted_YL_(t/ha)"]
-        * unsustainable_biofuels_yields.index.get_level_values("mapping").map(biofuel_yields)
+        * unsustainable_biofuels_yields.index.get_level_values("mapping").map(
+            biofuel_yields
+        )
     )
 
     # yields of perennials per hectare in ton/ha
@@ -238,7 +250,9 @@ def calculate_yields(filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, b
     ] * (1 - std_moist_perennials)
 
     # max yields from current production : applies to perennials for green biorefining
-    max_yields = df_avg_yield.groupby(["geo", "TIME_PERIOD", "mapping"])["YL_(t/ha)"].max()
+    max_yields = df_avg_yield.groupby(["geo", "TIME_PERIOD", "mapping"])[
+        "YL_(t/ha)"
+    ].max()
 
     perennial_yields_max = pd.DataFrame(max_yields)
     perennial_yields_max = perennial_yields_max[
@@ -282,14 +296,20 @@ if __name__ == "__main__":
     )
     costs = load_costs(snakemake.input.costs)
 
-    #conv = snakemake.params.biofuel_conversion
+    # conv = snakemake.params.biofuel_conversion
     # LHV values are fixed physical constants, not parameters: JRC Technical Report doi:10.2760/69179
-    LHV_fuels = {"ethanol": 7.447, "biodiesel": 10.194}  # MWh/t (26.81 MJ/kg, 36.7 MJ/kg)
+    LHV_fuels = {
+        "ethanol": 7.447,
+        "biodiesel": 10.194,
+    }  # MWh/t (26.81 MJ/kg, 36.7 MJ/kg)
 
     biofuel_yields = {
-        "MINBIOCRP11": costs.at['ethanol from wheat', 'efficiency'] * LHV_fuels["ethanol"],
-        "MINBIOCRP21": costs.at['ethanol from sugar beet', 'efficiency'] * LHV_fuels["ethanol"],
-        "MINBIORPS1":  costs.at['biodiesel from rapeseed', 'efficiency']  * LHV_fuels["biodiesel"],
+        "MINBIOCRP11": costs.at["ethanol from wheat", "efficiency"]
+        * LHV_fuels["ethanol"],
+        "MINBIOCRP21": costs.at["ethanol from sugar beet", "efficiency"]
+        * LHV_fuels["ethanol"],
+        "MINBIORPS1": costs.at["biodiesel from rapeseed", "efficiency"]
+        * LHV_fuels["biodiesel"],
     }
 
     other_crops_codes = [
@@ -300,12 +320,14 @@ if __name__ == "__main__":
     crops_sel = perennial_codes + other_crops_codes
 
     logger.info("Computing crop yields...")
-    unsustainable_biofuels_yields, perennial_yields, perennial_yields_max = calculate_yields(
-        filepath_nuts0=CROPS_CSV_NUTS0,
-        filepath_nuts2=CROPS_CSV_NUTS2,
-        crops_sel=crops_sel,
-        crops_mapping=crops_mapping,
-        biofuel_yields=biofuel_yields,
+    unsustainable_biofuels_yields, perennial_yields, perennial_yields_max = (
+        calculate_yields(
+            filepath_nuts0=CROPS_CSV_NUTS0,
+            filepath_nuts2=CROPS_CSV_NUTS2,
+            crops_sel=crops_sel,
+            crops_mapping=crops_mapping,
+            biofuel_yields=biofuel_yields,
+        )
     )
 
     yield_MINBIOCRP11 = unsustainable_biofuels_yields[

@@ -12,7 +12,11 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from scripts._helpers import configure_logging, resolve_biomass_classes, set_scenario_config
+from scripts._helpers import (
+    configure_logging,
+    resolve_biomass_classes,
+    set_scenario_config,
+)
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]

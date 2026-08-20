@@ -1368,62 +1368,77 @@ def add_perennials(n, costs):
 
     # load resources
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
-    perennials_yields_1G_biofuels = pd.read_csv(snakemake.input.perennials_yields_1G_biofuels).set_index("name")
+    perennials_yields_1G_biofuels = pd.read_csv(
+        snakemake.input.perennials_yields_1G_biofuels
+    ).set_index("name")
 
     # calculate perennials potential based on the conversion on first generation biofuels for equal area
-    perennials_area = (biomass_potentials.filter(regex='biofuels_1G') / perennials_yields_1G_biofuels.filter(regex='biofuels_1G')).sum(axis=1)
+    perennials_area = (
+        biomass_potentials.filter(regex="biofuels_1G")
+        / perennials_yields_1G_biofuels.filter(regex="biofuels_1G")
+    ).sum(axis=1)
     # (MWh/y) / (MWh / ha / y) = (ha) returns the area used by sum of the 3 biofuels_1G classes which can be assigned for perennials
-    perennials_potentials = perennials_area * snakemake.config["perennials"]["sequestration_co2"]  # (tCO2seq)  =  (ha) * (tCO2 seq/ha)
+    perennials_potentials = (
+        perennials_area * snakemake.config["perennials"]["sequestration_co2"]
+    )  # (tCO2seq)  =  (ha) * (tCO2 seq/ha)
 
     nodes = pop_layout.index
     n.add("Carrier", "co2 perennials")
 
     n.add(
-       "Bus",
-       nodes,
-       suffix=" co2 perennials",
-       location=nodes,
-       carrier="co2 perennials",
-       unit="t_co2",
+        "Bus",
+        nodes,
+        suffix=" co2 perennials",
+        location=nodes,
+        carrier="co2 perennials",
+        unit="t_co2",
     )
 
     # calculate CO2 sequestration per tDM perennials
-    perennial_CO2_seq = perennials_yields_1G_biofuels["perennials"] / snakemake.config["perennials"]["sequestration_co2"] # (tDM/tCO2 seq)
+    perennial_CO2_seq = (
+        perennials_yields_1G_biofuels["perennials"]
+        / snakemake.config["perennials"]["sequestration_co2"]
+    )  # (tDM/tCO2 seq)
 
     # calculate biogas production based on harvesting time (in month)
     df_harvest = pd.DataFrame(index=n.snapshots, columns=["harvest"])
-    df_harvest["harvest"] = df_harvest.index.month.isin([4, 5, 6, 7, 8, 9, 10]).astype(int)
+    df_harvest["harvest"] = df_harvest.index.month.isin([4, 5, 6, 7, 8, 9, 10]).astype(
+        int
+    )
     p_max_pu = pd.DataFrame(index=n.snapshots, columns=nodes)
     for node in nodes:
         p_max_pu[node] = df_harvest["harvest"]
 
     n.add(
-       "Link",
-       nodes,
-       suffix=" perennials refining",
-       bus0="co2 atmosphere",
-       bus1=nodes + " co2 perennials",
-       bus2=nodes.values,
-       bus3=spatial.gas.biogas,
-       efficiency=1,
-       efficiency2=-costs.at["perennials refining", "electricity-input"] * perennial_CO2_seq,
-       efficiency3=costs.at["perennials refining", "biogas-output"] * perennial_CO2_seq,
-       carrier="co2 perennials",
-       p_nom_extendable=True,
-       p_max_pu=p_max_pu,
-       capital_cost=costs.at["perennials refining", "capital_cost"] * perennial_CO2_seq,
-       marginal_cost=costs.at["perennials refining", "VOM"] * perennial_CO2_seq,
-       lifetime=costs.at["perennials refining", "lifetime"],
+        "Link",
+        nodes,
+        suffix=" perennials refining",
+        bus0="co2 atmosphere",
+        bus1=nodes + " co2 perennials",
+        bus2=nodes.values,
+        bus3=spatial.gas.biogas,
+        efficiency=1,
+        efficiency2=-costs.at["perennials refining", "electricity-input"]
+        * perennial_CO2_seq,
+        efficiency3=costs.at["perennials refining", "biogas-output"]
+        * perennial_CO2_seq,
+        carrier="co2 perennials",
+        p_nom_extendable=True,
+        p_max_pu=p_max_pu,
+        capital_cost=costs.at["perennials refining", "capital_cost"]
+        * perennial_CO2_seq,
+        marginal_cost=costs.at["perennials refining", "VOM"] * perennial_CO2_seq,
+        lifetime=costs.at["perennials refining", "lifetime"],
     )
 
     n.add(
-       "Store",
-       nodes,
-       suffix=" CO2s perennials",
-       bus=nodes + " co2 perennials",
-       e_nom=perennials_potentials.values,
-       carrier="co2 perennials",
-       e_cyclic=False,
+        "Store",
+        nodes,
+        suffix=" CO2s perennials",
+        bus=nodes + " co2 perennials",
+        e_nom=perennials_potentials.values,
+        carrier="co2 perennials",
+        e_cyclic=False,
     )
 
 

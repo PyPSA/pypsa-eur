@@ -91,7 +91,6 @@ def impute_missing_values(df_nuts2, missing_shapes, yield_cols):
     imputed_rows = []
 
     for missing_id, c_geom in missing_centroids.items():
-
         # Distance to only VALID NUTS2 rows
         dists = valid_centroids.distance(c_geom)
         nearest_nuts2 = dists.idxmin()
@@ -220,10 +219,7 @@ if __name__ == "__main__":
         "perennials",
     ]
     imputed_missing = impute_missing_values(df_nuts2, missing_shapes, yield_cols)
-    df_nuts2 = pd.concat([
-        df_nuts2.drop(index=missing_countries),
-        imputed_missing
-    ])
+    df_nuts2 = pd.concat([df_nuts2.drop(index=missing_countries), imputed_missing])
 
     # convert nuts2 yields to regions
     df = convert_nuts2_to_regions_yields(df_nuts2, regions)
