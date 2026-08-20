@@ -220,7 +220,7 @@ def average_every_nhours(n, offset, drop_leap_day=False):
 def apply_time_segmentation(n, segments, solver_name="cbc"):
     logger.info(f"Aggregating time series to {segments} segments.")
     try:
-        import tsam.timeseriesaggregation as tsam
+        import tsam
     except ImportError:
         raise ModuleNotFoundError(
             "Optional dependency 'tsam' not found.Install via 'pip install tsam'"
@@ -237,16 +237,27 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
 
     raw = pd.concat([p_max_pu, load, inflow], axis=1, sort=False)
 
-    agg = tsam.TimeSeriesAggregation(
-        raw,
-        hoursPerPeriod=len(raw),
-        noTypicalPeriods=1,
-        noSegments=int(segments),
-        segmentation=True,
-        solver=solver_name,
-    )
+    if hasattr(tsam, "aggregate"):  # tsam >= 3.0
+        agg = tsam.aggregate(
+            raw,
+            n_clusters=1,
+            period_duration=len(raw),
+            segments=tsam.SegmentConfig(n_segments=int(segments)),
+        )
+        agg = agg.cluster_representatives
+    else:  # tsam < 3.0
+        from tsam import timeseriesaggregation
 
-    segmented = agg.createTypicalPeriods()
+        agg = timeseriesaggregation.TimeSeriesAggregation(
+            raw,
+            hoursPerPeriod=len(raw),
+            noTypicalPeriods=1,
+            noSegments=int(segments),
+            segmentation=True,
+            solver=solver_name,
+        )
+
+        segmented = agg.createTypicalPeriods()
 
     weightings = segmented.index.get_level_values("Segment Duration")
     offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)

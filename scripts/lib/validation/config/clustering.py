@@ -93,7 +93,7 @@ class _AggregationStrategiesConfig(BaseModel):
 
 
 class _TemporalConfig(BaseModel):
-    """Configuration for `clustering.temporal` settings."""
+    """Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods."""
 
     resolution_elec: bool | str = Field(
         False,
