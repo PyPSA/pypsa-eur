@@ -621,7 +621,7 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods.",
           "properties": {
             "resolution_elec": {
               "anyOf": [
@@ -876,6 +876,14 @@
     "DataConfig": {
       "description": "Configuration for `data` settings.",
       "properties": {
+        "version_files": {
+          "description": "\n        List of paths to version files.\n        If multiple paths are provided, they will be merged with priority given to the later paths in the list.\n        This allows for overriding default versions with custom versions, without modifying the default version file.\n\n        All filepaths must be relative to the project root or as an absolute path and point to one of:\n        - a CSV file.\n        - a YAML file with a list of version entries, which will be converted internally to CSV format.\n          This allows for easier editing of versions with comments and multi-line notes.\n          This is equivalent to calling `df.to_dict(orient='records')` on a dataframe with the same structure as the CSV version files, and then dumping to YAML.\n\n        The CSV columns / YAML fields must be:\n        - `dataset`: The name of the dataset (e.g., \"hotmaps_industrial_sites\", \"enspreso_biomass\", etc.).\n        - `version`: The version of the dataset to use (e.g., \"latest\", \"v1.0\", etc.).\n        - `source`: The source of the dataset (e.g., \"archive\", \"primary\", \"build\").\n          \"archive\" retrieves data from an organisation data bucket (e.g. `data.pypsa.org`).\n          \"primary\" retrieves data from the primary source (e.g. Eurostat, OSM, etc.).\n          \"build\" retrieves data from the result of a build script within the PyPSA-Eur workflow itself, rather than a remote source.\n        - `tags`: space separated tags for the dataset, which will become boolean columns when loaded into the workflow.\n          \"supported\" must be a tag on a version if it is supported by the workflow.\n          \"latest\" must be a tag on the version of each `source` that should be used when `version` is set to \"latest\".\n        - `added`: The date when the dataset version was added (e.g., \"2024-01-01\").\n        - `note`: [Optional] notes about the dataset version.\n        - `url`: URL to the dataset version. Optional if data `source` is \"build\", otherwise required.\n        ",
+          "items": {
+            "format": "file-path",
+            "type": "string"
+          },
+          "type": "array"
+        },
         "hotmaps_industrial_sites": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -4077,6 +4085,18 @@
             true
           ],
           "type": "boolean"
+        },
+        "default_target_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "all",
+          "description": "Default target rule for snakemake. This is the default rule that will be executed if no other rule is specified. If set to ``None``, snakemake will use its default behavior and execute the first rule in the Snakefile. NOTE: This value will be overwritten by any reference to `default_target` made in a specific rule."
         }
       }
     },
@@ -4359,7 +4379,7 @@
         },
         "bev_energy": {
           "default": 0.05,
-          "description": "The average size of battery electric vehicles (BEV) in MWh.",
+          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh.",
           "type": "number"
         },
         "bev_charge_efficiency": {
@@ -4682,8 +4702,8 @@
         },
         "regional_co2_sequestration_potential": {
           "additionalProperties": true,
-          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.",
-          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).",
+          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
+          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
           "type": "object"
         },
         "co2_sequestration_potential": {
@@ -4718,10 +4738,22 @@
           "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
           "type": "number"
         },
+        "co2_network_liquefaction": {
+          "default": false,
+          "description": "Add option for including compressor stations with investment costs and electricity demand for liquefaction step for carbon dioxide before transport.",
+          "type": "boolean"
+        },
         "cc_fraction": {
           "default": 0.9,
           "description": "The default fraction of CO2 captured with post-combustion capture.",
           "type": "number"
+        },
+        "cc_capital_cost_factor": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. Factors are given relative to cement capture. The default values are based on the DEA technology-data report on carbon capture, transport and storage Table 8 / Figure 12 (https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage).",
+          "type": "object"
         },
         "hydrogen_underground_storage": {
           "default": true,
@@ -8060,7 +8092,7 @@
       }
     },
     "_TemporalConfig": {
-      "description": "Configuration for `clustering.temporal` settings.",
+      "description": "Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods.",
       "properties": {
         "resolution_elec": {
           "anyOf": [
@@ -8197,7 +8229,7 @@
   "description": "Combined configuration schema for PyPSA-EUR.",
   "properties": {
     "version": {
-      "default": "v2026.02.0",
+      "default": "v2026.08.0",
       "description": "Version of PyPSA-Eur. Descriptive only.",
       "type": "string"
     },
@@ -8328,6 +8360,18 @@
             true
           ],
           "type": "boolean"
+        },
+        "default_target_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "all",
+          "description": "Default target rule for snakemake. This is the default rule that will be executed if no other rule is specified. If set to ``None``, snakemake will use its default behavior and execute the first rule in the Snakefile. NOTE: This value will be overwritten by any reference to `default_target` made in a specific rule."
         }
       }
     },
@@ -10827,7 +10871,7 @@
         },
         "bev_energy": {
           "default": 0.05,
-          "description": "The average size of battery electric vehicles (BEV) in MWh.",
+          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh.",
           "type": "number"
         },
         "bev_charge_efficiency": {
@@ -11150,8 +11194,8 @@
         },
         "regional_co2_sequestration_potential": {
           "additionalProperties": true,
-          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.",
-          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).",
+          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
+          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
           "type": "object"
         },
         "co2_sequestration_potential": {
@@ -11186,10 +11230,22 @@
           "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
           "type": "number"
         },
+        "co2_network_liquefaction": {
+          "default": false,
+          "description": "Add option for including compressor stations with investment costs and electricity demand for liquefaction step for carbon dioxide before transport.",
+          "type": "boolean"
+        },
         "cc_fraction": {
           "default": 0.9,
           "description": "The default fraction of CO2 captured with post-combustion capture.",
           "type": "number"
+        },
+        "cc_capital_cost_factor": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. Factors are given relative to cement capture. The default values are based on the DEA technology-data report on carbon capture, transport and storage Table 8 / Figure 12 (https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage).",
+          "type": "object"
         },
         "hydrogen_underground_storage": {
           "default": true,
@@ -12099,7 +12155,7 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods.",
           "properties": {
             "resolution_elec": {
               "anyOf": [
@@ -12677,6 +12733,14 @@
     "data": {
       "description": "Configuration for `data` settings.",
       "properties": {
+        "version_files": {
+          "description": "\n        List of paths to version files.\n        If multiple paths are provided, they will be merged with priority given to the later paths in the list.\n        This allows for overriding default versions with custom versions, without modifying the default version file.\n\n        All filepaths must be relative to the project root or as an absolute path and point to one of:\n        - a CSV file.\n        - a YAML file with a list of version entries, which will be converted internally to CSV format.\n          This allows for easier editing of versions with comments and multi-line notes.\n          This is equivalent to calling `df.to_dict(orient='records')` on a dataframe with the same structure as the CSV version files, and then dumping to YAML.\n\n        The CSV columns / YAML fields must be:\n        - `dataset`: The name of the dataset (e.g., \"hotmaps_industrial_sites\", \"enspreso_biomass\", etc.).\n        - `version`: The version of the dataset to use (e.g., \"latest\", \"v1.0\", etc.).\n        - `source`: The source of the dataset (e.g., \"archive\", \"primary\", \"build\").\n          \"archive\" retrieves data from an organisation data bucket (e.g. `data.pypsa.org`).\n          \"primary\" retrieves data from the primary source (e.g. Eurostat, OSM, etc.).\n          \"build\" retrieves data from the result of a build script within the PyPSA-Eur workflow itself, rather than a remote source.\n        - `tags`: space separated tags for the dataset, which will become boolean columns when loaded into the workflow.\n          \"supported\" must be a tag on a version if it is supported by the workflow.\n          \"latest\" must be a tag on the version of each `source` that should be used when `version` is set to \"latest\".\n        - `added`: The date when the dataset version was added (e.g., \"2024-01-01\").\n        - `note`: [Optional] notes about the dataset version.\n        - `url`: URL to the dataset version. Optional if data `source` is \"build\", otherwise required.\n        ",
+          "items": {
+            "format": "file-path",
+            "type": "string"
+          },
+          "type": "array"
+        },
         "hotmaps_industrial_sites": {
           "description": "Configuration for a single data source.",
           "properties": {

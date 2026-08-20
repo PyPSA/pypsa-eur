@@ -3,16 +3,34 @@ on:
   push:
     branches: [master]
     paths: [pixi.lock]
+  # No path filter, a required check must report on every PR
   pull_request:
     branches: [master]
-    paths: [pixi.lock]
   schedule:
   - cron: "0 6 * * *"
   workflow_dispatch:
 
 jobs:
+  changes:
+    name: Detect pixi.lock changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      pixi: ${{ steps.diff.outputs.pixi }}
+    steps:
+    - id: diff
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        files=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --paginate --jq '.[].filename')
+        grep -qxF pixi.lock <<< "$files" && pixi=true || pixi=false
+        echo "pixi=$pixi" >> "$GITHUB_OUTPUT"
+
   scan:
     name: SBOM and vulnerability scan
+    needs: changes
+    # Skip only when pixi.lock is confirmed unchanged
+    if: ${{ !cancelled() && !(needs.changes.result == 'success' && needs.changes.outputs.pixi == 'false') }}
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -22,75 +40,87 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v6
-    - uses: prefix-dev/setup-pixi@v0.9.6
+    - uses: actions/checkout@v7
+    - uses: prefix-dev/setup-pixi@v0.10.1
       with:
         pixi-version: v0.68.1
 
-    - name: Generate SBOM # (master only)
-      if: github.ref == 'refs/heads/master'
+    - name: Generate SBOM
       uses: anchore/sbom-action@v0.24.0
       with:
         path: ".pixi/envs/default"
         output-file: sbom.spdx.json
-        dependency-snapshot: true
+        dependency-snapshot: ${{ github.ref == 'refs/heads/master' }}
+        upload-artifact: false  # uploaded explicitly below, master only
 
     - name: Vulnerability Scan
       id: scan
       uses: anchore/scan-action@v7.4.0
-      with:
-        path: ".pixi/envs/default"
+      env:
+        SBOM: sbom.spdx.json
+      with: &scan_settings
+        sbom: ${{ env.SBOM }}
         fail-build: false
         severity-cutoff: high
         add-cpes-if-none: true
+        by-cve: true
         output-format: sarif
 
-    # Point alerts to pixi.lock so githubs path scoped PR check registers it
-    - name: Rewrite SARIF locations to pixi.lock
+    # Set uri=pixi.lock for a readable location, and fingerprint each alert by
+    # CVE id so code scanning matches against the master baseline by CVE, not line.
+    - name: Normalize SARIF (pixi.lock location + CVE fingerprint)
       run: |
-        jq '.runs[].results[].locations[].physicalLocation.artifactLocation.uri = "pixi.lock"' \
-          "${{ steps.scan.outputs.sarif }}" > rewritten.sarif
-        mv rewritten.sarif "${{ steps.scan.outputs.sarif }}"
+        jq '.runs[].results[] |= (
+              .locations[].physicalLocation.artifactLocation.uri = "pixi.lock"
+              | .partialFingerprints = {"grypeCve/v1": .ruleId}
+            )' "${{ steps.scan.outputs.sarif }}" > normalized.sarif
+        mv normalized.sarif "${{ steps.scan.outputs.sarif }}"
 
     - name: Upload SARIF
-      if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+      if: github.ref == 'refs/heads/master'
       uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: ${{ steps.scan.outputs.sarif }}
         category: pixi-vuln-scan
 
-    # Fork PRs cant upload SARIF (no access to token), so code scannings native diff
-    # does not apply. This builds our own diff from a master-uploaded SARIF artifact instead.
-    - name: Upload SARIF as artifact
+    # Baseline for the PR CVE diff. PR runs rescan it with their own vuln DB.
+    - name: Upload SBOM as artifact
       if: github.ref == 'refs/heads/master'
       uses: actions/upload-artifact@v7
       with:
-        name: master-sarif
-        path: ${{ steps.scan.outputs.sarif }}
+        name: master-sbom
+        path: sbom.spdx.json
         retention-days: 30
 
-    # Fork PRs cant upload SARIF to code scanning (no token write access), so
-    # diff against the master baseline artifact here instead
-    - name: Download master baseline (fork PRs only)
-      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
-      uses: dawidd6/action-download-artifact@v21
+    # All PRs gate on new CVEs vs the master baseline
+    - name: Download master baseline
+      if: github.event_name == 'pull_request'
+      uses: dawidd6/action-download-artifact@v23
       with:
         workflow: security-scan.yaml
-        name: master-sarif
+        name: master-sbom
         branch: master
         if_no_artifact_found: fail
         path: master-baseline
 
-    - name: Fail on new CVEs (fork PRs only)
-      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+    - name: Scan master baseline
+      id: baseline
+      if: github.event_name == 'pull_request'
+      uses: anchore/scan-action@v7.4.0
       env:
-        SARIF_PATH: ${{ steps.scan.outputs.sarif }}
+        SBOM: master-baseline/sbom.spdx.json
+      with: *scan_settings
+
+    - name: Fail on new CVEs
+      if: github.event_name == 'pull_request'
+      env:
+        PR_SARIF: ${{ steps.scan.outputs.sarif }}
+        BASE_SARIF: ${{ steps.baseline.outputs.sarif }}
       run: |
-        [ -s master-baseline/output ] || { echo "::error::baseline SARIF missing"; exit 2; }
-        [ -s "$SARIF_PATH" ]          || { echo "::error::PR SARIF missing"; exit 2; }
-        new=$(comm -23 \
-          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' "$SARIF_PATH"          | sort -u) \
-          <(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' master-baseline/output | sort -u))
+        [ -s "$BASE_SARIF" ] || { echo "::error::baseline SARIF missing"; exit 2; }
+        [ -s "$PR_SARIF" ]   || { echo "::error::PR SARIF missing"; exit 2; }
+        ids() { jq -r '.runs[].results[] | select(.level == "error") | .ruleId' "$1" | sort -u; }
+        new=$(comm -23 <(ids "$PR_SARIF") <(ids "$BASE_SARIF"))
         if [ -n "$new" ]; then
           echo "::error::New high+ CVEs vs master:"
           printf '%s\n' "$new"

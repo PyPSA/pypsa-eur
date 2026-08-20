@@ -452,7 +452,8 @@ class SectorConfig(BaseModel):
         description="The share for battery electric vehicles (BEV) that are able to do demand side management (DSM).",
     )
     bev_energy: float = Field(
-        0.05, description="The average size of battery electric vehicles (BEV) in MWh."
+        0.05,
+        description="The average available net battery capacity of battery electric vehicles (BEV) in MWh.",
     )
     bev_charge_efficiency: float = Field(
         0.9,
@@ -715,7 +716,6 @@ class SectorConfig(BaseModel):
         default_factory=lambda: {
             "enable": True,
             "attribute": [
-                "conservative estimate Mt",
                 "conservative estimate GAS Mt",
                 "conservative estimate OIL Mt",
                 "conservative estimate aquifer Mt",
@@ -725,7 +725,7 @@ class SectorConfig(BaseModel):
             "max_size": 25,
             "years_of_storage": 25,
         },
-        description="Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.",
+        description="Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
     )
     co2_sequestration_potential: dict[int, float] = Field(
         default_factory=lambda: {
@@ -757,11 +757,24 @@ class SectorConfig(BaseModel):
         1,
         description="The cost factor for the capital cost of the carbon dioxide transmission network.",
     )
+    co2_network_liquefaction: bool = Field(
+        False,
+        description="Add option for including compressor stations with investment costs and electricity demand for liquefaction step for carbon dioxide before transport.",
+    )
     cc_fraction: float = Field(
         0.9,
         description="The default fraction of CO2 captured with post-combustion capture.",
     )
-
+    cc_capital_cost_factor: dict[str, float] = Field(
+        default_factory=lambda: {
+            "gas": 2.0,
+            "biomass": 1.1,
+            "coal": 1.1,
+            "waste": 1.2,
+            "cement": 1.0,
+        },
+        description="Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. Factors are given relative to cement capture. The default values are based on the DEA technology-data report on carbon capture, transport and storage Table 8 / Figure 12 (https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage).",
+    )
     hydrogen_underground_storage: bool = Field(
         True,
         description="Add options for storing hydrogen underground. Storage potential depends regionally.",

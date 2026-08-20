@@ -99,6 +99,14 @@ Having downloaded the necessary data,
 
 ::: build_eurostat_balances
 
+## Rule `build_co2_totals`
+
+::: build_co2_totals
+
+## Rule `build_transformation_output_coke`
+
+::: build_transformation_output_coke
+
 ## Rule `build_energy_totals`
 
 ::: build_energy_totals
