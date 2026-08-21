@@ -837,6 +837,19 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
+  biochar:
+    enable: false
+    heat_output: false
+    corine:
+    - 12
+    - 13
+    - 14
+    natura: false
+    cutout: default
+    excluder_resolution: 250
+    application_per_sqkm: 1500
+    max_land_usage: 0.2
+    number_years: 25
   co2_vent: false
   heat_vent:
     urban central: true

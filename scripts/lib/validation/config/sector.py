@@ -372,6 +372,55 @@ class _ImportsConfig(BaseModel):
     )
 
 
+class _BiocharConfig(BaseModel):
+    """
+    Configuration for `sector.biochar` settings.
+
+    All biochar settings, including its land-eligibility settings, are
+    consolidated here rather than split across `renewable.biochar` (like
+    afforestation/rock_weathering) and a top-level `biochar:` key, since
+    biochar is the only technology sharing the shared
+    determine_availability_matrix.py/build_available_land.py plumbing
+    whose config was fully collected under `sector.<technology>`.
+    """
+
+    enable: bool = Field(
+        False,
+        description="Add option for biochar (CDR via biomass pyrolysis and stable-carbon soil storage) as a carbon dioxide removal (CDR) technology.",
+    )
+    heat_output: bool = Field(
+        False,
+        description="Export biochar pyrolysis waste heat to the urban central heating network.",
+    )
+    corine: list[int] = Field(
+        default_factory=lambda: [12, 13, 14],
+        description="CORINE Land Cover codes for non-irrigated arable land (potential biochar feedstock land).",
+    )
+    natura: bool = Field(
+        False,
+        description="Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+    )
+    cutout: str | list[str] = Field(
+        "default", description="Specifies the weather data cutout file(s) to use."
+    )
+    excluder_resolution: float = Field(
+        250,
+        description="Resolution in meters on which to perform geographical eligibility analysis.",
+    )
+    application_per_sqkm: float = Field(
+        1500,
+        description="Tonnes of biochar applied per square kilometre of eligible land (approx. 15 t/ha).",
+    )
+    max_land_usage: float = Field(
+        0.2,
+        description="Maximum fraction of suitable CORINE area used for biochar.",
+    )
+    number_years: float = Field(
+        25,
+        description="Years to exhaust the maximum biochar that can be spread per square kilometre.",
+    )
+
+
 class SectorConfig(BaseModel):
     """Configuration for `sector` settings."""
 
@@ -669,6 +718,10 @@ class SectorConfig(BaseModel):
         False, description="Add option for coal CHPs with carbon capture."
     )
     dac: bool = Field(True, description="Add option for Direct Air Capture (DAC).")
+    biochar: _BiocharConfig = Field(
+        default_factory=_BiocharConfig,
+        description="Biochar (carbon dioxide removal) configuration.",
+    )
     co2_vent: bool = Field(
         False,
         description="Add option for vent out CO2 from storages to the atmosphere.",
