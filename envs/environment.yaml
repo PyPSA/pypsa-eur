@@ -25,7 +25,7 @@ dependencies:
 - ipython >=9.7.0
 - jpype1 >=1.6.0
 - libgdal-netcdf >=3.10.3
-- linopy >=0.6.1
+- linopy >=0.8,<0.9
 - lxml >=6.0.2
 - matplotlib >=3.10.7
 - memory_profiler >=0.61.0
@@ -33,7 +33,7 @@ dependencies:
 - networkx >=3.5
 - numpy >=1.26.4
 - openpyxl >=3.1.5
-- pandas >=2.1
+- pandas >=3
 - plotly >=6.4.0
 - powerplantmatching >=0.5.15
 - pydantic >=2
@@ -43,7 +43,7 @@ dependencies:
 - pypsa >=0.35.2
 - pyscipopt >=5.6.0
 - pytables >=3.10.2
-- python >=3.10
+- python >=3.12,<3.14
 - pytz >=2025.2
 - pyxlsb >=1.0.10
 - rasterio >=1.4.3
@@ -59,7 +59,7 @@ dependencies:
 - tenacity >=9.1.2
 - tqdm >=4.67.1
 - tsam >=2.3.1
-- xarray >=2024.3.0,<2025.7.0
+- xarray >=2026.1
 - xlrd >=2.0.2
 - yaml >=0.2.5
 - snakemake-storage-plugin-cached-http >=0.2.1
@@ -67,6 +67,5 @@ dependencies:
 - natsort >=8.4.0
 - snakemake-logger-plugin-pypsa >=0.1.0
 - pydeflate >=2.3.4
-- grpcio <1.78
 - snakemake-logger-plugin-snkmt ==0.1.6
 - snakemake-executor-plugin-slurm >=1.9.2

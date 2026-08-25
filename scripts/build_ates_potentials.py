@@ -234,7 +234,7 @@ def ates_potential_per_onshore_region(
             if missing_regions:
                 logger.info(f"{len(missing_regions)} regions have no ATES potential")
 
-            ret_val["ates_potential"] = 0  # Default value
+            ret_val["ates_potential"] = 0.0  # Default value
             ret_val.loc[aquifers_in_dh_areas.index, "ates_potential"] = (
                 aquifers_in_dh_areas * mwh_per_m2
             )

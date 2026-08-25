@@ -621,7 +621,7 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods.",
           "properties": {
             "resolution_elec": {
               "anyOf": [
@@ -4379,7 +4379,7 @@
         },
         "bev_energy": {
           "default": 0.05,
-          "description": "The average size of battery electric vehicles (BEV) in MWh.",
+          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh.",
           "type": "number"
         },
         "bev_charge_efficiency": {
@@ -4702,8 +4702,8 @@
         },
         "regional_co2_sequestration_potential": {
           "additionalProperties": true,
-          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.",
-          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).",
+          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
+          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
           "type": "object"
         },
         "co2_sequestration_potential": {
@@ -4738,10 +4738,22 @@
           "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
           "type": "number"
         },
+        "co2_network_liquefaction": {
+          "default": false,
+          "description": "Add option for including compressor stations with investment costs and electricity demand for liquefaction step for carbon dioxide before transport.",
+          "type": "boolean"
+        },
         "cc_fraction": {
           "default": 0.9,
           "description": "The default fraction of CO2 captured with post-combustion capture.",
           "type": "number"
+        },
+        "cc_capital_cost_factor": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. Factors are given relative to cement capture. The default values are based on the DEA technology-data report on carbon capture, transport and storage Table 8 / Figure 12 (https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage).",
+          "type": "object"
         },
         "hydrogen_underground_storage": {
           "default": true,
@@ -8100,7 +8112,7 @@
       }
     },
     "_TemporalConfig": {
-      "description": "Configuration for `clustering.temporal` settings.",
+      "description": "Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods.",
       "properties": {
         "resolution_elec": {
           "anyOf": [
@@ -8237,7 +8249,7 @@
   "description": "Combined configuration schema for PyPSA-EUR.",
   "properties": {
     "version": {
-      "default": "v2026.02.0",
+      "default": "v2026.08.0",
       "description": "Version of PyPSA-Eur. Descriptive only.",
       "type": "string"
     },
@@ -10879,7 +10891,7 @@
         },
         "bev_energy": {
           "default": 0.05,
-          "description": "The average size of battery electric vehicles (BEV) in MWh.",
+          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh.",
           "type": "number"
         },
         "bev_charge_efficiency": {
@@ -11202,8 +11214,8 @@
         },
         "regional_co2_sequestration_potential": {
           "additionalProperties": true,
-          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.",
-          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).",
+          "description": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on `CO2StoP <https://setis.ec.europa.eu/european-co2-storage-database_en>`_.Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
+          "markdownDescription": "Add option for regionally-resolved geological carbon dioxide sequestration potentials based on [CO2StoP ](https://setis.ec.europa.eu/european-co2-storage-database_en).Note that 'conservative estimate Mt' is not a summary of gas/oil fields and aquifers but contains storage potential for geological reservoirs suitable for CO2 storage excluding those. The more conservative assumption is to only include the three attributes mentioned above.",
           "type": "object"
         },
         "co2_sequestration_potential": {
@@ -11238,10 +11250,22 @@
           "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
           "type": "number"
         },
+        "co2_network_liquefaction": {
+          "default": false,
+          "description": "Add option for including compressor stations with investment costs and electricity demand for liquefaction step for carbon dioxide before transport.",
+          "type": "boolean"
+        },
         "cc_fraction": {
           "default": 0.9,
           "description": "The default fraction of CO2 captured with post-combustion capture.",
           "type": "number"
+        },
+        "cc_capital_cost_factor": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Size of the carbon capture unit depending on the amount of carbon dioxide in the flue gas. The more CO2, the smaller the capture unit and thus the lower the capital cost factor. Factors are given relative to cement capture. The default values are based on the DEA technology-data report on carbon capture, transport and storage Table 8 / Figure 12 (https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage).",
+          "type": "object"
         },
         "hydrogen_underground_storage": {
           "default": true,
@@ -12151,7 +12175,7 @@
           }
         },
         "temporal": {
-          "description": "Configuration for `clustering.temporal` settings.",
+          "description": "Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods.",
           "properties": {
             "resolution_elec": {
               "anyOf": [
