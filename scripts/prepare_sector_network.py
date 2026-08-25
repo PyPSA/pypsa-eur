@@ -1420,13 +1420,11 @@ def add_perennials(n, costs):
         efficiency=1,
         efficiency2=-costs.at["perennials gbr", "electricity-input"]
         * perennial_CO2_seq,
-        efficiency3=costs.at["perennials gbr", "biogas-output"]
-        * perennial_CO2_seq,
+        efficiency3=costs.at["perennials gbr", "biogas-output"] * perennial_CO2_seq,
         carrier="co2 perennials",
         p_nom_extendable=True,
         p_max_pu=p_max_pu,
-        capital_cost=costs.at["perennials gbr", "capital_cost"]
-        * perennial_CO2_seq,
+        capital_cost=costs.at["perennials gbr", "capital_cost"] * perennial_CO2_seq,
         marginal_cost=costs.at["perennials gbr", "VOM"] * perennial_CO2_seq,
         lifetime=costs.at["perennials gbr", "lifetime"],
     )
