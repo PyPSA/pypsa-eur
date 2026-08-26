@@ -921,7 +921,7 @@ sector:
     - gas pipeline new
     - electricity distribution grid
     - CO2 pipeline
-    DC:
+    DC: 
       efficiency_static: 0.98
       efficiency_per_1000km: 0.977
     H2 pipeline:
