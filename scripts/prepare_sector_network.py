@@ -3671,7 +3671,7 @@ def add_heat(
         ) / heat_demand.T.groupby(level=[1]).sum().T
 
         for name in n.loads[
-            n.loads.carrier.isin([x + " heat" for x in HeatSystem])
+            n.loads.carrier.isin([str(x) + " heat" for x in HeatSystem])
         ].index:
             node = n.buses.loc[name, "location"]
             ct = pop_layout.loc[node, "ct"]

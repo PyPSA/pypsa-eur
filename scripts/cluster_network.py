@@ -306,7 +306,7 @@ def distribute_n_clusters_to_countries(
             c not in focus_weights.keys() for c in L.index.get_level_values("country")
         ]
         L[remainder] = L.loc[remainder].pipe(normed) * (1 - total_focus)
-
+        L.index.name = "cluster"
         logger.warning("Using custom focus weights for determining number of clusters.")
 
     assert np.isclose(L.sum(), 1.0, rtol=1e-3), (
