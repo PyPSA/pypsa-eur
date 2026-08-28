@@ -20,6 +20,7 @@ from scripts.lib.validation.config._base import ConfigModel
 # hgv = heavy goods vehicles.
 _TRANSPORT_SEGMENTS = ["pc", "ptw", "bus", "lcv", "hgv"]
 
+
 def _segment_share_default(years: dict[int, float]) -> dict[str, dict[int, float]]:
     """Repeat a single year-indexed propulsion mix share dict across all motor vehicle segments."""
     return {segment: dict(years) for segment in _TRANSPORT_SEGMENTS}

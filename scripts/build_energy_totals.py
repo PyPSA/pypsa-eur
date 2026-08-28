@@ -286,7 +286,7 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     )
     ct_totals["total heavy duty road freight"] = df.loc[row]
 
-    # vehicle efficiency (kgoe/100km) 
+    # vehicle efficiency (kgoe/100km)
     assert df.index[61] == "Passenger cars"
     ct_totals["passenger car efficiency"] = df.iloc[61]
 
@@ -489,7 +489,7 @@ def build_idees(
         "mio km-driven.*",
         "load factor.*",
         ".*space efficiency",
-        ".*water efficiency"
+        ".*water efficiency",
     ]
     exclude = totals.columns.str.fullmatch("|".join(patterns))
     totals = totals.copy()
@@ -577,7 +577,8 @@ def build_energy_totals(
 
     efficiency_keywords = ["space efficiency", "water efficiency"]
     to_drop = idees.columns[idees.columns.str.contains("|".join(efficiency_keywords))]
-    drop_columns = ["Number Passenger cars",
+    drop_columns = [
+        "Number Passenger cars",
         "Number Powered two-wheelers",
         "Number Light commercial vehicles",
         "Number Motor coaches, buses and trolley buses",
@@ -595,8 +596,8 @@ def build_energy_totals(
         "load factor Rail passenger",
         "load factor Rail freight",
         "load factor Heavy goods vehicles",
-        "load factor Motor coaches, buses and trolley buses"
-        ]
+        "load factor Motor coaches, buses and trolley buses",
+    ]
     to_drop = to_drop.append(pd.Index(drop_columns))
 
     df = idees.reindex(new_index).drop(to_drop, axis=1)
@@ -955,19 +956,20 @@ def build_transport_data(
     """
     years = np.arange(2000, 2024)
 
-    car_cols = ["Number Passenger cars",
-                "Number Powered two-wheelers",
-                "Number Light commercial vehicles",
-                "Number Motor coaches, buses and trolley buses",
-                "Number Heavy goods vehicles",
-                "mio km-driven Passenger cars",
-                "mio km-driven Powered two-wheelers",
-                "mio km-driven Light commercial vehicles",
-                "mio km-driven Motor coaches, buses and trolley buses",
-                "mio km-driven Heavy goods vehicles",
-                "mio km-driven Rail",
-                "mio km-driven Rail passenger",
-                "mio km-driven Rail freight"
+    car_cols = [
+        "Number Passenger cars",
+        "Number Powered two-wheelers",
+        "Number Light commercial vehicles",
+        "Number Motor coaches, buses and trolley buses",
+        "Number Heavy goods vehicles",
+        "mio km-driven Passenger cars",
+        "mio km-driven Powered two-wheelers",
+        "mio km-driven Light commercial vehicles",
+        "mio km-driven Motor coaches, buses and trolley buses",
+        "mio km-driven Heavy goods vehicles",
+        "mio km-driven Rail",
+        "mio km-driven Rail passenger",
+        "mio km-driven Rail freight",
     ]
 
     # first collect number of cars
@@ -993,7 +995,9 @@ def build_transport_data(
             years, ["passenger cars"]
         ]
 
-        swiss_cars = swiss_cars.rename(columns={"passenger cars": "Number Passenger cars"})
+        swiss_cars = swiss_cars.rename(
+            columns={"passenger cars": "Number Passenger cars"}
+        )
 
         # Ensure index is integer years
         swiss_cars.index = swiss_cars.index.astype(int)
@@ -1018,7 +1022,8 @@ def build_transport_data(
             cars_pp = transport_data[col] / population
 
             fill_values = {
-                year: cars_pp.mean() * population for year in transport_data.index.unique(1)
+                year: cars_pp.mean() * population
+                for year in transport_data.index.unique(1)
             }
             fill_values = pd.DataFrame(fill_values).stack()
             fill_values = pd.DataFrame(fill_values, columns=[col])
