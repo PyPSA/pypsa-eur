@@ -12,7 +12,6 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-import xarray as xr
 
 from scripts._helpers import (
     configure_logging,
@@ -32,22 +31,32 @@ def build_nodal_transport_data(fn, pop_layout, year):
     # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index
-    nodal_transport_data["number cars"] = (
-        pop_layout["fraction"] * nodal_transport_data["number cars"]
+    # add nodal transport data for specified segments
+    # avoid "efficiency" and "load factor" columns
+    car_cols = transport_data.columns[
+        ~transport_data.columns.str.contains("efficiency|load factor")
+    ]
+    nodal_transport_data[car_cols] = nodal_transport_data[car_cols].mul(
+        pop_layout["fraction"], axis=0
     )
-    # fill missing fuel efficiency with average data
-    nodal_transport_data.loc[
-        nodal_transport_data["average fuel efficiency"] == 0.0,
+    # fill missing stats with average data
+    stats = [
         "average fuel efficiency",
-    ] = transport_data["average fuel efficiency"].mean()
+        "load factor Rail passenger",
+        "load factor Rail freight",
+        "load factor Heavy goods vehicles",
+        "load factor Motor coaches, buses and trolley buses",
+    ]
+    for stat in stats:
+        nodal_transport_data.loc[
+            nodal_transport_data[stat] == 0.0,
+            stat,
+        ] = transport_data[stat].mean()
 
     return nodal_transport_data
 
 
-def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
-    """
-    Returns transport demand per bus in unit km driven [100 km].
-    """
+def get_shape(traffic_fn):
     # averaged weekly counts from the year 2010-2015
     traffic = pd.read_csv(traffic_fn, skiprows=2, usecols=["count"]).squeeze("columns")
 
@@ -59,33 +68,75 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     )
     transport_shape = transport_shape / transport_shape.sum()
 
-    # get heating demand for correction to demand time series
-    temperature = xr.open_dataarray(airtemp_fn).to_pandas()
+    return transport_shape
 
-    # correction factors for vehicle heating
-    dd_ICE = transport_degree_factor(
-        temperature,
-        options["transport_heating_deadband_lower"],
-        options["transport_heating_deadband_upper"],
-        options["ICE_lower_degree_factor"],
-        options["ICE_upper_degree_factor"],
+
+def build_transport_demand(
+    traffic_fn_pc,
+    traffic_fn_ptw,
+    traffic_fn_bus,
+    traffic_fn_lcv,
+    traffic_fn_hgv,
+    airtemp_fn,
+    nodes,
+    nodal_transport_data,
+):
+    """
+    Returns transport demand per bus in unit km driven [100 km] for the five distinguishable motor vehicle types:
+    - "pkw" - pc = passenger cars,
+    - "mot" - ptw = powered two-wheelers,
+    - "bus" = buses/coaches,
+    - "lcv" = light commercial vehicles,
+    - "hgv" = heavy goods vehicles.
+    """
+    # get transport shape per vehicle type
+    transport_shape_pc = get_shape(traffic_fn_pc)
+    transport_shape_ptw = get_shape(traffic_fn_ptw)
+    transport_shape_bus = get_shape(traffic_fn_bus)
+    transport_shape_lcv = get_shape(traffic_fn_lcv)
+    transport_shape_hgv = get_shape(traffic_fn_hgv)
+
+    # non-electrified rail share
+    non_elec_rail = 1 - (
+        pop_weighted_energy_totals["electricity rail"]
+        / pop_weighted_energy_totals["total rail"]
     )
 
-    # divide out the heating/cooling demand from ICE totals
-    ice_correction = (transport_shape * (1 + dd_ICE)).sum() / transport_shape.sum()
-
-    # unit TWh
-    energy_totals_transport = (
-        pop_weighted_energy_totals["total road"]
-        + pop_weighted_energy_totals["total rail"]
-        - pop_weighted_energy_totals["electricity rail"]
+    # total demand of driven vehicle-km [mio km]
+    pc = nodal_transport_data["mio km-driven Passenger cars"]
+    ptw = nodal_transport_data["mio km-driven Powered two-wheelers"]
+    lcv = nodal_transport_data["mio km-driven Light commercial vehicles"]
+    bus = nodal_transport_data[
+        "mio km-driven Motor coaches, buses and trolley buses"
+    ] + non_elec_rail * nodal_transport_data["mio km-driven Rail passenger"] * (
+        nodal_transport_data["load factor Rail passenger"]
+        / nodal_transport_data["load factor Motor coaches, buses and trolley buses"]
+    )
+    hgv = nodal_transport_data[
+        "mio km-driven Heavy goods vehicles"
+    ] + non_elec_rail * nodal_transport_data["mio km-driven Rail freight"] * (
+        nodal_transport_data["load factor Rail freight"]
+        / nodal_transport_data["load factor Heavy goods vehicles"]
     )
 
-    # average fuel efficiency in MWh/100 km
-    eff = nodal_transport_data["average fuel efficiency"]
+    def get_demand(profile, total, nyears, seg):
+        """
+        Returns from total demand [mio km] and given profile
+        demand time-series in unit [100 km].
+        """
 
-    return (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears).divide(
-        eff * ice_correction
+        demand = profile.multiply(total) * 1e4 * nyears
+
+        return pd.concat([demand], keys=[seg], axis=1)
+
+    demand_pc = get_demand(transport_shape_pc, pc, nyears, seg="pc")
+    demand_ptw = get_demand(transport_shape_ptw, ptw, nyears, seg="ptw")
+    demand_bus = get_demand(transport_shape_bus, bus, nyears, seg="bus")
+    demand_lcv = get_demand(transport_shape_lcv, lcv, nyears, seg="lcv")
+    demand_hgv = get_demand(transport_shape_hgv, hgv, nyears, seg="hgv")
+
+    return pd.concat(
+        [demand_pc, demand_ptw, demand_lcv, demand_hgv, demand_bus], axis=1
     )
 
 
@@ -118,48 +169,84 @@ def transport_degree_factor(
     return dd
 
 
-def bev_availability_profile(fn, snapshots, nodes, options):
+def bev_availability_profile(
+    fn_pc, fn_ptw, fn_lcv, fn_hgv, fn_bus, snapshots, nodes, options
+):
     """
-    Derive plugged-in availability for passenger electric vehicles.
+    Derive plugged-in availability for electric vehicles.
     """
     # car count in typical week
-    traffic = pd.read_csv(fn, skiprows=2, usecols=["count"]).squeeze("columns")
-    # maximum share plugged-in availability for passenger electric vehicles
-    avail_max = options["bev_avail_max"]
-    # average share plugged-in availability for passenger electric vehicles
-    avail_mean = options["bev_avail_mean"]
+    traffic_pc = pd.read_csv(fn_pc, skiprows=2, usecols=["count"]).squeeze("columns")
+    traffic_ptw = pd.read_csv(fn_ptw, skiprows=2, usecols=["count"]).squeeze("columns")
+    traffic_bus = pd.read_csv(fn_bus, skiprows=2, usecols=["count"]).squeeze("columns")
+    traffic_lcv = pd.read_csv(fn_lcv, skiprows=2, usecols=["count"]).squeeze("columns")
+    traffic_hgv = pd.read_csv(fn_hgv, skiprows=2, usecols=["count"]).squeeze("columns")
 
-    # linear scaling, highest when traffic is lowest, decreases if traffic increases
-    avail = avail_max - (avail_max - avail_mean) * (traffic - traffic.min()) / (
-        traffic.mean() - traffic.min()
-    )
+    def get_avail(traffic, seg):
+        # maximum share plugged-in availability for respective segment
+        avail_max = options["bev_avail_max"][seg]
+        # average share plugged-in availability for respective segment
+        avail_mean = options["bev_avail_mean"][seg]
 
-    if not avail[avail < 0].empty:
-        logger.warning(
-            "The BEV availability weekly profile has negative values which can "
-            "lead to infeasibility."
+        # linear scaling, highest when traffic is lowest, decreases if traffic increases
+        avail = avail_max - (avail_max - avail_mean) * (traffic - traffic.min()) / (
+            traffic.mean() - traffic.min()
         )
 
-    return generate_periodic_profiles(
-        dt_index=snapshots,
-        nodes=nodes,
-        weekly_profile=avail.values,
+        if not avail[avail < 0].empty:
+            logger.warning(
+                "The BEV availability weekly profile has negative values which can "
+                "lead to infeasibility."
+            )
+
+        avail_periodic = generate_periodic_profiles(
+            dt_index=snapshots,
+            nodes=nodes,
+            weekly_profile=avail.values,
+        )
+
+        return pd.concat([avail_periodic], keys=[seg], axis=1)
+
+    return pd.concat(
+        [
+            get_avail(traffic_pc, seg="pc"),
+            get_avail(traffic_ptw, seg="ptw"),
+            get_avail(traffic_bus, seg="bus"),
+            get_avail(traffic_lcv, seg="lcv"),
+            get_avail(traffic_hgv, seg="hgv"),
+        ],
+        axis=1,
     )
 
 
 def bev_dsm_profile(snapshots, nodes, options):
-    dsm_week = np.zeros((24 * 7,))
 
-    # assuming that at a certain time ("bev_dsm_restriction_time") EVs have to
-    # be charged to a minimum value (defined in bev_dsm_restriction_value)
-    dsm_week[(np.arange(0, 7, 1) * 24 + options["bev_dsm_restriction_time"])] = options[
-        "bev_dsm_restriction_value"
-    ]
+    def get_dsm(seg):
+        dsm_week = np.zeros((24 * 7,))
 
-    return generate_periodic_profiles(
-        dt_index=snapshots,
-        nodes=nodes,
-        weekly_profile=dsm_week,
+        # assuming that at a certain time ("bev_dsm_restriction_time") EVs have to
+        # be charged to a minimum value (defined in bev_dsm_restriction_value)
+        dsm_week[
+            (np.arange(0, 7, 1) * 24 + options["bev_dsm_restriction_time"][seg])
+        ] = options["bev_dsm_restriction_value"][seg]
+
+        dsm_periodic = generate_periodic_profiles(
+            dt_index=snapshots,
+            nodes=nodes,
+            weekly_profile=dsm_week,
+        )
+
+        return pd.concat([dsm_periodic], keys=[seg], axis=1)
+
+    return pd.concat(
+        [
+            get_dsm(seg="pc"),
+            get_dsm(seg="ptw"),
+            get_dsm(seg="bus"),
+            get_dsm(seg="lcv"),
+            get_dsm(seg="hgv"),
+        ],
+        axis=1,
     )
 
 
@@ -194,14 +281,25 @@ if __name__ == "__main__":
     )
 
     transport_demand = build_transport_demand(
-        snakemake.input.traffic_data_KFZ,
+        snakemake.input.traffic_data_Pkw,
+        snakemake.input.traffic_data_Mot,
+        snakemake.input.traffic_data_Bus,
+        snakemake.input.traffic_data_Lfw,
+        snakemake.input.traffic_data_Lkw,
         snakemake.input.temp_air_total,
         nodes,
         nodal_transport_data,
     )
 
     avail_profile = bev_availability_profile(
-        snakemake.input.traffic_data_Pkw, snapshots, nodes, options
+        snakemake.input.traffic_data_Pkw,
+        snakemake.input.traffic_data_Mot,
+        snakemake.input.traffic_data_Bus,
+        snakemake.input.traffic_data_Lfw,
+        snakemake.input.traffic_data_Lkw,
+        snapshots,
+        nodes,
+        options,
     )
 
     dsm_profile = bev_dsm_profile(snapshots, nodes, options)

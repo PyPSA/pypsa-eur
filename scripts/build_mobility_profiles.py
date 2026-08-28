@@ -4,15 +4,23 @@
 """
 Create profiles for road transport demand using measured data from vehicle monitoring by the German Federal Highway Research Institute (BASt).
 
-This rule downloads the data files, extracts them, and then aggregates the data to weekly profiles for two vehicle types:
+This rule downloads the data files, extracts them, and then aggregates the data to weekly profiles for all and the five distinguishable motor vehicle types:
 - "kfz": All motor vehicles (="Kraftfahrzeuge", i.e. cars, trucks, buses, motorcycles)
-- "pkw": Passenger cars only (="Personenkraftwagen")
+- "pkw": Passenger cars (="Personenkraftwagen" and "PmA" "Personenkraftwagen mit Anhänger" passenger cars with trailer )
+- "mot": Motorcycles only (="Motorräder")
+- "bus": Buses only (="Busse")
+- "lfw": Light commercial vehicles only (="Lieferwagen")
+- "lkw": Heavy goods vehicles only (="Lastkraftwagen" constituted of "LoA" "Lastkraftwagen mit Anhänger" lorry with trailer, "Lzg" "Zugmaschinen" lorry, and "Son" "Sonderfahrzeuge" special vehicles)
 
 Outputs
 -------
 
 - `data/mobility_profiles/build/<version>/kfz.csv`: Weekly profile for all motor vehicles (cars, trucks, buses, motorcycles).
-- `data/mobility_profiles/build/<version>/pkw.csv`: Weekly profile for passenger cars only.
+- `data/mobility_profiles/build/<version>/pkw.csv`: Weekly profile for passenger cars.
+- `data/mobility_profiles/build/<version>/mot.csv`: Weekly profile for motorcycles only.
+- `data/mobility_profiles/build/<version>/bus.csv`: Weekly profile for buses only.
+- `data/mobility_profiles/build/<version>/lfw.csv`: Weekly profile for light commercial vehicles only.
+- `data/mobility_profiles/build/<version>/lkw.csv`: Weekly profile for heavy goods vehicles.
 
 **kfz.csv**
 
@@ -92,6 +100,20 @@ if __name__ == "__main__":
                 "KFZ_R2",
                 "Pkw_R1",
                 "Pkw_R2",
+                "PmA_R1",
+                "PmA_R2",
+                "Mot_R1",
+                "Mot_R2",
+                "Bus_R1",
+                "Bus_R2",
+                "Lfw_R1",
+                "Lfw_R2",
+                "LoA_R1",
+                "LoA_R2",
+                "Lzg_R1",
+                "Lzg_R2",
+                "Son_R1",
+                "Son_R2",
             ],
         )
 
@@ -111,12 +133,32 @@ if __name__ == "__main__":
 
     # Aggregate data for both directions on the road
     vehicle_counts["kfz"] = vehicle_counts["KFZ_R1"] + vehicle_counts["KFZ_R2"]
-    vehicle_counts["pkw"] = vehicle_counts["Pkw_R1"] + vehicle_counts["Pkw_R2"]
+    vehicle_counts["pkw"] = (
+        vehicle_counts["Pkw_R1"]
+        + vehicle_counts["Pkw_R2"]
+        + vehicle_counts["PmA_R1"]
+        + vehicle_counts["PmA_R2"]
+    )
+    vehicle_counts["mot"] = vehicle_counts["Mot_R1"] + vehicle_counts["Mot_R2"]
+    vehicle_counts["bus"] = vehicle_counts["Bus_R1"] + vehicle_counts["Bus_R2"]
+    vehicle_counts["lfw"] = vehicle_counts["Lfw_R1"] + vehicle_counts["Lfw_R2"]
+    vehicle_counts["lkw"] = (
+        vehicle_counts["LoA_R1"]
+        + vehicle_counts["LoA_R2"]
+        + vehicle_counts["Lzg_R1"]
+        + vehicle_counts["Lzg_R2"]
+        + vehicle_counts["Son_R1"]
+        + vehicle_counts["Son_R2"]
+    )
 
     # vehicles types to aggregate for and output files to write to
     vehicle_types = {
         "kfz": snakemake.output["kfz"],
         "pkw": snakemake.output["pkw"],
+        "mot": snakemake.output["mot"],
+        "bus": snakemake.output["bus"],
+        "lfw": snakemake.output["lfw"],
+        "lkw": snakemake.output["lkw"],
     }
     for vehicle_type, output_file in vehicle_types.items():
         logger.info(f"Aggregating and writing {vehicle_type} data to {output_file}")
@@ -137,7 +179,7 @@ if __name__ == "__main__":
             content = file.read()
             file.seek(0, 0)
             file.write(
-                f"# File generated for type: {vehicle_type} using data for: {', '.join(file_names)}\n"
+                f"# File generated for type: {vehicle_type} using data from: {', '.join(file_names)}\n"
             )
             file.write(f"# Time of generation: {pd.Timestamp.now()}\n")
             file.write(content)
