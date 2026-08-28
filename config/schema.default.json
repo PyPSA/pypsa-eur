@@ -1044,6 +1044,26 @@
             }
           }
         },
+        "co2_removal_data": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "co2stop": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -2925,6 +2945,16 @@
         }
       }
     },
+    "PerennialsConfig": {
+      "description": "Configuration for `perennials` settings.",
+      "properties": {
+        "sequestration_co2": {
+          "default": 2,
+          "description": "Tonnes of CO2 equivalent sequestered per hectare per year when 1st-generation biofuel cropland is converted to perennial grasses.",
+          "type": "number"
+        }
+      }
+    },
     "PypsaEurConfig": {
       "description": "Configuration for `pypsa_eur` settings.",
       "properties": {
@@ -4645,6 +4675,11 @@
         "dac": {
           "default": true,
           "description": "Add option for Direct Air Capture (DAC).",
+          "type": "boolean"
+        },
+        "perennials": {
+          "default": false,
+          "description": "Add option for perennialisation (converting 1st-generation biofuel cropland to perennial grasses) as a carbon dioxide removal (CDR) technology.",
           "type": "boolean"
         },
         "co2_vent": {
@@ -10091,6 +10126,16 @@
         }
       }
     },
+    "perennials": {
+      "description": "Configuration for `perennials` settings.",
+      "properties": {
+        "sequestration_co2": {
+          "default": 2,
+          "description": "Tonnes of CO2 equivalent sequestered per hectare per year when 1st-generation biofuel cropland is converted to perennial grasses.",
+          "type": "number"
+        }
+      }
+    },
     "conventional": {
       "additionalProperties": true,
       "description": "Configuration for `conventional` settings.",
@@ -11137,6 +11182,11 @@
         "dac": {
           "default": true,
           "description": "Add option for Direct Air Capture (DAC).",
+          "type": "boolean"
+        },
+        "perennials": {
+          "default": false,
+          "description": "Add option for perennialisation (converting 1st-generation biofuel cropland to perennial grasses) as a carbon dioxide removal (CDR) technology.",
           "type": "boolean"
         },
         "co2_vent": {
@@ -12882,6 +12932,26 @@
           }
         },
         "instrat_co2_prices": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "co2_removal_data": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

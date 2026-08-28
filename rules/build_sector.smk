@@ -953,6 +953,38 @@ rule build_biomass_potentials:
         scripts("build_biomass_potentials.py")
 
 
+rule build_perennials_yields_eurostat_average:
+    input:
+        nuts2021=rules.retrieve_eu_nuts_2021.output.shapes_level_2,
+        crops_nuts2=rules.retrieve_co2_removal_data.output.eurostat_crops_nuts2,
+        crops_nuts0=rules.retrieve_co2_removal_data.output.eurostat_crops_nuts0,
+        costs=resources(f"costs_{config['costs']['year']}_processed.csv"),
+    output:
+        yields_all=resources("perennials_yields_1G_biofuels.csv"),
+    log:
+        logs("build_perennials_yields_eurostat_average.log"),
+    script:
+        scripts("build_perennials_yields_eurostat_average.py")
+
+
+rule build_perennials_yields:
+    input:
+        nuts2=rules.retrieve_eu_nuts_2021.output.shapes_level_2,
+        country_shapes=resources("country_shapes.geojson"),
+        perennials_yields_1G_biofuels=resources("perennials_yields_1G_biofuels.csv"),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        csv_file=resources("perennials_yields_1G_biofuels_s_{clusters}.csv"),
+    log:
+        logs("build_perennials_yields_s_{clusters}.log"),
+    resources:
+        mem_mb=8000,
+    params:
+        biomass=config_provider("biomass"),
+    script:
+        scripts("build_perennials_yields.py")
+
+
 rule build_biomass_transport_costs:
     input:
         sc1="data/biomass_transport_costs_supplychain1.csv",
@@ -1720,6 +1752,11 @@ rule prepare_sector_network:
         ates_potentials=lambda w: (
             resources("ates_potentials_base_s_{clusters}_{planning_horizons}.csv")
             if config_provider("sector", "district_heating", "ates", "enable")(w)
+            else []
+        ),
+        perennials_yields_1G_biofuels=lambda w: (
+            resources("perennials_yields_1G_biofuels_s_{clusters}.csv")
+            if config_provider("sector", "perennials")(w)
             else []
         ),
     output:
