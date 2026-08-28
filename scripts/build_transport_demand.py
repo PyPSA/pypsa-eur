@@ -273,7 +273,8 @@ if __name__ == "__main__":
         snakemake.params.snapshots, snakemake.params.drop_leap_day, tz="UTC"
     )
 
-    nyears = len(snapshots) / 8760
+    n = pypsa.Network(snakemake.input.network)
+    nyears = n.snapshot_weightings.generators.sum() / 8760.0
 
     energy_totals_year = snakemake.params.energy_totals_year
     nodal_transport_data = build_nodal_transport_data(
