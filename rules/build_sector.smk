@@ -156,7 +156,7 @@ rule build_daily_heat_demand:
     output:
         heat_demand=resources("daily_heat_demand_total_base_s_{clusters}.nc"),
     log:
-        logs("build_daily_heat_demand_total_s_{clusters}.loc"),
+        logs("build_daily_heat_demand_total_s_{clusters}.log"),
     benchmark:
         benchmarks("build_daily_heat_demand/total_s_{clusters}")
     threads: 8
@@ -181,7 +181,7 @@ rule build_hourly_heat_demand:
             "residential_heat_dsm_profile_total_base_s_{clusters}.csv"
         ),
     log:
-        logs("build_hourly_heat_demand_total_s_{clusters}.loc"),
+        logs("build_hourly_heat_demand_total_s_{clusters}.log"),
     benchmark:
         benchmarks("build_hourly_heat_demand/total_s_{clusters}")
     threads: 8
