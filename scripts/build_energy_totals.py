@@ -251,6 +251,7 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     df = pd.read_excel(fn_transport, "TrRoad_ene", index_col=0)
 
+    # energy consumption by fuel (ktoe)
     ct_totals["total road"] = df.loc["by fuel (EUROSTAT DATA)"]
 
     ct_totals["electricity road"] = df.loc["Electricity"]
@@ -285,8 +286,14 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     )
     ct_totals["total heavy duty road freight"] = df.loc[row]
 
+    # vehicle efficiency (kgoe/100km) 
     assert df.index[61] == "Passenger cars"
     ct_totals["passenger car efficiency"] = df.iloc[61]
+
+    assert df.index[81] == "Heavy goods vehicles"
+    ct_totals["heavy goods efficiency"] = df.iloc[81]
+
+    # transport rail
 
     df = pd.read_excel(fn_transport, "TrRail_ene", index_col=0)
 
@@ -307,6 +314,24 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     assert df.index[17] == "Electric"
     ct_totals["electricity rail freight"] = df.iloc[17]
+
+    df = pd.read_excel(fn_transport, "TrRail_act", index_col=0)
+
+    assert df.index[12] == "Vehicle-km (mio km)"
+    ct_totals["mio km-driven Rail"] = df.iloc[12]
+
+    assert df.index[13] == "Passenger transport"
+    ct_totals["mio km-driven Rail passenger"] = df.iloc[13]
+
+    assert df.index[19] == "Freight transport"
+    ct_totals["mio km-driven Rail freight"] = df.iloc[19]
+
+    # load factors (pkm/km or tkm/km)
+    assert df.index[48] == "Passenger transport (p/movement)"
+    ct_totals["load factor Rail passenger"] = df.iloc[48]
+
+    assert df.index[54] == "Freight transport (t/movement)"
+    ct_totals["load factor Rail freight"] = df.iloc[54]
 
     df = pd.read_excel(fn_transport, "TrAvia_ene", index_col=0)
 
@@ -357,10 +382,46 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     # coastal and inland
     ct_totals["total domestic navigation"] = df.loc["Energy consumption (ktoe)"]
 
+    # transport road - activity: Stock of vehicle and Vehicle-km driven (mio km)
     df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)
 
     assert df.index[85] == "Passenger cars"
-    ct_totals["passenger cars"] = df.iloc[85]
+    ct_totals["Number Passenger cars"] = df.iloc[85]
+
+    assert df.index[84] == "Powered two-wheelers"
+    ct_totals["Number Powered two-wheelers"] = df.iloc[84]
+
+    assert df.index[99] == "Light commercial vehicles"
+    ct_totals["Number Light commercial vehicles"] = df.iloc[99]
+
+    assert df.index[92] == "Motor coaches, buses and trolley buses"
+    ct_totals["Number Motor coaches, buses and trolley buses"] = df.iloc[92]
+
+    assert df.index[105] == "Heavy goods vehicles"
+    ct_totals["Number Heavy goods vehicles"] = df.iloc[105]
+
+    # vehicle-km driven (mio km)
+    assert df.index[31] == "Passenger cars"
+    ct_totals["mio km-driven Passenger cars"] = df.iloc[31]
+
+    assert df.index[30] == "Powered two-wheelers"
+    ct_totals["mio km-driven Powered two-wheelers"] = df.iloc[30]
+
+    assert df.index[45] == "Light commercial vehicles"
+    ct_totals["mio km-driven Light commercial vehicles"] = df.iloc[45]
+
+    assert df.index[38] == "Motor coaches, buses and trolley buses"
+    ct_totals["mio km-driven Motor coaches, buses and trolley buses"] = df.iloc[38]
+
+    assert df.index[51] == "Heavy goods vehicles"
+    ct_totals["mio km-driven Heavy goods vehicles"] = df.iloc[51]
+
+    # load factors (pkm/km or tkm/km)
+    assert df.index[148] == "Motor coaches, buses and trolley buses"
+    ct_totals["load factor Motor coaches, buses and trolley buses"] = df.iloc[148]
+
+    assert df.index[161] == "Heavy goods vehicles"
+    ct_totals["load factor Heavy goods vehicles"] = df.iloc[161]
 
     return pd.DataFrame(ct_totals)
 
@@ -420,9 +481,16 @@ def build_idees(
     totals = totals[totals.index.get_level_values(1).isin(years)]
 
     # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
-    totals.loc[:, "passenger car efficiency"] /= 1e6
+    eff_cols = ["passenger car efficiency", "heavy goods efficiency"]
+    totals.loc[:, eff_cols] /= 1e6
     # convert ktoe to TWh
-    patterns = ["passenger cars", ".*space efficiency", ".*water efficiency"]
+    patterns = [
+        "Number.*",
+        "mio km-driven.*",
+        "load factor.*",
+        ".*space efficiency",
+        ".*water efficiency"
+    ]
     exclude = totals.columns.str.fullmatch("|".join(patterns))
     totals = totals.copy()
     totals.loc[:, ~exclude] *= 11.63 / 1e3
@@ -509,7 +577,27 @@ def build_energy_totals(
 
     efficiency_keywords = ["space efficiency", "water efficiency"]
     to_drop = idees.columns[idees.columns.str.contains("|".join(efficiency_keywords))]
-    to_drop = to_drop.append(pd.Index(["passenger cars", "passenger car efficiency"]))
+    drop_columns = ["Number Passenger cars",
+        "Number Powered two-wheelers",
+        "Number Light commercial vehicles",
+        "Number Motor coaches, buses and trolley buses",
+        "Number Heavy goods vehicles",
+        "passenger car efficiency",
+        "heavy goods efficiency",
+        "mio km-driven Passenger cars",
+        "mio km-driven Powered two-wheelers",
+        "mio km-driven Light commercial vehicles",
+        "mio km-driven Motor coaches, buses and trolley buses",
+        "mio km-driven Heavy goods vehicles",
+        "mio km-driven Rail",
+        "mio km-driven Rail passenger",
+        "mio km-driven Rail freight",
+        "load factor Rail passenger",
+        "load factor Rail freight",
+        "load factor Heavy goods vehicles",
+        "load factor Motor coaches, buses and trolley buses"
+        ]
+    to_drop = to_drop.append(pd.Index(drop_columns))
 
     df = idees.reindex(new_index).drop(to_drop, axis=1)
 
@@ -867,8 +955,23 @@ def build_transport_data(
     """
     years = np.arange(2000, 2024)
 
+    car_cols = ["Number Passenger cars",
+                "Number Powered two-wheelers",
+                "Number Light commercial vehicles",
+                "Number Motor coaches, buses and trolley buses",
+                "Number Heavy goods vehicles",
+                "mio km-driven Passenger cars",
+                "mio km-driven Powered two-wheelers",
+                "mio km-driven Light commercial vehicles",
+                "mio km-driven Motor coaches, buses and trolley buses",
+                "mio km-driven Heavy goods vehicles",
+                "mio km-driven Rail",
+                "mio km-driven Rail passenger",
+                "mio km-driven Rail freight"
+    ]
+
     # first collect number of cars
-    transport_data = pd.DataFrame(idees["passenger cars"])
+    transport_data = pd.DataFrame(idees[car_cols])
 
     countries_without_ch = set(countries) - {"CH"}
     new_index = pd.MultiIndex.from_product(
@@ -890,6 +993,8 @@ def build_transport_data(
             years, ["passenger cars"]
         ]
 
+        swiss_cars = swiss_cars.rename(columns={"passenger cars": "Number Passenger cars"})
+
         # Ensure index is integer years
         swiss_cars.index = swiss_cars.index.astype(int)
 
@@ -899,40 +1004,49 @@ def build_transport_data(
 
         transport_data = pd.concat([transport_data, swiss_cars]).sort_index()
 
-    transport_data = transport_data.rename(columns={"passenger cars": "number cars"})
     # clean up dataframe
     transport_data = transport_data[
         transport_data.index.get_level_values(1).isin(years)
     ]
 
-    missing = transport_data.index[transport_data["number cars"].isna()]
-    if not missing.empty:
-        logger.info(
-            f"Missing data on cars from:\n{list(missing)}\nFilling gaps with averaged data."
-        )
-        cars_pp = transport_data["number cars"] / population
+    for col in car_cols:
+        missing = transport_data.index[transport_data[col].isna()]
+        if not missing.empty:
+            logger.info(
+                f"Missing data on cars from:\n{list(missing)}\nFilling gaps with averaged data."
+            )
+            cars_pp = transport_data[col] / population
 
-        fill_values = {
-            year: cars_pp.mean() * population for year in transport_data.index.unique(1)
-        }
-        fill_values = pd.DataFrame(fill_values).stack()
-        fill_values = pd.DataFrame(fill_values, columns=["number cars"])
-        fill_values.index.names = ["country", "year"]
-        fill_values = fill_values.reindex(transport_data.index)
+            fill_values = {
+                year: cars_pp.mean() * population for year in transport_data.index.unique(1)
+            }
+            fill_values = pd.DataFrame(fill_values).stack()
+            fill_values = pd.DataFrame(fill_values, columns=[col])
+            fill_values.index.names = ["country", "year"]
+            fill_values = fill_values.reindex(transport_data.index)
 
-        transport_data = transport_data.combine_first(fill_values)
+            transport_data = transport_data.combine_first(fill_values)
 
-    # collect average fuel efficiency in MWh/100km, taking passengar car efficiency in TWh/100km
+    # collect average fuel efficiency in MWh/100km, taking passenger car efficiency in TWh/100km
     transport_data["average fuel efficiency"] = idees["passenger car efficiency"] * 1e6
+    stats = [
+        "average fuel efficiency",
+        "load factor Rail passenger",
+        "load factor Rail freight",
+        "load factor Heavy goods vehicles",
+        "load factor Motor coaches, buses and trolley buses",
+    ]
+    transport_data[stats[1:]] = idees[stats[1:]]
 
-    missing = transport_data.index[transport_data["average fuel efficiency"].isna()]
-    if not missing.empty:
-        logger.info(
-            f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gaps with averaged data."
-        )
+    for stat in stats:
+        missing = transport_data.index[transport_data[stat].isna()]
+        if not missing.empty:
+            logger.info(
+                f"Missing data on {stat} from:\n{list(missing)}\nFilling gaps with averaged data."
+            )
 
-        fill_values = transport_data["average fuel efficiency"].mean()
-        transport_data.loc[missing, "average fuel efficiency"] = fill_values
+            fill_values = transport_data[stat].mean()
+            transport_data.loc[missing, stat] = fill_values
 
     return transport_data
 

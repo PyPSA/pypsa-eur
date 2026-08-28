@@ -724,47 +724,203 @@ sector:
       - 22
   cluster_heat_buses: true
   heat_demand_cutout: default
-  bev_dsm_restriction_value: 0.8
-  bev_dsm_restriction_time: 7
+  bev_dsm_restriction_value:
+    pc: 0.7
+    ptw: 0.7
+    bus: 0.9
+    lcv: 0.7
+    hgv: 0.7
+  bev_dsm_restriction_time:
+    pc: 7
+    ptw: 7
+    bus: 5
+    lcv: 6
+    hgv: 4
   transport_heating_deadband_upper: 20.0
   transport_heating_deadband_lower: 15.0
   ICE_lower_degree_factor: 0.375
   ICE_upper_degree_factor: 1.6
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
-  bev_dsm: true
-  bev_dsm_availability: 0.5
-  bev_energy: 0.05
+  bev_dem_smoothing: true
+  low_voltage_charging:
+  - pc
+  - ptw
+  - bus
+  - lcv
+  - hgv
+  bev_dsm:
+    pc: true
+    ptw: false
+    bus: true
+    lcv: true
+    hgv: true
+  bev_dsm_availability:
+    pc: 0.45
+    ptw: 0.45
+    bus: 0.42
+    lcv: 0.33
+    hgv: 0.38
+  bev_energy:
+    pc: 0.078
+    ptw: 0.0133
+    bus: 0.9
+    lcv: 0.078
+    hgv: 0.817
   bev_charge_efficiency: 0.9
-  bev_charge_rate: 0.011
-  bev_avail_max: 0.95
-  bev_avail_mean: 0.8
-  v2g: true
+  bev_charge_rate:
+    pc: 0.0266
+    ptw: 0.0109
+    bus: 0.2554
+    lcv: 0.0793
+    hgv: 0.3527
+  bev_avail_max:
+    pc: 0.9
+    ptw: 0.9
+    bus: 0.51
+    lcv: 0.9
+    hgv: 0.94
+  bev_avail_mean:
+    pc: 0.8
+    ptw: 0.8
+    bus: 0.37
+    lcv: 0.7
+    hgv: 0.61
+  v2g:
+    pc: true
+    ptw: false
+    bus: true
+    lcv: true
+    hgv: true
   land_transport_fuel_cell_share:
-    2020: 0
-    2025: 0
-    2030: 0
-    2035: 0
-    2040: 0
-    2045: 0
-    2050: 0
+    pc:
+      2020: 0
+      2025: 0
+      2030: 0
+      2035: 0
+      2040: 0
+      2045: 0
+      2050: 0
+    ptw:
+      2020: 0
+      2025: 0
+      2030: 0
+      2035: 0
+      2040: 0
+      2045: 0
+      2050: 0
+    bus:
+      2020: 0
+      2025: 0
+      2030: 0
+      2035: 0
+      2040: 0
+      2045: 0
+      2050: 0
+    lcv:
+      2020: 0
+      2025: 0
+      2030: 0
+      2035: 0
+      2040: 0
+      2045: 0
+      2050: 0
+    hgv:
+      2020: 0
+      2025: 0
+      2030: 0
+      2035: 0
+      2040: 0
+      2045: 0
+      2050: 0
   land_transport_electric_share:
-    2020: 0
-    2025: 0.05
-    2030: 0.2
-    2035: 0.45
-    2040: 0.7
-    2045: 0.85
-    2050: 1
+    pc:
+      2020: 0
+      2025: 0.05
+      2030: 0.2
+      2035: 0.45
+      2040: 0.7
+      2045: 0.85
+      2050: 1
+    ptw:
+      2020: 0
+      2025: 0.05
+      2030: 0.2
+      2035: 0.45
+      2040: 0.7
+      2045: 0.85
+      2050: 1
+    bus:
+      2020: 0
+      2025: 0.05
+      2030: 0.2
+      2035: 0.45
+      2040: 0.7
+      2045: 0.85
+      2050: 1
+    lcv:
+      2020: 0
+      2025: 0.05
+      2030: 0.2
+      2035: 0.45
+      2040: 0.7
+      2045: 0.85
+      2050: 1
+    hgv:
+      2020: 0
+      2025: 0.05
+      2030: 0.2
+      2035: 0.45
+      2040: 0.7
+      2045: 0.85
+      2050: 1
   land_transport_ice_share:
-    2020: 1
-    2025: 0.95
-    2030: 0.8
-    2035: 0.55
-    2040: 0.3
-    2045: 0.15
-    2050: 0
-  transport_electric_efficiency: 53.19
+    pc:
+      2020: 1
+      2025: 0.95
+      2030: 0.8
+      2035: 0.55
+      2040: 0.3
+      2045: 0.15
+      2050: 0
+    ptw:
+      2020: 1
+      2025: 0.95
+      2030: 0.8
+      2035: 0.55
+      2040: 0.3
+      2045: 0.15
+      2050: 0
+    bus:
+      2020: 1
+      2025: 0.95
+      2030: 0.8
+      2035: 0.55
+      2040: 0.3
+      2045: 0.15
+      2050: 0
+    lcv:
+      2020: 1
+      2025: 0.95
+      2030: 0.8
+      2035: 0.55
+      2040: 0.3
+      2045: 0.15
+      2050: 0
+    hgv:
+      2020: 1
+      2025: 0.95
+      2030: 0.8
+      2035: 0.55
+      2040: 0.3
+      2045: 0.15
+      2050: 0
+  transport_electric_efficiency:
+    pc: 80.0
+    ptw: 172.41
+    bus: 17.09
+    lcv: 54.35
+    hgv: 10.11
   transport_fuel_cell_efficiency: 30.003
   transport_ice_efficiency: 16.0712
   agriculture_machinery_electric_share: 0.5
