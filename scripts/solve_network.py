@@ -154,7 +154,17 @@ def add_land_use_constraint(n: pypsa.Network, planning_horizons: str) -> None:
         Modified PyPSA network with constraints added
     """
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
-
+    # Sara's thesis
+    # island_carrier_map index and carrier name
+    island_carrier_map = {
+        "solar":      [("solar island",                    "solar island")],
+        "onwind":     [("onwind island",                   "onwind island")],
+        "offwind-ac": [
+            ("offwind-ac island",                  "offwind-ac island"),
+            ("offwind-ac offshore island offshore", "offwind-ac island offshore"),
+        ],
+    }
+    # end of thesis changes
     for carrier in [
         "solar",
         "solar rooftop",
@@ -169,6 +179,27 @@ def add_land_use_constraint(n: pypsa.Network, planning_horizons: str) -> None:
             f" {carrier}.*$", "", regex=True
         )
         existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
+        
+        # Sara's thesis
+        # Similar code to normal renewables for the islands
+        for island_carrier, gen_suffix in island_carrier_map.get(carrier, []):
+            island_prior = (
+                (n.generators.carrier == island_carrier)
+                & ~n.generators.p_nom_extendable
+            )
+            if island_prior.any():
+                island_grouper = n.generators.loc[island_prior].index.str.replace(
+                    f" {gen_suffix}.*$", "", regex=True
+                )
+                island_existing = (
+                    n.generators.loc[island_prior, "p_nom"]
+                    .groupby(island_grouper)
+                    .sum()
+                )
+                # Aggregating island renewable to normal renewables
+                existing = existing.add(island_existing, fill_value=0)
+        # end of thesis changes
+        
         existing.index += f" {carrier}-{planning_horizons}"
         n.generators.loc[existing.index, "p_nom_max"] -= existing
 
@@ -1275,6 +1306,10 @@ def extra_functionality(
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
+    # Sara's thesis
+    add_island_shared_capacity_constraints(n)
+    # end of thesis changes
+
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
@@ -1296,6 +1331,84 @@ def extra_functionality(
         module = importlib.import_module(module_name)
         custom_extra_functionality = getattr(module, module_name)
         custom_extra_functionality(n, snapshots, snakemake)  # pylint: disable=E0601
+
+# Sara's thesis
+def add_island_shared_capacity_constraints(n: pypsa.Network) -> None:
+    """
+    Ensure combined installed capacity of original + all island variants
+    does not exceed the shared physical resource potential (p_nom_max).
+
+    offwind-ac: p_nom[base] + p_nom[island] + p_nom[island offshore] <= p_nom_max  (3-way)
+    solar/onwind: p_nom[base] + p_nom[island] <= p_nom_max                          (2-way)
+    """
+    rename = {} if PYPSA_V1 else {"Generator-ext": "Generator"}
+
+    # (base_carrier, island_suffixes_that_share_the_same_resource)
+        
+    carrier_groups = [
+        ("solar",      [" island"]),
+        ("offwind-ac", [" island", " offshore island offshore"]),  # all three draw from same offshore resource
+        ("onwind",     [" island"]),
+    ]
+
+    for base_carrier, island_suffixes in carrier_groups:
+        all_carriers = [base_carrier] + [f"{base_carrier}{s}" for s in island_suffixes]
+
+        all_ext = n.generators[
+            n.generators.carrier.isin(all_carriers) & n.generators.p_nom_extendable
+        ].index
+        base_ext = n.generators[
+            (n.generators.carrier == base_carrier) & n.generators.p_nom_extendable
+        ].index
+
+        if base_ext.empty or all_ext.empty:
+            continue
+
+        # Map every generator to its base generator name (the constraint group key)
+        def to_base(gen_name, carrier):
+            if carrier == base_carrier:
+                return gen_name
+            for suffix in island_suffixes:
+                if carrier == f"{base_carrier}{suffix}":
+                    if carrier == "offwind-ac offshore island offshore":
+                        suffix = " island offshore"
+                    return re.sub(
+                        rf"{re.escape(suffix)}(-\d+)$", r"\1", gen_name
+                    )
+            return None
+
+        grouper = pd.Series(
+            [to_base(g, n.generators.at[g, "carrier"]) for g in all_ext],
+            index=all_ext,
+    )
+        # Drop island gens whose base is not in base_ext (unmatched)
+        # Grouper is only for data tha has a base_ext and thus has a p_nom max
+        # Then I create a all_ext_valid that contains a list of the actual name of the capacities (include solar and so on)
+        grouper = grouper[grouper.isin(base_ext)]
+        all_ext_valid = grouper.index
+
+        if all_ext_valid.empty:
+            continue
+
+        # Sort groups to match groupby().sum() sorted order.
+        # Use .values (numpy) to strip the pandas index name — otherwise linopy sees
+        # lhs dim="group" vs rhs dim="name" and broadcasts to a (N×N) cross-product
+        # instead of the intended N element-wise constraints.
+        sorted_groups = sorted(grouper.unique())
+        rhs = n.generators.loc[sorted_groups, "p_nom_max"].values
+
+        lhs = (
+            n.model["Generator-p_nom"].rename(rename).loc[all_ext_valid]
+            .groupby(grouper)
+            .sum()
+        )
+
+        logger.info(f"Adding island shared capacity constraint for {base_carrier}.")
+        n.model.add_constraints(
+            lhs <= rhs,
+            name=f"island_cap_{base_carrier.replace('-', '_')}",
+        )
+# end of thesis changes
 
 
 def check_objective_value(n: pypsa.Network, solving: dict) -> None:

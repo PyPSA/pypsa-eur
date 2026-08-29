@@ -789,7 +789,7 @@ rule build_eurostat_balances:
         csv=resources("eurostat_energy_balances.csv"),
     threads: 1
     resources:
-        mem_mb=4000,
+        mem_mb=12000,
     log:
         logs("build_eurostat_balances.log"),
     benchmark:
@@ -1093,7 +1093,7 @@ rule build_industrial_production_per_country:
         ),
     threads: 8
     resources:
-        mem_mb=2000,
+        mem_mb=8000,
     log:
         logs("build_industrial_production_per_country.log"),
     benchmark:
@@ -1561,6 +1561,15 @@ def input_heat_source_power(w):
         ).keys()
     }
 
+def input_profile_tech(w):
+    return {
+        f"profile_{tech}": resources(
+            "profile_{clusters}_" + tech + ".nc"
+            if tech != "hydro"
+            else f"profile_{tech}.nc"
+        )
+        for tech in config_provider("electricity", "renewable_carriers")(w)
+    }
 
 rule prepare_sector_network:
     message:
@@ -1598,7 +1607,10 @@ rule prepare_sector_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
+        # Added - thesis
+        clusters=config_provider("scenario","clusters"),
     input:
+        # unpack(input_profile_tech),
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),
         **rules.cluster_gas_network.output,
@@ -1724,6 +1736,12 @@ rule prepare_sector_network:
             if config_provider("sector", "district_heating", "ates", "enable")(w)
             else []
         ),
+        # Added - thesis
+        electroyser_capacities="data/new_data/IEA_renewable_hydrogen_electrolysers_EU_NO_CH_GB_2030.csv",
+        solar_profile=resources("profile_{clusters}_solar.nc"),
+        onwind_profile=resources("profile_{clusters}_onwind.nc"),
+        offwind_ac_profile=resources("profile_{clusters}_offwind-ac.nc"),
+        
     output:
         resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"

@@ -1738,7 +1738,7 @@ def insert_gas_distribution_costs(
 
 
 def add_electricity_grid_connection(n, costs):
-    carriers = ["onwind", "solar", "solar-hsat"]
+    carriers = ["onwind", "solar", "solar-hsat"] 
 
     gens = n.generators.index[n.generators.carrier.isin(carriers)]
 
@@ -1821,18 +1821,372 @@ def add_h2_gas_infrastructure(
 
     n.add("Bus", nodes + " H2", location=nodes, carrier="H2", unit="MWh_LHV")
 
-    n.add(
-        "Link",
-        nodes + " H2 Electrolysis",
-        bus1=nodes + " H2",
-        bus0=nodes,
-        p_nom_extendable=True,
-        carrier="H2 Electrolysis",
-        efficiency=costs.at["electrolysis", "efficiency"],
-        capital_cost=costs.at["electrolysis", "capital_cost"],
-        p_min_pu=options["min_part_load_electrolysis"],
-        lifetime=costs.at["electrolysis", "lifetime"],
-    )
+    # n.add(
+    #     "Link",
+    #     nodes + " H2 Electrolysis",
+    #     bus1=nodes + " H2",
+    #     bus0=nodes,
+    #     p_nom_extendable=True,
+    #     carrier="H2 Electrolysis",
+    #     efficiency=costs.at["electrolysis", "efficiency"],
+    #     capital_cost=costs.at["electrolysis", "capital_cost"],
+    #     p_min_pu=options["min_part_load_electrolysis"],
+    #     lifetime=costs.at["electrolysis", "lifetime"],
+    # )
+    
+    # Sara's thesis
+    import xarray as xr
+    from collections.abc import Iterable
+    from typing import Any
+    import pandas as pd
+    import pycountry
+    from powerplantmatching.export import map_country_bus
+    
+    cluster=snakemake.params.clusters[0]
+    def get_bus_locations_island(car_island, cluster, base_path="resources/EU-365H-cluster=90"):
+        
+        """
+        Load bus profile data for a given island scenario and produces the location of the buses of renewables.
+
+        Parameters:
+            car_island (str): Island technology type (e.g. 'solar', 'offwind-ac').
+            cluster (str): Dataset cluster/scenario identifier.
+            base_path (str): Path to input data directory.
+
+        Returns:bus_bins_location
+        """
+        
+        key = f"{car_island.replace('-', '_')}_profile"
+        ds = xr.open_dataset(snakemake.input[key])
+       
+        if "year" in ds.indexes:
+            ds = ds.sel(year=ds.year.min(), drop=True) #to select only the dataset for the smallest year
+        ds = ds.stack(bus_bin=["bus", "bin"]) #combines multiple dimension into one
+        
+        # Flatten changes the multi-index ('BE0 0', 0) to 'BE0 0  0'
+        def flatten(t: Iterable[Any]) -> str:
+            return " ".join(map(str, t))
+
+        buses = ds.indexes["bus_bin"].get_level_values("bus")
+        bus_bins_location = ds.indexes["bus_bin"].map(flatten)     
+        return bus_bins_location
+
+    mapping_df_onland, mapping_df_offshore = [
+        (lambda bus_bins: n.buses.loc[bus_bins.str.rsplit(" ", n=1).str[0], ["x", "y","country"]].copy().assign(bus_bins=bus_bins.str.rsplit(" ", n=1).str[0]))
+        (get_bus_locations_island(tech, cluster)) 
+        for tech in ["solar", "offwind-ac"]
+    ]
+
+    projects_eu_renH2_2030 = pd.read_csv(snakemake.input.electroyser_capacities, encoding="latin-1", low_memory=False, sep=",")
+    projects_eu_renH2_2030 = projects_eu_renH2_2030[~projects_eu_renH2_2030[["lat","lon","p_nom"]].isna().any(axis=1)]
+    
+    # Myopic - Allowing to filter the database for 2025 and 2030     
+    # Read in data, clean (remove nan valeus)
+    def define_electrolyser_project_capacities_at_buses(df,from_year, to_year,onland_flag,mapping_df):
+        df_fitered = df[(df['build_year'] > from_year) & (df['build_year'] <= to_year)]    #) & 8()
+        df_filtered_2 = df_fitered[df_fitered["on_land"] == onland_flag]
+        df_withbuses = map_country_bus(df_filtered_2, mapping_df)
+        df_withbuses_aggregated_under_one_bus=df_withbuses.groupby("bus")["p_nom"].sum().to_frame()
+        all_buses = mapping_df.index
+        missing_buses = all_buses.difference(df_withbuses_aggregated_under_one_bus.index)
+        df_withbuses_aggregated = pd.concat([df_withbuses_aggregated_under_one_bus, pd.DataFrame({"p_nom": 0}, index=missing_buses)]).sort_index()
+        return df_withbuses_aggregated
+    
+    # Defining nodes island to make sure that the other objects on the island are at the same locations as the electrolyser.
+    # And that there are no extra offwind capacities in location with no offwind. 
+    nodes_island_onland=define_electrolyser_project_capacities_at_buses(projects_eu_renH2_2030,2025,2030,True,mapping_df_onland).index.values
+    nodes_island_offshore=define_electrolyser_project_capacities_at_buses(projects_eu_renH2_2030,2025,2030,False,mapping_df_offshore).index.values
+    
+    def add_island_grid(n, nodes_island, suffix,costs):
+        """
+        Add an AC bus representing an island grid to the network with a suffix to distinguish different island types (e.g., onshore()/offshore(offshore)).
+        """
+        n.add("Carrier", f"AC {suffix}")
+        n.add(
+            "Bus",
+            nodes_island + f" {suffix}", 
+            location=nodes_island, 
+            carrier=f"AC {suffix}",
+            unit="MWh_el",
+        )
+    add_island_grid(n, nodes_island_onland, 'island',costs)   
+    add_island_grid(n, nodes_island_offshore, 'island offshore',costs) 
+    
+    def add_island_renewables(
+        n,
+        cluster: str,
+        settings: dict,
+        is_extendable: bool,
+    ):
+    # for car_island, suffix in car_island_.items():
+    #for car_island in ["solar", "onwind","offwind-ac"]:
+        reference_carrier = settings["reference_carrier"]
+        suffix = settings["suffix"]
+        import xarray as xr
+        
+        key = f"{reference_carrier.replace('-', '_')}_profile"
+        ds = xr.open_dataset(snakemake.input[key])
+
+        if "year" in ds.indexes:
+            ds = ds.sel(year=ds.year.min(), drop=True) #to select only the dataset for the smallest year
+        ds = ds.stack(bus_bin=["bus", "bin"]) #combines multiple dimension into one
+
+        from collections.abc import Iterable
+        from typing import Any
+
+        # Flatten changes the multi-index ('BE0 0', 0) to 'BE0 0  0'
+        def flatten(t: Iterable[Any]) -> str:
+            return " ".join(map(str, t))
+
+        # The aim of this is to add the offshore bus in the game
+        # if "offwind" in car_island:
+        #     suffix = ' offshore'
+        # else:
+        #     suffix = ''
+        
+        buses_ds_island = ds.indexes["bus_bin"].get_level_values("bus")
+        bus_bins = ds.indexes["bus_bin"].map(flatten) + f" {reference_carrier} island{suffix}" #+ f"{suffix}"
+        
+        # Create bus_bin_extendable from bus_bins
+        bus_bin_extendable = pd.DataFrame(index=bus_bins)
+        # Extract the first two parts of the bus name
+        # Example: "BE0 0 H2" -> "BE0 0"
+        bus_bin_extendable["location"] = (
+            bus_bin_extendable.index.to_series()
+            .str.split()
+            .str[:2]
+            .str.join(" ")
+        )
+        # Join electrolyser extendability information
+        # Assumes electrolysers.index contains matching location names
+        bus_bin_extendable = bus_bin_extendable.join(
+            is_extendable,
+            on="location"
+        )
+        
+        p_nom_max = ds["p_nom_max"].to_pandas()
+        p_nom_max.index = p_nom_max.index.map(flatten) + f" {reference_carrier} island{suffix}"
+        #Added on 28.06 to undestand the effect if the costs
+        p_nom_max_island=n.generators.p_nom_max[n.generators.index.str.endswith(f'{reference_carrier}')]
+        p_nom_max_island.index=p_nom_max_island.index +  f' island{suffix}'
+
+        p_max_pu = ds["profile"].to_pandas()
+        p_max_pu.columns = p_max_pu.columns.map(flatten) + f" {reference_carrier} island{suffix}" #mean is incorrect, so have to 
+        #more than that would mean that I shall find a way to have this averaged out
+        
+        p_max_pu_island=n.generators_t.p_max_pu.loc[:, n.generators_t.p_max_pu.columns.str.endswith(f'{reference_carrier}')]
+        p_max_pu_island.columns=p_max_pu_island.columns +f' island{suffix}'
+        
+        # Added 0.1 and 0.01 to the capital- and marginal-costs so that the system would always favour the actual capacities, not the island ones
+        marginal_cost_island=n.generators.marginal_cost[n.generators.index.str.endswith(f'{reference_carrier}')]#+0.01
+        marginal_cost_island.index=marginal_cost_island.index +  f' island{suffix}'
+        
+        capital_cost_island=n.generators.capital_cost[n.generators.index.str.endswith(f'{reference_carrier}')]#+0.1
+        capital_cost_island.index=capital_cost_island.index +  f' island{suffix}'
+        
+        efficiency_island=n.generators.efficiency[n.generators.index.str.endswith(f'{reference_carrier}')]
+        efficiency_island.index=efficiency_island.index +  f' island{suffix}'
+        
+        lifetime_island=n.generators.lifetime[n.generators.index.str.endswith(f'{reference_carrier}')]
+        lifetime_island.index=lifetime_island.index +  f' island{suffix}'
+
+        n.add("Carrier", f"{car_island} island{suffix}")
+
+        # Adding renewable generator - pv & onwind
+        n.add(
+            "Generator",
+            bus_bins,
+            #suffix=" island",
+            bus= buses_ds_island + f" island{suffix}", # I will create a new bus for each island to add the electricity there
+            carrier=f"{car_island} island{suffix}", 
+            p_nom_extendable=bus_bin_extendable['p_nom_extendable'],
+            p_nom_max=p_nom_max_island,
+            marginal_cost=marginal_cost_island,
+            capital_cost= capital_cost_island,
+            efficiency=efficiency_island,#what is the buses are not in the right order? best to create a df. unless the value is same for all
+            p_max_pu=p_max_pu_island,
+            lifetime=lifetime_island,
+        )
+
+    investment_year = int(snakemake.wildcards.planning_horizons)
+    
+    def add_island_electrolysers(n, nodes_island, suffix_electrolyser, suffix,df, costs):
+        n.add("Carrier",f"H2 Electrolysis{suffix_electrolyser}")
+        n.add(
+            "Link",
+            nodes_island, 
+            suffix= f" H2 Electrolysis{suffix_electrolyser}",
+            bus1=nodes_island + " H2",
+            bus0=nodes_island + f" {suffix}", # changes from the normal grid to the energy of the renewables
+            #p_nom=df['p_nom'].values,
+            #p_nom_extendable=False,
+            p_nom_min=df['p_nom'].values,
+            p_nom_max=df['p_nom'].values,
+            p_nom_extendable=(df["p_nom"] > 0).values, #Only when there is a value in p_nom
+            carrier="H2 Electrolysis",
+            efficiency=costs.at["electrolysis", "efficiency"],
+            capital_cost=costs.at["electrolysis", "capital_cost"],
+            p_min_pu=options["min_part_load_electrolysis"],
+            lifetime=costs.at["electrolysis", "lifetime"],
+            )
+
+    def add_island_grid_connection(n, nodes_island, suffix,costs, is_extendable):
+        """
+        Add an extendable one-way grid connection for an island (onland or offshore) node.
+
+        """
+        
+        n.add("Carrier",f"grid connection {suffix}")
+        n.add(
+            "Link",
+            nodes_island, 
+            suffix=f" grid connection {suffix}",
+            bus0=nodes_island + f" {suffix}",
+            bus1=nodes_island,
+            p_nom_extendable=is_extendable,
+            carrier=f"grid connection {suffix}",
+            efficiency=costs.at["electricity grid connection", "efficiency"],
+            capital_cost=costs.at["electricity grid connection", "capital_cost"],
+            p_min_pu=0, # prevents reverse flow
+            lifetime=costs.at["electricity grid connection", "lifetime"],
+            )  
+        
+    # add_island_grid_connection(n, nodes_island_onland, 'island',costs)   
+    # add_island_grid_connection(n, nodes_island_offshore, 'island offshore',costs) 
+    logger.info("Adding island batteries.")
+    
+    # New code for battery installation
+    def add_island_battery_system(n, nodes_island, suffix,costs, is_extendable):
+        """
+        Add a battery system to the given nodes for the specified suffix.
+        
+        Parameters:
+        n (pypsa.Network): The PyPSA network object to add the components to.
+        nodes_island (list): The list of nodes to add the battery system to.
+        suffix (str): The suffix to use for the battery system components.
+        costs (pd.DataFrame): The cost parameters for the battery inverter.
+        """
+            
+        n.add("Carrier", f"battery {suffix}")
+
+        n.add(
+            "Bus",
+            nodes_island,
+            suffix=f" battery {suffix}", #(I have a feeling that bus should not include battery)
+            location=nodes_island,
+            carrier=f"battery {suffix}",
+            x=n.buses.loc[list(nodes_island)].x.values,
+            y=n.buses.loc[list(nodes_island)].y.values,
+        )
+
+        n.add(
+            "Store",
+            nodes_island,
+            suffix= f" battery {suffix}",
+            bus=nodes_island + f" battery {suffix}",
+            e_cyclic=True,
+            e_nom_extendable=is_extendable,
+            carrier=f"battery {suffix}",
+            capital_cost=costs.at["battery storage", "capital_cost"],
+            lifetime=costs.at["battery storage", "lifetime"],
+        )
+        
+        # Similar to add electricity
+        roundtrip_correction=0.5
+        n.add("Carrier", [f"battery charger {suffix}", f"battery discharger {suffix}"])
+        n.add(
+            "Link",
+            nodes_island,
+            suffix=f" battery charger {suffix}",
+            bus0=nodes_island + f" {suffix}",
+            bus1=nodes_island + f" battery {suffix}",
+            carrier=f"battery charger {suffix}",
+            efficiency=costs.at["battery inverter", "efficiency"] ** roundtrip_correction,
+            capital_cost=costs.at["battery inverter",  "capital_cost"],
+            p_nom_extendable=is_extendable,
+            marginal_cost=costs.at["battery inverter", "marginal_cost"],
+            lifetime=costs.at["battery inverter", "lifetime"],
+        )
+        n.add(
+            "Link",
+            nodes_island,
+            suffix=f" battery discharger {suffix}",
+            bus1=nodes_island + f" {suffix}",
+            bus0=nodes_island + f" battery {suffix}",
+            carrier=f"battery discharger {suffix}",
+            efficiency=costs.at["battery inverter", "efficiency"] ** roundtrip_correction,
+            #Capital cost is added in dicharge only, as in add_electricity
+            p_nom_extendable=is_extendable,
+            marginal_cost=costs.at["battery inverter", "marginal_cost"],
+            lifetime=costs.at["battery inverter", "lifetime"],
+        )
+        
+    # add_island_battery_system(n, nodes_island_onland, 'island',costs)   
+    # add_island_battery_system(n, nodes_island_offshore, 'island offshore',costs)    
+    
+    # Adding island-grid connection
+    
+    logger.info("Adding  island to grid connection.")
+    
+
+    start_year = 2008 if investment_year == 2025 else 2025
+    end_year = investment_year
+    logger.info("Adding IEA electrolyser capacities.")
+    logger.info("Adding Island renewables.")
+
+    for is_onland, mapping_df, suffix_elec, suffix in [
+        (True, mapping_df_onland, "", "island"),
+        (False, mapping_df_offshore, " offshore", "island offshore"),
+    ]:
+        electrolysers = define_electrolyser_project_capacities_at_buses(
+            projects_eu_renH2_2030,
+            start_year,
+            end_year,
+            is_onland,
+            mapping_df,
+        )
+
+        electrolysers['p_nom_extendable'] = electrolysers['p_nom'] > 0
+        has_electrolyser = electrolysers["p_nom"] > 0
+
+        nodes_island = electrolysers.index.values
+        add_island_electrolysers(
+            n,
+            nodes_island,
+            suffix_elec,
+            suffix,
+            electrolysers,
+            costs
+        )
+        
+        carriers_onland = {
+            "solar": {"reference_carrier": "solar", "suffix": ""},
+            "onwind": {"reference_carrier": "onwind", "suffix": ""},
+            "offwind-ac": {"reference_carrier": "offwind-ac", "suffix": ""}, #I might remoe this later
+        }
+
+        carriers_offshore = {
+            "offwind-ac offshore": {"reference_carrier": "offwind-ac", "suffix": " offshore"},
+        }
+        if is_onland:
+            car_island_ = carriers_onland
+        else:
+            car_island_ = carriers_offshore
+        
+        # car_island_ = {
+        # "solar": [""],
+        # "onwind": [""],
+        # "offwind-ac": ["", " offshore"],
+        #
+        for car_island, suffixes in car_island_.items():
+            add_island_renewables(n, cluster, suffixes,  electrolysers['p_nom_extendable'])
+        
+        add_island_grid_connection(n, nodes_island, suffix, costs, electrolysers['p_nom_extendable'],)
+        add_island_battery_system(n, nodes_island, suffix, costs, electrolysers['p_nom_extendable'],)
+    
+    # Adding Island battery
+    
+#end of thesis changes
 
     if options["hydrogen_fuel_cell"]:
         logger.info("Adding hydrogen fuel cell for re-electrification.")
