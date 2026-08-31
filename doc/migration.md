@@ -7,7 +7,15 @@ This guide helps you move an existing PyPSA-Eur setup to the streamlined
 workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)). Other changes
 that were released at the same time are listed in the
 [release notes](release_notes.md).
+## Why the change
 
+Over the years the project has grown dynamically and we have accumulated quite a variety of options and ways to use these options. With this, the complexity for running, maintaining and managing the model and project has also grown. Specially the merge of the electricity-only model PyPSA-Eur with its' sector-coupled sibling PyPSA-Eur-Sec introduced a lot of duplicate logic.
+
+We have learned from many projects what works and what works not, and have used this experience to restructure the model quite a bit. We see the changes as the way forward to simplify future work and we hope you can also consider the migration to the new structure an investment for the future.
+
+The new structure moves nearly all options from wildcards into the config files, makes these options more consistent and more transparent, and also restructured the model building and solving logic to make it easier to maintain and extend.
+
+The changes might seem quite substantial, but we have prepared this migration guide to make it easier to move from the previous structure to the new structure. The migration guide is for users of the default PyPSA-Eur model, as well as for people maintaining forks of the model with their own modifications.
 ## What changed
 
 Scenario information used to live in filenames, such as
@@ -162,7 +170,7 @@ former `clusters: [adm]`.
 
 ### Translating `opts` and `sector_opts` {#opts-translation}
 
-Every option token has a config equivalent. The translation layer
+Every option token which was formerly given as a wildcard now has a config equivalent. The translation layer
 (`_helpers.update_config_from_wildcards`) was deleted, so leftover option strings
 have no effect at all.
 
@@ -173,11 +181,11 @@ have no effect at all.
 | `Co2L<x>` | `co2_budget.upper` (see [CO₂](#co2-budget)) |
 | `<n>h` | `clustering.temporal.averaging: <n>h` |
 | `<n>seg` | `clustering.temporal.segmentation: <n>` |
-| `CH4L<x>` | `electricity.gaslimit_enable: true` + `electricity.gaslimit` |
-| `Ep<x>` | `costs.emission_prices.enable: true` + `costs.emission_prices.co2` |
+| `CH4L<x>` | `electricity.gaslimit_enable: true` + `electricity.gaslimit: <x>` |
+| `Ep<x>` | `costs.emission_prices.enable: true` + `costs.emission_prices.co2: <x>` |
 | `Ept` | `costs.emission_prices.dynamic: true` |
 | `ATK` / `ATKc` | `electricity.autarky.enable` / `electricity.autarky.by_country` |
-| `lv<x>` / `lc<x>` | `electricity.transmission_limit` (e.g. `vopt`, `v1.25`, `c1.25`) |
+| `lv<x>` / `lc<x>` | `electricity.transmission_limit: <x>` (e.g. `vopt`, `v1.25`, `c1.25`) |
 | `<carrier>+<comp>+<p\|e\|c\|m><factor>` | `adjustments.electricity.factor` |
 
 `sector_opts` tokens:
@@ -205,9 +213,8 @@ Three tokens did a unit conversion for you that you now have to do yourself:
 
 - `linemaxext<n>` was given in GW and multiplied by `1e3`, so `linemaxext20`
   becomes `20000` (MW).
-- `CH4L<x>` was multiplied by `1e6`, so `CH4L200` becomes `gaslimit: 200000000`.
-- `sdr<x>` was a percentage divided by `100`, so `sdr2` becomes
-  `social_discountrate: 0.02`.
+- `CH4L<x>` was given in TWh and multiplied by `1e6`, so `CH4L200` becomes `gaslimit: 200000000` (MWh).
+- `sdr<x>` was a percentage divided by `100`, so `sdr2` becomes `social_discountrate: 0.02` in per unit.
 
 !!! note
     `sector.district_heating.progress` has to stay a year-to-value mapping; a bare
@@ -225,7 +232,7 @@ into it:
 | `electricity.co2limit_enable` / `co2limit` / `co2base` | `co2_budget.upper` with `relative: false` |
 | `energy.emissions` | `co2_budget.emissions_scope` |
 
-The new block looks like this:
+The new block by default looks like this:
 
 ```yaml
 co2_budget:
@@ -246,7 +253,7 @@ There are three traps here.
 
 **The units of absolute limits changed.** With `relative: false`, `upper` and
 `lower` are in **Gt CO₂ per year**, while the old `electricity.co2limit` was in
-tonnes. Divide by `1e9`, so `co2limit: 77500000.0` becomes `upper: 0.0775`. If you
+**t CO₂ per year** . Divide by `1e9`, so a former `co2limit: 77500000.0` becomes `upper: 0.0775`. If you
 copy the old number unchanged, your limit is a billion times too loose.
 
 **Electricity-only runs are now capped by default.** Previously an
@@ -330,7 +337,7 @@ Two keys are new and worth a decision:
 Finally, `solving.check_objective.expected_value` now accepts either a single value
 or a `{<horizon>: value}` mapping, so every `solved_{horizon}.nc` of a multi-horizon
 run is checked against its own benchmark. The default tolerances were tightened
-(`atol` 1e6 → 1e4, `rtol` 0.01 → 0.001).
+(`atol` from `1e6` to `1e4` and `rtol` from `1e-2` to `1e-3`).
 
 ### Complete example {#example}
 
@@ -393,8 +400,8 @@ The changes below are not renames. Even with an equivalent config the model itse
 changes, so do not expect to reproduce old numbers unless you act on them. Each item
 says how to get the old behaviour back, where that is possible.
 
-**Costs follow the planning horizon by default.** Every layer is costed with
-`costs_{horizon}_processed.csv`. Previously an overnight run used `costs.year`
+**Costs now follow the planning horizon by default.** Every layer is costed with
+`costs_{horizon}_processed.csv`. Previously an overnight run used the config entry `costs.year`
 (default 2050) regardless of the horizon, and in myopic and perfect runs the
 electricity layer used `costs.year` while the sector layer used the horizon.
 Wherever those two years differed, all costs, efficiencies and lifetimes change.
@@ -406,8 +413,7 @@ Wherever those two years differed, all costs, efficiencies and lifetimes change.
 **Electricity-only runs are CO₂-capped by default**, and absolute caps are given in
 Gt instead of tonnes. A default electricity-only run therefore changes from
 unconstrained to zero-emission.
-*Old behaviour:* `co2_budget: {upper: null, lower: null}`, or divide your old tonne
-value by `1e9`.
+To restore the *old behaviour*, set: `co2_budget: {upper: null, lower: null}`. To migrate your previous `<x> t` values, divide your old values by `1e9`.
 
 **Relative budgets are always measured against 1990.**
 `energy.base_emissions_year` no longer influences the CO₂ baseline; it still controls
@@ -417,8 +423,8 @@ that is flagged in `sector:`, which makes a relative budget almost non-binding.
 rescale `upper` by hand or use `relative: false`. For electricity-only runs, switch
 the `sector.transport`, `heating`, `industry` and `agriculture` flags off.
 
-**A missing horizon drops the CO₂ constraint** instead of interpolating. That
-horizon is then unconstrained, and in myopic mode so is every later one.
+**A horizon entry missing in the config drops the CO₂ constraint from the model** instead of interpolating. The CO2 emissions for this
+horizon are then unconstrained, and in myopic mode so is every later horizon.
 *Old behaviour:* list every horizon explicitly in `co2_budget.upper`.
 
 **Sector-coupled HVDC extension headroom rises from 20 to 30 GW.** In addition, a
@@ -431,19 +437,14 @@ to be ignored.
 transmission costs are set. Sector runs now also pick up `adjustments.electricity`,
 electricity-only runs also pick up `adjustments.sector`, and Line/Link
 `capital_cost` adjustments now take effect.
-*Old behaviour:* keep entries only in the block that your model type used before, and
-drop Line/Link `capital_cost` adjustments.
+*Old behaviour:* entries applied only to their respective model type and the Line/Link `capital_cost` adjustments were dropped.
 
-**`segmentation` is computed from the profile and demand resources** rather than from
-the prepared network's time series, so segment boundaries and weights differ, and with
-them capacity factors and the objective.
-*Old behaviour:* use `averaging` or `representative`; both are numerically unchanged.
+**`segmentation` is computed from the profiles of all renewable energy sources and all demand resources in the network**, so segment boundaries and weights differ, and with them capacity factors and the objective.
+*Old behaviour:*  segmentation was done on all time-series that were contained in the prepared network.
 
-**Electricity-only myopic and perfect foresight now run.** An electricity-only config
-used to ignore `foresight` and always solved a single period. Now `foresight: myopic`
-or `perfect` gives you a genuinely different model, with an existing fleet and with
+**Myopic and perfect foresight now supported for electricity-only runs.** `foresight: myopic` or `perfect` gives you the correct model with an existing fleet and with
 capacity accumulating across horizons.
-*Old behaviour:* use `foresight: overnight` with a single horizon.
+*Old behaviour:* Only `foresight: overnight` was used and only a single period was solved, even with different `foresight:` options specified.
 
 ### If you use perfect foresight {#perfect}
 
@@ -632,7 +633,7 @@ If you target files directly:
 The `**config["scenario"]` expansion pattern is gone. Collection rules take the
 `{horizon}` wildcard from `config["planning_horizons"]`.
 
-## Symptoms and causes {#symptoms}
+## Troubleshooting: Symptoms and causes {#symptoms}
 
 | Symptom | Likely cause |
 |---------|--------------|
@@ -742,8 +743,7 @@ foresight mode.
 
 **Turned into libraries.** `add_electricity.py`, `add_existing_baseyear.py`,
 `add_brownfield.py`, `prepare_network.py`, `prepare_sector_network.py` and
-`prepare_perfect_foresight.py` still exist, but Snakemake does not execute them any
-more. Their `if __name__ == "__main__"` blocks became `main()` functions that
+`prepare_perfect_foresight.py` still exist, but Snakemake does not execute them directly anymore. Their `if __name__ == "__main__"` blocks became `main()` functions that
 `compose_network.py` imports and calls. The signatures differ, so check the one you
 are patching:
 
@@ -799,10 +799,9 @@ maybe_adjust_costs_and_potentials(n, adjustments["sector"], horizon)
     `prepare_network.py` that assumed an electricity-only network will now see a full
     sector network with existing vintages.
 
-### Porting code inside a `main()` {#fork-porting}
+### Porting code into the new `main()` functions {#fork-porting}
 
-Inside these functions the `snakemake` object is not available. Use the `inputs` and
-`params` arguments instead:
+Inside the new `main()` functions the `snakemake` object is no longer available. Use the `inputs` and `params` arguments of the functions instead:
 
 | Old pattern | New pattern |
 |----------------|-------------|
