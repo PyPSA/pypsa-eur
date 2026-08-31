@@ -41,12 +41,12 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v7
-    - uses: prefix-dev/setup-pixi@v0.10.1
+    - uses: prefix-dev/setup-pixi@v0.10.2
       with:
         pixi-version: v0.68.1
 
     - name: Generate SBOM
-      uses: anchore/sbom-action@v0.24.0
+      uses: anchore/sbom-action@v0.24.2
       with:
         path: ".pixi/envs/default"
         output-file: sbom.spdx.json
@@ -55,7 +55,7 @@ jobs:
 
     - name: Vulnerability Scan
       id: scan
-      uses: anchore/scan-action@v7.4.0
+      uses: anchore/scan-action@v7.4.2
       env:
         SBOM: sbom.spdx.json
       with: &scan_settings
@@ -106,7 +106,7 @@ jobs:
     - name: Scan master baseline
       id: baseline
       if: github.event_name == 'pull_request'
-      uses: anchore/scan-action@v7.4.0
+      uses: anchore/scan-action@v7.4.2
       env:
         SBOM: master-baseline/sbom.spdx.json
       with: *scan_settings
