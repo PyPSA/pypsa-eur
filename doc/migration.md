@@ -231,8 +231,13 @@ The new block looks like this:
 co2_budget:
   emissions_scope: CO2     # was energy.emissions
   relative: true           # upper/lower are fractions of 1990 emissions
-  upper:
+  upper:                   # fraction of 1990 emissions, per horizon
+    2020: 0.72
+    2025: 0.648
     2030: 0.45
+    2035: 0.25
+    2040: 0.1
+    2045: 0.05
     2050: 0.0
   lower:                   # optional floor, unset by default
 ```
@@ -591,8 +596,6 @@ dropped and `{planning_horizons}` becomes `{horizon}`. For example
 | `results/graphics/balance_timeseries/s_{clusters}_…_{planning_horizons}/` | `results/graphs/balance_timeseries_{horizon}/` |
 | `results/graphics/heatmap_timeseries/s_{clusters}_…_{planning_horizons}/` | `results/graphs/heatmap_timeseries_{horizon}/` |
 | `results/graphics/interactive_bus_balance/s_{clusters}_…_{planning_horizons}/` | `results/graphics/interactive_bus_balance/{horizon}/` |
-
-Note that `plot_summary` writes SVG now, not PDF.
 
 ## Snakemake targets {#targets}
 
