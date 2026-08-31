@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* feat: Add biochar as a carbon dioxide removal (CDR) technology, via biomass pyrolysis and stable-carbon soil storage, with node-level potential derived from CORINE land cover ([#2141](https://github.com/PyPSA/pypsa-eur/issues/2141)).
 
 * Fix: fix bugs in retrofitting scripts which happens due to pandas version change and other code changes ([#2273](https://github.com/PyPSA/pypsa-eur/pull/2273))
 

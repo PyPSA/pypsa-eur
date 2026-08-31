@@ -4647,6 +4647,69 @@
           "description": "Add option for Direct Air Capture (DAC).",
           "type": "boolean"
         },
+        "biochar": {
+          "description": "Configuration for `sector.biochar` settings.\n\nAll biochar settings, including its land-eligibility settings, are\nconsolidated here rather than split across `renewable.biochar` (like\nafforestation/rock_weathering) and a top-level `biochar:` key, since\nbiochar is the only technology sharing the shared\ndetermine_availability_matrix.py/build_available_land.py plumbing\nwhose config was fully collected under `sector.<technology>`.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add option for biochar (CDR via biomass pyrolysis and stable-carbon soil storage) as a carbon dioxide removal (CDR) technology.",
+              "type": "boolean"
+            },
+            "heat_output": {
+              "default": false,
+              "description": "Export biochar pyrolysis waste heat to the urban central heating network.",
+              "type": "boolean"
+            },
+            "corine": {
+              "description": "CORINE Land Cover codes for non-irrigated arable land (potential biochar feedstock land).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "type": "boolean"
+            },
+            "cutout": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ],
+              "default": "default",
+              "description": "Specifies the weather data cutout file(s) to use."
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters on which to perform geographical eligibility analysis.",
+              "type": "number"
+            },
+            "application_per_sqkm": {
+              "default": 1500,
+              "description": "Tonnes of biochar applied per square kilometre of eligible land (approx. 15 t/ha).",
+              "type": "number"
+            },
+            "max_land_usage": {
+              "default": 0.2,
+              "description": "Maximum fraction of suitable CORINE area used for biochar.",
+              "type": "number"
+            },
+            "number_years": {
+              "default": 25,
+              "description": "Years to exhaust the maximum biochar that can be spread per square kilometre.",
+              "type": "number"
+            }
+          }
+        },
         "co2_vent": {
           "default": false,
           "description": "Add option for vent out CO2 from storages to the atmosphere.",
@@ -5864,6 +5927,69 @@
           "default": false,
           "description": "Require each country to be autarkic by removing all cross-border lines and links. `electricity: autarky` must be enabled.",
           "type": "boolean"
+        }
+      }
+    },
+    "_BiocharConfig": {
+      "description": "Configuration for `sector.biochar` settings.\n\nAll biochar settings, including its land-eligibility settings, are\nconsolidated here rather than split across `renewable.biochar` (like\nafforestation/rock_weathering) and a top-level `biochar:` key, since\nbiochar is the only technology sharing the shared\ndetermine_availability_matrix.py/build_available_land.py plumbing\nwhose config was fully collected under `sector.<technology>`.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Add option for biochar (CDR via biomass pyrolysis and stable-carbon soil storage) as a carbon dioxide removal (CDR) technology.",
+          "type": "boolean"
+        },
+        "heat_output": {
+          "default": false,
+          "description": "Export biochar pyrolysis waste heat to the urban central heating network.",
+          "type": "boolean"
+        },
+        "corine": {
+          "description": "CORINE Land Cover codes for non-irrigated arable land (potential biochar feedstock land).",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "natura": {
+          "default": false,
+          "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+          "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+          "type": "boolean"
+        },
+        "cutout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": "default",
+          "description": "Specifies the weather data cutout file(s) to use."
+        },
+        "excluder_resolution": {
+          "default": 250,
+          "description": "Resolution in meters on which to perform geographical eligibility analysis.",
+          "type": "number"
+        },
+        "application_per_sqkm": {
+          "default": 1500,
+          "description": "Tonnes of biochar applied per square kilometre of eligible land (approx. 15 t/ha).",
+          "type": "number"
+        },
+        "max_land_usage": {
+          "default": 0.2,
+          "description": "Maximum fraction of suitable CORINE area used for biochar.",
+          "type": "number"
+        },
+        "number_years": {
+          "default": 25,
+          "description": "Years to exhaust the maximum biochar that can be spread per square kilometre.",
+          "type": "number"
         }
       }
     },
@@ -11138,6 +11264,69 @@
           "default": true,
           "description": "Add option for Direct Air Capture (DAC).",
           "type": "boolean"
+        },
+        "biochar": {
+          "description": "Configuration for `sector.biochar` settings.\n\nAll biochar settings, including its land-eligibility settings, are\nconsolidated here rather than split across `renewable.biochar` (like\nafforestation/rock_weathering) and a top-level `biochar:` key, since\nbiochar is the only technology sharing the shared\ndetermine_availability_matrix.py/build_available_land.py plumbing\nwhose config was fully collected under `sector.<technology>`.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add option for biochar (CDR via biomass pyrolysis and stable-carbon soil storage) as a carbon dioxide removal (CDR) technology.",
+              "type": "boolean"
+            },
+            "heat_output": {
+              "default": false,
+              "description": "Export biochar pyrolysis waste heat to the urban central heating network.",
+              "type": "boolean"
+            },
+            "corine": {
+              "description": "CORINE Land Cover codes for non-irrigated arable land (potential biochar feedstock land).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+              "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+              "type": "boolean"
+            },
+            "cutout": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ],
+              "default": "default",
+              "description": "Specifies the weather data cutout file(s) to use."
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters on which to perform geographical eligibility analysis.",
+              "type": "number"
+            },
+            "application_per_sqkm": {
+              "default": 1500,
+              "description": "Tonnes of biochar applied per square kilometre of eligible land (approx. 15 t/ha).",
+              "type": "number"
+            },
+            "max_land_usage": {
+              "default": 0.2,
+              "description": "Maximum fraction of suitable CORINE area used for biochar.",
+              "type": "number"
+            },
+            "number_years": {
+              "default": 25,
+              "description": "Years to exhaust the maximum biochar that can be spread per square kilometre.",
+              "type": "number"
+            }
+          }
         },
         "co2_vent": {
           "default": false,

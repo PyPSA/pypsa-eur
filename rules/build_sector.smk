@@ -953,6 +953,60 @@ rule build_biomass_potentials:
         scripts("build_biomass_potentials.py")
 
 
+rule determine_carbon_dioxide_removal_availability_matrix:
+    input:
+        corine=ancient(rules.retrieve_corine.output["tif_file"]),
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        cutout=lambda w: input_cutout(
+            w, config_provider("sector", w.technology, "cutout")(w)
+        ),
+    output:
+        nc=resources(
+            "availability_matrix_carbon_dioxide_removal_{clusters}_{technology}.nc"
+        ),
+    log:
+        logs(
+            "determine_carbon_dioxide_removal_availability_matrix_{clusters}_{technology}.log"
+        ),
+    wildcard_constraints:
+        technology="biochar",
+    threads: config["atlite"].get("nprocesses", 4)
+    resources:
+        mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+    params:
+        # determine_availability_matrix.py reads params.renewable[technology];
+        # biochar's land-eligibility settings live under sector.biochar, so
+        # reshape it into the same {technology: {...}} lookup the shared
+        # script expects.
+        renewable=lambda w: {"biochar": config_provider("sector", "biochar")(w)},
+        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+    message:
+        "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} carbon dioxide removal technology"
+    script:
+        scripts("determine_availability_matrix.py")
+
+
+rule build_available_land:
+    input:
+        availability_matrix=resources(
+            "availability_matrix_carbon_dioxide_removal_{clusters}_{technology}.nc"
+        ),
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        cutout=lambda w: input_cutout(
+            w, config_provider("sector", w.technology, "cutout")(w)
+        ),
+    output:
+        csv_file=resources("{technology}_available_land_s_{clusters}.csv"),
+    log:
+        logs("build_available_land_{clusters}_{technology}.log"),
+    wildcard_constraints:
+        technology="biochar",
+    resources:
+        mem_mb=8000,
+    script:
+        scripts("build_available_land.py")
+
+
 rule build_biomass_transport_costs:
     input:
         sc1="data/biomass_transport_costs_supplychain1.csv",
@@ -1720,6 +1774,11 @@ rule prepare_sector_network:
         ates_potentials=lambda w: (
             resources("ates_potentials_base_s_{clusters}_{planning_horizons}.csv")
             if config_provider("sector", "district_heating", "ates", "enable")(w)
+            else []
+        ),
+        biochar_potentials=lambda w: (
+            resources("biochar_available_land_s_{clusters}.csv")
+            if config_provider("sector", "biochar", "enable")(w)
             else []
         ),
     output:
