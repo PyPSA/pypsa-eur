@@ -209,17 +209,18 @@ have no effect at all.
 | `CF+<key>+<subkey>+<value>` | set that key directly in the config |
 | `cb<x>ex`, `cb<x>be` | no replacement: `build_carbon_budget` is not called any more, so write the resulting per-year values into `co2_budget.upper` yourself |
 
+!!! note
+    `sector.district_heating.progress` (the `nodistrict` token above) has to stay a
+    year-to-value mapping; a bare `0` is rejected by the schema. Config files are
+    deep-merged, so list every horizon you optimise, for example
+    `progress: {2030: 0, 2040: 0, 2050: 0}`.
+
 Three tokens did a unit conversion for you that you now have to do yourself:
 
 - `linemaxext<n>` was given in GW and multiplied by `1e3`, so `linemaxext20`
   becomes `20000` (MW).
 - `CH4L<x>` was given in TWh and multiplied by `1e6`, so `CH4L200` becomes `gaslimit: 200000000` (MWh).
 - `sdr<x>` was a percentage divided by `100`, so `sdr2` becomes `social_discountrate: 0.02` in per unit.
-
-!!! note
-    `sector.district_heating.progress` has to stay a year-to-value mapping; a bare
-    `0` is rejected by the schema. Config files are deep-merged, so list every
-    horizon you optimise, for example `progress: {2030: 0, 2040: 0, 2050: 0}`.
 
 ### CO₂ constraints {#co2-budget}
 
