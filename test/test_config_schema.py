@@ -15,6 +15,7 @@ from scripts.lib.validation.config import (
     generate_config_schema,
     normalize_config,
     validate_config,
+    validate_scenarios,
 )
 
 
@@ -126,3 +127,23 @@ class TestPlanningHorizonsNormalization:
         validated = validate_config(cfg)
         normalize_config(cfg, validated)
         assert cfg["planning_horizons"] == [2030, 2050]
+
+
+class TestValidateScenarios:
+    base = {"foresight": "overnight", "planning_horizons": [2050]}
+
+    def test_accepts_compatible_override(self):
+        validate_scenarios(self.base, {"s1": {"countries": ["DE"]}})
+
+    @pytest.mark.parametrize(
+        ("override", "match"),
+        [
+            ({"data": {}}, "overrides the 'data' block"),
+            ({"foresight": "perfect"}, "changes 'foresight'"),
+            ({"planning_horizons": [2030]}, "changes 'planning_horizons'"),
+            ({"countries": "not-a-list"}, "failed config validation"),
+        ],
+    )
+    def test_rejects_incompatible_override(self, override, match):
+        with pytest.raises(ValueError, match=match):
+            validate_scenarios(self.base, {"s1": override})

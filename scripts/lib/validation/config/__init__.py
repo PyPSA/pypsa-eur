@@ -10,11 +10,13 @@ The json schema is also contributed to the schemastore.org and matches
 `**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
 """
 
+import copy
 import pathlib
 import re
 
 from pydantic import ValidationError
 from ruamel.yaml import YAML
+from snakemake.utils import update_config
 
 from scripts.lib.validation.config._base import _registry
 from scripts.lib.validation.config._schema import ConfigSchema
@@ -41,6 +43,33 @@ def validate_config(config: dict) -> ConfigSchema:
 def normalize_config(config: dict, validated: ConfigSchema) -> None:
     """Normalize config values in place (e.g., ensure planning_horizons is a list)."""
     config["planning_horizons"] = validated.planning_horizons
+
+
+def validate_scenarios(config: dict, scenarios: dict) -> None:
+    """Validate that each scenario override yields a valid, compatible config."""
+    for scenario_name, scenario_overrides in scenarios.items():
+        if "data" in scenario_overrides:
+            raise ValueError(
+                f"Scenario '{scenario_name}' overrides the 'data' block, but dataset "
+                "versions are resolved globally at workflow construction and cannot vary "
+                "per scenario. Move 'data' settings to the base config."
+            )
+        merged = copy.deepcopy(config)
+        update_config(merged, scenario_overrides)
+        for key in ("foresight", "planning_horizons"):
+            if merged[key] != config[key]:
+                raise ValueError(
+                    f"Scenario '{scenario_name}' changes '{key}', but collection and "
+                    "default targets are built from the base config, so it must be "
+                    "identical across scenarios. Set it at the top level and run "
+                    "differing values as separate workflows with their own run.name."
+                )
+        try:
+            validate_config(merged)
+        except Exception as e:
+            raise ValueError(
+                f"Scenario '{scenario_name}' failed config validation: {e}"
+            ) from e
 
 
 def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
@@ -203,6 +232,7 @@ def generate_config_schema(path: str = "config/schema.{configname}.json") -> dic
 __all__ = [
     "ConfigSchema",
     "validate_config",
+    "validate_scenarios",
     "normalize_config",
     "generate_config_defaults",
     "generate_config_schema",

@@ -2,13 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 
-import copy
 from pathlib import Path
 import yaml
 from os.path import normpath, exists, join
 from shutil import copyfile, move, rmtree
 from dotenv import load_dotenv
-from snakemake.utils import min_version, update_config
+from snakemake.utils import min_version
 
 load_dotenv()
 
@@ -21,7 +20,11 @@ from scripts._helpers import (
     path_provider,
     script_path_provider,
 )
-from scripts.lib.validation.config import normalize_config, validate_config
+from scripts.lib.validation.config import (
+    normalize_config,
+    validate_config,
+    validate_scenarios,
+)
 
 
 configfile: "config/config.default.yaml"
@@ -39,29 +42,7 @@ normalize_config(config, validated)
 run = config["run"]
 scenarios = get_scenarios(run)
 
-for scenario_name, scenario_overrides in scenarios.items():
-    if "data" in scenario_overrides:
-        raise ValueError(
-            f"Scenario '{scenario_name}' overrides the 'data' block, but dataset "
-            "versions are resolved globally at workflow construction and cannot vary "
-            "per scenario. Move 'data' settings to the base config."
-        )
-    merged = copy.deepcopy(config)
-    update_config(merged, scenario_overrides)
-    for key in ("foresight", "planning_horizons"):
-        if merged[key] != config[key]:
-            raise ValueError(
-                f"Scenario '{scenario_name}' changes '{key}', but collection and "
-                "default targets are built from the base config, so it must be "
-                "identical across scenarios. Set it at the top level and run "
-                "differing values as separate workflows with their own run.name."
-            )
-    try:
-        validate_config(merged)
-    except Exception as e:
-        raise ValueError(
-            f"Scenario '{scenario_name}' failed config validation: {e}"
-        ) from e
+validate_scenarios(config, scenarios)
 
 RDIR = get_rdir(run)
 PROJ_DIR = Path(workflow.snakefile).parent
