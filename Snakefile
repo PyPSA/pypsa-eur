@@ -48,6 +48,14 @@ for scenario_name, scenario_overrides in scenarios.items():
         )
     merged = copy.deepcopy(config)
     update_config(merged, scenario_overrides)
+    for key in ("foresight", "planning_horizons"):
+        if merged[key] != config[key]:
+            raise ValueError(
+                f"Scenario '{scenario_name}' changes '{key}', but collection and "
+                "default targets are built from the base config, so it must be "
+                "identical across scenarios. Set it at the top level and run "
+                "differing values as separate workflows with their own run.name."
+            )
     try:
         validate_config(merged)
     except Exception as e:
