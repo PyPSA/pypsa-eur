@@ -17,11 +17,7 @@ is provided in the
 [documentation of PyPSA](https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow).
 
 The optimization is based on the `network.optimize` function.
-Additionally, some extra constraints specified in [solve_network][] are added.
-
-**Note:** The rules `solve_elec_networks` and `solve_sector_networks` run
-    the workflow for all scenarios in the configuration file (`scenario:`)
-    based on the rule [solve_network][].
+Additionally, some extra constraints specified in [create_optimization_model][] are added.
 """
 
 import importlib
@@ -41,6 +37,7 @@ import yaml
 from linopy.constants import SolverStatus, TerminationCondition
 from linopy.remote.oetc import OetcCredentials, OetcHandler, OetcSettings
 from pypsa.descriptors import get_activity_mask
+from snakemake.script import Snakemake
 
 from scripts._benchmark import memory_logger
 from scripts._helpers import (
@@ -1229,7 +1226,10 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 
 def extra_functionality(
-    n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
+    n: pypsa.Network,
+    snapshots: pd.DatetimeIndex,
+    snakemake: Snakemake,
+    planning_horizons: str | None = None,
 ) -> None:
     """
     Add custom constraints and functionality.
@@ -1240,6 +1240,8 @@ def extra_functionality(
         The PyPSA network instance with config and params attributes
     snapshots : pd.DatetimeIndex
         Simulation timesteps
+    snakemake : snakemake.script.Snakemake
+        Snakemake instance for accessing workflow parameters
     planning_horizons : str, optional
         The current planning horizon year or None in perfect foresight.
 
@@ -1371,6 +1373,7 @@ def collect_kwargs(
         For 'rolling_horizon' and 'iterative' modes, returns merged kwargs
         with additional mode-specific parameters
     """
+
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -1439,6 +1442,7 @@ def create_optimization_model(
     params: dict,
     model_kwargs: dict,
     solve_kwargs: dict,
+    snakemake: Snakemake,
     planning_horizons: str | None = None,
 ) -> None:
     """
@@ -1461,6 +1465,8 @@ def create_optimization_model(
         Arguments for n.optimize.create_model()
     solve_kwargs : dict
         Arguments for n.optimize.solve_model()
+    snakemake : snakemake.script.Snakemake
+        Snakemake instance for accessing workflow parameters
     planning_horizons : str, optional
         The current planning horizon year or None in perfect foresight
     """
@@ -1474,7 +1480,7 @@ def create_optimization_model(
 
     # Add extra functionality (custom constraints)
     logger.info("Adding extra functionality (custom constraints)...")
-    extra_functionality(n, n.snapshots, planning_horizons)
+    extra_functionality(n, n.snapshots, snakemake, planning_horizons)
 
 
 if __name__ == "__main__":
@@ -1542,7 +1548,9 @@ if __name__ == "__main__":
             n.config = snakemake.config
             n.params = snakemake.params
             all_kwargs["extra_functionality"] = partial(
-                extra_functionality, planning_horizons=planning_horizons
+                extra_functionality,
+                snakemake=snakemake,
+                planning_horizons=planning_horizons,
             )
             n.optimize.optimize_with_rolling_horizon(**all_kwargs)
             status, condition = "", ""
@@ -1562,6 +1570,7 @@ if __name__ == "__main__":
                 params=snakemake.params,
                 model_kwargs=model_kwargs,
                 solve_kwargs=solve_kwargs,
+                snakemake=snakemake,
                 planning_horizons=planning_horizons,
             )
 
@@ -1582,7 +1591,9 @@ if __name__ == "__main__":
             n.config = snakemake.config
             n.params = snakemake.params
             all_kwargs["extra_functionality"] = partial(
-                extra_functionality, planning_horizons=planning_horizons
+                extra_functionality,
+                snakemake=snakemake,
+                planning_horizons=planning_horizons,
             )
             status, condition = n.optimize.optimize_transmission_expansion_iteratively(
                 **all_kwargs
