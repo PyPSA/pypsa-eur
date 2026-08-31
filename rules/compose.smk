@@ -169,6 +169,17 @@ def get_compose_inputs(w):
         else:
             raise ValueError(f"Invalid foresight type: {foresight}")
 
+    # imported by compose_network.py; listed so code changes trigger reruns
+    inputs["code_dependencies"] = [
+        "scripts/add_electricity.py",
+        "scripts/add_existing_baseyear.py",
+        "scripts/add_brownfield.py",
+        "scripts/prepare_network.py",
+        "scripts/prepare_perfect_foresight.py",
+        "scripts/prepare_sector_network.py",
+        "scripts/_helpers.py",
+    ]
+
     return inputs
 
 

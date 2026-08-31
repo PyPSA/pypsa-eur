@@ -65,6 +65,14 @@ if __name__ == "__main__":
 
     is_first_horizon = current_horizon == horizons[0]
 
+    phase_outs = params.existing_capacities["phase_outs"]
+    if phase_outs and foresight != "perfect":
+        logger.warning(
+            "existing_capacities.phase_outs is only applied under perfect foresight; "
+            f"the {len(phase_outs)} configured rule(s) are ignored for foresight "
+            f"'{foresight}', where phase-outs follow the powerplant lifetimes instead."
+        )
+
     n = pypsa.Network(snakemake.input.network)
     n_previous = None if is_first_horizon else pypsa.Network(inputs.network_previous)
     nyears = n.snapshot_weightings.objective.sum() / 8760.0
@@ -98,7 +106,7 @@ if __name__ == "__main__":
 
     if foresight == "perfect":
         n = prepare_perfect_foresight(n, n_previous, params, current_horizon)
-        apply_phase_outs(n, params.existing_capacities["phase_outs"], horizons)
+        apply_phase_outs(n, phase_outs, horizons)
 
     apply_co2_budget_constraints(
         n, inputs=inputs, params=params, nyears=nyears, current_horizon=current_horizon

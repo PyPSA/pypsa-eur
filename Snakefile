@@ -40,6 +40,12 @@ run = config["run"]
 scenarios = get_scenarios(run)
 
 for scenario_name, scenario_overrides in scenarios.items():
+    if "data" in scenario_overrides:
+        raise ValueError(
+            f"Scenario '{scenario_name}' overrides the 'data' block, but dataset "
+            "versions are resolved globally at workflow construction and cannot vary "
+            "per scenario. Move 'data' settings to the base config."
+        )
     merged = copy.deepcopy(config)
     update_config(merged, scenario_overrides)
     try:
