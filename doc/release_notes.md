@@ -43,6 +43,8 @@
 
 * Fix: fix bugs in retrofitting scripts which happens due to pandas version change and other code changes ([#2273](https://github.com/PyPSA/pypsa-eur/pull/2273))
 
+* Fix: focus_weights related TypeError during cluster_network ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277))
+
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
 **Features**
