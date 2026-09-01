@@ -5,6 +5,12 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Bugfix: Fixed a ``TypeError`` when building cutouts locally, caused by using the
+  ``/`` operator on ``CUTOUT_DATASET["folder"]``, which is a string.
+
+* Bugfix: The fallback to the last column in ``attach_conventional_generators`` now
+  also catches ``KeyError``, so a snapshot year that is missing from a conventional
+  input file no longer aborts the run.
 
 * Fix: fix bugs in retrofitting scripts which happens due to pandas version change and other code changes ([#2273](https://github.com/PyPSA/pypsa-eur/pull/2273))
 
