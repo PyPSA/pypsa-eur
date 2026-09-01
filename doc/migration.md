@@ -64,6 +64,11 @@ restructured, so you will get merge conflicts.
 
 ## Before you start {#before-you-start}
 
+**Migrate on a clean branch and keep a backup.** The config edits and script changes
+are extensive, so start from a clean git state on a new branch and commit as you go.
+If you keep local modifications, back up your working folder first, so you can always
+return to a run that worked.
+
 **Your retrieved data and cutouts stay valid.** Nothing about the input data or the
 weather cutouts changed, so there is no need to download or cut anything again.
 There are two exceptions, both files that you supply yourself and that were keyed by
