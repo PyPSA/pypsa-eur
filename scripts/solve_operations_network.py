@@ -2,23 +2,27 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Solves linear optimal dispatch in hourly resolution using the capacities of
+Solves linear optimal dispatch in hourly resolution using the capacities of a
 previous capacity expansion in rule [solve_network][].
+
+Loads `networks/solved_{horizon}.nc`, fixes the optimal capacities, and
+re-solves dispatch only (optionally with rolling horizon). Note that
+`load_shedding` is incompatible with operational solving, as its components
+already exist in the solved network.
 """
 
 import logging
+from functools import partial
 
 import numpy as np
 import pypsa
 
 from scripts._benchmark import memory_logger
-from scripts._helpers import (
-    configure_logging,
-    set_scenario_config,
-    update_config_from_wildcards,
-)
+from scripts._helpers import configure_logging, set_scenario_config
 from scripts.solve_network import (
     collect_kwargs,
+    create_optimization_model,
+    extra_functionality,
     prepare_network,
 )
 
@@ -31,65 +35,80 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_operations_network",
-            configfiles="test/config.electricity.yaml",
-            opts="",
-            clusters="5",
-            sector_opts="",
-            planning_horizons="",
+            configfiles="config/test/config.electricity.yaml",
+            horizon=2030,
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
-    solve_opts = snakemake.params.options
     cf_solving = snakemake.params.solving["options"]
-
-    np.random.seed(solve_opts.get("seed", 123))
+    cf_operations = snakemake.params.solving["operations"]
+    np.random.seed(cf_solving.get("seed", 123))
 
     n = pypsa.Network(snakemake.input.network)
-    planning_horizons = snakemake.wildcards.get("planning_horizons", None)
+    planning_horizons = snakemake.wildcards["horizon"]
 
-    # Fix capacities from previous optimization
+    rolling_horizon = cf_operations["rolling_horizon"]
+
     n.optimize.fix_optimal_capacities()
 
-    # Prepare network (settings before solving)
     prepare_network(
         n,
-        solve_opts=snakemake.params.solving["options"],
+        config=snakemake.config,
+        solve_opts=cf_solving,
         foresight=snakemake.params.foresight,
         planning_horizons=planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
-        limit_max_growth=snakemake.params.get("sector", {}).get("limit_max_growth"),
-    )
-
-    # Check if rolling horizon is enabled
-    rolling_horizon = cf_solving.get("rolling_horizon", False)
-    mode = "rolling_horizon" if rolling_horizon else "single"
-
-    # Collect solver arguments
-    all_kwargs, _ = collect_kwargs(
-        snakemake.config,
-        snakemake.params.solving,
-        planning_horizons,
-        log_fn=snakemake.log.solver,
-        mode=mode,
+        limit_max_growth=snakemake.params["sector"]["limit_max_growth"],
+        rolling_horizon=rolling_horizon,
     )
 
     logging_frequency = snakemake.config.get("solving", {}).get(
         "mem_logging_frequency", 30
     )
 
-    # Solve network
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=logging_frequency
     ) as mem:
         if rolling_horizon:
             logger.info("Solving operations network with rolling horizon...")
+            all_kwargs, _ = collect_kwargs(
+                snakemake.config,
+                snakemake.params.solving,
+                planning_horizons,
+                log_fn=snakemake.log.solver,
+                mode="rolling_horizon",
+                horizon=cf_operations["horizon"],
+                overlap=cf_operations["overlap"],
+            )
+            n.config = snakemake.config
+            n.params = snakemake.params
+            all_kwargs["extra_functionality"] = partial(
+                extra_functionality,
+                planning_horizons=planning_horizons,
+                snakemake=snakemake,
+            )
             n.optimize.optimize_with_rolling_horizon(**all_kwargs)
         else:
             logger.info("Solving operations network...")
-            n.optimize(**all_kwargs)
+            model_kwargs, solve_kwargs = collect_kwargs(
+                snakemake.config,
+                snakemake.params.solving,
+                planning_horizons,
+                log_fn=snakemake.log.solver,
+                mode="single",
+            )
+            create_optimization_model(
+                n,
+                config=snakemake.config,
+                params=snakemake.params,
+                model_kwargs=model_kwargs,
+                solve_kwargs=solve_kwargs,
+                planning_horizons=planning_horizons,
+                snakemake=snakemake,
+            )
+            n.optimize.solve_model(**solve_kwargs)
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 

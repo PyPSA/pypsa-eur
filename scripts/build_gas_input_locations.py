@@ -146,16 +146,13 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_gas_input_locations",
-            clusters="10",
-        )
+        snakemake = mock_snakemake("build_gas_input_locations")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     regions = load_bus_regions(
-        snakemake.input.regions_onshore, snakemake.input.regions_offshore
+        snakemake.input.onshore_regions, snakemake.input.offshore_regions
     )
 
     # add a buffer to eastern countries because some

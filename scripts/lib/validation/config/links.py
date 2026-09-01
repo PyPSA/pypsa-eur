@@ -30,7 +30,7 @@ class LinksConfig(ConfigModel):
         float("inf"),
         description="Global upper limit for the maximum capacity of each extendable DC link (MW).",
     )
-    max_extension: float = Field(
+    p_nom_max_extension: float = Field(
         30000,
         description="Upper limit for the extended capacity of each extendable DC link (MW).",
     )

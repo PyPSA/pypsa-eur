@@ -41,6 +41,7 @@ nav:
     - "Tutorial: Sector-Coupled": tutorial_sector.md
   - References:
     - Release Notes: release_notes.md
+    - Migration Guide: migration.md
     - Licenses: licenses.md
     - Validation: validation.md
     - Limitations: limitations.md

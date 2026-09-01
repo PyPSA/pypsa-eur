@@ -31,10 +31,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_temperature_profiles",
-            clusters=48,
-        )
+        snakemake = mock_snakemake("build_temperature_profiles")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -46,7 +43,7 @@ if __name__ == "__main__":
     cutout = load_cutout(snakemake.input.cutout, time=time)
 
     clustered_regions = (
-        gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
+        gpd.read_file(snakemake.input.onshore_regions).set_index("name").buffer(0)
     )
 
     I = cutout.indicatormatrix(clustered_regions)  # noqa: E741
