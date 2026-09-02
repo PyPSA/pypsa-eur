@@ -783,6 +783,24 @@ if (ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] i
             copy2(input["xlsx"], output["xlsx"])
 
 
+if (TABULA_CALCSETBUILDING := dataset_version("tabula_calcsetbuilding"))[
+    "source"
+] in [
+    "primary",
+]:
+
+    rule retrieve_tabula_calcsetbuilding:
+        input:
+            data=storage(TABULA_CALCSETBUILDING["url"]),
+        output:
+            csv=f"{TABULA_CALCSETBUILDING['folder']}/tabula-calculator-calcsetbuilding.csv",
+        retries: 2
+        message:
+            "Retrieving TABULA building typology data"
+        script:
+            scripts("retrieve_tabula_calcsetbuilding.py")
+
+
 if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
     "source"
 ] in [

@@ -1478,6 +1478,9 @@ data:
   bidding_zones_entsoepy:
     source: archive
     version: latest
+  tabula_calcsetbuilding:
+    source: primary
+    version: latest
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api
 overpass_api:
