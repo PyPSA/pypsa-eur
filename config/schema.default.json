@@ -5068,7 +5068,7 @@
                 }
               }
             },
-            "heat>500": {
+            "heat500+": {
               "description": "Supply technologies allowed for industry process heat above 500 \u00b0C.",
               "properties": {
                 "methane": {
@@ -7002,7 +7002,7 @@
             }
           }
         },
-        "heat>500": {
+        "heat500+": {
           "description": "Supply technologies allowed for industry process heat above 500 \u00b0C.",
           "properties": {
             "methane": {
@@ -11784,7 +11784,7 @@
                 }
               }
             },
-            "heat>500": {
+            "heat500+": {
               "description": "Supply technologies allowed for industry process heat above 500 \u00b0C.",
               "properties": {
                 "methane": {

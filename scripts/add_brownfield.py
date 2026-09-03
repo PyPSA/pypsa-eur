@@ -29,7 +29,7 @@ idx = pd.IndexSlice
 INDUSTRY_T_HEAT_BUS_SUFFIXES = (
     " heat100-200 industry",
     " heat200-500 industry",
-    " heat>500 industry",
+    " heat500+ industry",
 )
 
 # primary cost technology per endogenous industry heat carrier as
@@ -59,9 +59,9 @@ INDUSTRY_T_COST_TECH = {
     "heat200-500 industry gas": ("direct firing gas", 1, None),
     "heat200-500 industry gas CC": ("direct firing gas CC", 1, "gas"),
     "heat200-500 industry hydrogen": ("direct firing gas", 10, None),
-    "heat>500 industry gas": ("direct firing gas", 1, None),
-    "heat>500 industry gas CC": ("direct firing gas CC", 1, "gas"),
-    "heat>500 industry hydrogen": ("direct firing gas", 10, None),
+    "heat500+ industry gas": ("direct firing gas", 1, None),
+    "heat500+ industry gas CC": ("direct firing gas CC", 1, "gas"),
+    "heat500+ industry hydrogen": ("direct firing gas", 10, None),
 }
 
 

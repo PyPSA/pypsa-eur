@@ -4883,30 +4883,30 @@ def add_t_industry500(n, nodes, industrial_demand, costs, must_run, options, spa
 
     n.add(
         "Bus",
-        nodes + " heat>500 industry",
+        nodes + " heat500+ industry",
         location=nodes,
-        carrier="heat>500 industry",
+        carrier="heat500+ industry",
         unit="MWh_LHV",
     )
 
     n.add(
         "Load",
         nodes,
-        suffix=" heat>500 industry",
-        bus=nodes + " heat>500 industry",
-        carrier="heat>500 industry",
-        p_set=industrial_demand.loc[nodes, "heat>500"] / 8760.0,
+        suffix=" heat500+ industry",
+        bus=nodes + " heat500+ industry",
+        carrier="heat500+ industry",
+        p_set=industrial_demand.loc[nodes, "heat500+"] / 8760.0,
     )
 
-    if options["industry_t"]["heat>500"]["methane"]:
+    if options["industry_t"]["heat500+"]["methane"]:
         n.add(
             "Link",
             nodes,
-            suffix=" heat>500 industry gas",
+            suffix=" heat500+ industry gas",
             bus0=spatial.gas.nodes,
-            bus1=nodes + " heat>500 industry",
+            bus1=nodes + " heat500+ industry",
             bus2="co2 atmosphere",
-            carrier="heat>500 industry gas",
+            carrier="heat500+ industry gas",
             p_nom_extendable=True,
             p_min_pu=must_run,
             efficiency=costs.at["direct firing gas", "efficiency"],
@@ -4925,12 +4925,12 @@ def add_t_industry500(n, nodes, industrial_demand, costs, must_run, options, spa
         n.add(
             "Link",
             nodes,
-            suffix=" heat>500 industry gas CC",
+            suffix=" heat500+ industry gas CC",
             bus0=spatial.gas.nodes,
-            bus1=nodes + " heat>500 industry",
+            bus1=nodes + " heat500+ industry",
             bus2="co2 atmosphere",
             bus3=spatial.co2.nodes,
-            carrier="heat>500 industry gas CC",
+            carrier="heat500+ industry gas CC",
             p_nom_extendable=True,
             p_min_pu=must_run,
             efficiency=eta,
@@ -4946,15 +4946,15 @@ def add_t_industry500(n, nodes, industrial_demand, costs, must_run, options, spa
             lifetime=costs.at["direct firing gas", "lifetime"],
         )
 
-    if options["industry_t"]["heat>500"]["hydrogen"]:
+    if options["industry_t"]["heat500+"]["hydrogen"]:
         # TODO: research cost of industrial H2 combustion, here set to 10x methane combustion
         n.add(
             "Link",
             nodes,
-            suffix=" heat>500 industry hydrogen",
+            suffix=" heat500+ industry hydrogen",
             bus0=nodes + " H2",
-            bus1=nodes + " heat>500 industry",
-            carrier="heat>500 industry hydrogen",
+            bus1=nodes + " heat500+ industry",
+            carrier="heat500+ industry hydrogen",
             capital_cost=10
             * costs.at["direct firing gas", "capital_cost"]
             * costs.at["direct firing gas", "efficiency"],

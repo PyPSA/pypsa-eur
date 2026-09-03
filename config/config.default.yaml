@@ -978,7 +978,7 @@ sector:
       biomass: true
       methane: true
       hydrogen: true
-    "heat>500":
+    heat500+:
       methane: true
       hydrogen: true
   biomass_to_liquid: true

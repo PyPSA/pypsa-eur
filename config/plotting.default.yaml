@@ -451,10 +451,10 @@ plotting:
     gas for industry CC: '#692e0a'
     heat100-200 industry gas: '#853403'
     heat200-500 industry gas: '#853403'
-    heat>500 industry gas: '#853403'
+    heat500+ industry gas: '#853403'
     heat100-200 industry gas CC: '#692e0a'
     heat200-500 industry gas CC: '#692e0a'
-    heat>500 industry gas CC: '#692e0a'
+    heat500+ industry gas CC: '#692e0a'
     gas pipeline: '#ebbca0'
     gas pipeline new: '#a87c62'
     # oil
@@ -611,7 +611,7 @@ plotting:
     low-temperature heat for industry: '#8f2626'
     heat100-200 industry: '#8f2828'
     heat200-500 industry: '#c72020'
-    heat>500 industry: '#ff0000'
+    heat500+ industry: '#ff0000'
     process heat: '#ff0000'
     agriculture heat: '#d9a5a5'
     # heat supply
@@ -672,7 +672,7 @@ plotting:
     H2 turbine: '#991f83'
     heat100-200 industry hydrogen: '#991f83'
     heat200-500 industry hydrogen: '#991f83'
-    heat>500 industry hydrogen: '#991f83'
+    heat500+ industry hydrogen: '#991f83'
     H2 Electrolysis: '#ff29d9'
     H2 electrolysis: '#ff29d9'
     # ammonia

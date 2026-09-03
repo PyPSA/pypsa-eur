@@ -476,7 +476,7 @@ class _IndustryTConfig(BaseModel):
     )
     heat_500: _IndustryHeat500Config = Field(
         default_factory=_IndustryHeat500Config,
-        alias="heat>500",
+        alias="heat500+",
         description="Supply technologies allowed in the >500 °C temperature band.",
     )
 

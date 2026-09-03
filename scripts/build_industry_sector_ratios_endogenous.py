@@ -88,46 +88,46 @@ backup_temperature_band_shares = {
         "heat<100": 0.0,
         "heat100-200": 0.0,
         "heat200-500": 0.0,
-        "heat>500": 1.0,
+        "heat500+": 1.0,
     },
     "Pharmaceutical products etc.": {
         "heat<100": 0.3,
         "heat100-200": 0.6,
         "heat200-500": 0.1,
-        "heat>500": 0.0,
+        "heat500+": 0.0,
     },
     # from https://energyinnovation.org/data-explorer/overcoming-all-barriers-to-industrial-electrification
     "Other industrial sectors": {
         "heat<100": 0.1,
         "heat100-200": 0.65,
         "heat200-500": 0.25,
-        "heat>500": 0.0,
+        "heat500+": 0.0,
     },
     "Transport equipment": {
         "heat<100": 0.25,
         "heat100-200": 0.6,
         "heat200-500": 0.15,
-        "heat>500": 0.0,
+        "heat500+": 0.0,
     },
     "Machinery equipment": {
         "heat<100": 0.25,
         "heat100-200": 0.6,
         "heat200-500": 0.15,
-        "heat>500": 0.0,
+        "heat500+": 0.0,
     },
     # from https://www.fpl.fs.usda.gov/documents/fplgtr/fplgtr118.pdf
     "Wood and wood products": {
         "heat<100": 0.65,
         "heat100-200": 0.35,
         "heat200-500": 0.0,
-        "heat>500": 0.0,
+        "heat500+": 0.0,
     },
     # from https://www.ifc.org/content/dam/ifc/doc/2000/2007-textiles-manufacturing-ehs-guidelines-en.pdf
     "Textiles and leather": {
         "heat<100": 0.7,
         "heat100-200": 0.2,
         "heat200-500": 0.1,
-        "heat>500": 0.0,
+        "heat500+": 0.0,
     },
 }
 
@@ -178,12 +178,12 @@ def build_industry_sector_ratios_endogenous():
         },
         inplace=True,
     )
-    process_temperature_bands.loc[:, "heat>500"] = (
+    process_temperature_bands.loc[:, "heat500+"] = (
         process_temperature_bands.loc[:, "heat500-1000"]
         + process_temperature_bands.loc[:, "heat>1000"]
     )
     process_temperature_bands = process_temperature_bands[
-        ["heat<100", "heat100-200", "heat200-500", "heat>500"]
+        ["heat<100", "heat100-200", "heat200-500", "heat500+"]
     ]
 
     # Override the Fleiter 2025 Mechanical pulp row, which places 100% of
@@ -196,7 +196,7 @@ def build_industry_sector_ratios_endogenous():
     ] = [0.0, 1.0, 0.0, 0.0]
 
     heat_carriers = ["heat", "biomass", "methane"]
-    bands = ["heat<100", "heat100-200", "heat200-500", "heat>500"]
+    bands = ["heat<100", "heat100-200", "heat200-500", "heat500+"]
 
     endogenous_sector_ratios = today_sector_ratios.copy()
 
