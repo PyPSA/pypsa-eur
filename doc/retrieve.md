@@ -91,26 +91,3 @@ costs:
 **Outputs**
 
 - `data/costs/primary/{version}/costs_{year}.csv`
-
-## Rule `retrieve_tabula_calcsetbuilding`
-
-This rule downloads the [TABULA calculator workbook](https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx) published by EPISCOPE and exports the `Calc.Set.Building` sheet to CSV.
-The CSV is used by [`build_retro_cost`](sector.md#rule-build_retro_cost) for typical building topologies (envelope areas, thermal bridging, ventilation) when endogenous building retrofitting is enabled (`sector.retrofitting.retro_endogen`).
-
-The EPISCOPE workbook is not versioned; the entry in `data/versions.csv` therefore uses `version: unknown`.
-Only the `primary` source is currently supported.
-
-**Relevant Settings**
-
-```yaml
-data:
-  tabula_calcsetbuilding:
-    source: primary
-    version: latest
-```
-
-**Outputs**
-
-- `data/tabula_calcsetbuilding/{source}/{version}/tabula-calculator-calcsetbuilding.csv`
-
-  With the default settings this is `data/tabula_calcsetbuilding/primary/unknown/tabula-calculator-calcsetbuilding.csv`.

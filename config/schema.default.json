@@ -1304,7 +1304,7 @@
             }
           }
         },
-        "tabula_calcsetbuilding": {
+        "tabula_calculator": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -13181,7 +13181,7 @@
             }
           }
         },
-        "tabula_calcsetbuilding": {
+        "tabula_calculator": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
