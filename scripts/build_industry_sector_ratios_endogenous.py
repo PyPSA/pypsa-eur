@@ -223,7 +223,13 @@ def build_industry_sector_ratios_endogenous():
 
     # for each heat-endogenous process, split energy in heat carriers into the respective temperature bands
     for process, key in band_mapper.items():
-        as_fuels = endogenous_sector_ratios.loc[heat_carriers, idx[:, process]]
+        # processes absent from all modelled countries (e.g. in single-country
+        # runs) are dropped upstream and must be skipped here
+        mask = endogenous_sector_ratios.columns.get_level_values(1) == process
+        if not mask.any():
+            continue
+
+        as_fuels = endogenous_sector_ratios.loc[heat_carriers, mask]
 
         as_heat = pd.DataFrame(
             np.outer(
@@ -233,14 +239,18 @@ def build_industry_sector_ratios_endogenous():
             columns=as_fuels.sum().index,
         )
 
-        endogenous_sector_ratios.loc[bands, idx[:, process]] = as_heat
-        endogenous_sector_ratios.loc[heat_carriers, idx[:, process]] = 0.0
+        endogenous_sector_ratios.loc[bands, mask] = as_heat
+        endogenous_sector_ratios.loc[heat_carriers, mask] = 0.0
 
     # for processes not covered by Fleiter et al. 2025
     for process, band_shares in backup_bands.items():
+        mask = endogenous_sector_ratios.columns.get_level_values(1) == process
+        if not mask.any():
+            continue
+
         band_shares = pd.Series(band_shares)
 
-        as_fuels = endogenous_sector_ratios.loc[heat_carriers, idx[:, process]]
+        as_fuels = endogenous_sector_ratios.loc[heat_carriers, mask]
 
         as_heat = pd.DataFrame(
             np.outer(band_shares.values, as_fuels.sum().values),
@@ -248,8 +258,8 @@ def build_industry_sector_ratios_endogenous():
             columns=as_fuels.sum().index,
         )
 
-        endogenous_sector_ratios.loc[bands, idx[:, process]] = as_heat
-        endogenous_sector_ratios.loc[heat_carriers, idx[:, process]] = 0.0
+        endogenous_sector_ratios.loc[bands, mask] = as_heat
+        endogenous_sector_ratios.loc[heat_carriers, mask] = 0.0
 
     # heat is only nonzero in processes that are not endogenous here, so this does not produce an error
     endogenous_sector_ratios.loc["heat<100"] += endogenous_sector_ratios.loc["heat"]
