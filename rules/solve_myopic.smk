@@ -66,6 +66,7 @@ rule add_brownfield:
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
         ),
         network_p=solved_previous_horizon,  #solved network at previous time step
+        costs=resources("costs_{planning_horizons}_processed.csv"),
     output:
         resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"

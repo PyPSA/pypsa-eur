@@ -15,6 +15,7 @@ import xarray as xr
 from scripts._helpers import (
     configure_logging,
     get_snapshots,
+    load_costs,
     sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
@@ -25,11 +26,77 @@ from scripts.add_existing_baseyear import add_build_year_to_new_assets
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
+INDUSTRY_T_HEAT_BUS_SUFFIXES = (
+    " heat100-200 industry",
+    " heat200-500 industry",
+    " heat>500 industry",
+)
+
+# primary cost technology per endogenous industry heat carrier as
+# (technology, investment multiplier, capture fuel or None), mirroring how
+# prepare_sector_network builds each link's capital cost
+INDUSTRY_T_COST_TECH = {
+    "heat100-200 industry solid biomass": ("solid biomass boiler steam", 1, None),
+    "heat100-200 industry solid biomass CC": (
+        "solid biomass boiler steam CC",
+        1,
+        "solid biomass",
+    ),
+    "heat100-200 industry gas": ("gas boiler steam", 1, None),
+    "heat100-200 industry gas CC": ("gas boiler steam", 1, "gas"),
+    "heat100-200 industry industrial heat pump high temperature": (
+        "industrial heat pump high temperature",
+        1,
+        None,
+    ),
+    "heat100-200 industry electric boiler steam": ("electric boiler steam", 1, None),
+    "heat200-500 industry solid biomass": ("direct firing solid fuels", 1, None),
+    "heat200-500 industry solid biomass CC": (
+        "direct firing solid fuels CC",
+        1,
+        "solid biomass",
+    ),
+    "heat200-500 industry gas": ("direct firing gas", 1, None),
+    "heat200-500 industry gas CC": ("direct firing gas CC", 1, "gas"),
+    "heat200-500 industry hydrogen": ("direct firing gas", 10, None),
+    "heat>500 industry gas": ("direct firing gas", 1, None),
+    "heat>500 industry gas CC": ("direct firing gas CC", 1, "gas"),
+    "heat>500 industry hydrogen": ("direct firing gas", 10, None),
+}
+
+
+def industry_t_fom_cost(carrier, costs):
+    """
+    Annualised FOM-only cost per MW input for an inherited industry heat link.
+
+    Mirrors the capital cost construction in prepare_sector_network (base
+    technology cost scaled by efficiency, plus carbon capture equipment scaled
+    by the fuel's CO2 intensity), but with the annuity stripped: inherited
+    capacity is sunk, so surviving plants are only charged their fixed O&M.
+    """
+    tech, factor, capture_fuel = INDUSTRY_T_COST_TECH[carrier]
+    fom = (
+        factor
+        * costs.at[tech, "investment"]
+        * costs.at[tech, "FOM"]
+        / 100
+        * costs.at[tech, "efficiency"]
+    )
+    if capture_fuel is not None:
+        fom += (
+            costs.at["biomass CHP capture", "investment"]
+            * costs.at["biomass CHP capture", "FOM"]
+            / 100
+            * costs.at[capture_fuel, "CO2 intensity"]
+        )
+    return fom
+
 
 def add_brownfield(
     n,
     n_p,
     year,
+    costs,
     h2_retrofit=False,
     h2_retrofit_capacity_per_ch4=None,
     capacity_threshold=None,
@@ -45,6 +112,8 @@ def add_brownfield(
         Previous network to get brownfield from
     year : int
         Planning year
+    costs : pd.DataFrame
+        Prepared cost data for the planning year
     h2_retrofit : bool
         Whether to allow hydrogen pipeline retrofitting
     h2_retrofit_capacity_per_ch4 : float
@@ -115,6 +184,25 @@ def add_brownfield(
         # copy over assets but fix their capacity
         c.static[f"{attr}_nom"] = c.static[f"{attr}_nom_opt"]
         c.static[f"{attr}_nom_extendable"] = False
+
+        # industry heat supply links keep a must-run floor (p_min_pu), so
+        # fixed inherited capacity can exceed falling band demand in later
+        # horizons and render the nodal balance infeasible. Carry them over
+        # shrink-only extendable instead: retirable, never beyond what was
+        # built, and surviving capacity is charged only its fixed O&M since
+        # the investment is sunk.
+        if c.name == "Link":
+            ind_i = c.static.index[
+                c.static.bus1.str.endswith(INDUSTRY_T_HEAT_BUS_SUFFIXES)
+            ]
+            if not ind_i.empty:
+                c.static.loc[ind_i, "p_nom_extendable"] = True
+                c.static.loc[ind_i, "p_nom_max"] = c.static.loc[ind_i, "p_nom_opt"]
+                c.static.loc[ind_i, "p_nom_min"] = 0.0
+                c.static.loc[ind_i, "capital_cost"] = [
+                    industry_t_fom_cost(carrier, costs)
+                    for carrier in c.static.loc[ind_i, "carrier"]
+                ]
 
         n.add(c.name, c.static.index, **c.static)
 
@@ -377,10 +465,13 @@ if __name__ == "__main__":
     if snakemake.params.tes and snakemake.params.dynamic_ptes_capacity:
         update_dynamic_ptes_capacity(n, n_p, year)
 
+    costs = load_costs(snakemake.input.costs)
+
     add_brownfield(
         n,
         n_p,
         year,
+        costs,
         h2_retrofit=snakemake.params.H2_retrofit,
         h2_retrofit_capacity_per_ch4=snakemake.params.H2_retrofit_capacity_per_CH4,
         capacity_threshold=snakemake.params.threshold_capacity,
