@@ -25,8 +25,9 @@ SHEET_NAME = "Calc.Set.Building"
 
 
 def export_calcsetbuilding_csv(xlsx: Path, csv: Path) -> None:
-    """Export the Calc.Set.Building sheet from the TABULA workbook to CSV.
-    
+    """
+    Export the Calc.Set.Building sheet from the TABULA workbook to CSV.
+
     Parameters
     ----------
     xlsx : Path

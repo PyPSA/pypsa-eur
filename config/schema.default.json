@@ -1308,7 +1308,7 @@
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
-              "default": "archive",
+              "default": "primary",
               "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
               "enum": [
                 "archive",
@@ -13185,7 +13185,7 @@
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
-              "default": "archive",
+              "default": "primary",
               "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
               "enum": [
                 "archive",

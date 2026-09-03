@@ -783,9 +783,7 @@ if (ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] i
             copy2(input["xlsx"], output["xlsx"])
 
 
-if (TABULA_CALCSETBUILDING := dataset_version("tabula_calcsetbuilding"))[
-    "source"
-] in [
+if (TABULA_CALCSETBUILDING := dataset_version("tabula_calcsetbuilding"))["source"] in [
     "primary",
 ]:
 
