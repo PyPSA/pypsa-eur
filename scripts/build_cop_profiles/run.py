@@ -160,7 +160,9 @@ if __name__ == "__main__":
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(
             xr.concat(
-                cop_this_system_type, dim=pd.Index(heat_sources, name="heat_source")
+                cop_this_system_type,
+                # object dtype since xarray cannot join pandas 3 str-dtype indexes
+                dim=pd.Index(heat_sources, name="heat_source", dtype=object),
             )
         )
 

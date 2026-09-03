@@ -428,8 +428,8 @@ def extract_zenodo_deposition_url(record_url: str) -> tuple[str, str]:
         The Zenodo deposition API URL, or None if extraction fails.
     """
     # Match both sandbox and production, with or without /files/...
-    m = re.match(
-        r"https://(?:sandbox\.)?zenodo\.org/records/(\d+)(/files/.*)?", record_url
+    m = re.fullmatch(
+        r"https://(?:sandbox\.)?zenodo\.org/records/(\d+)(/files(/.*)?)?", record_url
     )
     if not m:
         raise ValueError(f"Invalid Zenodo record URL format: {record_url}. ")

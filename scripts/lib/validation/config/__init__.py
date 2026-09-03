@@ -10,6 +10,7 @@ The json schema is also contributed to the schemastore.org and matches
 `**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
 """
 
+import pathlib
 import re
 
 from pydantic import ValidationError
@@ -61,6 +62,7 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
     def str_representer(dumper, data):
         """Use block style for multiline, quotes for special chars, plain otherwise."""
         TAG = "tag:yaml.org,2002:str"
+        data = str(data)  # Ensure it's a plain string (not e.g. Path)
         if "\n" in data:
             return dumper.represent_scalar(TAG, data, style="|")
         if data == "" or any(c in data for c in ":{}[]&*#?|-<>=!%@"):
@@ -68,6 +70,7 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
         return dumper.represent_scalar(TAG, data, style="")
 
     yaml_writer.representer.add_representer(str, str_representer)
+    yaml_writer.representer.add_multi_representer(pathlib.PurePath, str_representer)
 
     # Create a CommentedMap to add comments
     data = CommentedMap()

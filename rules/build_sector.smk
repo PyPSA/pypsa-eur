@@ -156,7 +156,7 @@ rule build_daily_heat_demand:
     output:
         heat_demand=resources("daily_heat_demand_total_base_s_{clusters}.nc"),
     log:
-        logs("build_daily_heat_demand_total_s_{clusters}.loc"),
+        logs("build_daily_heat_demand_total_s_{clusters}.log"),
     benchmark:
         benchmarks("build_daily_heat_demand/total_s_{clusters}")
     threads: 8
@@ -181,7 +181,7 @@ rule build_hourly_heat_demand:
             "residential_heat_dsm_profile_total_base_s_{clusters}.csv"
         ),
     log:
-        logs("build_hourly_heat_demand_total_s_{clusters}.loc"),
+        logs("build_hourly_heat_demand_total_s_{clusters}.log"),
     benchmark:
         benchmarks("build_hourly_heat_demand/total_s_{clusters}")
     threads: 8
@@ -816,10 +816,45 @@ rule build_swiss_energy_balances:
         scripts("build_swiss_energy_balances.py")
 
 
+rule build_co2_totals:
+    input:
+        co2=rules.retrieve_ghg_emissions.output["csv"],
+        eurostat=resources("eurostat_energy_balances.csv"),
+    output:
+        co2_totals=resources("co2_totals.csv"),
+    log:
+        logs("build_co2_totals.log"),
+    benchmark:
+        benchmarks("build_co2_totals")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        countries=config_provider("countries"),
+        energy=config_provider("energy"),
+    script:
+        scripts("build_co2_totals.py")
+
+
+rule build_transformation_output_coke:
+    input:
+        eurostat=resources("eurostat_energy_balances.csv"),
+    output:
+        transformation_output_coke=resources("transformation_output_coke.csv"),
+    log:
+        logs("build_transformation_output_coke.log"),
+    benchmark:
+        benchmarks("build_transformation_output_coke")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    script:
+        scripts("build_transformation_output_coke.py")
+
+
 rule build_energy_totals:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        co2=rules.retrieve_ghg_emissions.output["csv"],
         swiss=resources("switzerland_energy_balances.csv"),
         swiss_transport=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         idees=rules.retrieve_jrc_idees.output["directory"],
@@ -827,9 +862,7 @@ rule build_energy_totals:
         eurostat=resources("eurostat_energy_balances.csv"),
         eurostat_households=rules.retrieve_eurostat_household_balances.output["csv"],
     output:
-        transformation_output_coke=resources("transformation_output_coke.csv"),
         energy_name=resources("energy_totals.csv"),
-        co2_name=resources("co2_totals.csv"),
         transport_name=resources("transport_data.csv"),
         district_heat_share=resources("district_heat_share.csv"),
         heating_efficiencies=resources("heating_efficiencies.csv"),
