@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Fix: integrate TABULA data used in building retrofitting back to the model ([#2285](https://github.com/PyPSA/pypsa-eur/pull/2285))
+
 * Fix: fix bugs in retrofitting scripts which happens due to pandas version change and other code changes ([#2273](https://github.com/PyPSA/pypsa-eur/pull/2273))
 
 * Fix: focus_weights related TypeError during cluster_network ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277))
