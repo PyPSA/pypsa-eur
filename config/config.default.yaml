@@ -1364,6 +1364,9 @@ data:
   swiss_energy_balances:
     source: primary
     version: latest
+  tabula_calcsetbuilding:
+    source: primary
+    version: latest
   synthetic_electricity_demand:
     source: primary
     version: latest
@@ -1477,9 +1480,6 @@ data:
     version: latest
   bidding_zones_entsoepy:
     source: archive
-    version: latest
-  tabula_calcsetbuilding:
-    source: primary
     version: latest
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#overpass_api

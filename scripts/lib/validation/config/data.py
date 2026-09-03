@@ -254,8 +254,8 @@ class DataConfig(BaseModel):
         description="Swiss energy balances data source configuration.",
     )
     tabula_calcsetbuilding: _DataSourceConfig = Field(
-        default_factory=_DataSourceConfig,
-        description="TABULA building typology data source configuration.",
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="TABULA building typology data source configuration. Primary-only until an archive workbook is mirrored on data.pypsa.org.",
     )
     synthetic_electricity_demand: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
