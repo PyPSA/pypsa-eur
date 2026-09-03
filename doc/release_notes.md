@@ -6,6 +6,9 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Fix: Set transmission efficiencies for `gas pipeline new` and `CO2 pipeline` links by default, to ensure consistency with other link type carriers.
+* Adding option to include the compression step in carbon dioxide transport before transporting in dense phase and including electricity demand for post combustion carbon capture. Adjusting the capital costs for post combustion capture that differs depending on the carbon dioxide percentage in the flue gas ([#2161](https://github.com/PyPSA/pypsa-eur/pull/2161)).
+Upcoming Release
 * Fix: fix bugs in retrofitting scripts which happens due to pandas version change and other code changes ([#2273](https://github.com/PyPSA/pypsa-eur/pull/2273))
 
 * Fix: focus_weights related TypeError during cluster_network ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277))
