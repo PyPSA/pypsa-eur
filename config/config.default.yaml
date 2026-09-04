@@ -1364,6 +1364,9 @@ data:
   swiss_energy_balances:
     source: primary
     version: latest
+  tabula_calculator:
+    source: primary
+    version: latest
   synthetic_electricity_demand:
     source: primary
     version: latest
