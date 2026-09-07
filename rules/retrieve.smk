@@ -785,6 +785,7 @@ if (ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] i
 
 if (TABULA_CALCULATOR := dataset_version("tabula_calculator"))["source"] in [
     "primary",
+    "archive",
 ]:
 
     rule retrieve_tabula_calculator:
