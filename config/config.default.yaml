@@ -1365,7 +1365,7 @@ data:
     source: primary
     version: latest
   tabula_calculator:
-    source: primary
+    source: archive
     version: latest
   synthetic_electricity_demand:
     source: primary
