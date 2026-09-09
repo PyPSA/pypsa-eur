@@ -7,12 +7,11 @@ Build total energy demands per country using JRC IDEES and Eurostat data.
 - Country-specific data is read in `build_idees` and read in from [build_eurostat_balances][] and `build_swiss_energy_balances`.
 - `build_energy_totals` then combines energy data from Eurostat, Swiss, and IDEES data.
 - `build_district_heat_share` calculates the share of district heating for each country from IDEES data.
-- Historical CO2 emissions are calculated in `build_eea_co2` and `build_eurostat_co2` and combined in `build_co2_totals`.
 
 Outputs
 -------
 - ``resources/<run_name>/energy_totals.csv``: Energy totals per country, sector and year.
-- ``resources/<run_name>/transport_data.csv``: Transport data per country and year.
+- ``resources/<run_name>/transport_data_raw.csv``: Transport data per country and year.
 - ``resources/<run_name>/district_heat_share.csv``: District heating share per country and year.
 - ``resources/<run_name>/heating_efficiencies.csv``: Heating efficiencies per country and year.
 """

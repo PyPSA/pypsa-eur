@@ -240,7 +240,7 @@ if __name__ == "__main__":
     params = snakemake.params.energy
     countries = snakemake.params.countries
     base_year_emissions = params["base_emissions_year"]
-    emissions_scope = params["emissions"]
+    emissions_scope = snakemake.params.emissions_scope
 
     eurostat = pd.read_csv(snakemake.input.eurostat)
     eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)

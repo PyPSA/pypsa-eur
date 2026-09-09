@@ -61,6 +61,7 @@ def add_new_buses(n, new_ports):
         substation_off=True,
         substation_lv=False,
         carrier="AC",
+        return_names=True,
     )
     new_buses = n.buses.loc[added_buses].copy().dropna(axis=1, how="all")
     new_ports.loc[to_add.index, "neighbor"] = added_buses

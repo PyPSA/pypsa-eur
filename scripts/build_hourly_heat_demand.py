@@ -76,7 +76,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_hourly_heat_demand",
             scope="total",
-            clusters=5,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

@@ -447,16 +447,13 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_industrial_distribution_key",
-            clusters=256,
-        )
+        snakemake = mock_snakemake("build_industrial_distribution_key")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
 
-    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
+    regions = gpd.read_file(snakemake.input.onshore_regions).set_index("name")
 
     hotmaps = prepare_hotmaps_database(snakemake.input.hotmaps, regions)
 

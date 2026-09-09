@@ -42,7 +42,7 @@ rule make_network_comparison:
         n_release=resources("networks/base.nc"),
         n_incumbent=resources("osm/comparison/incumbent/networks/base.nc"),
         country_shapes=resources("country_shapes.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
+        regions_offshore=resources("offshore_regions.geojson"),
     output:
         lengths=resources("osm/comparison/lengths.pdf"),
     log:

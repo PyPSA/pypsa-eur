@@ -18,7 +18,7 @@ class _EmissionPricesConfig(ConfigModel):
 
     enable: bool = Field(
         False,
-        description="Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. Config setting can also be enabled with the keyword `Ep` in the `{opts}` wildcard for electricity-only runs.",
+        description="Add cost for a carbon-dioxide price configured in `costs: emission_prices: co2` to `marginal_cost` of generators. For a static price, only enable this setting; for a time-varying price, also set `costs.emission_prices.dynamic` to True.",
     )
     co2: float | dict[int, float] = Field(
         0.0,
@@ -61,9 +61,9 @@ class _FillValuesConfig(BaseModel):
 class CostsConfig(BaseModel):
     """Configuration for `costs` settings."""
 
-    year: int = Field(
-        2050,
-        description="Year for which to retrieve cost assumptions of `data/costs/primary/<version>/costs_<year>.csv`.",
+    year: int | None = Field(
+        None,
+        description="Year of the cost assumptions `data/costs/primary/<version>/costs_<year>.csv` used for all planning horizons. If null, each planning horizon uses the cost assumptions of its own year.",
     )
     social_discountrate: float = Field(
         0.02,

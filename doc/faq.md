@@ -103,7 +103,7 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
       (`focus_weights`).
     - Provide a fully custom spatial clustering by setting `mode: custom_busshapes` and
       placing your geometry file at
-      `data/busshapes/base_s_{w.clusters}_{base_network}.geojson`.
+      `data/busshapes/simplified_{n_clusters}_{base_network}.geojson`.
 
 ??? note "Why do some countries (e.g. GB or DK) have at least two nodes even when I specify only one cluster per country?"
     Some countries span multiple synchronous zones. Examples include Denmark (DK1 and DK2) and Great Britain versus Northern Ireland. To represent these electrical boundaries correctly, PyPSA-Eur assigns one bus region per synchronous zone, even if the configuration requests only a single cluster for the whole country.

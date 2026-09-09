@@ -5,8 +5,9 @@
 
 The database of cost assumptions is retrieved from the repository
 [PyPSA/technology-data](https://github.com/pypsa/technology-data) and then
-saved to a file `data/costs/*/costs_{year}.csv`. The `config/config.yaml` provides options
-to choose a reference year. To select a specific version of the cost assumptions, see [Managing Data Versions](data_sources.md#managing_data_versions).
+saved to a file `data/costs/*/costs_{year}.csv`. By default each planning horizon uses
+the cost assumptions of its own year; `costs.year` overrides this with a single
+reference year for all horizons. To select a specific version of the cost assumptions, see [Managing Data Versions](data_sources.md#managing_data_versions).
 
 ```yaml
 {{ yaml_section("costs.year") }}

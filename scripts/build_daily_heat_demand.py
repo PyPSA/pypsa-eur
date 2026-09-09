@@ -34,9 +34,8 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_daily_heat_demands",
+            "build_daily_heat_demand",
             scope="total",
-            clusters=48,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -56,7 +55,7 @@ if __name__ == "__main__":
     cutout = load_cutout(cutout_name, time=time)
 
     clustered_regions = (
-        gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
+        gpd.read_file(snakemake.input.onshore_regions).set_index("name").buffer(0)
     )
 
     I = cutout.indicatormatrix(clustered_regions)  # noqa: E741

@@ -34,14 +34,16 @@ effects for renewable power generation and their varying resource availability.
 
 ## Sector-Coupled Energy System
 
-A sector-coupled extension (previously known as **PyPSA-Eur-Sec**, which is now
-deprecated) adds demand and supply for the following sectors: transport, space
-and water heating, biomass, energy consumption in the agriculture, industry and
-industrial feedstocks, carbon management, carbon capture and
-usage/sequestration. This completes the energy system and includes all
-greenhouse gas emitters except waste management, agriculture, forestry and land
-use. The diagram below gives an overview of the sectors and the links between
-them:
+A sector-coupled extension adds demand and supply for the following sectors:
+transport, space and water heating, biomass, energy consumption in the
+agriculture, industry and industrial feedstocks, carbon management, carbon
+capture and usage/sequestration. This completes the energy system and includes
+all greenhouse gas emitters except waste management, agriculture, forestry and
+land use. The diagram below gives an overview of the sectors and the links
+between them:
+
+!!! note
+    This extension replaces the functionality that previously shipped under the **PyPSA-Eur-Sec** name.
 
 ![](img/multisector_figure.png){width=70%}
 
@@ -96,7 +98,12 @@ as part of the [Stromnetze Research Initiative](http://forschung-stromnetze.info
 
 !!! note
     The graph above was generated using
-    `pixi run snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/workflow.svg`
+    `pixi run snakemake --rulegraph dot --forceall | sed -n "/digraph/,/}/p" | pixi run dot -Tsvg -o doc/img/workflow.svg`
+
+The rule set follows `base → simplified → clustered → composed → solved`.
+Intermediate networks (`networks/simplified.nc`, `networks/clustered.nc`,
+`networks/composed_{horizon}.nc`) are stored in `resources/{run}`, while solved
+networks are always written to `results/{run}/networks/solved_{horizon}.nc`.
 
 ## Learning Energy System Modelling
 
