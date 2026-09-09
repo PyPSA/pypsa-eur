@@ -1313,7 +1313,7 @@ rule build_industrial_energy_demand_per_node_today:
 rule build_retro_cost:
     input:
         building_stock="data/retro/data_building_stock.csv",
-        data_tabula="data/bundle/retro/tabula-calculator-calcsetbuilding.csv",
+        data_tabula=rules.retrieve_tabula_calculator.output["xlsx"],
         air_temperature=resources("temp_air_total_base_s_{clusters}.nc"),
         u_values_PL="data/retro/u_values_poland.csv",
         tax_w="data/retro/electricity_taxes_eu.csv",
