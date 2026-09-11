@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-FROM ghcr.io/prefix-dev/pixi:0.79.0
+FROM ghcr.io/prefix-dev/pixi:0.80.0
 
 LABEL org.opencontainers.image.source=https://github.com/PyPSA/pypsa-eur
 
