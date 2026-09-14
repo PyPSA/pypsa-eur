@@ -183,18 +183,6 @@ class ElectricityConfig(BaseModel):
         False,
         description="Global gas usage limit.",
     )
-    co2limit_enable: bool = Field(
-        False,
-        description="Add an overall absolute carbon-dioxide emissions limit configured in `electricity: co2limit` in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks.",
-    )
-    co2limit: float = Field(
-        7.75e7,
-        description="Cap on total annual system carbon dioxide emissions.",
-    )
-    co2base: float = Field(
-        1.487e9,
-        description="Reference value of total annual system carbon dioxide emissions if relative emission reduction target is specified in `{opts}` wildcard.",
-    )
     operational_reserve: _OperationalReserveConfig = Field(
         default_factory=_OperationalReserveConfig,
         description="Settings for reserve requirements following `GenX <https://genxproject.github.io/GenX/dev/core/#Reserves>`_.",
@@ -231,7 +219,7 @@ class ElectricityConfig(BaseModel):
             "waste",
             "biomass",
         ],
-        description="List of conventional power plants to include in the model from `resources/powerplants_s_{clusters}.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
+        description="List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
     )
     renewable_carriers: list[str] = Field(
         default_factory=lambda: [

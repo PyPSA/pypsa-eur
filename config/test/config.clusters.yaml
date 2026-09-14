@@ -3,19 +3,14 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
+planning_horizons: 2050
+
 run:
   name: "test-elec-clusters"
   disable_progressbar: true
   shared_resources:
     policy: false
 
-scenario:
-  clusters:
-  - "adm"
-  opts:
-  - ''
-  planning_horizons:
-  - 2050
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
 
@@ -27,10 +22,13 @@ clustering:
   - [DE00, LUG1]
   - [GBNI, IE00]
   temporal:
-    resolution_elec: 24h
+    averaging: 24h
   simplify_network:
     remove_stubs: false
     remove_stubs_across_borders: false
+
+lines:
+  s_nom_max: 30_000
 
 solving:
   solver:

@@ -69,8 +69,8 @@ class LinesConfig(BaseModel):
         float("inf"),
         description="Global upper limit for the maximum capacity of each extendable line (MW).",
     )
-    max_extension: float = Field(
-        20000,
+    s_nom_max_extension: float = Field(
+        20_000,
         description="Upper limit for the extended capacity of each extendable line (MW).",
     )
     length_factor: float = Field(

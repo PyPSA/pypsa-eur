@@ -4,8 +4,8 @@
 
 
 """
-Prepare PyPSA network for solving according to opts, such
-as.
+Prepare PyPSA network for solving with various operational constraints and
+temporal adjustments.
 
 - adding an annual **limit** of carbon-dioxide emissions,
 - adding an exogenous **price** per tonne emissions of carbon-dioxide (or other kinds),
@@ -15,16 +15,11 @@ as.
 - reducing the **temporal** resolution by averaging over multiple hours
   or segmenting time series into chunks of varying lengths using `tsam`.
 
-Description
------------
-
-!!! tip
-    The rule `prepare_elec_networks` runs
-    for all `scenario` s in the configuration file
-    the rule [prepare_network][].
 """
 
 import logging
+import os
+from collections.abc import Mapping
 
 import numpy as np
 import pandas as pd
@@ -32,13 +27,15 @@ import pypsa
 
 from scripts._helpers import (
     PYPSA_V1,
-    configure_logging,
     get,
-    load_costs,
-    set_scenario_config,
-    update_config_from_wildcards,
 )
 from scripts.add_electricity import set_transmission_costs
+from scripts.co2_budget import (
+    bound_value_for_horizon,
+    co2_budget_for_horizon,
+    co2_limit_name,
+)
+from scripts.prepare_sector_network import co2_emissions_year, set_temporal_aggregation
 
 # Allow for PyPSA versions <0.35
 if PYPSA_V1:
@@ -50,6 +47,9 @@ else:
 idx = pd.IndexSlice
 
 logger = logging.getLogger(__name__)
+
+# Conversion constant for CO2 emissions
+GT_TO_TONNES = 1e9  # Gigatonnes to tonnes conversion
 
 
 def modify_attribute(n, adjustments, investment_year, modification="factor"):
@@ -93,14 +93,172 @@ def maybe_adjust_costs_and_potentials(n, adjustments, investment_year=None):
         modify_attribute(n, adjustments, investment_year, modification)
 
 
-def add_co2limit(n, co2limit, Nyears=1.0):
-    n.add(
-        "GlobalConstraint",
-        "CO2Limit",
-        carrier_attribute="co2_emissions",
-        sense="<=",
-        constant=co2limit * Nyears,
+def add_co2limit(
+    n: pypsa.Network,
+    co2_max: float | None = None,
+    co2_min: float | None = None,
+    nyears: float = 1.0,
+    suffix: str = "",
+    investment_period: int | None = None,
+    glc_type: str = "primary_energy",
+) -> None:
+    """
+    Add global CO2 emissions constraint(s) to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to add constraints to
+    co2_max : float or None, default None
+        Annual CO2 emissions limit in Gt CO2/a.
+    co2_min : float or None, default None
+        Annual minimum CO2 emissions limit in Gt CO2/a.
+    nyears : float, default 1.0
+        Number of years represented by the modelled snapshots. The global constraint constant
+        is computed as the annual value times ``nyears`` (converted to tonnes).
+    suffix : str, default ""
+        Suffix to add to constraint names
+    investment_period : int | None, default None
+        Investment period for perfect foresight constraints. When set, the global
+        constraint applies only to that investment period.
+    glc_type : str, default "primary_energy"
+        GlobalConstraint type determining which solver routine enforces it:
+        ``primary_energy`` (PyPSA native, electricity-only), ``co2_atmosphere``
+        (sector atmosphere-store constraint) or ``Co2Budget`` (cumulative perfect
+        foresight budget).
+
+    """
+
+    for value, sense, bound in [(co2_max, "<=", "upper"), (co2_min, ">=", "lower")]:
+        if value is None:
+            continue
+
+        if pd.isna(value):
+            raise ValueError(f"CO2 {bound} limit value cannot be NaN.")
+
+        n.add(
+            "GlobalConstraint",
+            co2_limit_name(bound) + suffix,
+            type=glc_type,
+            investment_period=investment_period,
+            carrier_attribute="co2_emissions",
+            sense=sense,
+            constant=value * GT_TO_TONNES * nyears,
+        )
+
+
+def _is_scalar_bound(bound: object) -> bool:
+    return isinstance(bound, (int, float))
+
+
+def _is_mapping_bound(bound: object) -> bool:
+    return isinstance(bound, Mapping)
+
+
+def apply_co2_budget_constraints(
+    n: pypsa.Network,
+    *,
+    inputs,
+    params,
+    nyears: float,
+    current_horizon: int,
+) -> None:
+    foresight = params.foresight
+    horizons = params.horizons
+
+    co2_budget = params["co2_budget"]
+    upper_cfg = co2_budget["upper"]
+    lower_cfg = co2_budget["lower"]
+
+    if upper_cfg is None and lower_cfg is None:
+        logger.info(
+            f"No CO2 budget specified for horizon {current_horizon}. "
+            "Skipping CO2 constraints for this horizon."
+        )
+        return
+
+    for bound, cfg in [("upper", upper_cfg), ("lower", lower_cfg)]:
+        if cfg is not None and not (_is_scalar_bound(cfg) or _is_mapping_bound(cfg)):
+            raise TypeError(
+                f"co2_budget.{bound} must be null, a number, or a dict mapping year "
+                f"to value. Received {type(cfg).__name__}."
+            )
+
+    if (
+        upper_cfg is not None
+        and lower_cfg is not None
+        and _is_scalar_bound(upper_cfg) != _is_scalar_bound(lower_cfg)
+    ):
+        raise ValueError(
+            "Invalid co2_budget configuration: co2_budget.upper and co2_budget.lower "
+            "must both be scalars or both be dicts mapping year to value."
+        )
+
+    budget_is_scalar = _is_scalar_bound(
+        upper_cfg if upper_cfg is not None else lower_cfg
     )
+
+    baseline_1990 = None
+    if co2_budget["relative"]:
+        upper_raw = bound_value_for_horizon(upper_cfg, current_horizon)
+        lower_raw = bound_value_for_horizon(lower_cfg, current_horizon)
+        if upper_raw is not None or lower_raw is not None:
+            baseline_1990 = co2_emissions_year(
+                countries=params.countries,
+                input_eurostat=inputs["eurostat"],
+                options=params.sector,
+                emissions_scope=co2_budget["emissions_scope"],
+                input_co2=inputs["co2"],
+                year=1990,
+            )
+
+    upper, lower = co2_budget_for_horizon(
+        co2_budget,
+        current_horizon=current_horizon,
+        baseline_1990=baseline_1990,
+    )
+
+    is_last_horizon = current_horizon == horizons[-1]
+    elec_only = not params.sector["enabled"]
+    glc_type = "primary_energy" if elec_only else "co2_atmosphere"
+
+    if budget_is_scalar:
+        if foresight == "perfect" and not is_last_horizon:
+            logger.info(
+                f"Deferring scalar CO2 constraint until final horizon {horizons[-1]}."
+            )
+            return
+        if foresight == "perfect":
+            # cumulative budget over all periods: recompute nyears from the
+            # merged multi-period network rather than the per-horizon value
+            nyears = n.snapshot_weightings.objective.sum() / 8760.0
+            if elec_only:
+                add_co2limit(n, upper, lower, nyears, glc_type="primary_energy")
+            else:
+                add_co2limit(
+                    n,
+                    upper,
+                    lower,
+                    nyears,
+                    glc_type="Co2Budget",
+                    investment_period=horizons[-1],
+                )
+            return
+        add_co2limit(n, upper, lower, nyears, glc_type=glc_type)
+        return
+
+    if foresight == "perfect":
+        add_co2limit(
+            n,
+            upper,
+            lower,
+            nyears,
+            suffix=f"-{current_horizon}",
+            investment_period=current_horizon,
+            glc_type=glc_type,
+        )
+    else:
+        add_co2limit(n, upper, lower, nyears, glc_type=glc_type)
 
 
 def add_gaslimit(n, gaslimit, Nyears=1.0):
@@ -197,85 +355,6 @@ def set_transmission_limit(n, kind, factor, costs, Nyears=1):
     return n
 
 
-def average_every_nhours(n, offset, drop_leap_day=False):
-    logger.info(f"Resampling the network to {offset}")
-    m = n.copy(snapshots=[])
-
-    snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
-    sns = snapshot_weightings.index
-    if drop_leap_day:
-        sns = sns[~((sns.month == 2) & (sns.day == 29))]
-    m.set_snapshots(snapshot_weightings.index)
-    m.snapshot_weightings = snapshot_weightings
-
-    for c in n.components:
-        pnl = getattr(m, c.list_name + "_t")
-        for k, df in c.dynamic.items():
-            if not df.empty:
-                pnl[k] = df.resample(offset).mean()
-
-    return m
-
-
-def apply_time_segmentation(n, segments, solver_name="cbc"):
-    logger.info(f"Aggregating time series to {segments} segments.")
-    try:
-        import tsam
-    except ImportError:
-        raise ModuleNotFoundError(
-            "Optional dependency 'tsam' not found.Install via 'pip install tsam'"
-        )
-
-    p_max_pu_norm = n.generators_t.p_max_pu.max()
-    p_max_pu = n.generators_t.p_max_pu / p_max_pu_norm
-
-    load_norm = n.loads_t.p_set.max()
-    load = n.loads_t.p_set / load_norm
-
-    inflow_norm = n.storage_units_t.inflow.max()
-    inflow = n.storage_units_t.inflow / inflow_norm
-
-    raw = pd.concat([p_max_pu, load, inflow], axis=1, sort=False)
-
-    if hasattr(tsam, "aggregate"):  # tsam >= 3.0
-        agg = tsam.aggregate(
-            raw,
-            n_clusters=1,
-            period_duration=len(raw),
-            segments=tsam.SegmentConfig(n_segments=int(segments)),
-        )
-        agg = agg.cluster_representatives
-    else:  # tsam < 3.0
-        from tsam import timeseriesaggregation
-
-        agg = timeseriesaggregation.TimeSeriesAggregation(
-            raw,
-            hoursPerPeriod=len(raw),
-            noTypicalPeriods=1,
-            noSegments=int(segments),
-            segmentation=True,
-            solver=solver_name,
-        )
-
-        segmented = agg.createTypicalPeriods()
-
-    weightings = segmented.index.get_level_values("Segment Duration")
-    offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
-    snapshots = [n.snapshots[0] + pd.Timedelta(f"{offset}h") for offset in offsets]
-
-    n.set_snapshots(pd.DatetimeIndex(snapshots, name="name"))
-    n.snapshot_weightings = pd.Series(
-        weightings, index=snapshots, name="weightings", dtype="float64"
-    )
-
-    segmented.index = snapshots
-    n.generators_t.p_max_pu = segmented[n.generators_t.p_max_pu.columns] * p_max_pu_norm
-    n.loads_t.p_set = segmented[n.loads_t.p_set.columns] * load_norm
-    n.storage_units_t.inflow = segmented[n.storage_units_t.inflow.columns] * inflow_norm
-
-    return n
-
-
 def enforce_autarky(n, only_crossborder=False):
     if only_crossborder:
         lines_rm = n.lines.loc[
@@ -291,95 +370,143 @@ def enforce_autarky(n, only_crossborder=False):
     n.remove("Link", links_rm)
 
 
-def set_line_nom_max(
+def cap_transmission_capacity(
     n,
-    s_nom_max_set=np.inf,
-    p_nom_max_set=np.inf,
-    s_nom_max_ext=np.inf,
-    p_nom_max_ext=np.inf,
+    line_max=None,
+    link_max=None,
+    line_max_extension=None,
+    link_max_extension=None,
+    line_max_pu=None,
+    link_max_pu=None,
 ):
-    if np.isfinite(s_nom_max_ext) and s_nom_max_ext > 0:
-        logger.info(f"Limiting line extensions to {s_nom_max_ext} MW")
-        n.lines["s_nom_max"] = n.lines["s_nom"] + s_nom_max_ext
+    """
+    Cap transmission capacity for AC lines and DC links.
 
-    if np.isfinite(p_nom_max_ext) and p_nom_max_ext > 0:
-        logger.info(f"Limiting link extensions to {p_nom_max_ext} MW")
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    line_max : float, optional
+        Absolute upper limit for AC line capacity [MW]. If None, no limit is applied.
+    link_max : float, optional
+        Absolute upper limit for DC link capacity [MW]. If None, no limit is applied.
+    line_max_extension : float, optional
+        Maximum extension per AC line [MW]. If None, no limit is applied.
+    link_max_extension : float, optional
+        Maximum extension per DC link [MW]. If None, no limit is applied.
+    line_max_pu : float, optional
+        Set N-1 security margin for AC lines (e.g., 0.7 for 70% utilization).
+        If None, s_max_pu is not modified.
+    link_max_pu : float, optional
+        Set maximum utilization for DC links (e.g., 0.7 for 70% utilization).
+        If None, p_max_pu is not modified.
+
+    Notes
+    -----
+    All parameters accept None to skip that particular constraint. This allows
+    selective application of limits without needing to specify all parameters.
+    """
+    # Set N-1 security margin (s_max_pu) for AC lines if specified
+    if line_max_pu is not None:
+        n.lines["s_max_pu"] = line_max_pu
+        logger.info(f"N-1 security margin of lines set to {line_max_pu}")
+
+    # Set maximum utilization (p_max_pu) for DC links if specified
+    if link_max_pu is not None:
         hvdc = n.links.index[n.links.carrier == "DC"]
-        n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + p_nom_max_ext
+        n.links.loc[hvdc, "p_max_pu"] = link_max_pu
+        logger.info(f"Maximum utilization of DC links set to {link_max_pu}")
 
-    n.lines["s_nom_max"] = n.lines.s_nom_max.clip(upper=s_nom_max_set)
-    n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=p_nom_max_set)
+    # Apply line capacity extension limit if specified
+    if (
+        line_max_extension is not None
+        and np.isfinite(line_max_extension)
+        and line_max_extension > 0
+    ):
+        logger.info(f"Limiting AC line extensions to {line_max_extension} MW")
+        n.lines["s_nom_max"] = n.lines["s_nom"] + line_max_extension
+
+    # Apply link capacity extension limit if specified
+    if (
+        link_max_extension is not None
+        and np.isfinite(link_max_extension)
+        and link_max_extension > 0
+    ):
+        logger.info(f"Limiting DC link extensions to {link_max_extension} MW")
+        hvdc = n.links.index[n.links.carrier == "DC"]
+        n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + link_max_extension
+
+    # Apply absolute line capacity limit if specified
+    if line_max is not None and np.isfinite(line_max):
+        n.lines["s_nom_max"] = n.lines.s_nom_max.clip(upper=line_max)
+
+    # Apply absolute link capacity limit if specified
+    if link_max is not None and np.isfinite(link_max):
+        n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=link_max)
 
 
-if __name__ == "__main__":
-    if "snakemake" not in globals():
-        from scripts._helpers import mock_snakemake
+def apply_temporal_aggregation(
+    n: pypsa.Network,
+    inputs,
+    params,
+) -> None:
+    logger.info("Applying temporal aggregation")
+    n_new = set_temporal_aggregation(
+        n, params.clustering_temporal, inputs.snapshot_weightings
+    )
+    n.__dict__.update(n_new.__dict__)
+    logger.info("Completed temporal aggregation")
 
-        snakemake = mock_snakemake(
-            "prepare_network",
-            clusters="50",
-            opts="",
-        )
-    configure_logging(snakemake)  # pylint: disable=E0606
-    set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
-    n = pypsa.Network(snakemake.input[0])
-    Nyears = n.snapshot_weightings.objective.sum() / 8760.0
-    costs = load_costs(snakemake.input.costs)
+def main(
+    n: pypsa.Network,
+    inputs,
+    params,
+    costs: pd.DataFrame,
+    nyears: float,
+) -> None:
+    logger.info("Preparing network for solving")
 
-    set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
+    electricity_cfg = params.electricity
 
-    # temporal averaging
-    time_resolution = snakemake.params.time_resolution
-    is_string = isinstance(time_resolution, str)
-    if is_string and time_resolution.lower().endswith("h"):
-        n = average_every_nhours(n, time_resolution, snakemake.params.drop_leap_day)
+    if electricity_cfg["gaslimit_enable"]:
+        gaslimit = electricity_cfg["gaslimit"]
+        add_gaslimit(n, gaslimit, nyears)
 
-    # segments with package tsam
-    if is_string and time_resolution.lower().endswith("seg"):
-        solver_name = snakemake.config["solving"]["solver"]["name"]
-        segments = int(time_resolution.replace("seg", ""))
-        n = apply_time_segmentation(n, segments, solver_name)
+    emission_prices = params.costs["emission_prices"]
 
-    if snakemake.params.co2limit_enable:
-        add_co2limit(n, snakemake.params.co2limit, Nyears)
-
-    if snakemake.params.gaslimit_enable:
-        add_gaslimit(n, snakemake.params.gaslimit, Nyears)
-
-    maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
-
-    emission_prices = snakemake.params.emission_prices
     if emission_prices["dynamic"]:
-        logger.info(
-            "Setting time dependent emission prices according spot market price"
-        )
-        add_dynamic_emission_prices(n, snakemake.input.co2_price)
+        if not os.path.exists(inputs.co2_price):
+            raise ValueError("CO2 price file for monthly prices not found")
+        add_dynamic_emission_prices(n, inputs.co2_price)
     elif emission_prices["enable"]:
         if isinstance(emission_prices["co2"], dict):
             logger.warning(
-                "Not setting emission prices on generators and storage units, "
-                "due to their configuration per planning horizon"
+                "Not setting emission prices specified per planning horizon. "
+                "Use dynamic emission prices instead."
             )
-        elif isinstance(emission_prices["co2"], float):
-            add_emission_prices(n, dict(co2=emission_prices["co2"]))
+        else:
+            add_emission_prices(n, {"co2": emission_prices["co2"]}, exclude_co2=False)
 
-    kind = snakemake.params.transmission_limit[0]
-    factor = snakemake.params.transmission_limit[1:]
-    set_transmission_limit(n, kind, factor, costs, Nyears)
+    transmission_limit = electricity_cfg["transmission_limit"]
+    if isinstance(transmission_limit, str):
+        kind = transmission_limit[0]
+        factor = transmission_limit[1:] or "opt"
+    elif isinstance(transmission_limit, (list, tuple)) and len(transmission_limit) == 2:
+        kind, factor = transmission_limit
+    else:
+        raise ValueError(
+            "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
+        )
 
-    set_line_nom_max(
+    set_transmission_limit(n, kind, factor, costs, nyears)
+
+    cap_transmission_capacity(
         n,
-        s_nom_max_set=snakemake.params.lines.get("s_nom_max", np.inf),
-        p_nom_max_set=snakemake.params.links.get("p_nom_max", np.inf),
-        s_nom_max_ext=snakemake.params.lines.get("max_extension", np.inf),
-        p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
+        line_max=params.lines["s_nom_max"],
+        link_max=params.links["p_nom_max"],
+        line_max_extension=params.lines["s_nom_max_extension"],
+        link_max_extension=params.links["p_nom_max_extension"],
+        line_max_pu=params.lines["s_max_pu"],
+        link_max_pu=params.links["p_max_pu"],
     )
-
-    if snakemake.params.autarky["enable"]:
-        only_crossborder = snakemake.params.autarky["by_country"]
-        enforce_autarky(n, only_crossborder=only_crossborder)
-
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output[0])

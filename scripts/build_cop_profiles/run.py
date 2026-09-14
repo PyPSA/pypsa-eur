@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
-            clusters=48,
+            horizon=2030,
         )
 
     set_scenario_config(snakemake)
