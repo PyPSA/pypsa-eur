@@ -141,7 +141,7 @@ Configuration for top level `run` settings.
 
 ## `foresight` {#foresight_cf}
 
-[planning_horizons](#planning-horizons) has to be set.
+[planning_horizons](#planning_horizons_cf) has to be set.
 
 Configuration for `foresight` settings.
 
@@ -156,7 +156,7 @@ Configuration for `foresight` settings.
 
 !!! note
     If you use myopic or perfect foresight, define at least two values in the
-    top-level [planning_horizons](#planning-horizons) list.
+    top-level [planning_horizons](#planning_horizons_cf) list.
 
 !!! note
     The `foresight` setting cannot vary across scenarios defined in
@@ -165,7 +165,7 @@ Configuration for `foresight` settings.
     foresight modes, run them as separate workflows with distinct `run.name`.
 
 
-## `planning_horizons` {#planning-horizons}
+## `planning_horizons` {#planning_horizons_cf}
 
 Configure planning horizons at the top level rather than through wildcards.
 Provide either a single year (for overnight studies) or a list of investment
@@ -198,7 +198,7 @@ Configuration for top level `planning_horizons` settings.
     [migration](migration.md) for detailed conversion steps.
 
 
-## `countries` {#countries}
+## `countries` {#countries_cf}
 
 Configuration for `countries` settings.
 
@@ -242,13 +242,13 @@ Configuration for `enable` settings.
 ```
 
 
-## `co2 budget` {#CO2_budget_cf}
+## `co2 budget` {#co2_budget_cf}
 
 Carbon budgets share one schema for all foresight modes. The `relative` flag
 selects whether yearly entries inside `upper`/`lower` are interpreted as
 fractions of the 1990 baseline (`true`) or absolute GtCO₂/year
 (`false`). Enable `upper` and/or `lower` to enforce those caps only for
-the explicitly listed years or a total budget across all [planning_horizons](#planning-horizons).
+the explicitly listed years or a total budget across all [planning_horizons](#planning_horizons_cf).
 
 Configuration for `co2_budget` settings.
 
