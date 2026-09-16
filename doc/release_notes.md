@@ -5,6 +5,12 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* The `plotting:` configuration block is now covered by the Pydantic config validation, alongside all other top-level config sections. `config/plotting.default.yaml` is generated (like `config/config.default.yaml`) from `scripts/lib/validation/config/plotting.py` and validated against the shared `config/schema.default.json`. Run `pixi run generate-config` after editing `plotting.py` to regenerate both `config/plotting.default.yaml` and `config/schema.default.json`. This is a metadata-only change; no default values change in effect, with the following cosmetic exceptions:
+
+    - A `heat_source_map: {temperature_cmap: Reds, energy_cmap: Oranges}` section was added to the generated defaults, documenting settings that scripts already read via a fallback default but that were previously undocumented in `plotting.default.yaml`.
+    - Numeric settings under `balance_map` and `balance_map_interactive` (e.g. `unit_conversion`, `*_factor`, `bus_sizes`, `branch_sizes`, `bus_size_max`, `branch_width_max`, `arrow_size_factor`) are now consistently typed as floats and render with an explicit decimal point (e.g. `100.0` instead of `100`).
+    - Hand-written comments inside `plotting.default.yaml` (e.g. the cartopy projection alternatives, the `# GW` unit hints) were moved into the Pydantic field descriptions and are now available via the JSON schema/IDE hover and in the `plotting` section of the [configuration docs](configuration.md#plotting_cf) instead.
+
 * Streamlined workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)): overnight, myopic, and perfect foresight are now handled by a unified set of rules for both electricity-only and sector-coupled models. See the [migration guide](migration.md) for detailed migration guidance.
 
     **Workflow structure:**

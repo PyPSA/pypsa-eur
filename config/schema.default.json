@@ -3049,6 +3049,538 @@
         }
       }
     },
+    "PlottingConfig": {
+      "description": "Configuration for top level `plotting` settings.",
+      "properties": {
+        "enable_heat_source_maps": {
+          "default": false,
+          "description": "Enable generation of heat source temperature and energy potential maps (see `plot_heat_source_map`).",
+          "type": "boolean"
+        },
+        "heat_source_map": {
+          "description": "Configuration for `plotting.heat_source_map` settings.",
+          "properties": {
+            "temperature_cmap": {
+              "default": "Reds",
+              "description": "Matplotlib colormap for the heat source temperature map.",
+              "type": "string"
+            },
+            "energy_cmap": {
+              "default": "Oranges",
+              "description": "Matplotlib colormap for the heat source energy potential map.",
+              "type": "string"
+            }
+          }
+        },
+        "map": {
+          "description": "Configuration for `plotting.map` settings.",
+          "properties": {
+            "boundaries": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": [
+                -11,
+                30,
+                34,
+                71
+              ],
+              "description": "Bounding box of static maps as ``[x_min, x_max, y_min, y_max]`` in longitude/latitude degrees. If ``null``, the boundaries are derived automatically from the plotted regions."
+            },
+            "geomap_colors": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Colors used for cartopy geographic map features, e.g. ``ocean``, ``land``, ``border`` or ``coastline``.",
+              "type": "object"
+            }
+          }
+        },
+        "projection": {
+          "additionalProperties": true,
+          "description": "Configuration for `plotting.projection` settings.",
+          "properties": {
+            "name": {
+              "default": "EqualEarth",
+              "description": "Name of the `cartopy <https://scitools.org.uk/cartopy/docs/latest/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "markdownDescription": "Name of the [cartopy ](https://scitools.org.uk/cartopy/docs/latest/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "type": "string"
+            }
+          }
+        },
+        "eu_node_location": {
+          "description": "Configuration for `plotting.eu_node_location` settings.",
+          "properties": {
+            "x": {
+              "default": -5.5,
+              "description": "Longitude of the auxiliary EU-wide node used for continent-level summaries.",
+              "type": "number"
+            },
+            "y": {
+              "default": 46.0,
+              "description": "Latitude of the auxiliary EU-wide node used for continent-level summaries.",
+              "type": "number"
+            }
+          }
+        },
+        "costs_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 1000.0,
+          "description": "Upper limit (in billion EUR/a) for the y-axis of cost bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "costs_threshold": {
+          "default": 1,
+          "description": "Minimum cost (in billion EUR/a) for a cost component to be included in cost plots.",
+          "type": "number"
+        },
+        "energy_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 20000.0,
+          "description": "Upper limit (in TWh) for the y-axis of energy balance bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "energy_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": -20000.0,
+          "description": "Lower limit (in TWh) for the y-axis of energy balance bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "energy_threshold": {
+          "default": 50.0,
+          "description": "Minimum energy (in TWh) for an energy balance component to be included in energy plots.",
+          "type": "number"
+        },
+        "balance_timeseries": {
+          "description": "Configuration for `plotting.balance_timeseries` settings.",
+          "properties": {
+            "max_threshold": {
+              "default": 5,
+              "description": "Maximum absolute value (in GW) used to determine the y-axis limits of balance timeseries plots.",
+              "type": "number"
+            },
+            "mean_threshold": {
+              "default": 1,
+              "description": "Mean absolute value (in GW) below which a carrier is excluded from balance timeseries plots.",
+              "type": "number"
+            },
+            "monthly": {
+              "default": true,
+              "description": "Enable generation of monthly balance timeseries plots.",
+              "type": "boolean"
+            },
+            "monthly_resolution": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Resampling resolution (pandas offset alias) for monthly balance timeseries plots. ``null`` uses the native snapshot resolution."
+            },
+            "annual": {
+              "default": true,
+              "description": "Enable generation of annual balance timeseries plots.",
+              "type": "boolean"
+            },
+            "annual_resolution": {
+              "default": "D",
+              "description": "Resampling resolution (pandas offset alias, e.g. ``D`` for daily) for annual balance timeseries plots.",
+              "type": "string"
+            },
+            "carriers": {
+              "default": [
+                "H2",
+                "NH3",
+                "gas",
+                "methanol",
+                "oil",
+                "solid biomass",
+                "biogas",
+                "co2 stored",
+                "co2"
+              ],
+              "description": "Bus carriers for which balance timeseries plots are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "carrier_groups": {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "description": "Named groups of bus carriers that are aggregated into a single balance timeseries plot.",
+              "type": "object"
+            }
+          }
+        },
+        "interactive_bus_balance": {
+          "description": "Configuration for `plotting.interactive_bus_balance` settings.",
+          "properties": {
+            "bus_name_pattern": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "None",
+              "description": "Shell-style glob pattern (see Python's ``fnmatch``) used to select buses for the interactive bus balance plot, e.g. ``DE*`` for German buses. The default value matches no bus name literally, so no plots are generated unless overridden. Set to ``NONE_BY_DEFAULT`` to explicitly disable, or ``null``/empty to include all buses."
+            }
+          }
+        },
+        "heatmap_timeseries": {
+          "description": "Configuration for `plotting.heatmap_timeseries` settings.",
+          "properties": {
+            "marginal_price": {
+              "default": [
+                "AC",
+                "H2",
+                "NH3",
+                "gas",
+                "methanol",
+                "oil",
+                "co2 stored",
+                "urban central heat"
+              ],
+              "description": "Bus carriers for which marginal price heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "utilisation_rate": {
+              "default": [
+                "solar",
+                "solar rooftop",
+                "solar-hsat",
+                "onwind",
+                "offwind-dc",
+                "offwind-ac",
+                "offwind-float",
+                "ror",
+                "hydro",
+                "PHS",
+                "battery charger",
+                "battery discharger",
+                "H2 Electrolysis",
+                "Fischer-Tropsch",
+                "methanolisation",
+                "Sabatier",
+                "OCGT",
+                "H2 Fuel Cell",
+                "urban central CHP",
+                "urban central CHP CC",
+                "urban central solid biomass CHP",
+                "urban central solid biomass CHP CC",
+                "rural gas boiler",
+                "urban central air heat pump",
+                "DAC"
+              ],
+              "description": "Generator/storage carriers for which utilisation-rate heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "soc": {
+              "default": [
+                "battery",
+                "H2 Store",
+                "co2 stored",
+                "gas",
+                "methanol",
+                "oil",
+                "urban central water tanks"
+              ],
+              "description": "Storage carriers for which state-of-charge heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "balance_map": {
+          "additionalProperties": {
+            "description": "Style settings for a single carrier of `plotting.balance_map`.",
+            "properties": {
+              "cmap": {
+                "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+                "type": "string"
+              },
+              "vmin": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "vmax": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "region_unit": {
+                "description": "Unit label shown in the region color bar legend.",
+                "type": "string"
+              },
+              "branch_color": {
+                "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+                "type": "string"
+              },
+              "unit": {
+                "description": "Unit label shown in the bus/branch size legend.",
+                "type": "string"
+              },
+              "unit_conversion": {
+                "description": "Factor used to convert the carrier's native unit (MWh) into ``unit``.",
+                "type": "number"
+              },
+              "bus_factor": {
+                "description": "Scaling factor applied to bus pie/marker sizes.",
+                "type": "number"
+              },
+              "branch_factor": {
+                "description": "Scaling factor applied to branch line widths.",
+                "type": "number"
+              },
+              "flow_factor": {
+                "description": "Scaling factor applied to flow arrow sizes.",
+                "type": "number"
+              },
+              "bus_sizes": {
+                "description": "Reference values (in ``unit``) shown in the bus size legend.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "branch_sizes": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Reference values (in ``unit``) shown in the branch size legend. ``null`` omits the branch size legend."
+              }
+            },
+            "required": [
+              "cmap",
+              "region_unit",
+              "branch_color",
+              "unit",
+              "unit_conversion",
+              "bus_factor",
+              "branch_factor",
+              "flow_factor",
+              "bus_sizes"
+            ]
+          },
+          "description": "Configuration for `plotting.balance_map` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the static balance map style for that carrier (see\n:class:`_BalanceMapCarrierConfig`). They are looked up dynamically by carrier name.",
+          "properties": {
+            "bus_carriers": {
+              "default": [
+                "AC",
+                "co2_stored",
+                "gas",
+                "H2",
+                "methanol",
+                "oil",
+                "urban_central_heat"
+              ],
+              "description": "Bus carriers for which a static balance map is generated (see `plot_balance_map`).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "balance_map_interactive": {
+          "additionalProperties": {
+            "description": "Style settings for a single carrier of `plotting.balance_map_interactive`.",
+            "properties": {
+              "cmap": {
+                "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+                "type": "string"
+              },
+              "region_unit": {
+                "description": "Unit label shown in the region color bar legend.",
+                "type": "string"
+              },
+              "vmin": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "vmax": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "region_alpha": {
+                "description": "Opacity of the region choropleth layer.",
+                "type": "number"
+              },
+              "unit_conversion": {
+                "description": "Factor used to convert the carrier's native unit (MWh) into the legend unit.",
+                "type": "number"
+              },
+              "branch_color": {
+                "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+                "type": "string"
+              },
+              "branch_width_max": {
+                "description": "Maximum branch line width in pixels.",
+                "type": "number"
+              },
+              "bus_size_max": {
+                "description": "Maximum bus marker size in pixels.",
+                "type": "number"
+              },
+              "arrow_size_factor": {
+                "description": "Scaling factor applied to flow arrow sizes.",
+                "type": "number"
+              },
+              "map_style": {
+                "description": "Base map tile style passed to the plotting backend, e.g. ``road`` or ``satellite``.",
+                "type": "string"
+              },
+              "tooltip": {
+                "description": "Enable hover tooltips showing bus/branch values.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "cmap",
+              "region_unit",
+              "region_alpha",
+              "unit_conversion",
+              "branch_color",
+              "branch_width_max",
+              "bus_size_max",
+              "arrow_size_factor",
+              "map_style",
+              "tooltip"
+            ]
+          },
+          "description": "Configuration for `plotting.balance_map_interactive` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the interactive balance map style for that carrier (see\n:class:`_BalanceMapInteractiveCarrierConfig`). They are looked up dynamically by carrier\nname.",
+          "properties": {
+            "bus_carriers": {
+              "default": [
+                "AC",
+                "co2_stored",
+                "gas",
+                "H2",
+                "methanol",
+                "oil",
+                "urban_central_heat"
+              ],
+              "description": "Bus carriers for which an interactive balance map is generated (see `plot_balance_map_interactive`).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "nice_names": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Human-readable display names used to relabel technology/carrier identifiers in plots and summaries.",
+          "type": "object"
+        },
+        "tech_colors": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Colors used to represent technologies and carriers consistently across all plots.",
+          "type": "object"
+        }
+      }
+    },
     "PypsaEurConfig": {
       "description": "Configuration for `pypsa_eur` settings.",
       "properties": {
@@ -5994,6 +6526,468 @@
         }
       }
     },
+    "_BalanceMapCarrierConfig": {
+      "description": "Style settings for a single carrier of `plotting.balance_map`.",
+      "properties": {
+        "cmap": {
+          "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+          "type": "string"
+        },
+        "vmin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+        },
+        "vmax": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+        },
+        "region_unit": {
+          "description": "Unit label shown in the region color bar legend.",
+          "type": "string"
+        },
+        "branch_color": {
+          "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+          "type": "string"
+        },
+        "unit": {
+          "description": "Unit label shown in the bus/branch size legend.",
+          "type": "string"
+        },
+        "unit_conversion": {
+          "description": "Factor used to convert the carrier's native unit (MWh) into ``unit``.",
+          "type": "number"
+        },
+        "bus_factor": {
+          "description": "Scaling factor applied to bus pie/marker sizes.",
+          "type": "number"
+        },
+        "branch_factor": {
+          "description": "Scaling factor applied to branch line widths.",
+          "type": "number"
+        },
+        "flow_factor": {
+          "description": "Scaling factor applied to flow arrow sizes.",
+          "type": "number"
+        },
+        "bus_sizes": {
+          "description": "Reference values (in ``unit``) shown in the bus size legend.",
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "branch_sizes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reference values (in ``unit``) shown in the branch size legend. ``null`` omits the branch size legend."
+        }
+      },
+      "required": [
+        "cmap",
+        "region_unit",
+        "branch_color",
+        "unit",
+        "unit_conversion",
+        "bus_factor",
+        "branch_factor",
+        "flow_factor",
+        "bus_sizes"
+      ]
+    },
+    "_BalanceMapConfig": {
+      "additionalProperties": {
+        "description": "Style settings for a single carrier of `plotting.balance_map`.",
+        "properties": {
+          "cmap": {
+            "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+            "type": "string"
+          },
+          "vmin": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+          },
+          "vmax": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+          },
+          "region_unit": {
+            "description": "Unit label shown in the region color bar legend.",
+            "type": "string"
+          },
+          "branch_color": {
+            "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+            "type": "string"
+          },
+          "unit": {
+            "description": "Unit label shown in the bus/branch size legend.",
+            "type": "string"
+          },
+          "unit_conversion": {
+            "description": "Factor used to convert the carrier's native unit (MWh) into ``unit``.",
+            "type": "number"
+          },
+          "bus_factor": {
+            "description": "Scaling factor applied to bus pie/marker sizes.",
+            "type": "number"
+          },
+          "branch_factor": {
+            "description": "Scaling factor applied to branch line widths.",
+            "type": "number"
+          },
+          "flow_factor": {
+            "description": "Scaling factor applied to flow arrow sizes.",
+            "type": "number"
+          },
+          "bus_sizes": {
+            "description": "Reference values (in ``unit``) shown in the bus size legend.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "branch_sizes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Reference values (in ``unit``) shown in the branch size legend. ``null`` omits the branch size legend."
+          }
+        },
+        "required": [
+          "cmap",
+          "region_unit",
+          "branch_color",
+          "unit",
+          "unit_conversion",
+          "bus_factor",
+          "branch_factor",
+          "flow_factor",
+          "bus_sizes"
+        ]
+      },
+      "description": "Configuration for `plotting.balance_map` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the static balance map style for that carrier (see\n:class:`_BalanceMapCarrierConfig`). They are looked up dynamically by carrier name.",
+      "properties": {
+        "bus_carriers": {
+          "default": [
+            "AC",
+            "co2_stored",
+            "gas",
+            "H2",
+            "methanol",
+            "oil",
+            "urban_central_heat"
+          ],
+          "description": "Bus carriers for which a static balance map is generated (see `plot_balance_map`).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
+    "_BalanceMapInteractiveCarrierConfig": {
+      "description": "Style settings for a single carrier of `plotting.balance_map_interactive`.",
+      "properties": {
+        "cmap": {
+          "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+          "type": "string"
+        },
+        "region_unit": {
+          "description": "Unit label shown in the region color bar legend.",
+          "type": "string"
+        },
+        "vmin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+        },
+        "vmax": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+        },
+        "region_alpha": {
+          "description": "Opacity of the region choropleth layer.",
+          "type": "number"
+        },
+        "unit_conversion": {
+          "description": "Factor used to convert the carrier's native unit (MWh) into the legend unit.",
+          "type": "number"
+        },
+        "branch_color": {
+          "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+          "type": "string"
+        },
+        "branch_width_max": {
+          "description": "Maximum branch line width in pixels.",
+          "type": "number"
+        },
+        "bus_size_max": {
+          "description": "Maximum bus marker size in pixels.",
+          "type": "number"
+        },
+        "arrow_size_factor": {
+          "description": "Scaling factor applied to flow arrow sizes.",
+          "type": "number"
+        },
+        "map_style": {
+          "description": "Base map tile style passed to the plotting backend, e.g. ``road`` or ``satellite``.",
+          "type": "string"
+        },
+        "tooltip": {
+          "description": "Enable hover tooltips showing bus/branch values.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "cmap",
+        "region_unit",
+        "region_alpha",
+        "unit_conversion",
+        "branch_color",
+        "branch_width_max",
+        "bus_size_max",
+        "arrow_size_factor",
+        "map_style",
+        "tooltip"
+      ]
+    },
+    "_BalanceMapInteractiveConfig": {
+      "additionalProperties": {
+        "description": "Style settings for a single carrier of `plotting.balance_map_interactive`.",
+        "properties": {
+          "cmap": {
+            "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+            "type": "string"
+          },
+          "region_unit": {
+            "description": "Unit label shown in the region color bar legend.",
+            "type": "string"
+          },
+          "vmin": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+          },
+          "vmax": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+          },
+          "region_alpha": {
+            "description": "Opacity of the region choropleth layer.",
+            "type": "number"
+          },
+          "unit_conversion": {
+            "description": "Factor used to convert the carrier's native unit (MWh) into the legend unit.",
+            "type": "number"
+          },
+          "branch_color": {
+            "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+            "type": "string"
+          },
+          "branch_width_max": {
+            "description": "Maximum branch line width in pixels.",
+            "type": "number"
+          },
+          "bus_size_max": {
+            "description": "Maximum bus marker size in pixels.",
+            "type": "number"
+          },
+          "arrow_size_factor": {
+            "description": "Scaling factor applied to flow arrow sizes.",
+            "type": "number"
+          },
+          "map_style": {
+            "description": "Base map tile style passed to the plotting backend, e.g. ``road`` or ``satellite``.",
+            "type": "string"
+          },
+          "tooltip": {
+            "description": "Enable hover tooltips showing bus/branch values.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cmap",
+          "region_unit",
+          "region_alpha",
+          "unit_conversion",
+          "branch_color",
+          "branch_width_max",
+          "bus_size_max",
+          "arrow_size_factor",
+          "map_style",
+          "tooltip"
+        ]
+      },
+      "description": "Configuration for `plotting.balance_map_interactive` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the interactive balance map style for that carrier (see\n:class:`_BalanceMapInteractiveCarrierConfig`). They are looked up dynamically by carrier\nname.",
+      "properties": {
+        "bus_carriers": {
+          "default": [
+            "AC",
+            "co2_stored",
+            "gas",
+            "H2",
+            "methanol",
+            "oil",
+            "urban_central_heat"
+          ],
+          "description": "Bus carriers for which an interactive balance map is generated (see `plot_balance_map_interactive`).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
+    "_BalanceTimeseriesConfig": {
+      "description": "Configuration for `plotting.balance_timeseries` settings.",
+      "properties": {
+        "max_threshold": {
+          "default": 5,
+          "description": "Maximum absolute value (in GW) used to determine the y-axis limits of balance timeseries plots.",
+          "type": "number"
+        },
+        "mean_threshold": {
+          "default": 1,
+          "description": "Mean absolute value (in GW) below which a carrier is excluded from balance timeseries plots.",
+          "type": "number"
+        },
+        "monthly": {
+          "default": true,
+          "description": "Enable generation of monthly balance timeseries plots.",
+          "type": "boolean"
+        },
+        "monthly_resolution": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resampling resolution (pandas offset alias) for monthly balance timeseries plots. ``null`` uses the native snapshot resolution."
+        },
+        "annual": {
+          "default": true,
+          "description": "Enable generation of annual balance timeseries plots.",
+          "type": "boolean"
+        },
+        "annual_resolution": {
+          "default": "D",
+          "description": "Resampling resolution (pandas offset alias, e.g. ``D`` for daily) for annual balance timeseries plots.",
+          "type": "string"
+        },
+        "carriers": {
+          "default": [
+            "H2",
+            "NH3",
+            "gas",
+            "methanol",
+            "oil",
+            "solid biomass",
+            "biogas",
+            "co2 stored",
+            "co2"
+          ],
+          "description": "Bus carriers for which balance timeseries plots are generated.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "carrier_groups": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": "Named groups of bus carriers that are aggregated into a single balance timeseries plot.",
+          "type": "object"
+        }
+      }
+    },
     "_BiomassClassesConfig": {
       "description": "Configuration for `biomass.classes` settings.",
       "properties": {
@@ -6708,6 +7702,21 @@
         }
       }
     },
+    "_EuNodeLocationConfig": {
+      "description": "Configuration for `plotting.eu_node_location` settings.",
+      "properties": {
+        "x": {
+          "default": -5.5,
+          "description": "Longitude of the auxiliary EU-wide node used for continent-level summaries.",
+          "type": "number"
+        },
+        "y": {
+          "default": 46.0,
+          "description": "Latitude of the auxiliary EU-wide node used for continent-level summaries.",
+          "type": "number"
+        }
+      }
+    },
     "_ExtendableCarriersConfig": {
       "description": "Configuration for `electricity.extendable_carriers` settings.",
       "properties": {
@@ -6808,6 +7817,93 @@
           "default": 0,
           "description": "Default standing losses.",
           "type": "number"
+        }
+      }
+    },
+    "_HeatSourceMapConfig": {
+      "description": "Configuration for `plotting.heat_source_map` settings.",
+      "properties": {
+        "temperature_cmap": {
+          "default": "Reds",
+          "description": "Matplotlib colormap for the heat source temperature map.",
+          "type": "string"
+        },
+        "energy_cmap": {
+          "default": "Oranges",
+          "description": "Matplotlib colormap for the heat source energy potential map.",
+          "type": "string"
+        }
+      }
+    },
+    "_HeatmapTimeseriesConfig": {
+      "description": "Configuration for `plotting.heatmap_timeseries` settings.",
+      "properties": {
+        "marginal_price": {
+          "default": [
+            "AC",
+            "H2",
+            "NH3",
+            "gas",
+            "methanol",
+            "oil",
+            "co2 stored",
+            "urban central heat"
+          ],
+          "description": "Bus carriers for which marginal price heatmaps are generated.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "utilisation_rate": {
+          "default": [
+            "solar",
+            "solar rooftop",
+            "solar-hsat",
+            "onwind",
+            "offwind-dc",
+            "offwind-ac",
+            "offwind-float",
+            "ror",
+            "hydro",
+            "PHS",
+            "battery charger",
+            "battery discharger",
+            "H2 Electrolysis",
+            "Fischer-Tropsch",
+            "methanolisation",
+            "Sabatier",
+            "OCGT",
+            "H2 Fuel Cell",
+            "urban central CHP",
+            "urban central CHP CC",
+            "urban central solid biomass CHP",
+            "urban central solid biomass CHP CC",
+            "rural gas boiler",
+            "urban central air heat pump",
+            "DAC"
+          ],
+          "description": "Generator/storage carriers for which utilisation-rate heatmaps are generated.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "soc": {
+          "default": [
+            "battery",
+            "H2 Store",
+            "co2 stored",
+            "gas",
+            "methanol",
+            "oil",
+            "urban central water tanks"
+          ],
+          "description": "Storage carriers for which state-of-charge heatmaps are generated.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       }
     },
@@ -6941,6 +8037,23 @@
         }
       }
     },
+    "_InteractiveBusBalanceConfig": {
+      "description": "Configuration for `plotting.interactive_bus_balance` settings.",
+      "properties": {
+        "bus_name_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "None",
+          "description": "Shell-style glob pattern (see Python's ``fnmatch``) used to select buses for the interactive bus balance plot, e.g. ``DE*`` for German buses. The default value matches no bus name literally, so no plots are generated unless overridden. Set to ``NONE_BY_DEFAULT`` to explicitly disable, or ``null``/empty to include all buses."
+        }
+      }
+    },
     "_LimitMaxGrowthConfig": {
       "description": "Configuration for `sector.limit_max_growth` settings.",
       "properties": {
@@ -7026,6 +8139,38 @@
           },
           "default": {},
           "description": "Dictionary of carriers and their specific load sink cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default cost is assumed for non-listed carriers.",
+          "type": "object"
+        }
+      }
+    },
+    "_MapConfig": {
+      "description": "Configuration for `plotting.map` settings.",
+      "properties": {
+        "boundaries": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [
+            -11,
+            30,
+            34,
+            71
+          ],
+          "description": "Bounding box of static maps as ``[x_min, x_max, y_min, y_max]`` in longitude/latitude degrees. If ``null``, the boundaries are derived automatically from the plotted regions."
+        },
+        "geomap_colors": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Colors used for cartopy geographic map features, e.g. ``ocean``, ``land``, ``border`` or ``coastline``.",
           "type": "object"
         }
       }
@@ -7673,6 +8818,18 @@
           ],
           "default": null,
           "description": "Path to a temporary directory where intermediate files are stored when building the cutout. Helpful when building large cutouts."
+        }
+      }
+    },
+    "_ProjectionConfig": {
+      "additionalProperties": true,
+      "description": "Configuration for `plotting.projection` settings.",
+      "properties": {
+        "name": {
+          "default": "EqualEarth",
+          "description": "Name of the `cartopy <https://scitools.org.uk/cartopy/docs/latest/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+          "markdownDescription": "Name of the [cartopy ](https://scitools.org.uk/cartopy/docs/latest/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+          "type": "string"
         }
       }
     },
@@ -14299,6 +15456,538 @@
               "type": "string"
             }
           }
+        }
+      }
+    },
+    "plotting": {
+      "description": "Configuration for top level `plotting` settings.",
+      "properties": {
+        "enable_heat_source_maps": {
+          "default": false,
+          "description": "Enable generation of heat source temperature and energy potential maps (see `plot_heat_source_map`).",
+          "type": "boolean"
+        },
+        "heat_source_map": {
+          "description": "Configuration for `plotting.heat_source_map` settings.",
+          "properties": {
+            "temperature_cmap": {
+              "default": "Reds",
+              "description": "Matplotlib colormap for the heat source temperature map.",
+              "type": "string"
+            },
+            "energy_cmap": {
+              "default": "Oranges",
+              "description": "Matplotlib colormap for the heat source energy potential map.",
+              "type": "string"
+            }
+          }
+        },
+        "map": {
+          "description": "Configuration for `plotting.map` settings.",
+          "properties": {
+            "boundaries": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": [
+                -11,
+                30,
+                34,
+                71
+              ],
+              "description": "Bounding box of static maps as ``[x_min, x_max, y_min, y_max]`` in longitude/latitude degrees. If ``null``, the boundaries are derived automatically from the plotted regions."
+            },
+            "geomap_colors": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Colors used for cartopy geographic map features, e.g. ``ocean``, ``land``, ``border`` or ``coastline``.",
+              "type": "object"
+            }
+          }
+        },
+        "projection": {
+          "additionalProperties": true,
+          "description": "Configuration for `plotting.projection` settings.",
+          "properties": {
+            "name": {
+              "default": "EqualEarth",
+              "description": "Name of the `cartopy <https://scitools.org.uk/cartopy/docs/latest/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "markdownDescription": "Name of the [cartopy ](https://scitools.org.uk/cartopy/docs/latest/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "type": "string"
+            }
+          }
+        },
+        "eu_node_location": {
+          "description": "Configuration for `plotting.eu_node_location` settings.",
+          "properties": {
+            "x": {
+              "default": -5.5,
+              "description": "Longitude of the auxiliary EU-wide node used for continent-level summaries.",
+              "type": "number"
+            },
+            "y": {
+              "default": 46.0,
+              "description": "Latitude of the auxiliary EU-wide node used for continent-level summaries.",
+              "type": "number"
+            }
+          }
+        },
+        "costs_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 1000.0,
+          "description": "Upper limit (in billion EUR/a) for the y-axis of cost bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "costs_threshold": {
+          "default": 1,
+          "description": "Minimum cost (in billion EUR/a) for a cost component to be included in cost plots.",
+          "type": "number"
+        },
+        "energy_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 20000.0,
+          "description": "Upper limit (in TWh) for the y-axis of energy balance bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "energy_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": -20000.0,
+          "description": "Lower limit (in TWh) for the y-axis of energy balance bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "energy_threshold": {
+          "default": 50.0,
+          "description": "Minimum energy (in TWh) for an energy balance component to be included in energy plots.",
+          "type": "number"
+        },
+        "balance_timeseries": {
+          "description": "Configuration for `plotting.balance_timeseries` settings.",
+          "properties": {
+            "max_threshold": {
+              "default": 5,
+              "description": "Maximum absolute value (in GW) used to determine the y-axis limits of balance timeseries plots.",
+              "type": "number"
+            },
+            "mean_threshold": {
+              "default": 1,
+              "description": "Mean absolute value (in GW) below which a carrier is excluded from balance timeseries plots.",
+              "type": "number"
+            },
+            "monthly": {
+              "default": true,
+              "description": "Enable generation of monthly balance timeseries plots.",
+              "type": "boolean"
+            },
+            "monthly_resolution": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Resampling resolution (pandas offset alias) for monthly balance timeseries plots. ``null`` uses the native snapshot resolution."
+            },
+            "annual": {
+              "default": true,
+              "description": "Enable generation of annual balance timeseries plots.",
+              "type": "boolean"
+            },
+            "annual_resolution": {
+              "default": "D",
+              "description": "Resampling resolution (pandas offset alias, e.g. ``D`` for daily) for annual balance timeseries plots.",
+              "type": "string"
+            },
+            "carriers": {
+              "default": [
+                "H2",
+                "NH3",
+                "gas",
+                "methanol",
+                "oil",
+                "solid biomass",
+                "biogas",
+                "co2 stored",
+                "co2"
+              ],
+              "description": "Bus carriers for which balance timeseries plots are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "carrier_groups": {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "description": "Named groups of bus carriers that are aggregated into a single balance timeseries plot.",
+              "type": "object"
+            }
+          }
+        },
+        "interactive_bus_balance": {
+          "description": "Configuration for `plotting.interactive_bus_balance` settings.",
+          "properties": {
+            "bus_name_pattern": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "None",
+              "description": "Shell-style glob pattern (see Python's ``fnmatch``) used to select buses for the interactive bus balance plot, e.g. ``DE*`` for German buses. The default value matches no bus name literally, so no plots are generated unless overridden. Set to ``NONE_BY_DEFAULT`` to explicitly disable, or ``null``/empty to include all buses."
+            }
+          }
+        },
+        "heatmap_timeseries": {
+          "description": "Configuration for `plotting.heatmap_timeseries` settings.",
+          "properties": {
+            "marginal_price": {
+              "default": [
+                "AC",
+                "H2",
+                "NH3",
+                "gas",
+                "methanol",
+                "oil",
+                "co2 stored",
+                "urban central heat"
+              ],
+              "description": "Bus carriers for which marginal price heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "utilisation_rate": {
+              "default": [
+                "solar",
+                "solar rooftop",
+                "solar-hsat",
+                "onwind",
+                "offwind-dc",
+                "offwind-ac",
+                "offwind-float",
+                "ror",
+                "hydro",
+                "PHS",
+                "battery charger",
+                "battery discharger",
+                "H2 Electrolysis",
+                "Fischer-Tropsch",
+                "methanolisation",
+                "Sabatier",
+                "OCGT",
+                "H2 Fuel Cell",
+                "urban central CHP",
+                "urban central CHP CC",
+                "urban central solid biomass CHP",
+                "urban central solid biomass CHP CC",
+                "rural gas boiler",
+                "urban central air heat pump",
+                "DAC"
+              ],
+              "description": "Generator/storage carriers for which utilisation-rate heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "soc": {
+              "default": [
+                "battery",
+                "H2 Store",
+                "co2 stored",
+                "gas",
+                "methanol",
+                "oil",
+                "urban central water tanks"
+              ],
+              "description": "Storage carriers for which state-of-charge heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "balance_map": {
+          "additionalProperties": {
+            "description": "Style settings for a single carrier of `plotting.balance_map`.",
+            "properties": {
+              "cmap": {
+                "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+                "type": "string"
+              },
+              "vmin": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "vmax": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "region_unit": {
+                "description": "Unit label shown in the region color bar legend.",
+                "type": "string"
+              },
+              "branch_color": {
+                "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+                "type": "string"
+              },
+              "unit": {
+                "description": "Unit label shown in the bus/branch size legend.",
+                "type": "string"
+              },
+              "unit_conversion": {
+                "description": "Factor used to convert the carrier's native unit (MWh) into ``unit``.",
+                "type": "number"
+              },
+              "bus_factor": {
+                "description": "Scaling factor applied to bus pie/marker sizes.",
+                "type": "number"
+              },
+              "branch_factor": {
+                "description": "Scaling factor applied to branch line widths.",
+                "type": "number"
+              },
+              "flow_factor": {
+                "description": "Scaling factor applied to flow arrow sizes.",
+                "type": "number"
+              },
+              "bus_sizes": {
+                "description": "Reference values (in ``unit``) shown in the bus size legend.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "branch_sizes": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Reference values (in ``unit``) shown in the branch size legend. ``null`` omits the branch size legend."
+              }
+            },
+            "required": [
+              "cmap",
+              "region_unit",
+              "branch_color",
+              "unit",
+              "unit_conversion",
+              "bus_factor",
+              "branch_factor",
+              "flow_factor",
+              "bus_sizes"
+            ]
+          },
+          "description": "Configuration for `plotting.balance_map` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the static balance map style for that carrier (see\n:class:`_BalanceMapCarrierConfig`). They are looked up dynamically by carrier name.",
+          "properties": {
+            "bus_carriers": {
+              "default": [
+                "AC",
+                "co2_stored",
+                "gas",
+                "H2",
+                "methanol",
+                "oil",
+                "urban_central_heat"
+              ],
+              "description": "Bus carriers for which a static balance map is generated (see `plot_balance_map`).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "balance_map_interactive": {
+          "additionalProperties": {
+            "description": "Style settings for a single carrier of `plotting.balance_map_interactive`.",
+            "properties": {
+              "cmap": {
+                "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+                "type": "string"
+              },
+              "region_unit": {
+                "description": "Unit label shown in the region color bar legend.",
+                "type": "string"
+              },
+              "vmin": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "vmax": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "region_alpha": {
+                "description": "Opacity of the region choropleth layer.",
+                "type": "number"
+              },
+              "unit_conversion": {
+                "description": "Factor used to convert the carrier's native unit (MWh) into the legend unit.",
+                "type": "number"
+              },
+              "branch_color": {
+                "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+                "type": "string"
+              },
+              "branch_width_max": {
+                "description": "Maximum branch line width in pixels.",
+                "type": "number"
+              },
+              "bus_size_max": {
+                "description": "Maximum bus marker size in pixels.",
+                "type": "number"
+              },
+              "arrow_size_factor": {
+                "description": "Scaling factor applied to flow arrow sizes.",
+                "type": "number"
+              },
+              "map_style": {
+                "description": "Base map tile style passed to the plotting backend, e.g. ``road`` or ``satellite``.",
+                "type": "string"
+              },
+              "tooltip": {
+                "description": "Enable hover tooltips showing bus/branch values.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "cmap",
+              "region_unit",
+              "region_alpha",
+              "unit_conversion",
+              "branch_color",
+              "branch_width_max",
+              "bus_size_max",
+              "arrow_size_factor",
+              "map_style",
+              "tooltip"
+            ]
+          },
+          "description": "Configuration for `plotting.balance_map_interactive` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the interactive balance map style for that carrier (see\n:class:`_BalanceMapInteractiveCarrierConfig`). They are looked up dynamically by carrier\nname.",
+          "properties": {
+            "bus_carriers": {
+              "default": [
+                "AC",
+                "co2_stored",
+                "gas",
+                "H2",
+                "methanol",
+                "oil",
+                "urban_central_heat"
+              ],
+              "description": "Bus carriers for which an interactive balance map is generated (see `plot_balance_map_interactive`).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "nice_names": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Human-readable display names used to relabel technology/carrier identifiers in plots and summaries.",
+          "type": "object"
+        },
+        "tech_colors": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Colors used to represent technologies and carriers consistently across all plots.",
+          "type": "object"
         }
       }
     }
