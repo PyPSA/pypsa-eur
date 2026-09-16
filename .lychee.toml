@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# lychee link checker config (https://lychee.cli.rs).
+# Modeled on https://github.com/PyPSA/pypsa/blob/master/.lychee.toml
+scheme = ["https", "http"]
+
+# Validate that #anchor fragments actually exist on the target page, not just
+# that the page itself resolves. Catches issues like in #2288.
+include_fragments = "anchor-only"
+
+# Accept every reachable response except definitive "not found" codes, so only
+# 404 and 410 fail. Publishers routinely answer bots with 400/403/429, which is
+# not link rot.
+accept = ["100..=403", "405..=409", "411..=599"]
+
+# Slow hosts time out on a different random subset each run. Timeouts are not
+# link rot, so tolerate them; genuine 404/410 and connection failures still
+# fail the check.
+accept_timeouts = true
+
+# Hosts that reject automated clients through TLS/HTTP2/timeout errors instead
+# of a status code, so `accept` cannot cover them. Add more here as CI turns
+# up new false positives.
+exclude = [
+  "localhost",
+  "127.0.0.1",
+  "gurobi.com",
+  # URL templates with an unformatted `{placeholder}`, e.g. the docs_url
+  # pattern in scripts/lib/validation/config/_schema.py, are not real links.
+  '\{[a-zA-Z_]+\}',
+]
+
+# Release notes are an immutable historical record whose links rot over time.
+exclude_path = ["doc/release_notes.md"]
+
+timeout = 30
+max_retries = 5
+max_redirects = 10
+host_concurrency = 2

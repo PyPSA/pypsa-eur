@@ -144,3 +144,22 @@ jobs:
     - name: Show remaining disk space
       if: always()
       run: df -h
+
+  link-check:
+    name: Check external links
+    runs-on: ubuntu-latest
+    # Flaky external hosts, run on the daily schedule only, not PRs/master
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Check external links
+      uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+      with:
+        args: >-
+          --config .lychee.toml --no-progress
+          './**/*.md' './**/*.py' './**/*.yaml' './**/*.yml' './**/*.toml'
+        fail: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
