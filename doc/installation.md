@@ -88,7 +88,7 @@ it might be the case that you can only retrieve solutions by using a commercial 
 Nevertheless, you can still use open-source solvers for smaller problems.
 
 !!! note "See also"
-    [Instructions how to install a solver in the documentation of PyPSA](https://pypsa.readthedocs.io/en/latest/installation.html#getting-a-solver-for-linear-optimisation)
+    [Instructions how to install a solver in the documentation of PyPSA](https://docs.pypsa.org/latest/home/installation/#solvers)
 
 !!! note
     The rules [cluster_network][] solves a mixed-integer quadratic optimisation problem for clustering.

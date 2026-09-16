@@ -90,7 +90,7 @@ For large-scale district heating systems the following options are available: co
 Supply options in individual buildings include gas and oil boilers, air- and ground-sourced heat pumps, resistive heaters, and solar thermal collectors.
 Ground-source heat pumps are only allowed in rural areas because of space constraints. Thus, only air- source heat pumps are allowed in urban areas. This is a conservative assumption, since there are many possible sources of low-temperature heat that could be tapped in cities (e.g. waste water, ground water, or natural bodies of water). Costs, lifetimes and efficiencies for these technologies are retrieved from the [technology-data repository](https://github.com/PyPSA/technology-data).
 
-Below are more detailed explanations for each heating supply component, all of which are modelled as [links](https://pypsa.readthedocs.io/en/latest/components.html?highlight=distribution#link) in PyPSA-Eur-Sec.
+Below are more detailed explanations for each heating supply component, all of which are modelled as [links](https://docs.pypsa.org/latest/user-guide/components/links/) in PyPSA-Eur-Sec.
 
 ### Large-scale CHP {#large-scale-chp}
 
@@ -149,7 +149,7 @@ For the myopic transition paths, capacities already existing for technologies su
 
 Activated in Config from the [tes](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L228) option.
 
-Thermal energy can be stored in large water pits associated with district heating systems and individual thermal energy storage (TES), i.e., small water tanks. Water tanks are modelled as [stores](https://pypsa.readthedocs.io/en/latest/components.html?highlight=distribution#store), which are connected to heat demand buses through water charger/discharger links.
+Thermal energy can be stored in large water pits associated with district heating systems and individual thermal energy storage (TES), i.e., small water tanks. Water tanks are modelled as [stores](https://docs.pypsa.org/latest/user-guide/components/stores/), which are connected to heat demand buses through water charger/discharger links.
 A thermal energy density of 46.8 kWh $_{th}$/m3 is assumed, corresponding to a temperature difference of 40 K. The decay of thermal energy in the stores: 1- $e^{-1/24\tau}$ is assumed to have a time constant  of  $\tau$=180 days for central TES and  $\tau$=3 days for individual TES, both modifiable through [tes_tau](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L229) in config file. Charging and discharging efficiencies are 90% due to pipe losses.
 
 **Residential Heat Demand-Side Management (DSM)**
