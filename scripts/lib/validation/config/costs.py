@@ -5,7 +5,7 @@
 """
 Costs configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#costs_cf
 """
 
 from pydantic import BaseModel, ConfigDict, Field

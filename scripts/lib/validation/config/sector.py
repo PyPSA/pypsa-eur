@@ -5,7 +5,7 @@
 """
 Sector configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#sector_cf
 """
 
 from typing import Any
@@ -153,7 +153,7 @@ class _ResidentialHeatConfig(BaseModel):
 
     dsm: _ResidentialHeatDsmConfig = Field(
         default_factory=_ResidentialHeatDsmConfig,
-        description="Configuration options for residential heat demand-side management (DSM). See `smartEn DSM study <https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf>`_ (Appendix A) for methodology.",
+        description="Configuration options for residential heat demand-side management (DSM). See `smartEn DSM study <https://smarten.eu/wp-content/uploads/2022/10/SmartEN-DSF-benefits-2030-Report_DIGITAL-1.pdf>`_ (Appendix A) for methodology.",
     )
 
 
@@ -329,7 +329,7 @@ class _EnhancedGeothermalConfig(BaseModel):
     )
     sustainability_factor: float = Field(
         0.0025,
-        description="Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
+        description="Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py>`_).",
     )
 
 
@@ -581,7 +581,7 @@ class SectorConfig(BaseModel):
     )
     shipping_methanol_efficiency: float = Field(
         0.46,
-        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
     )
     shipping_oil_efficiency: float = Field(
         0.40,
@@ -861,7 +861,7 @@ class SectorConfig(BaseModel):
     )
     H2_retrofit_capacity_per_CH4: float = Field(
         0.6,
-        description="The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+        description="The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
     )
     gas_network_connectivity_upgrade: float = Field(
         1,
