@@ -5,7 +5,7 @@
 """
 Industry configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#industry_cf
 """
 
 from pydantic import Field

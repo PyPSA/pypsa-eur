@@ -5,7 +5,7 @@
 """
 Sector configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#sector_cf
 """
 
 from typing import Any

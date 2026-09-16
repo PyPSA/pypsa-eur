@@ -5,7 +5,7 @@
 """
 CO2 budget configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#co2_budget_cf
 """
 
 from pydantic import Field

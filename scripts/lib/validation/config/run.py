@@ -5,7 +5,7 @@
 """
 Run configuration block.
 
-See # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
+See # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#run_cf
 """
 
 from pydantic import Field

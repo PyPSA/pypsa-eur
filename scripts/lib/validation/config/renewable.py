@@ -5,7 +5,7 @@
 """
 Renewable energy configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#renewable_cf
 """
 
 from pydantic import BaseModel, ConfigDict, Field

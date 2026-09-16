@@ -5,7 +5,7 @@
 """
 Electricity configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#electricity_cf
 """
 
 from typing import Literal
