@@ -47,6 +47,8 @@
 
 * Fix: focus_weights related TypeError during cluster_network ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277))
 
+* Chore: introduce a Pixi version floor for the CI ([#2293](https://github.com/PyPSA/pypsa-eur/pull/2293)).
+
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
 **Features**
