@@ -492,7 +492,7 @@ plotting:
     biomass to liquid: "#32CD32"
     unsustainable solid biomass: "#998622"
     unsustainable bioliquids: "#32CD32"
-    electrobiofuels: red
+    electrobiofuels: "#ff0000"
     BioSNG: "#123456"
     BioSNG CC: "#45233b"
     solid biomass to hydrogen: "#654321"
@@ -712,7 +712,7 @@ plotting:
     waste CHP: "#e3d37d"
     waste CHP CC: "#e3d3ff"
     "non-sequestered HVC": "#8f79b5"
-    HVC to air: k
+    HVC to air: "#000000"
     import H2: "#db8ccd"
     import gas: "#f7a572"
     import NH3: "#e2ed74"

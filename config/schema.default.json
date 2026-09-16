@@ -3576,7 +3576,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Colors used to represent technologies and carriers consistently across all plots.",
+          "description": "Colors used to represent technologies and carriers consistently across all plots. Values must be hex color strings, e.g. ``#235ebc``.",
           "type": "object"
         }
       }
@@ -15986,7 +15986,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Colors used to represent technologies and carriers consistently across all plots.",
+          "description": "Colors used to represent technologies and carriers consistently across all plots. Values must be hex color strings, e.g. ``#235ebc``.",
           "type": "object"
         }
       }

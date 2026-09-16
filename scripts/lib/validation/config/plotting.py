@@ -8,11 +8,15 @@ Plotting configuration block.
 See # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 """
 
+import re
 from typing import Literal
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, field_validator
 
 from scripts.lib.validation.config._base import ConfigModel
+
+#: Matches `#RGB`, `#RRGGBB` and `#RRGGBBAA` hex color strings.
+_HEX_COLOR_RE = re.compile(r"^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$")
 
 
 class _MapConfig(ConfigModel):
@@ -709,7 +713,7 @@ _TECH_COLORS: dict[str, str] = {
     "biomass to liquid": "#32CD32",
     "unsustainable solid biomass": "#998622",
     "unsustainable bioliquids": "#32CD32",
-    "electrobiofuels": "red",
+    "electrobiofuels": "#ff0000",
     "BioSNG": "#123456",
     "BioSNG CC": "#45233b",
     "solid biomass to hydrogen": "#654321",
@@ -943,7 +947,7 @@ _TECH_COLORS: dict[str, str] = {
     "waste CHP": "#e3d37d",
     "waste CHP CC": "#e3d3ff",
     "non-sequestered HVC": "#8f79b5",
-    "HVC to air": "k",
+    "HVC to air": "#000000",
     "import H2": "#db8ccd",
     "import gas": "#f7a572",
     "import NH3": "#e2ed74",
@@ -1021,5 +1025,17 @@ class PlottingConfig(ConfigModel):
     )
     tech_colors: dict[str, str] = Field(
         default_factory=lambda: dict(_TECH_COLORS),
-        description="Colors used to represent technologies and carriers consistently across all plots.",
+        description="Colors used to represent technologies and carriers consistently across all plots. Values must be hex color strings, e.g. ``#235ebc``.",
     )
+
+    @field_validator("tech_colors")
+    @classmethod
+    def _validate_tech_colors_are_hex(cls, value: dict[str, str]) -> dict[str, str]:
+        """Ensure every `tech_colors` value is a hex color string (`#RGB`/`#RRGGBB`/`#RRGGBBAA`)."""
+        invalid = {k: v for k, v in value.items() if not _HEX_COLOR_RE.match(v)}
+        if invalid:
+            raise ValueError(
+                "plotting.tech_colors values must be hex color strings (e.g. '#235ebc'), "
+                f"but got non-hex values for: {invalid}"
+            )
+        return value
