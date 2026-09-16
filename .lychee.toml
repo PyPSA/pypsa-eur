@@ -27,9 +27,25 @@ exclude = [
   "localhost",
   "127.0.0.1",
   "gurobi.com",
-  # URL templates with an unformatted `{placeholder}`, e.g. the docs_url
-  # pattern in scripts/lib/validation/config/_schema.py, are not real links.
+  # Self-signed certificate on their end (verified independently of lychee).
+  "cembureau.eu",
+  # URL templates with an unformatted `{placeholder}` (Python .format()
+  # fields) or `${placeholder}` (JS template literals in HTML snippets), e.g.
+  # the docs_url pattern in scripts/lib/validation/config/_schema.py or the
+  # popup markup in scripts/prepare_osm_network_release.py. These are not
+  # real links. lychee percent-encodes braces in the path/query before
+  # matching excludes (but not in the fragment), so both forms are needed.
   '\{[a-zA-Z_]+\}',
+  '%7B[a-zA-Z_]+%7D',
+  # ISO's OBP catalogue is a JS-rendered SPA; its #anchors never appear in the
+  # static HTML lychee fetches (a documented lychee limitation, not link rot).
+  'iso\.org/obp',
+  # Functional REST API base URLs embedded in code (retrieve_corine_dataset_
+  # primary.py, create_zenodo_deposition_cli.py), not documentation links for
+  # humans to click. A bare GET against them 404s even though the script's
+  # actual authenticated POST/JSON calls work fine.
+  'land\.copernicus\.eu/api',
+  'zenodo\.org/api',
 ]
 
 # Release notes are an immutable historical record whose links rot over time.
