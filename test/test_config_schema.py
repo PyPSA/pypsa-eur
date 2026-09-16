@@ -13,6 +13,7 @@ import pytest
 from scripts.lib.validation.config import (
     generate_config_defaults,
     generate_config_schema,
+    generate_plotting_defaults,
     normalize_config,
     validate_config,
     validate_scenarios,
@@ -24,6 +25,13 @@ def config_file():
     config = validate_config({})
     config_filename = Path(f"config/config.{config._name}.yaml")
     return config_filename
+
+
+@pytest.fixture(scope="module")
+def plotting_file():
+    config = validate_config({})
+    plotting_filename = Path(f"config/plotting.{config._name}.yaml")
+    return plotting_filename
 
 
 @pytest.fixture(scope="module")
@@ -77,6 +85,18 @@ def test_config_default_yaml_in_sync(config_file, pytestconfig):
     _check_file_in_sync(
         config_file,
         generate_config_defaults,
+        "yaml",
+    )
+
+
+def test_plotting_default_yaml_in_sync(plotting_file, pytestconfig):
+    """Test that config/plotting.default.yaml is in sync with Pydantic schema."""
+    fix = pytestconfig.getoption("fix")
+    if fix:
+        generate_plotting_defaults(plotting_file.as_posix())
+    _check_file_in_sync(
+        plotting_file,
+        generate_plotting_defaults,
         "yaml",
     )
 

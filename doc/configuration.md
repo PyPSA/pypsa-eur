@@ -1054,6 +1054,13 @@ Configuration for `overpass_api` settings.
 
 ## `plotting` {#plotting_cf}
 
+Configuration for `plotting` settings, used to style post-processing summaries, static
+and interactive maps, and timeseries plots.
+
+{{ schema_table("plotting") }}
+
+**YAML Syntax**
+
 ```yaml
 {{ yaml_section("plotting", source="plotting") }}
 ```
