@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#plotting_cf
 plotting:
   enable_heat_source_maps: false
   map:
