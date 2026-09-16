@@ -42,8 +42,6 @@ jobs:
     steps:
     - uses: actions/checkout@v7
     - uses: prefix-dev/setup-pixi@v0.10.2
-      with:
-        pixi-version: v0.68.1
 
     - name: Generate SBOM
       uses: anchore/sbom-action@v0.24.2

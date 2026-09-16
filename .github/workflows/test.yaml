@@ -32,7 +32,6 @@ jobs:
     - name: Setup Pixi
       uses: prefix-dev/setup-pixi@v0.10.2
       with:
-        pixi-version: v0.68.1
         cache: true
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
 
@@ -89,7 +88,6 @@ jobs:
       if: steps.filter.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       uses: prefix-dev/setup-pixi@v0.10.2
       with:
-        pixi-version: v0.68.1
         cache: true
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
 
