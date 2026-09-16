@@ -57,7 +57,7 @@ def get_access_token(sandbox: bool):
             f" * Option 2: Create a `.env` file in the current directory with the following content:\n"
             f"   {key_name}='<token>'\n"
             "Make sure to replace '<token>' with your actual Zenodo API token.\n"
-            "Visit (https://zenodo.org/account/settings/applications/tokens/) to generate a new token.",
+            "Visit (https://zenodo.org/account/settings/applications/tokens/new/) to generate a new token.",
             fg=typer.colors.RED,
         )
         raise typer.Exit()

@@ -29,7 +29,7 @@ Inputs
 
     ![](img/gebco_2019_grid_image.jpg)
 
-    **Source:** [GEBCO](https://www.gebco.net/data_and_products/images/gebco_2019_grid_image.jpg)
+    **Source:** [GEBCO](https://www.gebco.net/data-products/gridded-bathymetry-data/gebco-2019)
 
 - `resources/natura.tiff`: confer natura
 - `resources/offshore_shapes.geojson`: confer shapes

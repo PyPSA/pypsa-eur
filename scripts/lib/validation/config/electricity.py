@@ -185,7 +185,7 @@ class ElectricityConfig(BaseModel):
     )
     operational_reserve: _OperationalReserveConfig = Field(
         default_factory=_OperationalReserveConfig,
-        description="Settings for reserve requirements following `GenX <https://genxproject.github.io/GenX/dev/core/#Reserves>`_.",
+        description="Settings for reserve requirements following `GenX <https://genxproject.github.io/GenX.jl/stable/Model_Reference/core/>`_.",
     )
     max_hours: _MaxHoursConfig = Field(
         default_factory=_MaxHoursConfig,

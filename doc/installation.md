@@ -72,9 +72,9 @@ PyPSA passes the PyPSA-Eur network model to an external solver for performing th
 PyPSA is known to work with the free software
 
 - [HiGHS](https://highs.dev/)
-- [Cbc](https://projects.coin-or.org/Cbc#DownloadandInstall)
+- [Cbc](https://github.com/coin-or/Cbc)
 - [GLPK](https://www.gnu.org/software/glpk/) ([WinGLKP](http://winglpk.sourceforge.net/))
-- [SCIP](https://scipopt.github.io/PySCIPOpt/docs/html/index.html)
+- [SCIP](https://pyscipopt.readthedocs.io/)
 
 and the non-free, commercial software (for some of which free academic licenses are available)
 
