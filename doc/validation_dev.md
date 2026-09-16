@@ -11,7 +11,7 @@ This system provides type checking, default values, and documentation in a singl
 The configuration validation system consists of:
 
 - **Pydantic models** in `scripts/lib/validation/config/` that define all options and validates the snakemake config.
-- **Auto-generated files**: `config/config.default.yaml`, `config/plotting.default.yaml`, and `config/schema.default.json`. The `plotting` top-level key is written to its own `config/plotting.default.yaml` instead of `config/config.default.yaml`, but is validated against the same `config/schema.default.json`.
+- **Auto-generated files**: `config/config.default.yaml`, `config/plotting.default.yaml`, and `config/schema.default.json`. The top-level key `plotting` is written to its own `config/plotting.default.yaml` instead of `config/config.default.yaml`, but validated against the same `config/schema.default.json` schema.
 
 ### Adding a New Config Option
 
