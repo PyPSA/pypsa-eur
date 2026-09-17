@@ -9,11 +9,11 @@ The total number of nodes for Europe is set in the `config/config.yaml` file und
 
 Exemplary unsolved network clustered to 512 nodes:
 
-![Exemplary unsolved network clustered to 512 nodes](img/base_s_512.png)
+![Exemplary unsolved network clustered to 512 nodes](img/clustered_512.png)
 
 Exemplary unsolved network clustered to 37 nodes:
 
-![Exemplary unsolved network clustered to 37 nodes](img/base_s_37.png)
+![Exemplary unsolved network clustered to 37 nodes](img/clustered_37.png)
 
 The total number of nodes for Europe is set in the `config/config.yaml` file under [clusters](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L20).  The number of nodes can vary between 37, the number of independent countries/synchronous areas, and several hundred. With 200-300 nodes, the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
 Not all of the sectors are at the full nodal resolution, and some demand for some sectors is distributed to nodes using heuristics that need to be corrected. Some networks are copper-plated to reduce computational times.

@@ -167,7 +167,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_transport_demand", clusters=128)
+        snakemake = mock_snakemake("build_transport_demand")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
     energy_totals_year = snakemake.params.energy_totals_year
     nodal_transport_data = build_nodal_transport_data(
-        snakemake.input.transport_data, pop_layout, energy_totals_year
+        snakemake.input.transport_data_raw, pop_layout, energy_totals_year
     )
 
     transport_demand = build_transport_demand(

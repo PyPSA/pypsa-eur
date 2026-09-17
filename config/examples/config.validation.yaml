@@ -5,13 +5,10 @@
 run:
   name: "validation"
 
-scenario:
-  ll:
-  - v1.0
-  clusters:
-  - 37
-  opts:
-  - 'Ept'
+planning_horizons: 2020
+
+sector:
+  enabled: false
 
 snapshots:
   start: "2019-01-01"
@@ -21,8 +18,12 @@ snapshots:
 enable:
   retrieve_cutout: false
 
+co2_budget:
+  relative: false
+  upper: 1.0
+
 electricity:
-  co2limit: 1e9
+  transmission_limit: v1.0
 
   extendable_carriers:
     Generator: []
@@ -51,7 +52,8 @@ atlite:
 
 renewable:
   hydro:
-    flatten_dispatch: 0.01
+    flatten_dispatch: true
+    flatten_dispatch_buffer: 0.01
 
 conventional:
   unit_commitment: false
@@ -69,14 +71,16 @@ links:
   include_tyndp: false
 
 costs:
-  year: 2020
   emission_prices:
+    enable: true
+    dynamic: true
     co2: 25
 
 clustering:
   simplify_network:
     exclude_carriers: [oil, coal, lignite, OCGT, CCGT]
   cluster_network:
+    n_clusters: 37
     consider_efficiency_classes: true
 
 solving:

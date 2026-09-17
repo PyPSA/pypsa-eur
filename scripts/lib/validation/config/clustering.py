@@ -10,7 +10,8 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#cluste
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pandas.tseries.frequencies import to_offset
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -61,6 +62,10 @@ class _SimplifyNetworkConfig(BaseModel):
 class _ClusterNetworkConfig(BaseModel):
     """Configuration for `clustering.cluster_network` settings."""
 
+    n_clusters: int | Literal["all"] = Field(
+        50,
+        description="Number of clusters to aggregate the network to. Set to 'all' to skip clustering and keep every bus of the simplified network.",
+    )
     algorithm: Literal["kmeans", "hac"] = Field(
         "kmeans",
         description="Clustering algorithm to use.",
@@ -93,16 +98,42 @@ class _AggregationStrategiesConfig(BaseModel):
 
 
 class _TemporalConfig(BaseModel):
-    """Configuration for `clustering.temporal` settings.  Follows the convention of {n}{unit}, e.g. 3H to aggregate over 3 hours time periods. `SEG` can be used to create n segments of varying time periods based on network similarities during those time periods."""
+    """Configuration for `clustering.temporal` settings (at most one may be set)."""
 
-    resolution_elec: bool | str = Field(
+    averaging: Literal[False] | str = Field(
         False,
-        description="Resample the time-resolution by averaging over every `n` snapshots in `prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks.",
+        description="Average the time series over the given pandas offset, e.g. `3h` or `1d`.",
     )
-    resolution_sector: bool | str = Field(
+    segmentation: Literal[False] | int = Field(
         False,
-        description="Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`.",
+        description="Aggregate the time series into `n` representative segments using `tsam`.",
     )
+    representative: Literal[False] | int = Field(
+        False,
+        description="Use every `n`-th snapshot as representative.",
+    )
+
+    @field_validator("averaging")
+    @classmethod
+    def check_offset(cls, value: bool | str) -> bool | str:
+        if value:
+            to_offset(value)
+        return value
+
+    @model_validator(mode="after")
+    def check_mutually_exclusive(self):
+        fields = {
+            "averaging": self.averaging,
+            "segmentation": self.segmentation,
+            "representative": self.representative,
+        }
+        active = [name for name, value in fields.items() if value]
+        if len(active) > 1:
+            raise ValueError(
+                "clustering.temporal: only one of averaging, segmentation and "
+                f"representative may be set, got {active}."
+            )
+        return self
 
 
 class ClusteringConfig(BaseModel):
@@ -111,7 +142,7 @@ class ClusteringConfig(BaseModel):
     mode: Literal["busmap", "custom_busmap", "administrative", "custom_busshapes"] = (
         Field(
             "busmap",
-            description="'busmap': Default. 'custom_busmap': Enable the use of custom busmaps in rule `cluster_network`. If activated the rule looks for provided busmaps at ``data/busmaps/base_s_{clusters}_{base_network}.csv`` which should have the same format as ``resources/busmap_base_s_{clusters}.csv``, i.e. the index should contain the buses of ``networks/base_s.nc``. {base_network} is the name of the selected base_network in electricity, e.g. ``gridkit``, ``osm-prebuilt``, or ``osm-raw``. 'administrative': Clusters and indexes the network based on the administrative regions of the countries based on ``nuts3_shapes.geojson`` (level: 1, 2, 3, bz). To activate this, additionally set the ``clusters`` wildcard in ``scenario`` to 'adm'. 'custom_busshapes': Enable the use of custom shapes in rule `cluster_network`. If activated the rule looks for provided busshapes at ``data/busshapes/base_s_{clusters}_{base_network}.geojson``.",
+            description="'busmap': Default. 'custom_busmap': Enable the use of custom busmaps in rule `cluster_network`. If activated the rule looks for provided busmaps at ``data/busmaps/simplified_{n_clusters}_{base_network}.csv`` which should have the same format as ``resources/busmap_cluster_network.csv``, i.e. the index should contain the buses of ``networks/simplified.nc``. {base_network} is the name of the selected base_network in electricity, e.g. ``gridkit``, ``osm-prebuilt``, or ``osm-raw``. {n_clusters} is ``clustering.cluster_network.n_clusters``. 'administrative': Clusters and indexes the network based on the administrative regions of the countries based on ``nuts3_shapes.geojson`` (level: 1, 2, 3, bz). 'custom_busshapes': Enable the use of custom shapes in rule `cluster_network`. If activated the rule looks for provided busshapes at ``data/busshapes/simplified_{n_clusters}_{base_network}.geojson``.",
         )
     )
     administrative: _AdministrativeConfig = Field(
@@ -140,7 +171,7 @@ class ClusteringConfig(BaseModel):
     )
     exclude_carriers: list[str] = Field(
         default_factory=list,
-        description="List of carriers which will not be aggregated. If empty, all carriers will be aggregated.",
+        description="List of carriers to exclude from aggregation. Excluded carriers keep individual plant representation instead of being aggregated per bus.",
     )
     consider_efficiency_classes: bool | list[float] = Field(
         False,
