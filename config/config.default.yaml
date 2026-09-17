@@ -37,7 +37,7 @@ foresight: overnight
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#planning_horizons
 planning_horizons:
-- 2050 
+- 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
