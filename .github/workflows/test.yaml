@@ -148,8 +148,8 @@ jobs:
   link-check:
     name: Check external links
     runs-on: ubuntu-latest
-    # Flaky external hosts, run on the daily schedule only, not PRs/master
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # Flaky external hosts, run on the weekly schedule only, not PRs/master
+    if: github.event.schedule == '0 5 * * 0' || github.event_name == 'workflow_dispatch'
 
     steps:
     - uses: actions/checkout@v7
