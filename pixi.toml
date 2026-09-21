@@ -9,6 +9,7 @@ name = "pypsa-eur"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "2025.07.0"
 exclude-newer = "7d"
+requires-pixi = ">=0.71.0"
 
 [exclude-newer]
 linopy = "0d"
