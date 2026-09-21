@@ -127,3 +127,10 @@ path = [
 ]
 SPDX-FileCopyrightText = "Wikipedia contributors"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+[[annotations]]
+path = [
+    "data/ente202300981-sup-0001-suppdata-s1.xlsx",
+]
+SPDX-FileCopyrightText = "Fleiter et al."
+SPDX-License-Identifier = "CC-BY-4.0"

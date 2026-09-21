@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     if foresight == "myopic" and not is_first_horizon:
         apply_brownfield(
-            n, n_previous, inputs, params, current_horizon, renewable_carriers
+            n, n_previous, inputs, params, costs, current_horizon, renewable_carriers
         )
 
     if foresight == "perfect":
