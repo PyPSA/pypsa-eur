@@ -66,7 +66,7 @@ class _MaxHoursConfig(BaseModel):
     )
     iron_air: float = Field(
         100,
-        description="Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+        description="Hours the iron-air storage sustains its full output capacity `p_nom`, i.e. hours of dispatched energy, rather than the state of charge in hours taken by the other storage technologies (cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_). The store is sized by dividing by the discharge efficiency, matching how Form Energy quote duration and cost per kWh.",
         alias="iron-air",
     )
     H2: float = Field(
