@@ -141,7 +141,7 @@ Configuration for top level `run` settings.
 
 ## `foresight` {#foresight_cf}
 
-[planning_horizons](#planning-horizons) has to be set.
+[planning_horizons](#planning_horizons_cf) has to be set.
 
 Configuration for `foresight` settings.
 
@@ -156,7 +156,7 @@ Configuration for `foresight` settings.
 
 !!! note
     If you use myopic or perfect foresight, define at least two values in the
-    top-level [planning_horizons](#planning-horizons) list.
+    top-level [planning_horizons](#planning_horizons_cf) list.
 
 !!! note
     The `foresight` setting cannot vary across scenarios defined in
@@ -165,7 +165,7 @@ Configuration for `foresight` settings.
     foresight modes, run them as separate workflows with distinct `run.name`.
 
 
-## `planning_horizons` {#planning-horizons}
+## `planning_horizons` {#planning_horizons_cf}
 
 Configure planning horizons at the top level rather than through wildcards.
 Provide either a single year (for overnight studies) or a list of investment
@@ -198,7 +198,7 @@ Configuration for top level `planning_horizons` settings.
     [migration](migration.md) for detailed conversion steps.
 
 
-## `countries` {#countries}
+## `countries` {#countries_cf}
 
 Configuration for `countries` settings.
 
@@ -242,13 +242,13 @@ Configuration for `enable` settings.
 ```
 
 
-## `co2 budget` {#CO2_budget_cf}
+## `co2 budget` {#co2_budget_cf}
 
 Carbon budgets share one schema for all foresight modes. The `relative` flag
 selects whether yearly entries inside `upper`/`lower` are interpreted as
 fractions of the 1990 baseline (`true`) or absolute GtCO₂/year
 (`false`). Enable `upper` and/or `lower` to enforce those caps only for
-the explicitly listed years or a total budget across all [planning_horizons](#planning-horizons).
+the explicitly listed years or a total budget across all [planning_horizons](#planning_horizons_cf).
 
 Configuration for `co2_budget` settings.
 
@@ -593,9 +593,9 @@ Only used for sector-coupling studies.
     |     `direction` | list of string |  | 'overheat-undercool' means both pre-heating and delayed heating are allowed. 'overheat' allows only pre-heating where buildings are heated up above target temperature and then allowed to cool down, while 'undercool' allows only delayed heating where buildings can cool below target temperature and then be heated up again. |
     |     `restriction_value` | dict (str -> number) |  | Maximum state of charge (as fraction) for heat flexibility storage representing available thermal buffer capacity in buildings. Set to 0 for no flexibility or to 1.0 to assume that the entire heating demand can contribute to flexibility. |
     |     `restriction_time` | list of integer |  | Checkpoint hours (0-23) at which heat flexibility storage must return to baseline state of charge, i.e. the residence surplus or missing heat be balanced. Time is the local time for each country and bus. Default: [10, 22] creates 12-hour periods with checkpoints at 10am and 10pm. |
-    | `cluster_heat_buses` | boolean | `true` | Cluster residential and service heat buses in [prepare_sector_network.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py) to one to save memory. |
+    | `cluster_heat_buses` | boolean | `true` | Cluster residential and service heat buses in [prepare_sector_network.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/prepare_sector_network.py) to one to save memory. |
     | `heat_demand_cutout` | string | `default` | Heat demand cutout. |
-    | `bev_dsm_restriction_value` | number | `0.8` | Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM. |
+    | `bev_dsm_restriction_value` | number | `0.8` | Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM. |
     | `bev_dsm_restriction_time` | number | `7` | Time at which SOC of BEV has to be dsm_restriction_value. |
     | `transport_heating_deadband_upper` | number | `20.0` | The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases. |
     | `transport_heating_deadband_lower` | number | `15.0` | The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases. |
@@ -734,7 +734,7 @@ Only used for sector-coupling studies.
     |   `max_hours` | integer | `240` | The maximum hours the reservoir can be charged under flexible operation. |
     |   `max_boost` | number | `0.25` | The maximum boost in power output under flexible operation. |
     |   `var_cf` | boolean | `true` | Add option for variable capacity factor (see Ricks et al. 2024). |
-    |   `sustainability_factor` | number | `0.0025` | Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)). |
+    |   `sustainability_factor` | number | `0.0025` | Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py)). |
     | `solid_biomass_import` | any |  | Configuration for `sector.solid_biomass_import` settings. |
     |   `enable` | boolean | `false` | Add option to include solid biomass imports. |
     |   `price` | number | `54` | Price for importing solid biomass (currency/MWh). |

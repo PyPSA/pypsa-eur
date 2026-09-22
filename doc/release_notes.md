@@ -41,6 +41,8 @@
 
 * Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive options: `averaging` (average over a pandas offset such as `24h`), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
 
+* Fix: update documentation links from old Sphinx to new mkdocs syntax that were broken by the [mkdocs migration in #2288](https://github.com/PyPSA/pypsa-eur/issues/2288) ([#2294](https://github.com/PyPSA/pypsa-eur/pull/2294))
+
 * Fix: integrate TABULA data used in building retrofitting back to the model ([#2285](https://github.com/PyPSA/pypsa-eur/pull/2285))
 
 * Fix: fix bugs in retrofitting scripts which happens due to pandas version change and other code changes ([#2273](https://github.com/PyPSA/pypsa-eur/pull/2273))

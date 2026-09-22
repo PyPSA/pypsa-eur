@@ -25,7 +25,7 @@ years compiled from various sources, namely for
 - efficiency, and
 - carbon-dioxide intensity.
 
-Many values are taken from a database published by the Danish Energy Agency ([DEA](https://ens.dk/en/our-services/projections-and-models/technology-data)).
+Many values are taken from a database published by the Danish Energy Agency ([DEA](https://ens.dk/en/analyses-and-statistics/technology-catalogues)).
 
 The given overnight capital costs are annualised to net present costs
 with a discount rate of $r$ over the economic lifetime $n$ using the annuity factor
