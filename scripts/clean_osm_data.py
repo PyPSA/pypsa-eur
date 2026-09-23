@@ -16,7 +16,6 @@ import itertools
 import json
 import logging
 import os
-import re
 
 import geopandas as gpd
 import numpy as np
@@ -77,6 +76,14 @@ def _create_polygon(row):
     return polygon
 
 
+def _to_str(column):
+    """
+    Convert a raw OSM tag column to strings, with missing values as empty
+    strings.
+    """
+    return column.fillna("").astype(str)
+
+
 def _clean_voltage(column):
     """
     Function to clean the raw voltage column: manual fixing and drop nan values
@@ -88,10 +95,9 @@ def _clean_voltage(column):
     - column: pandas Series, the cleaned column
     """
     logger.info("Cleaning voltages.")
-    column = column.copy()
 
     column = (
-        column.astype(str)
+        _to_str(column)
         .str.lower()
         .str.replace("400/220/110 kV'", "400000;220000;110000")
         .str.replace("400/220/110/20_kv", "400000;220000;110000;20000")
@@ -102,8 +108,7 @@ def _clean_voltage(column):
     )
 
     column = (
-        column.astype(str)
-        .str.lower()
+        column.str.lower()
         .str.replace("(temp 150000)", "")
         .str.replace("low", "1000")
         .str.replace("minor", "1000")
@@ -119,14 +124,11 @@ def _clean_voltage(column):
         .str.replace("kv", "000")
         .str.replace("kva", "000")
         .str.replace("/", ";")
-        .str.replace("nan", "")
-        .str.replace("<na>", "")
     )
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", str(x)))
+    column = column.str.replace(r"[^0-9;]", "", regex=True)
 
-    column.dropna(inplace=True)
     return column
 
 
@@ -142,23 +144,19 @@ def _clean_circuits(column):
     - column: pandas Series, the cleaned column
     """
     logger.info("Cleaning circuits.")
-    column = column.copy()
     column = (
-        column.astype(str)
+        _to_str(column)
         .str.replace("partial", "")
         .str.replace("1operator=RTE operator:wikidata=Q2178795", "")
         .str.lower()
         .str.replace("1,5", "3")
         .str.replace("1/3", "1")
-        .str.replace("<na>", "")
-        .str.replace("nan", "")
     )
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", str(x)))
+    column = column.str.replace(r"[^0-9;]", "", regex=True)
 
-    column.dropna(inplace=True)
-    return column.astype(str)
+    return column
 
 
 def _clean_cables(column):
@@ -172,21 +170,14 @@ def _clean_cables(column):
     - column: pandas Series, the cleaned column
     """
     logger.info("Cleaning cables.")
-    column = column.copy()
     column = (
-        column.astype(str)
-        .str.lower()
-        .str.replace("1/3", "1")
-        .str.replace("3x2;2", "3")
-        .str.replace("<na>", "")
-        .str.replace("nan", "")
+        _to_str(column).str.lower().str.replace("1/3", "1").str.replace("3x2;2", "3")
     )
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", str(x)))
+    column = column.str.replace(r"[^0-9;]", "", regex=True)
 
-    column.dropna(inplace=True)
-    return column.astype(str)
+    return column
 
 
 def _clean_wires(column):
@@ -200,9 +191,8 @@ def _clean_wires(column):
     - column: pandas Series, the cleaned column
     """
     logger.info("Cleaning wires.")
-    column = column.copy()
     column = (
-        column.astype(str)
+        _to_str(column)
         .str.lower()
         .str.replace("?", "")
         .str.replace("trzyprzewodowe", "3")
@@ -216,15 +206,12 @@ def _clean_wires(column):
         .str.replace("1/3", "1")
         .str.replace("3x2;2", "3")
         .str.replace("_", "")
-        .str.replace("<na>", "")
-        .str.replace("nan", "")
     )
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", str(x)))
+    column = column.str.replace(r"[^0-9;]", "", regex=True)
 
-    column.dropna(inplace=True)
-    return column.astype(str)
+    return column
 
 
 def _check_voltage(voltage, list_voltages):
@@ -260,24 +247,20 @@ def _clean_frequency(column):
     - column: pandas Series, the cleaned column
     """
     logger.info("Cleaning frequencies.")
-    column = column.copy()
     column = (
-        column.astype(str)
+        _to_str(column)
         .str.lower()
         .str.replace("16.67", "16.7")
         .str.replace("16,7", "16.7")
         .str.replace("?", "")
         .str.replace("hz", "")
         .str.replace(" ", "")
-        .str.replace("<NA>", "")
-        .str.replace("nan", "")
     )
 
-    # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;.]", "", str(x)))
+    # Remove all remaining non-numeric characters except for semicolons and dots
+    column = column.str.replace(r"[^0-9;.]", "", regex=True)
 
-    column.dropna(inplace=True)
-    return column.astype(str)
+    return column
 
 
 def _clean_rating(column):
@@ -291,16 +274,14 @@ def _clean_rating(column):
     - column: pandas Series, the cleaned column
     """
     logger.info("Cleaning ratings.")
-    column = column.copy()
-    column = column.astype(str).str.replace("MW", "")
+    column = _to_str(column).str.replace("MW", "")
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", str(x)))
+    column = column.str.replace(r"[^0-9;]", "", regex=True)
 
-    # Sum up all ratings if there are multiple entries
-    column = column.str.split(";").apply(lambda x: sum([int(i) for i in x]))
+    # Sum up all ratings if there are multiple entries, skipping empty ones
+    column = column.str.split(";").apply(lambda x: sum(int(i) for i in x if i))
 
-    column.dropna(inplace=True)
     return column.astype(str)
 
 
@@ -313,15 +294,9 @@ def _clean_date(column):
     - column: pandas Series of datetime64, the cleaned column (with NaT for invalid dates)
     """
     logger.info("Cleaning dates.")
-    column = column.copy()
-
-    # Replace NaN/None with empty string first
-    column = column.fillna("")
-    column = column.replace({pd.NA: "", None: ""})
-
     # Clean text indicators of uncertainty
     column = (
-        column.astype(str)
+        _to_str(column)
         .str.lower()
         .str.replace("unknown", "", regex=False)
         .str.replace("approx", "", regex=False)
@@ -329,15 +304,12 @@ def _clean_date(column):
         .str.replace("circa", "", regex=False)
         .str.replace("about", "", regex=False)
         .str.replace("?", "", regex=False)
-        .str.replace("<na>", "", regex=False)
-        .str.replace("nan", "", regex=False)
-        .str.replace("none", "", regex=False)
         .str.strip()  # Remove leading/trailing whitespace
     )
 
     # Remove all remaining non-numeric characters except for dashes
     # Note: removed semicolons unless you have multi-date entries
-    column = column.apply(lambda x: re.sub(r"[^0-9-]", "", str(x)))
+    column = column.str.replace(r"[^0-9-]", "", regex=True)
 
     # Replace empty strings with NaN before datetime conversion
     column = column.replace("", np.nan)
@@ -618,8 +590,8 @@ def _create_single_link(row):
     valid_roles = ["line", "cable", "section"]
     df = pd.json_normalize(row["members"])
     df = df[df["role"].isin(valid_roles)]
-    df.loc[:, "geometry"] = df.apply(_create_linestring, axis=1)
-    df.loc[:, "length"] = df["geometry"].apply(lambda x: x.length)
+    df["geometry"] = df.apply(_create_linestring, axis=1)
+    df["length"] = df["geometry"].apply(lambda x: x.length)
 
     list_endpoints = []
     for idx, row in df.iterrows():
@@ -633,7 +605,7 @@ def _create_single_link(row):
         )
         list_endpoints.append(tuple)
 
-    df.loc[:, "endpoints"] = list_endpoints
+    df["endpoints"] = list_endpoints
     df_longest = df.loc[df.groupby("endpoints")["length"].idxmin()]
 
     single_link = linemerge(df_longest["geometry"].values.tolist())
@@ -675,7 +647,7 @@ def _create_line(row):
     df["ways"] = "way/" + df["ref"]
     # Drop NAs
     df = df.dropna(subset=["geometry"])
-    df.loc[:, "geometry"] = df.apply(_create_linestring, axis=1)
+    df["geometry"] = df.apply(_create_linestring, axis=1)
     # Drop closed geometries (substations)
     closed_geom = df["geometry"].apply(lambda x: x.is_closed)
 
@@ -803,10 +775,10 @@ def _clean_substations(df_substations, list_voltages):
         _check_voltage, list_voltages=list_voltages
     )
     df_substations = df_substations[bool_voltages]
-    df_substations.loc[:, "split_count"] = df_substations["id"].apply(
+    df_substations["split_count"] = df_substations["id"].apply(
         lambda x: x.split("-")[1] if "-" in x else "0"
     )
-    df_substations.loc[:, "split_count"] = df_substations["split_count"].astype(int)
+    df_substations["split_count"] = df_substations["split_count"].astype(int)
 
     bool_split = df_substations["split_elements"] > 1
     bool_frequency_len = (
@@ -1036,7 +1008,7 @@ def _create_substations_geometry(df_substations):
     df_substations = df_substations.copy()
 
     # Create PoI from geometries and keep the original polygons
-    df_substations.loc[:, "polygon"] = df_substations["geometry"]
+    df_substations["polygon"] = df_substations["geometry"]
 
     return df_substations
 
@@ -1058,12 +1030,12 @@ def _create_substations_poi(df_substations, tol=BUS_TOL / 2):
     logger.info("Creating substations geometry.")
     df_substations = df_substations.copy()
 
-    df_substations.loc[:, "geometry"] = df_substations["polygon"].apply(
+    df_substations["geometry"] = df_substations["polygon"].apply(
         lambda polygon: polylabel(polygon, tol)
     )
 
-    df_substations.loc[:, "lon"] = df_substations["geometry"].apply(lambda x: x.x)
-    df_substations.loc[:, "lat"] = df_substations["geometry"].apply(lambda x: x.y)
+    df_substations["lon"] = df_substations["geometry"].apply(lambda x: x.x)
+    df_substations["lat"] = df_substations["geometry"].apply(lambda x: x.y)
 
     return df_substations
 
@@ -1087,7 +1059,7 @@ def _aggregate_substations(df_substations: pd.DataFrame) -> pd.DataFrame:
     df_substations = df_substations.copy()
 
     # Strip -suffix from 'id' to group by original bus_id before splitting
-    df_substations.loc[:, "id"] = df_substations["id"].apply(
+    df_substations["id"] = df_substations["id"].apply(
         lambda x: x.split("-")[0] if "-" in x else x
     )
 
@@ -1131,7 +1103,7 @@ def _create_lines_geometry(df_lines):
     """
     logger.info("Creating lines geometry.")
     df_lines = df_lines.copy()
-    df_lines.loc[:, "geometry"] = df_lines.apply(_create_linestring, axis=1)
+    df_lines["geometry"] = df_lines.apply(_create_linestring, axis=1)
 
     bool_circle = df_lines["geometry"].apply(lambda x: x.coords[0] == x.coords[-1])
     df_lines = df_lines[~bool_circle]
@@ -1203,11 +1175,11 @@ def _finalise_substations(df_substations):
         df_substations["x_node"] = pd.Series(dtype=bool)
     else:
         # Initiate new columns for subsequent build_osm_network step
-        df_substations.loc[:, "contains"] = df_substations["bus_id"].apply(
+        df_substations["contains"] = df_substations["bus_id"].apply(
             lambda x: x.split("-")[0]
         )
         # Initialise x_node column to False
-        df_substations.loc[:, "x_node"] = False
+        df_substations["x_node"] = False
 
     # Only include needed columns (works for both empty and non-empty)
     df_substations = df_substations[
@@ -1249,7 +1221,7 @@ def _aggregate_lines(df_lines: pd.DataFrame) -> pd.DataFrame:
     df_lines = df_lines.copy()
 
     # Strip -suffix from 'id' to group by original line_id before splitting
-    df_lines.loc[:, "line_id"] = df_lines["line_id"].apply(
+    df_lines["line_id"] = df_lines["line_id"].apply(
         lambda x: x.split("-")[0] if "-" in x else x
     )
 
@@ -1312,10 +1284,10 @@ def _finalise_lines(df_lines):
     )
 
     # Initiate new columns for subsequent build_osm_network step
-    df_lines.loc[:, "bus0"] = None
-    df_lines.loc[:, "bus1"] = None
-    df_lines.loc[:, "length"] = None
-    df_lines.loc[:, "underground"] = False
+    df_lines["bus0"] = None
+    df_lines["bus1"] = None
+    df_lines["length"] = None
+    df_lines["underground"] = False
     df_lines.loc[df_lines["tag_type"] == "line", "underground"] = False
     df_lines.loc[df_lines["tag_type"] == "cable", "underground"] = True
 
@@ -1740,7 +1712,7 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
     gdf["intersects_bus"] = gdf.apply(lambda row: len(row["bus_dict"]) > 0, axis=1)
     gdf.set_index(["line_id", "voltage"], inplace=True)
 
-    gdf.loc[:, "line_geometry"] = gdf.join(
+    gdf["line_geometry"] = gdf.join(
         gdf_lines.set_index(["line_id", "voltage"])["geometry"],
     )["geometry"]
 
@@ -1750,7 +1722,7 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
         axis=1,
     )
 
-    gdf.loc[:, "line_geometry_new"] = gdf.apply(
+    gdf["line_geometry_new"] = gdf.apply(
         lambda row: _add_endpoints_to_line(
             row["line_geometry"], row["bus_endpoints"], tol
         ),
@@ -1758,7 +1730,7 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
     )
 
     gdf_lines.set_index(["line_id", "voltage"], inplace=True)
-    gdf_lines.loc[:, "geometry"] = gdf["line_geometry_new"]
+    gdf_lines["geometry"] = gdf["line_geometry_new"]
 
     return gdf_lines.reset_index()
 
@@ -1890,23 +1862,23 @@ if __name__ == "__main__":
         df_lines_cables_relation["start_date"]
     )
 
-    df_lines_cables_relation.loc[:, "voltage"] = _clean_voltage(
+    df_lines_cables_relation["voltage"] = _clean_voltage(
         df_lines_cables_relation["voltage"]
     )
     df_lines_cables_relation, list_voltages = _filter_by_voltage(
         df_lines_cables_relation, min_voltage=min_voltage_ac
     )
-    df_lines_cables_relation.loc[:, "frequency"] = _clean_frequency(
+    df_lines_cables_relation["frequency"] = _clean_frequency(
         df_lines_cables_relation["frequency"]
     )
     df_lines_cables_relation = df_lines_cables_relation[
         df_lines_cables_relation["frequency"] != "0"
     ]
     df_lines_cables_relation["frequency"] = "50"
-    df_lines_cables_relation.loc[:, "circuits"] = _clean_circuits(
+    df_lines_cables_relation["circuits"] = _clean_circuits(
         df_lines_cables_relation["circuits"]
     )
-    df_lines_cables_relation.loc[:, "cables"] = _clean_cables(
+    df_lines_cables_relation["cables"] = _clean_cables(
         df_lines_cables_relation["cables"]
     )
     df_lines_cables_relation = _clean_lines(df_lines_cables_relation, list_voltages)
@@ -2000,7 +1972,7 @@ if __name__ == "__main__":
     )
 
     # Cleaning process
-    df_lines.loc[:, "voltage"] = _clean_voltage(df_lines["voltage"])
+    df_lines["voltage"] = _clean_voltage(df_lines["voltage"])
     # Clean dates and construction status
     df_lines["under_construction"] = (
         (df_lines["construction"].isin(["line", "cable"]))
@@ -2009,10 +1981,10 @@ if __name__ == "__main__":
     )
     df_lines["start_date"] = _clean_date(df_lines["start_date"])
     df_lines, list_voltages = _filter_by_voltage(df_lines, min_voltage=min_voltage_ac)
-    df_lines.loc[:, "circuits"] = _clean_circuits(df_lines["circuits"])
-    df_lines.loc[:, "cables"] = _clean_cables(df_lines["cables"])
-    df_lines.loc[:, "frequency"] = _clean_frequency(df_lines["frequency"])
-    df_lines.loc[:, "wires"] = _clean_wires(df_lines["wires"])
+    df_lines["circuits"] = _clean_circuits(df_lines["circuits"])
+    df_lines["cables"] = _clean_cables(df_lines["cables"])
+    df_lines["frequency"] = _clean_frequency(df_lines["frequency"])
+    df_lines["wires"] = _clean_wires(df_lines["wires"])
 
     df_lines = _clean_lines(df_lines, list_voltages)
 
@@ -2077,16 +2049,16 @@ if __name__ == "__main__":
     )
     df_links["start_date"] = _clean_date(df_links["start_date"])
 
-    df_links.loc[:, "voltage"] = _clean_voltage(df_links["voltage"])
+    df_links["voltage"] = _clean_voltage(df_links["voltage"])
     df_links, list_voltages = _filter_by_voltage(df_links, min_voltage=min_voltage_dc)
     # Keep only highest voltage of split string
-    df_links.loc[:, "voltage"] = df_links["voltage"].apply(
+    df_links["voltage"] = df_links["voltage"].apply(
         lambda x: str(max(map(int, x.split(";"))))
     )
-    df_links.loc[:, "frequency"] = _clean_frequency(df_links["frequency"])
-    df_links.loc[:, "rating"] = _clean_rating(df_links["rating"])
+    df_links["frequency"] = _clean_frequency(df_links["frequency"])
+    df_links["rating"] = _clean_rating(df_links["rating"])
 
-    df_links.loc[:, "geometry"] = df_links.apply(_create_single_link, axis=1)
+    df_links["geometry"] = df_links.apply(_create_single_link, axis=1)
 
     # TEMPORARY:
     # Drop links with empty geometry
