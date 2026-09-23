@@ -39,7 +39,7 @@
     - Inputs to `compose_network` are already regionally clustered and simplified to be processed without further aggregation.
     - Data files that represent a final version of themselves don't have dedicated suffixes (e.g. regionally aggregated shapes are stored at `onshore_regions.geojson`). Ancestor files that are intermediate steps in the processing chain may rely on suffixes (e.g. `onshore_shapes_simplified.geojson`).
 
-* Switched the linear approximation of losses in transmission lines from tangents to secants. Losses are now captured accurately. For a typical run this may induce changes in the objective function on the order of 1%.
+* Switched the linear approximation of losses in AC transmission lines from tangents to secants. Losses representation is now improved. For a typical run this may induce changes in the objective function on the order of 1%.
 
 * Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive options: `averaging` (average over a pandas offset such as `24h`), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
 
