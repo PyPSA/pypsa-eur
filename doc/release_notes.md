@@ -49,7 +49,7 @@
 
 * Fix: focus_weights related TypeError during cluster_network ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277))
 
-* Fix: make [clean_osm_data][] compatible with pandas 3 by treating missing OSM tag values explicitly as empty strings and replacing whole columns instead of assigning in place via `.loc[:, col]`. Empty entries in link ratings (e.g. `500;`) no longer raise an error. In [build_osm_network][], lines split at more than 26 overpassed buses no longer fail; segment IDs continue after `z` with `aa`, `ab`, etc. Added unit tests for the OSM column cleaning functions.
+* Fix: make [clean_osm_data][] compatible with pandas 3 by treating missing OSM tag values explicitly as empty strings and replacing whole columns instead of assigning in place via `.loc[:, col]`. Empty entries in link ratings (e.g. `500;`) no longer raise an error. In [build_osm_network][], lines split at more than 26 overpassed buses no longer fail; segment IDs continue after `z` with `aa`, `ab`, etc. Added unit tests for the OSM column cleaning functions. ([#2300]/https://github.com/PyPSA/pypsa-eur/pull/2300))
 
 * Chore: introduce a Pixi version floor for the CI ([#2293](https://github.com/PyPSA/pypsa-eur/pull/2293)).
 
