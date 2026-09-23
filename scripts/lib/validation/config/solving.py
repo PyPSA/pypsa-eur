@@ -169,7 +169,7 @@ class _SolvingOptionsConfig(BaseModel):
     )
     transmission_losses: bool | dict = Field(
         True,
-        description="Controls the piecewise linear approximation of transmission losses in AC lines. Defaults to true, which uses an approximation method based on secants. If set to false transmission losses are ignored. Optionally, a dict with the following keys may be provided to configure the transmission loss approximation, e.g. transmission_losses={\"mode\": \"secants\", \"atol\": 1, \"rtol\": 0.1}. The legacy tangent-based approximation can be configured with a dict of the form transmission_losses={\"mode\": \"tangents\", \"segments\": 2}.",
+        description='Controls the piecewise linear approximation of transmission losses in AC lines. Defaults to true, which uses an approximation method based on secants. If set to false transmission losses are ignored. Optionally, a dict with the following keys may be provided to configure the transmission loss approximation, e.g. transmission_losses={"mode": "secants", "atol": 1, "rtol": 0.1}. The legacy tangent-based approximation can be configured with a dict of the form transmission_losses={"mode": "tangents", "segments": 2}.',
     )
     linearized_unit_commitment: bool = Field(
         True,
