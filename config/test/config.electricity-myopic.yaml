@@ -161,7 +161,7 @@ solving:
   check_objective:
     enable: false
   options:
-    transmission_losses: 0
+    transmission_losses: false
 
 conventional:
   dynamic_fuel_price: false

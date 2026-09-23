@@ -167,9 +167,9 @@ class _SolvingOptionsConfig(BaseModel):
         3,
         description="Maximum number of solving iterations in between which resistance and reactence (`x/r`) are updated for branches according to `s_nom_opt` of the previous run.",
     )
-    transmission_losses: int = Field(
-        2,
-        description="Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
+    transmission_losses: bool | dict = Field(
+        True,
+        description='Controls the piecewise linear approximation of transmission losses in AC lines. Defaults to true, which uses an approximation method based on secants. If set to false transmission losses are ignored. Optionally, a dict with the following keys may be provided to configure the transmission loss approximation, e.g. transmission_losses={"mode": "secants", "atol": 1, "rtol": 0.1}. The legacy tangent-based approximation can be configured with a dict of the form transmission_losses={"mode": "tangents", "segments": 2}.',
     )
     linearized_unit_commitment: bool = Field(
         True,
