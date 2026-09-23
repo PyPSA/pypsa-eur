@@ -155,7 +155,7 @@ def _clean_circuits(column):
     )
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", x))
+    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", str(x)))
 
     column.dropna(inplace=True)
     return column.astype(str)
@@ -183,7 +183,7 @@ def _clean_cables(column):
     )
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", x))
+    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", str(x)))
 
     column.dropna(inplace=True)
     return column.astype(str)
@@ -221,7 +221,7 @@ def _clean_wires(column):
     )
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", x))
+    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", str(x)))
 
     column.dropna(inplace=True)
     return column.astype(str)
@@ -274,7 +274,7 @@ def _clean_frequency(column):
     )
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;.]", "", x))
+    column = column.apply(lambda x: re.sub(r"[^0-9;.]", "", str(x)))
 
     column.dropna(inplace=True)
     return column.astype(str)
@@ -295,7 +295,7 @@ def _clean_rating(column):
     column = column.astype(str).str.replace("MW", "")
 
     # Remove all remaining non-numeric characters except for semicolons
-    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", x))
+    column = column.apply(lambda x: re.sub(r"[^0-9;]", "", str(x)))
 
     # Sum up all ratings if there are multiple entries
     column = column.str.split(";").apply(lambda x: sum([int(i) for i in x]))
@@ -337,7 +337,7 @@ def _clean_date(column):
 
     # Remove all remaining non-numeric characters except for dashes
     # Note: removed semicolons unless you have multi-date entries
-    column = column.apply(lambda x: re.sub(r"[^0-9-]", "", x))
+    column = column.apply(lambda x: re.sub(r"[^0-9-]", "", str(x)))
 
     # Replace empty strings with NaN before datetime conversion
     column = column.replace("", np.nan)
