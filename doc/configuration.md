@@ -696,7 +696,6 @@ Only used for sector-coupling studies.
     | `use_electrolysis_waste_heat` | number | `0.25` | Add option for using waste heat of electrolysis in district heating networks. |
     | `electricity_transmission_grid` | boolean | `true` | Switch for enabling/disabling the electricity transmission grid. |
     | `electricity_distribution_grid` | boolean | `true` | Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link. |
-    | `electricity_distribution_grid_cost_factor` | number | `1.0` | Multiplies the investment cost of the electricity distribution grid. |
     | `electricity_grid_connection` | boolean | `true` | Add the cost of electricity grid connection for onshore wind and solar. |
     | `transmission_efficiency` | any |  | Configuration for `sector.transmission_efficiency` settings. |
     |   `enable` | list of string |  | Switch to select the carriers for which transmission efficiency is to be added. Carriers not listed assume lossless transmission. |

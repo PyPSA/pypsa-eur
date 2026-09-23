@@ -51,7 +51,7 @@
 
 * Chore: introduce a Pixi version floor for the CI ([#2293](https://github.com/PyPSA/pypsa-eur/pull/2293)).
 
-* Fix: bring removed `electricity_distribution_grid_cost_factor` back ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299))
+* Fix: remove unused leftover `electricity_distribution_grid_cost_factor` ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299))
 
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 

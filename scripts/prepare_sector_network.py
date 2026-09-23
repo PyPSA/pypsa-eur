@@ -1374,12 +1374,6 @@ def insert_electricity_distribution_grid(
     - Resistive heaters
     - Micro-CHP units
     """
-    cost_factor = options["electricity_distribution_grid_cost_factor"]
-
-    logger.info(
-        f"Inserting electricity distribution grid with investment cost factor of {cost_factor:.2f}"
-    )
-
     nodes = n.buses.query("carrier == 'AC'").index
 
     n.add(
@@ -1400,8 +1394,7 @@ def insert_electricity_distribution_grid(
         carrier="electricity distribution grid",
         efficiency=1,
         lifetime=costs.at["electricity distribution grid", "lifetime"],
-        capital_cost=costs.at["electricity distribution grid", "capital_cost"]
-        * cost_factor,
+        capital_cost=costs.at["electricity distribution grid", "capital_cost"],
     )
 
     # deduct distribution losses from electricity demand as these are included in total load
