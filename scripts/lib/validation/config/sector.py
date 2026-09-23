@@ -836,10 +836,6 @@ class SectorConfig(BaseModel):
         True,
         description="Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
     )
-    electricity_distribution_grid_cost_factor: float = Field(
-        1.0,
-        description="Multiplies the investment cost of the electricity distribution grid.",
-    )
     electricity_grid_connection: bool = Field(
         True,
         description="Add the cost of electricity grid connection for onshore wind and solar.",
