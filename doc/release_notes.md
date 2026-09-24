@@ -53,6 +53,8 @@
 
 * Fix: Remove deprecated `electricity_distribution_grid_cost_factor` config option ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299))
 
+* Fix: Remove `__init__` override from `heat_system.py` for compatibility with python>=3.14 ([#]()).
+
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
 **Features**
