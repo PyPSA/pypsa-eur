@@ -53,6 +53,8 @@
 
 * Fix: Remove deprecated `electricity_distribution_grid_cost_factor` config option ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299))
 
+* Improve `mock_snakemake` to support files in scripts subdirectories ([#2305](https://github.com/PyPSA/pypsa-eur/pull/2305)).
+
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
 **Features**
