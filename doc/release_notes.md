@@ -63,6 +63,7 @@
 
 * Fix: Remove deprecated `electricity_distribution_grid_cost_factor` config option ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299))
 
+* Improve `mock_snakemake` to support files in scripts subdirectories ([#2305](https://github.com/PyPSA/pypsa-eur/pull/2305)).
 * Added `pixi run validate-config CONFIGFILE [CONFIGFILE ...]` to check config files for invalid keys/values ([#2307](https://github.com/PyPSA/pypsa-eur/pull/2307))
 
 * Fix: Remove `__init__` override from `heat_system.py` for compatibility with python>=3.14 ([#2304](https://github.com/PyPSA/pypsa-eur/pull/2304)).
