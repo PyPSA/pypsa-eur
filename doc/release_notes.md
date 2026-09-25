@@ -5,71 +5,156 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Bugfix: Fixed a ``TypeError`` when building cutouts locally, caused by using the
-  ``/`` operator on ``CUTOUT_DATASET["folder"]``, which is a string.
 
-* Bugfix: The fallback to the last column in ``attach_conventional_generators`` now
-  also catches ``KeyError``, so a snapshot year that is missing from a conventional
-  input file no longer aborts the run.
-* Streamlined workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)): overnight, myopic, and perfect foresight are now handled by a unified set of rules for both electricity-only and sector-coupled models. See the [migration guide](migration.md) for detailed migration guidance.
+## PyPSA-Eur v2026.09.0 (25th September 2026)
 
-    **Workflow structure:**
+**Streamlined Workflow**
 
-    - The network pipeline now follows a 4-stage progression: `base.nc` → `simplified.nc` → `clustered.nc` → `composed_{horizon}.nc` → `solved_{horizon}.nc`.
-    - Cryptic filenames like `elec_s_37_lv1.25_3H_2030.nc` are replaced with readable names. Scenario parameters (clusters, opts, sector_opts) are now set via configuration rather than filename wildcards.
-    - A unified `compose_network` rule handles overnight, myopic, and perfect foresight network assembly for both electricity-only and sector-coupled models.
-    - A single `solve_network` rule replaces the separate `solve_electricity.smk`, `solve_overnight.smk`, `solve_myopic.smk`, and `solve_perfect.smk` rule files (now deleted).
-    - **Electricity-only models now support myopic and perfect foresight**, not just overnight optimization. New test configs `config.electricity-myopic.yaml` and `config.electricity-perfect.yaml` added.
-    - **Perfect foresight runs on PyPSA ≥1.0 again.** The previous `prepare_perfect_foresight.py` raised `PyPSA versions >=1.0 are not supported for perfect foresight`; perfect foresight has been ported to the current PyPSA API so it is usable once more.
-    - Post-processing (summaries, maps, plots) works uniformly across all foresight modes and model types.
-    - Results CSVs (`costs.csv`, `capacities.csv`, `energy.csv`, etc.) are unified across horizons.
-    - `make_summary.py` now handles all foresight modes, consolidating the functionality of `make_summary_perfect.py` and `make_global_summary.py`.
-    - A new migration guide documents file name mappings and configuration changes in detail.
+This release restructures the workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)). Overnight,
+myopic and perfect foresight are now handled by a unified set of rules for both electricity-only and
+sector-coupled models. Existing configurations need to be updated. See the [migration guide](migration.md)
+for file name mappings and configuration changes in detail.
 
-    **Breaking configuration changes:**
+* **Workflow structure:**
 
-    - Removed `scenario:` block. The `scenario: clusters/opts/sector_opts/planning_horizons` section is removed. Use `planning_horizons` at top-level and `clustering: cluster_network: n_clusters` for cluster count.
-    - Removed `electricity: co2limit_enable`, `electricity: co2limit`, and `electricity: co2base`. Use the unified `co2_budget` section with `upper:`/`lower:` bounds instead. The `Co2L` and `cb*` wildcards (both opts and sector_opts) are also removed.
-    - Restructured `co2_budget:`. Now requires `emissions_scope` and `relative` (true/false) plus `upper`/`lower` bounds, where each bound can be `null`, a scalar, or a `{year: value}` mapping.
-    - Renamed transmission extension keys. `lines: max_extension` → `s_nom_max_extension`; `links: max_extension` → `p_nom_max_extension`.
-    - Retrofitted H2 pipelines now model directional transmission losses. `H2 pipeline retrofitted` was added to `sector: transmission_efficiency: enable`, so these links are split into two unidirectional lossy links (as already done for `H2 pipeline` and `gas pipeline`) instead of a single lossless bidirectional link. This changes results where H2 pipeline losses are relevant.
+    - The network pipeline now follows the progression `base.nc` -> `simplified.nc` -> `clustered.nc` ->
+      `composed_{horizon}.nc` -> `solved_{horizon}.nc`.
+
+    - Replaced cryptic filenames like `elec_s_37_lv1.25_3H_2030.nc` with readable names. Scenario parameters
+      (clusters, opts, sector_opts) are now set via configuration rather than filename wildcards.
+
+    - A single [compose_network][] rule assembles the networks for overnight, myopic and perfect foresight for
+      both electricity-only and sector-coupled models.
+
+    - A single [solve_network][] rule replaces the separate `solve_electricity.smk`, `solve_overnight.smk`,
+      `solve_myopic.smk` and `solve_perfect.smk` rule files (now deleted).
+
+    - **Electricity-only models now support myopic and perfect foresight**, not just overnight optimisation.
+      Added the test configurations `config.electricity-myopic.yaml` and `config.electricity-perfect.yaml`.
+
+    - **Perfect foresight runs on PyPSA v1.0 again.** Perfect foresight has been ported to the current PyPSA
+      API, which removes the previous error `PyPSA versions >=1.0 are not supported for perfect foresight`.
+
+    - Post-processing (summaries, maps, plots) works uniformly across all foresight modes and model types. The
+      results CSVs (`costs.csv`, `capacities.csv`, `energy.csv`, etc.) are unified across horizons.
+
+    - [make_summary][] now handles all foresight modes and replaces `make_summary_perfect.py` and
+      `make_global_summary.py`.
+
+* **Breaking configuration changes:**
+
+    - Removed the `scenario:` block (`clusters`, `opts`, `sector_opts`, `planning_horizons`). Use
+      `planning_horizons` at the top level and `clustering: cluster_network: n_clusters` for the number of
+      clusters.
+
+    - Added `clustering: cluster_network: n_clusters`, which replaces the `{clusters}` wildcard in filenames.
+      It accepts an integer or `all` to skip clustering.
+
     - Added `sector: enabled` to control sector coupling. Set to `false` for electricity-only models.
-    - Moved national policy phase-outs to `existing_capacities: phase_outs` as a list of `{carriers, countries, year}` rules. Previously hardcoded in `prepare_perfect_foresight.py`, they now cap conventional asset lifetimes for both generators (electricity-only) and links (sector-coupled) in perfect foresight. Defaults reproduce the previous behaviour.
-    - Changed `costs: year` to default to `null`. Cost assumptions now follow each planning horizon; set `costs: year` to a year to cost all horizons with that year's assumptions (e.g. a 2050 horizon with 2030 costs). It also selects which `planning_horizon` entries of the custom costs file apply.
-    - Added `clustering: cluster_network: n_clusters`. Replaces the `{clusters}` wildcard in filenames. Accepts an integer or `all` to skip clustering.
-    - Retained `solve_operations_network` as an opt-in rule that re-dispatches the fixed-capacity `solved_{horizon}.nc` into `operations_{horizon}.nc`. Its rolling horizon settings moved to a new `solving: operations` block (`rolling_horizon`, `horizon`, `overlap`), enabling capacity expansion followed by rolling-horizon dispatch; `solving: options: rolling_horizon` now controls the `solve_network` rule only.
-    - Renamed `regions_onshore_base_s_{clusters}.geojson` to `onshore_regions.geojson` and `regions_offshore_base_s_{clusters}.geojson` to `offshore_regions.geojson`. The process chain for shape files is now: `onshore_shapes`/`offshore_shapes` → `onshore_regions.geojson`/`offshore_regions.geojson`; shape files for the simplified resolution are now stored at `onshore_regions_simplified.geojson` and `offshore_regions_simplified.geojson`.
 
-    **Conventions:**
+    - Removed `electricity: co2limit_enable`, `electricity: co2limit` and `electricity: co2base`, as well as
+      the `Co2L` and `cb*` wildcards in `opts` and `sector_opts`. Use the unified `co2_budget` section
+      instead.
 
-    - Inputs to `compose_network` are already regionally clustered and simplified to be processed without further aggregation.
-    - Data files that represent a final version of themselves don't have dedicated suffixes (e.g. regionally aggregated shapes are stored at `onshore_regions.geojson`). Ancestor files that are intermediate steps in the processing chain may rely on suffixes (e.g. `onshore_shapes_simplified.geojson`).
+    - Restructured `co2_budget`. It now requires `emissions_scope` and `relative` (`true`/`false`) plus
+      `upper`/`lower` bounds, where each bound can be `null`, a scalar, or a `{year: value}` mapping.
 
-* Fix: output files of the rule build_ambient_air_temperature_yearly_average did not contain the right wildcards when running with scenarios and shared_resources
+    - Merged `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` into
+      `clustering: temporal`, which offers three mutually exclusive options: `averaging` (average over a
+      pandas offset such as `24h`), `segmentation` (aggregate into `n` `tsam` segments) and `representative`
+      (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation
+      path.
 
-* Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive options: `averaging` (average over a pandas offset such as `24h`), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
+    - Renamed the transmission extension keys `lines: max_extension` to `s_nom_max_extension` and
+      `links: max_extension` to `p_nom_max_extension`.
 
-* Fix: update documentation links from old Sphinx to new mkdocs syntax that were broken by the [mkdocs migration in #2288](https://github.com/PyPSA/pypsa-eur/issues/2288) ([#2294](https://github.com/PyPSA/pypsa-eur/pull/2294))
+    - Moved national policy phase-outs to `existing_capacities: phase_outs` as a list of
+      `{carriers, countries, year}` rules. Previously hardcoded in `prepare_perfect_foresight.py`, they now cap
+      conventional asset lifetimes for both generators (electricity-only) and links (sector-coupled) in
+      perfect foresight. Defaults reproduce the previous behaviour.
 
-* Fix: integrate TABULA data used in building retrofitting back to the model ([#2285](https://github.com/PyPSA/pypsa-eur/pull/2285))
+    - Changed the default of `costs: year` to `null`. Cost assumptions now follow each planning horizon. Set
+      `costs: year` to cost all horizons with that year's assumptions (e.g. a 2050 horizon with 2030 costs).
+      It also selects which `planning_horizon` entries of the custom costs file apply.
 
-* Fix: Set transmission efficiencies for `gas pipeline new` and `CO2 pipeline` links by default, to ensure consistency with other link type carriers.
-* Adding option to include the compression step in carbon dioxide transport before transporting in dense phase and including electricity demand for post combustion carbon capture. Adjusting the capital costs for post combustion capture that differs depending on the carbon dioxide percentage in the flue gas ([#2161](https://github.com/PyPSA/pypsa-eur/pull/2161)).
-Upcoming Release
-* Fix: fix bugs in retrofitting scripts which happens due to pandas version change and other code changes ([#2273](https://github.com/PyPSA/pypsa-eur/pull/2273))
+    - Retained [solve_operations_network][] as an opt-in rule that re-dispatches the fixed-capacity
+      `solved_{horizon}.nc` into `operations_{horizon}.nc`. Its rolling horizon settings moved to a new
+      `solving: operations` block (`rolling_horizon`, `horizon`, `overlap`), enabling capacity expansion
+      followed by rolling-horizon dispatch. `solving: options: rolling_horizon` now only controls
+      [solve_network][].
 
-* Fix: focus_weights related TypeError during cluster_network ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277))
+    - Renamed `regions_onshore_base_s_{clusters}.geojson` and `regions_offshore_base_s_{clusters}.geojson` to
+      `onshore_regions.geojson` and `offshore_regions.geojson`. The shapes for the simplified resolution are
+      stored at `onshore_regions_simplified.geojson` and `offshore_regions_simplified.geojson`.
 
-* Fix: make [clean_osm_data][] compatible with pandas 3 by treating missing OSM tag values explicitly as empty strings and replacing whole columns instead of assigning in place via `.loc[:, col]`. Empty entries in link ratings (e.g. `500;`) no longer raise an error. In [build_osm_network][], lines split at more than 26 overpassed buses no longer fail; segment IDs continue after `z` with `aa`, `ab`, etc. Added unit tests for the OSM column cleaning functions. ([#2300]/https://github.com/PyPSA/pypsa-eur/pull/2300))
+* **Conventions:**
 
-* Chore: introduce a Pixi version floor for the CI ([#2293](https://github.com/PyPSA/pypsa-eur/pull/2293)).
+    - Inputs to [compose_network][] are already regionally clustered and simplified, so they are processed
+      without further aggregation.
 
-* Fix: Remove deprecated `electricity_distribution_grid_cost_factor` config option ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299))
+    - Data files that represent a final version of themselves have no dedicated suffix (e.g. regionally
+      aggregated shapes are stored at `onshore_regions.geojson`). Intermediate files in the processing chain
+      may carry suffixes (e.g. `onshore_shapes_simplified.geojson`).
 
-* Improve `mock_snakemake` to support files in scripts subdirectories ([#2305](https://github.com/PyPSA/pypsa-eur/pull/2305)).
-* Added `pixi run validate-config CONFIGFILE [CONFIGFILE ...]` to check config files for invalid keys/values ([#2307](https://github.com/PyPSA/pypsa-eur/pull/2307))
+**Features**
 
-* Fix: Remove `__init__` override from `heat_system.py` for compatibility with python>=3.14 ([#2304](https://github.com/PyPSA/pypsa-eur/pull/2304)).
+* Added `pixi run validate-config CONFIGFILE [CONFIGFILE ...]` to check configuration files for invalid keys
+  and values ([#2307](https://github.com/PyPSA/pypsa-eur/pull/2307)).
+
+**Changes**
+
+* Removed the deprecated configuration option `sector: electricity_distribution_grid_cost_factor`
+  ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299)).
+
+* `mock_snakemake` now supports scripts in subdirectories of `scripts/`
+  ([#2305](https://github.com/PyPSA/pypsa-eur/pull/2305)).
+
+* Fixed broken documentation links left over from the MkDocs migration and added the `lychee` link checker
+  for external links and internal anchors ([#2294](https://github.com/PyPSA/pypsa-eur/pull/2294),
+  [#2288](https://github.com/PyPSA/pypsa-eur/issues/2288)).
+
+* Introduced a Pixi version floor of v0.71.0. The CI uses the latest Pixi version, while the `Dockerfile`
+  uses a fixed version managed by Dependabot ([#2293](https://github.com/PyPSA/pypsa-eur/pull/2293)).
+
+**Bugfixes and Compatibility**
+
+* Added `gas pipeline new` and `CO2 pipeline` to `sector: transmission_efficiency: enable` by default, so
+  that these bidirectional links are split into two unidirectional lossy links. Previously, they could carry
+  negative flows, which led to negative marginal costs at the exporting bus. Also fixed the condition in
+  `lossy_bidirectional_links` that decides whether links are split
+  ([#2191](https://github.com/PyPSA/pypsa-eur/pull/2191)).
+
+* Restored the TABULA building data required by [build_retro_cost][] via the new rule
+  `retrieve_tabula_calcsetbuilding`, which retrieves the data from the original source
+  ([#2285](https://github.com/PyPSA/pypsa-eur/pull/2285), [#2281](https://github.com/PyPSA/pypsa-eur/issues/2281)).
+
+* Fixed the building retrofitting scripts, which broke with `pandas` v3 and other code changes
+  ([#2273](https://github.com/PyPSA/pypsa-eur/pull/2273)).
+
+* Made [clean_osm_data][] compatible with `pandas` v3 by treating missing OSM tag values explicitly as empty
+  strings. Empty entries in link ratings (e.g. `500;`) no longer raise an error. In [build_osm_network][],
+  lines split at more than 26 overpassed buses no longer fail; segment IDs continue after `z` with `aa`, `ab`,
+  etc. ([#2300](https://github.com/PyPSA/pypsa-eur/pull/2300)).
+
+* Fixed a `TypeError` with focus weights in [cluster_network][], caused by `pandas` dropping the index name
+  ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277)).
+
+* Removed the `__init__` override in `heat_system.py` for compatibility with Python 3.14 and lifted the
+  temporary `python < 3.14` pin ([#2304](https://github.com/PyPSA/pypsa-eur/pull/2304),
+  [#2245](https://github.com/PyPSA/pypsa-eur/issues/2245)).
+
+* Fixed a `TypeError` when building cutouts locally with `source: build`
+  ([#2283](https://github.com/PyPSA/pypsa-eur/pull/2283), [#2156](https://github.com/PyPSA/pypsa-eur/issues/2156)).
+
+* Fixed the fallback to the last column in `attach_conventional_generators`, so that a snapshot year missing
+  from a conventional input file (e.g. 2014 in `data/nuclear_p_max_pu.csv`) no longer aborts the run
+  ([#2283](https://github.com/PyPSA/pypsa-eur/pull/2283)).
+
+* Fixed the wildcards in the output files of [build_ambient_air_temperature_yearly_average][] when running
+  with scenarios and `shared_resources` ([#2303](https://github.com/PyPSA/pypsa-eur/pull/2303)).
+
+* Fixed typos in the log file extensions of [build_daily_heat_demand][] and [build_hourly_heat_demand][]
+  ([#2275](https://github.com/PyPSA/pypsa-eur/pull/2275)).
 
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
