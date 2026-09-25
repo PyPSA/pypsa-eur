@@ -22,8 +22,23 @@ from scripts.lib.validation.config._base import _registry
 from scripts.lib.validation.config._schema import ConfigSchema
 
 
-def validate_config(config: dict) -> ConfigSchema:
-    """Validate config dict against schema."""
+def validate_config(config: dict, extra: str | None = None) -> ConfigSchema:
+    """
+    Validate config dict against schema.
+
+    Parameters
+    ----------
+    config : dict
+        Config dict to validate.
+    extra : {"ignore", "allow", "forbid"}, optional
+        Override how unknown keys are handled in all (nested) models, e.g.
+        ``"forbid"`` to raise a validation error for each of them. If None,
+        the behaviour configured in each model is used.
+
+    Returns
+    -------
+    Validated config model, with all config updaters applied.
+    """
     config_schema = ConfigSchema
     name = config_schema._name.default
     docs_url = config_schema._docs_url.default
@@ -34,10 +49,62 @@ def validate_config(config: dict) -> ConfigSchema:
             docs_url = updater_config.docs_url
         if updater_config.name:
             name += f".{updater_config.name}"
-    validated_config = config_schema(**config)
+    validated_config = config_schema.model_validate(config, extra=extra)
     validated_config._name = name
     validated_config._docs_url = docs_url
     return validated_config
+
+
+# Sections not covered by the schema or deliberately accepting arbitrary keys,
+# for which unknown keys are not reported
+UNCHECKED_SECTIONS = {"plotting", "conventional"}
+
+
+def find_invalid_entries(config: dict) -> dict[str, list[str]]:
+    """
+    Find config entries that are unknown or have invalid values, including in nested sections.
+
+    Invalid values are those violating the type or allowed values of the schema,
+    e.g. a value outside a set of choices or a numeric range. Missing entries are
+    ignored, so partial override configs can be checked on their own.
+
+    Parameters
+    ----------
+    config : dict
+        Config dict to check.
+
+    Returns
+    -------
+    Error messages by dotted path of the invalid entries.
+    """
+    try:
+        validate_config(config, extra="forbid")
+    except ValidationError as e:
+        invalid = {}
+        for err in e.errors():
+            if err["type"] == "missing":
+                continue
+            if err["type"] == "extra_forbidden":
+                if err["loc"][0] in UNCHECKED_SECTIONS:
+                    continue
+                err["msg"] = "Unknown key, not part of the schema"
+            invalid.setdefault(_config_path(config, err["loc"]), []).append(err["msg"])
+        return invalid
+    return {}
+
+
+def _config_path(config: dict, loc: tuple) -> str:
+    """Dotted path of an error location, without pydantic's union member tags."""
+    path, data = [], config
+    for key in loc:
+        if isinstance(data, dict) and key in data:
+            data = data[key]
+        elif isinstance(data, list) and isinstance(key, int) and key < len(data):
+            data = data[key]
+        else:
+            break
+        path.append(str(key))
+    return ".".join(path) or "<root>"
 
 
 def normalize_config(config: dict, validated: ConfigSchema) -> None:
@@ -232,6 +299,7 @@ def generate_config_schema(path: str = "config/schema.{configname}.json") -> dic
 __all__ = [
     "ConfigSchema",
     "validate_config",
+    "find_invalid_entries",
     "validate_scenarios",
     "normalize_config",
     "generate_config_defaults",
