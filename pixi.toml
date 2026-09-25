@@ -83,14 +83,14 @@ openpyxl = ">=3.1.5"
 pandas = ">=3"
 plotly = ">=6.4.0"
 powerplantmatching = ">=0.5.15"
-pydantic = ">=2"
+pydantic = ">=2.12"
 python-dotenv = ">=1.0"
 proj = ">=9.6.2"
 pydeck = ">0.6"  # pypsa fails to import with pydeck <0.6, lower bound was only added from pypsa 1.0.6
 pypsa = ">=0.35.2"
 pyscipopt = ">=5.6.0"
 pytables = ">=3.10.2"
-python = ">=3.12,<3.14"  # remove upper bound once issue has been fixed https://github.com/PyPSA/pypsa-eur/issues/2245
+python = ">=3.12"
 pytz = ">=2025.2"
 pyxlsb = ">=1.0.10"
 rasterio = ">=1.4.3"
@@ -196,6 +196,7 @@ unit-tests = "pytest test"
 all-tests = {depends-on = ["integration-tests", "clean-tests", "unit-tests"]}
 
 generate-config = "pytest test/test_config_schema.py --fix"
+validate-config = "pytest test/test_config_schema.py::test_config_file_is_valid --validate-config"
 
 [feature.test.dependencies]
 pytest = ">=8.4.2"
