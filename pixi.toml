@@ -83,7 +83,7 @@ openpyxl = ">=3.1.5"
 pandas = ">=3"
 plotly = ">=6.4.0"
 powerplantmatching = ">=0.5.15"
-pydantic = ">=2"
+pydantic = ">=2.12"
 python-dotenv = ">=1.0"
 proj = ">=9.6.2"
 pydeck = ">0.6"  # pypsa fails to import with pydeck <0.6, lower bound was only added from pypsa 1.0.6
@@ -196,6 +196,7 @@ unit-tests = "pytest test"
 all-tests = {depends-on = ["integration-tests", "clean-tests", "unit-tests"]}
 
 generate-config = "pytest test/test_config_schema.py --fix"
+validate-config = "pytest test/test_config_schema.py::test_config_file_is_valid --validate-config"
 
 [feature.test.dependencies]
 pytest = ">=8.4.2"
