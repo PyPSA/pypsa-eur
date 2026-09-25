@@ -3,7 +3,7 @@
 # yaml-language-server: $schema=./schema.default.json
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#version_cf
-version: v2026.08.0
+version: v2026.09.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#tutorial_cf
 tutorial: false
