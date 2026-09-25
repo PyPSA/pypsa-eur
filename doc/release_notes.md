@@ -55,6 +55,9 @@
 
 * Fix: Remove deprecated `electricity_distribution_grid_cost_factor` config option ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299))
 
+* Added `pixi run validate-config CONFIGFILE [CONFIGFILE ...]` to check config files for invalid keys/values ([#2307](https://github.com/PyPSA/pypsa-eur/pull/2307))
+
+
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
 **Features**
