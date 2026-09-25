@@ -204,7 +204,7 @@ have no effect at all.
 | `noH2network` | `sector.H2_network: false` |
 | `nowasteheat` | the `sector.use_*_waste_heat` flags, set to `0` |
 | `nodistrict` | `sector.district_heating.progress: {<year>: 0, …}` |
-| `dist<f>` | `sector.electricity_distribution_grid: true` + `sector.electricity_distribution_grid_cost_factor` |
+| `dist<f>` | `sector.electricity_distribution_grid: true` + `adjustments.sector.factor.Link.electricity distribution grid.capital_cost: <f>` |
 | `biomasstransport` | `sector.biomass_transport: true` |
 | `linemaxext<n>` | `lines.s_nom_max_extension` and `links.p_nom_max_extension` |
 | `sdr<x>` | `costs.social_discountrate` |

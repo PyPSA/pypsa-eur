@@ -4974,11 +4974,6 @@
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
         },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
-        },
         "electricity_grid_connection": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
@@ -11621,11 +11616,6 @@
           "default": true,
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
-        },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
         },
         "electricity_grid_connection": {
           "default": true,

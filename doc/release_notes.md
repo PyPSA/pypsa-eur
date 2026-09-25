@@ -39,6 +39,8 @@
     - Inputs to `compose_network` are already regionally clustered and simplified to be processed without further aggregation.
     - Data files that represent a final version of themselves don't have dedicated suffixes (e.g. regionally aggregated shapes are stored at `onshore_regions.geojson`). Ancestor files that are intermediate steps in the processing chain may rely on suffixes (e.g. `onshore_shapes_simplified.geojson`).
 
+* Fix: output files of the rule build_ambient_air_temperature_yearly_average did not contain the right wildcards when running with scenarios and shared_resources
+
 * Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive options: `averaging` (average over a pandas offset such as `24h`), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
 
 * Fix: update documentation links from old Sphinx to new mkdocs syntax that were broken by the [mkdocs migration in #2288](https://github.com/PyPSA/pypsa-eur/issues/2288) ([#2294](https://github.com/PyPSA/pypsa-eur/pull/2294))
@@ -50,6 +52,8 @@
 * Fix: focus_weights related TypeError during cluster_network ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277))
 
 * Chore: introduce a Pixi version floor for the CI ([#2293](https://github.com/PyPSA/pypsa-eur/pull/2293)).
+
+* Fix: Remove deprecated `electricity_distribution_grid_cost_factor` config option ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299))
 
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
