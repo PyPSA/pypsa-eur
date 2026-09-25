@@ -5,6 +5,12 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Bugfix: Fixed a ``TypeError`` when building cutouts locally, caused by using the
+  ``/`` operator on ``CUTOUT_DATASET["folder"]``, which is a string.
+
+* Bugfix: The fallback to the last column in ``attach_conventional_generators`` now
+  also catches ``KeyError``, so a snapshot year that is missing from a conventional
+  input file no longer aborts the run.
 * Streamlined workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)): overnight, myopic, and perfect foresight are now handled by a unified set of rules for both electricity-only and sector-coupled models. See the [migration guide](migration.md) for detailed migration guidance.
 
     **Workflow structure:**
@@ -51,12 +57,15 @@
 
 * Fix: focus_weights related TypeError during cluster_network ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277))
 
+* Fix: make [clean_osm_data][] compatible with pandas 3 by treating missing OSM tag values explicitly as empty strings and replacing whole columns instead of assigning in place via `.loc[:, col]`. Empty entries in link ratings (e.g. `500;`) no longer raise an error. In [build_osm_network][], lines split at more than 26 overpassed buses no longer fail; segment IDs continue after `z` with `aa`, `ab`, etc. Added unit tests for the OSM column cleaning functions. ([#2300]/https://github.com/PyPSA/pypsa-eur/pull/2300))
+
 * Chore: introduce a Pixi version floor for the CI ([#2293](https://github.com/PyPSA/pypsa-eur/pull/2293)).
 
 * Fix: Remove deprecated `electricity_distribution_grid_cost_factor` config option ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299))
 
 * Added `pixi run validate-config CONFIGFILE [CONFIGFILE ...]` to check config files for invalid keys/values ([#2307](https://github.com/PyPSA/pypsa-eur/pull/2307))
 
+* Fix: Remove `__init__` override from `heat_system.py` for compatibility with python>=3.14 ([#2304](https://github.com/PyPSA/pypsa-eur/pull/2304)).
 
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
