@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     params = snakemake.params.industry
 
-    investment_year = int(snakemake.wildcards.planning_horizons)
+    investment_year = int(snakemake.wildcards.horizon)
 
     fn = snakemake.input.industrial_production_per_country
     production = pd.read_csv(fn, index_col=0)

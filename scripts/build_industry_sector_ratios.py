@@ -8,7 +8,7 @@ Description
 -------
 
 This script uses the `JRC-IDEES <https://joint-research-centre.ec.europa.eu/potencia-policy-oriented-tool-energy-and-climate-change-impact-assessment/jrc-idees_en>` data to calculate an EU28 average specific energy consumption by carrier and industries.
-The industries are according to the rule `industrial_production_per_country <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_industrial_production_per_country>`.
+The industries are according to the rule `industrial_production_per_country <https://pypsa-eur.readthedocs.io/en/latest/sector/#rule-build_industrial_production_per_country>`.
 
 The following carriers are considered:
 - elec
@@ -23,7 +23,7 @@ The following carriers are considered:
 - process emission from feedstock
 - (ammonia)
 
-If the `config["industry"]["ammonia"] <https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry>` is set to true the ammonia demand is not converted to hydrogen and electricity but is considered as a separate carrier.
+If the `config["industry"]["ammonia"] <https://pypsa-eur.readthedocs.io/en/latest/configuration/#industry_cf>` is set to true the ammonia demand is not converted to hydrogen and electricity but is considered as a separate carrier.
 
 The unit of the specific energy consumption is MWh/t material and tCO2/t material for process emissions.
 """

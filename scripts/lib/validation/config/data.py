@@ -5,7 +5,7 @@
 """
 Data source configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#data_cf
 """
 
 from datetime import date
@@ -252,6 +252,10 @@ class DataConfig(BaseModel):
     swiss_energy_balances: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
         description="Swiss energy balances data source configuration.",
+    )
+    tabula_calculator: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="archive"),
+        description="TABULA building typology data source configuration.",
     )
     synthetic_electricity_demand: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
