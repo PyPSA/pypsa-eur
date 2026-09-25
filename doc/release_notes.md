@@ -5,6 +5,12 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Bugfix: Fixed a ``TypeError`` when building cutouts locally, caused by using the
+  ``/`` operator on ``CUTOUT_DATASET["folder"]``, which is a string.
+
+* Bugfix: The fallback to the last column in ``attach_conventional_generators`` now
+  also catches ``KeyError``, so a snapshot year that is missing from a conventional
+  input file no longer aborts the run.
 * Streamlined workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)): overnight, myopic, and perfect foresight are now handled by a unified set of rules for both electricity-only and sector-coupled models. See the [migration guide](migration.md) for detailed migration guidance.
 
     **Workflow structure:**
