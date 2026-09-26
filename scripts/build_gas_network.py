@@ -19,7 +19,7 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def diameter_to_capacity(pipe_diameter_mm):
+def diameter_to_capacity(pipe_diameter_mm: float) -> float:
     """
     Calculate pipe capacity in MW based on diameter in mm.
 
@@ -53,13 +53,13 @@ def diameter_to_capacity(pipe_diameter_mm):
         return a3 + m3 * pipe_diameter_mm
 
 
-def unnest_struct(s):
+def unnest_struct(s: pd.Series) -> pd.DataFrame:
     if isinstance(s.iloc[0], str):
         s = s.apply(json.loads)
     return s.apply(pd.Series)
 
 
-def load_dataset(fn):
+def load_dataset(fn: str) -> gpd.GeoDataFrame:
     df = gpd.read_file(fn)
     param = unnest_struct(df.param)
     method = unnest_struct(df.method)[["diameter_mm", "max_cap_M_m3_per_d"]]
@@ -72,12 +72,12 @@ def load_dataset(fn):
 
 
 def prepare_dataset(
-    df,
-    length_factor=1.5,
-    correction_threshold_length=4,
-    correction_threshold_p_nom=8,
-    bidirectional_below=10,
-):
+    df: gpd.GeoDataFrame,
+    length_factor: float = 1.5,
+    correction_threshold_length: float = 4,
+    correction_threshold_p_nom: float = 8,
+    bidirectional_below: float = 10,
+) -> gpd.GeoDataFrame:
     # extract start and end from LineString
     df["point0"] = df.geometry.apply(lambda x: Point(x.coords[0]))
     df["point1"] = df.geometry.apply(lambda x: Point(x.coords[-1]))

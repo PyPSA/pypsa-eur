@@ -49,12 +49,12 @@ if __name__ == "__main__":
         gpd.read_file(snakemake.input.onshore_regions).set_index("name").buffer(0)
     )
 
-    I = cutout.indicatormatrix(clustered_regions)
+    indicator = cutout.indicatormatrix(clustered_regions)
 
     pop_layout = xr.open_dataarray(snakemake.input.pop_layout)
 
     stacked_pop = pop_layout.stack(spatial=("y", "x"))
-    M = I.T.dot(np.diag(I.dot(stacked_pop)))
+    M = indicator.T.dot(np.diag(indicator.dot(stacked_pop)))
 
     nonzero_sum = M.sum(axis=0, keepdims=True)
     nonzero_sum[nonzero_sum == 0.0] = 1.0

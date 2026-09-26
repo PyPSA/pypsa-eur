@@ -84,7 +84,7 @@ def test_get_linetype_by_voltage(config):
     for v_nom in v_nom_list:
         line_type_list.append(_get_linetype_by_voltage(v_nom, config["lines"]["types"]))
     assert len(line_type_list) == len(reference_list)
-    assert all([x == y for x, y in zip(line_type_list, reference_list)])
+    assert all(x == y for x, y in zip(line_type_list, reference_list))
 
 
 @pytest.mark.parametrize(

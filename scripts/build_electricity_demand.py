@@ -9,6 +9,7 @@ given period, the load data is exported to a `.csv` file.
 """
 
 import logging
+from collections.abc import Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -21,7 +22,12 @@ logger = logging.getLogger(__name__)
 OPSD_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
-def load_timeseries(fn, years, countries, date_format=None):
+def load_timeseries(
+    fn: str,
+    years: slice | pd.DatetimeIndex,
+    countries: list[str],
+    date_format: str | None = None,
+) -> pd.DataFrame:
     """
     Read and pre-filter load data.
 
@@ -49,7 +55,7 @@ def load_timeseries(fn, years, countries, date_format=None):
     )
 
 
-def consecutive_nans(ds):
+def consecutive_nans(ds: pd.Series) -> pd.Series:
     return (
         ds.isnull()
         .astype(int)
@@ -59,7 +65,7 @@ def consecutive_nans(ds):
     )
 
 
-def fill_large_gaps(ds, shift):
+def fill_large_gaps(ds: pd.Series, shift: str) -> pd.Series:
     """
     Fill up large gaps with load data from the previous week.
 
@@ -75,8 +81,8 @@ def fill_large_gaps(ds, shift):
     return ds.where(ds.notnull(), time_shift.reindex_like(ds))
 
 
-def nan_statistics(df):
-    def max_consecutive_nans(ds):
+def nan_statistics(df: pd.DataFrame) -> pd.DataFrame:
+    def max_consecutive_nans(ds: pd.Series) -> int:
         return (
             ds.isnull()
             .astype(int)
@@ -95,7 +101,14 @@ def nan_statistics(df):
     )
 
 
-def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
+def copy_timeslice(
+    load: pd.DataFrame,
+    cntry: str,
+    start: str,
+    stop: str,
+    delta: pd.Timedelta,
+    fn_load: str | None = None,
+) -> None:
     start = pd.Timestamp(start)
     stop = pd.Timestamp(stop)
     if start in load.index and stop in load.index:
@@ -111,7 +124,9 @@ def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
             ].values
 
 
-def manual_adjustment(load, fn_load, countries):
+def manual_adjustment(
+    load: pd.DataFrame, fn_load: str, countries: list[str]
+) -> pd.DataFrame:
     """
     Adjust gaps manual for load data.
 
@@ -166,11 +181,13 @@ def manual_adjustment(load, fn_load, countries):
     # longer stretch
     copy_timeslice(load, "NL", "2014-12-01 00:00", "2014-12-19 23:00", Delta(weeks=-3))
 
-    def _safe_where(df, col, pred):
+    def _safe_where(
+        df: pd.DataFrame, col: str, pred: Callable[[pd.Series], pd.Series]
+    ) -> None:
         if col in df.columns:
             df[col] = df[col].where(pred(df[col]), np.nan)
 
-    def _safe_setna(df, idx, col):
+    def _safe_setna(df: pd.DataFrame, idx: str, col: str) -> None:
         if col in df.columns:
             df.loc[idx, col] = np.nan
 
@@ -213,7 +230,7 @@ def manual_adjustment(load, fn_load, countries):
     return load
 
 
-def repeat_years(s: pd.Series, years: list) -> pd.Series:
+def repeat_years(s: pd.Series, years: Iterable[int]) -> pd.Series:
     s = s[~((s.index.month == 2) & (s.index.day == 29))]  # drop leap day
     return pd.concat(
         [s.set_axis(s.index.map(lambda t: t.replace(year=y))) for y in years]
@@ -311,7 +328,7 @@ if __name__ == "__main__":
         fn = snakemake.input.synthetic
         synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
         # UA, MD, XK, CY, MT do not appear in synthetic load data
-        countries = list(set(countries) - set(["UA", "MD", "XK", "CY", "MT"]))
+        countries = list(set(countries) - {"UA", "MD", "XK", "CY", "MT"})
         synthetic_load = synthetic_load.loc[snapshots, countries]
         load = load.combine_first(synthetic_load)
 

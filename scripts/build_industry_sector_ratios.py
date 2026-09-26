@@ -107,7 +107,7 @@ def load_idees_data(sector, country="EU27"):
     return idees
 
 
-def iron_and_steel():
+def iron_and_steel() -> pd.DataFrame:
     """
     This function calculates the energy consumption and emissions for different
     approaches to producing iron and steel. The two primary approaches are
@@ -301,7 +301,7 @@ def iron_and_steel():
     return df
 
 
-def chemicals_industry():
+def chemicals_industry() -> pd.DataFrame:
     """
     This function calculates the energy consumption and emissions for the
     chemicals industry, focusing on various subsectors such as basic chemicals,
@@ -640,7 +640,7 @@ def chemicals_industry():
     return df
 
 
-def nonmetalic_mineral_products():
+def nonmetalic_mineral_products() -> pd.DataFrame:
     """
     This function calculates the energy consumption and emissions for the non-
     metallic mineral products industry, focusing on three main sectors: cement,
@@ -837,7 +837,7 @@ def nonmetalic_mineral_products():
     return df
 
 
-def pulp_paper_printing():
+def pulp_paper_printing() -> pd.DataFrame:
     """
     Models the energy consumption for the pulp, paper, and printing sector,
     assuming complete electrification of all processes. This sector does not
@@ -996,7 +996,7 @@ def pulp_paper_printing():
     return df
 
 
-def food_beverages_tobacco():
+def food_beverages_tobacco() -> pd.DataFrame:
     """
     Calculates the energy consumption for the food, beverages, and tobacco
     sector, assuming complete electrification of all processes. This sector
@@ -1062,7 +1062,7 @@ def food_beverages_tobacco():
     return df
 
 
-def non_ferrous_metals():
+def non_ferrous_metals() -> pd.DataFrame:
     sector = "Non Ferrous Metals"
     idees = load_idees_data(sector)
 
@@ -1264,7 +1264,7 @@ def non_ferrous_metals():
     return df
 
 
-def transport_equipment():
+def transport_equipment() -> pd.DataFrame:
     sector = "Transport equipment"
     idees = load_idees_data(sector)
 
@@ -1314,7 +1314,7 @@ def transport_equipment():
     return df
 
 
-def machinery_equipment():
+def machinery_equipment() -> pd.DataFrame:
     sector = "Machinery equipment"
 
     idees = load_idees_data(sector)
@@ -1366,7 +1366,7 @@ def machinery_equipment():
     return df
 
 
-def textiles_and_leather():
+def textiles_and_leather() -> pd.DataFrame:
     sector = "Textiles and leather"
 
     idees = load_idees_data(sector)
@@ -1415,7 +1415,7 @@ def textiles_and_leather():
     return df
 
 
-def wood_and_wood_products():
+def wood_and_wood_products() -> pd.DataFrame:
     sector = "Wood and wood products"
 
     idees = load_idees_data(sector)
@@ -1460,7 +1460,7 @@ def wood_and_wood_products():
     return df
 
 
-def other_industrial_sectors():
+def other_industrial_sectors() -> pd.DataFrame:
     sector = "Other industrial sectors"
     idees = load_idees_data(sector)
 

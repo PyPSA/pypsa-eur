@@ -288,7 +288,7 @@ if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [
     "archive",
 ]:
 
-    rule retrieve_eu_nuts_2013:
+    rule retrieve_eu_nuts2013:
         input:
             shapes=storage(EU_NUTS2013_DATASET["url"]),
         output:
@@ -310,7 +310,7 @@ if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
     "archive",
 ]:
 
-    rule retrieve_eu_nuts_2021:
+    rule retrieve_eu_nuts2021:
         input:
             shapes=storage(EU_NUTS2021_DATASET["url"]),
         output:
@@ -437,7 +437,7 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
     "archive",
 ]:
 
-    rule retrieve_cost_data:
+    rule retrieve_costs:
         input:
             costs=storage(COSTS_DATASET["url"] + "/costs_{horizon}.csv"),
         output:
@@ -469,7 +469,7 @@ if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
     "archive",
 ]:
 
-    rule retrieve_gas_infrastructure_data:
+    rule retrieve_scigrid_gas:
         input:
             zip_file=storage(SCIGRID_GAS_DATASET["url"]),
         output:
@@ -489,11 +489,11 @@ if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in
     "build"
 ]:
 
-    rule retrieve_electricity_demand_opsd:
+    rule retrieve_opsd_electricity_demand:
         output:
             csv=f"{OPSD_DEMAND_DATA['folder']}/electricity_demand_opsd_raw.csv",
         log:
-            "logs/retrieve_electricity_demand_opsd.log",
+            "logs/retrieve_opsd_electricity_demand.log",
         retries: 2
         resources:
             mem_mb=5000,
@@ -502,14 +502,14 @@ if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in
         message:
             "Retrieving electricity demand data from OPSD from build source"
         script:
-            scripts("retrieve_electricity_demand_opsd.py")
+            scripts("retrieve_opsd_electricity_demand.py")
 
 
 if (OPSD_DEMAND_DATA := dataset_version("opsd_electricity_demand"))["source"] in [
     "archive"
 ]:
 
-    rule retrieve_electricity_demand_opsd:
+    rule retrieve_opsd_electricity_demand:
         input:
             csv=storage(OPSD_DEMAND_DATA["url"]),
         output:
@@ -565,7 +565,7 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
         "XK",
     ]
 
-    rule retrieve_electricity_demand_entsoe_country:
+    rule retrieve_entsoe_electricity_demand_country:
         output:
             csv=f"{ENTSOE_DEMAND_DATA['folder']}"
             + "/electricity_demand_entsoe_raw_{country}.csv",
@@ -579,9 +579,9 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
         message:
             "Retrieving electricity demand data from ENTSO-E for {wildcards.country}"
         script:
-            scripts("retrieve_electricity_demand_entsoe.py")
+            scripts("retrieve_entsoe_electricity_demand.py")
 
-    rule retrieve_electricity_demand_entsoe:
+    rule retrieve_entsoe_electricity_demand:
         input:
             csvs=expand(
                 f"{ENTSOE_DEMAND_DATA['folder']}"
@@ -604,7 +604,7 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
     "archive"
 ]:
 
-    rule retrieve_electricity_demand_entsoe:
+    rule retrieve_entsoe_electricity_demand:
         input:
             csv=storage(ENTSOE_DEMAND_DATA["url"]),
         output:
@@ -620,25 +620,25 @@ if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in
     "build"
 ]:
 
-    rule retrieve_electricity_demand_neso:
+    rule retrieve_neso_electricity_demand:
         output:
             csv=f"{NESO_DEMAND_DATA['folder']}/electricity_demand_neso_raw.csv",
         log:
-            "logs/retrieve_electricity_demand_neso.log",
+            "logs/retrieve_neso_electricity_demand.log",
         retries: 2
         resources:
             mem_mb=5000,
         message:
             "Retrieving electricity demand data from NESO from build source"
         script:
-            scripts("retrieve_electricity_demand_neso.py")
+            scripts("retrieve_neso_electricity_demand.py")
 
 
 if (NESO_DEMAND_DATA := dataset_version("neso_electricity_demand"))["source"] in [
     "archive"
 ]:
 
-    rule retrieve_electricity_demand_neso:
+    rule retrieve_neso_electricity_demand:
         input:
             csv=storage(NESO_DEMAND_DATA["url"]),
         output:
@@ -676,7 +676,7 @@ if (ENERGY_ATLAS_DATASET := dataset_version("jrc_energy_atlas"))["source"] in [
     "archive",
 ]:
 
-    rule retrieve_electricity_demand_energy_atlas:
+    rule retrieve_jrc_energy_atlas:
         output:
             tif=f"{ENERGY_ATLAS_DATASET['folder']}/electricity_tot_demand_2019.tif",
         message:
@@ -844,7 +844,7 @@ if (COPERNICUS_LAND_COVER_DATASET := dataset_version("copernicus_land_cover"))[
 
     # Downloading Copernicus Global Land Cover for land cover and land use:
     # Website: https://land.copernicus.eu/global/products/lc
-    rule download_copernicus_land_cover:
+    rule retrieve_copernicus_land_cover:
         input:
             tif=storage(COPERNICUS_LAND_COVER_DATASET["url"]),
         output:
@@ -997,7 +997,7 @@ if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
     "archive",
 ]:
 
-    rule retrieve_gem_steel_plant_tracker:
+    rule retrieve_gem_gspt:
         input:
             xlsx=storage(GEM_GSPT_DATASET["url"]),
         output:
@@ -1013,7 +1013,7 @@ if (GEM_GCCT_DATASET := dataset_version("gem_gcct"))["source"] in [
     "archive",
 ]:
 
-    rule retrieve_gem_cement_concrete_tracker:
+    rule retrieve_gem_gcct:
         input:
             xlsx=storage(GEM_GCCT_DATASET["url"]),
         output:
@@ -1168,11 +1168,11 @@ if (INSTRAT_CO2_PRICES_DATASET := dataset_version("instrat_co2_prices"))["source
     "primary",
 ]:
 
-    rule retrieve_co2_prices:
+    rule retrieve_instrat_co2_prices:
         output:
             csv=f"{INSTRAT_CO2_PRICES_DATASET['folder']}/prices_eu_ets_all.csv",
         log:
-            "logs/retrieve_co2_prices.log",
+            "logs/retrieve_instrat_co2_prices.log",
         retries: 2
         resources:
             mem_mb=5000,
@@ -1579,7 +1579,7 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
     "archive",
 ]:
 
-    rule retrieve_aquifer_data_bgr:
+    rule retrieve_aquifer_data:
         input:
             zip_file=storage(AQUIFER_DATA_DATASET["url"]),
         output:

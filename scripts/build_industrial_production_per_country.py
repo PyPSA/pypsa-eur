@@ -164,7 +164,7 @@ ch_mapping = {
 }
 
 
-def find_physical_output(df):
+def find_physical_output(df: pd.DataFrame) -> slice:
     start = np.where(df.index.str.contains("Physical output", na=False))[0][0]
     empty_row = np.where(df.index.isnull())[0]
     end = empty_row[np.argmax(empty_row > start)]
@@ -254,7 +254,9 @@ def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake)
     return demand
 
 
-def industry_production(countries, year, eurostat, jrc_dir):
+def industry_production(
+    countries: list[str], year: int, eurostat: pd.DataFrame, jrc_dir: str
+) -> pd.DataFrame:
     nprocesses = snakemake.threads
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
 
@@ -265,13 +267,13 @@ def industry_production(countries, year, eurostat, jrc_dir):
         jrc_dir=jrc_dir,
         snakemake=snakemake,
     )
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" country",
-        total=len(countries),
-        desc="Build industry production",
-        disable=disable_progress,
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " country",
+        "total": len(countries),
+        "desc": "Build industry production",
+        "disable": disable_progress,
+    }
     with mp.Pool(processes=nprocesses) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
@@ -282,7 +284,7 @@ def industry_production(countries, year, eurostat, jrc_dir):
     return demand
 
 
-def separate_basic_chemicals(demand, year):
+def separate_basic_chemicals(demand: pd.DataFrame, year: int) -> None:
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """

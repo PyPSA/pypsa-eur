@@ -22,8 +22,8 @@ def attach_transmission_projects(
     n: pypsa.Network, transmission_projects: list[str]
 ) -> None:
     logger.info("Adding transmission projects to network.")
-    for path in transmission_projects:
-        path = Path(path)
+    for fn in transmission_projects:
+        path = Path(fn)
         df = pd.read_csv(path, index_col=0, dtype={"bus0": str, "bus1": str})
         if df.empty:
             continue

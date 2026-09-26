@@ -26,7 +26,6 @@ Outputs
 """
 
 import logging
-import warnings
 
 import pandas as pd
 import pypsa
@@ -80,9 +79,9 @@ def prepare_costs(
     costs: pd.DataFrame,
     config: dict,
     cost_year: str,
-    max_hours: dict = None,
+    max_hours: dict | None = None,
     nyears: float = 1.0,
-    custom_costs_fn: str = None,
+    custom_costs_fn: str | None = None,
 ) -> pd.DataFrame:
     """
     Standardize and prepare extended costs data.
@@ -165,9 +164,8 @@ def prepare_costs(
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
-            warnings.warn(
-                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv').",
-                DeprecationWarning,
+            logger.warning(
+                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv')."
             )
             logger.info(f"Overwriting {attr} with:\n{overwrites}")
 
@@ -194,7 +192,12 @@ def prepare_costs(
     # Calculate storage costs if max_hours is provided
     if max_hours is not None:
 
-        def costs_for_storage(store=None, link1=None, link2=None, max_hours=1.0):
+        def costs_for_storage(
+            store: pd.Series | None = None,
+            link1: pd.Series | None = None,
+            link2: pd.Series | None = None,
+            max_hours: float = 1.0,
+        ) -> pd.Series:
             capital_cost = 0
             if store is not None:
                 capital_cost += max_hours * store["capital_cost"]
@@ -244,9 +247,8 @@ def prepare_costs(
             overwrites = pd.Series(overwrites)
             idx = overwrites.index.intersection(costs.index)
             costs.loc[idx, attr] = overwrites.loc[idx]
-            warnings.warn(
-                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv').",
-                DeprecationWarning,
+            logger.warning(
+                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv')."
             )
             logger.info(f"Overwriting {attr} with:\n{overwrites}")
 

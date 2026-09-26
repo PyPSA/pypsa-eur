@@ -39,46 +39,46 @@ if __name__ == "__main__":
     )
 
     if not n.lines.empty:
-        sizes_ac = [10, 20]
+        sizes_ac: list[float] = [10, 20]
         labels_ac = [f"HVAC ({s} GW)" for s in sizes_ac]
         scale_ac = 1e3 / lw_factor
         sizes_ac = [s * scale_ac for s in sizes_ac]
 
-        legend_kw_ac = dict(
-            loc=[0.25, 0.9],
-            frameon=False,
-            labelspacing=0.5,
-            handletextpad=1,
-            fontsize=13,
-        )
+        legend_kw_ac = {
+            "loc": [0.25, 0.9],
+            "frameon": False,
+            "labelspacing": 0.5,
+            "handletextpad": 1,
+            "fontsize": 13,
+        }
 
         add_legend_lines(
             ax,
             sizes_ac,
             labels_ac,
-            patch_kw=dict(color="rosybrown"),
+            patch_kw={"color": "rosybrown"},
             legend_kw=legend_kw_ac,
         )
 
     if not n.links.empty:
-        sizes_dc = [1, 5]
+        sizes_dc: list[float] = [1, 5]
         labels_dc = [f"HVDC ({s} GW)" for s in sizes_dc]
         scale_dc = 1e3 / lw_factor
         sizes_dc = [s * scale_dc for s in sizes_dc]
 
-        legend_kw_dc = dict(
-            loc=[0.0, 0.9],
-            frameon=False,
-            labelspacing=0.5,
-            handletextpad=1,
-            fontsize=13,
-        )
+        legend_kw_dc = {
+            "loc": [0.0, 0.9],
+            "frameon": False,
+            "labelspacing": 0.5,
+            "handletextpad": 1,
+            "fontsize": 13,
+        }
 
         add_legend_lines(
             ax,
             sizes_dc,
             labels_dc,
-            patch_kw=dict(color="darkseagreen"),
+            patch_kw={"color": "darkseagreen"},
             legend_kw=legend_kw_dc,
         )
 

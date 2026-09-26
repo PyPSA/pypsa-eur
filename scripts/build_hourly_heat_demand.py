@@ -26,7 +26,7 @@ from scripts._helpers import (
 logger = logging.getLogger(__name__)
 
 
-def heat_dsm_profile(nodes, options):
+def heat_dsm_profile(nodes: pd.Index, options: dict) -> pd.DataFrame:
     """
     Generate heat demand-side management (DSM) availability profile with periodic restrictions.
 

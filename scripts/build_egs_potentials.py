@@ -22,21 +22,23 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
 
 from scripts._helpers import configure_logging, get_snapshots, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 
-def prepare_egs_data(egs_file):
+def prepare_egs_data(egs_file: str) -> dict[int, gpd.GeoDataFrame]:
     """
     Processes the original .json file EGS data to a more human-readable format.
     """
     with open(egs_file) as f:
         jsondata = json.load(f)
 
-    def point_to_square(p, lon_extent=1.0, lat_extent=1.0):
+    def point_to_square(
+        p: Point, lon_extent: float = 1.0, lat_extent: float = 1.0
+    ) -> Polygon | Point:
         try:
             x, y = p.coords.xy[0][0], p.coords.xy[1][0]
         except IndexError:
@@ -54,7 +56,7 @@ def prepare_egs_data(egs_file):
     years = [2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050]
     lcoes = ["LCOE50", "LCOE100", "LCOE150"]
 
-    egs_data = dict()
+    egs_data = {}
 
     for year in years:
         df = pd.DataFrame(columns=["Lon", "Lat", "CAPEX", "HeatSust", "PowerSust"])
@@ -89,7 +91,7 @@ def prepare_egs_data(egs_file):
     return egs_data
 
 
-def prepare_capex(prepared_data):
+def prepare_capex(prepared_data: dict[int, gpd.GeoDataFrame]) -> gpd.GeoDataFrame:
     """
     The source paper provides only data for year and regions where LCOE <
     100Euro/MWh. However, this implementations starts with the costs for 2020

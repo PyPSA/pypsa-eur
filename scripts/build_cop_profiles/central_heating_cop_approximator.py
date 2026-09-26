@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 
+from collections.abc import Mapping
+from types import MappingProxyType
+
 import numpy as np
 import xarray as xr
 
@@ -76,9 +79,9 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     _approximate_delta_t_refrigerant_sink(
         self,
         refrigerant: str,
-        a: float = {"ammonia": 0.2, "isobutane": -0.0011},
-        b: float = {"ammonia": 0.2, "isobutane": 0.3},
-        c: float = {"ammonia": 0.016, "isobutane": 2.4},
+        a: Mapping[str, float] = MappingProxyType({"ammonia": 0.2, "isobutane": -0.0011}),
+        b: Mapping[str, float] = MappingProxyType({"ammonia": 0.2, "isobutane": 0.3}),
+        c: Mapping[str, float] = MappingProxyType({"ammonia": 0.016, "isobutane": 2.4}),
     ) -> Union[xr.DataArray, np.array]:
         Approximates the temperature difference between the refrigerant and heat sink.
 
@@ -92,9 +95,9 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     _approximate_delta_t_refrigerant_sink(
         self,
         refrigerant: str,
-        a: float = {"ammonia": 0.2, "isobutane": -0.0011},
-        b: float = {"ammonia": 0.2, "isobutane": 0.3},
-        c: float = {"ammonia": 0.016, "isobutane": 2.4},
+        a: Mapping[str, float] = MappingProxyType({"ammonia": 0.2, "isobutane": -0.0011}),
+        b: Mapping[str, float] = MappingProxyType({"ammonia": 0.2, "isobutane": 0.3}),
+        c: Mapping[str, float] = MappingProxyType({"ammonia": 0.016, "isobutane": 2.4}),
     ) -> Union[xr.DataArray, np.array]:
         Approximates the temperature difference between the refrigerant and heat sink.
 
@@ -340,9 +343,11 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     def _approximate_delta_t_refrigerant_sink(
         self,
         refrigerant: str,
-        a: float = {"ammonia": 0.2, "isobutane": -0.0011},
-        b: float = {"ammonia": 0.2, "isobutane": 0.3},
-        c: float = {"ammonia": 0.016, "isobutane": 2.4},
+        a: Mapping[str, float] = MappingProxyType(
+            {"ammonia": 0.2, "isobutane": -0.0011}
+        ),
+        b: Mapping[str, float] = MappingProxyType({"ammonia": 0.2, "isobutane": 0.3}),
+        c: Mapping[str, float] = MappingProxyType({"ammonia": 0.016, "isobutane": 2.4}),
     ) -> xr.DataArray | np.ndarray:
         """
         Approximates the temperature difference between the refrigerant and
@@ -371,7 +376,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         The approximate temperature difference at the refrigerant sink is calculated using the following formula:
         a * (t_sink_out - t_source_out + 2 * delta_t_pinch) + b * delta_t_sink + c
         """
-        if refrigerant not in a.keys():
+        if refrigerant not in a:
             raise ValueError(
                 f"Invalid refrigerant '{refrigerant}'. Must be one of {a.keys()}"
             )
@@ -389,9 +394,15 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     def _ratio_evaporation_compression_work_approximation(
         self,
         refrigerant: str,
-        a: float = {"ammonia": 0.0014, "isobutane": 0.0035},
-        b: float = {"ammonia": -0.0015, "isobutane": -0.0033},
-        c: float = {"ammonia": 0.039, "isobutane": 0.053},
+        a: Mapping[str, float] = MappingProxyType(
+            {"ammonia": 0.0014, "isobutane": 0.0035}
+        ),
+        b: Mapping[str, float] = MappingProxyType(
+            {"ammonia": -0.0015, "isobutane": -0.0033}
+        ),
+        c: Mapping[str, float] = MappingProxyType(
+            {"ammonia": 0.039, "isobutane": 0.053}
+        ),
     ) -> xr.DataArray | np.ndarray:
         """
         Calculate the ratio of evaporation to compression work approximation.
@@ -419,7 +430,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         The approximation equation used is:
         ratio = a * (t_sink_out - t_source_out + 2 * delta_t_pinch) + b * delta_t_sink + c
         """
-        if refrigerant not in a.keys():
+        if refrigerant not in a:
             raise ValueError(
                 f"Invalid refrigerant '{refrigerant}'. Must be one of {a.keys()}"
             )

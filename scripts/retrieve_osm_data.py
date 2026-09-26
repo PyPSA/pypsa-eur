@@ -23,13 +23,13 @@ logger = logging.getLogger(__name__)
 def retrieve_osm_data(
     country,
     output,
-    features=[
+    features=(
         "cables_way",
         "lines_way",
         "routes_relation",
         "substations_way",
         "substations_relation",
-    ],
+    ),
     url="https://overpass-api.de/api/interpreter",
     max_tries=3,
     timeout=600,

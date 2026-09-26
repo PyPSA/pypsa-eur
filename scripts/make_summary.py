@@ -7,6 +7,7 @@ capacity factors, curtailment, energy balances, prices and other metrics.
 """
 
 import logging
+from collections.abc import Callable
 from functools import wraps
 from typing import TypeAlias
 
@@ -29,7 +30,9 @@ logger = logging.getLogger(__name__)
 NetworkLike: TypeAlias = pypsa.Network | NetworkCollection
 
 
-def _loop_over_collection(func):
+def _loop_over_collection(
+    func: Callable[[pypsa.Network], pd.Series | pd.DataFrame],
+) -> Callable[[NetworkLike], pd.Series | pd.DataFrame]:
     """Decorator to handle NetworkCollection by looping over individual networks."""
 
     @wraps(func)
@@ -37,7 +40,7 @@ def _loop_over_collection(func):
         if not isinstance(obj, NetworkCollection):
             return func(obj)
         results = []
-        for horizon, n in zip(obj.index, obj.networks):
+        for horizon, n in zip(obj.index, obj.networks, strict=True):
             result = func(n)
             if isinstance(result, pd.DataFrame):
                 result = result.iloc[:, 0]

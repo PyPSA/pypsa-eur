@@ -23,13 +23,13 @@ idx = pd.IndexSlice
 
 
 def add_brownfield(
-    n,
-    n_p,
-    year,
-    h2_retrofit=False,
-    h2_retrofit_capacity_per_ch4=None,
-    capacity_threshold=None,
-):
+    n: pypsa.Network,
+    n_p: pypsa.Network,
+    year: int,
+    h2_retrofit: bool = False,
+    h2_retrofit_capacity_per_ch4: float | None = None,
+    capacity_threshold: float | None = None,
+) -> None:
     """
     Add brownfield capacity from previous network.
 
@@ -168,7 +168,7 @@ def add_brownfield(
             n.links.loc[gas_pipes_i, "p_nom_max"] = remaining_capacity
 
 
-def disable_grid_expansion_if_limit_hit(n):
+def disable_grid_expansion_if_limit_hit(n: pypsa.Network) -> None:
     """
     Check if transmission expansion limit is already reached; then turn off.
 
@@ -255,7 +255,9 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             n.generators_t.p_max_pu.loc[:, p_max_pu.columns] = p_max_pu
 
 
-def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int):
+def update_heat_pump_efficiency(
+    n: pypsa.Network, n_p: pypsa.Network, year: int
+) -> None:
     """
     Update the efficiency of heat pumps from previous years to current year
     (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).

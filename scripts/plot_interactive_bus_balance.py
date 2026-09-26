@@ -207,7 +207,7 @@ def prepare_all_buses_data(
     dict
         Dictionary with bus names as keys and carrier dispatch DataFrames as values
     """
-    buses_data = {}
+    buses_data: dict[str, pd.DataFrame] = {}
 
     # Check for the special "NONE_BY_DEFAULT" pattern
     if bus_name_pattern == "NONE_BY_DEFAULT":
@@ -228,22 +228,17 @@ def prepare_all_buses_data(
 
     # Process all buses
     for bus in all_buses:
-        try:
-            # Get the bus balance
-            bus_balance = get_bus_balance(n, bus)
-
-            # Only add buses that have non-empty carrier data
-            if len([col for col in bus_balance.columns if col != "time"]) > 0:
-                buses_data[bus] = bus_balance
-        except Exception as e:
-            raise RuntimeError(f"Error processing bus {bus}: {e}")
+        bus_balance = get_bus_balance(n, bus)
+        # Only add buses that have non-empty carrier data
+        if len([col for col in bus_balance.columns if col != "time"]) > 0:
+            buses_data[bus] = bus_balance
     logger.info(f"Successfully processed {len(buses_data)} buses with carrier data")
 
     return buses_data
 
 
 def plot_stacked_area_steplike(
-    ax: plt.Axes, df: pd.DataFrame, colors: dict[str, str] | pd.Series = {}
+    ax: plt.Axes, df: pd.DataFrame, colors: dict[str, str] | pd.Series | None = None
 ) -> None:
     """
     Plot stacked area chart with step-like transitions.
@@ -257,6 +252,8 @@ def plot_stacked_area_steplike(
     colors : dict[str, str] | pd.Series, optional
         Color mapping for carriers.
     """
+    if colors is None:
+        colors = {}
     if isinstance(colors, pd.Series):
         colors = colors.to_dict()
 
@@ -308,9 +305,9 @@ def plot_energy_balance_timeseries(
     time: pd.DatetimeIndex | None = None,
     ylim: float | None = None,
     resample: str | None = None,
-    rename: dict[str, str] = {},
+    rename: dict[str, str] | None = None,
     ylabel: str = "",
-    colors: dict[str, str] | pd.Series = {},
+    colors: dict[str, str] | pd.Series | None = None,
     directory: str = "",
 ) -> None:
     """
@@ -335,6 +332,8 @@ def plot_energy_balance_timeseries(
     directory : str, optional
         Output directory for HTML file.
     """
+    rename = rename or {}
+    colors = {} if colors is None else colors
     if time is not None:
         df = df.loc[time]
 
@@ -382,7 +381,7 @@ def plot_energy_balance_timeseries(
                     y=carrier_df["value"],
                     mode="lines",
                     name=carrier,
-                    line=dict(width=0, color=plotly_colors.get(carrier, "grey")),
+                    line={"width": 0, "color": plotly_colors.get(carrier, "grey")},
                     stackgroup="positive",
                     fill="tonexty",
                     hovertemplate=f"{carrier}: %{{y:.2f}}<extra></extra>",
@@ -411,7 +410,7 @@ def plot_energy_balance_timeseries(
                     y=carrier_df["value"],
                     mode="lines",
                     name=carrier,
-                    line=dict(width=0, color=plotly_colors.get(carrier, "grey")),
+                    line={"width": 0, "color": plotly_colors.get(carrier, "grey")},
                     stackgroup="negative",
                     fill="tonexty",
                     hovertemplate=f"{carrier}: %{{y:.2f}}<extra></extra>",
@@ -430,8 +429,14 @@ def plot_energy_balance_timeseries(
         title="",
         yaxis_title=f"{ylabel} balance [{unit}]",
         hovermode="x unified",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        yaxis=dict(range=[-ylim, ylim]),
+        legend={
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+        },
+        yaxis={"range": [-ylim, ylim]},
         plot_bgcolor="white",
     )
 
@@ -442,7 +447,7 @@ def plot_energy_balance_timeseries(
         y0=0,
         x1=df.index[-1],
         y1=0,
-        line=dict(color="grey", width=1),
+        line={"color": "grey", "width": 1},
     )
 
     # Add grid lines
@@ -478,13 +483,9 @@ def process_carrier(
 
     df = bus_data[bus_name]
 
-    kwargs = dict(
-        ylabel=bus_name,
-        colors=colors,
-        directory=output_dir,
+    plot_energy_balance_timeseries(
+        df, resample=None, ylabel=bus_name, colors=colors, directory=output_dir
     )
-
-    plot_energy_balance_timeseries(df, resample=None, **kwargs)
 
 
 if __name__ == "__main__":
@@ -533,12 +534,12 @@ if __name__ == "__main__":
         colors = n.carriers.color.copy().replace("", "grey")
         # Process each carrier group in partial
         threads = snakemake.threads
-        tqdm_kwargs = dict(
-            ascii=False,
-            unit=" carrier",
-            total=len(bus_data.keys()),
-            desc="Plotting carrier balance time series",
-        )
+        tqdm_kwargs = {
+            "ascii": False,
+            "unit": " carrier",
+            "total": len(bus_data.keys()),
+            "desc": "Plotting carrier balance time series",
+        }
         func = partial(
             process_carrier,
             bus_data=bus_data,

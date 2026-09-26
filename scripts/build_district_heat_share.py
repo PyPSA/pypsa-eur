@@ -84,7 +84,7 @@ if __name__ == "__main__":
             # Fill missing countries with default value from config
             central_fraction = {
                 **central_fraction,
-                **{ct: default_value for ct in other_countries},
+                **dict.fromkeys(other_countries, default_value),
             }
         # Map district heating potentials to bus regions
         central_fraction = pop_layout.ct.map(central_fraction)

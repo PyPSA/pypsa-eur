@@ -397,13 +397,13 @@ def build_idees(
     """
 
     func = partial(idees_per_country, base_dir=idees_dir)
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" country",
-        total=len(countries),
-        desc="Build from IDEES database",
-        disable=disable_progress,
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " country",
+        "total": len(countries),
+        "desc": "Build from IDEES database",
+        "disable": disable_progress,
+    }
     with mute_print():
         with mp.Pool(processes=nprocesses) as pool:
             totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
@@ -878,6 +878,7 @@ def build_transport_data(
     transport_data = transport_data.reindex(index=new_index)
 
     if "CH" in countries:
+        assert swiss_transport_fn is not None, "Swiss transport data required for CH"
         fn = swiss_transport_fn
 
         # Detect delimiter automatically; BFS files often use ';'
@@ -996,7 +997,7 @@ def update_residential_from_eurostat(
     )
 
 
-def build_transformation_output_coke(eurostat, fn):
+def build_transformation_output_coke(eurostat: pd.DataFrame, fn: str) -> None:
     """
     Extracts and builds the transformation output data for coke ovens from the
     Eurostat dataset.
