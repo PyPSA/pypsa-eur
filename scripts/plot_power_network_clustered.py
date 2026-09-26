@@ -46,21 +46,21 @@ if __name__ == "__main__":
         link_width=2.0,
     )
 
-    sizes = [10, 20]
+    sizes: list[float] = [10, 20]
     labels = [f"HVAC ({s} GW)" for s in sizes]
     scale = 1e3 / lw_factor
     sizes = [s * scale for s in sizes]
 
-    legend_kw = dict(
-        loc=[0.25, 0.9],
-        frameon=False,
-        labelspacing=0.5,
-        handletextpad=1,
-        fontsize=13,
-    )
+    legend_kw = {
+        "loc": [0.25, 0.9],
+        "frameon": False,
+        "labelspacing": 0.5,
+        "handletextpad": 1,
+        "fontsize": 13,
+    }
 
     add_legend_lines(
-        ax, sizes, labels, patch_kw=dict(color="rosybrown"), legend_kw=legend_kw
+        ax, sizes, labels, patch_kw={"color": "rosybrown"}, legend_kw=legend_kw
     )
 
     handles = [

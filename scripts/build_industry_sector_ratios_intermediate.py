@@ -68,7 +68,7 @@ from scripts.prepare_sector_network import get
 logger = logging.getLogger(__name__)
 
 
-def build_industry_sector_ratios_intermediate():
+def build_industry_sector_ratios_intermediate() -> None:
     # in TWh/a
     demand = pd.read_csv(
         snakemake.input.industrial_energy_demand_per_country_today,

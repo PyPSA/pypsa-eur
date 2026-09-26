@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
 
-def get_cost_per_tkm(pdf, datapage, countrypage):
+def get_cost_per_tkm(pdf: str, datapage: int, countrypage: int) -> pd.DataFrame:
     """
     Extracts the cost tables from the JRC report PDF.
 
@@ -51,9 +51,12 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
     encoding = "cp1252" if system == "Windows" else "utf-8"
 
     # Obtain countries:
-    pandas_options_country = dict(
-        skiprows=range(6), header=None, index_col=0, encoding=encoding
-    )
+    pandas_options_country = {
+        "skiprows": range(6),
+        "header": None,
+        "index_col": 0,
+        "encoding": encoding,
+    }
 
     countries = tbl.read_pdf(
         pdf,
@@ -64,14 +67,14 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
     )[0].index
 
     # Obtain data tables
-    pandas_options_data = dict(
-        skiprows=range(6),
-        header=0,
-        sep=" |,",
-        engine="python",
-        index_col=False,
-        encoding=encoding,
-    )
+    pandas_options_data = {
+        "skiprows": range(6),
+        "header": 0,
+        "sep": " |,",
+        "engine": "python",
+        "index_col": False,
+        "encoding": encoding,
+    }
 
     sc = tbl.read_pdf(
         pdf,
@@ -86,7 +89,7 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
     return sc
 
 
-def build_biomass_transport_costs():
+def build_biomass_transport_costs() -> None:
     # Optional build from JRC report pdf, requires tabula and java dependencies.
     # Update `pdf` path to the JRC report if needed.
     # sc1 = get_cost_per_tkm(pdf = "report.pdf", datapage=146, countrypage=145)

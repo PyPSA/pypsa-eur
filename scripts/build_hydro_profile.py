@@ -43,15 +43,19 @@ def get_eia_annual_hydro_generation(
     df.index = df.index.str.strip()
     df.columns = df.columns.astype(int)
 
-    former_countries = {
-        "Former Czechoslovakia": dict(
-            countries=["Czechia", "Slovakia"], start=1980, end=1992
-        ),
-        "Former Serbia and Montenegro": dict(
-            countries=["Serbia", "Montenegro", "Kosovo"], start=1992, end=2005
-        ),
-        "Former Yugoslavia": dict(
-            countries=[
+    former_countries: dict[str, dict] = {
+        "Former Czechoslovakia": {
+            "countries": ["Czechia", "Slovakia"],
+            "start": 1980,
+            "end": 1992,
+        },
+        "Former Serbia and Montenegro": {
+            "countries": ["Serbia", "Montenegro", "Kosovo"],
+            "start": 1992,
+            "end": 2005,
+        },
+        "Former Yugoslavia": {
+            "countries": [
                 "Slovenia",
                 "Croatia",
                 "Bosnia and Herzegovina",
@@ -60,13 +64,13 @@ def get_eia_annual_hydro_generation(
                 "Montenegro",
                 "North Macedonia",
             ],
-            start=1980,
-            end=1991,
-        ),
+            "start": 1980,
+            "end": 1991,
+        },
     }
 
     for k, v in former_countries.items():
-        period = [i for i in range(v["start"], v["end"] + 1)]
+        period = list(range(v["start"], v["end"] + 1))
         ratio = df.loc[v["countries"]].T.dropna().sum()
         ratio /= ratio.sum()
         for country in v["countries"]:

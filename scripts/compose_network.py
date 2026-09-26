@@ -119,7 +119,7 @@ if __name__ == "__main__":
     sanitize_custom_columns(n)
     sanitize_carriers(n, config)
     sanitize_locations(n)
-    n.meta = dict(config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta = dict(config, **{"wildcards": dict(snakemake.wildcards)})
     if n.investment_periods.empty:
         n.consistency_check()
     else:

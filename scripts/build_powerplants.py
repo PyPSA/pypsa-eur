@@ -64,6 +64,7 @@ In addition the configuration option `electricity: everywhere_powerplants` can b
 
 import itertools
 import logging
+from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
@@ -77,7 +78,11 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
+def add_custom_powerplants(
+    ppl: pd.DataFrame,
+    custom_powerplants: str | Path,
+    custom_ppl_query: str | bool = False,
+) -> pd.DataFrame:
     if not custom_ppl_query:
         return ppl
     add_ppls = pd.read_csv(custom_powerplants, dtype={"bus": "str"})
@@ -88,7 +93,9 @@ def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
     )
 
 
-def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
+def add_everywhere_powerplants(
+    ppl: pd.DataFrame, substations: pd.DataFrame, everywhere_powerplants: list[str]
+) -> pd.DataFrame:
     # Create a dataframe with "everywhere_powerplants" of stated carriers at the location of all substations
     everywhere_ppl = (
         pd.DataFrame(
@@ -127,7 +134,7 @@ def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
     )
 
 
-def replace_natural_gas_technology(df):
+def replace_natural_gas_technology(df: pd.DataFrame) -> pd.Series:
     mapping = {
         "Steam Turbine": "CCGT",
         "Combustion Engine": "OCGT",
@@ -144,7 +151,7 @@ def replace_natural_gas_fueltype(df: pd.DataFrame) -> pd.Series:
 
 
 def fill_unoccupied_holes(gdf: gpd.GeoDataFrame) -> gpd.GeoSeries:
-    def _fill_poly(poly, idx):
+    def _fill_poly(poly: Polygon, idx: str) -> Polygon:
         if not poly.interiors:
             return poly
         kept = [h for h in poly.interiors if gdf.drop(idx).intersects(Polygon(h)).any()]
@@ -196,7 +203,6 @@ def map_to_country_bus(
                 .to_crs(4326)
             )
             missing = plants.index.difference(nearest.index)
-            print(country, missing)
             nearest = pd.concat([nearest, plants.loc[missing]])
             assigned.append(nearest)
 

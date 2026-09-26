@@ -14,14 +14,19 @@ select = [
     'UP',  # pyupgrade
     # 'ANN', # flake-8 annotations
     'TID', # flake8-tidy-imports
+    'B006', # mutable argument defaults
+    'C4',   # comprehensions
+    'SIM118', # `key in dict` instead of `key in dict.keys()`; keep `.keys()` on Snakemake Namedlists (list subclasses)
+    'B904', # raise from inside except
+    'T20',  # print statements
     # 'NPY', # numpy
     # 'RUF', # ruff
 ]
 
 ignore = [
     'ANN401', # Dynamically typed expressions are forbidden
+    'C408', # dict(a=1) call style is used deliberately
     'E712', # comparison to False should be 'if cond is False:' or 'if not cond:'
-    'E741', # ambiguous variable names
     'D203', # 1 blank line required before class docstring
     'D212', # Multi-line docstring summary should start at the second line
     'D401', # First line should be in imperative mood
@@ -54,6 +59,10 @@ ignore = [
     ]
 
 "scripts/**/__init__.py"= ["F401"]
+
+# Timing utility that reports to stdout on purpose.
+"scripts/_benchmark.py" = ["T20"]
+"test/**" = ["T20"]
 
 # The order of imports matters in this file, so we stop ruff from re-ordering them.
 "scripts/lib/validation/config_updates.py"= ["I001", "F401"]

@@ -30,7 +30,7 @@ from scripts.plot_power_network import load_projection
 logger = logging.getLogger(__name__)
 
 
-def group_pipes(df, drop_direction=False):
+def group_pipes(df: pd.DataFrame, drop_direction: bool = False) -> pd.DataFrame:
     """
     Group pipes which connect same buses and return overall capacity.
     """
@@ -56,7 +56,7 @@ def group_pipes(df, drop_direction=False):
 
 
 @retry
-def plot_h2_map(n, regions):
+def plot_h2_map(n: pypsa.Network, regions: gpd.GeoDataFrame) -> None:
     # Check if H2 infrastructure exists in the network
     if "H2 pipeline" not in n.links.carrier.unique():
         logger.warning(
@@ -213,24 +213,24 @@ def plot_h2_map(n, regions):
         },
     )
 
-    sizes = [50, 10]
+    sizes: list[float] = [50, 10]
     labels = [f"{s} GW" for s in sizes]
     sizes = [s / bus_size_factor * 1e3 for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1),
-        labelspacing=0.8,
-        handletextpad=0,
-        frameon=False,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1),
+        "labelspacing": 0.8,
+        "handletextpad": 0,
+        "frameon": False,
+    }
 
     add_legend_circles(
         ax,
         sizes,
         labels,
         srid=n.srid,
-        patch_kw=dict(facecolor="lightgrey"),
+        patch_kw={"facecolor": "lightgrey"},
         legend_kw=legend_kw,
     )
 
@@ -239,31 +239,31 @@ def plot_h2_map(n, regions):
     scale = 1e3 / linewidth_factor
     sizes = [s * scale for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0.23, 1),
-        frameon=False,
-        labelspacing=0.8,
-        handletextpad=1,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0.23, 1),
+        "frameon": False,
+        "labelspacing": 0.8,
+        "handletextpad": 1,
+    }
 
     add_legend_lines(
         ax,
         sizes,
         labels,
-        patch_kw=dict(color="lightgrey"),
+        patch_kw={"color": "lightgrey"},
         legend_kw=legend_kw,
     )
 
     colors = [bus_color[c] for c in carriers] + [color_h2_pipe, color_retrofit]
     labels = carriers + ["H2 pipeline (total)", "H2 pipeline (repurposed)"]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1.13),
-        ncol=2,
-        frameon=False,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1.13),
+        "ncol": 2,
+        "frameon": False,
+    }
 
     add_legend_patches(ax, colors, labels, legend_kw=legend_kw)
 

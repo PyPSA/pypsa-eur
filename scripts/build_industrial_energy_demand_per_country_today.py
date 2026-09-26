@@ -129,7 +129,9 @@ eu27 = cc.EU27as("ISO2").ISO2.tolist()
 jrc_names = {"GR": "EL", "GB": "UK"}
 
 
-def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammonia):
+def industrial_energy_demand_per_country(
+    country: str, year: int, jrc_dir: str, endogenous_ammonia: bool | str
+) -> pd.DataFrame:
     jrc_country = jrc_names.get(country, country)
 
     root = Path(jrc_dir, jrc_country)
@@ -142,7 +144,7 @@ def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammo
     sheets = list(sector_sheets.values())
     df_dict = pd.read_excel(fn, sheet_name=sheets, index_col=0)
 
-    def get_subsector_data(sheet):
+    def get_subsector_data(sheet: str) -> pd.Series:
         df = df_dict[sheet][year].groupby(fuels).sum()
 
         df["hydrogen"] = 0.0
@@ -170,7 +172,9 @@ def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammo
     return df
 
 
-def separate_basic_chemicals(demand, production):
+def separate_basic_chemicals(
+    demand: pd.DataFrame, production: pd.DataFrame
+) -> pd.DataFrame:
     chlorine = pd.DataFrame(
         {
             "hydrogen": production["Chlorine"] * params["MWh_H2_per_tCl"],
@@ -215,7 +219,9 @@ def separate_basic_chemicals(demand, production):
     return demand
 
 
-def add_non_eu27_industrial_energy_demand(countries, demand, production):
+def add_non_eu27_industrial_energy_demand(
+    countries: pd.Index, demand: pd.DataFrame, production: pd.DataFrame
+) -> pd.DataFrame:
     non_eu27 = countries.difference(eu27)
     if non_eu27.empty:
         return demand
@@ -231,7 +237,7 @@ def add_non_eu27_industrial_energy_demand(countries, demand, production):
     return pd.concat([demand, demand_non_eu27])
 
 
-def industrial_energy_demand(countries, year):
+def industrial_energy_demand(countries: pd.Index, year: int) -> pd.DataFrame:
     nprocesses = snakemake.threads
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     func = partial(
@@ -240,20 +246,22 @@ def industrial_energy_demand(countries, year):
         jrc_dir=snakemake.input.jrc,
         endogenous_ammonia=snakemake.params.ammonia,
     )
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" country",
-        total=len(countries),
-        desc="Build industrial energy demand",
-        disable=disable_progress,
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " country",
+        "total": len(countries),
+        "desc": "Build industrial energy demand",
+        "disable": disable_progress,
+    }
     with mp.Pool(processes=nprocesses) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
     return pd.concat(demand_l, keys=countries)
 
 
-def add_coke_ovens(demand, fn, year, factor=0.75):
+def add_coke_ovens(
+    demand: pd.DataFrame, fn: str, year: int, factor: float = 0.75
+) -> pd.DataFrame:
     """
     Adds the energy consumption of coke ovens to the energy demand for
     integrated steelworks.

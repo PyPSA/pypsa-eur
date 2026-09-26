@@ -106,7 +106,7 @@ def _create_empty_datasets(
 
 
 def get_regional_result(
-    seawater_temperature_fn: str,
+    seawater_temperature_fn: list[str],
     region: gpd.GeoSeries,
     dh_areas: gpd.GeoDataFrame,
     snapshots: pd.DatetimeIndex,
@@ -116,7 +116,7 @@ def get_regional_result(
 
     Parameters
     ----------
-    seawater_temperature_fn : str
+    seawater_temperature_fn : list[str]
         Path to NetCDF file containing sea water temperature data.
     region : geopandas.GeoSeries
         Geographical region for which to compute the heat potential.

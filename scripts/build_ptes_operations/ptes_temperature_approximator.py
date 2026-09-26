@@ -30,7 +30,7 @@ class PtesTemperatureApproximator:
         return_temperature: xr.DataArray,
         max_ptes_top_temperature: float = 90,
         min_ptes_bottom_temperature: float = 35,
-    ):
+    ) -> None:
         """
         Initialize PtesTemperatureApproximator.
 

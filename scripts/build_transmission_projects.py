@@ -45,7 +45,9 @@ if PYPSA_V1:
     pypsa.options.params.add.return_names = True
 
 
-def add_new_buses(n, new_ports):
+def add_new_buses(
+    n: pypsa.Network, new_ports: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     # Add new buses for the ports which do not have an existing bus close by. If there are multiple ports at the same location, only one bus is added.
     duplicated = new_ports.duplicated(subset=["x", "y"], keep="first")
     to_add = new_ports[~duplicated]
@@ -69,7 +71,7 @@ def add_new_buses(n, new_ports):
     return new_ports, new_buses
 
 
-def find_country_for_bus(bus, shapes):
+def find_country_for_bus(bus: pd.Series, shapes: gpd.GeoDataFrame) -> str:
     """
     Find the country of a bus based on its coordinates and the provided
     shapefile.
@@ -82,13 +84,13 @@ def find_country_for_bus(bus, shapes):
 
 
 def connect_new_lines(
-    lines,
-    n,
-    new_buses_df,
-    offshore_shapes=None,
-    distance_upper_bound=np.inf,
-    bus_carrier="AC",
-):
+    lines: pd.DataFrame,
+    n: pypsa.Network,
+    new_buses_df: pd.DataFrame,
+    offshore_shapes: gpd.GeoDataFrame | None = None,
+    distance_upper_bound: float = np.inf,
+    bus_carrier: str | list[str] = "AC",
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Find the closest existing bus to the port of each line.
 
@@ -111,10 +113,15 @@ def connect_new_lines(
         lines_port["neighbor"] = buses.iloc[indices].index
         lines_port["match_distance"] = distances < distance_upper_bound
         # For buses which are not close to any existing bus, only add a new bus if the line is going offshore (e.g. North Sea Wind Power Hub)
-        if not lines_port.match_distance.all() and offshore_shapes.union_all():
+        if (
+            not lines_port.match_distance.all()
+            and offshore_shapes is not None
+            and offshore_shapes.union_all()
+        ):
+            offshore_geom = offshore_shapes.union_all()
             potential_new_buses = lines_port[~lines_port.match_distance]
             is_offshore = potential_new_buses.apply(
-                lambda x: offshore_shapes.union_all().contains(Point(x.x, x.y)), axis=1
+                lambda x: offshore_geom.contains(Point(x.x, x.y)), axis=1
             )
             new_buses = potential_new_buses[is_offshore]
             if not new_buses.empty:
@@ -142,7 +149,9 @@ def connect_new_lines(
     return lines, new_buses_df
 
 
-def get_branch_coords_from_geometry(linestring, reversed=False):
+def get_branch_coords_from_geometry(
+    linestring: LineString, reversed: bool = False
+) -> np.ndarray:
     """
     Reduces a linestring to its start and end points. Used to simplify the
     linestring which can have more than two points.
@@ -166,7 +175,7 @@ def get_branch_coords_from_geometry(linestring, reversed=False):
     return start_end_coords.flatten()
 
 
-def get_branch_coords_from_buses(line):
+def get_branch_coords_from_buses(line: pd.Series) -> np.ndarray:
     """
     Gets line string for branch component in an pypsa network.
 
@@ -184,7 +193,7 @@ def get_branch_coords_from_buses(line):
     return np.array([start_coords, end_coords]).flatten()
 
 
-def get_bus_coords_from_port(linestring, port=0):
+def get_bus_coords_from_port(linestring: LineString, port: int = 0) -> np.ndarray:
     """
     Extracts the coordinates of a specified port from a given linestring.
 
@@ -204,7 +213,12 @@ def get_bus_coords_from_port(linestring, port=0):
     return coords
 
 
-def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
+def find_closest_lines(
+    lines: pd.DataFrame,
+    new_lines: pd.DataFrame,
+    distance_upper_bound: float = 0.1,
+    type: str = "new",
+) -> pd.Series:
     """
     Find the closest lines in the existing set of lines to a set of new lines.
 
@@ -236,7 +250,7 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     found_i = np.arange(len(querylines))[found_b] % len(new_lines)
     # create a DataFrame with the distances, new line and its closest existing line
     line_map = pd.DataFrame(
-        dict(D=dist[found_b], existing_line=lines.index[ind[found_b] % len(lines)]),
+        {"D": dist[found_b], "existing_line": lines.index[ind[found_b] % len(lines)]},
         index=new_lines.index[found_i].rename("new_lines"),
     )
     if type == "new":
@@ -273,7 +287,9 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     return line_map
 
 
-def adjust_decommissioning(upgraded_lines, line_map):
+def adjust_decommissioning(
+    upgraded_lines: pd.DataFrame, line_map: pd.Series
+) -> pd.DataFrame:
     """
     Adjust the decommissioning year of the existing lines to the built year of
     the upgraded lines.
@@ -288,7 +304,12 @@ def adjust_decommissioning(upgraded_lines, line_map):
     return to_update
 
 
-def get_upgraded_lines(branch_component, n, upgraded_lines, line_map):
+def get_upgraded_lines(
+    branch_component: str,
+    n: pypsa.Network,
+    upgraded_lines: pd.DataFrame,
+    line_map: pd.Series,
+) -> pd.DataFrame:
     """
     Get upgraded lines by merging information of existing line and upgraded
     line.
@@ -316,9 +337,11 @@ def get_upgraded_lines(branch_component, n, upgraded_lines, line_map):
     return lines_to_add
 
 
-def get_project_files(path, skip=[]):
+def get_project_files(
+    path: str | Path, skip: tuple[str, ...] | list[str] = ()
+) -> dict[str, pd.DataFrame]:
     path = Path(path)
-    lines = {}
+    lines: dict[str, pd.DataFrame] = {}
     files = [
         p
         for p in path.iterdir()
@@ -339,7 +362,9 @@ def get_project_files(path, skip=[]):
     return lines
 
 
-def remove_projects_outside_countries(lines, europe_shape):
+def remove_projects_outside_countries(
+    lines: pd.DataFrame, europe_shape: shapely.Geometry
+) -> pd.DataFrame:
     """
     Remove projects which are not in the considered countries.
     """
@@ -358,7 +383,7 @@ def remove_projects_outside_countries(lines, europe_shape):
     return lines
 
 
-def is_similar(ds1, ds2, percentage=10):
+def is_similar(ds1: pd.Series, ds2: pd.Series, percentage: float = 10) -> pd.Series:
     """
     Check if values in series ds2 are within a specified percentage of series
     ds1.
@@ -371,7 +396,9 @@ def is_similar(ds1, ds2, percentage=10):
     return np.logical_and(ds2 >= lower_bound, ds2 <= upper_bound)
 
 
-def set_underwater_fraction(new_links, offshore_shapes):
+def set_underwater_fraction(
+    new_links: pd.DataFrame, offshore_shapes: gpd.GeoDataFrame
+) -> None:
     new_links_gds = gpd.GeoSeries(new_links["geometry"])
     new_links["underwater_fraction"] = (
         new_links_gds.intersection(offshore_shapes.union_all()).length
@@ -380,19 +407,22 @@ def set_underwater_fraction(new_links, offshore_shapes):
 
 
 def add_projects(
-    n,
-    new_lines_df,
-    new_links_df,
-    adjust_lines_df,
-    adjust_links_df,
-    new_buses_df,
-    europe_shape,
-    offshore_shapes,
-    path,
-    plan,
-    status=["confirmed", "under construction"],
-    skip=[],
-):
+    n: pypsa.Network,
+    new_lines_df: pd.DataFrame,
+    new_links_df: pd.DataFrame,
+    adjust_lines_df: pd.DataFrame,
+    adjust_links_df: pd.DataFrame,
+    new_buses_df: pd.DataFrame,
+    europe_shape: shapely.Geometry,
+    offshore_shapes: gpd.GeoDataFrame,
+    path: str | Path,
+    plan: str,
+    status: tuple[str, ...] | list[str] | dict[str, list[str]] = (
+        "confirmed",
+        "under construction",
+    ),
+    skip: tuple[str, ...] | list[str] = (),
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     lines_dict = get_project_files(path, skip=skip)
     for key, lines in lines_dict.items():
         logger.info(f"Processing {key.replace('_', ' ')} projects from {plan}.")
@@ -458,7 +488,7 @@ def add_projects(
     return new_lines_df, new_links_df, adjust_lines_df, adjust_links_df, new_buses_df
 
 
-def fill_length_from_geometry(line, line_factor=1.2):
+def fill_length_from_geometry(line: pd.Series, line_factor: float = 1.2) -> float:
     if not pd.isna(line.length):
         return line.length
     length = gpd.GeoSeries(line["geometry"], crs=4326).to_crs(3035).length.values[0]

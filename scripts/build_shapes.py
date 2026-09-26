@@ -18,7 +18,9 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def country_cover(country_shapes, eez_shapes=None):
+def country_cover(
+    country_shapes: gpd.GeoSeries, eez_shapes: gpd.GeoSeries | None = None
+) -> Polygon:
     shapes = country_shapes
     if eez_shapes is not None:
         shapes = pd.concat([shapes, eez_shapes])

@@ -70,13 +70,10 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
 
         # Project data to target CRS if needed
         if self.water_temperature.rio.crs.to_epsg() != self.EPSG:
-            try:
-                self.water_temperature = self.water_temperature.rio.reproject(
-                    f"EPSG:{self.EPSG}"
-                )
-                logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
-            except Exception as e:
-                raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
+            self.water_temperature = self.water_temperature.rio.reproject(
+                f"EPSG:{self.EPSG}"
+            )
+            logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
 
     def _clip_data_to_region(self) -> None:
         """

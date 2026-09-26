@@ -7,6 +7,7 @@ Creates plots from summary CSV files.
 
 import logging
 import os
+from collections.abc import Iterable
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
@@ -21,8 +22,6 @@ from scripts._helpers import (
 from scripts.prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
-plt.style.use("bmh")
-
 
 # consolidate and rename
 
@@ -67,7 +66,7 @@ preferred_order = pd.Index(
 )
 
 
-def check_tech_colors(tech_colors, keys):
+def check_tech_colors(tech_colors: dict[str, str], keys: Iterable[str]) -> None:
     """
     Check if all keys exist in tech_colors mapping, otherwise raise KeyError.
     """
@@ -78,7 +77,7 @@ def check_tech_colors(tech_colors, keys):
         )
 
 
-def plot_costs():
+def plot_costs() -> None:
     cost_df = pd.read_csv(
         snakemake.input.costs, index_col=list(range(3)), header=list(range(n_header))
     )
@@ -158,7 +157,7 @@ def plot_costs():
     plt.close(fig)
 
 
-def plot_energy():
+def plot_energy() -> None:
     energy_df = pd.read_csv(
         snakemake.input.energy, index_col=list(range(2)), header=list(range(n_header))
     )
@@ -247,14 +246,15 @@ def plot_energy():
     plt.close(fig)
 
 
-def plot_balances():
+def plot_balances() -> None:
     co2_carriers = ["co2", "co2 stored", "process emissions"]
 
     balances_df = pd.read_csv(
         snakemake.input.balances, index_col=list(range(3)), header=list(range(n_header))
     )
 
-    balances = {k: df for k, df in balances_df.groupby("bus_carrier")}
+    # dict() on a GroupBy calls its `.keys` attribute, so keep the comprehension
+    balances = {k: df for k, df in balances_df.groupby("bus_carrier")}  # noqa: C416
     balances["energy"] = balances_df.groupby(["component", "carrier"]).sum()
 
     for bus_carrier, df in balances.items():
@@ -338,7 +338,7 @@ def plot_balances():
         )
 
 
-def historical_emissions(countries):
+def historical_emissions(countries: list[str]) -> pd.Series:
     """
     Read historical emissions to add them to the carbon budget plot.
     """
@@ -430,7 +430,7 @@ def historical_emissions(countries):
     return emissions
 
 
-def plot_carbon_budget_distribution(input_eurostat, options):
+def plot_carbon_budget_distribution(input_eurostat: str, options: dict) -> None:
     """
     Plot historical carbon emissions in the EU and decarbonization path.
     """
@@ -565,6 +565,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+    plt.style.use("bmh")
 
     n_header = 1
 

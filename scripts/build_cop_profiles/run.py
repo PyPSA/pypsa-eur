@@ -142,7 +142,7 @@ if __name__ == "__main__":
                     ]
                 )
             else:
-                if f"temp_{heat_source}" not in snakemake.input.keys():
+                if f"temp_{heat_source}" not in snakemake.input.keys():  # noqa: SIM118
                     raise ValueError(
                         f"Missing input temperature for heat source {heat_source}."
                     )

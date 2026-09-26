@@ -1187,7 +1187,7 @@ def compress_html(html: str) -> str:
     html = re.sub(r"<!--.*?-->", "", html, flags=re.DOTALL)
 
     # Minify CSS only
-    def minify_css(match):
+    def minify_css(match: re.Match[str]) -> str:
         css = match.group(1)
         css = re.sub(r"\s+", " ", css)
         css = re.sub(r"\s*([{};:,])\s*", r"\1", css)
@@ -1197,7 +1197,7 @@ def compress_html(html: str) -> str:
     html = re.sub(r"<style>(.*?)</style>", minify_css, html, flags=re.DOTALL)
 
     # Compress JSON data in the main script tag
-    def compress_json_in_script(match):
+    def compress_json_in_script(match: re.Match[str]) -> str:
         script_content = match.group(0)  # Get the entire match including <script> tags
 
         # Find the jsonInput declaration
@@ -1295,7 +1295,7 @@ if __name__ == "__main__":
 
     # Legacy: Old tag column (<= 0.6) contained voltage and circuit info, so we need to clean it up for the release. Not relevant for newer versions.
     lines["tags"] = lines["tags"].apply(
-        lambda x: ";".join(set(tag.split("-")[0] for tag in x.split(";")))
+        lambda x: ";".join({tag.split("-")[0] for tag in x.split(";")})
     )
 
     lines = export_clean_csv(lines, LINES_COLUMNS, out_lines, "line_id", export)
