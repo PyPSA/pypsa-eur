@@ -10,18 +10,35 @@ The json schema is also contributed to the schemastore.org and matches
 `**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
 """
 
+import copy
 import pathlib
 import re
 
 from pydantic import ValidationError
 from ruamel.yaml import YAML
+from snakemake.utils import update_config
 
 from scripts.lib.validation.config._base import _registry
 from scripts.lib.validation.config._schema import ConfigSchema
 
 
-def validate_config(config: dict) -> ConfigSchema:
-    """Validate config dict against schema."""
+def validate_config(config: dict, extra: str | None = None) -> ConfigSchema:
+    """
+    Validate config dict against schema.
+
+    Parameters
+    ----------
+    config : dict
+        Config dict to validate.
+    extra : {"ignore", "allow", "forbid"}, optional
+        Override how unknown keys are handled in all (nested) models, e.g.
+        ``"forbid"`` to raise a validation error for each of them. If None,
+        the behaviour configured in each model is used.
+
+    Returns
+    -------
+    Validated config model, with all config updaters applied.
+    """
     config_schema = ConfigSchema
     name = config_schema._name.default
     docs_url = config_schema._docs_url.default
@@ -32,10 +49,94 @@ def validate_config(config: dict) -> ConfigSchema:
             docs_url = updater_config.docs_url
         if updater_config.name:
             name += f".{updater_config.name}"
-    validated_config = config_schema(**config)
+    validated_config = config_schema.model_validate(config, extra=extra)
     validated_config._name = name
     validated_config._docs_url = docs_url
     return validated_config
+
+
+# Sections not covered by the schema or deliberately accepting arbitrary keys,
+# for which unknown keys are not reported
+UNCHECKED_SECTIONS = {"plotting", "conventional"}
+
+
+def find_invalid_entries(config: dict) -> dict[str, list[str]]:
+    """
+    Find config entries that are unknown or have invalid values, including in nested sections.
+
+    Invalid values are those violating the type or allowed values of the schema,
+    e.g. a value outside a set of choices or a numeric range. Missing entries are
+    ignored, so partial override configs can be checked on their own.
+
+    Parameters
+    ----------
+    config : dict
+        Config dict to check.
+
+    Returns
+    -------
+    Error messages by dotted path of the invalid entries.
+    """
+    try:
+        validate_config(config, extra="forbid")
+    except ValidationError as e:
+        invalid = {}
+        for err in e.errors():
+            if err["type"] == "missing":
+                continue
+            if err["type"] == "extra_forbidden":
+                if err["loc"][0] in UNCHECKED_SECTIONS:
+                    continue
+                err["msg"] = "Unknown key, not part of the schema"
+            invalid.setdefault(_config_path(config, err["loc"]), []).append(err["msg"])
+        return invalid
+    return {}
+
+
+def _config_path(config: dict, loc: tuple) -> str:
+    """Dotted path of an error location, without pydantic's union member tags."""
+    path, data = [], config
+    for key in loc:
+        if isinstance(data, dict) and key in data:
+            data = data[key]
+        elif isinstance(data, list) and isinstance(key, int) and key < len(data):
+            data = data[key]
+        else:
+            break
+        path.append(str(key))
+    return ".".join(path) or "<root>"
+
+
+def normalize_config(config: dict, validated: ConfigSchema) -> None:
+    """Normalize config values in place (e.g., ensure planning_horizons is a list)."""
+    config["planning_horizons"] = validated.planning_horizons
+
+
+def validate_scenarios(config: dict, scenarios: dict) -> None:
+    """Validate that each scenario override yields a valid, compatible config."""
+    for scenario_name, scenario_overrides in scenarios.items():
+        if "data" in scenario_overrides:
+            raise ValueError(
+                f"Scenario '{scenario_name}' overrides the 'data' block, but dataset "
+                "versions are resolved globally at workflow construction and cannot vary "
+                "per scenario. Move 'data' settings to the base config."
+            )
+        merged = copy.deepcopy(config)
+        update_config(merged, scenario_overrides)
+        for key in ("foresight", "planning_horizons"):
+            if merged[key] != config[key]:
+                raise ValueError(
+                    f"Scenario '{scenario_name}' changes '{key}', but collection and "
+                    "default targets are built from the base config, so it must be "
+                    "identical across scenarios. Set it at the top level and run "
+                    "differing values as separate workflows with their own run.name."
+                )
+        try:
+            validate_config(merged)
+        except Exception as e:
+            raise ValueError(
+                f"Scenario '{scenario_name}' failed config validation: {e}"
+            ) from e
 
 
 def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
@@ -198,6 +299,9 @@ def generate_config_schema(path: str = "config/schema.{configname}.json") -> dic
 __all__ = [
     "ConfigSchema",
     "validate_config",
+    "find_invalid_entries",
+    "validate_scenarios",
+    "normalize_config",
     "generate_config_defaults",
     "generate_config_schema",
     "ValidationError",

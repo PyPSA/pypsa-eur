@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=../../config/schema.default.json
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# Override config with unknown keys and invalid values, used to test
+# `pixi run validate-config`. Entries that are reported are marked.
+
+foresight: overnight
+country: ["DE"] # reported: unknown key, should be `countries`
+
+snapshots:
+  inclusive: neither # reported: not one of "left", "right", "both" or null
+
+clustering:
+  temporal:
+    averaging: 24 # reported: wrong type, must be a string like "24h" or false
+  cluster_network:
+    nclusters: 5 # reported: unknown nested key, should be `n_clusters`
+
+conventional:
+  unit_commitmnt: true # not reported, `conventional` accepts any extra key
+  fuel_price_rolling_window: 0 # reported: out of range, must be >= 1
+
+solving:
+  solver_options:
+    my-custom-options: # not reported, free-form dict
+      threads: 1

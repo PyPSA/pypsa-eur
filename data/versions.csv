@@ -18,8 +18,10 @@ copernicus_land_cover,v3.0.1,archive,latest supported,2026-01-20,"The primary is
 copernicus_land_cover,v2.0.2,archive,deprecated supported,2026-01-13,,https://data.pypsa.org/workflows/eur/copernicus_land_cover/v2.0.2/PROBAV_LC100_global_v3.0.1_2015-base_Discrete-Classification-map_EPSG-4326.tif
 corine,v18_5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/corine/v18_5/corine.zip
 corine,unknown,primary,latest supported,2025-12-02,Need to register with CLMS API and create an access token. The download URL is dynamic,
-costs,v0.14.0,primary,latest supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.14.0/outputs
-costs,v0.14.0,archive,latest supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.14.0
+costs,v0.15.0,primary,latest supported,2026-06-09,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.15.0/outputs
+costs,v0.15.0,archive,latest supported,2026-06-09,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.15.0
+costs,v0.14.0,primary,supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.14.0/outputs
+costs,v0.14.0,archive,supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.14.0
 costs,v0.13.4,primary,supported,2025-12-02,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.4/outputs
 costs,v0.13.4,archive,supported,2026-01-21,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.13.4
 costs,v0.13.3,primary,supported,2025-12-02,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.3/outputs
@@ -145,6 +147,8 @@ swiss_energy_balances,2025-10-01,archive,latest supported,2026-02-16,,https://we
 synthetic_electricity_demand,v2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/10820928/files/demand_hourly.csv
 synthetic_electricity_demand,v2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/v2/demand_hourly.csv
 synthetic_electricity_demand,0.1.0,archive,deprecated might-work,2026-01-13,,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/0.1.0/demand_hourly.csv
+tabula_calculator,unknown,primary,latest supported,2026-09-02,Derived from the Calc.Set.Building sheet of the TABULA calculator workbook,https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
+tabula_calculator,2026-09-07,archive,latest supported,2026-09-07,Derived from the Calc.Set.Building sheet of the TABULA calculator workbook,https://data.pypsa.org/workflows/eur/tabula_calculator/2026-09-07/tabula-calculator.xlsx
 tyndp,2024,primary,latest supported,2025-12-02,,https://2024-data.entsos-tyndp-scenarios.eu/files/scenarios-inputs
 tyndp,2024,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/tyndp/2024
 wdpa,unknown,primary,latest supported,2025-12-02,"WDPA changes its URL every month, the URL here is used as a template and {bYYYY} is replaced inside the retrieve.smk.",https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip

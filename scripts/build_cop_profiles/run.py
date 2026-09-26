@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
-            clusters=48,
+            horizon=2030,
         )
 
     set_scenario_config(snakemake)
@@ -160,7 +160,9 @@ if __name__ == "__main__":
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(
             xr.concat(
-                cop_this_system_type, dim=pd.Index(heat_sources, name="heat_source")
+                cop_this_system_type,
+                # object dtype since xarray cannot join pandas 3 str-dtype indexes
+                dim=pd.Index(heat_sources, name="heat_source", dtype=object),
             )
         )
 

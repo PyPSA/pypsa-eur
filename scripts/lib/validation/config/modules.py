@@ -5,42 +5,40 @@
 """
 Modules configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#modules
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#modules_cf
 """
 
-from pathlib import Path
-
-from pydantic import Field, FilePath
+from pydantic import Field
 
 from scripts.lib.validation.config._base import ConfigModel
 
 
-class _ModuleConfig(ConfigModel):
-    """Configuration for module settings"""
+class _GeoBoundariesModuleConfig(ConfigModel):
+    """Configuration for the geo_boundaries module."""
 
-    config_path: FilePath = Field(
-        description="Path to module default configuration file. Can be relative to the project directory or absolute.",
-    )
     version: str = Field(
-        description="Module version to use.",
+        default="v1.0.1",
+        description="Release tag of the geo_boundaries module. Applies to all scenarios of a run.",
     )
-
-
-class _GeoBoundariesModuleConfig(_ModuleConfig):
-    """Configuration for module settings"""
-
-    scenario: str = Field(
-        default="default",
-        description="Scenario to use for the geo_boundaries module.",
+    nuts_year: int = Field(
+        default=2021,
+        description="NUTS release year used for countries with NUTS3 regions.",
+    )
+    nuts_resolution: str = Field(
+        default="01M",
+        pattern=r"^[0-9]{2}M$",
+        description="Resolution of the NUTS shapes, e.g. '01M' for 1:1 million.",
+    )
+    adm1_countries: list[str] = Field(
+        default=["BA", "MD", "UA", "XK"],
+        description="Countries without NUTS3 regions. Their ADM1 regions are taken from geoBoundaries (gbOpen release).",
     )
 
 
 class ModulesConfig(ConfigModel):
-    """Configuration for modules."""
+    """Configuration for external Modelblocks modules."""
 
     geo_boundaries: _GeoBoundariesModuleConfig = Field(
-        default=_GeoBoundariesModuleConfig(
-            config_path=Path("config/modules/geo_boundaries.yaml"), version="v1.0.1"
-        ),
+        default_factory=_GeoBoundariesModuleConfig,
         description="Configuration for the geo_boundaries module.",
     )

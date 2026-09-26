@@ -25,7 +25,7 @@ sector:
 
 Inputs
 ------
-- `resources/<run_name>/regions_onshore.geojson`: Shapes of onshore regions
+- `resources/<run_name>/onshore_regions.geojson`: Shapes of onshore regions
 - `resources/<run_name>/aquifer_shapes.shp`: Shapes of aquifers
 - `resources/<run_name>/dh_areas.geojson`: Shapes of district heating areas
 - `resources/<run_name>/central_heating_forward_temperature_profiles.nc`: Forward temperature profiles
@@ -39,7 +39,7 @@ References
 ----------
 - Jackson, Regnier, Staffell 2024: "Aquifer Thermal Energy Storage for low carbon heating and cooling in the United Kingdom: Current status and future prospects", Applied Energy, vol. 376, no. 124096, https://doi.org/10.1016/j.apenergy.2024.124096
 - Manz et al. 2024: "Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe", Renewable Energy, vol. 224, no. 120111, https://doi.org/10.1016/j.renene.2024.120111
-- Fallahnejad et al. 2024: "District heating potential in the EU-27: Evaluating the impacts of heat demand reduction and market share growth", Applied Energy, vol. 353, no. 122154, https://https://doi.org/10.1016/j.apenergy.2023.122154
+- Fallahnejad et al. 2024: "District heating potential in the EU-27: Evaluating the impacts of heat demand reduction and market share growth", Applied Energy, vol. 353, no. 122154, https://doi.org/10.1016/j.apenergy.2023.122154
 - BGR: IHME1500 - Internationale Hydrogeologische Karte von Europa 1:1.500.000 (https://www.bgr.bund.de/DE/Themen/Wasser/Projekte/laufend/Beratung/Ihme1500/ihme1500_projektbeschr.html?nn=1546102)
 """
 
@@ -156,7 +156,7 @@ def suitable_aquifers(
 
 def ates_potential_per_onshore_region(
     suitable_aquifers: gpd.GeoDataFrame,
-    regions_onshore: gpd.GeoDataFrame,
+    onshore_regions: gpd.GeoDataFrame,
     dh_areas: gpd.GeoDataFrame,
     dh_area_buffer: float,
     mwh_per_m2: float,
@@ -171,7 +171,7 @@ def ates_potential_per_onshore_region(
     ----------
     suitable_aquifers : geopandas.GeoDataFrame
         GeoDataFrame containing filtered suitable aquifers
-    regions_onshore : geopandas.GeoDataFrame
+    onshore_regions : geopandas.GeoDataFrame
         GeoDataFrame containing the shapes of onshore regions
     dh_areas : geopandas.GeoDataFrame
         GeoDataFrame containing the shapes of district heating areas
@@ -188,24 +188,24 @@ def ates_potential_per_onshore_region(
     Raises
     ------
     KeyError
-        If required column 'name' is not found in regions_onshore dataframe
+        If required column 'name' is not found in onshore_regions dataframe
     Exception
         If calculation process fails
     """
     try:
-        if suitable_aquifers.empty or regions_onshore.empty or dh_areas.empty:
+        if suitable_aquifers.empty or onshore_regions.empty or dh_areas.empty:
             logger.warning("One or more input GeoDataFrames are empty")
 
-        ret_val = regions_onshore.copy()
+        ret_val = onshore_regions.copy()
 
         if "name" not in ret_val.columns:
-            raise KeyError("Column 'name' not found in regions_onshore dataframe")
+            raise KeyError("Column 'name' not found in onshore_regions dataframe")
 
         ret_val.index = ret_val["name"]
         ret_val.drop(columns=["name"], inplace=True)
 
         suitable_aquifers_in_onshore_regions = gpd.overlay(
-            suitable_aquifers, regions_onshore, how="intersection"
+            suitable_aquifers, onshore_regions, how="intersection"
         )
 
         if suitable_aquifers_in_onshore_regions.empty:
@@ -234,7 +234,7 @@ def ates_potential_per_onshore_region(
             if missing_regions:
                 logger.info(f"{len(missing_regions)} regions have no ATES potential")
 
-            ret_val["ates_potential"] = 0  # Default value
+            ret_val["ates_potential"] = 0.0  # Default value
             ret_val.loc[aquifers_in_dh_areas.index, "ates_potential"] = (
                 aquifers_in_dh_areas * mwh_per_m2
             )
@@ -305,7 +305,7 @@ def check_dh_areas_coverage(dh_areas: gpd.GeoDataFrame, countries: list) -> None
 
 def check_aquifer_coverage(
     aquifer_shapes: gpd.GeoDataFrame,
-    regions_onshore: gpd.GeoDataFrame,
+    onshore_regions: gpd.GeoDataFrame,
     ignore_missing_regions: bool,
 ) -> None:
     """
@@ -318,7 +318,7 @@ def check_aquifer_coverage(
     ----------
     aquifer_shapes : geopandas.GeoDataFrame
         GeoDataFrame containing the shapes of all aquifers
-    regions_onshore : geopandas.GeoDataFrame
+    onshore_regions : geopandas.GeoDataFrame
         GeoDataFrame containing the shapes of onshore regions
 
     Returns
@@ -336,21 +336,21 @@ def check_aquifer_coverage(
             "Aquifer shapes dataframe is empty. Cannot proceed with ATES calculation."
         )
 
-    if regions_onshore.empty:
+    if onshore_regions.empty:
         raise ValueError(
             "Onshore regions dataframe is empty. Cannot proceed with ATES calculation."
         )
 
     # Perform spatial overlay to check which regions have aquifer coverage
     aquifers_by_region = (
-        gpd.overlay(aquifer_shapes, regions_onshore, how="intersection")
+        gpd.overlay(aquifer_shapes, onshore_regions, how="intersection")
         .groupby("name")["geometry"]
         .count()
     )
 
     # Get regions without any aquifer coverage
-    if "name" in regions_onshore.columns:
-        all_region_names = set(regions_onshore["name"])
+    if "name" in onshore_regions.columns:
+        all_region_names = set(onshore_regions["name"])
         covered_region_names = set(aquifers_by_region.index)
         uncovered_regions = all_region_names - covered_region_names
 
@@ -376,26 +376,24 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_ates_potentials", clusters="48", planning_horizons=2030
-        )
+        snakemake = mock_snakemake("build_ates_potentials", horizon=2030)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     # get onshore regions and index them by region name
-    regions_onshore = gpd.read_file(snakemake.input.regions_onshore)
-    regions_onshore = regions_onshore.to_crs(epsg=3035)
+    onshore_regions = gpd.read_file(snakemake.input.onshore_regions)
+    onshore_regions = onshore_regions.to_crs(epsg=3035)
 
     countries: list = snakemake.params.countries
 
     aquifer_shapes = gpd.read_file(snakemake.input.aquifer_shapes_shp).to_crs(
-        regions_onshore.crs
+        onshore_regions.crs
     )
     # fix any invalid geometries
     aquifer_shapes.geometry = aquifer_shapes.geometry.make_valid()
 
-    dh_areas = gpd.read_file(snakemake.input.dh_areas).to_crs(regions_onshore.crs)
+    dh_areas = gpd.read_file(snakemake.input.dh_areas).to_crs(onshore_regions.crs)
 
     # Check district heating areas coverage
     logger.info("Checking district heating areas coverage")
@@ -408,7 +406,7 @@ if __name__ == "__main__":
     logger.info("Checking aquifer coverage for onshore regions")
     check_aquifer_coverage(
         aquifer_shapes=aquifer_shapes,
-        regions_onshore=regions_onshore,
+        onshore_regions=onshore_regions,
         ignore_missing_regions=snakemake.params.ignore_missing_regions,
     )
 
@@ -437,7 +435,7 @@ if __name__ == "__main__":
     logger.info("Calculating ATES potentials per region")
     ates_potentials = ates_potential_per_onshore_region(
         suitable_aquifers=suitable_aquifer_df,
-        regions_onshore=regions_onshore,
+        onshore_regions=onshore_regions,
         dh_areas=dh_areas,
         dh_area_buffer=snakemake.params.dh_area_buffer,
         mwh_per_m2=mwh_per_m2,

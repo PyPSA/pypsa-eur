@@ -91,11 +91,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_heatmap_timeseries",
-            simpl="",
-            clusters="10",
-            opts="",
-            sector_opts="",
-            planning_horizons=2050,
+            horizon=2050,
         )
 
     configure_logging(snakemake)

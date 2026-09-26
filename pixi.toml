@@ -9,11 +9,13 @@ name = "pypsa-eur"
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "2025.07.0"
 exclude-newer = "7d"
+requires-pixi = ">=0.71.0"
 
 [exclude-newer]
 linopy = "0d"
 pypsa = "0d"
 atlite = "0d"
+snakemake-executor-plugin-slurm = "0d"  # drop once the pandas 3 build is older than 7d
 
 [tasks]
 
@@ -35,11 +37,11 @@ logs, resources, benchmarks, results, and .snakemake directories except \
 """
 
 update-dags = """
-	snakemake results/networks/base_s_128_elec_.nc -F --dag | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/intro-workflow.svg && \
-	snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/workflow.svg && \
-	snakemake --dag --configfile config/test/config.electricity.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_electricity.svg && \
-	snakemake --dag --configfile config/test/config.overnight.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_overnight.svg && \
-	snakemake --dag --configfile config/test/config.myopic.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_myopic.svg
+	snakemake --dag dot --forceall results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/intro-workflow.svg && \
+	snakemake --rulegraph dot --forceall | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/workflow.svg && \
+	snakemake --dag dot --forceall --configfile config/test/config.electricity.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_electricity.svg && \
+	snakemake --dag dot --forceall --configfile config/test/config.overnight.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_overnight.svg && \
+	snakemake --dag dot --forceall --configfile config/test/config.myopic.yaml | sed -n '/^digraph/,$ p' | dot -Tsvg -o doc/img/dag_myopic.svg
 """
 
 sync-locks = """
@@ -78,17 +80,17 @@ netcdf4 = ">=1.7.2,!=1.7.4"
 networkx = ">=3.5"
 numpy = ">=1.26.4"
 openpyxl = ">=3.1.5"
-pandas = ">=2.1"
+pandas = ">=3"
 plotly = ">=6.4.0"
 powerplantmatching = ">=0.5.15"
-pydantic = ">=2"
+pydantic = ">=2.12"
 python-dotenv = ">=1.0"
 proj = ">=9.6.2"
 pydeck = ">0.6"  # pypsa fails to import with pydeck <0.6, lower bound was only added from pypsa 1.0.6
 pypsa = ">=0.35.2"
 pyscipopt = ">=5.6.0"
 pytables = ">=3.10.2"
-python = ">=3.12,<3.14"  # remove upper bound once issue has been fixed https://github.com/PyPSA/pypsa-eur/issues/2245
+python = ">=3.12"
 pytz = ">=2025.2"
 pyxlsb = ">=1.0.10"
 rasterio = ">=1.4.3"
@@ -104,7 +106,7 @@ snakemake-storage-plugin-http = ">=0.3"
 tenacity = ">=9.1.2"
 tqdm = ">=4.67.1"
 tsam = ">=2.3.1"
-xarray = ">=2024.3.0,<2025.7.0"
+xarray = ">=2026.1"
 xlrd = ">=2.0.2"
 yaml = ">=0.2.5"
 snakemake-storage-plugin-cached-http = ">=0.2.1"
@@ -113,7 +115,8 @@ natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
 pydeflate = ">=2.3.4"
 snakemake-logger-plugin-snkmt = "==0.1.6" # For better pypsa-app integration
-conda = ">=26.5.3"
+antimeridian = ">=0.4.7"  # geo_boundaries module
+duckdb = ">=1.2.0"  # geo_boundaries module (Overture source)
 
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"
@@ -129,14 +132,14 @@ cmd = "mkdocs build -d {{ dir }}/html"
 args = ["dir"]
 
 [feature.doc.dependencies]
-atlite = "==0.4.1"
-cartopy = "==0.25.0"
-dask = "==2025.11.0"
-descartes = "==1.1.0"
-fiona = "==1.10.1"
-graphviz = "==13.1.2"
-matplotlib = "==3.10.7"
-memory_profiler = "==0.61.0"
+atlite = ">=0.3,!=0.5.0"
+cartopy = ">=0.25.0"
+dask = ">=2025.10.0"
+descartes = ">=1.1.0"
+fiona = ">=1.10.1"
+graphviz = ">=12.2.1"
+matplotlib = ">=3.10.7"
+memory_profiler = ">=0.61.0"
 mkdocs = ">=1.6"
 mkdocs-material = ">=9.5"
 mkdocstrings = ">=0.29"
@@ -146,37 +149,48 @@ pymdown-extensions = ">=10.0"
 mkdocs-macros-plugin = ">=1.0"
 mkdocs-table-reader-plugin = ">=3.1"
 snakemake-minimal = ">=9"
-powerplantmatching = "==0.7.1"
-pydot = "==4.0.1"
-pypsa = "==1.0.3"
-pytables = "==3.10.2"
-python = "==3.12.12"
-pyyaml = "==6.0.3"
-requests = "==2.32.5"
-scikit-learn = "==1.7.2"
-seaborn = "==0.13.2"
-tabula-py = "==2.7.0"
-tenacity = "==9.1.2"
-tsam = "==2.3.9"
+powerplantmatching = ">=0.5.15"
+pydot = ">=4.0.1"
+pypsa = ">=0.35.2"
+pytables = ">=3.10.2"
+python = ">=3.10"
+pyyaml = ">=6.0.3"
+requests = ">=2.32.5"
+scikit-learn = ">=1.7.2"
+seaborn = ">=0.13.2"
+tabula-py = ">=2.7.0"
+tenacity = ">=9.1.2"
+tsam = ">=2.3.1"
 
 [feature.test.tasks]
 
 integration-tests = """
-    snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml &&
+    snakemake -call --configfile config/test/config.electricity.yaml &&
     snakemake -call --configfile config/test/config.overnight.yaml &&
     snakemake -call --configfile config/test/config.myopic.yaml &&
-    snakemake -call resources/test-elec-clusters/networks/base_s_adm.nc --configfile config/test/config.clusters.yaml &&
+    snakemake -call --configfile config/test/config.perfect.yaml &&
+    snakemake -call resources/test-elec-clusters/networks/clustered.nc --configfile config/test/config.clusters.yaml &&
+    snakemake -call resources/test-elec-segmentation/snapshot_weightings.csv --configfile config/test/config.segmentation.yaml &&
     snakemake -call --configfile config/test/config.scenarios.yaml -n &&
-    snakemake -call plot_power_networks_clustered --configfile config/test/config.tyndp.yaml &&
+    snakemake -call results/test-elec-tyndp/maps/static/power_network_2030.pdf --configfile config/test/config.tyndp.yaml &&
+    echo "All tests completed successfully."
+"""
+integration-tests-streamlined = """
+    snakemake -call --configfile config/test/config.electricity-perfect.yaml &&
+    snakemake -call --configfile config/test/config.electricity-myopic.yaml &&
     echo "All tests completed successfully."
 """
 clean-tests = """
-    snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml --delete-all-output ;
+    snakemake -call --configfile config/test/config.electricity.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.overnight.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.myopic.yaml --delete-all-output ;
-    snakemake -call resources/test-elec-clusters/networks/base_s_adm.nc --configfile config/test/config.clusters.yaml --delete-all-output ;
+    snakemake -call --configfile config/test/config.perfect.yaml --delete-all-output ;
+    snakemake -call --configfile config/test/config.electricity-perfect.yaml --delete-all-output ;
+    snakemake -call --configfile config/test/config.electricity-myopic.yaml --delete-all-output ;
+    snakemake -call resources/test-elec-clusters/networks/clustered.nc --configfile config/test/config.clusters.yaml --delete-all-output ;
+    snakemake -call resources/test-elec-segmentation/snapshot_weightings.csv --configfile config/test/config.segmentation.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.scenarios.yaml -n --delete-all-output ;
-    snakemake -call plot_power_networks_clustered --configfile config/test/config.tyndp.yaml --delete-all-output ;
+    snakemake -call results/test-elec-tyndp/maps/static/power_network_2030.pdf --configfile config/test/config.tyndp.yaml --delete-all-output ;
 	echo "All test outputs have been cleaned up."
 """
 unit-tests = "pytest test"
@@ -184,6 +198,7 @@ unit-tests = "pytest test"
 all-tests = {depends-on = ["integration-tests", "clean-tests", "unit-tests"]}
 
 generate-config = "pytest test/test_config_schema.py --fix"
+validate-config = "pytest test/test_config_schema.py::test_config_file_is_valid --validate-config"
 
 [feature.test.dependencies]
 pytest = ">=8.4.2"

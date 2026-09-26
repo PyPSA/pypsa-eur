@@ -6,65 +6,396 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-* refactor: `prepare_sector_network.py` functions now take `spatial` as an explicit parameter instead of a module-level global.
-* fix: update stale contribution docs (linting and formatting ruff)
-* feat: data version CSV / YAML file can be specified separately or extended by the user in the `data.version_files` config entry ([#2016](https://github.com/PyPSA/pypsa-eur/issues/2016)).
-* Fix: Resolve plotting crashes from missing `tech_colors` entries by adding `heat dsm` color and implementing upfront validation for missing keys in `plot_summary.py` ([#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
-* Fix: Retry interrupted WDPA and WDPA-marine downloads ([#2138](https://github.com/PyPSA/pypsa-eur/issues/2138)).
-* feat: Make the default target rule configurable (defaults to "all" for backwards compatibility)
+## Upcoming Release
 
-* Fix: Keep unset `p_set` (NaN) as NaN when aggregating components in `cluster_heat_buses`, required for [PyPSA#1703](https://github.com/PyPSA/PyPSA/pull/1703).
+* **Geographical shapes come from the Modelblocks `geo_boundaries` module**
+  ([#2252](https://github.com/PyPSA/pypsa-eur/pull/2252)). NUTS3, EEZ and ADM1 boundaries
+  are no longer retrieved and harmonised by PyPSA-Eur itself but by the external
+  [`geo_boundaries`](https://github.com/modelblocks-org/module_geo_boundaries) Snakemake module,
+  imported in `rules/modules/geo_boundaries.smk` and configured in the new top-level
+  `modules` section. The module configuration is derived from `countries` and the
+  `modules.geo_boundaries` settings, one module scenario per PyPSA-Eur scenario. The rules
+  `retrieve_eez`, `retrieve_eu_nuts_2021`, `retrieve_osm_boundaries` and `build_osm_boundaries`
+  and the data sources `eez`, `eu_nuts2021` and `osm_boundaries` are removed. ADM1 boundaries for
+  BA, MD, UA and XK now come from geoBoundaries instead of OpenStreetMap, so region outlines in
+  these countries shift slightly. Snakemake >= 9.19 is required.
 
-* Fix: When clustering heat buses, in myopic optimization, and afterwards viewing the heat energy_balance with n.statistics (and with nice_names=True, which is the default), some assets would still be displayed as belonging to "residential" or "services" sectors, because the nice_names still lingered from the unclustered version. This has been fixed.
+## PyPSA-Eur v2026.09.0 (25th September 2026)
 
-* Security: SBOM security scan included in CI.
+**Streamlined Workflow**
 
-* Updated contribution guidelines outline what we expect from AI-based contributions.
+This release restructures the workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)). Overnight,
+myopic and perfect foresight are now handled by a unified set of rules for both electricity-only and
+sector-coupled models. Existing configurations need to be updated. See the [migration guide](migration.md)
+for file name mappings and configuration changes in detail.
 
-* Security: Development dependencies (pre-commit, pylint, jupyter, etc.) moved to `dev` `pixi` environment.
-  Removed 62 CVEs from `default` environment.
+* **Workflow structure:**
 
-* Fix: Prevent over-aggressive HVDC simplification in `simplify_network` for branched/multi-terminal DC topologies (e.g. UK/Shetland edge cases). Supernode detection now only collapses true chain nodes (degree 2) and preserves DC junctions (degree 3+) so branches are not dropped ([#2147](https://github.com/PyPSA/pypsa-eur/pull/2147)).
+    - The network pipeline now follows the progression `base.nc` -> `simplified.nc` -> `clustered.nc` ->
+      `composed_{horizon}.nc` -> `solved_{horizon}.nc`.
 
-* Fix: `atlite.plot_availability_matrix` config option for `determine_availability_matrix` and `determine_availability_matrix_MD_UA` scripts, changed their output and behaviour to align consistently ([#2173](https://github.com/PyPSA/pypsa-eur/pull/2173)).
+    - Replaced cryptic filenames like `elec_s_37_lv1.25_3H_2030.nc` with readable names. Scenario parameters
+      (clusters, opts, sector_opts) are now set via configuration rather than filename wildcards.
 
-* Fix: Activate losses for `H2 pipeline retrofitted` links by default, to ensure consistency with `H2 pipeline` links.
+    - A single [compose_network][] rule assembles the networks for overnight, myopic and perfect foresight for
+      both electricity-only and sector-coupled models.
 
-* Fix: Re-introduce capital costs for non-bicharging discharge links in `add_electricity.py`, e.g. fuel cells.
+    - A single [solve_network][] rule replaces the separate `solve_electricity.smk`, `solve_overnight.smk`,
+      `solve_myopic.smk` and `solve_perfect.smk` rule files (now deleted).
 
-* The lockfile update workflow now excludes packages published within the last 7 days to reduce the risk of pulling in broken or yanked releases ([#2130](https://github.com/PyPSA/pypsa-eur/pull/2130)).
+    - **Electricity-only models now support myopic and perfect foresight**, not just overnight optimisation.
+      Added the test configurations `config.electricity-myopic.yaml` and `config.electricity-perfect.yaml`.
 
-* The industry reference year and the ammonia production data have been updated to 2023 ([#2103](https://github.com/PyPSA/pypsa-eur/pull/2103))
+    - **Perfect foresight runs on PyPSA v1.0 again.** Perfect foresight has been ported to the current PyPSA
+      API, which removes the previous error `PyPSA versions >=1.0 are not supported for perfect foresight`.
 
-* refactor: Use scripts path provider consistently ([#2093](https://github.com/PyPSA/pypsa-eur/pull/2093)).
+    - Post-processing (summaries, maps, plots) works uniformly across all foresight modes and model types. The
+      results CSVs (`costs.csv`, `capacities.csv`, `energy.csv`, etc.) are unified across horizons.
 
-* Fix: Lower the lower bound used to group the power plants in `add_existing_baseyear` ([#2097](https://github.com/PyPSA/pypsa-eur/pull/2097)). This now includes all power plants built since 1900.
+    - [make_summary][] now handles all foresight modes and replaces `make_summary_perfect.py` and
+      `make_global_summary.py`.
 
-* feat: Add options for carrier specific load shedding and load sinks configurable via `load_shedding` and `load_sinks` respectively ([#2105](https://github.com/PyPSA/pypsa-eur/pull/2105)).
+* **Breaking configuration changes:**
 
-* perf: Optimize dask settings for computing weather-dependent profiles ([#2137](https://github.com/PyPSA/pypsa-eur/pull/2137)).
+    - Removed the `scenario:` block (`clusters`, `opts`, `sector_opts`, `planning_horizons`). Use
+      `planning_horizons` at the top level and `clustering: cluster_network: n_clusters` for the number of
+      clusters.
 
-* Fix: correct definition of `marginal_cost` for those links were `vom` values from technology cost datasets are defined per units of output (e.g., electricity) ([#2154](https://github.com/PyPSA/pypsa-eur/pull/2154)).
+    - Added `clustering: cluster_network: n_clusters`, which replaces the `{clusters}` wildcard in filenames.
+      It accepts an integer or `all` to skip clustering.
 
-* feat: Improve the config validation to cover scenario management ([#2155](https://github.com/PyPSA/pypsa-eur/pull/2155)).
+    - Added `sector: enabled` to control sector coupling. Set to `false` for electricity-only models.
 
-- Added solar rooftop ratio setting to `add_existing_baseyear` for heuristically splitting existing solar capacity between rooftop and utility-scale (defaults to a 50:50 split).
+    - Removed `electricity: co2limit_enable`, `electricity: co2limit` and `electricity: co2base`, as well as
+      the `Co2L` and `cb*` wildcards in `opts` and `sector_opts`. Use the unified `co2_budget` section
+      instead.
 
-- doc: Disable root TOC entries in order to declutter the table of contents for the rules overview ([2216](https://github.com/PyPSA/pypsa-eur/pull/2216)).
+    - Restructured `co2_budget`. It now requires `emissions_scope` and `relative` (`true`/`false`) plus
+      `upper`/`lower` bounds, where each bound can be `null`, a scalar, or a `{year: value}` mapping.
 
-* fix: Ensure `inflow_t` is always defined in `attach_hydro`, resolving a pylint use-before-assignment issue ([#2224](https://github.com/PyPSA/pypsa-eur/pull/2224)).
-* Add missing regex anchor with `re.fullmatch` to `create_zenodo_deposition_cli` utils script ([#2225](https://github.com/PyPSA/pypsa-eur/pull/2225)).
+    - Merged `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` into
+      `clustering: temporal`, which offers three mutually exclusive options: `averaging` (average over a
+      pandas offset such as `24h`), `segmentation` (aggregate into `n` `tsam` segments) and `representative`
+      (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation
+      path.
 
-* doc: Add note about deep-discharge protection for BEV available battery capacity ([#2227](https://github.com/PyPSA/pypsa-eur/pull/2227)).
-* doc: Add FAQ section to docs (`faq.md`) with troubleshooting for `SSL: CERTIFICATE_VERIFY_FAILED` during data retrieval behind proxy servers ([#2228](https://github.com/PyPSA/pypsa-eur/pull/2228)).
-* Fix Ultranet (TYNDP 254) to end in Philippsburg (#2236)
+    - Renamed the transmission extension keys `lines: max_extension` to `s_nom_max_extension` and
+      `links: max_extension` to `p_nom_max_extension`.
 
-* chore: Bump the python version to 3.12 ([#2235](https://github.com/PyPSA/pypsa-eur/pull/2235)). This does not increase the real requirement, because 3.12 is already the effective minimum.
+    - Moved national policy phase-outs to `existing_capacities: phase_outs` as a list of
+      `{carriers, countries, year}` rules. Previously hardcoded in `prepare_perfect_foresight.py`, they now cap
+      conventional asset lifetimes for both generators (electricity-only) and links (sector-coupled) in
+      perfect foresight. Defaults reproduce the previous behaviour.
 
-* Fix: `build_electricity_demand_base` fetched the non-existent `load.distribution_key.pop` key instead of correct `population`, silently ignoring the configured value ([#2241](https://github.com/PyPSA/pypsa-eur/pull/2241)).
-* Fix: `fill_missing_years` applied the backward fill across country boundaries, so countries without any Eurostat value silently inherited the values of the next country ([#2242](https://github.com/PyPSA/pypsa-eur/pull/2242)).
+    - Changed the default of `costs: year` to `null`. Cost assumptions now follow each planning horizon. Set
+      `costs: year` to cost all horizons with that year's assumptions (e.g. a 2050 horizon with 2030 costs).
+      It also selects which `planning_horizon` entries of the custom costs file apply.
 
-* chore: Drop the `grpcio < 1.78` pin and add a temporary `python < 3.14` pin ([#2244](https://github.com/PyPSA/pypsa-eur/pull/2244)). The upper bound on python will be lifted once [#2245](https://github.com/PyPSA/pypsa-eur/issues/2245) is resolved.
+    - Retained [solve_operations_network][] as an opt-in rule that re-dispatches the fixed-capacity
+      `solved_{horizon}.nc` into `operations_{horizon}.nc`. Its rolling horizon settings moved to a new
+      `solving: operations` block (`rolling_horizon`, `horizon`, `overlap`), enabling capacity expansion
+      followed by rolling-horizon dispatch. `solving: options: rolling_horizon` now only controls
+      [solve_network][].
+
+    - Renamed `regions_onshore_base_s_{clusters}.geojson` and `regions_offshore_base_s_{clusters}.geojson` to
+      `onshore_regions.geojson` and `offshore_regions.geojson`. The shapes for the simplified resolution are
+      stored at `onshore_regions_simplified.geojson` and `offshore_regions_simplified.geojson`.
+
+* **Conventions:**
+
+    - Inputs to [compose_network][] are already regionally clustered and simplified, so they are processed
+      without further aggregation.
+
+    - Data files that represent a final version of themselves have no dedicated suffix (e.g. regionally
+      aggregated shapes are stored at `onshore_regions.geojson`). Intermediate files in the processing chain
+      may carry suffixes (e.g. `onshore_shapes_simplified.geojson`).
+
+**Features**
+
+* Added `pixi run validate-config CONFIGFILE [CONFIGFILE ...]` to check configuration files for invalid keys
+  and values ([#2307](https://github.com/PyPSA/pypsa-eur/pull/2307)).
+
+**Changes**
+
+* Removed the deprecated configuration option `sector: electricity_distribution_grid_cost_factor`
+  ([#2299](https://github.com/PyPSA/pypsa-eur/pull/2299)).
+
+* `mock_snakemake` now supports scripts in subdirectories of `scripts/`
+  ([#2305](https://github.com/PyPSA/pypsa-eur/pull/2305)).
+
+* Fixed broken documentation links left over from the MkDocs migration and added the `lychee` link checker
+  for external links and internal anchors ([#2294](https://github.com/PyPSA/pypsa-eur/pull/2294),
+  [#2288](https://github.com/PyPSA/pypsa-eur/issues/2288)).
+
+* Introduced a Pixi version floor of v0.71.0. The CI uses the latest Pixi version, while the `Dockerfile`
+  uses a fixed version managed by Dependabot ([#2293](https://github.com/PyPSA/pypsa-eur/pull/2293)).
+
+**Bugfixes and Compatibility**
+
+* Added `gas pipeline new` and `CO2 pipeline` to `sector: transmission_efficiency: enable` by default, so
+  that these bidirectional links are split into two unidirectional lossy links. Previously, they could carry
+  negative flows, which led to negative marginal costs at the exporting bus. Also fixed the condition in
+  `lossy_bidirectional_links` that decides whether links are split
+  ([#2191](https://github.com/PyPSA/pypsa-eur/pull/2191)).
+
+* Restored the TABULA building data required by [build_retro_cost][] via the new rule
+  `retrieve_tabula_calcsetbuilding`, which retrieves the data from the original source
+  ([#2285](https://github.com/PyPSA/pypsa-eur/pull/2285), [#2281](https://github.com/PyPSA/pypsa-eur/issues/2281)).
+
+* Fixed the building retrofitting scripts, which broke with `pandas` v3 and other code changes
+  ([#2273](https://github.com/PyPSA/pypsa-eur/pull/2273)).
+
+* Made [clean_osm_data][] compatible with `pandas` v3 by treating missing OSM tag values explicitly as empty
+  strings. Empty entries in link ratings (e.g. `500;`) no longer raise an error. In [build_osm_network][],
+  lines split at more than 26 overpassed buses no longer fail; segment IDs continue after `z` with `aa`, `ab`,
+  etc. ([#2300](https://github.com/PyPSA/pypsa-eur/pull/2300)).
+
+* Fixed a `TypeError` with focus weights in [cluster_network][], caused by `pandas` dropping the index name
+  ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277)).
+
+* Removed the `__init__` override in `heat_system.py` for compatibility with Python 3.14 and lifted the
+  temporary `python < 3.14` pin ([#2304](https://github.com/PyPSA/pypsa-eur/pull/2304),
+  [#2245](https://github.com/PyPSA/pypsa-eur/issues/2245)).
+
+* Fixed a `TypeError` when building cutouts locally with `source: build`
+  ([#2283](https://github.com/PyPSA/pypsa-eur/pull/2283), [#2156](https://github.com/PyPSA/pypsa-eur/issues/2156)).
+
+* Fixed the fallback to the last column in `attach_conventional_generators`, so that a snapshot year missing
+  from a conventional input file (e.g. 2014 in `data/nuclear_p_max_pu.csv`) no longer aborts the run
+  ([#2283](https://github.com/PyPSA/pypsa-eur/pull/2283)).
+
+* Fixed the wildcards in the output files of [build_ambient_air_temperature_yearly_average][] when running
+  with scenarios and `shared_resources` ([#2303](https://github.com/PyPSA/pypsa-eur/pull/2303)).
+
+* Fixed typos in the log file extensions of [build_daily_heat_demand][] and [build_hourly_heat_demand][]
+  ([#2275](https://github.com/PyPSA/pypsa-eur/pull/2275)).
+
+## PyPSA-Eur v2026.08.0 (19th August 2026)
+
+**Features**
+
+* **Improved carbon management modelling:**
+
+    - Added the option to include the compression step in carbon dioxide transport before transporting in
+      dense phase ([#2161](https://github.com/PyPSA/pypsa-eur/pull/2161)).
+
+    - Added the electricity demand of post-combustion carbon capture
+      ([#2161](https://github.com/PyPSA/pypsa-eur/pull/2161)).
+
+    - Capital costs of post-combustion carbon capture now differ depending on the carbon dioxide
+      concentration in the flue gas ([#2161](https://github.com/PyPSA/pypsa-eur/pull/2161)).
+
+* Added carrier-specific load shedding and load sinks, configurable via `load_shedding` and `load_sinks`
+  respectively ([#2105](https://github.com/PyPSA/pypsa-eur/pull/2105)).
+
+* Added solar rooftop ratio setting to [add_existing_baseyear][] for heuristically splitting existing solar
+  capacity between rooftop and utility-scale; defaults to a 50:50 split
+  ([#2088](https://github.com/PyPSA/pypsa-eur/pull/2088)).
+
+* Extended the configuration validation to cover scenario management
+  ([#2155](https://github.com/PyPSA/pypsa-eur/pull/2155)).
+
+* Added `data: version_files` configuration entry, so that the data version CSV and YAML files can be
+  specified separately or extended by the user
+  ([#2189](https://github.com/PyPSA/pypsa-eur/pull/2189)).
+
+* Added `run: default_target_rule` configuration entry making the default target rule configurable; defaults
+  to `all` for backwards compatibility ([#2218](https://github.com/PyPSA/pypsa-eur/pull/2218)).
+
+**Changes**
+
+* Migrated the documentation from Sphinx and reStructuredText to Markdown with MkDocs Material
+  ([#2162](https://github.com/PyPSA/pypsa-eur/pull/2162)). Pages are arranged in tabs
+  ([#2190](https://github.com/PyPSA/pypsa-eur/pull/2190)) and the configuration tables are generated
+  automatically from the validation schema ([#2193](https://github.com/PyPSA/pypsa-eur/pull/2193)).
+
+* Removed `conservative estimate Mt` from the default attributes of
+  `sector: regional_co2_sequestration_potential` to avoid double counting with the gas, oil and aquifer
+  categories. The meaning of the CO2StoP storage potential categories is now documented
+  ([#2086](https://github.com/PyPSA/pypsa-eur/pull/2086)).
+
+* Updated the industry reference year and the ammonia production data to 2023
+  ([#2103](https://github.com/PyPSA/pypsa-eur/pull/2103)).
+
+* Split [build_shapes][] into three independent rules: the new [build_offshore_shapes][] (EEZ only) and
+  [build_nuts3_shapes][] (NUTS3 and ADM1 regions with GDP and population data), while [build_shapes][] itself
+  now only aggregates country and Europe boundaries ([#2169](https://github.com/PyPSA/pypsa-eur/pull/2169)).
+
+* Split [build_energy_totals][] into three rules: the new [build_co2_totals][] (CO2 emissions from EEA and
+  Eurostat, no IDEES dependency) and [build_transformation_output_coke][] (coke oven transformation output
+  from Eurostat only) now run independently of [build_energy_totals][], which retains the IDEES-based energy
+  totals, transport data, district heat share, and heating efficiencies
+  ([#2170](https://github.com/PyPSA/pypsa-eur/pull/2170)).
+
+* Optimised the Dask settings for computing weather-dependent profiles
+  ([#2137](https://github.com/PyPSA/pypsa-eur/pull/2137)).
+
+* Added `highs-hipo` solver settings for the HiGHS interior point solver
+  ([#2180](https://github.com/PyPSA/pypsa-eur/pull/2180)).
+
+* Set `IISMethod` to 1 in the default Gurobi solver options to speed up diagnosing infeasibilities
+  ([#2158](https://github.com/PyPSA/pypsa-eur/pull/2158)).
+
+* Added an index name to the cluster weights in [cluster_network][]
+  ([#2185](https://github.com/PyPSA/pypsa-eur/pull/2185)).
+
+* Functions in [prepare_sector_network][] now take `spatial` as an explicit parameter instead of a
+  module-level global ([#2232](https://github.com/PyPSA/pypsa-eur/pull/2232)).
+
+* Use the scripts path provider consistently ([#2093](https://github.com/PyPSA/pypsa-eur/pull/2093)).
+
+* Added support for overwriting the documentation URL of the configuration schema, so that soft-forks can
+  link to their own documentation ([#2087](https://github.com/PyPSA/pypsa-eur/pull/2087)).
+
+* Added an SBOM vulnerability scan to the continuous integration and moved the development dependencies
+  (pre-commit, pylint, jupyter, etc.) to the `dev` pixi environment
+  ([#2164](https://github.com/PyPSA/pypsa-eur/pull/2164)).
+
+* The lockfile update workflow now excludes packages published within the last 7 days to reduce the risk of
+  pulling in broken or yanked releases ([#2130](https://github.com/PyPSA/pypsa-eur/pull/2130)).
+
+* The development container now uses `/workspace` as working directory and installs the pixi environment
+  persistently with an auto-symlink entrypoint
+  ([#2095](https://github.com/PyPSA/pypsa-eur/pull/2095), [#2098](https://github.com/PyPSA/pypsa-eur/pull/2098)).
+
+* Added a [FAQ and troubleshooting](faq.md) page covering common installation, solving, configuration,
+  results, and contribution questions ([#1939](https://github.com/PyPSA/pypsa-eur/pull/1939),
+  [#2228](https://github.com/PyPSA/pypsa-eur/pull/2228)).
+
+* Documented the configuration options for temporal clustering
+  ([#2264](https://github.com/PyPSA/pypsa-eur/pull/2264), [#2160](https://github.com/PyPSA/pypsa-eur/pull/2160)).
+
+* Added a note about deep-discharge protection for the available battery capacity of battery electric
+  vehicles ([#2227](https://github.com/PyPSA/pypsa-eur/pull/2227)).
+
+* Decluttered the table of contents of the rules overview, which previously listed every rule twice
+  ([#2216](https://github.com/PyPSA/pypsa-eur/pull/2216)). The duplicate entries are now suppressed by
+  rendering the rule anchors below the table of contents depth, so that `[rule_name][]` cross-references
+  keep resolving.
+
+* Updated the contribution guidelines to outline what we expect from AI-based contributions
+  ([#2215](https://github.com/PyPSA/pypsa-eur/pull/2215)).
+
+* Updated stale contribution documentation on linting and formatting to refer to `ruff`
+  ([#2233](https://github.com/PyPSA/pypsa-eur/pull/2233)).
+
+**Bugfixes and Compatibility**
+
+* Fixed operational reserve margin constraints for PyPSA v1.0. Load shedding generators are now excluded
+  from reserve margin calculations, renewable generators are identified based on the configuration rather
+  than the presence of `p_max_pu` data, and networks without extendable generators are handled correctly
+  ([#2178](https://github.com/PyPSA/pypsa-eur/pull/2178)).
+
+* Added compatibility with `tsam` v4.0, and fixed the differing `tsam < 3.0` and `tsam >= 3.0` APIs
+  ([#2263](https://github.com/PyPSA/pypsa-eur/pull/2263), [#2266](https://github.com/PyPSA/pypsa-eur/pull/2266)).
+
+* Bumped `pandas` to v3 ([#2260](https://github.com/PyPSA/pypsa-eur/pull/2260)) and fixed the remaining
+  `pandas` deprecation warnings ([#2220](https://github.com/PyPSA/pypsa-eur/pull/2220)).
+
+* Bumped the Python version to 3.12 ([#2235](https://github.com/PyPSA/pypsa-eur/pull/2235)). This does not
+  increase the effective requirement, since 3.12 was already the effective minimum.
+
+* Dropped the `grpcio < 1.78` pin and added a temporary `python < 3.14` pin
+  ([#2244](https://github.com/PyPSA/pypsa-eur/pull/2244)). The upper bound on Python will be lifted once
+  [#2245](https://github.com/PyPSA/pypsa-eur/issues/2245) is resolved.
+
+* Pinned `linopy` to 0.8.x and exempted `pypsa`, `linopy` and `atlite` from the lockfile cooldown period, so
+  that fresh releases of these packages are picked up immediately
+  ([#2237](https://github.com/PyPSA/pypsa-eur/pull/2237)).
+
+* Excluded `atlite` v0.5.0 ([#2150](https://github.com/PyPSA/pypsa-eur/pull/2150)).
+
+* [solve_network][] now raises an error if the solver status is `warning`, rather than failing silently
+  ([#2256](https://github.com/PyPSA/pypsa-eur/pull/2256)).
+
+* Fixed `fill_missing_years` applying the backward fill across country boundaries, so that countries without
+  any Eurostat value silently inherited the values of the next country
+  ([#2243](https://github.com/PyPSA/pypsa-eur/pull/2243), [#2242](https://github.com/PyPSA/pypsa-eur/issues/2242)).
+
+* Fixed [build_electricity_demand_base][] reading the non-existent `load: distribution_key: pop` key instead
+  of `population`, which silently ignored the configured value
+  ([#2241](https://github.com/PyPSA/pypsa-eur/pull/2241)).
+
+* Corrected the definition of `marginal_cost` for those links where `vom` values from the technology cost
+  datasets are defined per unit of output (e.g. electricity)
+  ([#2154](https://github.com/PyPSA/pypsa-eur/pull/2154)).
+
+* Fixed over-aggressive HVDC simplification in [simplify_network][] for branched and multi-terminal DC
+  topologies (e.g. UK and Shetland edge cases). Supernode detection now only collapses true chain nodes
+  (degree 2) and preserves DC junctions (degree 3 and above) so that branches are not dropped
+  ([#2147](https://github.com/PyPSA/pypsa-eur/pull/2147)).
+
+* Kept DC buses in sector-coupled networks instead of removing them in [simplify_network][]
+  ([#2199](https://github.com/PyPSA/pypsa-eur/pull/2199)).
+
+* Re-introduced capital costs for non-bicharging discharge links in [add_electricity][], e.g. fuel cells
+  ([#2157](https://github.com/PyPSA/pypsa-eur/pull/2157)).
+
+* Activated losses for `H2 pipeline retrofitted` links by default, for consistency with `H2 pipeline` links
+  ([#2174](https://github.com/PyPSA/pypsa-eur/pull/2174)).
+
+* Lowered the lower bound used to group power plants in [add_existing_baseyear][], which now includes all
+  power plants built since 1900 ([#2097](https://github.com/PyPSA/pypsa-eur/pull/2097)).
+
+* Kept unset `p_set` (NaN) as NaN when aggregating components in `cluster_heat_buses`, as required for
+  [PyPSA#1703](https://github.com/PyPSA/PyPSA/pull/1703) ([#2202](https://github.com/PyPSA/pypsa-eur/pull/2202)).
+
+* Fixed nice names lingering from the unclustered network when clustering heat buses in myopic optimisation,
+  which made some assets appear as belonging to the `residential` or `services` sectors in the heat energy
+  balance of `n.statistics` ([#2203](https://github.com/PyPSA/pypsa-eur/pull/2203)).
+
+* Fixed the Ultranet transmission project (TYNDP 254) to end in Philippsburg
+  ([#2236](https://github.com/PyPSA/pypsa-eur/pull/2236)).
+
+* Clamped `s_nom_max` and `p_nom_max` in [add_brownfield][] so that floating-point tolerances in the
+  `s_nom_opt` values carried over from the previous planning horizon cannot render the next horizon
+  infeasible. The remaining capacity available for H2 pipeline retrofitting is clipped to non-negative values
+  ([#2115](https://github.com/PyPSA/pypsa-eur/pull/2115)).
+
+* Fixed post-discretisation of transmission capacities raising an error in
+  `n.optimize.optimize_transmission_expansion_iteratively`
+  ([#2107](https://github.com/PyPSA/pypsa-eur/pull/2107)).
+
+* Fixed [cluster_network][] mutating the configuration in place
+  ([#2091](https://github.com/PyPSA/pypsa-eur/pull/2091)).
+
+* Fixed typo in the `rolling_horizon` configuration lookup of [solve_network][]
+  ([#2213](https://github.com/PyPSA/pypsa-eur/pull/2213)).
+
+* Fixed plotting crashes from missing `tech_colors` entries by adding a `heat dsm` color and validating
+  missing keys upfront in [plot_summary][]
+  ([#2211](https://github.com/PyPSA/pypsa-eur/pull/2211), [#2108](https://github.com/PyPSA/pypsa-eur/issues/2108)).
+
+* Aligned the output and behaviour of the `atlite.plot_availability_matrix` configuration option in
+  [determine_availability_matrix][] and [determine_availability_matrix_MD_UA][]
+  ([#2173](https://github.com/PyPSA/pypsa-eur/pull/2173)).
+
+* Fixed handling of `corine: false` for offshore technologies in [determine_availability_matrix_MD_UA][]
+  ([#2265](https://github.com/PyPSA/pypsa-eur/pull/2265)).
+
+* Removed the explicit Dask `client.shutdown()` in [build_renewable_profiles][], which could turn a completed
+  run into a spurious Snakemake failure on shared filesystems
+  ([#2131](https://github.com/PyPSA/pypsa-eur/pull/2131)).
+
+* Removed the asynchronous model for the distributed Dask client
+  ([#2149](https://github.com/PyPSA/pypsa-eur/pull/2149)).
+
+* Made [build_ambient_air_temperature_yearly_average][] thread-safe
+  ([#2197](https://github.com/PyPSA/pypsa-eur/pull/2197)).
+
+* Added retries for interrupted WDPA and WDPA-marine downloads
+  ([#2238](https://github.com/PyPSA/pypsa-eur/pull/2238)).
+
+* Fixed the URLs for the SCIGRID gas 1.1.2 archive and the synthetic electricity demand data on
+  `data.pypsa.org` ([#2165](https://github.com/PyPSA/pypsa-eur/pull/2165)).
+
+* Fixed typos in the TYNDP data retrieval rules ([#2214](https://github.com/PyPSA/pypsa-eur/pull/2214)).
+
+* Ensured `inflow_t` is always defined in `attach_hydro`, resolving a pylint use-before-assignment issue
+  ([#2224](https://github.com/PyPSA/pypsa-eur/pull/2224)).
+
+* Added a missing regular expression anchor with `re.fullmatch` to the `create_zenodo_deposition_cli` utility
+  script ([#2225](https://github.com/PyPSA/pypsa-eur/pull/2225)).
 
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 
@@ -560,7 +891,7 @@
 
     - Additionally, a new `.geojson` file of clustered regions split by resource
       classes is exported, which is is used in [add_electricity][] and
-      [build_clustered_solar_rooftop_potentials][] to assign existing wind and
+      `build_clustered_solar_rooftop_potentials` to assign existing wind and
       solar capacities to the correct combination of bus and resource class.
       Within a clustered region, the resource classes do not have to be
       contiguous.
@@ -652,13 +983,13 @@
 
     - Computes summaries for only a single network at a time.
 
-    - Concatenation is outsourced to new rule [make_global_summary][].
+    - Concatenation is outsourced to new rule `make_global_summary`.
 
     - Rule no longer depends on network plots; use the `all` collection rule to
       generate summaries and plots.
 
     - Calculation of cumulative costs for myopic foresight networks was moved to
-      [make_cumulative_costs][].
+      `make_cumulative_costs`.
 
     - Rewrote functions in [make_summary][] to use PyPSA statistics module
       more.
@@ -3564,23 +3895,28 @@ It is [archived on Zenodo](https://zenodo.org/records/1146666).
 
 ## Release Process
 
-* Checkout a new release branch `git checkout -b release-v0.x.x`.
+* Checkout a new release branch `git checkout -b release-vYYYY.MM.0`.
 
-* Finalise release notes at `doc/release_notes.rst`.
+* Update the locked environment files via `pixi run sync-locks` (or let the
+  `[pypsa-bot] run sync-locks` workflow do it) and merge them first.
 
-* Update `envs/environment.fixed.yaml` via
-  `conda env export -n pypsa-eur -f envs/environment.fixed.yaml --no-builds`
-  from an up-to-date `pypsa-eur` environment.
+* Finalise the release notes at `doc/release_notes.md`: group the entries of the upcoming release into
+  **Features**, **Changes** and **Bugfixes and Compatibility**, add the release heading
+  `## PyPSA-Eur vYYYY.MM.0 (Dth Month YYYY)` and comment out the `Upcoming Release` heading.
 
-* Update version number in `doc/conf.py`, `CITATION.cff` and `*config.*.yaml`.
+* Update the version number in `CITATION.cff`, `scripts/lib/validation/config/_schema.py` and
+  `doc/configuration.md`, then regenerate `config/config.default.yaml` and `config/schema.default.json`
+  with `pixi run generate-config`.
 
 * Make a `git commit`.
 
-* Open, review and merge pull request for branch `release-v0.x.x`.
+* Open, review and merge pull request for branch `release-vYYYY.MM.0`.
   Make sure to close issues and PRs or the release milestone with it (e.g. closes #X).
 
-* Tag a release on Github via `git tag v0.x.x`, `git push`, `git push --tags`. Include release notes in the tag message.
+* Tag a release on Github via `git tag vYYYY.MM.0`, `git push`, `git push --tags`. Include release notes in the tag message.
+  The `Release` workflow updates the workflow DAGs in the documentation, amends the commit
+  `[github-actions.ci] prepare release vYYYY.MM.0` and re-creates the tag.
 
-* Make a [GitHub release](https://github.com/PyPSA/pypsa-eur-sec/releases), which automatically triggers archiving to the [zenodo code repository](https://doi.org/10.5281/zenodo.3520874) with [MIT license](https://opensource.org/licenses/MIT).
+* Make a [GitHub release](https://github.com/PyPSA/pypsa-eur/releases), which automatically triggers archiving to the [zenodo code repository](https://doi.org/10.5281/zenodo.3520874) with [MIT license](https://opensource.org/licenses/MIT).
 
 * Send announcement on the [PyPSA mailing list](https://groups.google.com/forum/#!forum/pypsa).

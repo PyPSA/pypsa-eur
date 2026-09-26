@@ -37,7 +37,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "determine_availability_matrix_MD_UA", clusters=100, technology="solar"
+            "determine_availability_matrix_MD_UA", technology="solar"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -60,6 +60,8 @@ if __name__ == "__main__":
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
     corine = config.get("corine", {})
+    if not isinstance(corine, dict):
+        corine = {}
     if "grid_codes" in corine:
         # Land cover codes to emulate CORINE results
         if snakemake.wildcards.technology == "solar":

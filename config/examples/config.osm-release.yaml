@@ -5,6 +5,16 @@
 run:
   name: "osm-release"
 
+planning_horizons: 2050
+
+sector:
+  enabled: false
+
+# electricity-only default co2_budget ends at 2050: 0.0 (zero-emission cap);
+# this is an OSM base-network topology test, not a decarbonisation scenario
+co2_budget:
+  upper:
+
 countries:
 - AL
 - AT

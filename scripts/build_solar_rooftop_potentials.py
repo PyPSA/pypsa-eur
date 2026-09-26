@@ -16,8 +16,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_clustered_solar_rooftop_potentials",
-            clusters=5,
+            "build_solar_rooftop_potentials",
             configfiles="config/test/config.myopic.yaml",
         )
 
