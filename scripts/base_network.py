@@ -681,9 +681,8 @@ def base_network(
         f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
     )
     if base_network == "entsoegridkit":
-        warnings.warn(
-            "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm' instead.",
-            DeprecationWarning,
+        logger.warning(
+            "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm' instead."
         )
 
     logger_str = (

@@ -11,16 +11,9 @@ import logging
 import geopandas as gpd
 import pandas as pd
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import area, configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
-
-
-def area(gdf):
-    """
-    Returns area of GeoDataFrame geometries in square kilometers.
-    """
-    return gdf.to_crs(epsg=3035).area.div(1e6)
 
 
 def allocate_sequestration_potential(

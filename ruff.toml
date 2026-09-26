@@ -14,6 +14,9 @@ select = [
     'UP',  # pyupgrade
     # 'ANN', # flake-8 annotations
     'TID', # flake8-tidy-imports
+    'B006', # mutable argument defaults
+    'B904', # raise from inside except
+    'T20',  # print statements
     # 'NPY', # numpy
     # 'RUF', # ruff
 ]
@@ -54,6 +57,10 @@ ignore = [
     ]
 
 "scripts/**/__init__.py"= ["F401"]
+
+# Timing utility that reports to stdout on purpose.
+"scripts/_benchmark.py" = ["T20"]
+"test/**" = ["T20"]
 
 # The order of imports matters in this file, so we stop ruff from re-ordering them.
 "scripts/lib/validation/config_updates.py"= ["I001", "F401"]

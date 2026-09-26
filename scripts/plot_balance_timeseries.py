@@ -23,9 +23,11 @@ logger = logging.getLogger(__name__)
 
 
 def plot_stacked_area_steplike(
-    ax: plt.Axes, df: pd.DataFrame, colors: dict | pd.Series = {}
+    ax: plt.Axes, df: pd.DataFrame, colors: dict | pd.Series | None = None
 ):
     """Plot stacked area chart with step-like transitions."""
+    if colors is None:
+        colors = {}
     if isinstance(colors, pd.Series):
         colors = colors.to_dict()
 
@@ -68,15 +70,17 @@ def plot_energy_balance_timeseries(
     time: pd.DatetimeIndex | None = None,
     ylim: float | None = None,
     resample: str | None = None,
-    rename: dict = {},
-    preferred_order: pd.Index | list = [],
+    rename: dict | None = None,
+    preferred_order: pd.Index | tuple = (),
     ylabel: str = "",
-    colors: dict | pd.Series = {},
+    colors: dict | pd.Series | None = None,
     max_threshold: float = 0.0,
     mean_threshold: float = 0.0,
     directory="",
 ):
     """Create energy balance time series plot with positive/negative stacked areas."""
+    rename = {} if rename is None else dict(rename)
+    colors = {} if colors is None else dict(colors)
     if time is not None:
         df = df.loc[time]
 

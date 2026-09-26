@@ -21,8 +21,6 @@ from scripts._helpers import (
 from scripts.prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
-plt.style.use("bmh")
-
 
 # consolidate and rename
 
@@ -565,6 +563,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+    plt.style.use("bmh")
 
     n_header = 1
 

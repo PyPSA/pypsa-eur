@@ -72,8 +72,6 @@ from shapely.geometry import MultiPolygon, Polygon
 from scripts._helpers import configure_logging, sanitize_busmap, set_scenario_config
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
-
-warnings.filterwarnings(action="ignore", category=UserWarning)
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
@@ -661,6 +659,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("cluster_network")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+    warnings.filterwarnings(action="ignore", category=UserWarning)
 
     params = snakemake.params
     mode = params.mode

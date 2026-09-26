@@ -26,7 +26,6 @@ Outputs
 """
 
 import logging
-import warnings
 
 import pandas as pd
 import pypsa
@@ -165,9 +164,8 @@ def prepare_costs(
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
-            warnings.warn(
-                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv').",
-                DeprecationWarning,
+            logger.warning(
+                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv')."
             )
             logger.info(f"Overwriting {attr} with:\n{overwrites}")
 
@@ -244,9 +242,8 @@ def prepare_costs(
             overwrites = pd.Series(overwrites)
             idx = overwrites.index.intersection(costs.index)
             costs.loc[idx, attr] = overwrites.loc[idx]
-            warnings.warn(
-                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv').",
-                DeprecationWarning,
+            logger.warning(
+                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv')."
             )
             logger.info(f"Overwriting {attr} with:\n{overwrites}")
 

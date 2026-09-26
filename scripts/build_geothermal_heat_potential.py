@@ -63,7 +63,7 @@ GEOTHERMAL_SOURCE = (
 def get_unit_conversion_factor(
     input_unit: str,
     output_unit: str,
-    unit_scaling: dict = {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12},
+    unit_scaling: dict | None = None,
 ) -> float:
     """
     Get the unit conversion factor between two units.
@@ -77,6 +77,8 @@ def get_unit_conversion_factor(
     unit_scaling : dict, optional
         Dictionary of unit scaling factors. Default: {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12}.
     """
+    if unit_scaling is None:
+        unit_scaling = {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12}
 
     if input_unit not in unit_scaling.keys():
         raise ValueError(

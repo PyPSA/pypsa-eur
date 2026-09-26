@@ -49,12 +49,12 @@ def locate_missing_industrial_sites(df: pd.DataFrame) -> pd.DataFrame:
     try:
         from geopy.extra.rate_limiter import RateLimiter
         from geopy.geocoders import Nominatim
-    except ImportError:
+    except ImportError as e:
         raise ModuleNotFoundError(
             "Optional dependency 'geopy' not found."
             "Install via 'pixi add geopy'"
             "or set 'industry: hotmaps_locate_missing: false'."
-        )
+        ) from e
 
     locator = Nominatim(user_agent=str(uuid.uuid4()))
     geocode = RateLimiter(locator.geocode, min_delay_seconds=2)

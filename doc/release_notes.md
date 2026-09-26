@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Developers note: code hygiene clean-up. Shared geometry helpers (`area`, `concat_gdf`, `load_bus_regions`, `create_linestring`, `determine_cutout_xXyY`) moved to `_helpers.py`, mutable default arguments removed, exceptions re-raised with their cause, deprecation warnings routed through the logger, and import-time side effects moved into the script entry points. The `pydeflate` cache now lives in `data/pydeflate/`. ruff enforces `B006`, `B904` and `T20`.
+
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 
 **Streamlined Workflow**

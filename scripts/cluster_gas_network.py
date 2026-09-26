@@ -12,29 +12,9 @@ import pandas as pd
 from pypsa.geo import haversine_pts
 from shapely import wkt
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, load_bus_regions, set_scenario_config
 
 logger = logging.getLogger(__name__)
-
-
-def concat_gdf(gdf_list, crs="EPSG:4326"):
-    """
-    Concatenate multiple geopandas dataframes with common coordinate reference
-    system (crs).
-    """
-    return gpd.GeoDataFrame(pd.concat(gdf_list), crs=crs)
-
-
-def load_bus_regions(onshore_path, offshore_path):
-    """
-    Load pypsa-eur on- and offshore regions and concat.
-    """
-    offshore_bus_regions = gpd.read_file(offshore_path)
-    onshore_bus_regions = gpd.read_file(onshore_path)
-    bus_regions = concat_gdf([offshore_bus_regions, onshore_bus_regions])
-    bus_regions = bus_regions.dissolve(by="name", aggfunc="sum")
-
-    return bus_regions
 
 
 def build_clustered_gas_network(df, bus_regions, length_factor=1.25):

@@ -236,14 +236,14 @@ def prepare_all_buses_data(
             if len([col for col in bus_balance.columns if col != "time"]) > 0:
                 buses_data[bus] = bus_balance
         except Exception as e:
-            raise RuntimeError(f"Error processing bus {bus}: {e}")
+            raise RuntimeError(f"Error processing bus {bus}: {e}") from e
     logger.info(f"Successfully processed {len(buses_data)} buses with carrier data")
 
     return buses_data
 
 
 def plot_stacked_area_steplike(
-    ax: plt.Axes, df: pd.DataFrame, colors: dict[str, str] | pd.Series = {}
+    ax: plt.Axes, df: pd.DataFrame, colors: dict[str, str] | pd.Series | None = None
 ) -> None:
     """
     Plot stacked area chart with step-like transitions.
@@ -257,6 +257,8 @@ def plot_stacked_area_steplike(
     colors : dict[str, str] | pd.Series, optional
         Color mapping for carriers.
     """
+    if colors is None:
+        colors = {}
     if isinstance(colors, pd.Series):
         colors = colors.to_dict()
 
@@ -308,9 +310,9 @@ def plot_energy_balance_timeseries(
     time: pd.DatetimeIndex | None = None,
     ylim: float | None = None,
     resample: str | None = None,
-    rename: dict[str, str] = {},
+    rename: dict[str, str] | None = None,
     ylabel: str = "",
-    colors: dict[str, str] | pd.Series = {},
+    colors: dict[str, str] | pd.Series | None = None,
     directory: str = "",
 ) -> None:
     """
@@ -335,6 +337,8 @@ def plot_energy_balance_timeseries(
     directory : str, optional
         Output directory for HTML file.
     """
+    rename = rename or {}
+    colors = {} if colors is None else colors
     if time is not None:
         df = df.loc[time]
 

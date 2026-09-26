@@ -12,7 +12,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import area, configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
@@ -198,13 +198,6 @@ def build_nuts2_shapes():
     nuts2.rename(index={"ME00": "ME", "MK00": "MK"}, inplace=True)
 
     return pd.concat([nuts2, missing])
-
-
-def area(gdf):
-    """
-    Returns area of GeoDataFrame geometries in square kilometers.
-    """
-    return gdf.to_crs(epsg=3035).area.div(1e6)
 
 
 def convert_nuts2_to_regions(bio_nuts2, regions):

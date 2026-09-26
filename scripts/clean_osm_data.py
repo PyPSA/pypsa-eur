@@ -24,7 +24,7 @@ from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import linemerge, unary_union
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, create_linestring, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -34,20 +34,6 @@ DISTANCE_CRS = "EPSG:3035"
 BUS_TOL = (
     500  # unit: meters, default 5000 - Buses within this distance are grouped together
 )
-
-
-def _create_linestring(row):
-    """
-    Create a LineString object from the given row.
-
-    Args:
-        row (dict): A dictionary containing the row data.
-
-    Returns:
-        LineString: A LineString object representing the geometry.
-    """
-    coords = [(coord["lon"], coord["lat"]) for coord in row["geometry"]]
-    return LineString(coords)
 
 
 def _create_polygon(row):
@@ -321,7 +307,7 @@ def _clean_date(column):
     return column
 
 
-def _split_cells(df, cols=["voltage"]):
+def _split_cells(df, cols=("voltage",)):
     """
     Split semicolon separated cells i.e. [66000;220000] and create new
     identical rows.
@@ -590,7 +576,7 @@ def _create_single_link(row):
     valid_roles = ["line", "cable", "section"]
     df = pd.json_normalize(row["members"])
     df = df[df["role"].isin(valid_roles)]
-    df["geometry"] = df.apply(_create_linestring, axis=1)
+    df["geometry"] = df.apply(create_linestring, axis=1)
     df["length"] = df["geometry"].apply(lambda x: x.length)
 
     list_endpoints = []
@@ -647,7 +633,7 @@ def _create_line(row):
     df["ways"] = "way/" + df["ref"]
     # Drop NAs
     df = df.dropna(subset=["geometry"])
-    df["geometry"] = df.apply(_create_linestring, axis=1)
+    df["geometry"] = df.apply(create_linestring, axis=1)
     # Drop closed geometries (substations)
     closed_geom = df["geometry"].apply(lambda x: x.is_closed)
 
@@ -1097,13 +1083,13 @@ def _create_lines_geometry(df_lines):
     Notes
     -----
     - This function transforms 'geometry' column in the input DataFrame by
-      applying the '_create_linestring' function to each row.
+      applying the 'create_linestring' function to each row.
     - It then drops rows where the geometry has equal start and end points,
       as these are usually not lines but outlines of areas.
     """
     logger.info("Creating lines geometry.")
     df_lines = df_lines.copy()
-    df_lines["geometry"] = df_lines.apply(_create_linestring, axis=1)
+    df_lines["geometry"] = df_lines.apply(create_linestring, axis=1)
 
     bool_circle = df_lines["geometry"].apply(lambda x: x.coords[0] == x.coords[-1])
     df_lines = df_lines[~bool_circle]
@@ -1497,7 +1483,7 @@ def _import_substations(path_substations):
 
     df_substations_relation_members.reset_index(inplace=True)
     df_substations_relation_members["linestring"] = (
-        df_substations_relation_members.apply(_create_linestring, axis=1)
+        df_substations_relation_members.apply(create_linestring, axis=1)
     )
     df_substations_relation_members_grouped = (
         df_substations_relation_members.groupby("id")["linestring"]

@@ -76,7 +76,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
                 )
                 logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
             except Exception as e:
-                raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
+                raise ValueError(f"Failed to reproject water_temperature: {e}") from e
 
     def _clip_data_to_region(self) -> None:
         """

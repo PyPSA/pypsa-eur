@@ -222,7 +222,6 @@ rule compose_network:
         energy_totals_year=config_provider("energy", "energy_totals_year"),
         horizons=config_provider("planning_horizons"),
         renewable_carriers=config_provider("electricity", "renewable_carriers"),
-        conventional_carriers=config_provider("electricity", "conventional_carriers"),
         fuel_carriers=config_provider("existing_capacities", "conventional_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         h2_retrofit=config_provider("sector", "H2_retrofit"),

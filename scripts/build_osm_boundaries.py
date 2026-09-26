@@ -11,7 +11,7 @@ import pandas as pd
 from shapely import line_merge
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, create_linestring, set_scenario_config
 from scripts.build_offshore_shapes import eez
 
 logger = logging.getLogger(__name__)
@@ -23,22 +23,6 @@ EXCLUDER_LIST = [
     3788485,  # RU version of Sevastopol
     3795586,  # RU version of Crimea
 ]
-
-
-def _create_linestring(row):
-    """
-    Create a LineString object from the given row.
-
-    Parameters
-    ----------
-        row (dict): A dictionary containing the row data.
-
-    Returns
-    -------
-        LineString: A LineString object representing the geometry.
-    """
-    coords = [(coord["lon"], coord["lat"]) for coord in row["geometry"]]
-    return LineString(coords)
 
 
 def _create_geometries(row, crs=GEO_CRS):
@@ -63,7 +47,7 @@ def _create_geometries(row, crs=GEO_CRS):
     valid_roles = ["outer", "inner"]
     df = pd.json_normalize(row["members"])
     df = df[df["role"].isin(valid_roles) & ~df["geometry"].isna()]
-    df.loc[:, "geometry"] = df.apply(_create_linestring, axis=1)
+    df.loc[:, "geometry"] = df.apply(create_linestring, axis=1)
 
     gdf = gpd.GeoDataFrame(df, geometry="geometry", crs=crs)
     outer = line_merge(gdf[gdf["role"] == "outer"].union_all())

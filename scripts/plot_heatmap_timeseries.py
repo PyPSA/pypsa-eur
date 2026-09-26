@@ -38,11 +38,11 @@ def plot_heatmap(
     cmap: str = "Greens",
     label: str = "",
     title: str = "",
-    cbar_kws: dict = {},
+    cbar_kws: dict | None = None,
     fn: str | None = None,
 ):
     _cbar_kws = dict(label=label, aspect=17, pad=0.015)
-    _cbar_kws.update(cbar_kws)
+    _cbar_kws.update(cbar_kws or {})
     fig, ax = plt.subplots(figsize=(8.5, 4), constrained_layout=True)
     sns.heatmap(
         df,

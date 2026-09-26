@@ -55,7 +55,7 @@ def load_projection(plotting_params):
 @retry
 def plot_map(
     n,
-    components=["links", "stores", "storage_units", "generators"],
+    components=("links", "stores", "storage_units", "generators"),
     bus_size_factor=2e10,
     transmission=False,
     with_legend=True,

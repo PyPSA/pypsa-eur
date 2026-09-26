@@ -70,59 +70,6 @@ def format_bz_names(s: str):
     return s
 
 
-def extract_shape_by_bbox(
-    gdf: gpd.GeoDataFrame,
-    country: str,
-    min_lon: float,
-    max_lon: float,
-    min_lat: float,
-    max_lat: float,
-    region_id: str,
-):
-    """
-    Extracts a shape from a country's GeoDataFrame based on latitude and longitude bounds.
-
-    Parameters
-    ----------
-    gdf : GeoDataFrame
-        GeoDataFrame containing country geometries.
-    country : str
-        The country code or name to filter.
-    min_lon : float
-        Minimum longitude bound for extraction.
-    max_lon : float
-        Maximum longitude bound for extraction.
-    min_lat : float
-        Minimum latitude bound for extraction.
-    max_lat : float
-        Maximum latitude bound for extraction.
-    region_id : str
-        String to assign an ID to the extracted region.
-
-    Returns
-    -------
-    GeoDataFrame
-        Updated GeoDataFrame with the extracted shape separated.
-    """
-    country_gdf = gdf.explode().query(f"country == '{country}'").reset_index(drop=True)
-
-    extracted_region = country_gdf.cx[min_lon:max_lon, min_lat:max_lat].assign(
-        id=region_id
-    )
-
-    remaining_country = (
-        country_gdf.drop(extracted_region.index).dissolve(by="country").reset_index()
-    )
-
-    return pd.concat(
-        [
-            gdf.query(f"country != '{country}'"),
-            remaining_country,
-            extracted_region.dissolve(by="country").reset_index(),
-        ]
-    ).reset_index(drop=True)
-
-
 def build_shapes(
     bz_fn: str,
     countries: list[str],

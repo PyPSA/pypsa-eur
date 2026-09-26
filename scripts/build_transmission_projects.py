@@ -316,7 +316,7 @@ def get_upgraded_lines(branch_component, n, upgraded_lines, line_map):
     return lines_to_add
 
 
-def get_project_files(path, skip=[]):
+def get_project_files(path, skip=()):
     path = Path(path)
     lines = {}
     files = [
@@ -390,8 +390,8 @@ def add_projects(
     offshore_shapes,
     path,
     plan,
-    status=["confirmed", "under construction"],
-    skip=[],
+    status=("confirmed", "under construction"),
+    skip=(),
 ):
     lines_dict = get_project_files(path, skip=skip)
     for key, lines in lines_dict.items():

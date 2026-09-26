@@ -274,7 +274,8 @@ def add_gaslimit(n, gaslimit, Nyears=1.0):
     )
 
 
-def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
+def add_emission_prices(n, emission_prices=None, exclude_co2=False):
+    emission_prices = dict(emission_prices or {"co2": 0.0})
     if exclude_co2:
         emission_prices.pop("co2")
     ep = (

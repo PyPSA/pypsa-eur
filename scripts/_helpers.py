@@ -18,6 +18,7 @@ from typing import Any, Literal
 
 import atlite
 import fiona
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
@@ -26,6 +27,7 @@ import requests
 import xarray as xr
 import yaml
 from dask.distributed import Client, LocalCluster
+from shapely.geometry import LineString
 from snakemake.utils import update_config
 from tqdm import tqdm
 
@@ -42,6 +44,56 @@ def strip_if_str(value: Any) -> Any:
     """Return stripped strings while leaving other values unchanged."""
 
     return value.strip() if isinstance(value, str) else value
+
+
+def area(gdf: gpd.GeoDataFrame) -> pd.Series:
+    """Return the area of GeoDataFrame geometries in square kilometres."""
+    return gdf.to_crs(epsg=3035).area.div(1e6)
+
+
+def concat_gdf(
+    gdf_list: list[gpd.GeoDataFrame], crs: str = "EPSG:4326"
+) -> gpd.GeoDataFrame:
+    """Concatenate GeoDataFrames sharing a common coordinate reference system."""
+    return gpd.GeoDataFrame(pd.concat(gdf_list), crs=crs)
+
+
+def load_bus_regions(onshore_path: str, offshore_path: str) -> gpd.GeoDataFrame:
+    """Load on- and offshore bus regions and dissolve them by bus name."""
+    offshore_bus_regions = gpd.read_file(offshore_path)
+    onshore_bus_regions = gpd.read_file(onshore_path)
+    bus_regions = concat_gdf([offshore_bus_regions, onshore_bus_regions])
+    return bus_regions.dissolve(by="name", aggfunc="sum")
+
+
+def create_linestring(row: dict) -> LineString:
+    """Create a LineString from a row with OSM-style lon/lat coordinate dicts."""
+    coords = [(coord["lon"], coord["lat"]) for coord in row["geometry"]]
+    return LineString(coords)
+
+
+def determine_cutout_xXyY(cutout_name: str) -> list[float]:
+    """
+    Determine the full extent of a cutout.
+
+    Since the coordinates of the cutout data are given as the
+    center of the grid cells, the extent of the cutout is
+    calculated by adding/subtracting half of the grid cell size.
+
+    Parameters
+    ----------
+    cutout_name : str
+        Path to the cutout.
+
+    Returns
+    -------
+    A list of extent coordinates in the order [x, X, y, Y].
+    """
+    cutout = load_cutout(cutout_name)
+    assert cutout.crs.to_epsg() == 4326
+    x, X, y, Y = cutout.extent
+    dx, dy = cutout.dx, cutout.dy
+    return [x - dx / 2.0, X + dx / 2.0, y - dy / 2.0, Y + dy / 2.0]
 
 
 def sanitize_busmap(busmap: pd.Series) -> pd.Series:

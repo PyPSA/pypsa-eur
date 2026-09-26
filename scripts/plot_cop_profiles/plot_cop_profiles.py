@@ -68,7 +68,7 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
         cop_data = cop_profiles.sel(heat_system=heat_system_type)
         logger.info(f"Selected '{heat_system_type}' heat system")
     except Exception as e:
-        raise RuntimeError(f"Error selecting heat system: {e}")
+        raise RuntimeError(f"Error selecting heat system: {e}") from e
 
     # Get the name of the region dimension
     # Capture heat source names before pivoting
@@ -76,7 +76,7 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
         heat_sources = [val for val in cop_data.coords["heat_source"].values]
         # logger.info(f"Heat sources: {heat_sources}")
     except Exception as e:
-        raise RuntimeError(f"Error retrieving heat sources: {e}")
+        raise RuntimeError(f"Error retrieving heat sources: {e}") from e
 
     # Convert to pandas for plotting
     # We need to reshape data to have heat sources as columns
