@@ -43,9 +43,17 @@ We strive to keep documentation useful and up to date for all PyPSA users. If yo
 1. Install [pixi](https://pixi.sh/latest/).
 2. Make your changes in the corresponding `.md` file under `pypsa-eur/doc`.
 3. Compile your changes by running `pixi run build-docs site` from the project root.
-   You can also preview live with `mkdocs serve`. HTML files to review can be found under `site/`.
+   You can also preview live with `pixi run -e doc mkdocs serve`. HTML files to review can be found under `site/html/`.
 4. Contribute your documentation in a pull request ([here is a guide](https://help.github.com/en/articles/about-pull-requests)).
 
+
+## Release notes
+
+Every pull request adds a bullet to the upcoming release section at the top of
+`doc/release_notes.md`. State what changed for the user in one or two
+sentences, start bugfixes with `Bugfix:`, and refer to rules with the
+`[rule_name][]` syntax. The bullets are sorted into features, changes and
+bugfixes at release time.
 
 ## AI-based Contributions
 

@@ -44,9 +44,9 @@ The space heating demand can be exogenously reduced by retrofitting measures tha
 {{ yaml_section("sector.reduce_space_heat_exogenously", "sector.reduce_space_heat_exogenously_factor") }}
 ```
 
-Co-optimsing of building renovation is also possible, if it is activated in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L222).
+Co-optimsing of building renovation is also possible, if it is activated in the [config file](configuration.md#sector_cf).
 Renovation of the thermal envelope reduces the space heating demand and is optimised at each node for every heat bus. Renovation measures through additional insulation material and replacement of energy inefficient windows are considered.
-In a first step, costs per energy savings are estimated in [build_retro_cost.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_retro_cost.py). They depend on the insulation condition of the building stock and costs for renovation of the building elements. In a second step, for those cost per energy savings two possible renovation strengths are determined: a moderate renovation with lower costs, a lower maximum possible space heat savings, and an ambitious renovation with associated higher costs and higher efficiency gains. They are added by step-wise linearisation in form of two additional generations in [prepare_sector_network.py](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py).
+In a first step, costs per energy savings are estimated in [build_retro_cost][]. They depend on the insulation condition of the building stock and costs for renovation of the building elements. In a second step, for those cost per energy savings two possible renovation strengths are determined: a moderate renovation with lower costs, a lower maximum possible space heat savings, and an ambitious renovation with associated higher costs and higher efficiency gains. They are added by step-wise linearisation in form of two additional generations in [prepare_sector_network][].
 Further information are given in the publication :
 [Mitigating heat demand peaks in buildings in a highly renewable European energy system, (2021)](https://arxiv.org/abs/2012.01831).
 
@@ -56,7 +56,7 @@ Hot water demand is assumed to be constant throughout the year.
 
 *Urban and rural heating*
 
-For every country, heat demand is split between low and high population density areas. These country-level totals are then distributed to each region in proportion to their rural and urban populations respectively. Urban areas with dense heat demand can be supplied with large-scale district heating systems. The percentage of urban heat demand that can be supplied by district heating networks as well as lump-sum losses in district heating systems is exogenously determined in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L153).
+For every country, heat demand is split between low and high population density areas. These country-level totals are then distributed to each region in proportion to their rural and urban populations respectively. Urban areas with dense heat demand can be supplied with large-scale district heating systems. The percentage of urban heat demand that can be supplied by district heating networks as well as lump-sum losses in district heating systems is exogenously determined in the [config file](configuration.md#sector_cf).
 
 *Cooling demand*
 
@@ -83,7 +83,7 @@ Different supply options are available depending on whether demand is met centra
 
 **Urban central heat**
 
-For large-scale district heating systems the following options are available: combined heat and power (CHP) plants consuming gas or biomass from waste and residues with and without carbon capture (CC), large-scale air-sourced heat pumps, gas and oil boilers, resistive heaters, and fuel cell CHPs. Additionally, waste heat from the [Fischer-Tropsch](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L255)  and [Sabatier](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L240) processes for the production of synthetic hydrocarbons can supply district heating systems. For more detailed explanation of these processes, see [Oil-based products supply](#oil-based-products-supply) and [Methane supply](#methane-supply).
+For large-scale district heating systems the following options are available: combined heat and power (CHP) plants consuming gas or biomass from waste and residues with and without carbon capture (CC), large-scale air-sourced heat pumps, gas and oil boilers, resistive heaters, and fuel cell CHPs. Additionally, waste heat from the [Fischer-Tropsch](configuration.md#sector_cf)  and [Sabatier](configuration.md#sector_cf) processes for the production of synthetic hydrocarbons can supply district heating systems. For more detailed explanation of these processes, see [Oil-based products supply](#oil-based-products-supply) and [Methane supply](#methane-supply).
 
 **Residential and Urban decentral heat**
 
@@ -94,7 +94,7 @@ Below are more detailed explanations for each heating supply component, all of w
 
 ### Large-scale CHP {#large-scale-chp}
 
-Large Combined Heat and Power plants are included in the model if it is specified in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L235).
+Large Combined Heat and Power plants are included in the model if it is specified in the [config file](configuration.md#sector_cf).
 
 CHPs are based on back pressure plants operating with a fixed ratio of electricity to heat output. The efficiencies of each are given on the back pressure line, where the back pressure coefficient cb is the electricity output divided by the heat output. (For a more complete explanation of the operation of CHPs refer to the study by Dahl et al. : [Cost sensitivity of optimal sector-coupled district heating production systems](https://arxiv.org/pdf/1804.07557.pdf).
 
@@ -106,15 +106,15 @@ NB: The old PyPSA-Eur-Sec-30 model assumed an extraction plant (like the DEA coa
 
 **Micro-CHP**
 
-PyPSA-Eur-Sec allows individual buildings to make use of [micro gas CHPs](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L236) that are assumed to be installed at the distribution grid level.
+PyPSA-Eur-Sec allows individual buildings to make use of [micro gas CHPs](configuration.md#sector_cf) that are assumed to be installed at the distribution grid level.
 
 **Heat pumps**
 
-The coefficient of performance (COP) of air- and ground-sourced heat pumps depends on the ambient or soil temperature respectively. Hence, the COP is a time-varying parameter (refer to [Config](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L206) file). Generally, the COP will be lower during winter when temperatures are low. Because the ambient temperature is more volatile than the soil temperature, the COP of ground-sourced heat pumps is less variable. Moreover, the COP depends on the difference between the source and sink temperatures:
+The coefficient of performance (COP) of air- and ground-sourced heat pumps depends on the ambient or soil temperature respectively. Hence, the COP is a time-varying parameter (refer to [Config](configuration.md#sector_cf) file). Generally, the COP will be lower during winter when temperatures are low. Because the ambient temperature is more volatile than the soil temperature, the COP of ground-sourced heat pumps is less variable. Moreover, the COP depends on the difference between the source and sink temperatures:
 
 $$\Delta T = T_{sink} - T_{source}$$
 
-For the sink water temperature Tsink we assume 55 degrees C ([Config](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L207) file). For the time- and location-dependent source temperatures Tsource, we rely on the [ERA5](https://doi.org/10.1002/qj.3803) reanalysis weather data. The temperature differences are converted into COP time series using results from a regression analysis performed in the study by [Stafell et al.](https://pubs.rsc.org/en/content/articlelanding/2012/EE/c2ee22653g). For air-sourced heat pumps (ASHP), we use the function:
+For the sink water temperature Tsink we assume 55 degrees C ([Config](configuration.md#sector_cf) file). For the time- and location-dependent source temperatures Tsource, we rely on the [ERA5](https://doi.org/10.1002/qj.3803) reanalysis weather data. The temperature differences are converted into COP time series using results from a regression analysis performed in the study by [Stafell et al.](https://pubs.rsc.org/en/content/articlelanding/2012/EE/c2ee22653g). For air-sourced heat pumps (ASHP), we use the function:
 
 $$COP (\Delta T) = 6.81 - 0.121\Delta T + 0.000630\Delta T^2$$
 
@@ -124,22 +124,22 @@ $$COP(\Delta T) = 8.77 - 0.150\Delta T + 0.000734\Delta T^2$$
 
 **Resistive heaters**
 
-Can be activated in Config from the [boilers](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L232) option.
+Can be activated in Config from the [boilers](configuration.md#sector_cf) option.
 Resistive heaters produce heat with a fixed conversion efficiency (refer to [Technology-data repository](https://github.com/PyPSA/technology-data) ).
 
 **Gas, oil, and biomass boilers**
 
-Can be activated in Config from the [boilers](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L232) , [oil boilers](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L233) , and [biomass boiler](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L234) option.
+Can be activated in Config from the [boilers](configuration.md#sector_cf) , [oil boilers](configuration.md#sector_cf) , and [biomass boiler](configuration.md#sector_cf) option.
 Similar to resistive heaters, boilers have a fixed efficiency and produce heat using gas, oil or biomass.
 
 **Solar thermal collectors**
 
-Can be activated in the config file from the [solar_thermal](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L237) option.
-Solar thermal profiles are built based on weather data and also have the [options](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L134) for setting the sky model and the orientation of the panel in the config file, which are then used by the atlite tool to calculate the solar resource time series.
+Can be activated in the config file from the [solar_thermal](configuration.md#sector_cf) option.
+Solar thermal profiles are built based on weather data and also have the [options](configuration.md#sector_cf) for setting the sky model and the orientation of the panel in the config file, which are then used by the atlite tool to calculate the solar resource time series.
 
 **Waste heat from Fuel Cells, Methanation and Fischer-Tropsch plants**
 
-Waste heat from [fuel cells](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L256) in addition to processes like [Fischer-Tropsch](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L255), methanation, and Direct Air Capture (DAC) is dumped into  district heating networks.
+Waste heat from [fuel cells](configuration.md#sector_cf) in addition to processes like [Fischer-Tropsch](configuration.md#sector_cf), methanation, and Direct Air Capture (DAC) is dumped into  district heating networks.
 
 **Existing heating capacities and decommissioning**
 
@@ -147,10 +147,10 @@ For the myopic transition paths, capacities already existing for technologies su
 
 **Thermal Energy Storage**
 
-Activated in Config from the [tes](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L228) option.
+Activated in Config from the [tes](configuration.md#sector_cf) option.
 
 Thermal energy can be stored in large water pits associated with district heating systems and individual thermal energy storage (TES), i.e., small water tanks. Water tanks are modelled as [stores](https://docs.pypsa.org/latest/user-guide/components/stores/), which are connected to heat demand buses through water charger/discharger links.
-A thermal energy density of 46.8 kWh $_{th}$/m3 is assumed, corresponding to a temperature difference of 40 K. The decay of thermal energy in the stores: 1- $e^{-1/24\tau}$ is assumed to have a time constant  of  $\tau$=180 days for central TES and  $\tau$=3 days for individual TES, both modifiable through [tes_tau](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L229) in config file. Charging and discharging efficiencies are 90% due to pipe losses.
+A thermal energy density of 46.8 kWh $_{th}$/m3 is assumed, corresponding to a temperature difference of 40 K. The decay of thermal energy in the stores: 1- $e^{-1/24\tau}$ is assumed to have a time constant  of  $\tau$=180 days for central TES and  $\tau$=3 days for individual TES, both modifiable through [tes_tau](configuration.md#sector_cf) in config file. Charging and discharging efficiencies are 90% due to pipe losses.
 
 **Residential Heat Demand-Side Management (DSM)**
 
@@ -225,14 +225,14 @@ Thus, approximately 28 % of EU households are assumed to contribute to the resid
 
 **Retrofitting of the thermal envelope of buildings**
 
-Co-optimising building renovation is only enabled if in the [config](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L222) file. To reduce the computational burden,
+Co-optimising building renovation is only enabled if in the [config](configuration.md#sector_cf) file. To reduce the computational burden,
 default setting is set as false.
 
 Renovation of the thermal envelope reduces the space heating demand and is
 optimised at each node for every heat bus. Renovation measures through additional
 insulation material and replacement of energy inefficient windows are considered.
 
-In a first step, costs per energy savings are estimated in the [build_retro_cost.py](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/build_retro_cost.py) script.
+In a first step, costs per energy savings are estimated in the [build_retro_cost][] script.
 They depend on the insulation condition of the building stock and costs for
 renovation of the building elements.
 In a second step, for those cost per energy savings two possible renovation
@@ -240,17 +240,17 @@ strengths are determined: a moderate renovation with lower costs and lower
 maximum possible space heat savings, and an ambitious renovation with associated
 higher costs and higher efficiency gains. They are added by step-wise
 linearisation in form of two additional generations in
-the  [prepare_sector_network.py](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/prepare_sector_network.py#L1600)  script.
+the  [prepare_sector_network][]  script.
 
 Settings in the `config/config.yaml` concerning the endogenously optimisation of building
-renovation include [cost factor](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L223), [interest rate](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L224), [annualised cost](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L225), [tax weighting](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L226), and [construction index](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L227).
+renovation include [cost factor](configuration.md#sector_cf), [interest rate](configuration.md#sector_cf), [annualised cost](configuration.md#sector_cf), [tax weighting](configuration.md#sector_cf), and [construction index](configuration.md#sector_cf).
 
 Further information are given in the study by Zeyen et al. : [Mitigating heat demand peaks in buildings in a highly renewable European energy system, (2021)](https://arxiv.org/abs/2012.01831).
 
 ## Hydrogen demand {#hydrogen-demand}
 
 Hydrogen is consumed in the industry sector (see [Industry demand](#industry-demand)) to produce ammonia (see [Chemicals Industry](#chemicals-industry)) and direct reduced iron (DRI) (see [Iron and Steel](#iron-and-steel)). Hydrogen is also consumed to produce synthetic methane (see [Methane supply](#methane-supply)) and liquid hydrocarbons (see [Oil-based products supply](#oil-based-products-supply)) which have multiple uses in industry and other sectors.
-Hydrogen is also used for transport applications (see [Transportation](#transportation)), where it is exogenously fixed. It is used in [heavy-duty land transport](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L181) and as liquified hydrogen in the shipping sector (see [Shipping](#shipping)). Furthermore, stationary fuel cells may re-electrify hydrogen (with waste heat as a byproduct) to balance renewable fluctuations (see [Electricity supply and demand](#electricity-supply-and-demand)). The waste heat from the stationary fuel cells can be used in [district-heating systems](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L256).
+Hydrogen is also used for transport applications (see [Transportation](#transportation)), where it is exogenously fixed. It is used in [heavy-duty land transport](configuration.md#sector_cf) and as liquified hydrogen in the shipping sector (see [Shipping](#shipping)). Furthermore, stationary fuel cells may re-electrify hydrogen (with waste heat as a byproduct) to balance renewable fluctuations (see [Electricity supply and demand](#electricity-supply-and-demand)). The waste heat from the stationary fuel cells can be used in [district-heating systems](configuration.md#sector_cf).
 
 ## Hydrogen supply {#hydrogen-supply}
 
@@ -263,7 +263,7 @@ combined with a water-gas shift reaction
 $$CO + H_2O \xrightarrow{} CO_2 + H_2$$
 
 
-SMR is included [here](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L245).
+SMR is included [here](configuration.md#sector_cf).
 PyPSA-Eur-Sec allows this route of $H_2$ production with and without [carbon capture (CC)] (see [Carbon dioxide capture, usage and sequestration (CCU/S)](#carbon-dioxide-capture-usage-and-sequestration-ccus)). These routes are often referred to as blue and grey hydrogen. Here, methane input can be both of fossil or synthetic origin.
 
 Green hydrogen can be produced by electrolysis to split water into hydrogen and oxygen
@@ -275,12 +275,12 @@ For the electrolysis, alkaline electrolysers are chosen since they have lower co
 
 **Transport**
 
-Hydrogen is transported by pipelines. $H_2$ pipelines are endogenously generated, either via a  greenfield $H_2$ network, or by [retrofitting natural gas pipelines](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L262)). Retrofitting is implemented in such a way that for every unit of decommissioned gas pipeline, a share (60% is used in the study by  [Neumann et al.](https://arxiv.org/abs/2207.05816)) of its nominal capacity (exogenously determined in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L266).) is available for hydrogen transport. When the gas network is not resolved, this input denotes the potential for gas pipelines repurposed into hydrogen pipelines.
+Hydrogen is transported by pipelines. $H_2$ pipelines are endogenously generated, either via a  greenfield $H_2$ network, or by [retrofitting natural gas pipelines](configuration.md#sector_cf)). Retrofitting is implemented in such a way that for every unit of decommissioned gas pipeline, a share (60% is used in the study by  [Neumann et al.](https://arxiv.org/abs/2207.05816)) of its nominal capacity (exogenously determined in the [config file](configuration.md#sector_cf).) is available for hydrogen transport. When the gas network is not resolved, this input denotes the potential for gas pipelines repurposed into hydrogen pipelines.
 New pipelines can be built additionally on all routes where there currently is a gas or electricity network connection. These new pipelines will be built where no sufficient retrofitting options are available. The capacities of new and repurposed pipelines are a result of the optimisation.
 
 **Storage**
 
-Hydrogen can be stored in overground steel tanks or [underground salt caverns](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L250). For the latter, energy storage capacities in every country are limited to the potential estimation for onshore salt caverns within [50 km](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L251) of shore to avoid environmental issues associated with brine solution disposal. Underground storage potentials for hydrogen in European salt caverns is acquired from [Caglayan et al.](https://doi.org/10.1016/j.ijhydene.2019.12.161)
+Hydrogen can be stored in overground steel tanks or [underground salt caverns](configuration.md#sector_cf). For the latter, energy storage capacities in every country are limited to the potential estimation for onshore salt caverns within [50 km](configuration.md#sector_cf) of shore to avoid environmental issues associated with brine solution disposal. Underground storage potentials for hydrogen in European salt caverns is acquired from [Caglayan et al.](https://doi.org/10.1016/j.ijhydene.2019.12.161)
 
 ## Methane demand {#methane-demand}
 
@@ -288,7 +288,7 @@ Methane is used in individual and large-scale gas boilers, in CHP plants with an
 
 ## Methane supply {#methane-supply}
 
-In addition to methane from fossil origins, the model also considers biogenic and synthetic sources. [The gas network can either be modelled, or it can be assumed that gas transport is not limited](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L261). If gas infrastructure is regionally resolved, fossil gas can enter the system only at existing and planned LNG terminals, pipeline entry-points, and intra- European gas extraction sites, which are retrieved from the SciGRID Gas IGGIELGN dataset and the GEM Wiki.
+In addition to methane from fossil origins, the model also considers biogenic and synthetic sources. [The gas network can either be modelled, or it can be assumed that gas transport is not limited](configuration.md#sector_cf). If gas infrastructure is regionally resolved, fossil gas can enter the system only at existing and planned LNG terminals, pipeline entry-points, and intra- European gas extraction sites, which are retrieved from the SciGRID Gas IGGIELGN dataset and the GEM Wiki.
 Biogas can be upgraded to methane.
 Synthetic methane can be produced by processing hydrogen and captures $CO_2$ in the Sabatier reaction
 
@@ -315,10 +315,10 @@ Biomass supply potentials for each European country are taken from the [JRC ENSP
 Biomass supply potentials for every NUTS2 region are taken from the [JRC ENSPRESO database](http://data.europa.eu/89h/74ed5a04-7d74-4807-9eab-b94774309d9f) where data is available for various years (2010, 2020, 2030, 2040 and 2050) and different availability scenarios (low, medium, high). No biomass import from outside Europe is assumed. More information on the data set can be found [here](https://publications.jrc.ec.europa.eu/repository/handle/JRC98626). The data for NUTS2 regions is mapped to PyPSA-Eur-Sec model regions in proportion to the area overlap.
 
 
-The desired scenario can be selected in the PyPSA-Eur-Sec [configuration](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L108). The script for building the biomass potentials from the JRC ENSPRESO data base is located [here](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/build_biomass_potentials.py#L43). Consult the script to see the keywords that specify the scenario options.
+The desired scenario can be selected in the [configuration](configuration.md#biomass_cf). The script for building the biomass potentials from the JRC ENSPRESO data base is located [here][build_biomass_potentials]. Consult the script to see the keywords that specify the scenario options.
 
 
-The [configuration](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L108) also allows the user to define how the various types of biomass are used in the model by using the following categories: biogas, solid biomass, and not included. Feedstocks categorized as biogas, typically manure and sludge waste, are available to the model as biogas, which can be upgraded to biomethane. Feedstocks categorized as solid biomass, e.g. secondary forest residues or municipal waste, are available for combustion in combined-heat-and power (CHP) plants and for medium temperature heat (below 500 degrees C) applications in industry. It can also converted to gas or liquid fuels.
+The [configuration](configuration.md#biomass_cf) also allows the user to define how the various types of biomass are used in the model by using the following categories: biogas, solid biomass, and not included. Feedstocks categorized as biogas, typically manure and sludge waste, are available to the model as biogas, which can be upgraded to biomethane. Feedstocks categorized as solid biomass, e.g. secondary forest residues or municipal waste, are available for combustion in combined-heat-and power (CHP) plants and for medium temperature heat (below 500 degrees C) applications in industry. It can also converted to gas or liquid fuels.
 
 
 Feedstocks labeled as not included are ignored by the model.
@@ -332,19 +332,19 @@ A [typical use case for biomass](https://arxiv.org/abs/2109.09563) would be the 
 Solid biomass can be used directly to provide process heat up to 500 degrees C in the industry. It can also be burned in CHP plants and boilers associated with heating systems. These technologies are described elsewhere (see [Large-scale CHP](#large-scale-chp) and [Industry demand](#industry-demand)).
 
 
-Solid biomass can be converted to syngas if the option is enabled in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L274). In this case the model will enable the technology BioSNG both with and without the option for carbon capture (see [Technology-data repository](https://github.com/PyPSA/technology-data)).
+Solid biomass can be converted to syngas if the option is enabled in the [config file](configuration.md#sector_cf). In this case the model will enable the technology BioSNG both with and without the option for carbon capture (see [Technology-data repository](https://github.com/PyPSA/technology-data)).
 
 
-Liquefaction of solid biomass [can be enabled](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L273) allowing the model to convert it into liquid hydrocarbons that can replace conventional oil products. This technology also comes with and without carbon capture (see [Technology-data repository](https://github.com/PyPSA/technology-data)).
+Liquefaction of solid biomass [can be enabled](configuration.md#sector_cf) allowing the model to convert it into liquid hydrocarbons that can replace conventional oil products. This technology also comes with and without carbon capture (see [Technology-data repository](https://github.com/PyPSA/technology-data)).
 
 
 *Transport of solid biomass*
 
-The transport of solid biomass can either be assumed unlimited between countries or it can be associated with a country specific cost per MWh/km. In the config file these options are toggled [here](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L270). If the option is off, use of solid biomass is transport. If it is turned on, a biomass transport network will be [created](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/prepare_sector_network.py#L1803) between all nodes. This network resembles road transport of biomass and the cost of transportation is a variable cost which is proportional to distance and a country specific cost per MWh/km. The latter is [estimated](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/build_biomass_transport_costs.py) from the country specific costs per ton/km used in the publication ["The JRC-EU-TIMES model. Bioenergy potentials for EU and neighbouring countries"](https://publications.jrc.ec.europa.eu/repository/handle/JRC98626).
+The transport of solid biomass can either be assumed unlimited between countries or it can be associated with a country specific cost per MWh/km. In the config file these options are toggled [here](configuration.md#biomass_cf). If the option is off, use of solid biomass is transport. If it is turned on, a biomass transport network will be [created][prepare_sector_network] between all nodes. This network resembles road transport of biomass and the cost of transportation is a variable cost which is proportional to distance and a country specific cost per MWh/km. The latter is [estimated][build_biomass_transport_costs] from the country specific costs per ton/km used in the publication ["The JRC-EU-TIMES model. Bioenergy potentials for EU and neighbouring countries"](https://publications.jrc.ec.europa.eu/repository/handle/JRC98626).
 
 *Biogas transport and use*
 
-Biogas will be aggregated into a common European resources if a gas network is not modelled explicitly, i.e., the [gas_network](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L261) option is set to false. If, on the other hand, a gas network is included, the biogas potential will be associated with each node of origin.
+Biogas will be aggregated into a common European resources if a gas network is not modelled explicitly, i.e., the [gas_network](configuration.md#sector_cf) option is set to false. If, on the other hand, a gas network is included, the biogas potential will be associated with each node of origin.
 The model can only use biogas by first upgrading it to natural gas quality (see [Methane supply](#methane-supply)) (bio methane) which is fed into the general gas network.
 
 ## Oil-based products demand {#oil-based-products-demand}
@@ -359,7 +359,7 @@ Oil-based products can be either of fossil origin or synthetically produced by c
 $$nCO+(2n+1)H_2 \rightarrow C_{n}H_{2n + 2}  +nH_2O$$
 
 
-with costs as included from the [technology-data repository](https://github.com/PyPSA/technology-data/blob/master/latex_tables/tables_in_latex.pdf). The waste heat from the Fischer-Tropsch process is supplied to [district heating networks](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L255). The share of fossil and synthetic oil is an optimisation result depending on the techno-economic assumptions.
+with costs as included from the [technology-data repository](https://github.com/PyPSA/technology-data/blob/master/latex_tables/tables_in_latex.pdf). The waste heat from the Fischer-Tropsch process is supplied to [district heating networks](configuration.md#sector_cf). The share of fossil and synthetic oil is an optimisation result depending on the techno-economic assumptions.
 
 
 *Oil-based transport*
@@ -436,7 +436,7 @@ $$FeO + H_2  \xrightarrow{} Fe + H_2O$$
 This circumvents the process emissions associated with the use of coke. For hydrogen- based DRI, we assume energy requirements of 1.7 MWh $_{H_2}$ /t steel [(Vogl et. al)](https://doi.org/10.1016/j.jclepro.2018.08.279) and 0.322 MWh $_{el}$/t steel [(HYBRIT 2016)](https://web.archive.org/web/20220715202334/https://dh5k8ug1gwbyz.cloudfront.net/uploads/2021/02/Hybrit-broschure-engelska.pdf).
 
 
-The share of steel produced via the primary route is exogenously set in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L279). The share of steel obtained via hydrogen-based DRI plus EAF is also set exogenously in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L287). The remaining share is manufactured through the secondary route using scrap metal in EAF. Bioenergy as alternative to coke in blast furnaces is not considered in the model ([Mandova et.al](https://doi.org/10.1016/j.biombioe.2018.04.021), [Suopajaervi et.al](https://doi.org/10.1016/j.apenergy.2018.01.060)).
+The share of steel produced via the primary route is exogenously set in the [config file](configuration.md#industry_cf). The share of steel obtained via hydrogen-based DRI plus EAF is also set exogenously in the [config file](configuration.md#industry_cf). The remaining share is manufactured through the secondary route using scrap metal in EAF. Bioenergy as alternative to coke in blast furnaces is not considered in the model ([Mandova et.al](https://doi.org/10.1016/j.biombioe.2018.04.021), [Suopajaervi et.al](https://doi.org/10.1016/j.apenergy.2018.01.060)).
 
 For the remaining subprocesses in this sector, the following transformations are assumed. Methane is used as energy source for the smelting process. Activities associated with furnaces, refining and rolling, and product finishing are electrified assuming the current efficiency values for these cases. These transformations result in changes in process emissions as outlined in the process emissions figure presented in the industry overview section (see [Overview](#overview)).
 
@@ -462,8 +462,8 @@ The production of ammonia, methanol, and chlorine production is deducted from th
 
 The process emissions from feedstock in the chemical industry are as high as 0.369 t $_{CO_2}$/t of ethylene equivalent. We consider process emissions for all the material output, which is a conservative approach since it assumes that all plastic-embedded $CO_2$ will eventually be released into the atmosphere. However, plastic disposal in landfilling will avoid, or at least delay, associated $CO_2$ emissions.
 
-Circular economy practices drastically reduce the amount of primary feedstock needed for the production of plastics in the model (see [Kullmann et al.](https://doi.org/10.1016/j.energy.2022.124660), [Meys et al. (2021)](https://doi.org/10.1126/science.abg9853), [Meys et al. (2020)](https://doi.org/10/gmxv6z), [Gu et al.](https://doi.org/10/gf8n9w)) and consequently, also the energy demands and level of process emission. The percentage of plastics that are assumed to be mechanically recycled can be selected in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L315), as well as
-the percentage that is chemically recycled, see [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L316) The energy consumption for those recycling processes are respectively 0.547 MWh $_{el}$/t of HVC (as indicated in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L318)) ([Meys et al. (2020)](https://doi.org/10/gmxv6z)), and 6.9 MWh $_{el}$/t of HVC (as indicated in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/776596ab9ac6a6cc93422ccfd0383abeffb0baa9/config.default.yaml#L319)) based on pyrolysis and electric steam cracking (see [Materials Economics](https://materialeconomics.com/publications/industrial-transformation-2050) report).
+Circular economy practices drastically reduce the amount of primary feedstock needed for the production of plastics in the model (see [Kullmann et al.](https://doi.org/10.1016/j.energy.2022.124660), [Meys et al. (2021)](https://doi.org/10.1126/science.abg9853), [Meys et al. (2020)](https://doi.org/10/gmxv6z), [Gu et al.](https://doi.org/10/gf8n9w)) and consequently, also the energy demands and level of process emission. The percentage of plastics that are assumed to be mechanically recycled can be selected in the [config file](configuration.md#sector_cf), as well as
+the percentage that is chemically recycled, see [config file](configuration.md#sector_cf) The energy consumption for those recycling processes are respectively 0.547 MWh $_{el}$/t of HVC (as indicated in the [config file](configuration.md#sector_cf)) ([Meys et al. (2020)](https://doi.org/10/gmxv6z)), and 6.9 MWh $_{el}$/t of HVC (as indicated in the [config file](configuration.md#sector_cf)) based on pyrolysis and electric steam cracking (see [Materials Economics](https://materialeconomics.com/publications/industrial-transformation-2050) report).
 
 
 **Non-metallic Mineral Products**
@@ -507,7 +507,7 @@ $$2Al_2O_3 +3C \xrightarrow{}  4Al+3CO_2$$
 
 The primary route requires high-enthalpy heat (2.3 MWh/t) to produce alumina which is supplied by methane and causes process emissions of 1.5 t $_{CO_2}$/t aluminium. According to [Friedrichsen et al.](http://www.umweltbundesamt.de/en/publikationen/comparative-analysis-of-options-potential-for), inert anodes might become commercially available by 2030 that would eliminate the process emissions, but they are not included in the model. Assuming all subprocesses are electrified, the primary route requires 15.4 MWh $_{el}$/t of aluminium.
 
-In the secondary route, scrap aluminium is remelted. The energy demand for this process is only 10% of the primary route and there are no associated process emissions. Assuming all subprocesses are electrified, the secondary route requires 1.7 MWh/t of aluminium. The share of aliminum manufactured by the primary and secondary route can be selected in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L297)
+In the secondary route, scrap aluminium is remelted. The energy demand for this process is only 10% of the primary route and there are no associated process emissions. Assuming all subprocesses are electrified, the secondary route requires 1.7 MWh/t of aluminium. The share of aliminum manufactured by the primary and secondary route can be selected in the [config file](configuration.md#industry_cf)
 
 For the other non-ferrous metals, we assume the electrification of the entire manufacturing process with an average electricity demand of 3.2 MWh $_{el}$/t lead equivalent.
 
@@ -526,45 +526,45 @@ Annual energy demands for land transport, aviation and shipping for every countr
 
 ### Land transport {#land-transport}
 
-Both road and rail transport is combined as [land transport demand](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/build_transport_demand.py#L74) although electrified rail transport is excluded because that demand is included in the current electricity demand.
+Both road and rail transport is combined as [land transport demand][build_transport_demand] although electrified rail transport is excluded because that demand is included in the current electricity demand.
 
-The most important settings for land transport are the exogenously fixed fuel mix (an option enabling the endogeous optimization of transport electrification is planned but not yet implemented). In the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L181), the share of battery electric vehicles (BEV) and hydrogen fuel cell vehicles (FCEV) can be set. The remaining percentage will be treated as internal combustion engines (ICE) that consume oil products.
+The most important settings for land transport are the exogenously fixed fuel mix (an option enabling the endogeous optimization of transport electrification is planned but not yet implemented). In the [config file](configuration.md#sector_cf), the share of battery electric vehicles (BEV) and hydrogen fuel cell vehicles (FCEV) can be set. The remaining percentage will be treated as internal combustion engines (ICE) that consume oil products.
 
 *Battery Electric vehicles (BEV)*
 
-For the electrified land transport, country-specific factors are computed by comparing the [current car final energy consumption per km in](https://www.sciencedirect.com/science/article/pii/S0360544216310295) (average for Europe 0.7 kWh/km) to the 0.18 kWh/km value assumed for battery-to-wheels efficiency in EVs. The characteristic [weekly profile](https://www.bast.de/DE/Themen/Digitales/HF_1/Massnahmen/verkehrszaehlung/zaehl_node.html) provided by the German Federal Highway Research Institute (BASt) is used to obtain hourly time series for European countries taking into account the corresponding local times. Furthermore, a temperature dependence is included in the time series to account for heating/cooling demand in transport. For temperatures [below](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L166)/[above](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L165) certain threshold values, e.g. 15 degrees C/20 degrees C, [temperature coefficients](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L169) of typically 0.98%/degrees C and 0.63%/degrees C are assumed, based on the [paper](https://www.sciencedirect.com/science/article/pii/S036054421831288X).
+For the electrified land transport, country-specific factors are computed by comparing the [current car final energy consumption per km in](https://www.sciencedirect.com/science/article/pii/S0360544216310295) (average for Europe 0.7 kWh/km) to the 0.18 kWh/km value assumed for battery-to-wheels efficiency in EVs. The characteristic [weekly profile](https://www.bast.de/DE/Themen/Digitales/HF_1/Massnahmen/verkehrszaehlung/zaehl_node.html) provided by the German Federal Highway Research Institute (BASt) is used to obtain hourly time series for European countries taking into account the corresponding local times. Furthermore, a temperature dependence is included in the time series to account for heating/cooling demand in transport. For temperatures [below](configuration.md#sector_cf)/[above](configuration.md#sector_cf) certain threshold values, e.g. 15 degrees C/20 degrees C, [temperature coefficients](configuration.md#sector_cf) of typically 0.98%/degrees C and 0.63%/degrees C are assumed, based on the [paper](https://www.sciencedirect.com/science/article/pii/S036054421831288X).
 
-For BEVs the user can define the [storage energy capacity](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L173), [charging power capacity](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L176), and [charging efficiency](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L174).
+For BEVs the user can define the [storage energy capacity](configuration.md#sector_cf), [charging power capacity](configuration.md#sector_cf), and [charging efficiency](configuration.md#sector_cf).
 
-For BEV, smart charging is an option. A [certain share](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L172) of the BEV fleet can shift their charging time. The BEV state of charge is forced to be higher than a [set percentage](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L163), e.g. 75%, every day at a [specified hour](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L164), e.g., 7 am, to ensure that the batteries are sufficiently charged for peak usage in the morning and they not behave as seasonal storage.
+For BEV, smart charging is an option. A [certain share](configuration.md#sector_cf) of the BEV fleet can shift their charging time. The BEV state of charge is forced to be higher than a [set percentage](configuration.md#sector_cf), e.g. 75%, every day at a [specified hour](configuration.md#sector_cf), e.g., 7 am, to ensure that the batteries are sufficiently charged for peak usage in the morning and they not behave as seasonal storage.
 No lower limit on the state of charge is imposed, but BEV batteries are considered protected from e.g. deep discharge by the on-board battery management system which only makes the usable capacity available to the vehicle, equal to the configured storage energy capacity.
-They also have the option to participate in vehicle-to-grid (V2G) services to facilitate system operation if that [is enabled](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L179).
+They also have the option to participate in vehicle-to-grid (V2G) services to facilitate system operation if that [is enabled](configuration.md#sector_cf).
 
 The battery cost of BEV is not included in the model since it is assumed that BEV owners buy them to primarily satisfy their mobility needs.
 
 *Hydrogen fuel cell vehicles (FCEV)*
 
-The share of all land transport that is specified to be be FCEV will be converted to a demand for hydrogen (see [Hydrogen supply](#hydrogen-supply)) using the [FCEV efficiency](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L191).
+The share of all land transport that is specified to be be FCEV will be converted to a demand for hydrogen (see [Hydrogen supply](#hydrogen-supply)) using the [FCEV efficiency](configuration.md#sector_cf).
 
 FCEVs are typically used to simulate demand for transport that is hard to electrify directly, e.g. heavy construction machinery. But it may also be used to investigate a more widespread adoption of the technology.
 
 *Internal combustion engine vehicles (ICE)*
 
-All land transport that is not specified to be either BEV or FCEV will be treated as conventional ICEs. The transport demand is converted to a demand for oil products (see [Oil-based products supply](#oil-based-products-supply)) using the [ICE efficiency](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L192).
+All land transport that is not specified to be either BEV or FCEV will be treated as conventional ICEs. The transport demand is converted to a demand for oil products (see [Oil-based products supply](#oil-based-products-supply)) using the [ICE efficiency](configuration.md#sector_cf).
 
 ### Aviation {#aviation}
 
-The [demand for aviation](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/prepare_sector_network.py#L2193) includes international and domestic use. It is modelled as an oil demand since aviation consumes kerosene. This can be produced synthetically or have fossil-origin (see [Oil-based products supply](#oil-based-products-supply)).
+The [demand for aviation][prepare_sector_network] includes international and domestic use. It is modelled as an oil demand since aviation consumes kerosene. This can be produced synthetically or have fossil-origin (see [Oil-based products supply](#oil-based-products-supply)).
 
 ### Shipping {#shipping}
 
 Shipping energy demand is covered by a combination of oil, hydrogen and methanol. Other fuel options, like ammonia, are currently not included in PyPSA-Eur-Sec. The share of shipping that is assumed to be supplied by hydrogen or methanol can be selected in the [config file](https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml#L475).
 
-To estimate the [hydrogen demand](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/prepare_sector_network.py#L2090), the average fuel efficiency of the fleet is used in combination with the efficiency of the fuel cell defined in the technology-data repository. The average fuel efficiency is set in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L196).
+To estimate the [hydrogen demand][prepare_sector_network], the average fuel efficiency of the fleet is used in combination with the efficiency of the fuel cell defined in the technology-data repository. The average fuel efficiency is set in the [config file](configuration.md#sector_cf).
 
 The consumed hydrogen comes from the general hydrogen bus where it can be produced by SMR, SMR+CC or electrolysers (see [Hydrogen supply](#hydrogen-supply)). The fraction that is not converted into hydrogen use oil products, i.e. is connected to the general oil bus.
 
-The energy demand for liquefaction of the hydrogen used for shipping can be [included](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L197). If this option is selected, liquifaction will happen at the [node where the shipping demand occurs](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/scripts/prepare_sector_network.py#L2064).
+The energy demand for liquefaction of the hydrogen used for shipping can be [included](configuration.md#sector_cf). If this option is selected, liquifaction will happen at the [node where the shipping demand occurs][prepare_sector_network].
 
 The consumed methanol comes from the general methanol bus where it is produced through methanolisation (see [Chemicals Industry](#chemicals-industry)).
 
@@ -580,12 +580,12 @@ For the following point source emissions, carbon capture is applicable:
 - Methane or biomass used for process heat in the industry
 - Hydrogen production by SMR
 - CHP plants using biomass or methane
-- [Coal power plants](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L242).
+- [Coal power plants](configuration.md#sector_cf).
 
-Point source emissions are captured assuming a capture rate, e.g. 90%, which can be specified in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L249). The electricity and heat demand of process emission carbon capture
+Point source emissions are captured assuming a capture rate, e.g. 90%, which can be specified in the [config file](configuration.md#sector_cf). The electricity and heat demand of process emission carbon capture
 is currently ignored.
 
-DAC (if [included](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L243)) includes the adsorption phase where electricity and heat consumptionsare required to assist the adsorption process and regenerate the adsorbent. It also includes the drying and compression of $CO_2$ prior to storage which consumes electricity and rejects heat.
+DAC (if [included](configuration.md#sector_cf)) includes the adsorption phase where electricity and heat consumptionsare required to assist the adsorption process and regenerate the adsorbent. It also includes the drying and compression of $CO_2$ prior to storage which consumes electricity and rejects heat.
 
 *Carbon dioxide usage*
 
@@ -594,8 +594,8 @@ naphtha). If captured carbon is used, the $CO_2$ emissions of the synthetic fuel
 
 *Carbon dioxide sequestration*
 
-Captured $CO_2$ can also be sequestered underground up to an annual sequestration limit of 200 Mt $_{CO_2}$/a. This limit can be chosen in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L246). As stored carbon dioxide is modelled as a single node for Europe, $CO_2$ transport constraints are neglected. Since $CO_2$ sequestration is an immature technology, the cost assumption is defined in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247).
+Captured $CO_2$ can also be sequestered underground up to an annual sequestration limit of 200 Mt $_{CO_2}$/a. This limit can be chosen in the [config file](configuration.md#sector_cf). As stored carbon dioxide is modelled as a single node for Europe, $CO_2$ transport constraints are neglected. Since $CO_2$ sequestration is an immature technology, the cost assumption is defined in the [config file](configuration.md#sector_cf).
 
 *Carbon dioxide transport*
 
-Carbon dioxide can be modelled as a single node for Europe (in this case, $CO_2$ transport constraints are neglected). A network for modelling the transport of $CO_2$ among the different nodes can also be created if selected in the [config file](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248).
+Carbon dioxide can be modelled as a single node for Europe (in this case, $CO_2$ transport constraints are neglected). A network for modelling the transport of $CO_2$ among the different nodes can also be created if selected in the [config file](configuration.md#sector_cf).
