@@ -2,27 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Prepare and extend default cost data with custom cost modifications. Custom costs can target all planning horizons
-and / or technologies using the 'all' identifier.
+Prepares the technology cost table of one planning horizon for the model.
 
-Preparing the cost data includes:
-- aligning all units to conventional units (i.e. MW / MWh),
-- filling in missing data,
-- computing 'capital_cost' parameter (annualised investment costs and FOM),
-- computing 'marginal_cost' parameter (fuel costs and VOM),
-- computing storage costs for batteries and hydrogen,
-- (deprecated) overwriting attributes using config-based modifications.
-
-Inputs
-------
-
-- `resources/costs_{horizon}.csv`: Default cost data for specified planning horizon
-- (by default) `data/custom_costs.csv`: Custom cost modifications (can be configured with `costs:custom_costs:file`
-
-Outputs
--------
-
-- `resources/costs_{horizon}_processed.csv`: Prepared cost data with custom modifications applied
+Units are aligned to MW and MWh, missing values are filled with defaults, the
+annualised `capital_cost` (investment annuity plus fixed operation and
+maintenance) and the `marginal_cost` (fuel plus variable operation and
+maintenance) are computed, and combined storage costs for batteries and
+hydrogen are derived. Custom cost modifications from the configuration can
+target single technologies and horizons or all of them with the `all`
+identifier.
 """
 
 import logging

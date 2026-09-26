@@ -2,59 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build specific energy consumption by carrier and industries and by country,
-that interpolates between the current average energy consumption (from
-2015-2020) and the ideal future best-in-class consumption.
+Build specific energy consumption per industrial subsector, carrier and country for a planning horizon in MWh/t.
 
-Description
--------
-
-The `config["industry"]["sector_ratios_fraction_future"]` parameter determines the progress towards the future best-in-class consumption.
-For each bus, the following industry subcategories
-
-- Electric arc
-- DRI + Electric arc
-- Integrated steelworks
-- HVC
-- HVC (mechanical recycling)
-- HVC (chemical recycling)
-- Ammonia
-- Chlorine
-- Methanol
-- Other chemicals
-- Pharmaceutical products etc.
-- Cement
-- Ceramics & other NMM
-- Glass production
-- Pulp production
-- Paper production
-- Printing and media reproduction
-- Food, beverages and tobacco
-- Alumina production
-- Aluminium - primary production
-- Aluminium - secondary production
-- Other non-ferrous metals
-- Transport equipment
-- Machinery equipment
-- Textiles and leather
-- Wood and wood products
-- Other Industrial Sectors
-
-with the following carriers are considered:
-
-- elec
-- coal
-- coke
-- biomass
-- methane
-- hydrogen
-- heat
-- naphtha
-- process emission
-- process emission from feedstock
-- (ammonia)
-
-Unit of the output file is MWh/t.
+Today's ratios are derived per country by dividing the energy demand from [build_industrial_energy_demand_per_country_today][] by the production from [build_industrial_production_per_country][], with the carriers mapped onto those of the best-case ratios (solid to coke, gas to methane, liquid to naphtha, waste and other to biomass). These are then interpolated linearly towards the best-case ratios from [build_industry_sector_ratios][] using `industry: sector_ratios_fraction_future` for the horizon year: a fraction of 0 keeps today's ratios, 1 uses the best-case ratios. Subsectors that do not exist today, such as DRI + Electric arc or HVC recycling, and any missing country or carrier values take the best-case ratios.
 """
 
 import logging

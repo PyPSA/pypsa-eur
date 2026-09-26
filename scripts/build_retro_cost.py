@@ -2,67 +2,33 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This script calculates the space heating savings through better insulation of
-the thermal envelope of a building and corresponding costs for different
-building types in different countries.
+Build space heating savings and costs of retrofitting the thermal envelope of buildings per country, sector and retrofitting strength.
 
-Methodology
------------
+Energy savings follow the seasonal method of EN ISO 13790 as implemented in
+the TABULA calculation method. The building stock with its U-values and
+heated floor areas comes from the Hotmaps project; typical envelope surfaces,
+thermal bridges and ventilation losses per building type come from TABULA.
+Space heat demand is the transmission and ventilation heat loss over the
+heating season minus the utilised solar and internal gains:
 
-The energy savings calculations are based on the
+$$
+E_{space} = (H_{tr} + H_{ve}) F_{red} (T_{th} - T_{heat}) d_{heat} / 365 - f_{gain} (H_{solar} + H_{int})
+$$
 
-  EN ISO 13790 / seasonal method https://www.iso.org/obp/ui/#iso:std:iso:13790:ed-2:v1:en:
+with the heating season of $d_{heat}$ days below the threshold $T_{th}$ of
+15 C, their mean temperature $T_{heat}$, a reduction factor $F_{red}$ for
+non-uniform heating and a gain utilisation factor $f_{gain}$. Savings are
+computed for several insulation thicknesses. Costs per thickness are taken
+from German data and weighted by country-specific construction and tax
+indices. Savings and costs per sector are area-weighted over building types
+and construction periods, and countries without building data take the
+values of neighbouring countries.
 
-  - calculations heavily oriented on the TABULAWebTool
-  http://webtool.building-typology.eu/
-  http://www.episcope.eu/fileadmin/tabula/public/docs/report/TABULA_CommonCalculationMethod.pdf
-  which is following the EN ISO 13790 / seasonal method
-
-  - building stock data:
-      mainly: hotmaps project https://gitlab.com/hotmaps/building-stock
-      missing: EU building observatory https://ec.europa.eu/energy/en/eu-buildings-database
-
-  - building types with typical surfaces/ standard values:
-      - tabula https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
-
-
-Basic Equations
----------------
-
-The basic equations:
-
-    The Energy needed for space heating E_space [W/m²] are calculated as the
-    sum of heat losses and heat gains:
-
-        E_space = H_losses - H_gains
-
-    Heat losses constitute from the losses through heat transmission (H_tr [W/m²K])
-    (this includes heat transfer through building elements and thermal bridges)
-    and losses by ventilation (H_ve [W/m²K]):
-
-        H_losses = (H_tr + H_ve) * F_red * (T_threshold - T_averaged_d_heat) * d_heat * 1/365
-
-        F_red : reduction factor, considering non-uniform heating [°C], p.16 chapter 2.6 [-]
-        T_threshold : heating temperature threshold, assumed 15 C
-        d_heat : Length of heating season, number of days with daily averaged temperature below T_threshold
-        T_averaged_d_heat : mean daily averaged temperature of the days within heating season d_heat
-
-    Heat gains constitute from the gains by solar radiation (H_solar) and
-    internal heat gains (H_int) weighted by a gain utilisation factor nu:
-
-        H_gains = nu * (H_solar + H_int)
-
-Structure
----------
-
-The script has the following structure:
-
-    (0) fixed parameters are set
-    (1) prepare data, bring to same format
-    (2) calculate space heat demand depending on additional insulation material
-    (3) calculate costs for corresponding additional insulation material
-    (4) get cost savings per retrofitting measures for each sector by weighting
-        with heated floor area
+References
+----------
+- Loga et al. (2013), [TABULA Calculation Method - Energy Use for Heating and Domestic Hot Water](http://www.episcope.eu/fileadmin/tabula/public/docs/report/TABULA_CommonCalculationMethod.pdf)
+- Hotmaps project, [Building stock data](https://gitlab.com/hotmaps/building-stock)
+- TABULA, [Building typology calculator](https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx)
 """
 
 import logging

@@ -2,20 +2,25 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build hydroelectric inflow time-series for each country.
+Build hydroelectric inflow time series per country.
 
-Outputs
--------
-
-- `resources/profile_hydro.nc`:
+Runoff from the weather cutout is aggregated over each country shape with
+[atlite](https://atlite.readthedocs.io/en/latest/), smoothed and normalised so
+that the annual inflow matches the annual hydro generation reported by the
+U.S. Energy Information Administration (EIA). Optionally, the EIA statistics
+are corrected for capacity changes relative to 2019, missing years are
+approximated by a linear regression of generation on annual runoff, and all
+years can be normalised to a single reference year. Years without EIA data
+default to the median year. Inflows below a configurable threshold are clipped
+to zero.
 
 | Field | Dimensions | Description |
 | --- | --- | --- |
-| inflow | countries, time | Inflow to the state of charge (in MW), e.g. due to river inflow in hydro reservoir. |
+| inflow | countries, time | Inflow to the state of charge in MW, e.g. river inflow to hydro reservoirs |
 
-![](img/inflow-ts.png)
+![](../img/inflow-ts.png)
 
-![](img/inflow-box.png)
+![](../img/inflow-box.png)
 """
 
 import logging

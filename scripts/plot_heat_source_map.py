@@ -2,47 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create interactive maps for heat source temperature and energy data.
+Plots interactive maps of heat source temperatures and energy potentials by region.
 
-This script generates interactive Folium maps displaying heat source temperature
-and energy potential data across European regions. It visualizes spatial distributions
-of renewable heat sources like river water, sea water, and ambient air temperatures,
-along with their energy potentials for district heating applications.
-
-The script creates two types of maps:
-- Temperature maps showing spatial temperature distributions (°C)
-- Energy maps showing total energy potential (TWh) where available
-
-Maps include regional boundaries with aggregated values and detailed point data
-with interactive tooltips. Temperature data is averaged by region while energy
-data is summed by region to show total potential.
-
-Relevant Settings
------------------
-
-```yaml
-plotting:
-    heat_source_map:
-        temperature_cmap: "Reds"  # Colormap for temperature data
-        energy_cmap: "Oranges"    # Colormap for energy data
-```
-
-Inputs
-------
-- `resources/{run}/onshore_regions.geojson`: Regional boundaries
-- `resources/{run}/temp_{carrier}_temporal_aggregate.nc`: Temperature data
-- `resources/{run}/heat_source_energy_{carrier}_temporal_aggregate.nc`: Energy data (optional)
-
-Outputs
--------
-- `results/{run}/maps/static/heat_source_temperature_map_{carrier}_{horizon}.html`: Interactive temperature map
-- `results/{run}/maps/static/heat_source_energy_map_{carrier}_{horizon}.html`: Interactive energy potential map
-
-Notes
------
-Uses Folium for interactive web-based mapping. Temperature values in °C,
-energy values converted from MWh to TWh for display. Handles missing energy
-data by creating empty placeholder maps.
+Reads the temporally aggregated temperature and, where available, energy
+potential of a heat source such as river water, sea water or ambient air.
+Grid cell values are drawn as points and aggregated per onshore region, with
+temperatures averaged and energy potentials summed, and shown in tooltips. The
+maps are rendered with Folium as HTML files and serve to inspect the spatial
+distribution of heat sources available for district heating. Missing energy
+data yields an empty map.
 """
 
 import logging

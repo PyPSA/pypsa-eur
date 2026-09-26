@@ -4,62 +4,28 @@
 
 
 """
-Retrieves conventional powerplant capacities and locations from
-[powerplantmatching](https://github.com/PyPSA/powerplantmatching), assigns
-these to buses and creates a `.csv` file. It is possible to amend the
-powerplant database with custom entries provided in
-`data/custom_powerplants.csv`.
-Lastly, for every substation, powerplants with zero-initial capacity can be added for certain fuel types automatically.
+Build a table of existing conventional power plants assigned to the buses of the clustered network.
 
-Outputs
--------
+Plant capacities and locations come from the
+[powerplantmatching](https://github.com/PyPSA/powerplantmatching) database,
+restricted to the modelled countries and filtered with the
+[pandas.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html)
+expression in `electricity.powerplants_filter`. Custom entries from a
+user-provided CSV can be added, filtered with `electricity.custom_powerplants`;
+for example `powerplants_filter: Country not in ['Germany']` together with
+`custom_powerplants: Country in ['Germany']` replaces the German fleet by custom
+data. Fuel types listed in `electricity.everywhere_powerplants` are added with
+zero capacity at every bus. Each plant is assigned to the bus whose onshore or
+offshore region contains it, or to the nearest region of the same country
+within 10 km; plants that cannot be assigned are dropped with a warning.
 
-- `resources/{run}/powerplants.csv`: A list of conventional power plants (i.e. neither wind nor solar) with fields for name, fuel type, technology, country, capacity in MW, duration, commissioning year, retrofit year, latitude, longitude, and dam information as documented in the [powerplantmatching README](https://github.com/PyPSA/powerplantmatching/blob/master/README.md); additionally it includes information on the closest substation/bus in `resources/{run}/networks/clustered.nc`.
+The table keeps the powerplantmatching fields (name, fuel type, technology,
+country, capacity in MW, commissioning and retrofit year, coordinates and dam
+information, see the
+[powerplantmatching README](https://github.com/PyPSA/powerplantmatching/blob/master/README.md))
+and adds the assigned bus.
 
-    ![](img/powerplantmatching.png)
-
-    **Source:** [powerplantmatching on GitHub](https://github.com/PyPSA/powerplantmatching)
-
-Description
------------
-
-The configuration options `electricity: powerplants_filter` and `electricity: custom_powerplants` can be used to control whether data should be retrieved from the original powerplants database or from custom amendments. These specify [pandas.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html) commands.
-In addition the configuration option `electricity: everywhere_powerplants` can be used to place powerplants with zero-initial capacity of certain fuel types at all substations.
-
-1. Adding all powerplants from custom:
-
-    ```yaml
-    powerplants_filter: false
-    custom_powerplants: true
-    ```
-
-2. Replacing powerplants in e.g. Germany by custom data:
-
-    ```yaml
-    powerplants_filter: Country not in ['Germany']
-    custom_powerplants: true
-    ```
-
-    or
-
-    ```yaml
-    powerplants_filter: Country not in ['Germany']
-    custom_powerplants: Country in ['Germany']
-    ```
-
-
-3. Adding additional built year constraints:
-
-    ```yaml
-    powerplants_filter: Country not in ['Germany'] and YearCommissioned <= 2015
-    custom_powerplants: YearCommissioned <= 2015
-    ```
-
-4. Adding powerplants at all substations for 4 conventional carrier types:
-
-    ```yaml
-    everywhere_powerplants: ['Natural Gas', 'Coal', 'nuclear', 'OCGT']
-    ```
+![](../img/powerplantmatching.png)
 """
 
 import itertools

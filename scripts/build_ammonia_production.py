@@ -2,13 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build historical annual ammonia production per country in ktonNH3/a.
+Build historical ammonia production per country in ktNH3/a.
 
-Description
--------
-
-This functions takes data from the [Minerals Yearbook](https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information)
- (July 2024) published by the US Geological Survey (USGS) and the National Minerals Information Center and extracts the annual ammonia production per country in ktonN/a. The data is converted to ktonNH3/a.
+Annual ammonia production per country for 2019 to 2023 is read from the nitrogen statistics of the [USGS Minerals Yearbook](https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information) (July 2024 edition). Country names are converted to ISO-2 codes, and the reported nitrogen content is converted to ammonia mass with the factor 17/14.
 """
 
 import logging

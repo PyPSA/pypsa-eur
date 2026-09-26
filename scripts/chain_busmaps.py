@@ -6,15 +6,6 @@ Build combined busmap from simplify_network and cluster_network busmaps.
 
 Chains the two busmaps to create a single mapping from base network buses
 to clustered network buses.
-
-Inputs
-------
-- ``resources/busmap_simplify_network.csv``: Mapping from base to simplified buses
-- ``resources/busmap_cluster_network.csv``: Mapping from simplified to clustered buses
-
-Outputs
--------
-- ``resources/busmap.csv``: Combined mapping from base to clustered buses
 """
 
 import logging

@@ -2,10 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Retrieve electricity demand for United Kingdom from NESO.
+Retrieve historic electricity demand of Great Britain from NESO.
 
-https://www.neso.energy/data-portal/historic-demand-data
-https://www.neso.energy/data-portal/api-guidance
+Half-hourly national demand is queried per year from 2001 onwards from the
+[NESO historic demand data](https://www.neso.energy/data-portal/historic-demand-data)
+through its [datastore API](https://www.neso.energy/data-portal/api-guidance),
+concatenated and averaged to hourly resolution in UTC.
 """
 
 import logging
