@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Documentation: the *Design* section is restructured into one page per carrier and sector (electricity, heating, transport, industry, hydrogen, ammonia, methane, oil, methanol, biomass, carbon management) plus pages on the model overview, model resolution and foresight. All pages use the same headings (demand, supply, conversion, storage, transport), start with badges showing in which model variants they apply, show electricity-only differences in tabs, and cite literature through `mkdocs-bibtex`. The cited references are added to `doc/publications.bib`. The former *Supply and Demand* and *Spatial Resolution* pages are replaced, and the *Foresight* page is trimmed to the planning concepts.
+
 * Documentation: removed stale wildcard-era instructions and links to the old PyPSA-Eur-Sec configuration, corrected paths and commands in the tutorials, installation, foresight and retrieve pages, and restored the rule documentation for scripts in subdirectories (`build_cop_profiles`, `build_ptes_operations`, ...). The installation page now recommends checking out a release. The `sector`, `data` and new `pypsa_eur` configuration tables are generated from the schema, all wildcards and the collection targets are documented, the retrieve page now focuses on rules needing credentials, and the data inventory is complete and checked against `data/versions.csv` by a unit test.
 
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
@@ -3767,7 +3769,7 @@ New features:
 * Land transport is separated by energy carrier (fossil, hydrogen fuel cell electric vehicle, and electric vehicle), but still needs to be separated into heavy and light vehicles (the data is there, just not the code yet).
 * For assumptions that change with the investment year, there is a new time-dependent format in the `config.yaml` using a dictionary with keys for each year. Implemented examples include the CO2 budget, exogenous retrofitting share and land transport energy carrier; more parameters will be dynamised like this in future.
 * Some assumptions have been moved out of the code and into the `config.yaml`, including the carbon sequestration potential and cost, the heat pump sink temperature, reductions in demand for high value chemicals, and some BEV DSM parameters and transport efficiencies.
-* Documentation on [supply_demand](supply_demand.md) options has been added.
+* Documentation on [supply_demand](design/overview.md) options has been added.
 
 Many thanks to Fraunhofer ISI for opening the hotmaps database and to Lisa Zeyen (KIT) for implementing the building retrofitting.
 
@@ -3802,7 +3804,7 @@ It is known to work with PyPSA-Eur v0.1.0 (commit bb3477cd69), PyPSA v0.17.1 and
 
 New features:
 
-* Option for pathway optimization with myopic foresight, based on the paper [Early decarbonisation of the European Energy system pays off (2020)](https://arxiv.org/abs/2004.11009). Investments are optimized sequentially for multiple years (e.g. 2020, 2030, 2040, 2050) taking account of existing assets built in previous years and their lifetimes. The script uses data on the existing assets for electricity and building heating technologies, but there are no assumptions yet for existing transport and industry (if you include these, the model will greenfield them). There are also some [outstanding issues](https://github.com/PyPSA/pypsa-eur-sec/issues/19#issuecomment-678194802) on e.g. the distribution of existing wind, solar and heating technologies within each country. To use myopic foresight, set `foresight : 'myopic'` in the `config.yaml` instead of the default `foresight : 'overnight'`. An example configuration can be found in `config.myopic.yaml`. More details on the implementation can be found in [myopic](foresight.md).
+* Option for pathway optimization with myopic foresight, based on the paper [Early decarbonisation of the European Energy system pays off (2020)](https://arxiv.org/abs/2004.11009). Investments are optimized sequentially for multiple years (e.g. 2020, 2030, 2040, 2050) taking account of existing assets built in previous years and their lifetimes. The script uses data on the existing assets for electricity and building heating technologies, but there are no assumptions yet for existing transport and industry (if you include these, the model will greenfield them). There are also some [outstanding issues](https://github.com/PyPSA/pypsa-eur-sec/issues/19#issuecomment-678194802) on e.g. the distribution of existing wind, solar and heating technologies within each country. To use myopic foresight, set `foresight : 'myopic'` in the `config.yaml` instead of the default `foresight : 'overnight'`. An example configuration can be found in `config.myopic.yaml`. More details on the implementation can be found in [myopic](design/foresight.md).
 
 * Technology assumptions (costs, efficiencies, etc.) are no longer stored in the repository. Instead, you have to install the [technology-data](https://github.com/PyPSA/technology-data) database in a parallel directory. These assumptions are largely based on the [Danish Energy Agency Technology Data](https://ens.dk/en/our-services/projections-and-models/technology-data). More details on the installation can be found in [installation](installation.md).
 

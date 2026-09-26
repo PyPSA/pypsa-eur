@@ -114,6 +114,29 @@ def define_env(env):
         return header + "\n" + "\n".join(_schema_rows(props))
 
     @env.macro
+    def scope(electricity="on", sector="on", overnight="on", myopic="on", perfect="on"):
+        """
+        Render badges saying in which model variants a design page applies.
+
+        Each argument is "on", "partial" or "off". "partial" means the feature
+        exists in that variant but in a reduced form; the page explains the
+        difference in a note or tab. Model variants and foresight modes are
+        coloured differently.
+        """
+        labels = [
+            ("variant", "Electricity-only", electricity),
+            ("variant", "Sector-coupled", sector),
+            ("foresight", "Overnight", overnight),
+            ("foresight", "Myopic", myopic),
+            ("foresight", "Perfect foresight", perfect),
+        ]
+        spans = "".join(
+            f'<span class="scope-{group} scope-{state}">{label}</span>'
+            for group, label, state in labels
+        )
+        return f'<div class="scope" markdown="0">{spans}</div>'
+
+    @env.macro
     def yaml_section(*paths, source="config", with_key=True):
         data = _load(source)
 
