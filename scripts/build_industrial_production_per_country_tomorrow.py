@@ -2,34 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build future industrial production per country.
+Build industrial production per country and subsector for a planning horizon in kt/a.
 
-Description
--------
+Starting from today's production from [build_industrial_production_per_country][], the steel, aluminium and high-value chemical (HVC) subsectors are re-split between primary and secondary routes according to the `industry` configuration for the horizon year; values given per year are interpolated. Total steel is preserved: a share `St_primary_fraction` stays primary, of which `DRI_fraction` moves from integrated steelworks to the new "DRI + Electric arc" route, and the rest becomes electric arc (scrap) steel. Aluminium is likewise split by `Al_primary_fraction`. HVC production is split into virgin production (`HVC_primary_fraction`) and the new subsectors "HVC (mechanical recycling)" and "HVC (chemical recycling)".
 
-This rule uses the `industrial_production_per_country.csv` file and the expected recycling rates to calculate the future production of the industrial sectors.
-
-**St_primary_fraction**
-The fraction of steel that is coming from primary production. This is more energy intensive than recycling steel (secondary production).
-
-**DRI_fraction**
-The fraction of primary steel that is produced in DRI plants.
-
-**Al_primary_fraction**
-The fraction of aluminium that is coming from primary production. This is more energy intensive than recycling aluminium (secondary production).
-
-**HVC_primary_fraction**
-The fraction of high value chemicals that are coming from primary production (crude oil or Fischer Tropsch).
-
-**HVC_mechanical_recycling_fraction**
-The fraction of high value chemicals that are coming from mechanical recycling.
-
-**HVC_chemical_recycling_fraction**
-The fraction of high value chemicals that are coming from chemical recycling.
-
-If not already present, the information is added as new column in the output file.
-
-The unit of the production is kt/a.
+!!! note "Primary shares are European"
+    The primary fractions apply to the European total. Each country's primary production is scaled by a common factor so that the sum across countries meets the target share, which preserves the existing spatial pattern of primary plants.
 """
 
 import logging

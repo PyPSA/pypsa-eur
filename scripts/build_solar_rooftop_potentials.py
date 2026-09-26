@@ -2,7 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build solar rooftop potentials for all clustered model regions per resource class.
+Build solar rooftop capacity potentials per clustered region and resource class.
+
+The gridded total population layout is summed over each solar resource class
+region using the cutout indicator matrix. The potential assumes 20 m2 of
+usable roof area per person and 0.1 kW per m2, i.e. 2 kW per person. The
+result in MW caps the solar rooftop capacity expansion in the network.
 """
 
 import geopandas as gpd

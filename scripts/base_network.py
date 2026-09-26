@@ -4,14 +4,19 @@
 
 
 """
-Creates the network topology from a [ENTSO-E map extract.](https://github.com/PyPSA/GridKit/tree/master/entsoe) (March 2022)
-or [OpenStreetMap data](https://www.openstreetmap.org/) (Aug 2024)
-as a PyPSA
-network.
+Build the base transmission network as a PyPSA network from the chosen grid dataset, together with the onshore and offshore Voronoi regions of its buses.
 
-Description
------------
-Creates the network topology from an ENTSO-E map extract, and create Voronoi shapes for each bus representing both onshore and offshore regions.
+Buses, lines, links, transformers and converters come from an
+[ENTSO-E map extract](https://github.com/PyPSA/GridKit/tree/master/entsoe)
+(March 2022, deprecated), from [OpenStreetMap data](https://www.openstreetmap.org/)
+or from the TYNDP reference grid, as selected by `electricity.base_network`.
+Buses outside the modelled countries and small unconnected components are
+dropped, electrical parameters are set from the configured line types per
+voltage level and the link and converter settings, and branches under
+construction are kept or removed according to the configuration. Each bus is
+assigned a country and marked as substation. Onshore regions are Voronoi cells
+of the buses within administrative shapes derived from NUTS3 regions; offshore
+regions are Voronoi cells within the exclusive economic zones.
 """
 
 import logging

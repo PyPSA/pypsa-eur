@@ -4,6 +4,7 @@
 
 
 rule base_network_incumbent:
+    """Builds the incumbent base network used as reference for the OSM network comparison."""
     input:
         unpack(input_base_network_incumbent),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
@@ -31,13 +32,12 @@ rule base_network_incumbent:
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
-    message:
-        "Building base network to which to compare against."
     script:
         scripts("base_network.py")
 
 
 rule make_network_comparison:
+    """Plots transmission line lengths per country for the released and incumbent networks."""
     input:
         n_release=resources("networks/base.nc"),
         n_incumbent=resources("osm/comparison/incumbent/networks/base.nc"),
@@ -59,13 +59,12 @@ rule make_network_comparison:
             "osm_network_release", "compare_to", "version"
         ),
         voltages=config_provider("electricity", "voltages"),
-    message:
-        "Create network comparison between two PyPSA networks."
     script:
         scripts("make_network_comparison.py")
 
 
 rule prepare_osm_network_release:
+    """Exports the OSM-based base network as clean CSV tables and an interactive map."""
     input:
         base_network=resources("networks/base.nc"),
         stations_polygon=resources("osm/build/geojson/stations_polygon.geojson"),
@@ -89,13 +88,12 @@ rule prepare_osm_network_release:
         release_version=config_provider("osm_network_release", "release_version"),
         include_polygons=True,
         export=True,
-    message:
-        "Preparing OSM network release files and map."
     script:
         scripts("prepare_osm_network_release.py")
 
 
 rule map_incumbent:
+    """Renders an interactive map of the incumbent base network for comparison."""
     input:
         base_network=resources("osm/comparison/incumbent/networks/base.nc"),
     output:
@@ -112,13 +110,12 @@ rule map_incumbent:
         release_version="Incumbent",
         include_polygons=False,
         export=False,
-    message:
-        "Preparing map of incumbent network for comparison with OSM release."
     script:
         scripts("prepare_osm_network_release.py")
 
 
 rule osm_release:
+    """Collects the OSM network release tables, maps and the comparison plot."""
     input:
         resources("osm/release/buses.csv"),
         resources("osm/release/converters.csv"),
@@ -128,5 +125,3 @@ rule osm_release:
         resources("osm/release/map.html"),
         resources("osm/comparison/map_incumbent.html"),
         resources("osm/comparison/lengths.pdf"),
-    message:
-        "Creating OSM network release files, map and comparison with incumbent network."

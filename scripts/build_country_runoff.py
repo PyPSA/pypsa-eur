@@ -4,17 +4,12 @@
 """
 Build daily hydro runoff for each country to fill missing EIA statistics for hydro generation.
 
-Outputs
--------
-
-- `data/country_runoff/build/unknown/era5-runoff-per-country.csv`:
+The resulting table has the following structure:
 
 | Field | Dimensions | Unit | Description |
 | --- | --- | --- | --- |
 | index/time | time | day | Datestamp, YYYY-MM-DD |
 | &lt;columns&gt; | country | ISO-3166 A2 | Daily total runoff (volume per area) per country |
-
-
 """
 
 import logging

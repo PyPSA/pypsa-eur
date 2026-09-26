@@ -2,30 +2,20 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build best case specific energy consumption by carrier and category.
+Build best-case specific energy consumption and process emissions per industrial subsector and carrier.
 
-Description
--------
+The EU27 industry balances of [JRC-IDEES](https://joint-research-centre.ec.europa.eu/potencia-policy-oriented-tool-energy-and-climate-change-impact-assessment/jrc-idees_en) for the configured `industry: reference_year` give today's final and useful energy per process and carrier. Each process is assigned a future carrier, and the current efficiency of that carrier converts useful energy back into final energy. Dividing by the subsector's physical output yields MWh per tonne of material; process emissions are given in tCO2 per tonne. If `industry: ammonia` is enabled, ammonia is kept as its own carrier instead of hydrogen and electricity.
 
-This script uses the `JRC-IDEES <https://joint-research-centre.ec.europa.eu/potencia-policy-oriented-tool-energy-and-climate-change-impact-assessment/jrc-idees_en>` data to calculate an EU28 average specific energy consumption by carrier and industries.
-The industries are according to the rule `industrial_production_per_country <https://pypsa-eur.readthedocs.io/en/latest/sector/#rule-build_industrial_production_per_country>`.
-
-The following carriers are considered:
-- elec
-- coal
-- coke
-- biomass
-- methane
-- hydrogen
-- heat
-- naphtha
-- process emission
-- process emission from feedstock
-- (ammonia)
-
-If the `config["industry"]["ammonia"] <https://pypsa-eur.readthedocs.io/en/latest/configuration/#industry_cf>` is set to true the ammonia demand is not converted to hydrogen and electricity but is considered as a separate carrier.
-
-The unit of the specific energy consumption is MWh/t material and tCO2/t material for process emissions.
+| Subsector | Treatment |
+| --- | --- |
+| Electric arc | Electrified, smelters on methane |
+| DRI + Electric arc | Hydrogen direct reduction plus electric arc furnace |
+| Integrated steelworks | Existing fuels kept, furnaces and finishing electrified |
+| HVC | Naphtha feedstock, steam on methane, rest electrified; recycling routes electric |
+| Ammonia, chlorine, methanol | Fixed specific consumptions from the `industry` configuration |
+| Cement, alumina | High-temperature heat on methane, existing electricity and biomass kept |
+| Pulp and paper | Thermal processes on biomass, rest electrified |
+| Other subsectors | Fully electrified, steam on biomass in light industry and food |
 """
 
 import logging

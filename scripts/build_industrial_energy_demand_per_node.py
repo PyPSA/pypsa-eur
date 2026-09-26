@@ -2,25 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build industrial energy demand per model region.
+Build the industrial energy demand per model region for a planning horizon in TWh/a.
 
-Description
--------
-This rule aggregates the energy demand of the industrial sectors per model region.
-For each bus, the following carriers are considered:
-- electricity
-- coal
-- coke
-- solid biomass
-- methane
-- hydrogen
-- low-temperature heat
-- naphtha
-- ammonia
-- process emission
-- process emission from feedstock
-
-which can later be used as values for the industry load.
+The specific energy consumption per subsector and country for the horizon from [build_industry_sector_ratios_intermediate][] (MWh/t) is multiplied by the regional production from [build_industrial_production_per_node][] and summed over subsectors. This gives, per region, the demand for electricity, coal, coke, solid biomass, methane, hydrogen, low-temperature heat, naphtha, methanol and ammonia (non-zero only if `industry: ammonia` is enabled), as well as process emissions and process emissions from feedstock in MtCO2/a. Today's regional electricity demand from [build_industrial_energy_demand_per_node_today][] is appended as `current electricity` so that [prepare_sector_network][] can separate the new industrial electricity load from the existing one.
 """
 
 import logging

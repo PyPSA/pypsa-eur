@@ -2,8 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build population layouts for all clustered model regions as total as well as
-split by urban and rural population.
+Aggregate gridded population layouts to clustered model regions.
+
+The total, urban and rural population layouts on the cutout grid are summed
+over each onshore region using the cutout indicator matrix. The output table
+also holds each region's country and its share of the national population,
+which later rules use to distribute national demands and capacities to
+regions.
 """
 
 import logging

@@ -4,36 +4,23 @@
 
 
 """
-Lifts electrical transmission network to a single 380 kV voltage layer, removes
-dead-ends of the network, and reduces multi-hop HVDC connections to a single
-link.
+Simplify the base network to a single 380 kV voltage layer, remove dead-ends and fold multi-hop HVDC connections into single links.
 
-Outputs
--------
+All voltage levels are mapped to 380 kV by replacing the line types and
+removing transformers while preserving transmission capacity. Converters are
+removed and DC-only sub-networks connected to the AC network at two buses are
+reduced to one representative link. Stub lines and links, i.e. dead-ends of
+the network, are removed sequentially, optionally only within a country or
+administrative region. Optionally, non-substation buses are aggregated to
+their electrically closest substation, and for HAC clustering, buses without a
+Voronoi shape are merged into their closest neighbour. The busmaps of all
+steps are combined and the onshore and offshore regions dissolved accordingly.
 
-- `resources/onshore_regions_simplified.geojson`:
+![](../img/simplified.png)
 
-    ![](img/onshore_regions_simplified.png)
+![](../img/onshore_regions_simplified.png)
 
-- `resources/offshore_regions_simplified.geojson`:
-
-    ![](img/offshore_regions_simplified.png)
-
-- `resources/busmap_simplify_network.csv`: Mapping of buses from `networks/base.nc` to `networks/simplified.nc`;
-- `networks/simplified.nc`:
-
-    ![](img/simplified.png)
-
-Description
------------
-
-The rule [simplify_network][] does up to three things:
-
-1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function `simplify_network(...)`.
-
-2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function `simplify_links(...)`.
-
-3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function `remove_stubs(...)` and `remove_stubs_within_admin(...)`.
+![](../img/offshore_regions_simplified.png)
 """
 
 import logging

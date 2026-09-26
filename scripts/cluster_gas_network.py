@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Cluster gas transmission network to clustered model regions.
+Cluster the cleaned gas transmission pipelines to the model regions.
+
+Each pipeline end point is assigned to the onshore or offshore region it lies
+in, and the length is replaced by the great-circle distance between region
+centroids times a detour factor. Pipelines with an end outside all regions or
+with both ends in the same region are dropped. Parallel pipelines between the
+same pair of regions are merged, summing their capacities; unidirectional
+pipelines get a lower flow limit of zero. The result becomes the gas pipeline
+links of the sector-coupled network.
 """
 
 import logging

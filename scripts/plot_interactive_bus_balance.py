@@ -2,41 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create interactive bus energy balance time series plots.
+Plots interactive energy balance time series for individual buses of a solved network.
 
-This script generates interactive HTML plots showing energy balance time series
-for buses in the final network. It calculates and visualizes the contribution of
-different carriers (generation, storage, loads, links) to the energy balance
-at specified buses, creating stacked area charts with positive/negative values.
-
-The plots show generation as positive values and consumption as negative values to provide an energy balance at each bus over time.
-The scripts does not use `n.statistics.energy_balance` but calculates the balance directly from the time series data of generators, storage units, loads, and links connected to each bus.
-
-
-Relevant Settings
------------------
-
-```yaml
-plotting:
-    tech_colors: # Color mapping for different technologies/carriers
-    balance_timeseries:
-        bus_name_pattern: # Pattern to filter buses (e.g., 'DE*' for German buses)
-```
-
-Inputs
-------
-- `results/{run}/networks/solved_{horizon}.nc`: Solved PyPSA network
-- `config/plotting/rc.mplstyle`: Matplotlib style configuration
-
-Outputs
--------
-- `results/{run}/plots/balance_timeseries/`: Directory containing HTML files with interactive plots
-  - `ts-balance-{bus_name}-native-{time}.html`: Interactive time series plot for each bus
-
-Notes
------
-Uses Plotly for interactive visualization. Supports filtering buses by pattern
-(shell-style wildcards). Processes multiple buses in parallel for efficiency.
+Reads the solved network and, for every bus matching a name pattern, sums the
+dispatch of connected generators, storage units, stores, loads and links per
+carrier. Supply is stacked above and consumption below the zero line in a
+Plotly figure written as one HTML file per bus. The balance is computed
+directly from the component time series rather than with the PyPSA statistics
+module, and buses are processed in parallel.
 """
 
 import fnmatch

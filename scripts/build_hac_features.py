@@ -2,7 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Aggregate all rastered cutout data to base regions Voronoi cells.
+Aggregates weather cutout time series to the regions of the simplified network as features for hierarchical agglomerative clustering (HAC).
+
+Selected cutout variables, such as wind speed and solar influx, are aggregated
+over each onshore region with the cutout's indicator matrix. The resulting
+per-region time series are the feature vectors compared when the network is
+clustered with the HAC algorithm.
 """
 
 import logging

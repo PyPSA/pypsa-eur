@@ -2,8 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Adds existing power and heat generation capacities for initial planning
-horizon.
+Add existing power and heating capacities to the network for the first
+planning horizon.
+
+Conventional power plants from the powerplantmatching database and historic
+renewable capacities from IRENA statistics are binned into installation-year
+groups and added as non-extendable assets with build year and remaining
+lifetime, so that they retire over the planning horizons. Renewable
+capacities per country are distributed across generators in proportion to
+their technical potential, and a share of solar capacity can be assigned to
+rooftop PV. For heating, the existing capacities of heat pumps, resistive
+heaters and gas, oil and biomass boilers per region are spread over the
+grouping years assuming a constant installation rate in the past and added
+as links with the efficiencies of the respective heat system. Capacities
+below a threshold are dropped and new assets receive the base year as build
+year. Used under myopic and perfect foresight.
 """
 
 import logging

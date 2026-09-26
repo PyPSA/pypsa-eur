@@ -2,8 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create summary CSV files for all scenario runs including costs, capacities,
-capacity factors, curtailment, energy balances, prices and other metrics.
+Computes summary tables of costs, capacities, energy balances, prices and metrics.
+
+Reads the solved networks of all planning horizons and evaluates them with the
+PyPSA statistics module, both system-wide and per region using the location
+of each component. The tables cover capital and marginal costs, optimal
+capacities, capacity factors, curtailment, energy balances, time-averaged and
+load-weighted prices, market values and system metrics such as grid volume
+and CO2 shadow prices. For pathways with several horizons, cumulative costs
+are also integrated over time for a range of social discount rates. The
+tables are the basis for the summary plots.
 """
 
 import logging

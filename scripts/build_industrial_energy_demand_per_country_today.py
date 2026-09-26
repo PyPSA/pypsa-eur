@@ -2,50 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build industrial energy demand per country.
+Build today's industrial final energy demand per country, subsector and carrier in TWh/a.
 
-Description
--------
+For EU27 countries, the JRC-IDEES energy balances for the configured `industry: reference_year` give the final energy consumption per subsector, which is grouped into the carriers electricity, gas, liquid, solid, heat, biomass, waste and other, plus hydrogen (zero today). Mining, construction and non-specified industry are merged into "Other industrial sectors", and non-energy feedstock is added to basic chemicals. Basic chemicals are then split into ammonia, chlorine, methanol and high-value chemicals (HVC) using the production volumes from [build_industrial_production_per_country][] and fixed specific consumptions; HVC receives the remainder, clipped at zero. If `industry: ammonia` is enabled, ammonia demand is kept as its own carrier instead of being expressed as hydrogen and electricity.
 
-This rule uses the industrial_production_per_country.csv file and the JRC-IDEES data to derive an energy demand per country and sector. If the country is not in the EU28, an average energy demand depending on the production volume is derived.
-For each country and each subcategory of
+Countries outside the EU27 receive the EU27-average energy demand per tonne of production multiplied by their own production. Finally, 75% of the energy consumed in coke ovens, taken from the Eurostat transformation output, is attributed to integrated steelworks ([doi:10.1016/j.erss.2022.102565](https://doi.org/10.1016/j.erss.2022.102565)).
 
-- Alumina production
-- Aluminium - primary production
-- Aluminium - secondary production
-- Ammonia
-- Cement
-- Ceramics & other NMM
-- Chlorine
-- Electric arc
-- Food, beverages and tobacco
-- Glass production
-- HVC
-- Integrated steelworks
-- Machinery equipment
-- Methanol
-- Other industrial sectors
-- Other chemicals
-- Other non-ferrous metals
-- Paper production
-- Pharmaceutical products etc.
-- Printing and media reproduction
-- Pulp production
-- Textiles and leather
-- Transport equipment
-- Wood and wood products
-
-the output file contains the energy demand in TWh/a for the following carriers
-
-- biomass
-- electricity
-- gas
-- heat
-- hydrogen
-- liquid
-- other
-- solid
-- waste
+The output has one row per carrier and one column per country and subsector.
 """
 
 import logging

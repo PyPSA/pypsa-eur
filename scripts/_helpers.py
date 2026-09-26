@@ -2,6 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Shared helper functions used across the workflow scripts.
+
+Covers Snakemake integration (logging setup, scenario configuration,
+`mock_snakemake` for running scripts outside the workflow, run-specific
+resource paths), loading of costs, cutouts and snapshot definitions, network
+utilities such as renaming components and aggregating capacities and costs,
+and small conveniences for downloading data and retrying flaky calls.
+"""
+
 import atexit
 import contextlib
 import logging

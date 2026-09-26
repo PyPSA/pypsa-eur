@@ -185,6 +185,7 @@ def get_compose_inputs(w):
 
 # Main composition rule - combines all network building steps
 rule compose_network:
+    """Assembles the full network by adding electricity and sector components to the clustered grid."""
     input:
         unpack(get_compose_inputs),
     output:
@@ -242,7 +243,5 @@ rule compose_network:
         ),
         co2_budget=config_provider("co2_budget"),
         adjustments=config_provider("adjustments"),
-    message:
-        "Composing network for horizon {wildcards.horizon}"
     script:
         scripts("compose_network.py")
