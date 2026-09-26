@@ -168,10 +168,11 @@ class TestFindInvalidEntries:
             "conventional.fuel_price_rolling_window",
         }
 
-    def test_passes_valid_config(self):
-        assert not find_invalid_entries(
-            _load_config("config/test/config.overnight.yaml")
-        )
+    @pytest.mark.parametrize(
+        "test_config", sorted(Path("config/test").glob("config.*.yaml")), ids=str
+    )
+    def test_passes_valid_config(self, test_config):
+        assert not find_invalid_entries(_load_config(test_config))
 
 
 def pytest_generate_tests(metafunc):

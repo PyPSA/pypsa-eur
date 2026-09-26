@@ -682,8 +682,6 @@ if __name__ == "__main__":
         linemap = n.lines.index.to_series()
         clustering = pypsa.clustering.spatial.Clustering(n, busmap, linemap)
     else:
-        Nyears = n.snapshot_weightings.objective.sum() / 8760
-
         if mode == "administrative":
             busmap = busmap_for_admin_regions(
                 n,

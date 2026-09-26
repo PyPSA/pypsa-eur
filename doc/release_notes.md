@@ -6,6 +6,14 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Bugfix: enhanced geothermal systems (`sector: enhanced_geothermal: enable: true`) could not be added in either capacity-factor mode. With `var_cf: true` the compose step passed a placeholder path instead of the built capacity factors, and with `var_cf: false` a static efficiency was indexed like a time series.
+
+* Bugfix: the development rule `base_network_incumbent` could not run because its output names did not match those written by `base_network.py`.
+
+* The unit tests now check every `config/test/*.yaml` for unknown configuration keys. Two electricity-only test configurations carried stale keys that were silently ignored.
+
+* Developers note: removed unused helper functions (`get_opt`, `find_opt`, `aggregate_*`, `progress_retrieve`, `parse`) from `_helpers.py` and dead functions from `prepare_network.py` and `prepare_sector_network.py`.
+
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 
 **Streamlined Workflow**
