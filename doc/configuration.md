@@ -118,6 +118,29 @@ Configuration for top level `remote` settings.
 ```
 
 
+## `modules` {#modules_cf}
+
+PyPSA-Eur imports external [Modelblocks](https://www.modelblocks.org/) data modules as
+[Snakemake modules](https://snakemake.readthedocs.io/en/stable/snakefiles/modularization.html).
+Their rules appear in the workflow with a module prefix, e.g. `geo_boundaries_build_country`.
+The `geo_boundaries` module provides the onshore and offshore boundary shapes and replaces the
+direct retrieval of NUTS, EEZ and OSM boundaries. Its configuration is derived from the
+PyPSA-Eur configuration: the `countries` list selects which countries are built, and the settings
+below choose the data sources. With scenario management enabled, one module scenario per
+PyPSA-Eur scenario is generated, so all keys except `version` may differ between scenarios.
+Module rules run in the PyPSA-Eur environment, which carries the module's dependencies.
+
+Configuration for top level `modules` settings.
+
+{{ schema_table("modules") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("modules") }}
+```
+
+
 ## `run` {#run_cf}
 
 It is common conduct to analyse energy system optimisation models for **multiple scenarios** for a variety of reasons,
@@ -884,9 +907,6 @@ See the [data versioning documentation](data_sources.md#managing_data_versions) 
     | `eu_nuts2013` | any |  | Configuration for a single data source. |
     |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
     |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `eu_nuts2021` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
     | `eurostat_balances` | any |  | Configuration for a single data source. |
     |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
     |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
@@ -932,9 +952,6 @@ See the [data versioning documentation](data_sources.md#managing_data_versions) 
     | `ship_raster` | any |  | Configuration for a single data source. |
     |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
     |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `eez` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
     | `nuts3_population` | any |  | Configuration for a single data source. |
     |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
     |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
@@ -966,9 +983,6 @@ See the [data versioning documentation](data_sources.md#managing_data_versions) 
     |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
     |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
     | `aquifer_data` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `osm_boundaries` | any |  | Configuration for a single data source. |
     |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
     |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
     | `gem_gspt` | any |  | Configuration for a single data source. |

@@ -111,23 +111,6 @@ rule base_network:
         scripts("base_network.py")
 
 
-rule build_osm_boundaries:
-    input:
-        json=f"{OSM_BOUNDARIES_DATASET['folder']}/{{country}}_adm1.json",
-        eez=ancient(rules.retrieve_eez.output["gpkg"]),
-    output:
-        boundary=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/{{country}}_adm1.geojson",
-    log:
-        "logs/build_osm_boundaries_{country}.log",
-    threads: 1
-    resources:
-        mem_mb=1500,
-    message:
-        "Building OSM boundaries for {wildcards.country}"
-    script:
-        scripts("build_osm_boundaries.py")
-
-
 rule build_bidding_zones:
     input:
         bidding_zones_entsoepy=f"{BIDDING_ZONES_ENTSOEPY_DATASET['folder']}/bidding_zones_entsoepy.geojson",
@@ -155,7 +138,7 @@ rule build_bidding_zones:
 
 rule build_offshore_shapes:
     input:
-        eez=ancient(rules.retrieve_eez.output["gpkg"]),
+        shapes=geo_boundaries_shapes,
     output:
         offshore_shapes=resources("offshore_shapes.geojson"),
     log:
@@ -175,14 +158,9 @@ rule build_offshore_shapes:
 
 rule build_nuts3_shapes:
     input:
-        nuts3_2021=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
-        ba_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/BA_adm1.geojson",
-        md_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/MD_adm1.geojson",
-        ua_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/UA_adm1.geojson",
-        xk_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/XK_adm1.geojson",
+        shapes=geo_boundaries_shapes,
         nuts3_gdp=rules.retrieve_jrc_ardeco.output["ardeco_gdp"],
         nuts3_pop=rules.retrieve_jrc_ardeco.output["ardeco_pop"],
-        offshore_shapes=resources("offshore_shapes.geojson"),
         bidding_zones=lambda w: (
             resources("bidding_zones.geojson")
             if config_provider("clustering", "mode")(w) == "administrative"

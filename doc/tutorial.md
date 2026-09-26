@@ -174,7 +174,6 @@ build_electricity_demand_base                   1
 build_line_rating                               1
 build_nuts3_shapes                              1
 build_offshore_shapes                           1
-build_osm_boundaries                            4
 build_population_layouts                        1
 build_powerplants                               1
 build_renewable_profiles                        6
@@ -186,24 +185,26 @@ cluster_electricity_demand                      1
 cluster_network                                 1
 compose_network                                 1
 determine_availability_matrix                   6
+geo_boundaries_build_combined_area              1
+geo_boundaries_build_country                    1
+geo_boundaries_download_harmonised_eez          1
+geo_boundaries_download_nuts                    1
+geo_boundaries_harmonise_nuts                   1
 process_cost_data                               1
 retrieve_co2_prices                             1
 retrieve_corine                                 1
 retrieve_cost_data                              1
 retrieve_cutout                                 1
 retrieve_desnz_electricity_consumption          1
-retrieve_eez                                    1
 retrieve_electricity_demand_energy_atlas        1
 retrieve_electricity_demand_entsoe              1
 retrieve_electricity_demand_neso                1
 retrieve_electricity_demand_opsd                1
-retrieve_eu_nuts_2021                           1
 retrieve_gdp_per_capita                         1
 retrieve_jrc_ardeco                             1
 retrieve_natura                                 1
 retrieve_ons_lad                                1
 retrieve_osm_archive                            1
-retrieve_osm_boundaries                         1
 retrieve_population_count                       1
 retrieve_powerplants                            1
 retrieve_ship_raster                            1
@@ -212,7 +213,7 @@ retrieve_worldbank_urban_population             1
 simplify_network                                1
 solve_network                                   1
 time_aggregation                                1
-total                                          59
+total                                          57
 ```
 
 

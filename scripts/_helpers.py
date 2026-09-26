@@ -17,7 +17,9 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Literal
 
 import atlite
+import country_converter as coco
 import fiona
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
@@ -246,6 +248,32 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
         )
 
     return f"{dir}{rdir}{fn}"
+
+
+def read_geo_boundaries(
+    path: str, countries: list[str], shape_class: str
+) -> gpd.GeoDataFrame:
+    """
+    Read the harmonised shapes of the geo_boundaries module.
+
+    Parameters
+    ----------
+    path : str
+        Geoparquet output of the geo_boundaries module.
+    countries : list[str]
+        ISO2 country codes to keep.
+    shape_class : str
+        Either ``"land"`` or ``"maritime"``.
+
+    Returns
+    -------
+    geopandas.GeoDataFrame
+        Selected shapes with an additional ISO2 ``country`` column.
+    """
+    shapes = gpd.read_parquet(path)
+    cc = coco.CountryConverter()
+    shapes["country"] = cc.pandas_convert(shapes["country_id"], src="ISO3", to="ISO2")
+    return shapes.query("country in @countries and shape_class == @shape_class").copy()
 
 
 def path_provider(dir, rdir, shared_resources, exclude_from_shared):

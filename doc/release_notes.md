@@ -6,6 +6,20 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+## Upcoming Release
+
+* **Geographical shapes come from the Modelblocks `geo_boundaries` module**
+  ([#2252](https://github.com/PyPSA/pypsa-eur/pull/2252)). NUTS3, EEZ and ADM1 boundaries
+  are no longer retrieved and harmonised by PyPSA-Eur itself but by the external
+  [`geo_boundaries`](https://github.com/modelblocks-org/module_geo_boundaries) Snakemake module,
+  imported in `rules/modules/geo_boundaries.smk` and configured in the new top-level
+  `modules` section. The module configuration is derived from `countries` and the
+  `modules.geo_boundaries` settings, one module scenario per PyPSA-Eur scenario. The rules
+  `retrieve_eez`, `retrieve_eu_nuts_2021`, `retrieve_osm_boundaries` and `build_osm_boundaries`
+  and the data sources `eez`, `eu_nuts2021` and `osm_boundaries` are removed. ADM1 boundaries for
+  BA, MD, UA and XK now come from geoBoundaries instead of OpenStreetMap, so region outlines in
+  these countries shift slightly. Snakemake >= 9.19 is required.
+
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 
 **Streamlined Workflow**

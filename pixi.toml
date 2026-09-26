@@ -115,6 +115,8 @@ natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
 pydeflate = ">=2.3.4"
 snakemake-logger-plugin-snkmt = "==0.1.6" # For better pypsa-app integration
+antimeridian = ">=0.4.7"  # geo_boundaries module
+duckdb = ">=1.2.0"  # geo_boundaries module (Overture source)
 
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"

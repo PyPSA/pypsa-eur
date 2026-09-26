@@ -18,6 +18,18 @@ remote:
   ssh: ""
   path: ""
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#modules_cf
+modules:
+  geo_boundaries:
+    version: v1.0.1
+    nuts_year: 2021
+    nuts_resolution: 01M
+    adm1_countries:
+    - BA
+    - MD
+    - UA
+    - XK
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#run_cf
 run:
   prefix: ""
@@ -1394,9 +1406,6 @@ data:
   eu_nuts2013:
     source: archive
     version: latest
-  eu_nuts2021:
-    source: archive
-    version: latest
   eurostat_balances:
     source: archive
     version: latest
@@ -1445,9 +1454,6 @@ data:
   ship_raster:
     source: archive
     version: latest
-  eez:
-    source: archive
-    version: latest
   nuts3_population:
     source: archive
     version: latest
@@ -1479,9 +1485,6 @@ data:
     source: archive
     version: latest
   aquifer_data:
-    source: archive
-    version: latest
-  osm_boundaries:
     source: archive
     version: latest
   gem_gspt:

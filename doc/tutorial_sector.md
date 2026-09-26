@@ -89,7 +89,6 @@ build_industry_sector_ratios                            1
 build_industry_sector_ratios_intermediate               1
 build_nuts3_shapes                                      1
 build_offshore_shapes                                   1
-build_osm_boundaries                                    4
 build_population_layouts                                1
 build_population_weighted_energy_totals                 2
 build_powerplants                                       1
@@ -113,6 +112,11 @@ cluster_gas_network                                     1
 cluster_network                                         1
 compose_network                                         1
 determine_availability_matrix                           6
+geo_boundaries_build_combined_area                      1
+geo_boundaries_build_country                            1
+geo_boundaries_download_harmonised_eez                  1
+geo_boundaries_download_nuts                            1
+geo_boundaries_harmonise_nuts                           1
 make_summary                                            1
 plot_balance_map                                        7
 plot_balance_map_interactive                            7
@@ -135,14 +139,12 @@ retrieve_country_hdd                                    1
 retrieve_cutout                                         1
 retrieve_desnz_electricity_consumption                  1
 retrieve_dh_areas                                       1
-retrieve_eez                                            1
 retrieve_electricity_demand_energy_atlas                1
 retrieve_electricity_demand_entsoe                      1
 retrieve_electricity_demand_neso                        1
 retrieve_electricity_demand_opsd                        1
 retrieve_enspreso_biomass                               1
 retrieve_eu_nuts_2013                                   1
-retrieve_eu_nuts_2021                                   1
 retrieve_eurostat_balances                              1
 retrieve_eurostat_household_balances                    1
 retrieve_gas_infrastructure_data                        1
@@ -164,7 +166,6 @@ retrieve_nitrogen_statistics                            1
 retrieve_nuts3_population                               1
 retrieve_ons_lad                                        1
 retrieve_osm_archive                                    1
-retrieve_osm_boundaries                                 1
 retrieve_population_count                               1
 retrieve_powerplants                                    1
 retrieve_seawater_temperature                           1
@@ -175,7 +176,7 @@ retrieve_worldbank_urban_population                     1
 simplify_network                                        1
 solve_network                                           1
 time_aggregation                                        1
-total                                                 148
+total                                                 146
 ```
 
 This covers the retrieval of additional raw data from online resources and
@@ -268,7 +269,6 @@ build_industry_sector_ratios                            1
 build_industry_sector_ratios_intermediate               3
 build_nuts3_shapes                                      1
 build_offshore_shapes                                   1
-build_osm_boundaries                                    4
 build_population_layouts                                1
 build_population_weighted_energy_totals                 2
 build_powerplants                                       1
@@ -292,6 +292,11 @@ cluster_gas_network                                     1
 cluster_network                                         1
 compose_network                                         3
 determine_availability_matrix                           6
+geo_boundaries_build_combined_area                      1
+geo_boundaries_build_country                            1
+geo_boundaries_download_harmonised_eez                  1
+geo_boundaries_download_nuts                            1
+geo_boundaries_harmonise_nuts                           1
 make_summary                                            1
 plot_balance_map                                       21
 plot_balance_map_interactive                           21
@@ -314,14 +319,12 @@ retrieve_country_hdd                                    1
 retrieve_cutout                                         1
 retrieve_desnz_electricity_consumption                  1
 retrieve_dh_areas                                       1
-retrieve_eez                                            1
 retrieve_electricity_demand_energy_atlas                1
 retrieve_electricity_demand_entsoe                      1
 retrieve_electricity_demand_neso                        1
 retrieve_electricity_demand_opsd                        1
 retrieve_enspreso_biomass                               1
 retrieve_eu_nuts_2013                                   1
-retrieve_eu_nuts_2021                                   1
 retrieve_eurostat_balances                              1
 retrieve_eurostat_household_balances                    1
 retrieve_gas_infrastructure_data                        1
@@ -343,7 +346,6 @@ retrieve_nitrogen_statistics                            1
 retrieve_nuts3_population                               1
 retrieve_ons_lad                                        1
 retrieve_osm_archive                                    1
-retrieve_osm_boundaries                                 1
 retrieve_population_count                               1
 retrieve_powerplants                                    1
 retrieve_seawater_temperature                           1
@@ -354,7 +356,7 @@ retrieve_worldbank_urban_population                     1
 simplify_network                                        1
 solve_network                                           3
 time_aggregation                                        1
-total                                                 220
+total                                                 218
 ```
 
 This sequential workflow nicely outlines how the pathway optimisation with

@@ -1196,26 +1196,6 @@
             }
           }
         },
-        "eu_nuts2021": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
         "eurostat_balances": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -1536,26 +1516,6 @@
             }
           }
         },
-        "eez": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
         "nuts3_population": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -1757,26 +1717,6 @@
           }
         },
         "aquifer_data": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
-        "osm_boundaries": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -3005,6 +2945,45 @@
           "description": "Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes.",
           "markdownDescription": "Custom format for log messages. See [LogRecord ](https://docs.python.org/3/library/logging.html#logging.LogRecord) attributes.",
           "type": "string"
+        }
+      }
+    },
+    "ModulesConfig": {
+      "description": "Configuration for external Modelblocks modules.",
+      "properties": {
+        "geo_boundaries": {
+          "description": "Configuration for the geo_boundaries module.",
+          "properties": {
+            "version": {
+              "default": "v1.0.1",
+              "description": "Release tag of the geo_boundaries module. Applies to all scenarios of a run.",
+              "type": "string"
+            },
+            "nuts_year": {
+              "default": 2021,
+              "description": "NUTS release year used for countries with NUTS3 regions.",
+              "type": "integer"
+            },
+            "nuts_resolution": {
+              "default": "01M",
+              "description": "Resolution of the NUTS shapes, e.g. '01M' for 1:1 million.",
+              "pattern": "^[0-9]{2}M$",
+              "type": "string"
+            },
+            "adm1_countries": {
+              "default": [
+                "BA",
+                "MD",
+                "UA",
+                "XK"
+              ],
+              "description": "Countries without NUTS3 regions. Their ADM1 regions are taken from geoBoundaries (gbOpen release).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
         }
       }
     },
@@ -6820,6 +6799,40 @@
         }
       }
     },
+    "_GeoBoundariesModuleConfig": {
+      "description": "Configuration for the geo_boundaries module.",
+      "properties": {
+        "version": {
+          "default": "v1.0.1",
+          "description": "Release tag of the geo_boundaries module. Applies to all scenarios of a run.",
+          "type": "string"
+        },
+        "nuts_year": {
+          "default": 2021,
+          "description": "NUTS release year used for countries with NUTS3 regions.",
+          "type": "integer"
+        },
+        "nuts_resolution": {
+          "default": "01M",
+          "description": "Resolution of the NUTS shapes, e.g. '01M' for 1:1 million.",
+          "pattern": "^[0-9]{2}M$",
+          "type": "string"
+        },
+        "adm1_countries": {
+          "default": [
+            "BA",
+            "MD",
+            "UA",
+            "XK"
+          ],
+          "description": "Countries without NUTS3 regions. Their ADM1 regions are taken from geoBoundaries (gbOpen release).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
     "_HydroConfig": {
       "description": "Configuration for hydropower.",
       "properties": {
@@ -8505,6 +8518,45 @@
           "default": "",
           "description": "Optionally specify the file path within the remote cluster to be synchronized.",
           "type": "string"
+        }
+      }
+    },
+    "modules": {
+      "description": "Configuration for external Modelblocks modules.",
+      "properties": {
+        "geo_boundaries": {
+          "description": "Configuration for the geo_boundaries module.",
+          "properties": {
+            "version": {
+              "default": "v1.0.1",
+              "description": "Release tag of the geo_boundaries module. Applies to all scenarios of a run.",
+              "type": "string"
+            },
+            "nuts_year": {
+              "default": 2021,
+              "description": "NUTS release year used for countries with NUTS3 regions.",
+              "type": "integer"
+            },
+            "nuts_resolution": {
+              "default": "01M",
+              "description": "Resolution of the NUTS shapes, e.g. '01M' for 1:1 million.",
+              "pattern": "^[0-9]{2}M$",
+              "type": "string"
+            },
+            "adm1_countries": {
+              "default": [
+                "BA",
+                "MD",
+                "UA",
+                "XK"
+              ],
+              "description": "Countries without NUTS3 regions. Their ADM1 regions are taken from geoBoundaries (gbOpen release).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
         }
       }
     },
@@ -13311,26 +13363,6 @@
             }
           }
         },
-        "eu_nuts2021": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
         "eurostat_balances": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -13651,26 +13683,6 @@
             }
           }
         },
-        "eez": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
         "nuts3_population": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -13872,26 +13884,6 @@
           }
         },
         "aquifer_data": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
-        "osm_boundaries": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
