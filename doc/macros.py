@@ -4,14 +4,17 @@
 
 import json
 import re
+import sys
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
 
-from doc.rule_docs import parse_rules
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from doc.rule_docs import parse_rules  # noqa: E402
+
 GITHUB = "https://github.com/PyPSA/pypsa-eur/blob/master"
 CONFIG_PATH = ROOT / "config" / "config.default.yaml"
 PLOTTING_CONFIG_PATH = ROOT / "config" / "plotting.default.yaml"
