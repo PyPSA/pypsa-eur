@@ -83,7 +83,7 @@ costs:
   emission_prices:
     enable: false
     co2: 0.0
-    co2_monthly_prices: false
+    dynamic: false
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -156,7 +156,6 @@ sector:
       supplemental_heating:
         enable: false
         booster_heat_pump: false
-  limited_heat_sources: []
   time_dep_hp_cop: false
   electricity_distribution_grid: false
 
