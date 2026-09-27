@@ -38,11 +38,11 @@ class ConfigModel(BaseModel):
 
     def values(self) -> Iterator[Any]:
         """Enable: config.values()."""
-        return (getattr(self, k) for k in self.model_fields.keys())
+        return (getattr(self, k) for k in self.model_fields)
 
     def items(self) -> Iterator[tuple[str, Any]]:
         """Enable: config.items()."""
-        return ((k, getattr(self, k)) for k in self.model_fields.keys())
+        return ((k, getattr(self, k)) for k in self.model_fields)
 
 
 class ConfigUpdater(ABC):

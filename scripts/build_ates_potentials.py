@@ -97,18 +97,14 @@ def mwh_ates_per_m2(
     ----------
     - Jackson, Regnier, Staffell 2024 (https://doi.org/10.1016/j.apenergy.2024.124096): Aquifer Thermal Energy Storages for low carbon heating and cooling in the United Kingdom: CUrrent status and future prospects
     """
-    try:
-        return (
-            aquifer_volumetric_heat_capacity
-            * fraction_of_aquifer_area_available
-            * effective_screen_length
-            * (hot_well_temperature - cold_well_temperature)
-            * kwh_per_kj
-            * mwh_per_kwh
-        )
-    except Exception as e:
-        logger.error(f"Error calculating ATES potential per m2: {e}")
-        raise
+    return (
+        aquifer_volumetric_heat_capacity
+        * fraction_of_aquifer_area_available
+        * effective_screen_length
+        * (hot_well_temperature - cold_well_temperature)
+        * kwh_per_kj
+        * mwh_per_kwh
+    )
 
 
 def suitable_aquifers(
@@ -137,21 +133,15 @@ def suitable_aquifers(
     Exception
         If filtering process fails
     """
-    try:
-        if "AQUIF_NAME" not in aquifer_shapes.columns:
-            raise KeyError("Column 'AQUIF_NAME' not found in aquifer shapes dataframe")
+    if "AQUIF_NAME" not in aquifer_shapes.columns:
+        raise KeyError("Column 'AQUIF_NAME' not found in aquifer shapes dataframe")
 
-        filtered = aquifer_shapes[
-            aquifer_shapes["AQUIF_NAME"].isin(suitable_aquifer_types)
-        ]
+    filtered = aquifer_shapes[aquifer_shapes["AQUIF_NAME"].isin(suitable_aquifer_types)]
 
-        if filtered.empty:
-            logger.warning("No suitable aquifers found with the specified types")
+    if filtered.empty:
+        logger.warning("No suitable aquifers found with the specified types")
 
-        return filtered
-    except Exception as e:
-        logger.error(f"Error filtering suitable aquifers: {e}")
-        raise
+    return filtered
 
 
 def ates_potential_per_onshore_region(
@@ -192,62 +182,50 @@ def ates_potential_per_onshore_region(
     Exception
         If calculation process fails
     """
-    try:
-        if suitable_aquifers.empty or onshore_regions.empty or dh_areas.empty:
-            logger.warning("One or more input GeoDataFrames are empty")
+    if suitable_aquifers.empty or onshore_regions.empty or dh_areas.empty:
+        logger.warning("One or more input GeoDataFrames are empty")
 
-        ret_val = onshore_regions.copy()
+    ret_val = onshore_regions.copy()
 
-        if "name" not in ret_val.columns:
-            raise KeyError("Column 'name' not found in onshore_regions dataframe")
+    if "name" not in ret_val.columns:
+        raise KeyError("Column 'name' not found in onshore_regions dataframe")
 
-        ret_val.index = ret_val["name"]
-        ret_val.drop(columns=["name"], inplace=True)
+    ret_val.index = ret_val["name"]
+    ret_val.drop(columns=["name"], inplace=True)
 
-        suitable_aquifers_in_onshore_regions = gpd.overlay(
-            suitable_aquifers, onshore_regions, how="intersection"
-        )
+    suitable_aquifers_in_onshore_regions = gpd.overlay(
+        suitable_aquifers, onshore_regions, how="intersection"
+    )
 
-        if suitable_aquifers_in_onshore_regions.empty:
-            logger.warning("No suitable aquifers found in onshore regions")
-            ret_val["ates_potential"] = 0
-            return ret_val
-
-        dh_areas_buffered = dh_areas.copy()
-        dh_areas_buffered["geometry"] = dh_areas_buffered.geometry.buffer(
-            dh_area_buffer
-        )
-
-        try:
-            aquifers_in_dh_areas = (
-                gpd.overlay(
-                    dh_areas_buffered,
-                    suitable_aquifers_in_onshore_regions,
-                    how="intersection",
-                )
-                .groupby("name")["geometry"]
-                .apply(lambda x: x.area.sum())
-            )
-
-            # Handle regions without any ATES potential
-            missing_regions = set(ret_val.index) - set(aquifers_in_dh_areas.index)
-            if missing_regions:
-                logger.info(f"{len(missing_regions)} regions have no ATES potential")
-
-            ret_val["ates_potential"] = 0.0  # Default value
-            ret_val.loc[aquifers_in_dh_areas.index, "ates_potential"] = (
-                aquifers_in_dh_areas * mwh_per_m2
-            )
-
-        except Exception as e:
-            logger.error(f"Error in overlay calculation: {e}")
-            ret_val["ates_potential"] = 0
-
+    if suitable_aquifers_in_onshore_regions.empty:
+        logger.warning("No suitable aquifers found in onshore regions")
+        ret_val["ates_potential"] = 0
         return ret_val
 
-    except Exception as e:
-        logger.error(f"Error calculating ATES potential per onshore region: {e}")
-        raise
+    dh_areas_buffered = dh_areas.copy()
+    dh_areas_buffered["geometry"] = dh_areas_buffered.geometry.buffer(dh_area_buffer)
+
+    aquifers_in_dh_areas = (
+        gpd.overlay(
+            dh_areas_buffered,
+            suitable_aquifers_in_onshore_regions,
+            how="intersection",
+        )
+        .groupby("name")["geometry"]
+        .apply(lambda x: x.area.sum())
+    )
+
+    # Handle regions without any ATES potential
+    missing_regions = set(ret_val.index) - set(aquifers_in_dh_areas.index)
+    if missing_regions:
+        logger.info(f"{len(missing_regions)} regions have no ATES potential")
+
+    ret_val["ates_potential"] = 0.0  # Default value
+    ret_val.loc[aquifers_in_dh_areas.index, "ates_potential"] = (
+        aquifers_in_dh_areas * mwh_per_m2
+    )
+
+    return ret_val
 
 
 def check_dh_areas_coverage(dh_areas: gpd.GeoDataFrame, countries: list) -> None:

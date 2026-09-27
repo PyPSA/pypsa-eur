@@ -12,13 +12,18 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import area, configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
 
 
-def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_type):
+def _calc_unsustainable_potential(
+    df: pd.DataFrame,
+    df_unsustainable: pd.DataFrame,
+    share_unsus: float,
+    resource_type: str,
+) -> pd.Series:
     """
     Calculate the unsustainable biomass potential for a given resource type or
     regex.
@@ -45,7 +50,7 @@ def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_ty
     else:
         resource_potential = df_unsustainable[resource_type]
 
-    def _calculate_resource_allocation(c):
+    def _calculate_resource_allocation(c: pd.Series) -> float:
         country = c.name[:2]
         country_total = df.loc[df.index.str[:2] == country].sum().sum()
         if country_total == 0:
@@ -57,7 +62,7 @@ def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_ty
     )
 
 
-def build_nuts_population_data(year=2013):
+def build_nuts_population_data(year: int = 2013) -> pd.DataFrame:
     pop = pd.read_csv(
         snakemake.input.nuts3_population,
         sep=r"\,| \t|\t",
@@ -94,7 +99,9 @@ def build_nuts_population_data(year=2013):
     return pop
 
 
-def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
+def enspreso_biomass_potentials(
+    year: int = 2020, scenario: str = "ENS_Low"
+) -> pd.DataFrame:
     """
     Loads the JRC ENSPRESO biomass potentials.
 
@@ -149,7 +156,7 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
     return bio
 
 
-def disaggregate_nuts0(bio):
+def disaggregate_nuts0(bio: pd.DataFrame) -> pd.DataFrame:
     """
     Some commodities are only given on NUTS0 level. These are disaggregated
     here using the NUTS2 population as distribution key.
@@ -181,7 +188,7 @@ def disaggregate_nuts0(bio):
     return bio
 
 
-def build_nuts2_shapes():
+def build_nuts2_shapes() -> gpd.GeoDataFrame:
     """
     - load NUTS2 geometries
     - add RS, AL, BA country shapes (not covered in NUTS 2013)
@@ -200,14 +207,9 @@ def build_nuts2_shapes():
     return pd.concat([nuts2, missing])
 
 
-def area(gdf):
-    """
-    Returns area of GeoDataFrame geometries in square kilometers.
-    """
-    return gdf.to_crs(epsg=3035).area.div(1e6)
-
-
-def convert_nuts2_to_regions(bio_nuts2, regions):
+def convert_nuts2_to_regions(
+    bio_nuts2: gpd.GeoDataFrame, regions: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
     """
     Converts biomass potentials given in NUTS2 to PyPSA-Eur regions based on
     the overlay of both GeoDataFrames in proportion to the area.
@@ -243,7 +245,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     return bio_regions
 
 
-def add_unsustainable_potentials(df, input_eurostat):
+def add_unsustainable_potentials(df: pd.DataFrame, input_eurostat: str) -> pd.DataFrame:
     """
     Add unsustainable biomass potentials to the given dataframe. The difference
     between the data of JRC and Eurostat is assumed to be unsustainable

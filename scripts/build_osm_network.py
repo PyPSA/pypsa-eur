@@ -15,7 +15,7 @@ import pypsa
 from pyproj import Transformer
 from shapely import get_point, prepare
 from shapely.algorithms.polylabel import polylabel
-from shapely.geometry import LineString, MultiLineString, Point
+from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import linemerge, split
 from tqdm import tqdm
 
@@ -80,7 +80,7 @@ CONVERTERS_COLUMNS = [
 ]
 
 
-def _merge_identical_lines(lines):
+def _merge_identical_lines(lines: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """
     Aggregates lines with identical geometries and voltage levels by merging them into a single line.
 
@@ -171,7 +171,7 @@ def _add_line_endings(lines):
     )
 
     # Create deterministic bus ids and tags
-    def create_bus_data(group):
+    def create_bus_data(group: pd.DataFrame) -> pd.Series:
         endpoint_names = group["endpoint_name"]
 
         # Extract numeric parts
@@ -227,7 +227,7 @@ def _split_linestring_by_point(linestring, points):
 
     for p in points:
         # execute split to all lines and store results
-        temp_list = [split(l, p) for l in list_linestrings]
+        temp_list = [split(line, p) for line in list_linestrings]
         # nest all geometries
         list_linestrings = [lstring for tval in temp_list for lstring in tval.geoms]
 
@@ -235,7 +235,7 @@ def _split_linestring_by_point(linestring, points):
 
 
 # TODO: Last old function to improve, either vectorise or parallelise
-def _alpha_suffix(i):
+def _alpha_suffix(i: int) -> str:
     """
     Convert a zero-based index to a spreadsheet-style letter suffix (0 -> 'a',
     25 -> 'z', 26 -> 'aa', ...).
@@ -248,7 +248,12 @@ def _alpha_suffix(i):
     return suffix
 
 
-def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
+def split_overpassing_lines(
+    lines: gpd.GeoDataFrame,
+    buses: gpd.GeoDataFrame,
+    distance_crs: str = DISTANCE_CRS,
+    tol: float = 1,
+) -> gpd.GeoDataFrame:
     """
     Split overpassing lines by splitting them at nodes within a given tolerance,
     to include the buses being overpassed.
@@ -283,15 +288,15 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
     buses_sindex = buses_epsgmod.sindex
 
     # set tqdm options for substation ids
-    tqdm_kwargs_substation_ids = dict(
-        ascii=False,
-        unit=" lines",
-        total=high_voltage_lines.shape[0],
-        desc="Splitting lines",
-    )
+    tqdm_kwargs_substation_ids = {
+        "ascii": False,
+        "unit": " lines",
+        "total": high_voltage_lines.shape[0],
+        "desc": "Splitting lines",
+    }
 
-    for l in tqdm(high_voltage_lines.index, **tqdm_kwargs_substation_ids):
-        line_geom = lines_epsgmod.geometry.loc[l]
+    for line_id in tqdm(high_voltage_lines.index, **tqdm_kwargs_substation_ids):
+        line_geom = lines_epsgmod.geometry.loc[line_id]
 
         # Use spatial index for initial filtering
         possible_matches = list(buses_sindex.intersection(line_geom.bounds))
@@ -314,16 +319,18 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
 
         if not bus_in_tol_epsg.empty:
             # add index of line to split
-            lines_to_split.append(l)
+            lines_to_split.append(line_id)
 
             buses_locs = buses.geometry.loc[bus_in_tol_epsg.index]
 
             # get new line geometries
-            new_geometries = _split_linestring_by_point(lines.geometry[l], buses_locs)
+            new_geometries = _split_linestring_by_point(
+                lines.geometry[line_id], buses_locs
+            )
             n_geoms = len(new_geometries)
 
             # create temporary copies of the line
-            df_append = gpd.GeoDataFrame([lines.loc[l]] * n_geoms)
+            df_append = gpd.GeoDataFrame([lines.loc[line_id]] * n_geoms)
             # update geometries
             df_append["geometry"] = new_geometries
             # update name of the line if there are multiple line segments
@@ -357,7 +364,12 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
     return lines
 
 
-def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
+def _create_merge_mapping(
+    lines: gpd.GeoDataFrame,
+    buses: gpd.GeoDataFrame,
+    buses_polygon: gpd.GeoDataFrame,
+    geo_crs: str = GEO_CRS,
+) -> gpd.GeoDataFrame:
     """
     Creates a mapping for merging lines with the same electric parameters over virtual buses.
 
@@ -473,12 +485,12 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
 
     connected_components = list(nx.connected_components(G))
 
-    tqdm_args = dict(
-        ascii=False,
-        unit=" components",
-        total=len(connected_components),
-        desc="Merging lines",
-    )
+    tqdm_args = {
+        "ascii": False,
+        "unit": " components",
+        "total": len(connected_components),
+        "desc": "Merging lines",
+    }
 
     subgraph_data = []
 
@@ -512,7 +524,7 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
         underground = G.nodes[node_longest].get("underground", None)
 
         # Extract the list of edges (lines) in the subgraph
-        contains_buses = list()
+        contains_buses = []
         for edge in subgraph.edges():
             contains_buses.append(G.edges[edge].get("bus_id", None))
 
@@ -553,8 +565,11 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
 
 
 def _merge_lines_over_virtual_buses(
-    lines, buses, merged_lines_map, distance_crs=DISTANCE_CRS
-):
+    lines: gpd.GeoDataFrame,
+    buses: gpd.GeoDataFrame,
+    merged_lines_map: gpd.GeoDataFrame,
+    distance_crs: str = DISTANCE_CRS,
+) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
     Merges lines over virtual buses and updates the lines and buses DataFrames accordingly.
 
@@ -607,13 +622,13 @@ def _merge_lines_over_virtual_buses(
 
 
 def _create_station_seeds(
-    buses,
-    buses_polygon,
-    country_shapes,
-    tol=BUS_TOL,
-    distance_crs=DISTANCE_CRS,
-    geo_crs=GEO_CRS,
-):
+    buses: gpd.GeoDataFrame,
+    buses_polygon: gpd.GeoDataFrame,
+    country_shapes: gpd.GeoDataFrame,
+    tol: float = BUS_TOL,
+    distance_crs: str = DISTANCE_CRS,
+    geo_crs: str = GEO_CRS,
+) -> gpd.GeoDataFrame:
     """
     Creates aggregated station seeds (candidates) based on substation polygons and updates their country information.
 
@@ -671,7 +686,7 @@ def _create_station_seeds(
     buses_all_buffer = pd.concat([buses_buffer, buses_polygon_buffer])
 
     buses_all_agg = gpd.GeoDataFrame(
-        geometry=[poly for poly in buses_all_buffer.union_all().geoms], crs=geo_crs
+        geometry=list(buses_all_buffer.union_all().geoms), crs=geo_crs
     )
 
     # full spatial join
@@ -731,8 +746,11 @@ def _create_station_seeds(
 
 
 def _merge_buses_to_stations(
-    buses, stations, distance_crs=DISTANCE_CRS, geo_crs=GEO_CRS
-):
+    buses: gpd.GeoDataFrame,
+    stations: gpd.GeoDataFrame,
+    distance_crs: str = DISTANCE_CRS,
+    geo_crs: str = GEO_CRS,
+) -> gpd.GeoDataFrame:
     """
     Merges buses with the same voltage level within the same station.
 
@@ -823,36 +841,40 @@ def _remove_loops_from_multiline(multiline):
         - shapely.geometry.MultiLineString or shapely.geometry.LineString: The geometry with closed loops removed.
     """
     elements_initial = (
-        [line for line in multiline.geoms]
+        list(multiline.geoms)
         if multiline.geom_type == "MultiLineString"
         else [multiline]
     )
 
-    if not any([line.is_closed for line in elements_initial]):
+    if not any(line.is_closed for line in elements_initial):
         return multiline
 
     elements = elements_initial
     iteration_count = 0
-    while any([line.is_closed for line in elements]) and iteration_count < 5:
+    while any(line.is_closed for line in elements) and iteration_count < 5:
         elements = [line for line in elements if not line.is_closed]
         geometry_updated = linemerge(elements)
 
         elements = (
-            [line for line in geometry_updated.geoms]
+            list(geometry_updated.geoms)
             if geometry_updated.geom_type == "MultiLineString"
             else [geometry_updated]
         )
         iteration_count += 1
 
-        if not any([line.is_closed for line in elements]):
+        if not any(line.is_closed for line in elements):
             break
 
     return geometry_updated
 
 
 def _identify_linestring_between_polygons(
-    multiline, polygon0, polygon1, geo_crs=GEO_CRS, distance_crs=DISTANCE_CRS
-):
+    multiline: LineString | MultiLineString,
+    polygon0: Polygon,
+    polygon1: Polygon,
+    geo_crs: str = GEO_CRS,
+    distance_crs: str = DISTANCE_CRS,
+) -> LineString | MultiLineString:
     """
     Identifies a LineString from a MultiLineString that touches both given polygons.
     This function takes a MultiLineString and two polygons, and identifies a LineString within the MultiLineString that touches both polygons.
@@ -871,7 +893,7 @@ def _identify_linestring_between_polygons(
         - shapely.geometry.LineString or shapely.geometry.MultiLineString: The identified LineString that touches both polygons, or the original MultiLineString if no such LineString is found.
     """
     list_lines = (
-        [line for line in multiline.geoms]
+        list(multiline.geoms)
         if multiline.geom_type == "MultiLineString"
         else [multiline]
     )
@@ -899,14 +921,14 @@ def _identify_linestring_between_polygons(
 
 
 def _map_endpoints_to_buses(
-    connection,
-    buses,
-    shape="station_polygon",
-    id_col="line_id",
-    sjoin="intersects",
-    distance_crs=DISTANCE_CRS,
-    geo_crs=GEO_CRS,
-):
+    connection: gpd.GeoDataFrame,
+    buses: gpd.GeoDataFrame,
+    shape: str = "station_polygon",
+    id_col: str = "line_id",
+    sjoin: str = "intersects",
+    distance_crs: str = DISTANCE_CRS,
+    geo_crs: str = GEO_CRS,
+) -> gpd.GeoDataFrame:
     """
     Maps the endpoints of lines to buses based on spatial relationships.
 
@@ -982,9 +1004,7 @@ def _map_endpoints_to_buses(
     if contains_stubs.any():
         lines_stubs = lines_all.loc[contains_stubs].copy()
         lines_stubs["linestrings"] = lines_stubs["geometry"].apply(
-            lambda x: (
-                [line for line in x.geoms] if x.geom_type == "MultiLineString" else [x]
-            )
+            lambda x: list(x.geoms) if x.geom_type == "MultiLineString" else [x]
         )
 
         # Remove closed subgeometries (circles), if any
@@ -1009,11 +1029,7 @@ def _map_endpoints_to_buses(
             for coord in range(2):
                 lines_stubs = lines_all.loc[contains_stubs].copy()
                 lines_stubs["linestrings"] = lines_stubs["geometry"].apply(
-                    lambda x: (
-                        [line for line in x.geoms]
-                        if x.geom_type == "MultiLineString"
-                        else [x]
-                    )
+                    lambda x: list(x.geoms) if x.geom_type == "MultiLineString" else [x]
                 )
 
                 # Check for each individual element in list of linestrings, if they are within the station_polygon, if yes delete
@@ -1048,7 +1064,7 @@ def _map_endpoints_to_buses(
     return lines_all
 
 
-def _add_point_to_line(linestring, point):
+def _add_point_to_line(linestring: LineString, point: Point) -> LineString:
     """
     Adds the bus coordinate to a linestring by extending the linestring with a
     new segment.
@@ -1078,7 +1094,9 @@ def _add_point_to_line(linestring, point):
     return merged
 
 
-def _extend_lines_to_buses(connection, buses):
+def _extend_lines_to_buses(
+    connection: gpd.GeoDataFrame, buses: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
     """
     Extends the geometry of lines/links to include mapped bus points.
     This function takes a DataFrame of connections (lines/links) and a DataFrame of buses,
@@ -1138,7 +1156,12 @@ def _extend_lines_to_buses(connection, buses):
     return lines_all
 
 
-def _determine_bus_capacity(buses, lines, voltages, line_types):
+def _determine_bus_capacity(
+    buses: gpd.GeoDataFrame,
+    lines: gpd.GeoDataFrame,
+    voltages: list[float],
+    line_types: dict[float, str],
+) -> gpd.GeoDataFrame:
     """
     Determines the bus capacity based on the sum of connected line capacities.
 
@@ -1184,7 +1207,9 @@ def _determine_bus_capacity(buses, lines, voltages, line_types):
     return buses_all
 
 
-def _add_transformers(buses, geo_crs=GEO_CRS):
+def _add_transformers(
+    buses: gpd.GeoDataFrame, geo_crs: str = GEO_CRS
+) -> gpd.GeoDataFrame:
     """
     Adds unique transformers between buses of different voltage levels at each station.
 
@@ -1270,14 +1295,14 @@ def _add_transformers(buses, geo_crs=GEO_CRS):
 
 
 def _add_dc_buses(
-    converters_polygon,
-    links,
-    buses,
-    country_shapes,
-    tol=BUS_TOL,
-    distance_crs=DISTANCE_CRS,
-    geo_crs=GEO_CRS,
-):
+    converters_polygon: gpd.GeoDataFrame,
+    links: gpd.GeoDataFrame,
+    buses: gpd.GeoDataFrame,
+    country_shapes: gpd.GeoDataFrame,
+    tol: float = BUS_TOL,
+    distance_crs: str = DISTANCE_CRS,
+    geo_crs: str = GEO_CRS,
+) -> gpd.GeoDataFrame:
     """
     Adds DC buses to the network and mapping them to the nearest AC buses.
 
@@ -1357,7 +1382,11 @@ def _add_dc_buses(
     return dc_buses
 
 
-def _map_links_to_dc_buses(links, dc_buses, distance_crs=DISTANCE_CRS):
+def _map_links_to_dc_buses(
+    links: gpd.GeoDataFrame,
+    dc_buses: gpd.GeoDataFrame,
+    distance_crs: str = DISTANCE_CRS,
+) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
     Maps links to DC buses based on geographical proximity and updates DC bus attributes.
 
@@ -1480,7 +1509,7 @@ def _add_converter_links(dc_buses, buses):
     ]
 
 
-def _closest_voltage(voltage, voltage_list):
+def _closest_voltage(voltage: float, voltage_list: list[float]) -> float:
     """
     Returns the closest voltage from a list of voltages to a given voltage.
 
@@ -1497,8 +1526,8 @@ def _closest_voltage(voltage, voltage_list):
 
 
 def _treat_under_construction(
-    df, decision, remove_after
-):  # decision is "keep" or "remove"
+    df: gpd.GeoDataFrame, decision: str, remove_after: str | None
+) -> gpd.GeoDataFrame:  # decision is "keep" or "remove"
     """
     Keep or remove elements that are under construction based on the provided boolean flag.
 
@@ -1554,11 +1583,9 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
         - tuple: A tuple containing the updated DataFrames for buses, converters, lines, links, and transformers
     """
 
-    def _contains_to_tags(x):
+    def _contains_to_tags(x: list[str] | str | float) -> str:
         if isinstance(x, list):
-            return ";".join(
-                set(item.split("-")[0] for item in x if isinstance(item, str))
-            )
+            return ";".join({item.split("-")[0] for item in x if isinstance(item, str)})
         elif isinstance(x, str):
             return x.split("-")[0]
         else:

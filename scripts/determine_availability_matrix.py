@@ -152,7 +152,7 @@ if __name__ == "__main__":
     logger.info(f"Calculate landuse availability for {technology}...")
     start = time.time()
 
-    kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
+    kwargs = {"nprocesses": nprocesses, "disable_progressbar": noprogress}
     availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
 
     duration = time.time() - start
@@ -172,7 +172,7 @@ if __name__ == "__main__":
 
     # For Moldova and Ukraine: Overwrite parts not covered by Corine with
     # externally determined available areas
-    if "availability_matrix_MD_UA" in snakemake.input.keys():
+    if "availability_matrix_MD_UA" in snakemake.input.keys():  # noqa: SIM118
         availability_MDUA = xr.open_dataarray(
             snakemake.input["availability_matrix_MD_UA"]
         )

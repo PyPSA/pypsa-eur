@@ -52,21 +52,26 @@ logger = logging.getLogger(__name__)
 GT_TO_TONNES = 1e9  # Gigatonnes to tonnes conversion
 
 
-def modify_attribute(n, adjustments, investment_year, modification="factor"):
+def modify_attribute(
+    n: pypsa.Network,
+    adjustments: dict,
+    investment_year: int | None,
+    modification: str = "factor",
+) -> None:
     if not adjustments[modification]:
         return
     change_dict = adjustments[modification]
-    for c in change_dict.keys():
-        if c not in n.component_attrs.keys():
+    for c in change_dict:
+        if c not in n.component_attrs:
             logger.warning(f"{c} needs to be a PyPSA Component")
             continue
-        for carrier in change_dict[c].keys():
+        for carrier in change_dict[c]:
             ind_i = (
                 n.components[c].static[n.components[c].static.carrier == carrier].index
             )
             if ind_i.empty:
                 continue
-            for parameter in change_dict[c][carrier].keys():
+            for parameter in change_dict[c][carrier]:
                 if parameter not in n.components[c].static.columns:
                     logger.warning(f"Attribute {parameter} needs to be in {c} columns.")
                     continue
@@ -86,10 +91,12 @@ def modify_attribute(n, adjustments, investment_year, modification="factor"):
                     )
 
 
-def maybe_adjust_costs_and_potentials(n, adjustments, investment_year=None):
+def maybe_adjust_costs_and_potentials(
+    n: pypsa.Network, adjustments: dict | bool, investment_year: int | None = None
+) -> None:
     if not adjustments:
         return
-    for modification in adjustments.keys():
+    for modification in adjustments:
         modify_attribute(n, adjustments, investment_year, modification)
 
 
@@ -274,7 +281,12 @@ def add_gaslimit(n, gaslimit, Nyears=1.0):
     )
 
 
-def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
+def add_emission_prices(
+    n: pypsa.Network,
+    emission_prices: dict[str, float] | None = None,
+    exclude_co2: bool = False,
+) -> None:
+    emission_prices = dict(emission_prices or {"co2": 0.0})
     if exclude_co2:
         emission_prices.pop("co2")
     ep = (
@@ -288,7 +300,7 @@ def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
     n.storage_units["marginal_cost"] += su_ep
 
 
-def add_dynamic_emission_prices(n, fn):
+def add_dynamic_emission_prices(n: pypsa.Network, fn: str) -> None:
     co2_price = (
         pd.read_csv(fn, index_col=0, parse_dates=True).squeeze().reindex(n.snapshots)
     )
@@ -314,7 +326,13 @@ def set_line_s_max_pu(n, s_max_pu=0.7):
     logger.info(f"N-1 security margin of lines set to {s_max_pu}")
 
 
-def set_transmission_limit(n, kind, factor, costs, Nyears=1):
+def set_transmission_limit(
+    n: pypsa.Network,
+    kind: str,
+    factor: str | float,
+    costs: pd.DataFrame,
+    Nyears: float = 1,
+) -> pypsa.Network:
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
     _lines_s_nom = (
@@ -371,14 +389,14 @@ def enforce_autarky(n, only_crossborder=False):
 
 
 def cap_transmission_capacity(
-    n,
-    line_max=None,
-    link_max=None,
-    line_max_extension=None,
-    link_max_extension=None,
-    line_max_pu=None,
-    link_max_pu=None,
-):
+    n: pypsa.Network,
+    line_max: float | None = None,
+    link_max: float | None = None,
+    line_max_extension: float | None = None,
+    link_max_extension: float | None = None,
+    line_max_pu: float | None = None,
+    link_max_pu: float | None = None,
+) -> None:
     """
     Cap transmission capacity for AC lines and DC links.
 

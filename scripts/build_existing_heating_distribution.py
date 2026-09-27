@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 
-def build_existing_heating():
+def build_existing_heating() -> None:
     """
     Retrieve and clean existing heating capacities for the myopic code.
     Data comes from the study "Mapping and analyses of the current and

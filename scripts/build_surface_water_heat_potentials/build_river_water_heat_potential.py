@@ -337,7 +337,7 @@ def get_regional_result(
 def set_dask_chunk_size(
     n_threads: int,  # Number of threads per worker,
     memory_mb: int,  # Memory per worker in MB
-    memory_safety_factor=MEMORY_SAFETY_FACTOR,
+    memory_safety_factor: float = MEMORY_SAFETY_FACTOR,
     n_datasets: int = 2,  # ambient temperature and river discharge datasets
     operation_multiplier: int = 3,  # Multiplier for operation overhead
 ) -> None:
@@ -410,7 +410,7 @@ if __name__ == "__main__":
     power = pd.DataFrame(
         {
             region_name: res["spatial aggregate"]["total_power"].to_pandas()
-            for region_name, res in zip(onshore_regions.index, results)
+            for region_name, res in zip(onshore_regions.index, results, strict=True)
         }
     ).dropna()
 

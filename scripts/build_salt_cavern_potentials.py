@@ -25,39 +25,19 @@ import logging
 import geopandas as gpd
 import pandas as pd
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import (
+    area,
+    configure_logging,
+    load_bus_regions,
+    set_scenario_config,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def concat_gdf(gdf_list, crs="EPSG:4326"):
-    """
-    Concatenate multiple geopandas dataframes with common coordinate reference
-    system (crs).
-    """
-    return gpd.GeoDataFrame(pd.concat(gdf_list), crs=crs)
-
-
-def load_bus_regions(onshore_path, offshore_path):
-    """
-    Load pypsa-eur on- and offshore regions and concat.
-    """
-    offshore_bus_regions = gpd.read_file(offshore_path)
-    onshore_bus_regions = gpd.read_file(onshore_path)
-    bus_regions = concat_gdf([offshore_bus_regions, onshore_bus_regions])
-    bus_regions = bus_regions.dissolve(by="name", aggfunc="sum")
-
-    return bus_regions
-
-
-def area(gdf):
-    """
-    Returns area of GeoDataFrame geometries in square kilometers.
-    """
-    return gdf.to_crs(epsg=3035).area.div(1e6)
-
-
-def salt_cavern_potential_by_region(caverns, regions):
+def salt_cavern_potential_by_region(
+    caverns: gpd.GeoDataFrame, regions: gpd.GeoDataFrame
+) -> pd.DataFrame:
     # calculate area of caverns shapes
     caverns["area_caverns"] = area(caverns)
 

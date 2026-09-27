@@ -18,7 +18,7 @@ from scripts.cluster_gas_network import load_bus_regions
 logger = logging.getLogger(__name__)
 
 
-def read_scigrid_gas(fn):
+def read_scigrid_gas(fn: str) -> gpd.GeoDataFrame:
     df = gpd.read_file(fn)
     expanded_param = unnest_struct(df.param)
     df = pd.concat([df, expanded_param], axis=1)
@@ -27,7 +27,7 @@ def read_scigrid_gas(fn):
     return df
 
 
-def build_gem_lng_data(fn):
+def build_gem_lng_data(fn: str) -> gpd.GeoDataFrame:
     df = pd.read_excel(fn, sheet_name="LNG terminals - data")
     df = df.set_index("ComboID")
 
@@ -53,7 +53,7 @@ def build_gem_lng_data(fn):
     return gdf
 
 
-def build_gem_prod_data(fn):
+def build_gem_prod_data(fn: str) -> gpd.GeoDataFrame:
     df = pd.read_excel(fn, sheet_name="Gas extraction - main")
     df = df.set_index("GEM Unit ID")
 
@@ -97,7 +97,9 @@ def build_gem_prod_data(fn):
     return gdf
 
 
-def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
+def build_gas_input_locations(
+    gem_fn: str, entry_fn: str, sto_fn: str, countries: pd.Index
+) -> gpd.GeoDataFrame:
     # LNG terminals
     lng = build_gem_lng_data(gem_fn)
 

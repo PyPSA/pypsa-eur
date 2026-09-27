@@ -8,7 +8,7 @@ import logging
 import os
 import re
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from functools import lru_cache, partial, wraps
 from itertools import takewhile
 from operator import attrgetter
@@ -18,6 +18,7 @@ from typing import Any, Literal
 
 import atlite
 import fiona
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
@@ -26,6 +27,7 @@ import requests
 import xarray as xr
 import yaml
 from dask.distributed import Client, LocalCluster
+from shapely.geometry import LineString, MultiPolygon, Polygon
 from snakemake.utils import update_config
 from tqdm import tqdm
 
@@ -42,6 +44,56 @@ def strip_if_str(value: Any) -> Any:
     """Return stripped strings while leaving other values unchanged."""
 
     return value.strip() if isinstance(value, str) else value
+
+
+def area(gdf: gpd.GeoDataFrame) -> pd.Series:
+    """Return the area of GeoDataFrame geometries in square kilometres."""
+    return gdf.to_crs(epsg=3035).area.div(1e6)
+
+
+def concat_gdf(
+    gdf_list: list[gpd.GeoDataFrame], crs: str = "EPSG:4326"
+) -> gpd.GeoDataFrame:
+    """Concatenate GeoDataFrames sharing a common coordinate reference system."""
+    return gpd.GeoDataFrame(pd.concat(gdf_list), crs=crs)
+
+
+def load_bus_regions(onshore_path: str, offshore_path: str) -> gpd.GeoDataFrame:
+    """Load on- and offshore bus regions and dissolve them by bus name."""
+    offshore_bus_regions = gpd.read_file(offshore_path)
+    onshore_bus_regions = gpd.read_file(onshore_path)
+    bus_regions = concat_gdf([offshore_bus_regions, onshore_bus_regions])
+    return bus_regions.dissolve(by="name", aggfunc="sum")
+
+
+def create_linestring(row: dict) -> LineString:
+    """Create a LineString from a row with OSM-style lon/lat coordinate dicts."""
+    coords = [(coord["lon"], coord["lat"]) for coord in row["geometry"]]
+    return LineString(coords)
+
+
+def determine_cutout_xXyY(cutout_name: str) -> list[float]:
+    """
+    Determine the full extent of a cutout.
+
+    Since the coordinates of the cutout data are given as the
+    center of the grid cells, the extent of the cutout is
+    calculated by adding/subtracting half of the grid cell size.
+
+    Parameters
+    ----------
+    cutout_name : str
+        Path to the cutout.
+
+    Returns
+    -------
+    A list of extent coordinates in the order [x, X, y, Y].
+    """
+    cutout = load_cutout(cutout_name)
+    assert cutout.crs.to_epsg() == 4326
+    x, X, y, Y = cutout.extent
+    dx, dy = cutout.dx, cutout.dy
+    return [x - dx / 2.0, X + dx / 2.0, y - dy / 2.0, Y + dy / 2.0]
 
 
 def sanitize_busmap(busmap: pd.Series) -> pd.Series:
@@ -145,7 +197,7 @@ def get_temporal_resolution(temporal: dict) -> tuple[str, int | str] | None:
     return method, int(value)
 
 
-def get_scenarios(run):
+def get_scenarios(run: dict) -> dict:
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):
         fn = Path(scenario_config["file"])
@@ -157,7 +209,7 @@ def get_scenarios(run):
     return {}
 
 
-def get_rdir(run):
+def get_rdir(run: dict) -> str:
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):
         RDIR = "{run}/"
@@ -173,7 +225,13 @@ def get_rdir(run):
     return RDIR
 
 
-def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
+def get_run_path(
+    fn: str,
+    dir: str,
+    rdir: str,
+    shared_resources: str | bool,
+    exclude_from_shared: list[str],
+) -> str:
     """
     Dynamically provide paths based on shared resources and filename.
 
@@ -248,7 +306,12 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
     return f"{dir}{rdir}{fn}"
 
 
-def path_provider(dir, rdir, shared_resources, exclude_from_shared):
+def path_provider(
+    dir: str,
+    rdir: str,
+    shared_resources: str | bool,
+    exclude_from_shared: list[str],
+) -> Callable[[str], str]:
     """
     Returns a partial function that dynamically provides paths based on shared
     resources and the filename.
@@ -289,7 +352,7 @@ def script_path_provider(project_dir: Path) -> Callable[[str], Path]:
     return _get_script_path
 
 
-def get_shadow(run):
+def get_shadow(run: dict) -> str | None:
     """
     Returns 'shallow' or None depending on the user setting.
     """
@@ -330,7 +393,7 @@ def find_opt(opts, expr):
 
 # Define a context manager to temporarily mute print statements
 @contextlib.contextmanager
-def mute_print():
+def mute_print() -> Iterator[None]:
     with open(os.devnull, "w") as devnull:
         with contextlib.redirect_stdout(devnull):
             yield
@@ -338,7 +401,7 @@ def mute_print():
 
 def set_scenario_config(snakemake):
     scenario = snakemake.config["run"].get("scenarios", {})
-    if scenario.get("enable") and "run" in snakemake.wildcards.keys():
+    if scenario.get("enable") and "run" in snakemake.wildcards.keys():  # noqa: SIM118
         try:
             with open(scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
@@ -372,7 +435,7 @@ def configure_logging(snakemake, skip_handlers=False):
     import logging
     import sys
 
-    kwargs = snakemake.config.get("logging", dict()).copy()
+    kwargs = snakemake.config.get("logging", {}).copy()
     kwargs.setdefault("level", "INFO")
 
     if skip_handlers is False:
@@ -405,7 +468,7 @@ def configure_logging(snakemake, skip_handlers=False):
     sys.excepthook = handle_exception
 
 
-def update_p_nom_max(n):
+def update_p_nom_max(n: pypsa.Network) -> None:
     # if extendable carriers (solar/onwind/...) have capacity >= 0,
     # e.g. existing assets from GEM are included to the network,
     # the installed capacity might exceed the expansion limit.
@@ -436,13 +499,13 @@ def aggregate_p(n):
     )
 
 
-def get(item, investment_year=None):
+def get(item: Any, investment_year: int | None = None) -> Any:
     """
     Check whether item depends on investment year.
     """
     if not isinstance(item, dict):
         return item
-    elif investment_year in item.keys():
+    elif investment_year in item:
         return item[investment_year]
     else:
         logger.warning(
@@ -500,18 +563,18 @@ def aggregate_p_curtailed(n):
 
 
 def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
-    components = dict(
-        Link=("p_nom", "p0"),
-        Generator=("p_nom", "p"),
-        StorageUnit=("p_nom", "p"),
-        Store=("e_nom", "p"),
-        Line=("s_nom", None),
-        Transformer=("s_nom", None),
-    )
+    components = {
+        "Link": ("p_nom", "p0"),
+        "Generator": ("p_nom", "p"),
+        "StorageUnit": ("p_nom", "p"),
+        "Store": ("e_nom", "p"),
+        "Line": ("s_nom", None),
+        "Transformer": ("s_nom", None),
+    }
 
     costs = {}
     for c, (p_nom, p_attr) in zip(
-        n.components[list(components.keys())], components.values()
+        n.components[list(components.keys())], components.values(), strict=True
     ):
         if c.static.empty:
             continue
@@ -596,7 +659,7 @@ def retry(func: Callable) -> Callable:
     delay = 5
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         for attempt in range(retries):
             try:
                 return func(*args, **kwargs)
@@ -697,15 +760,15 @@ def mock_snakemake(
         storage_settings = StorageSettings()
         dag_settings = DAGSettings(rerun_triggers=[])
 
-        workflow_kwargs = dict(
-            config_settings=config_settings,
-            resource_settings=resource_settings,
-            workflow_settings=workflow_settings,
-            storage_settings=storage_settings,
-            dag_settings=dag_settings,
-            storage_provider_settings=dict(),
-            overwrite_workdir=workdir,
-        )
+        workflow_kwargs = {
+            "config_settings": config_settings,
+            "resource_settings": resource_settings,
+            "workflow_settings": workflow_settings,
+            "storage_settings": storage_settings,
+            "dag_settings": dag_settings,
+            "storage_provider_settings": {},
+            "overwrite_workdir": workdir,
+        }
 
         # Snakemake version-dependent logger handling
         if version.parse(sm_version) >= version.parse("9.14.6"):
@@ -757,7 +820,12 @@ def mock_snakemake(
     return snakemake
 
 
-def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
+def generate_periodic_profiles(
+    dt_index: pd.DatetimeIndex,
+    nodes: pd.Index,
+    weekly_profile: np.ndarray | list[float],
+    localize: str | None = None,
+) -> pd.DataFrame:
     """
     Give a 24*7 long list of weekly hourly profiles, generate this for each
     country for the period dt_index, taking account of time zones and summer
@@ -834,7 +902,7 @@ def get_snapshots(
     )
 
     time_periods = []
-    for s, e in zip(start, end):
+    for s, e in zip(start, end, strict=True):
         period = pd.date_range(
             start=s, end=e, freq=freq, inclusive=snapshots["inclusive"], **kwargs
         )
@@ -848,7 +916,7 @@ def get_snapshots(
     return time
 
 
-def sanitize_custom_columns(n: pypsa.Network):
+def sanitize_custom_columns(n: pypsa.Network) -> None:
     """
     Sanitize non-standard columns used throughout the workflow.
 
@@ -1049,7 +1117,7 @@ def setup_dask(nprocesses: int) -> dict:
     else:
         client = None
 
-    return dict(scheduler=client)
+    return {"scheduler": client}
 
 
 def load_costs(cost_file: str) -> pd.DataFrame:
@@ -1071,10 +1139,12 @@ def load_costs(cost_file: str) -> pd.DataFrame:
 
 
 def _simplify_polys(
-    polys, minarea=100 * 1e6, maxdistance=None, tolerance=None, filterremote=True
-):  # 100*1e6 = 100 km² if CRS is DISTANCE_CRS
-    from shapely.geometry import MultiPolygon
-
+    polys: Polygon | MultiPolygon | gpd.GeoSeries,
+    minarea: float = 100 * 1e6,
+    maxdistance: float | None = None,
+    tolerance: float | None = None,
+    filterremote: bool = True,
+) -> Polygon | MultiPolygon | gpd.GeoSeries:  # 100*1e6 = 100 km² if CRS is DISTANCE_CRS
     if isinstance(polys, MultiPolygon):
         polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
         mainpoly = polys[0]

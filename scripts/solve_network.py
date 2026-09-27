@@ -76,7 +76,7 @@ def add_land_use_constraint(n: pypsa.Network) -> None:
     """
     logger.info("Add land-use constraint for perfect foresight")
 
-    def check_p_min_p_max(p_nom_max):
+    def check_p_min_p_max(p_nom_max: pd.Series) -> None:
         p_nom_min = n.generators[ext_i].groupby(grouper).sum().p_nom_min
         p_nom_min = p_nom_min.reindex(p_nom_max.index)
         check = (
@@ -304,14 +304,14 @@ def add_max_growth(n: pypsa.Network, opts: dict) -> None:
 
     # take maximum yearly difference between investment periods since historic growth is per year
     factor = n.investment_period_weightings.years.max() * opts["factor"]
-    for carrier in opts["max_growth"].keys():
+    for carrier in opts["max_growth"]:
         max_per_period = opts["max_growth"][carrier] * factor
         logger.info(
             f"set maximum growth rate per investment period of {carrier} to {max_per_period} GW."
         )
         n.carriers.loc[carrier, "max_growth"] = max_per_period * 1e3
 
-    for carrier in opts["max_relative_growth"].keys():
+    for carrier in opts["max_relative_growth"]:
         max_r_per_period = opts["max_relative_growth"][carrier]
         logger.info(
             f"set maximum relative growth per investment period of {carrier} to {max_r_per_period}."
@@ -408,7 +408,9 @@ def enforce_autarky(n: pypsa.Network, only_crossborder: bool = False) -> None:
     n.remove("Link", links_rm)
 
 
-def add_load_balance_components(n, config, sign=1):
+def add_load_balance_components(
+    n: pypsa.Network, config: dict, sign: float = 1
+) -> None:
     """
     Add load shedding or load sinks to the network with carrier 'load'.
 
@@ -689,7 +691,7 @@ def add_CCL_constraints(
         )
 
 
-def add_EQ_constraints(n, o, scaling=1e-1):
+def add_EQ_constraints(n: pypsa.Network, o: str, scaling: float = 1e-1) -> None:
     """
     Add equity constraints to the network.
 
@@ -778,7 +780,7 @@ def add_BAU_constraints(n: pypsa.Network, config: dict) -> None:
 
 
 # TODO: think about removing or make per country
-def add_SAFE_constraints(n, config):
+def add_SAFE_constraints(n: pypsa.Network, config: dict) -> None:
     """
     Add a capacity reserve margin of a certain fraction above the peak demand.
     Renewable generators and storage do not contribute. Ignores network.
@@ -816,7 +818,9 @@ def add_SAFE_constraints(n, config):
     n.model.add_constraints(lhs >= rhs, name="safe_mintotalcap")
 
 
-def add_operational_reserve_margin(n, sns, config):
+def add_operational_reserve_margin(
+    n: pypsa.Network, sns: pd.DatetimeIndex, config: dict
+) -> None:
     """
     Build reserve margin constraints based on the formulation given in
     https://genxproject.github.io/GenX.jl/stable/Model_Reference/core/#Operational-Reserves.
@@ -946,6 +950,7 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
         indices_charger_p_nom_extendable,
         indices_stores_e_nom_extendable,
         energy_to_power_ratio_values,
+        strict=True,
     ):
         charger_var = n.model["Link-p_nom"].loc[charger]
         if not tes == charger.replace(" charger", ""):
@@ -1009,7 +1014,9 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
         return
 
     for charger, discharger in zip(
-        indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
+        indices_charger_p_nom_extendable,
+        indices_discharger_p_nom_extendable,
+        strict=True,
     ):
         if not charger.replace(" charger", " ") == discharger.replace(
             " discharger", " "
@@ -1030,7 +1037,7 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
 
 
-def add_battery_constraints(n):
+def add_battery_constraints(n: pypsa.Network) -> None:
     """
     Add constraint ensuring that charger = discharger, i.e.
     1 * charger_size - efficiency * discharger_size = 0
@@ -1053,7 +1060,7 @@ def add_battery_constraints(n):
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
 
-def add_lossy_bidirectional_link_constraints(n):
+def add_lossy_bidirectional_link_constraints(n: pypsa.Network) -> None:
     if not n.links.p_nom_extendable.any() or not any(n.links.get("reversed", [])):
         return
 
@@ -1067,7 +1074,7 @@ def add_lossy_bidirectional_link_constraints(n):
     n.model.add_constraints(lhs == rhs, name="Link-bidirectional_sync")
 
 
-def add_chp_constraints(n):
+def add_chp_constraints(n: pypsa.Network) -> None:
     electric = (
         n.links.index.str.contains("urban central")
         & n.links.index.str.contains("CHP")
@@ -1121,7 +1128,7 @@ def add_chp_constraints(n):
         n.model.add_constraints(lhs <= rhs, name="chplink-backpressure")
 
 
-def add_pipe_retrofit_constraint(n):
+def add_pipe_retrofit_constraint(n: pypsa.Network) -> None:
     """
     Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.
     """
@@ -1149,7 +1156,7 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
-def add_flexible_egs_constraint(n):
+def add_flexible_egs_constraint(n: pypsa.Network) -> None:
     """
     Upper bounds the charging capacity of the geothermal reservoir according to
     the well capacity.
@@ -1168,7 +1175,7 @@ def add_flexible_egs_constraint(n):
     )
 
 
-def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
+def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex) -> None:
     """
     Add constraint for limiting green energy imports (synthetic and biomass).
     Does not include fossil fuel imports.
@@ -1201,7 +1208,9 @@ def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
     n.model.add_constraints(lhs, limit_sense, rhs, name="import_limit")
 
 
-def add_co2_atmosphere_constraint(n, snapshots):
+def add_co2_atmosphere_constraint(
+    n: pypsa.Network, snapshots: pd.DatetimeIndex
+) -> None:
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 
     if glcs.empty:
@@ -1624,7 +1633,7 @@ if __name__ == "__main__":
     if status == SolverStatus.warning:
         raise RuntimeError("Solving status 'warning'. Discarding solution.")
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta = dict(snakemake.config, **{"wildcards": dict(snakemake.wildcards)})
     n.export_to_netcdf(snakemake.output.network)
 
     if snakemake.output.get("model"):

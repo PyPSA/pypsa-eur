@@ -199,6 +199,14 @@ def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
     return dataset
 
 
+def atlite_threads(w):
+    return config_provider("atlite", "nprocesses", default=4)(w)
+
+
+def atlite_mem_mb(mb_per_thread):
+    return lambda w, threads: threads * mb_per_thread
+
+
 def solver_threads(w):
     solver_options = config_provider("solving", "solver_options")(w)
     option_set = config_provider("solving", "solver", "options")(w)

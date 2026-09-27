@@ -147,20 +147,14 @@ class SurfaceWaterHeatApproximator(ABC):
 
         # Project data to target CRS if needed
         if self.water_temperature.rio.crs.to_epsg() != self.EPSG:
-            try:
-                self.water_temperature = self.water_temperature.rio.reproject(
-                    f"EPSG:{self.EPSG}"
-                )
-                logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
-            except Exception as e:
-                raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
+            self.water_temperature = self.water_temperature.rio.reproject(
+                f"EPSG:{self.EPSG}"
+            )
+            logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
 
         if self.volume_flow.rio.crs.to_epsg() != self.EPSG:
-            try:
-                self.volume_flow = self.volume_flow.rio.reproject(f"EPSG:{self.EPSG}")
-                logger.info(f"Reprojected volume_flow to EPSG:{self.EPSG}")
-            except Exception as e:
-                raise ValueError(f"Failed to reproject volume_flow: {str(e)}")
+            self.volume_flow = self.volume_flow.rio.reproject(f"EPSG:{self.EPSG}")
+            logger.info(f"Reprojected volume_flow to EPSG:{self.EPSG}")
 
         # Check that datasets have the same dimensions
         if not set(self.water_temperature.dims) == set(self.volume_flow.dims):

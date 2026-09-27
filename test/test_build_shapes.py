@@ -56,7 +56,7 @@ def test_simplify_polys(tolerance, expected_tuple, italy_shape):
         np.round(gdf_country_simplified["perimeter"][0], 2),
     )
     assert len(output_tuple) == len(expected_tuple)
-    assert all([x == y for x, y in zip(output_tuple, expected_tuple)])
+    assert all(x == y for x, y in zip(output_tuple, expected_tuple))
 
 
 # Disable because of unreliable download_eez

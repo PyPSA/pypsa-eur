@@ -621,7 +621,7 @@ def add_heating_capacities_installed_before_baseyear(
                 # Installation is assumed to be linear for the past
                 ratios = _years / _years.sum()
 
-        for ratio, grouping_year in zip(ratios, valid_grouping_years):
+        for ratio, grouping_year in zip(ratios, valid_grouping_years, strict=True):
             # Add heat pumps
             for heat_source in heat_pump_source_types[heat_system.system_type.value]:
                 costs_name = heat_system.heat_pump_costs_name(heat_source)

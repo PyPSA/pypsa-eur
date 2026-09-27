@@ -259,6 +259,7 @@ def plot_comparison(
         axes,
         [routes_data, circuits_data],
         ["a. Route length (km)", "b. Circuit length (km)"],
+        strict=True,
     ):
         sns.barplot(
             data=data, x="country", y="length", hue="parameter", ax=ax, palette=palette

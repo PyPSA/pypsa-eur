@@ -24,6 +24,15 @@ repos:
     # Run the formatter.
   - id: ruff-format
 
+# Type check the modules listed in mypy.ini
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v2.3.1
+  hooks:
+  - id: mypy
+    pass_filenames: false
+    args: [--config-file=mypy.ini]
+    additional_dependencies: [pydantic>=2.12, types-requests]
+
   # Find common spelling mistakes in comments and docstrings
 - repo: https://github.com/codespell-project/codespell
   rev: v2.4.2

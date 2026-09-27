@@ -24,12 +24,12 @@ from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def get_wdpa_layer_name(wdpa_fn, layer_substring):
+def get_wdpa_layer_name(wdpa_fn: str, layer_substring: str) -> str:
     """
     Get layername from file "wdpa_fn" whose name contains "layer_substring".
     """
-    l = fiona.listlayers(wdpa_fn)
-    return [_ for _ in l if layer_substring in _][0]
+    layers = fiona.listlayers(wdpa_fn)
+    return [layer for layer in layers if layer_substring in layer][0]
 
 
 if __name__ == "__main__":
@@ -157,7 +157,7 @@ if __name__ == "__main__":
             snakemake.input.ship_density, codes=func, crs=4326, allow_no_overlap=True
         )
 
-    kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
+    kwargs = {"nprocesses": nprocesses, "disable_progressbar": noprogress}
     if noprogress:
         logger.info("Calculate landuse availabilities...")
         start = time.time()

@@ -6,6 +6,20 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Developers note: shared geometry helpers (`area`, `concat_gdf`, `load_bus_regions`, `create_linestring`, `determine_cutout_xXyY`) now live once in `_helpers.py`.
+
+* Developers note: mutable default arguments were removed, exceptions inside `except` blocks are re-raised with their cause, deprecation warnings go through the logger, and pass-through exception wrappers were dropped so the original error surfaces.
+
+* Developers note: import-time side effects were moved into the script entry points. The `pydeflate` cache now lives in `data/pydeflate/`, and the perfect-foresight warning is only logged for perfect-foresight runs.
+
+* Retrieve rules are named after their datasets (for example `retrieve_costs`, `retrieve_scigrid_gas`, `retrieve_opsd_electricity_demand`, `retrieve_copernicus_land_cover`). Only intermediate log and benchmark file names change.
+
+* Thread counts and memory of the atlite-based rules follow the scenario-aware configuration, and the target lists of `rule all` and the collection rules share one implementation.
+
+* Developers note: ruff additionally enforces `B006`, `B904`, `T20`, `C4` (without `C408`), `SIM118` and `E741`.
+
+* Developers note: a mypy baseline (`mypy.ini`, `pixi run -e dev typecheck`, pre-commit hook) type-checks the fully annotated scripts (111 of 130 modules) and the Pydantic config models, requires annotations in those modules, and grows file by file. Type hints were added to most functions across `scripts/`; a handful of wrong annotations found by mypy were corrected.
+
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 
 **Streamlined Workflow**

@@ -84,7 +84,7 @@ def build_eea_co2(
     """
     df = pd.read_csv(input_co2, encoding="latin-1", low_memory=False)
 
-    df.replace(dict(Year="1985-1987"), 1986, inplace=True)
+    df.replace({"Year": "1985-1987"}, 1986, inplace=True)
     df.Year = df.Year.astype(int)
     index_col = ["Country_code", "Pollutant_name", "Year", "Sector_name"]
     df = df.set_index(index_col).sort_index()

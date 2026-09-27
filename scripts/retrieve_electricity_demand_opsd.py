@@ -17,7 +17,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("retrieve_electricity_demand_opsd")
+        snakemake = mock_snakemake("retrieve_opsd_electricity_demand")
         rootpath = ".."
     else:
         rootpath = "."

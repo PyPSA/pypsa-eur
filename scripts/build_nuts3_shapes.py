@@ -77,7 +77,7 @@ NUTS3_INCLUDE = [
 ]
 
 
-def normalise_text(text):
+def normalise_text(text: str) -> str:
     """
     Removes diacritics from non-standard Latin letters, converts them to their
     closest standard 26-letter Latin equivalents, and removes asterisks (*) from the text.
@@ -99,7 +99,7 @@ def normalise_text(text):
     return text
 
 
-def simplify_europe(regions):
+def simplify_europe(regions: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """
     Simplifies the geometries of European regions by removing small islands and re-adding selected regions manually.
 
@@ -152,7 +152,9 @@ def simplify_europe(regions):
     return regions
 
 
-def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
+def calc_gdp_pop(
+    country: str, regions: gpd.GeoDataFrame, gdp_non_nuts3: str, pop_non_nuts3: str
+) -> pd.DataFrame:
     """
     Calculate the GDP p.c. and population values for non NUTS3 regions.
 

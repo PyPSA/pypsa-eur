@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 @retry
-def plot_ch4_map(n):
+def plot_ch4_map(n: pypsa.Network) -> None:
     # Check if gas infrastructure exists in the network
     if "gas pipeline" not in n.links.carrier.unique():
         logger.warning(
@@ -175,25 +175,25 @@ def plot_ch4_map(n):
         boundaries=map_opts["boundaries"],
     )
 
-    sizes = [100, 10]
+    sizes: list[float] = [100, 10]
     labels = [f"{s} TWh" for s in sizes]
     sizes = [s / bus_size_factor * 1e6 for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1.03),
-        labelspacing=0.8,
-        frameon=False,
-        handletextpad=1,
-        title="gas sources",
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1.03),
+        "labelspacing": 0.8,
+        "frameon": False,
+        "handletextpad": 1,
+        "title": "gas sources",
+    }
 
     add_legend_circles(
         ax,
         sizes,
         labels,
         srid=n.srid,
-        patch_kw=dict(facecolor="lightgrey"),
+        patch_kw={"facecolor": "lightgrey"},
         legend_kw=legend_kw,
     )
 
@@ -202,20 +202,20 @@ def plot_ch4_map(n):
     scale = 1e3 / linewidth_factor
     sizes = [s * scale for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0.25, 1.03),
-        frameon=False,
-        labelspacing=0.8,
-        handletextpad=1,
-        title="gas pipeline",
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0.25, 1.03),
+        "frameon": False,
+        "labelspacing": 0.8,
+        "handletextpad": 1,
+        "title": "gas pipeline",
+    }
 
     add_legend_lines(
         ax,
         sizes,
         labels,
-        patch_kw=dict(color="lightgrey"),
+        patch_kw={"color": "lightgrey"},
         legend_kw=legend_kw,
     )
 
@@ -228,12 +228,12 @@ def plot_ch4_map(n):
     #     frameon=False,
     # )
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1.24),
-        ncol=2,
-        frameon=False,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1.24),
+        "ncol": 2,
+        "frameon": False,
+    }
 
     add_legend_patches(
         ax,

@@ -44,7 +44,7 @@ if __name__ == "__main__":
     clustered.columns.name = "bus"
 
     out = xr.DataArray(clustered, name="electricity demand (MW)")
-    comp = dict(zlib=True, complevel=9, least_significant_digit=5)
+    comp = {"zlib": True, "complevel": 9, "least_significant_digit": 5}
     out.to_netcdf(snakemake.output[0], encoding={out.name: comp})
 
     logger.info(f"Clustered electricity demand to {clustered.shape[1]} buses.")

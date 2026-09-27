@@ -250,5 +250,5 @@ if __name__ == "__main__":
     )
 
     load.name = "electricity demand (MW)"
-    comp = dict(zlib=True, complevel=9, least_significant_digit=5)
+    comp = {"zlib": True, "complevel": 9, "least_significant_digit": 5}
     load.to_netcdf(snakemake.output[0], encoding={load.name: comp})

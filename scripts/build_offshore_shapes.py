@@ -55,7 +55,7 @@ EUROPE_COUNTRIES = [
 ]
 
 
-def eez(eez, country_list=EUROPE_COUNTRIES):
+def eez(eez: str, country_list: list[str] = EUROPE_COUNTRIES) -> gpd.GeoDataFrame:
     df = gpd.read_file(eez)
     iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")  # noqa: F841
     pol_type = ["200NM", "Overlapping claim"]  # noqa: F841

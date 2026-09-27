@@ -45,7 +45,7 @@ sector_mapping = {
 }
 
 
-def build_nodal_industrial_energy_demand():
+def build_nodal_industrial_energy_demand() -> None:
     fn = snakemake.input.industrial_energy_demand_per_country_today
     industrial_demand = pd.read_csv(fn, header=[0, 1], index_col=0)
 

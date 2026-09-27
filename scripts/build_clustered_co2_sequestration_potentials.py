@@ -11,21 +11,17 @@ import logging
 import geopandas as gpd
 import pandas as pd
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import area, configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 
-def area(gdf):
-    """
-    Returns area of GeoDataFrame geometries in square kilometers.
-    """
-    return gdf.to_crs(epsg=3035).area.div(1e6)
-
-
 def allocate_sequestration_potential(
-    gdf, regions, attr="conservative estimate Mt", threshold=3
-):
+    gdf: gpd.GeoDataFrame,
+    regions: gpd.GeoDataFrame,
+    attr: str | list[str] = "conservative estimate Mt",
+    threshold: float = 3,
+) -> pd.Series:
     if isinstance(attr, str):
         attr = [attr]
     gdf = gdf.loc[gdf[attr].sum(axis=1) > threshold, attr + ["geometry"]]

@@ -262,7 +262,7 @@ if __name__ == "__main__":
     # Determine larger total absolute value for supply and consumption for a carrier if carrier exists as both supply and consumption
     common_carriers = pos_carriers.intersection(neg_carriers)
 
-    def get_total_abs(carrier, sign):
+    def get_total_abs(carrier: str, sign: int) -> float:
         values = bus_size.loc[:, carrier]
         return values[values * sign > 0].abs().sum()
 

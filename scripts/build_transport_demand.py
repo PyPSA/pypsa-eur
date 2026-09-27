@@ -24,7 +24,9 @@ from scripts._helpers import (
 logger = logging.getLogger(__name__)
 
 
-def build_nodal_transport_data(fn, pop_layout, year):
+def build_nodal_transport_data(
+    fn: str, pop_layout: pd.DataFrame, year: int
+) -> pd.DataFrame:
     # get numbers of car and fuel efficiency per country
     transport_data = pd.read_csv(fn, index_col=[0, 1])
     transport_data = transport_data.xs(year, level="year")
@@ -44,7 +46,12 @@ def build_nodal_transport_data(fn, pop_layout, year):
     return nodal_transport_data
 
 
-def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
+def build_transport_demand(
+    traffic_fn: str,
+    airtemp_fn: str,
+    nodes: pd.Index,
+    nodal_transport_data: pd.DataFrame,
+) -> pd.DataFrame:
     """
     Returns transport demand per bus in unit km driven [100 km].
     """
@@ -90,12 +97,12 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
 
 
 def transport_degree_factor(
-    temperature,
-    deadband_lower=15,
-    deadband_upper=20,
-    lower_degree_factor=0.5,
-    upper_degree_factor=1.6,
-):
+    temperature: pd.DataFrame | pd.Series,
+    deadband_lower: float = 15,
+    deadband_upper: float = 20,
+    lower_degree_factor: float = 0.5,
+    upper_degree_factor: float = 1.6,
+) -> pd.DataFrame | pd.Series:
     """
     Work out how much energy demand in vehicles increases due to heating and
     cooling.
@@ -118,7 +125,9 @@ def transport_degree_factor(
     return dd
 
 
-def bev_availability_profile(fn, snapshots, nodes, options):
+def bev_availability_profile(
+    fn: str, snapshots: pd.DatetimeIndex, nodes: pd.Index, options: dict
+) -> pd.DataFrame:
     """
     Derive plugged-in availability for passenger electric vehicles.
     """
@@ -147,7 +156,9 @@ def bev_availability_profile(fn, snapshots, nodes, options):
     )
 
 
-def bev_dsm_profile(snapshots, nodes, options):
+def bev_dsm_profile(
+    snapshots: pd.DatetimeIndex, nodes: pd.Index, options: dict
+) -> pd.DataFrame:
     dsm_week = np.zeros((24 * 7,))
 
     # assuming that at a certain time ("bev_dsm_restriction_time") EVs have to

@@ -23,7 +23,7 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def get_source_temperature(heat_source_key: str):
+def get_source_temperature(heat_source_key: str) -> float:
     """
     Get the constant temperature of a heat source.
 
@@ -43,7 +43,7 @@ def get_source_temperature(heat_source_key: str):
         If the heat source is unknown (not in `config`).
     """
 
-    if heat_source_key in snakemake.params.limited_heat_sources.keys():
+    if heat_source_key in snakemake.params.limited_heat_sources:
         return snakemake.params.limited_heat_sources[heat_source_key][
             "constant_temperature_celsius"
         ]
@@ -56,7 +56,7 @@ def get_source_temperature(heat_source_key: str):
 
 def get_profile(
     source_temperature: float | xr.DataArray, forward_temperature: xr.DataArray
-) -> xr.DataArray | float:
+) -> xr.DataArray:
     """
     Get the direct heat source utilisation profile.
 

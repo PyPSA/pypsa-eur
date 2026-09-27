@@ -22,7 +22,7 @@ from scripts.plot_summary import preferred_order
 logger = logging.getLogger(__name__)
 
 
-def rename_techs_tyndp(tech):
+def rename_techs_tyndp(tech: str) -> str:
     tech = rename_techs(tech)
     if "heat pump" in tech or "resistive heater" in tech:
         return "power-to-heat"
@@ -46,20 +46,20 @@ def rename_techs_tyndp(tech):
         return tech
 
 
-def load_projection(plotting_params):
-    proj_kwargs = plotting_params.get("projection", dict(name="EqualEarth"))
+def load_projection(plotting_params: dict) -> ccrs.Projection:
+    proj_kwargs = plotting_params.get("projection", {"name": "EqualEarth"})
     proj_func = getattr(ccrs, proj_kwargs.pop("name"))
     return proj_func(**proj_kwargs)
 
 
 @retry
 def plot_map(
-    n,
-    components=["links", "stores", "storage_units", "generators"],
-    bus_size_factor=2e10,
-    transmission=False,
-    with_legend=True,
-):
+    n: pypsa.Network,
+    components: tuple[str, ...] = ("links", "stores", "storage_units", "generators"),
+    bus_size_factor: float = 2e10,
+    transmission: bool = False,
+    with_legend: bool = True,
+) -> None:
     tech_colors = snakemake.params.plotting["tech_colors"]
 
     assign_locations(n)
@@ -105,7 +105,9 @@ def plot_map(
     costs = costs.stack()  # .sort_index()
 
     # hack because impossible to drop buses...
-    eu_location = snakemake.params.plotting.get("eu_node_location", dict(x=-5.5, y=46))
+    eu_location = snakemake.params.plotting.get(
+        "eu_node_location", {"x": -5.5, "y": 46}
+    )
     n.buses.loc["EU gas", "x"] = eu_location["x"]
     n.buses.loc["EU gas", "y"] = eu_location["y"]
 
@@ -176,25 +178,25 @@ def plot_map(
         **map_opts,
     )
 
-    sizes = [20, 10, 5]
+    sizes: list[float] = [20, 10, 5]
     labels = [f"{s} bEUR/a" for s in sizes]
     sizes = [s / bus_size_factor * 1e9 for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0.01, 1.06),
-        labelspacing=0.8,
-        frameon=False,
-        handletextpad=0,
-        title="system cost",
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0.01, 1.06),
+        "labelspacing": 0.8,
+        "frameon": False,
+        "handletextpad": 0,
+        "title": "system cost",
+    }
 
     add_legend_circles(
         ax,
         sizes,
         labels,
         srid=n.srid,
-        patch_kw=dict(facecolor="lightgrey"),
+        patch_kw={"facecolor": "lightgrey"},
         legend_kw=legend_kw,
     )
 
@@ -203,23 +205,23 @@ def plot_map(
     scale = 1e3 / linewidth_factor
     sizes = [s * scale for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0.27, 1.06),
-        frameon=False,
-        labelspacing=0.8,
-        handletextpad=1,
-        title=title,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0.27, 1.06),
+        "frameon": False,
+        "labelspacing": 0.8,
+        "handletextpad": 1,
+        "title": title,
+    }
 
     add_legend_lines(
-        ax, sizes, labels, patch_kw=dict(color="lightgrey"), legend_kw=legend_kw
+        ax, sizes, labels, patch_kw={"color": "lightgrey"}, legend_kw=legend_kw
     )
 
-    legend_kw = dict(
-        bbox_to_anchor=(1.52, 1.04),
-        frameon=False,
-    )
+    legend_kw = {
+        "bbox_to_anchor": (1.52, 1.04),
+        "frameon": False,
+    }
 
     if with_legend:
         colors = [tech_colors[c] for c in carriers] + [ac_color, dc_color]

@@ -14,11 +14,6 @@ from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
 
-logger.warning(
-    "Running perfect foresight is not properly tested and may not work as expected. "
-    "Use at your own risk!"
-)
-
 
 # helper functions ---------------------------------------------------
 
@@ -421,6 +416,10 @@ def main(
     params,
     current_horizon: int,
 ) -> pypsa.Network:
+    logger.warning(
+        "Running perfect foresight is not properly tested and may not work as expected. "
+        "Use at your own risk!"
+    )
     is_first_horizon = current_horizon == params.horizons[0]
 
     add_build_year_to_new_assets(n, current_horizon)

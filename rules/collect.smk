@@ -68,40 +68,58 @@ rule solve_operations_networks:
         "Collecting operational dispatch network files"
 
 
-def balance_map_paths(kind, w):
-    """
-    kind = "static" or "interactive"
-    """
-    cfg_key = "balance_map" if kind == "static" else "balance_map_interactive"
-    ext = "pdf" if kind == "static" else "html"
-
+def balance_map_paths(w, kind=None):
+    """Balance map targets; `kind` is "static", "interactive" or None for both."""
     if config["foresight"] == "perfect":
         return []
+    kinds = ["static", "interactive"] if kind is None else [kind]
+    paths = []
+    for k in kinds:
+        cfg_key = "balance_map" if k == "static" else "balance_map_interactive"
+        ext = "pdf" if k == "static" else "html"
+        paths.extend(
+            expand(
+                RESULTS + f"maps/{k}/balance_map_{{carrier}}_{{horizon}}.{ext}",
+                run=config["run"]["name"],
+                horizon=config["planning_horizons"],
+                carrier=config_provider("plotting", cfg_key, "bus_carriers")(w),
+            )
+        )
+    return paths
 
-    return expand(
-        RESULTS + f"maps/{kind}/balance_map_{{carrier}}_{{horizon}}.{ext}",
-        run=config["run"]["name"],
-        horizon=config["planning_horizons"],
-        carrier=config_provider("plotting", cfg_key, "bus_carriers")(w),
-    )
+
+def sector_network_plot_paths(w):
+    """Hydrogen and methane network map targets if the sector model builds them."""
+    if config["foresight"] == "perfect" or not config_provider("sector", "enabled")(w):
+        return []
+    networks = {"H2_network": "h2", "gas_network": "ch4"}
+    return [
+        path
+        for key, name in networks.items()
+        if config_provider("sector", key)(w)
+        for path in expand(
+            RESULTS + f"maps/static/{name}_network_{{horizon}}.pdf",
+            horizon=config["planning_horizons"],
+            run=config["run"]["name"],
+        )
+    ]
 
 
 rule plot_balance_maps:
     input:
-        static=lambda w: balance_map_paths("static", w),
-        interactive=lambda w: balance_map_paths("interactive", w),
+        balance_map_paths,
     message:
         "Plotting energy balance maps"
 
 
 rule plot_balance_maps_static:
     input:
-        lambda w: balance_map_paths("static", w),
+        lambda w: balance_map_paths(w, "static"),
 
 
 rule plot_balance_maps_interactive:
     input:
-        lambda w: balance_map_paths("interactive", w),
+        lambda w: balance_map_paths(w, "interactive"),
 
 
 rule plot_power_networks:

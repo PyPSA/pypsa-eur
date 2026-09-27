@@ -134,67 +134,6 @@ else:
     MYOPIC_OUTPUTS = []
 
 
-def get_sector_network_plots(w):
-    """Returns sector-specific network plots if enabled and not perfect foresight."""
-    if config["foresight"] == "perfect" or not config_provider("sector", "enabled")(w):
-        return []
-
-    plots = []
-    if config_provider("sector", "H2_network")(w):
-        plots.extend(
-            expand(
-                RESULTS + "maps/static/h2_network_{horizon}.pdf",
-                horizon=config["planning_horizons"],
-                run=config["run"]["name"],
-            )
-        )
-    if config_provider("sector", "gas_network")(w):
-        plots.extend(
-            expand(
-                RESULTS + "maps/static/ch4_network_{horizon}.pdf",
-                horizon=config["planning_horizons"],
-                run=config["run"]["name"],
-            )
-        )
-    return plots
-
-
-def get_balance_map_plots(w):
-    """Returns balance map plots (static + interactive) if configured and not perfect foresight."""
-    if config["foresight"] == "perfect":
-        return []
-
-    plots = []
-
-    # Static balance maps (PDF)
-    static_carriers = config_provider("plotting", "balance_map", "bus_carriers")(w)
-    if static_carriers:
-        plots.extend(
-            expand(
-                RESULTS + "maps/static/balance_map_{carrier}_{horizon}.pdf",
-                horizon=config["planning_horizons"],
-                run=config["run"]["name"],
-                carrier=static_carriers,
-            )
-        )
-
-        # Interactive balance maps (HTML)
-    interactive_carriers = config_provider(
-        "plotting", "balance_map_interactive", "bus_carriers"
-    )(w)
-    if interactive_carriers:
-        plots.extend(
-            expand(
-                RESULTS + "maps/interactive/balance_map_{carrier}_{horizon}.html",
-                horizon=config["planning_horizons"],
-                run=config["run"]["name"],
-                carrier=interactive_carriers,
-            )
-        )
-
-    return plots
-
-
 rule all:
     input:
         expand(CORE_OUTPUTS, run=config["run"]["name"]),
@@ -217,8 +156,8 @@ rule all:
             else []
         ),
         (expand(MYOPIC_OUTPUTS, run=config["run"]["name"]) if MYOPIC_OUTPUTS else []),
-        get_sector_network_plots,
-        get_balance_map_plots,
+        sector_network_plot_paths,
+        balance_map_paths,
 
 
 rule create_scenarios:
