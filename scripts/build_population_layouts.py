@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build mapping between cutout grid cells and population (total, urban, rural).
+Build gridded total, urban and rural population layouts on the cutout grid.
+
+NUTS3 population is spread over the cutout grid cells in proportion to the
+area each NUTS3 region covers in a cell. Within each country, cells are sorted
+by population density and the least dense cells count as rural until their
+cumulative population reaches the country's rural share from World Bank
+urbanisation statistics; the remaining cells count as urban. Kosovo takes the
+urbanisation rate of Serbia. The layouts serve to regionalise demands and
+population-based potentials.
 """
 
 import logging

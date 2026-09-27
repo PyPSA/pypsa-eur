@@ -8,11 +8,8 @@ iteratively optimize while updating line reactances.
 This script is used for optimizing the electrical network as well as the
 sector coupled network.
 
-Description
------------
-
 Total annual system costs are minimised with PyPSA. The full formulation of the
-linear optimal power flow (plus investment planning
+linear optimal power flow (plus investment planning)
 is provided in the
 [documentation of PyPSA](https://docs.pypsa.org/latest/user-guide/network-optimization/).
 

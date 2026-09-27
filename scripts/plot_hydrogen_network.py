@@ -2,8 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates map of optimised hydrogen network, storage and selected other
-infrastructure.
+Plots the optimised hydrogen network, storage and conversion capacities on a map.
+
+Reads the solved network and draws electrolysis and fuel cell capacities as
+circles per electricity bus, hydrogen pipeline capacities as line widths and
+regional hydrogen storage capacity as shaded regions. New and repurposed
+pipelines are shown in separate layers; under myopic foresight, pipelines from
+different investment periods between the same buses are summed. Pipelines
+below a capacity threshold are omitted, and networks without hydrogen
+pipelines produce a placeholder figure.
 """
 
 import logging

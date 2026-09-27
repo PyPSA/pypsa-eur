@@ -2,14 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This script is used to clean OpenStreetMap (OSM) data for creating a PyPSA-Eur
-ready network.
+Cleans the raw OpenStreetMap power data into consistent tables of substations,
+lines, cables and links for building the base network.
 
-The script performs various cleaning operations on the OSM data, including:
-- Cleaning voltage, circuits, cables, wires, and frequency columns
-- Splitting semicolon-separated cells into new rows
-- Distributing values to circuits based on the number of splits
-- Adding line endings to substations based on line data
+The voltage, circuit, cable, wire and frequency tags are parsed and
+standardised, semicolon-separated values are split into separate rows with
+the circuits distributed among them, and line endings are attached to the
+substations they connect to.
 """
 
 import itertools

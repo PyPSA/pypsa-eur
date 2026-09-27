@@ -2,7 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Builds the electricity demand for base regions based on population and GDP.
+Distributes national electricity demand time series to the regions of the simplified network.
+
+Each country's hourly load is split among its regions with distribution keys:
+the JRC Energy Atlas demand raster for EU countries, local authority consumption
+statistics for Great Britain, and a weighted mix of NUTS3 GDP and population
+elsewhere. NUTS3 and local authority attributes are reassigned to regions in
+proportion to overlapping area. Optionally only regions of low-voltage
+substations receive load. The result is a time-by-bus array of demand in MW.
 """
 
 import logging

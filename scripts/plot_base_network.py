@@ -2,7 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot base transmission network.
+Plots the base transmission network topology on a map.
+
+Reads the base network and the onshore regions, draws region outlines and
+scales HVAC line widths by their thermal rating and HVDC link widths by
+their power rating. Legends with reference capacities are added for lines
+and links where present. The figure serves as a visual check of the
+imported grid before clustering.
 """
 
 import geopandas as gpd

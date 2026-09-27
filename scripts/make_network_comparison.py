@@ -3,9 +3,14 @@
 # SPDX-License-Identifier: MIT
 
 """
-Creates plots to compare transmission line lengths between two PyPSA networks.
-Uses spatial intersection with country shapes for accurate country attribution.
+Plots transmission route and circuit lengths per country for two PyPSA networks, e.g. a new OSM-based base network against a previous release.
 
+AC lines and DC links of both networks are clipped to country shapes, including
+offshore regions, so that cross-border lines are attributed to countries by their
+actual path. Route length is the clipped geometry length; circuit length
+additionally counts parallel circuits. Bar charts with the relative change per
+country are exported and the Pearson correlation between both networks is logged.
+The comparison is a development tool to validate new OSM network releases.
 """
 
 import logging

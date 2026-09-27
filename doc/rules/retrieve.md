@@ -10,10 +10,10 @@ Instead we use separate steps in the workflow (`rules` executed by `snakemake`) 
 Data is generally retrieved in a version-controlled manner, enabling control over input data versions, reproducibility and consistency of modelling runs.
 The rules download data into subfolders in the `data/` directory, following the structure
 `data/{dataset}/{source}/{version}`, e.g. `data/jrc_idees/primary/March-2025-V1/`.
-Which specific data version is retrieved can be controlled in the [data configuration](configuration.md#data_cf).
+Which specific data version is retrieved can be controlled in the [data configuration](../configuration.md#data_cf).
 
 Every dataset is listed with its owner, link and license in the
-[data inventory](data_sources.md#data-inventory). Its available versions and
+[data inventory](../data_sources.md#data-inventory). Its available versions and
 sources (`archive`, `primary` or `build`) are registered in `data/versions.csv`.
 Most `retrieve_<dataset>` rules simply download the registered URL for the
 selected source. The rules below need more than that.
@@ -32,11 +32,11 @@ file in the repository root, which is loaded automatically and ignored by git.
 
 ## Rules with special handling {#special}
 
-- `retrieve_cutout` downloads pre-built weather cutouts; see [cutouts](configuration.md#atlite_cf).
-- `retrieve_osm_data_raw` queries the [Overpass API](https://overpass-api.de) per country when `data: osm: source: build`. The endpoint, retries and user agent are set under [overpass_api](configuration.md#overpass_api_cf).
+- `retrieve_cutout` downloads pre-built weather cutouts; see [cutouts](../configuration.md#atlite_cf).
+- `retrieve_osm_data_raw` queries the [Overpass API](https://overpass-api.de) per country when `data: osm: source: build`. The endpoint, retries and user agent are set under [overpass_api](../configuration.md#overpass_api_cf).
 - `retrieve_wdpa` and `retrieve_wdpa_marine` resolve the monthly changing download URL of the [World Database on Protected Areas](https://www.protectedplanet.net/). The data may not be redistributed, so the `archive` source points to a web archive copy.
 - `retrieve_bidding_zones_entsoepy` and `retrieve_bidding_zones_electricitymaps` download bidding zone shapes via the [entsoe-py](https://github.com/EnergieID/entsoe-py) package and from [Electricity Maps](https://github.com/electricitymaps/electricitymaps-contrib). They are combined by [build_bidding_zones][].
-- `retrieve_cost_data` downloads techno-economic assumptions from the [technology-data repository](https://github.com/pypsa/technology-data) as `data/costs/{source}/{version}/costs_{horizon}.csv`. The cost year can be fixed with `costs: year:` (see [costs](configuration.md#costs_cf)).
+- `retrieve_cost_data` downloads techno-economic assumptions from the [technology-data repository](https://github.com/pypsa/technology-data) as `data/costs/{source}/{version}/costs_{horizon}.csv`. The cost year can be fixed with `costs: year:` (see [costs](../configuration.md#costs_cf)).
 
 ## Electricity demand data {#demand}
 

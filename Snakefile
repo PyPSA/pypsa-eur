@@ -376,3 +376,9 @@ rule sync_dry:
         rsync -uvarh --no-g {params.cluster}/results . -n || echo "No results directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/logs . -n || echo "No logs directory, skipping rsync"
         """
+
+
+# use the one-line rule docstrings as job messages
+for r in workflow.rules:
+    if r.message is None and r.docstring:
+        r.message = r.docstring

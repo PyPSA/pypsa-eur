@@ -27,7 +27,7 @@ $ snakemake -call results/test-elec/networks/solved_2050.nc --configfile config/
 ```
 
 This configuration is set to download a reduced cutout via the rule `retrieve_cutout`.
-For more information on the data dependencies of PyPSA-Eur, continue reading [Retrieving Data](retrieve.md#data).
+For more information on the data dependencies of PyPSA-Eur, continue reading [Retrieving Data](rules/retrieve.md#data).
 
 ## How to configure runs?
 
