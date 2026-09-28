@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* feat: Add optional endogenous shipping fuel choice (`sector: shipping_endogenous`, default `false`). When enabled, oil, methanol, LNG and hydrogen compete on a shared per-node shipping demand bus and the optimiser picks the cost-minimal mix instead of following the fixed year-indexed shares. LNG is also available in the default fixed-share mode via the new year-indexed `sector: shipping_lng_share` (default 0); in both modes gas is liquefied through a per-node `CH4 liquefaction` step before bunkering. LNG engine methane slip (`sector: shipping_lng_methane_slip`, default 3.1% as in FuelEU Maritime) is counted as CO2-equivalent using `sector: shipping_methane_gwp100` (default 25) and deducted from the useful engine efficiency.
 
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 
