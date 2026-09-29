@@ -235,6 +235,19 @@ def _split_linestring_by_point(linestring, points):
 
 
 # TODO: Last old function to improve, either vectorise or parallelise
+def _alpha_suffix(i):
+    """
+    Convert a zero-based index to a spreadsheet-style letter suffix (0 -> 'a',
+    25 -> 'z', 26 -> 'aa', ...).
+    """
+    suffix = ""
+    i += 1
+    while i > 0:
+        i, rem = divmod(i - 1, 26)
+        suffix = string.ascii_lowercase[rem] + suffix
+    return suffix
+
+
 def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
     """
     Split overpassing lines by splitting them at nodes within a given tolerance,
@@ -321,8 +334,10 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
             voltage = parts[1] if len(parts) > 1 else ""  # e.g., "220"
 
             df_append["line_id"] = [
-                f"{base_id}:{letter}-{voltage}" if n_geoms > 1 else original_line_id
-                for letter in string.ascii_lowercase[:n_geoms]
+                f"{base_id}:{_alpha_suffix(i)}-{voltage}"
+                if n_geoms > 1
+                else original_line_id
+                for i in range(n_geoms)
             ]
 
             lines_to_add.append(df_append)

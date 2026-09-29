@@ -158,7 +158,7 @@ def prepare_building_stock_data():
     building_data = pd.read_csv(snakemake.input.building_stock, usecols=list(range(13)))
 
     # standardize data
-    building_data["type"].replace(
+    building_data["type"] = building_data["type"].replace(
         {
             "Covered area: heated  [Mm²]": "Heated area [Mm²]",
             "Windows ": "Window",
@@ -168,22 +168,19 @@ def prepare_building_stock_data():
             "Roof ": "Roof",
             "Floor ": "Floor",
         },
-        inplace=True,
     )
-    building_data["feature"].replace(
+    building_data["feature"] = building_data["feature"].replace(
         {
             "Construction features (U-value)": "Construction features (U-values)",
         },
-        inplace=True,
     )
 
     building_data.country_code = building_data.country_code.str.upper()
-    building_data["subsector"].replace(
-        {"Hotels and Restaurants": "Hotels and restaurants"}, inplace=True
+    building_data["subsector"] = building_data["subsector"].replace(
+        {"Hotels and Restaurants": "Hotels and restaurants"}
     )
-    building_data["sector"].replace(
-        {"Residential sector": "residential", "Service sector": "services"},
-        inplace=True,
+    building_data["sector"] = building_data["sector"].replace(
+        {"Residential sector": "residential", "Service sector": "services"}
     )
 
     # extract u-values
@@ -267,7 +264,9 @@ def prepare_building_stock_data():
 
     # u_values for Poland are missing -> take them from eurostat -----------
     u_values_PL = pd.read_csv(snakemake.input.u_values_PL)
-    u_values_PL.component.replace({"Walls": "Wall", "Windows": "Window"}, inplace=True)
+    u_values_PL["component"] = u_values_PL["component"].replace(
+        {"Walls": "Wall", "Windows": "Window"}
+    )
     area_PL = area.loc["Poland"].reset_index()
     data_PL = pd.DataFrame(columns=u_values.columns, index=area_PL.index)
     data_PL["country"] = "Poland"
@@ -331,11 +330,16 @@ def prepare_building_topology(u_values, same_building_topology=True):
     Reads in typical building topologies (e.g. average surface of building
     elements) and typical losses through thermal bridging and air ventilation.
     """
-    data_tabula = pd.read_csv(
-        snakemake.input.data_tabula,
-        skiprows=lambda x: x in range(1, 11),
-        low_memory=False,
-    ).iloc[:2974]
+    data_tabula = (
+        pd.read_excel(
+            snakemake.input.data_tabula,
+            sheet_name="Calc.Set.Building",
+            header=0,
+            skiprows=range(1, 11),
+        )
+        .iloc[:2974]
+        .reset_index(drop=True)
+    )
 
     parameters = [
         "Code_Country",
@@ -461,7 +465,7 @@ def prepare_building_topology(u_values, same_building_topology=True):
     missing_ct = (
         missing_ct.unstack().unstack().fillna(missing_ct.unstack().unstack().mean())
     )
-    data_tabula = missing_ct.stack(level=[-1, -2, -3], dropna=False)
+    data_tabula = missing_ct.stack(level=[-1, -2, -3])
 
     # sets for different countries same building topology which only depends on
     # build year and subsector (MFH, SFH, AB)
@@ -898,7 +902,7 @@ def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
     Calculates gain utilisation factor nu.
     """
     # time constant of the building tau [h] = c_m [Wh/(m^2K)] * 1 /(H_tr_e+H_tb*H_ve) [m^2 K /W]
-    tau = c_m / heat_transfer_perm2.groupby().sum()
+    tau = c_m / heat_transfer_perm2.T.groupby(level=1).sum().T
     alpha = alpha_H_0 + (tau / tau_H_0)
     # heat balance ratio
     gamma = (1 / Q_ht).mul(Q_gain.sum(axis=1), axis=0)
@@ -1054,11 +1058,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_retro_cost",
-            clusters=48,
-            sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
-        )
+        snakemake = mock_snakemake("build_retro_cost")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

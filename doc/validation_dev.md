@@ -105,6 +105,21 @@ logging:
 
 Always commit these regenerated files alongside your model changes.
 
+### Checking Config Files Against the Schema
+
+The automatic validation is not `strict` and accepts config keys that are not part of the schema.
+This let's typos and outdated options pass silently and is intentional to make quick adaptations in soft-forks easier.
+(We might change this in the future and make the validation fail on unknown keys).
+You can check your configuration files against the schema, run:
+
+```console
+$ pixi run validate-config <path to your one or more config files>
+```
+
+Each file is checked against the schema on its own.
+The check reports any unknown keys, invalid values and thereby helps to identify typos or undefined config entries.
+The check does *not* report on missing keys, problems in the `plotting` section (no schema defined yet) or in the `conventional` section (as it allows for any extra keyword it is skipped completely).
+
 ### Custom Validators
 
 For validation logic beyond simple type checks and constraints, Pydantic provides

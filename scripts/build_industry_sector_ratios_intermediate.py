@@ -130,12 +130,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_industry_sector_ratios_intermediate",
-            planning_horizons="2030",
+            horizon="2030",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    year = int(snakemake.wildcards.planning_horizons)
+    year = int(snakemake.wildcards.horizon)
 
     params = snakemake.params.industry
 

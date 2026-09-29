@@ -16,9 +16,9 @@ from pypsa.statistics import get_transmission_carriers
 from scripts._helpers import (
     configure_logging,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 from scripts.add_electricity import sanitize_carriers
+from scripts.co2_budget import co2_limit_name
 
 VALID_MAP_STYLES = PydeckPlotter.VALID_MAP_STYLES
 
@@ -74,16 +74,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_balance_map_interactive",
-            clusters=50,
-            opts="",
-            sector_opts="",
-            planning_horizons="2050",
+            horizon="2050",
             carrier="H2",
         )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # Interactive map settings
     settings = snakemake.params.settings
@@ -110,22 +106,52 @@ if __name__ == "__main__":
     carrier = snakemake.wildcards.carrier
     carrier = carrier.replace("_", " ")
 
+    if carrier not in n.buses.carrier.unique():
+        import logging
+        import sys
+
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"Carrier {carrier} is not in the network. Skipping interactive balance map plot. "
+            f"Consider removing from configuration `plotting: balance_map_interactive: bus_carriers` for this scenario."
+        )
+        # Create empty HTML file as placeholder
+        with open(snakemake.output[0], "w") as f:
+            f.write(f"<html><body><p>No {carrier} carrier in network</p></body></html>")
+        sys.exit(0)
+
     # Fill missing carrier colors
     missing_color = "#808080"
     b_missing = n.carriers.query("color == '' or color.isnull()").index
     n.carriers.loc[b_missing, "color"] = missing_color
 
-    transmission_carriers = get_transmission_carriers(n, bus_carrier=carrier).rename(
-        {"name": "carrier"}
-    )
+    if carrier == "co2 stored" and "co2 dense" in n.buses.carrier.unique():
+        co2_carriers = ["co2 stored", "co2 dense"]
+        transmission_carriers = get_transmission_carriers(
+            n, bus_carrier=co2_carriers
+        ).rename({"name": "carrier"})
+
+        eb = n.statistics.energy_balance(
+            bus_carrier=co2_carriers,
+            groupby=["bus", "carrier"],
+        )
+        eb = eb.rename(
+            index=lambda value: value.replace("co2 dense", carrier), level="bus"
+        )
+        eb = eb.groupby(level=["component", "bus", "carrier"]).sum()
+    else:
+        transmission_carriers = get_transmission_carriers(
+            n, bus_carrier=carrier
+        ).rename({"name": "carrier"})
+
+        ### Pie charts
+        eb = n.statistics.energy_balance(
+            bus_carrier=carrier,
+            groupby=["bus", "carrier"],
+        )
+
     components = transmission_carriers.unique("component")
     carriers = transmission_carriers.unique("carrier")
-
-    ### Pie charts
-    eb = n.statistics.energy_balance(
-        bus_carrier=carrier,
-        groupby=["bus", "carrier"],
-    )
 
     # Only carriers that are also in the energy balance
     carriers_in_eb = carriers[carriers.isin(eb.index.get_level_values("carrier"))]
@@ -182,8 +208,9 @@ if __name__ == "__main__":
         / weights.sum()
     )
 
-    if carrier == "co2 stored" and "CO2Limit" in n.global_constraints.index:
-        co2_price = n.global_constraints.loc["CO2Limit", "mu"]
+    co2_limit = co2_limit_name("upper")
+    if carrier == "co2 stored" and co2_limit in n.global_constraints.index:
+        co2_price = n.global_constraints.loc[co2_limit, "mu"]
         price = price - co2_price
 
     # if only one price is available, use this price for all regions

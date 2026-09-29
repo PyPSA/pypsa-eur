@@ -25,7 +25,7 @@ New data should generally not be added to the data, but externally retrieved in 
 
 - **Source:** Eurostat
 - **Link:** https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Comparative_price_levels_for_investment
-- **License:** [custom](https://ec.europa.eu/eurostat/about-us/policies/copyright)
+- **License:** [custom](https://web.archive.org/web/20240923005932/https://ec.europa.eu/eurostat/about-us/policies/copyright)
 - **Description:** Contains data on comparative price levels for investment in Europe.
 
 `data/retro/data_building_stock.csv`
@@ -45,7 +45,7 @@ New data should generally not be added to the data, but externally retrieved in 
 
 - **Source:** Eurostat
 - **Link:** https://ec.europa.eu/eurostat/databrowser/view/NRG_PC_204/default/table?lang=en
-- **License:** [custom](https://ec.europa.eu/eurostat/about-us/policies/copyright)
+- **License:** [custom](https://web.archive.org/web/20240923005932/https://ec.europa.eu/eurostat/about-us/policies/copyright)
 - **Description:** Electricity prices for household consumers.
 
 `data/retro/floor_area_missing.csv` and `data/retro/u_values_poland.csv`
@@ -78,7 +78,7 @@ New data should generally not be added to the data, but externally retrieved in 
 `data/transmission_projects/nep`
 
 - **Source:** German Federal Network Agency (Bundesnetzagentur, BNetzA)
-- **Link:** https://data.netzausbau.de/2037-2023/NEP/NEP_2037_2045_Bestaetigung.pdf
+- **Link:** https://web.archive.org/web/20241114091345/https://data.netzausbau.de/2037-2023/NEP/NEP_2037_2045_Bestaetigung.pdf
 - **License:** unknown
 - **Description:** Contains transmission projects in Europe from German network development plan (Netzentwicklungsplan).
 
@@ -120,7 +120,7 @@ New data should generally not be added to the data, but externally retrieved in 
 `data/district_heat_share.csv`
 
 - **Source:** Euroheat & Power
-- **Link:** https://www.euroheat.org/knowledge-hub/country-profiles
+- **Link:** https://web.archive.org/web/20210921235424/https://www.euroheat.org/knowledge-hub/country-profiles/
 - **License:** unknown
 - **Description:** Contains district heating shares for European countries.
 

@@ -79,13 +79,13 @@ import xarray as xr
 from atlite.gis import ExclusionContainer
 
 from scripts._helpers import (
+    _simplify_polys,
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
     setup_dask,
 )
-from scripts.build_shapes import _simplify_polys
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +94,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_renewable_profiles", clusters=38, technology="offwind-ac"
-        )
+        snakemake = mock_snakemake("build_renewable_profiles", technology="offwind-ac")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
