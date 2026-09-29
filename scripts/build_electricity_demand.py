@@ -8,7 +8,6 @@ After filling small gaps linearly and large gaps by copying time-slice of a
 given period, the load data is exported to a `.csv` file.
 """
 
-import calendar
 import logging
 
 import numpy as np
@@ -221,33 +220,20 @@ def repeat_years(s: pd.Series, years: list) -> pd.Series:
     )
 
 
-def reindex_load_fixed_year(load: pd.DataFrame, snapshots: pd.DatetimeIndex, fixed_year) -> pd.DataFrame:
-    """
-    Reindex load data for a fixed_year onto the snapshot timeline.
-    """
-    if fixed_year:
-        fixed_year = int(fixed_year)
-
-        # Guard against leap year mismatch: if snapshots contain Feb 29
-        # but fixed_year has no Feb 29, there is no load data to map
-        has_feb29 = ((snapshots.month == 2) & (snapshots.day == 29)).any()
-        if has_feb29 and not calendar.isleap(fixed_year):
-            raise ValueError(
-                f"Snapshots contain Feb 29 but fixed_year={fixed_year} is not a "
-                f"leap year. Set 'drop_leap_day: true' in the snapshots config "
-                f"or choose a leap fixed_year."
-            )
-
-        # Map snapshot timestamps to fixed_year to index into load data,
-        # then restore the original snapshot index
-        fixed_year_index = snapshots.map(lambda t: t.replace(year=fixed_year))
-        load = load.reindex(index=fixed_year_index)
-        load.index = snapshots
-    else:
-        years = slice(snapshots[0], snapshots[-1])
-        load = load.loc[years].reindex(index=snapshots)
-
-    return load
+def reindex_to_snapshots(
+    load: pd.DataFrame, snapshots: pd.DatetimeIndex, fixed_year: int | bool = False
+) -> pd.DataFrame:
+    """Reindex load to snapshots, optionally taking the profile from `fixed_year`."""
+    if not fixed_year:
+        return load.reindex(snapshots)
+    has_leap_day = ((snapshots.month == 2) & (snapshots.day == 29)).any()
+    if has_leap_day and not pd.Timestamp(str(fixed_year)).is_leap_year:
+        raise ValueError(
+            f"Snapshots contain February 29 but load `fixed_year` {fixed_year} is "
+            "not a leap year. Set `enable: drop_leap_day: true` or use a leap year."
+        )
+    index = snapshots.map(lambda t: t.replace(year=fixed_year))
+    return load.reindex(index).set_axis(snapshots)
 
 
 if __name__ == "__main__":
@@ -345,19 +331,13 @@ if __name__ == "__main__":
         synthetic_load = synthetic_load.loc[snapshots, countries]
         load = load.combine_first(synthetic_load)
 
+    fixed_year = snakemake.params["load"].get("fixed_year", False)
+    load = reindex_to_snapshots(load, snapshots, fixed_year)
+
     assert not load.isna().any().any(), (
         "Load data contains nans. Adjust the parameters "
         "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
         "for implementing the needed load data modifications."
-    )
-
-    fixed_year = snakemake.params["load"].get("fixed_year", False)
-
-    load = reindex_load_fixed_year(load, snapshots, fixed_year)
-
-    assert not load.isna().any().any(), (
-        f"Load data contains NaN after reindexing. Ensure load data "
-        f"covers the requested snapshots (fixed_year={fixed_year})."
     )
 
     load.to_csv(snakemake.output[0])

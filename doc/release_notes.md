@@ -5,7 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Fix: Resolve silent NaN load data when `fixed_year` differs from snapshot year ([#2187](https://github.com/PyPSA/pypsa-eur/issues/2187)).
+* Fix: `load: fixed_year` no longer yields all-NaN load when it differs from the snapshot year ([#2209](https://github.com/PyPSA/pypsa-eur/pull/2209)).
 
 * Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
 
