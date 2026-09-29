@@ -5,7 +5,7 @@
 """
 Transformers configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#transformers_cf
 """
 
 from pydantic import Field

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 """
 Preprocess gas network based on data from bthe SciGRID_gas project
-(https://www.gas.scigrid.de/).
+(https://web.archive.org/web/20241210201605/https://www.gas.scigrid.de/).
 """
 
 import json
@@ -29,7 +29,7 @@ def diameter_to_capacity(pipe_diameter_mm):
     48 inch (1200 mm) 80 bar -> 21.7  GW CH4 pipe capacity (LHV)
 
     Based on p.15 of
-    https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
+    https://ehb.eu/files/downloads/2020_European-Hydrogen-Backbone_Report.pdf
     """
     m1 = (5000 - 1500) / (600 - 500)
     m2 = (11250 - 5000) / (900 - 600)

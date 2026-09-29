@@ -41,7 +41,8 @@ if __name__ == "__main__":
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
 
     # Indicator matrix NUTS3 -> grid cells
-    I = atlite.cutout.compute_indicatormatrix(nuts3.geometry, grid_cells)  # noqa: E741
+    # atlite looks up these shapes by position, not by index label
+    I = atlite.cutout.compute_indicatormatrix(list(nuts3.geometry), grid_cells)  # noqa: E741
 
     # Indicator matrix grid_cells -> NUTS3; inprinciple Iinv*I is identity
     # but imprecisions mean not perfect

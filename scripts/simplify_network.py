@@ -11,18 +11,18 @@ link.
 Outputs
 -------
 
-- `resources/regions_onshore_base.geojson`:
+- `resources/onshore_regions_simplified.geojson`:
 
-    ![](img/regions_onshore_base_s.png)
+    ![](img/onshore_regions_simplified.png)
 
-- `resources/regions_offshore_base.geojson`:
+- `resources/offshore_regions_simplified.geojson`:
 
-    ![](img/regions_offshore_base_s.png)
+    ![](img/offshore_regions_simplified.png)
 
-- `resources/busmap_base_s.csv`: Mapping of buses from `networks/base.nc` to `networks/base_s.nc`;
-- `networks/base.nc`:
+- `resources/busmap_simplify_network.csv`: Mapping of buses from `networks/base.nc` to `networks/simplified.nc`;
+- `networks/simplified.nc`:
 
-    ![](img/base_s.png)
+    ![](img/simplified.png)
 
 Description
 -----------
@@ -48,7 +48,11 @@ from pypsa.clustering.spatial import busmap_by_stubs, get_clustering_from_busmap
 from scipy.sparse.csgraph import connected_components, dijkstra
 
 from scripts._helpers import configure_logging, set_scenario_config
-from scripts.cluster_network import busmap_for_admin_regions, cluster_regions
+from scripts.cluster_network import (
+    busmap_for_admin_regions,
+    cluster_regions,
+    sanitize_busmap,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +123,7 @@ def simplify_links(
     adjacency_matrix = n.adjacency_matrix(
         branch_components=["Link"],
         weights=dict(Link=(n.links.carrier == "DC").astype(float)),
+        return_dataframe=False,
     )
 
     _, labels = connected_components(adjacency_matrix, directed=False)
@@ -296,7 +301,9 @@ def aggregate_to_substations(
         }
     )
 
-    adj = n.adjacency_matrix(branch_components=["Line", "Link"], weights=weight).tocsr()
+    adj = n.adjacency_matrix(
+        branch_components=["Line", "Link"], weights=weight, return_dataframe=False
+    ).tocsr()
 
     no_substation_i = n.buses.index.difference(substation_i)
     bus_indexer = n.buses.index.get_indexer(substation_i)
@@ -440,6 +447,13 @@ if __name__ == "__main__":
     busmaps.append(converter_map)
 
     n, simplify_links_map = simplify_links(n, params.p_max_pu, params.p_min_pu)
+
+    # Rename all DC bus carriers to AC
+    # TODO: long-term, rename all aggregated AC and DC carriers to `electricity` to avoid confusion
+    is_dc_bus_carrier = n.buses["carrier"] == "DC"
+    logger.info(f"Simplifying {is_dc_bus_carrier.sum()} DC bus carriers to AC.")
+    n.buses.loc[is_dc_bus_carrier, "carrier"] = "AC"
+
     busmaps.append(simplify_links_map)
 
     if params.simplify_network["remove_stubs"]:
@@ -487,9 +501,10 @@ if __name__ == "__main__":
         busmaps.append(busmap_hac)
 
     busmap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
+    busmap_s = sanitize_busmap(busmap_s)
     busmap_s.to_csv(snakemake.output.busmap)
 
-    for which in ["regions_onshore", "regions_offshore"]:
+    for which in ["onshore_regions", "offshore_regions"]:
         regions = gpd.read_file(snakemake.input[which])
         clustered_regions = cluster_regions(busmaps, regions, with_country=True)
         clustered_regions.to_file(snakemake.output[which])

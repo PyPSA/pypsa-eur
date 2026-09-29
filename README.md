@@ -61,7 +61,7 @@ them within each model region:
 # Warnings
 
 PyPSA-Eur is under active development and has several
-[limitations](https://pypsa-eur.readthedocs.io/en/latest/limitations.html) which
+[limitations](https://pypsa-eur.readthedocs.io/en/latest/limitations/) which
 you should understand before using the model. The github repository
 [issues](https://github.com/PyPSA/pypsa-eur/issues) collect known topics we are
 working on (please feel free to help or make suggestions). The
