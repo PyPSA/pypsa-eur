@@ -536,6 +536,11 @@
         "simplify_network": {
           "description": "Configuration for `clustering.simplify_network` settings.",
           "properties": {
+            "to_380": {
+              "default": true,
+              "description": "Map all buses and lines to 380 kV and remove transformers. If false, original voltage levels and transformers are kept. This is only recommended without spatial clustering (`cluster_network: n_clusters: all`), because clustering merges buses of different voltage levels.",
+              "type": "boolean"
+            },
             "to_substations": {
               "default": false,
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
@@ -8993,6 +8998,11 @@
     "_SimplifyNetworkConfig": {
       "description": "Configuration for `clustering.simplify_network` settings.",
       "properties": {
+        "to_380": {
+          "default": true,
+          "description": "Map all buses and lines to 380 kV and remove transformers. If false, original voltage levels and transformers are kept. This is only recommended without spatial clustering (`cluster_network: n_clusters: all`), because clustering merges buses of different voltage levels.",
+          "type": "boolean"
+        },
         "to_substations": {
           "default": false,
           "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
@@ -13523,6 +13533,11 @@
         "simplify_network": {
           "description": "Configuration for `clustering.simplify_network` settings.",
           "properties": {
+            "to_380": {
+              "default": true,
+              "description": "Map all buses and lines to 380 kV and remove transformers. If false, original voltage levels and transformers are kept. This is only recommended without spatial clustering (`cluster_network: n_clusters: all`), because clustering merges buses of different voltage levels.",
+              "type": "boolean"
+            },
             "to_substations": {
               "default": false,
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",

@@ -11,6 +11,8 @@
 
 * Feature: `clustering: administrative: countries` also accepts NUTS codes of subregions (e.g. `DEA: 3`) to set a different administrative level within a country ([#2146](https://github.com/PyPSA/pypsa-eur/pull/2146)).
 
+* Feature: New option `clustering: simplify_network: to_380` to keep original voltage levels and transformers instead of mapping everything to 380 kV. Lines of different voltage levels are no longer merged in clustering. Power plants are now matched to buses by the country of the clustered buses instead of bus name prefixes, which fixes `cluster_network: n_clusters: all` for OSM-based networks whose bus names do not start with the country code.
+
 * Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
 
 
