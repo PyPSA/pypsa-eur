@@ -86,7 +86,7 @@ Transformation in Energy Systems](https://www.tu.berlin/en/ensys) at the
 developed within the [IAI](http://www.iai.kit.edu) at the [Karlsruhe Institute
 of Technology (KIT)](http://www.kit.edu/english/index.php) which was funded by
 the [Helmholtz Association](https://www.helmholtz.de/en/), and by the
-[Renewable Energy Group](https://fias.uni-frankfurt.de/physics/schramm/renewable-energy-system-and-network-analysis/)
+[Renewable Energy Group](https://web.archive.org/web/20250425151540/https://www.fias.science/en/theoretical-sciences/research-groups/stefan-schramm/)
 at [FIAS](https://fias.uni-frankfurt.de/) to carry out simulations for the
 [CoNDyNet project](http://condynet.de/), financed by the [German Federal
 Ministry for Education and Research (BMBF)](https://www.bmbf.de/en/index.html)
@@ -115,8 +115,8 @@ to reading this documentation.
   modelling energy systems which PyPSA-Eur uses under the hood.
 - Course on [Energy Systems](https://nworbmot.org/courses/es-22/) given at
   Technical University of Berlin by [Prof. Dr. Tom Brown](https://nworbmot.org).
-- Course on [Data Science for Energy System Modelling](https://fneum.github.io/data-science-for-esm/intro.html)
-  given at Technical University of Berlin by [Dr. Fabian Neumann](https://neumann.fyi).
+- Course on [Data Science for Energy System Modelling](https://fneum.github.io/data-science-for-esm/)
+  given at Technical University of Berlin by [Dr. Fabian Neumann](https://fneum.org/).
 
 ## Citing PyPSA-Eur
 

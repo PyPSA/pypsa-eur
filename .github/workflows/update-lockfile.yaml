@@ -20,8 +20,6 @@ jobs:
 
     - name: Setup Pixi
       uses: prefix-dev/setup-pixi@v0.10.2
-      with:
-        pixi-version: v0.68.1
 
     - name: Full resolve
       run: |

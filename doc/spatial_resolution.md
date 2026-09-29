@@ -3,7 +3,7 @@
 
 # Spatial resolution {#spatial_resolution}
 
-The default nodal resolution of the model follows the electricity generation and transmission model [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur), which clusters down the electricity transmission substations in each European country based on the k-means algorithm (See [cluster_network](https://pypsa-eur.readthedocs.io/en/latest/simplification/cluster_network.html#rule-cluster-network) for a complete explanation). This gives nodes which correspond to major load and generation centres (typically cities).
+The default nodal resolution of the model follows the electricity generation and transmission model [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur), which clusters down the electricity transmission substations in each European country based on the k-means algorithm (See [cluster_network](https://pypsa-eur.readthedocs.io/en/latest/preparation/#cluster) for a complete explanation). This gives nodes which correspond to major load and generation centres (typically cities).
 
 The total number of nodes for Europe is set in the `config/config.yaml` file under `clusters`. The number of nodes can vary between 37, the number of independent countries / synchronous areas, and several hundred. With 200-300 nodes the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
 

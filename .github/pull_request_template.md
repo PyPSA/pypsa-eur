@@ -13,5 +13,5 @@ Closes # (if applicable).
 
 **If applicable:**
 - [ ] Changes in configuration options are reflected in `scripts/lib/validation`.
-- [ ] For new data sources or versions, [these instructions](https://pypsa-eur.readthedocs.io/en/latest/data_sources.html) have been followed.
+- [ ] For new data sources or versions, [these instructions](https://pypsa-eur.readthedocs.io/en/latest/data_sources/) have been followed.
 - [ ] New rules are documented in the appropriate `doc/*.md` files.

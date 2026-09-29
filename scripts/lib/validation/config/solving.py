@@ -5,7 +5,7 @@
 """
 Solving configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#solving_cf
 """
 
 from typing import Any

@@ -5,7 +5,7 @@
 """
 Links configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#links_cf
 """
 
 from typing import Literal

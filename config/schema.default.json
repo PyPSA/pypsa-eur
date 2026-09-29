@@ -2245,50 +2245,50 @@
           "properties": {
             "battery": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "li-ion": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "lfp": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "vanadium": {
               "default": 10,
-              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "lair": {
               "default": 12,
-              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "pair": {
               "default": 24,
-              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "iron-air": {
               "default": 100,
-              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "H2": {
               "default": 168,
-              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             }
           }
@@ -2589,8 +2589,8 @@
         },
         "elec_DRI": {
           "default": 0.322,
-          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
-          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
+          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://web.archive.org/web/20210310021333/https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
+          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://web.archive.org/web/20210310021333/https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
           "type": "number"
         },
         "Al_primary_fraction": {
@@ -3110,8 +3110,8 @@
           "properties": {
             "name": {
               "default": "EqualEarth",
-              "description": "Name of the `cartopy <https://scitools.org.uk/cartopy/docs/latest/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
-              "markdownDescription": "Name of the [cartopy ](https://scitools.org.uk/cartopy/docs/latest/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "description": "Name of the `cartopy <https://cartopy.readthedocs.io/stable/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "markdownDescription": "Name of the [cartopy ](https://cartopy.readthedocs.io/stable/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
               "type": "string"
             }
           }
@@ -4599,8 +4599,8 @@
             },
             "PHS_max_hours": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "hydro_max_hours": {
@@ -4613,8 +4613,8 @@
                 }
               ],
               "default": "energy_capacity_totals_by_country",
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)."
             },
             "flatten_dispatch": {
               "default": false,
@@ -5108,8 +5108,8 @@
         },
         "shipping_methanol_efficiency": {
           "default": 0.46,
-          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
-          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
+          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
           "type": "number"
         },
         "shipping_oil_efficiency": {
@@ -5506,11 +5506,6 @@
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
         },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
-        },
         "electricity_grid_connection": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
@@ -5554,11 +5549,25 @@
               "description": "Gas pipeline transmission efficiency.",
               "type": "object"
             },
+            "gas pipeline new": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Gas pipeline new transmission efficiency.",
+              "type": "object"
+            },
             "electricity distribution grid": {
               "additionalProperties": {
                 "type": "number"
               },
               "description": "Electricity distribution grid efficiency.",
+              "type": "object"
+            },
+            "CO2 pipeline": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "CO2 pipeline transmission efficiency.",
               "type": "object"
             }
           }
@@ -5581,8 +5590,8 @@
         },
         "H2_retrofit_capacity_per_CH4": {
           "default": 0.6,
-          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
           "type": "number"
         },
         "gas_network_connectivity_upgrade": {
@@ -5730,8 +5739,8 @@
             },
             "sustainability_factor": {
               "default": 0.0025,
-              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
-              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py>`_).",
+              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py)).",
               "type": "number"
             }
           }
@@ -7639,8 +7648,8 @@
         },
         "sustainability_factor": {
           "default": 0.0025,
-          "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
-          "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+          "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py>`_).",
+          "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py)).",
           "type": "number"
         }
       }
@@ -7934,8 +7943,8 @@
         },
         "PHS_max_hours": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "hydro_max_hours": {
@@ -7948,8 +7957,8 @@
             }
           ],
           "default": "energy_capacity_totals_by_country",
-          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
+          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)."
         },
         "flatten_dispatch": {
           "default": false,
@@ -8180,50 +8189,50 @@
       "properties": {
         "battery": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "li-ion": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "lfp": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "vanadium": {
           "default": 10,
-          "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "lair": {
           "default": 12,
-          "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "pair": {
           "default": 24,
-          "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "iron-air": {
           "default": 100,
-          "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "H2": {
           "default": 168,
-          "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         }
       }
@@ -8827,8 +8836,8 @@
       "properties": {
         "name": {
           "default": "EqualEarth",
-          "description": "Name of the `cartopy <https://scitools.org.uk/cartopy/docs/latest/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
-          "markdownDescription": "Name of the [cartopy ](https://scitools.org.uk/cartopy/docs/latest/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+          "description": "Name of the `cartopy <https://cartopy.readthedocs.io/stable/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+          "markdownDescription": "Name of the [cartopy ](https://cartopy.readthedocs.io/stable/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
           "type": "string"
         }
       }
@@ -9524,11 +9533,25 @@
           "description": "Gas pipeline transmission efficiency.",
           "type": "object"
         },
+        "gas pipeline new": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Gas pipeline new transmission efficiency.",
+          "type": "object"
+        },
         "electricity distribution grid": {
           "additionalProperties": {
             "type": "number"
           },
           "description": "Electricity distribution grid efficiency.",
+          "type": "object"
+        },
+        "CO2 pipeline": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "CO2 pipeline transmission efficiency.",
           "type": "object"
         }
       }
@@ -9595,7 +9618,7 @@
   "description": "Combined configuration schema for PyPSA-EUR.",
   "properties": {
     "version": {
-      "default": "v2026.08.0",
+      "default": "v2026.09.0",
       "description": "Version of PyPSA-Eur. Descriptive only.",
       "type": "string"
     },
@@ -9997,50 +10020,50 @@
           "properties": {
             "battery": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "li-ion": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "lfp": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "vanadium": {
               "default": 10,
-              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "lair": {
               "default": 12,
-              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "pair": {
               "default": 24,
-              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "iron-air": {
               "default": 100,
-              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "H2": {
               "default": 168,
-              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             }
           }
@@ -11399,8 +11422,8 @@
             },
             "PHS_max_hours": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "hydro_max_hours": {
@@ -11413,8 +11436,8 @@
                 }
               ],
               "default": "energy_capacity_totals_by_country",
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)."
             },
             "flatten_dispatch": {
               "default": false,
@@ -12381,8 +12404,8 @@
         },
         "shipping_methanol_efficiency": {
           "default": 0.46,
-          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
-          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
+          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
           "type": "number"
         },
         "shipping_oil_efficiency": {
@@ -12779,11 +12802,6 @@
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
         },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
-        },
         "electricity_grid_connection": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
@@ -12827,11 +12845,25 @@
               "description": "Gas pipeline transmission efficiency.",
               "type": "object"
             },
+            "gas pipeline new": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Gas pipeline new transmission efficiency.",
+              "type": "object"
+            },
             "electricity distribution grid": {
               "additionalProperties": {
                 "type": "number"
               },
               "description": "Electricity distribution grid efficiency.",
+              "type": "object"
+            },
+            "CO2 pipeline": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "CO2 pipeline transmission efficiency.",
               "type": "object"
             }
           }
@@ -12854,8 +12886,8 @@
         },
         "H2_retrofit_capacity_per_CH4": {
           "default": 0.6,
-          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
           "type": "number"
         },
         "gas_network_connectivity_upgrade": {
@@ -13003,8 +13035,8 @@
             },
             "sustainability_factor": {
               "default": 0.0025,
-              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
-              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py>`_).",
+              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py)).",
               "type": "number"
             }
           }
@@ -13088,8 +13120,8 @@
         },
         "elec_DRI": {
           "default": 0.322,
-          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
-          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
+          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://web.archive.org/web/20210310021333/https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
+          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://web.archive.org/web/20210310021333/https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
           "type": "number"
         },
         "Al_primary_fraction": {
@@ -15520,8 +15552,8 @@
           "properties": {
             "name": {
               "default": "EqualEarth",
-              "description": "Name of the `cartopy <https://scitools.org.uk/cartopy/docs/latest/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
-              "markdownDescription": "Name of the [cartopy ](https://scitools.org.uk/cartopy/docs/latest/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "description": "Name of the `cartopy <https://cartopy.readthedocs.io/stable/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "markdownDescription": "Name of the [cartopy ](https://cartopy.readthedocs.io/stable/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
               "type": "string"
             }
           }

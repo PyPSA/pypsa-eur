@@ -285,4 +285,4 @@ import pypsa
 n = pypsa.Network("results/test-elec/networks/solved_2050.nc")
 ```
 
-For inspiration, read the [examples section in the PyPSA documentation](https://pypsa.readthedocs.io/en/latest/examples-basic.html).
+For inspiration, read the [examples section in the PyPSA documentation](https://docs.pypsa.org/latest/examples/examples/).

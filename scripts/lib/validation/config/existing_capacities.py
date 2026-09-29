@@ -5,7 +5,7 @@
 """
 Existing capacities configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#existing_capacities_cf
 """
 
 from pydantic import Field

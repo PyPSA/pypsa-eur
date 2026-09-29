@@ -5,7 +5,7 @@
 """
 Lines configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#lines_cf
 """
 
 from typing import Literal

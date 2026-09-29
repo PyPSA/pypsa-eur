@@ -5,7 +5,7 @@
 """
 Clustering configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#clustering_cf
 """
 
 from typing import Literal

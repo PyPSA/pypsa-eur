@@ -10,10 +10,10 @@ Instead we use separate steps in the workflow (`rules` executed by `snakemake`) 
 Data is generally retrieved in a version-controlled manner, enabling control over input data versions, reproducibility and consistency of modelling runs.
 The rules download data into subfolders in the `data/` directory, following the structure
 `data/{dataset}/{source}/{version}`, e.g. `data/jrc_idees/primary/March-2025-V1/`.
-Which specific data version is retrieve can be controlled in the [data configuration](https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data).
+Which specific data version is retrieve can be controlled in the [data configuration](https://pypsa-eur.readthedocs.io/en/latest/configuration/#data_cf).
 
 Below some specific `retrieve_<dataset>` rules are documented.
-For more information on the datasets retrieved, see the [data sources](https://pypsa-eur.readthedocs.io/en/latest/data_sources.html) and *Data inventory* section there in the documentation.
+For more information on the datasets retrieved, see the [data sources](https://pypsa-eur.readthedocs.io/en/latest/data_sources/) and *Data inventory* section there in the documentation.
 
 ## Rule `retrieve_bidding_zones`
 

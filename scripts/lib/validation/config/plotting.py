@@ -5,7 +5,7 @@
 """
 Plotting configuration block.
 
-See # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#plotting_cf
 """
 
 import re
@@ -39,7 +39,7 @@ class _ProjectionConfig(ConfigModel):
 
     name: str = Field(
         "EqualEarth",
-        description="Name of the `cartopy <https://scitools.org.uk/cartopy/docs/latest/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+        description="Name of the `cartopy <https://cartopy.readthedocs.io/stable/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
     )
 
 
