@@ -4974,11 +4974,6 @@
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
         },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
-        },
         "electricity_grid_connection": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
@@ -5022,11 +5017,25 @@
               "description": "Gas pipeline transmission efficiency.",
               "type": "object"
             },
+            "gas pipeline new": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Gas pipeline new transmission efficiency.",
+              "type": "object"
+            },
             "electricity distribution grid": {
               "additionalProperties": {
                 "type": "number"
               },
               "description": "Electricity distribution grid efficiency.",
+              "type": "object"
+            },
+            "CO2 pipeline": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "CO2 pipeline transmission efficiency.",
               "type": "object"
             }
           }
@@ -8367,11 +8376,25 @@
           "description": "Gas pipeline transmission efficiency.",
           "type": "object"
         },
+        "gas pipeline new": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Gas pipeline new transmission efficiency.",
+          "type": "object"
+        },
         "electricity distribution grid": {
           "additionalProperties": {
             "type": "number"
           },
           "description": "Electricity distribution grid efficiency.",
+          "type": "object"
+        },
+        "CO2 pipeline": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "CO2 pipeline transmission efficiency.",
           "type": "object"
         }
       }
@@ -8438,7 +8461,7 @@
   "description": "Combined configuration schema for PyPSA-EUR.",
   "properties": {
     "version": {
-      "default": "v2026.08.0",
+      "default": "v2026.09.0",
       "description": "Version of PyPSA-Eur. Descriptive only.",
       "type": "string"
     },
@@ -11622,11 +11645,6 @@
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
         },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
-        },
         "electricity_grid_connection": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
@@ -11670,11 +11688,25 @@
               "description": "Gas pipeline transmission efficiency.",
               "type": "object"
             },
+            "gas pipeline new": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Gas pipeline new transmission efficiency.",
+              "type": "object"
+            },
             "electricity distribution grid": {
               "additionalProperties": {
                 "type": "number"
               },
               "description": "Electricity distribution grid efficiency.",
+              "type": "object"
+            },
+            "CO2 pipeline": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "CO2 pipeline transmission efficiency.",
               "type": "object"
             }
           }
