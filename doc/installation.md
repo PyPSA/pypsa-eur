@@ -72,9 +72,9 @@ PyPSA passes the PyPSA-Eur network model to an external solver for performing th
 PyPSA is known to work with the free software
 
 - [HiGHS](https://highs.dev/)
-- [Cbc](https://projects.coin-or.org/Cbc#DownloadandInstall)
+- [Cbc](https://github.com/coin-or/Cbc)
 - [GLPK](https://www.gnu.org/software/glpk/) ([WinGLKP](http://winglpk.sourceforge.net/))
-- [SCIP](https://scipopt.github.io/PySCIPOpt/docs/html/index.html)
+- [SCIP](https://pyscipopt.readthedocs.io/)
 
 and the non-free, commercial software (for some of which free academic licenses are available)
 
@@ -88,7 +88,7 @@ it might be the case that you can only retrieve solutions by using a commercial 
 Nevertheless, you can still use open-source solvers for smaller problems.
 
 !!! note "See also"
-    [Instructions how to install a solver in the documentation of PyPSA](https://pypsa.readthedocs.io/en/latest/installation.html#getting-a-solver-for-linear-optimisation)
+    [Instructions how to install a solver in the documentation of PyPSA](https://docs.pypsa.org/latest/home/installation/#solvers)
 
 !!! note
     The rules [cluster_network][] solves a mixed-integer quadratic optimisation problem for clustering.
