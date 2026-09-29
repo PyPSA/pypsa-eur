@@ -4,19 +4,21 @@
 
 import atexit
 import contextlib
-import copy
 import logging
 import os
 import re
 import time
 from collections.abc import Callable
-from functools import partial, wraps
+from functools import lru_cache, partial, wraps
+from itertools import takewhile
+from operator import attrgetter
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Literal
+from typing import Any, Literal
 
 import atlite
 import fiona
+import numpy as np
 import pandas as pd
 import pypsa
 import pytz
@@ -27,11 +29,120 @@ from dask.distributed import Client, LocalCluster
 from snakemake.utils import update_config
 from tqdm import tqdm
 
+from scripts.lib.validation.config.data import VersionsSchema
+
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
 PYPSA_V1 = bool(re.match(r"^1\.\d", pypsa.__version__))
+
+
+def strip_if_str(value: Any) -> Any:
+    """Return stripped strings while leaving other values unchanged."""
+
+    return value.strip() if isinstance(value, str) else value
+
+
+def sanitize_busmap(busmap: pd.Series) -> pd.Series:
+    """Ensure busmap labels are stripped of surrounding whitespace."""
+
+    series = busmap.map(strip_if_str)
+    if series.name is None:
+        series.name = "busmap"
+    series.index.name = "name"
+    return series
+
+
+def rename_network_component(
+    network: pypsa.Network, component: str, rename_map: pd.Series
+) -> None:
+    """
+    Rename a PyPSA component across static and dynamic tables in-place.
+
+    Parameters
+    ----------
+    network : pypsa.Network
+        Network instance whose component entries should be renamed.
+    component : str
+        Component name as used by PyPSA (e.g. ``"Generator"``, ``"Link"``).
+    rename_map : pandas.Series
+        Series mapping existing component names (index) to their new names (values).
+
+    Raises
+    ------
+    KeyError
+        If the component is not present on the network or any of the keys to
+        rename are missing from the static table.
+    ValueError
+        If duplicate source or target names are detected, or if a target name
+        collides with an unrenamed entry.
+    """
+
+    if component not in network.component_attrs:
+        raise KeyError(f"Component '{component}' not found on network")
+
+    if rename_map.empty:
+        return
+
+    rename_map = rename_map.dropna()
+    if rename_map.empty:
+        return
+
+    if pd.Index(rename_map.index).has_duplicates:
+        raise ValueError("Duplicate component names in rename_map index")
+
+    if pd.Index(rename_map.values).has_duplicates:
+        raise ValueError("Duplicate target names in rename_map values")
+
+    static_table = network.static(component)
+
+    missing = pd.Index(rename_map.index).difference(static_table.index)
+    if not missing.empty:
+        missing_text = ", ".join(str(name) for name in missing)
+        raise KeyError(
+            f"Cannot rename {component} entries; missing keys: {missing_text}"
+        )
+
+    existing = static_table.index.difference(rename_map.index)
+    conflicts = existing.intersection(pd.Index(rename_map.values))
+    if not conflicts.empty:
+        conflict_text = ", ".join(str(name) for name in conflicts)
+        raise ValueError(
+            f"Renaming {component} entries would collide with existing names: {conflict_text}"
+        )
+
+    mapping = rename_map.to_dict()
+
+    static_table.rename(index=mapping, inplace=True)
+
+    for dynamic_table in network.dynamic(component).values():
+        if isinstance(dynamic_table, pd.DataFrame):
+            dynamic_table.rename(columns=mapping, inplace=True)
+        elif isinstance(dynamic_table, pd.Series):
+            dynamic_table.rename(index=mapping, inplace=True)
+
+
+def get_temporal_resolution(temporal: dict) -> tuple[str, int | str] | None:
+    """
+    Return the active temporal aggregation as ``(method, value)`` or ``None``.
+
+    ``method`` is one of ``"averaging"``, ``"segmentation"`` or
+    ``"representative"`` as configured under ``clustering.temporal``. Mutual
+    exclusivity of these methods is enforced by the config schema. ``value`` is a
+    pandas offset for ``"averaging"`` and an integer otherwise.
+    """
+    active = {
+        method: temporal[method]
+        for method in ("averaging", "segmentation", "representative")
+        if temporal[method]
+    }
+    if not active:
+        return None
+    ((method, value),) = active.items()
+    if method == "averaging":
+        return method, value
+    return method, int(value)
 
 
 def get_scenarios(run):
@@ -108,15 +219,16 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
         )
         is_shared = no_relevant_wildcards and not_shared_rule
         shared_files = (
-            "networks/base_s_{clusters}.nc",
-            "regions_onshore_base_s_{clusters}.geojson",
-            "regions_offshore_base_s_{clusters}.geojson",
-            "busmap_base_s_{clusters}.csv",
-            "linemap_base_s_{clusters}.csv",
-            "cluster_network_base_s_{clusters}",
-            "profile_{clusters}_",
-            "build_renewable_profile_{clusters}",
-            "regions_by_class_{clusters}",
+            "networks/clustered.nc",
+            "networks/simplified.nc",
+            "onshore_regions.geojson",
+            "offshore_regions.geojson",
+            "onshore_regions_simplified.geojson",
+            "offshore_regions_simplified.geojson",
+            "busmap_simplify_network.csv",
+            "busmap_cluster_network.csv",
+            "busmap.csv",
+            "linemap_cluster_network.csv",
             "availability_matrix_",
             "determine_availability_matrix_",
             "solar_thermal",
@@ -508,8 +620,9 @@ def mock_snakemake(
 ):
     """
     This function is expected to be executed from the 'scripts'-directory of '
-    the snakemake project. It returns a snakemake.script.Snakemake object,
-    based on the Snakefile.
+    the snakemake project or from one of its subdirectories, e.g.
+    'scripts/build_central_heating_temperature_profiles' or 'scripts/build_cop_profiles'.
+    It returns a snakemake.script.Snakemake object, based on the Snakefile.
 
     If a rule has wildcards, you have to specify them in **wildcards.
 
@@ -548,23 +661,24 @@ def mock_snakemake(
     )
 
     script_dir = Path(__file__).parent.resolve()
+    cwd = Path.cwd().resolve()
     if root_dir is None:
         root_dir = script_dir.parent
     else:
         root_dir = Path(root_dir).resolve()
 
     workdir = None
-    user_in_script_dir = Path.cwd().resolve() == script_dir
+    user_in_script_dir = cwd == script_dir or script_dir in cwd.parents
     if str(submodule_dir) in __file__:
         # the submodule_dir path is only need to locate the project dir
         os.chdir(Path(__file__[: __file__.find(str(submodule_dir))]))
     elif user_in_script_dir:
         os.chdir(root_dir)
-    elif Path.cwd().resolve() != root_dir:
+    elif cwd != root_dir:
         logger.info(
             "Not in scripts or root directory, will assume this is a separate workdir"
         )
-        workdir = Path.cwd()
+        workdir = cwd
 
     try:
         for p in SNAKEFILE_CHOICES:
@@ -639,7 +753,7 @@ def mock_snakemake(
 
     finally:
         if user_in_script_dir:
-            os.chdir(script_dir)
+            os.chdir(cwd)
     return snakemake
 
 
@@ -686,192 +800,6 @@ def parse(infix):
         return {infix.pop(0): parse(infix)}
 
 
-def update_config_from_wildcards(config, w, inplace=True):
-    """
-    Parses configuration settings from wildcards and updates the config.
-    """
-
-    if not inplace:
-        config = copy.deepcopy(config)
-
-    if w.get("opts"):
-        opts = w.opts.split("-")
-
-        if nhours := get_opt(opts, r"^\d+(h|seg)$"):
-            config["clustering"]["temporal"]["resolution_elec"] = nhours
-
-        co2l_enable, co2l_value = find_opt(opts, "Co2L")
-        if co2l_enable:
-            config["electricity"]["co2limit_enable"] = True
-            if co2l_value is not None:
-                config["electricity"]["co2limit"] = (
-                    co2l_value * config["electricity"]["co2base"]
-                )
-
-        gasl_enable, gasl_value = find_opt(opts, "CH4L")
-        if gasl_enable:
-            config["electricity"]["gaslimit_enable"] = True
-            if gasl_value is not None:
-                config["electricity"]["gaslimit"] = gasl_value * 1e6
-
-        if "Ept" in opts:
-            config["costs"]["emission_prices"]["dynamic"] = True
-
-        ep_enable, ep_value = find_opt(opts, "Ep")
-        if ep_enable:
-            config["costs"]["emission_prices"]["enable"] = True
-            if ep_value is not None:
-                config["costs"]["emission_prices"]["co2"] = ep_value
-
-        if "ATK" in opts:
-            config["autarky"]["enable"] = True
-            if "ATKc" in opts:
-                config["autarky"]["by_country"] = True
-
-        attr_lookup = {
-            "p": "p_nom_max",
-            "e": "e_nom_max",
-            "c": "capital_cost",
-            "m": "marginal_cost",
-        }
-        for o in opts:
-            flags = ["+e", "+p", "+m", "+c"]
-            if all(flag not in o for flag in flags):
-                continue
-            carrier, component, attr_factor = o.split("+")
-            attr = attr_lookup[attr_factor[0]]
-            factor = float(attr_factor[1:])
-            if not isinstance(config["adjustments"]["electricity"], dict):
-                config["adjustments"]["electricity"] = dict()
-            update_config(
-                config["adjustments"]["electricity"],
-                {"factor": {component: {carrier: {attr: factor}}}},
-            )
-
-        for o in opts:
-            if o.startswith("lv") or o.startswith("lc"):
-                config["electricity"]["transmission_limit"] = o[1:]
-                break
-
-    if w.get("sector_opts"):
-        opts = w.sector_opts.split("-")
-
-        if "T" in opts:
-            config["sector"]["transport"] = True
-
-        if "H" in opts:
-            config["sector"]["heating"] = True
-
-        if "B" in opts:
-            config["sector"]["biomass"] = True
-
-        if "I" in opts:
-            config["sector"]["industry"] = True
-
-        if "A" in opts:
-            config["sector"]["agriculture"] = True
-
-        if "CCL" in opts:
-            config["solving"]["constraints"]["CCL"] = True
-
-        eq_value = get_opt(opts, r"^EQ+\d*\.?\d+(c|)")
-        for o in opts:
-            if eq_value is not None:
-                config["solving"]["constraints"]["EQ"] = eq_value
-            elif "EQ" in o:
-                config["solving"]["constraints"]["EQ"] = True
-            break
-
-        if "BAU" in opts:
-            config["solving"]["constraints"]["BAU"] = True
-
-        if "SAFE" in opts:
-            config["solving"]["constraints"]["SAFE"] = True
-
-        if nhours := get_opt(opts, r"^\d+(h|sn|seg)$"):
-            config["clustering"]["temporal"]["resolution_sector"] = nhours
-
-        if "decentral" in opts:
-            config["sector"]["electricity_transmission_grid"] = False
-
-        if "noH2network" in opts:
-            config["sector"]["H2_network"] = False
-
-        if "nowasteheat" in opts:
-            config["sector"]["use_fischer_tropsch_waste_heat"] = False
-            config["sector"]["use_methanolisation_waste_heat"] = False
-            config["sector"]["use_haber_bosch_waste_heat"] = False
-            config["sector"]["use_methanation_waste_heat"] = False
-            config["sector"]["use_fuel_cell_waste_heat"] = False
-            config["sector"]["use_electrolysis_waste_heat"] = False
-
-        if "nodistrict" in opts:
-            config["sector"]["district_heating"]["progress"] = 0.0
-
-        dg_enable, dg_factor = find_opt(opts, "dist")
-        if dg_enable:
-            config["sector"]["electricity_distribution_grid"] = True
-            if dg_factor is not None:
-                config["sector"]["electricity_distribution_grid_cost_factor"] = (
-                    dg_factor
-                )
-
-        if "biomasstransport" in opts:
-            config["sector"]["biomass_transport"] = True
-
-        _, maxext = find_opt(opts, "linemaxext")
-        if maxext is not None:
-            config["lines"]["max_extension"] = maxext * 1e3
-            config["links"]["max_extension"] = maxext * 1e3
-
-        _, co2l_value = find_opt(opts, "Co2L")
-        if co2l_value is not None:
-            config["co2_budget"] = float(co2l_value)
-
-        if co2_distribution := get_opt(opts, r"^(cb)\d+(\.\d+)?(ex|be)$"):
-            config["co2_budget"] = co2_distribution
-
-        if co2_budget := get_opt(opts, r"^(cb)\d+(\.\d+)?$"):
-            config["co2_budget"] = float(co2_budget[2:])
-
-        attr_lookup = {
-            "p": "p_nom_max",
-            "e": "e_nom_max",
-            "c": "capital_cost",
-            "m": "marginal_cost",
-        }
-        for o in opts:
-            flags = ["+e", "+p", "+m", "+c"]
-            if all(flag not in o for flag in flags):
-                continue
-            carrier, component, attr_factor = o.split("+")
-            attr = attr_lookup[attr_factor[0]]
-            factor = float(attr_factor[1:])
-            if not isinstance(config["adjustments"]["sector"], dict):
-                config["adjustments"]["sector"] = dict()
-            update_config(
-                config["adjustments"]["sector"],
-                {"factor": {component: {carrier: {attr: factor}}}},
-            )
-
-        _, sdr_value = find_opt(opts, "sdr")
-        if sdr_value is not None:
-            config["costs"]["social_discountrate"] = sdr_value / 100
-
-        _, seq_limit = find_opt(opts, "seq")
-        if seq_limit is not None:
-            config["sector"]["co2_sequestration_potential"] = seq_limit
-
-        # any config option can be represented in wildcard
-        for o in opts:
-            if o.startswith("CF+"):
-                infix = o.split("+")[1:]
-                update_config(config, parse(infix))
-
-    if not inplace:
-        return config
-
-
 def get_snapshots(
     snapshots: dict, drop_leap_day: bool = False, freq: str = "h", **kwargs
 ) -> pd.DatetimeIndex:
@@ -912,9 +840,7 @@ def get_snapshots(
         )
         time_periods.append(period)
 
-    time = pd.DatetimeIndex([])
-    for period in time_periods:
-        time = time.append(period)
+    time = pd.DatetimeIndex([ts for period in time_periods for ts in period])
 
     if drop_leap_day and time.is_leap_year.any():
         time = time[~((time.month == 2) & (time.day == 29))]
@@ -1070,6 +996,60 @@ def load_cutout(
     return cutout
 
 
+def create_placeholder_plot(
+    output_path: str, message: str, ylabel: str = "", figsize: tuple = (12, 8)
+) -> None:
+    """
+    Create a placeholder plot when data is missing or empty.
+
+    This is useful for plotting scripts that need to create output files
+    even when the underlying data is not available (e.g., carriers missing
+    in electricity-only models).
+
+    Parameters
+    ----------
+    output_path : str
+        Path where the placeholder plot should be saved.
+    message : str
+        Message to display in the center of the plot.
+    ylabel : str, optional
+        Y-axis label to display. Default is empty string.
+    figsize : tuple, optional
+        Figure size as (width, height). Default is (12, 8).
+
+    Returns
+    -------
+    None
+        Saves the plot to output_path and closes the figure.
+
+    Examples
+    --------
+    >>> create_placeholder_plot(
+    ...     "results/plot.svg",
+    ...     "No gas network in model",
+    ...     ylabel="Energy [TWh/a]"
+    ... )
+    """
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.text(
+        0.5,
+        0.5,
+        message,
+        ha="center",
+        va="center",
+        fontsize=14 if figsize[0] >= 10 else 10,
+        transform=ax.transAxes,
+    )
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    ax.grid(axis="x")
+    ax.axis("off") if not ylabel else None
+    fig.savefig(output_path, bbox_inches="tight")
+    plt.close(fig)
+
+
 def setup_dask(nprocesses: int) -> dict:
     if nprocesses > 1:
         cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
@@ -1097,3 +1077,102 @@ def load_costs(cost_file: str) -> pd.DataFrame:
     """
 
     return pd.read_csv(cost_file, index_col=0)
+
+
+def _simplify_polys(
+    polys, minarea=100 * 1e6, maxdistance=None, tolerance=None, filterremote=True
+):  # 100*1e6 = 100 km² if CRS is DISTANCE_CRS
+    from shapely.geometry import MultiPolygon
+
+    if isinstance(polys, MultiPolygon):
+        polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
+        mainpoly = polys[0]
+        mainlength = np.sqrt(mainpoly.area / (2.0 * np.pi))
+
+        if maxdistance is not None:
+            mainlength = maxdistance
+
+        if mainpoly.area > minarea:
+            polys = MultiPolygon(
+                [
+                    p
+                    for p in takewhile(lambda p: p.area > minarea, polys)
+                    if not filterremote or (mainpoly.distance(p) < mainlength)
+                ]
+            )
+        else:
+            polys = mainpoly
+    if tolerance is not None:
+        polys = polys.simplify(tolerance=tolerance)
+    return polys
+
+
+@lru_cache
+def load_data_versions(*files: Path) -> pd.DataFrame:
+    """
+    Load data versions from multiple CSV or YAML files and combine them into a single DataFrame.
+
+    Parameters
+    ----------
+    *files : Path
+        Paths to the CSV or YAML files containing data version information.
+
+    Returns
+    -------
+    pd.DataFrame
+        Combined DataFrame containing the data version information from all files, with, optionally, columns for each tag.
+    """
+    data_versions_list = [
+        _load_data_version(file).set_index(["dataset", "version", "source"])
+        for file in files
+    ]
+    combined_data_versions = pd.concat(data_versions_list)
+
+    deduplicated_data_versions = (
+        combined_data_versions.loc[
+            ~combined_data_versions.index.duplicated(keep="last")
+        ]
+        .sort_index()
+        .reset_index()
+    )
+
+    # Turn space-separated tags into individual columns
+    deduplicated_data_versions["tags"] = deduplicated_data_versions["tags"].str.split()
+    exploded = deduplicated_data_versions.explode("tags")
+    dummies = pd.get_dummies(exploded["tags"], dtype=bool)
+    tags_matrix = dummies.groupby(dummies.index).max()
+    deduplicated_data_versions = deduplicated_data_versions.join(tags_matrix)
+
+    return deduplicated_data_versions
+
+
+def _load_data_version(file: str | Path, validate: bool = True) -> pd.DataFrame:
+    """
+    Load data versions from a CSV or YAML file.
+
+    Parameters
+    ----------
+    file : str
+        Path to the CSV or YAML file containing data version information.
+    validate : bool, default True
+        If True, validate the loaded data against the VersionsSchema.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing the data version information, with, optionally, columns for each tag.
+    """
+    if (file_path := Path(file)).suffix.lower() in [".yaml", ".yml"]:
+        data_versions = pd.DataFrame(yaml.safe_load(file_path.read_text()))
+    else:
+        data_versions = pd.read_csv(
+            file_path,
+            dtype=str,
+            na_filter=False,
+            delimiter=",",
+            comment="#",
+        )
+    if validate:
+        data_versions = VersionsSchema.validate(data_versions)
+
+    return data_versions

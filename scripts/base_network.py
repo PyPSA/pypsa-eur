@@ -425,7 +425,9 @@ def _remove_dangling_branches(branches, buses):
 
 
 def _remove_unconnected_components(network, threshold=6):
-    _, labels = csgraph.connected_components(network.adjacency_matrix(), directed=False)
+    _, labels = csgraph.connected_components(
+        network.adjacency_matrix(return_dataframe=False), directed=False
+    )
     component = pd.Series(labels, index=network.buses.index)
 
     component_sizes = component.value_counts()
@@ -1679,10 +1681,10 @@ if __name__ == "__main__":
     n.export_to_netcdf(snakemake.output.base_network)
 
     # Export shapes
-    onshore_shapes.to_file(snakemake.output.regions_onshore)
+    onshore_shapes.to_file(snakemake.output.onshore_regions)
     # append_bus_shapes(n, shapes, "onshore")
 
-    offshore_shapes.to_file(snakemake.output.regions_offshore)
+    offshore_shapes.to_file(snakemake.output.offshore_regions)
     # append_bus_shapes(n, offshore_shapes, "offshore")
 
     # Convert contains columns into strings (pyogrio-friendly)

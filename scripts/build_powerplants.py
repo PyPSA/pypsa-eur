@@ -14,7 +14,7 @@ Lastly, for every substation, powerplants with zero-initial capacity can be adde
 Outputs
 -------
 
-- `resource/powerplants_s_{clusters}.csv`: A list of conventional power plants (i.e. neither wind nor solar) with fields for name, fuel type, technology, country, capacity in MW, duration, commissioning year, retrofit year, latitude, longitude, and dam information as documented in the [powerplantmatching README](https://github.com/PyPSA/powerplantmatching/blob/master/README.md); additionally it includes information on the closest substation/bus in `networks/base_s_{clusters}.nc`.
+- `resources/{run}/powerplants.csv`: A list of conventional power plants (i.e. neither wind nor solar) with fields for name, fuel type, technology, country, capacity in MW, duration, commissioning year, retrofit year, latitude, longitude, and dam information as documented in the [powerplantmatching README](https://github.com/PyPSA/powerplantmatching/blob/master/README.md); additionally it includes information on the closest substation/bus in `resources/{run}/networks/clustered.nc`.
 
     ![](img/powerplantmatching.png)
 
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_powerplants", clusters=256)
+        snakemake = mock_snakemake("build_powerplants")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
