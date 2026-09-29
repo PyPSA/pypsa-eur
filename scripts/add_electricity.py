@@ -634,6 +634,9 @@ def attach_conventional_generators(
     fuel_price : pd.DataFrame, optional
         DataFrame containing fuel price data, by default None.
     """
+    if ppl.empty:
+        return
+
     carriers = list(
         set(conventional_carriers)
         | set(extendable_carriers["Generator"]) - set(renewable_carriers)
@@ -1251,14 +1254,19 @@ def main(
         if "landfall_length" in settings.keys()
     }
 
-    ppl = load_and_aggregate_powerplants(
-        inputs["powerplants"],
-        costs,
-        consider_efficiency_classes=params.clustering["consider_efficiency_classes"],
-        aggregation_strategies=params.clustering["aggregation_strategies"],
-        exclude_carriers=params.clustering["exclude_carriers"],
-        estimate_efficiencies=params.conventional["estimate_efficiencies"],
-    )
+    if inputs.powerplants:
+        ppl = load_and_aggregate_powerplants(
+            inputs.powerplants,
+            costs,
+            consider_efficiency_classes=params.clustering[
+                "consider_efficiency_classes"
+            ],
+            aggregation_strategies=params.clustering["aggregation_strategies"],
+            exclude_carriers=params.clustering["exclude_carriers"],
+            estimate_efficiencies=params.conventional["estimate_efficiencies"],
+        )
+    else:
+        ppl = pd.DataFrame()
 
     attach_load(
         n,
