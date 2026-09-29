@@ -5,7 +5,7 @@
 """
 Snapshots configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#snapshots_cf
 """
 
 from typing import Literal

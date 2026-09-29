@@ -2,39 +2,34 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Rasters the vector data of the `Natura 2000.
-
-<https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas onto all
+Rasters the vector data of the [Natura 2000.](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas onto all
 cutout regions.
 
 Relevant Settings
 -----------------
 
-.. code:: yaml
+```yaml
+renewable:
+    {technology}:
+        cutout:
+```
 
-    renewable:
-        {technology}:
-            cutout:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`renewable_cf`
+!!! info "See also"
+    Documentation of the configuration file `config/config.yaml` at renewable_cf
 
 Inputs
 ------
 
-- ``data/bundle/natura/Natura2000_end2015.shp``: `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas.
+- `data/bundle/natura/Natura2000_end2015.shp`: [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas.
 
-    .. image:: img/natura.png
-        :scale: 33 %
+    ![](img/natura.png)
 
 Outputs
 -------
 
-- ``resources/natura.tiff``: Rasterized version of `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas to reduce computation times.
+- `resources/natura.tiff`: Rasterized version of [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas to reduce computation times.
 
-    .. image:: img/natura.png
-        :scale: 33 %
+    ![](img/natura.png)
 
 Description
 -----------

@@ -7,7 +7,7 @@ Build future industrial production per country.
 Description
 -------
 
-This rule uses the ``industrial_production_per_country.csv`` file and the expected recycling rates to calculate the future production of the industrial sectors.
+This rule uses the `industrial_production_per_country.csv` file and the expected recycling rates to calculate the future production of the industrial sectors.
 
 **St_primary_fraction**
 The fraction of steel that is coming from primary production. This is more energy intensive than recycling steel (secondary production).
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     params = snakemake.params.industry
 
-    investment_year = int(snakemake.wildcards.planning_horizons)
+    investment_year = int(snakemake.wildcards.horizon)
 
     fn = snakemake.input.industrial_production_per_country
     production = pd.read_csv(fn, index_col=0)

@@ -19,14 +19,15 @@ for PTES systems based on these temperature differences.
 
 Relevant Settings
 -----------------
-.. code:: yaml
-    sector
-        district_heating:
-            ptes:
-                dynamic_ptes_capacity:
-                supplemental_heating:
-                    enable:
-                max_top_temperature:
+```yaml
+sector
+    district_heating:
+        ptes:
+            dynamic_ptes_capacity:
+            supplemental_heating:
+                enable:
+            max_top_temperature:
+```
 
 Inputs
 ------
@@ -67,8 +68,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_ptes_operations",
-            clusters=5,
-            planning_horizons="2030",
+            horizon="2030",
         )
 
     set_scenario_config(snakemake)

@@ -4,13 +4,11 @@
 """
 Build time series for air and soil temperatures per clustered model region.
 
-Uses ``atlite.Cutout.temperature`` and ``atlite.Cutout.soil_temperature compute temperature ambient air and soil temperature for the respective cutout. The rule is executed in ``build_sector.smk``.
+Uses `atlite.Cutout.temperature` and `atlite.Cutout.soil_temperature compute temperature ambient air and soil temperature for the respective cutout. The rule is executed in `build_sector.smk``.
 
 
-.. seealso::
-    `Atlite.Cutout.temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
-    `Atlite.Cutout.soil_temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
-
+!!! info "See also"
+    [Atlite.Cutout.temperature](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert) [Atlite.Cutout.soil_temperature](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
 """
 
 import logging
@@ -33,10 +31,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_temperature_profiles",
-            clusters=48,
-        )
+        snakemake = mock_snakemake("build_temperature_profiles")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -48,7 +43,7 @@ if __name__ == "__main__":
     cutout = load_cutout(snakemake.input.cutout, time=time)
 
     clustered_regions = (
-        gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
+        gpd.read_file(snakemake.input.onshore_regions).set_index("name").buffer(0)
     )
 
     I = cutout.indicatormatrix(clustered_regions)  # noqa: E741
