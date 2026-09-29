@@ -61,7 +61,7 @@ them within each model region:
 # Warnings
 
 PyPSA-Eur is under active development and has several
-[limitations](https://pypsa-eur.readthedocs.io/en/latest/limitations.html) which
+[limitations](https://pypsa-eur.readthedocs.io/en/latest/limitations/) which
 you should understand before using the model. The github repository
 [issues](https://github.com/PyPSA/pypsa-eur/issues) collect known topics we are
 working on (please feel free to help or make suggestions). The
@@ -88,6 +88,6 @@ We strongly welcome anyone interested in contributing to this project. If you ha
 # Licence
 
 The code in PyPSA-Eur is released as free software under the
-[MIT License](https://opensource.org/licenses/MIT), see [`doc/licenses.rst`](doc/licenses.rst).
+[MIT License](https://opensource.org/licenses/MIT), see [`doc/licenses.md`](doc/licenses.md).
 However, different licenses and terms of use may apply to the various
-input data, see [`doc/data_sources.rst`](doc/data_sources.rst).
+input data, see [`doc/data_sources.md`](doc/data_sources.md).

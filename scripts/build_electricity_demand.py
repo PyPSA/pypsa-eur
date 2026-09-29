@@ -2,11 +2,10 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This rule downloads the load data from `Open Power System Data Time series
-<https://data.open-power-system-data.org/time_series/>`_. For all countries in
+This rule downloads the load data from [Open Power System Data Time series](https://data.open-power-system-data.org/time_series/). For all countries in
 the network, the per country load timeseries are extracted from the dataset.
 After filling small gaps linearly and large gaps by copying time-slice of a
-given period, the load data is exported to a ``.csv`` file.
+given period, the load data is exported to a `.csv` file.
 """
 
 import logging
@@ -118,16 +117,18 @@ def manual_adjustment(load, fn_load, countries):
 
     Parameters
     ----------
-     load : pd.DataFrame
-         Load time-series with UTC timestamps x ISO-2 countries
-    load_fn: str
-         File name or url location (file format .csv)
+    load : pd.DataFrame
+        Load time-series with UTC timestamps x ISO-2 countries.
+    fn_load : str
+        File name or url location (file format .csv).
+    countries : list
+        List of country codes.
 
     Returns
     -------
-     load : pd.DataFrame
-         Manual adjusted and interpolated load time-series with UTC
-         timestamps x ISO-2 countries
+    load : pd.DataFrame
+        Manual adjusted and interpolated load time-series with UTC
+        timestamps x ISO-2 countries.
     """
 
     copy_timeslice(load, "UA", "2010-01-01 00:00", "2010-01-01 01:00", Delta(days=-1))

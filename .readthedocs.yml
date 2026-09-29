@@ -4,21 +4,23 @@
 
 version: 2
 
-sphinx:
-  configuration: doc/conf.py
-
+mkdocs:
+  configuration: mkdocs.yml
 
 build:
   os: ubuntu-24.04
   tools:
     python: "3.12"
+  apt_packages:
+  - graphviz
   jobs:
     create_environment:
     - asdf plugin add pixi
     - asdf install pixi latest
     - asdf global pixi latest
     install:
-    - pixi install -e doc --frozen
+    - pixi install -e default -e doc --frozen
     build:
       html:
-      - pixi run build-docs $READTHEDOCS_OUTPUT html
+      - pixi run update-dags
+      - pixi run build-docs $READTHEDOCS_OUTPUT

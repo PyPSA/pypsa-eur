@@ -11,37 +11,26 @@ This rule downloads the data files, extracts them, and then aggregates the data 
 Outputs
 -------
 
-- ``data/mobility_profiles/build/<version>/kfz.csv``: Weekly profile for all motor vehicles (cars, trucks, buses, motorcycles).
-- ``data/mobility_profiles/build/<version>/pkw.csv``: Weekly profile for passenger cars only.
+- `data/mobility_profiles/build/<version>/kfz.csv`: Weekly profile for all motor vehicles (cars, trucks, buses, motorcycles).
+- `data/mobility_profiles/build/<version>/pkw.csv`: Weekly profile for passenger cars only.
 
 **kfz.csv**
 
-    ===================  ==========  ==========  =========================================================
-    Field                Dimensions  Unit        Description
-    ===================  ==========  ==========  =========================================================
-    day                  day        day of week  Day of the week (0=Monday, 6=Sunday)
-    -------------------  ----------  -----------  ---------------------------------------------------------
-    hour                 hour       hour of day  Hour of the day (0-23)
-    -------------------  ----------  -----------  ---------------------------------------------------------
-    count                day, hour   --          Aggregated vehicle counts for all motor vehicles
-                                                 (across all aggregated years and street types)
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    n_counts             day, hour   --          Number of data points that were aggregated.
-    ===================  ==========  ==========  =========================================================
+| Field | Dimensions | Unit | Description |
+| --- | --- | --- | --- |
+| day | day | day of week | Day of the week (0=Monday, 6=Sunday) |
+| hour | hour | hour of day | Hour of the day (0-23) |
+| count | day, hour | -- | Aggregated vehicle counts for all motor vehicles (across all aggregated years and street types) |
+| n_counts | day, hour | -- | Number of data points that were aggregated. |
 
 **pkw.csv**
-    ===================  ==========  ==========  =========================================================
-    Field                Dimensions  Unit        Description
-    ===================  ==========  ==========  =========================================================
-    day                  day         day of week Day of the week (0=Monday, 6=Sunday)
-    -------------------  ----------  ----------- ---------------------------------------------------------
-    hour                 hour        hour of day Hour of the day (0-23)
-    -------------------  ----------  ----------- ---------------------------------------------------------
-    count                day, hour   --          Aggregated vehicle counts for passenger cars only
-                                                 (across all aggregated years and street types)
-    -------------------  ----------  ----------  ---------------------------------------------------------
-    n_counts             day, hour   --          Number of data points that were aggregated.
-    ===================  ==========  ==========  =========================================================
+
+| Field | Dimensions | Unit | Description |
+| --- | --- | --- | --- |
+| day | day | day of week | Day of the week (0=Monday, 6=Sunday) |
+| hour | hour | hour of day | Hour of the day (0-23) |
+| count | day, hour | -- | Aggregated vehicle counts for passenger cars only (across all aggregated years and street types) |
+| n_counts | day, hour | -- | Number of data points that were aggregated. |
 
 """
 

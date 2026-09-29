@@ -5,7 +5,7 @@
 """
 Atlite configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#atlite_cf
 """
 
 from pydantic import BaseModel, Field, field_validator

@@ -5,7 +5,7 @@
 """
 Conventional generators configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#conventional_cf
 """
 
 from pydantic import ConfigDict, Field

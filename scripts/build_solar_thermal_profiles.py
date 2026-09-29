@@ -5,10 +5,10 @@
 Build solar thermal collector profile time series.
 
 Uses ``atlite.Cutout.solar_thermal` to compute heat generation for clustered onshore regions from population layout and weather data cutout.
-The rule is executed in ``build_sector.smk``.
+The rule is executed in `build_sector.smk`.
 
-.. seealso::
-    `Atlite.Cutout.solar_thermal <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
+!!! info "See also"
+    [Atlite.Cutout.solar_thermal](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
 """
 
 import logging
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_solar_thermal_profiles", clusters=48)
+        snakemake = mock_snakemake("build_solar_thermal_profiles")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     cutout = load_cutout(snakemake.input.cutout, time=time)
 
     clustered_regions = (
-        gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
+        gpd.read_file(snakemake.input.onshore_regions).set_index("name").buffer(0)
     )
 
     I = cutout.indicatormatrix(clustered_regions)
