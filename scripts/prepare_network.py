@@ -489,7 +489,12 @@ def main(
         else:
             add_emission_prices(n, {"co2": emission_prices["co2"]}, exclude_co2=False)
 
-    transmission_limit = get(electricity_cfg["transmission_limit"], current_horizon)
+    transmission_limit = electricity_cfg["transmission_limit"]
+    if isinstance(transmission_limit, dict) and params.foresight == "perfect":
+        raise ValueError(
+            "Per-horizon `transmission_limit` is not supported for perfect foresight."
+        )
+    transmission_limit = get(transmission_limit, current_horizon)
     if isinstance(transmission_limit, str):
         kind = transmission_limit[0]
         factor = transmission_limit[1:] or "opt"
