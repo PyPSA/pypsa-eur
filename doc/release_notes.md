@@ -9,6 +9,8 @@
 
 * Refactor: Only request power plant, gas network, gas input location, heat totals, salt cavern and GHG emission files when the configuration uses them, which shrinks the DAG. Fix: with `sector: hydrogen_underground_storage: false`, nodes with salt cavern potential previously received no hydrogen storage at all; they now get hydrogen tank storage like all other nodes ([#2248](https://github.com/PyPSA/pypsa-eur/pull/2248)).
 
+* Feature: `clustering: administrative: countries` also accepts NUTS codes of subregions (e.g. `DEA: 3`) to set a different administrative level within a country ([#2146](https://github.com/PyPSA/pypsa-eur/pull/2146)).
+
 * Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
 
 
