@@ -622,11 +622,20 @@ Only used for sector-coupling studies.
     | `agriculture_machinery_fuel_efficiency` | number | `0.7` | The efficiency of electric-powered machinery in the conversion of electricity to meet agricultural needs. |
     | `agriculture_machinery_electric_efficiency` | number | `0.3` | The efficiency of oil-powered machinery in the conversion of oil to meet agricultural needs. |
     | `shipping_hydrogen_liquefaction` | boolean | `false` | Whether to include liquefaction costs for hydrogen demand in shipping. |
-    | `shipping_hydrogen_share` | dict (str -> number) |  | The share of ships powered by hydrogen in a given year. |
-    | `shipping_methanol_share` | dict (str -> number) |  | The share of ships powered by methanol in a given year. |
-    | `shipping_oil_share` | dict (str -> number) |  | The share of ships powered by oil in a given year. |
+    | `shipping_endogenous` | boolean | `false` | If true, shipping fuel choice is endogenous: enabled fuels (`shipping_oil`/`_methanol`/`_lng`/`_hydrogen`) compete on a shared per-node shipping demand bus and the optimiser picks the cost-minimal mix. If false (default), the fixed year-indexed `shipping_*_share` values are used. |
+    | `shipping_oil` | boolean \| dict (str -> boolean) | `true` | Whether oil is an available shipping fuel in endogenous mode (flat or year-indexed). |
+    | `shipping_methanol` | boolean \| dict (str -> boolean) | `true` | Whether methanol is an available shipping fuel in endogenous mode (flat or year-indexed). |
+    | `shipping_lng` | boolean \| dict (str -> boolean) | `true` | Whether LNG (gas from the gas bus, liquefied via `CH4 liquefaction`) is an available shipping fuel in endogenous mode (flat or year-indexed). |
+    | `shipping_hydrogen` | boolean \| dict (str -> boolean) | `false` | Whether hydrogen is an available shipping fuel in endogenous mode (flat or year-indexed). |
+    | `shipping_hydrogen_share` | dict (str -> number) |  | The share of ships powered by hydrogen in a given year (exogenous mode only). |
+    | `shipping_methanol_share` | dict (str -> number) |  | The share of ships powered by methanol in a given year (exogenous mode only). |
+    | `shipping_oil_share` | dict (str -> number) |  | The share of ships powered by oil in a given year (exogenous mode only). |
+    | `shipping_lng_share` | dict (str -> number) |  | The share of ships powered by LNG in a given year (exogenous mode only). Gas is drawn from the gas bus and liquefied via `CH4 liquefaction`, as in endogenous mode. |
     | `shipping_methanol_efficiency` | number | `0.46` | The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf). |
     | `shipping_oil_efficiency` | number | `0.4` | The efficiency of oil-powered ships in the conversion of oil to meet shipping needs (propulsion). Base value derived from 2011. |
+    | `shipping_lng_efficiency` | number | `0.45` | Placeholder efficiency of LNG (dual-fuel) ship engines per unit of fuel actually burnt; the useful efficiency is this value times (1 - `shipping_lng_methane_slip`). To be replaced by a technology-data value. |
+    | `shipping_lng_methane_slip` | number | `0.031` | Share of LNG fuel mass leaving ship engines unburnt as methane (methane slip). Default is the FuelEU Maritime (Regulation (EU) 2023/1805, Annex II) value for LNG Otto dual-fuel medium-speed engines. The slipped share delivers no propulsion work and is counted as CO2-equivalent against the CO2 limit. |
+    | `shipping_methane_gwp100` | number | `25.0` | 100-year global warming potential of methane used to convert LNG methane slip to CO2-equivalent (IPCC AR4, as in FuelEU Maritime). |
     | `aviation_demand_factor` | number | `1.0` | The proportion of demand for aviation compared to today's consumption. |
     | `HVC_demand_factor` | number | `1.0` | The proportion of demand for high-value chemicals compared to today's consumption. |
     | `time_dep_hp_cop` | boolean | `true` | Consider the time dependent coefficient of performance (COP) of the heat pump. |

@@ -820,6 +820,11 @@ sector:
   agriculture_machinery_fuel_efficiency: 0.7
   agriculture_machinery_electric_efficiency: 0.3
   shipping_hydrogen_liquefaction: false
+  shipping_endogenous: false
+  shipping_oil: true
+  shipping_methanol: true
+  shipping_lng: true
+  shipping_hydrogen: false
   shipping_hydrogen_share:
     2020: 0
     2025: 0
@@ -844,8 +849,19 @@ sector:
     2040: 0.45
     2045: 0.2
     2050: 0
+  shipping_lng_share:
+    2020: 0
+    2025: 0
+    2030: 0
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.4
+  shipping_lng_efficiency: 0.45
+  shipping_lng_methane_slip: 0.031
+  shipping_methane_gwp100: 25.0
   aviation_demand_factor: 1.0
   HVC_demand_factor: 1.0
   time_dep_hp_cop: true

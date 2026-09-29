@@ -450,6 +450,9 @@ plotting:
     gas for industry: '#853403'
     gas for industry CC: '#692e0a'
     gas pipeline: '#ebbca0'
+    LNG: '#f08a4b'
+    CH4 liquefaction: '#c7521a'
+    shipping LNG: '#a3471c'
     gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
