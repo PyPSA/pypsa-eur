@@ -25,7 +25,7 @@ class _AdministrativeConfig(ConfigModel):
     )
     countries: dict[str, int] = Field(
         default_factory=dict,
-        description="Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`.",
+        description="Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. Keys can also be NUTS codes of subregions, which take precedence over the level of their country, e.g. `{'DE': 1, 'DEA': 3}`. Use `GB` instead of `UK` for NUTS codes of the United Kingdom. Only applies when mode is set to `administrative`.",
     )
 
 
