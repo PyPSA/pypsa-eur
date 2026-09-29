@@ -693,9 +693,6 @@ def attach_existing_batteries(
     ppl: pd.DataFrame,
 ) -> None:
     """Attach existing battery storage units from the power plant dataset."""
-    if ppl.empty:
-        return
-
     batt = ppl.query('carrier == "battery"')
     if batt.empty:
         return
@@ -756,9 +753,6 @@ def attach_hydro(
     **params :
         Additional parameters for hydro units.
     """
-    if ppl.empty:
-        return
-
     add_missing_carriers(n, carriers)
     add_co2_emissions(n, costs, carriers)
 
@@ -1206,13 +1200,18 @@ def main(
         if "landfall_length" in settings.keys()
     }
 
-    ppl = load_and_aggregate_powerplants(
-        inputs["powerplants"],
-        costs,
-        consider_efficiency_classes=params.clustering["consider_efficiency_classes"],
-        aggregation_strategies=params.clustering["aggregation_strategies"],
-        exclude_carriers=params.clustering["exclude_carriers"],
-    )
+    if inputs.powerplants:
+        ppl = load_and_aggregate_powerplants(
+            inputs.powerplants,
+            costs,
+            consider_efficiency_classes=params.clustering[
+                "consider_efficiency_classes"
+            ],
+            aggregation_strategies=params.clustering["aggregation_strategies"],
+            exclude_carriers=params.clustering["exclude_carriers"],
+        )
+    else:
+        ppl = pd.DataFrame()
 
     attach_load(
         n,

@@ -221,7 +221,8 @@ rule plot_summary:
         balances=RESULTS + "csvs/energy_balance.csv",
         eurostat=resources("eurostat_energy_balances.csv"),
         co2=branch(
-            config_provider("co2_budget"), rules.retrieve_ghg_emissions.output["csv"]
+            lambda w: config_provider("foresight")(w) == "perfect",
+            rules.retrieve_ghg_emissions.output["csv"],
         ),
     output:
         costs=RESULTS + "graphs/costs.pdf",

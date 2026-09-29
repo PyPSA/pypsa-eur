@@ -1696,13 +1696,13 @@ def add_h2_gas_infrastructure(
             lifetime=costs.at["OCGT", "lifetime"],
         )
 
-    h2_caverns = pd.read_csv(h2_cavern_file, index_col=0)
+    h2_caverns = (
+        pd.read_csv(h2_cavern_file, index_col=0)
+        if options["hydrogen_underground_storage"]
+        else pd.DataFrame()
+    )
 
-    if (
-        not h2_caverns.empty
-        and options["hydrogen_underground_storage"]
-        and set(cavern_types).intersection(h2_caverns.columns)
-    ):
+    if not h2_caverns.empty and set(cavern_types).intersection(h2_caverns.columns):
         h2_caverns = h2_caverns[cavern_types].sum(axis=1)
 
         # only use sites with at least 2 TWh potential
@@ -6145,13 +6145,14 @@ def main(
         pd.read_csv(inputs["pop_weighted_energy_totals"], index_col=0) * nyears
     )
 
-    pop_weighted_heat_totals = (
-        pd.read_csv(inputs["pop_weighted_heat_totals"], index_col=0) * nyears
-    )
-    pop_weighted_energy_totals.update(pop_weighted_heat_totals)
+    if options["heating"]:
+        pop_weighted_heat_totals = (
+            pd.read_csv(inputs["pop_weighted_heat_totals"], index_col=0) * nyears
+        )
+        pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
     fn = inputs.gas_input_nodes_simplified
-    gas_input_nodes = pd.read_csv(fn, index_col=0)
+    gas_input_nodes = pd.read_csv(fn, index_col=0) if fn else None
 
     carriers_to_keep = params.pypsa_eur
     patch_electricity_network(n, carriers_to_keep)

@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Refactor: Only request power plant, gas network, gas input location, heat totals, salt cavern and GHG emission files when the configuration uses them, which shrinks the DAG. Fix: with `sector: hydrogen_underground_storage: false`, nodes with salt cavern potential previously received no hydrogen storage at all; they now get hydrogen tank storage like all other nodes ([#2248](https://github.com/PyPSA/pypsa-eur/pull/2248)).
+
 * Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
 
 
@@ -385,8 +387,6 @@ for file name mappings and configuration changes in detail.
 
 * Added a missing regular expression anchor with `re.fullmatch` to the `create_zenodo_deposition_cli` utility
   script ([#2225](https://github.com/PyPSA/pypsa-eur/pull/2225)).
-
-* refactor: Refactor some input definitions to use conditional input files ([#2248](https://github.com/PyPSA/pypsa-eur/pull/2248)).
 
 ## PyPSA-Eur v2026.02.0 (18th February 2026)
 
