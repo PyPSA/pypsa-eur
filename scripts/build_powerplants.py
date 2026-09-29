@@ -224,6 +224,7 @@ if __name__ == "__main__":
     regions = pd.concat([gpd.read_file(fn_onshore), gpd.read_file(fn_offshore)])
     regions = regions.dissolve("name")
     regions["geometry"] = fill_unoccupied_holes(regions)
+    regions["country"] = n.buses.country
 
     # Steps copied from PPM: Usually run by PPM when using pm.powerplants(...) from cache
     ppl = (

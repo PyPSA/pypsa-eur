@@ -767,9 +767,7 @@ if __name__ == "__main__":
     # nc.shapes = n.shapes.copy()
     for which in ["onshore_regions", "offshore_regions"]:
         regions = gpd.read_file(snakemake.input[which])
-        clustered_regions = cluster_regions(
-            (cluster_busmap,), regions, with_country=True
-        )
+        clustered_regions = cluster_regions((cluster_busmap,), regions)
         clustered_regions.to_file(snakemake.output[which])
         # append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
 
