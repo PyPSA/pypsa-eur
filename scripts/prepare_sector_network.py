@@ -6393,7 +6393,7 @@ def main(
             egs_overlap=inputs.egs_overlap,
             egs_config=options["enhanced_geothermal"],
             spatial=spatial,
-            egs_capacity_factors=inputs.egs_capacity_factors,   
+            egs_capacity_factors=inputs.egs_capacity_factors,
         )
 
     if options["imports"]["enable"]:
