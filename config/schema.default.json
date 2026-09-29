@@ -748,9 +748,60 @@
       "description": "Configuration for `conventional` settings.",
       "properties": {
         "estimate_efficiencies": {
-          "default": false,
-          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic.",
-          "type": "boolean"
+          "description": "Configuration for `conventional.estimate_efficiencies` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic. The build year is the year of the last retrofit or, if unknown, of commissioning. Plants without build year or carriers without parameters fall back to the technology cost data.",
+              "type": "boolean"
+            },
+            "reference_year": {
+              "default": 2025,
+              "description": "Year in which the age of power plants is evaluated for degradation.",
+              "type": "integer"
+            },
+            "degradation_start": {
+              "default": 10,
+              "description": "Age in years after which efficiency degradation starts.",
+              "type": "integer"
+            },
+            "degradation_rate": {
+              "default": 0.001,
+              "description": "Relative efficiency loss per year of age after `degradation_start`.",
+              "type": "number"
+            },
+            "parameters": {
+              "additionalProperties": {
+                "description": "Parameters of the linear efficiency heuristic for one carrier.",
+                "properties": {
+                  "efficiency": {
+                    "description": "Efficiency of a plant built in `year`.",
+                    "type": "number"
+                  },
+                  "slope": {
+                    "description": "Efficiency gain per later build year.",
+                    "type": "number"
+                  },
+                  "year": {
+                    "description": "Reference build year of `efficiency`.",
+                    "type": "integer"
+                  },
+                  "max": {
+                    "description": "Upper bound of the estimated efficiency.",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "efficiency",
+                  "slope",
+                  "year",
+                  "max"
+                ]
+              },
+              "description": "Per carrier: efficiency `efficiency` of a plant built in `year`, rising by `slope` per later build year up to `max`.",
+              "type": "object"
+            }
+          }
         },
         "unit_commitment": {
           "default": false,
@@ -6594,6 +6645,33 @@
         }
       }
     },
+    "_EfficiencyParameters": {
+      "description": "Parameters of the linear efficiency heuristic for one carrier.",
+      "properties": {
+        "efficiency": {
+          "description": "Efficiency of a plant built in `year`.",
+          "type": "number"
+        },
+        "slope": {
+          "description": "Efficiency gain per later build year.",
+          "type": "number"
+        },
+        "year": {
+          "description": "Reference build year of `efficiency`.",
+          "type": "integer"
+        },
+        "max": {
+          "description": "Upper bound of the estimated efficiency.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "efficiency",
+        "slope",
+        "year",
+        "max"
+      ]
+    },
     "_EmissionPricesConfig": {
       "description": "Configuration for `costs.emission_prices` settings.",
       "properties": {
@@ -6662,6 +6740,62 @@
           "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py>`_).",
           "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py)).",
           "type": "number"
+        }
+      }
+    },
+    "_EstimateEfficienciesConfig": {
+      "description": "Configuration for `conventional.estimate_efficiencies` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic. The build year is the year of the last retrofit or, if unknown, of commissioning. Plants without build year or carriers without parameters fall back to the technology cost data.",
+          "type": "boolean"
+        },
+        "reference_year": {
+          "default": 2025,
+          "description": "Year in which the age of power plants is evaluated for degradation.",
+          "type": "integer"
+        },
+        "degradation_start": {
+          "default": 10,
+          "description": "Age in years after which efficiency degradation starts.",
+          "type": "integer"
+        },
+        "degradation_rate": {
+          "default": 0.001,
+          "description": "Relative efficiency loss per year of age after `degradation_start`.",
+          "type": "number"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "description": "Parameters of the linear efficiency heuristic for one carrier.",
+            "properties": {
+              "efficiency": {
+                "description": "Efficiency of a plant built in `year`.",
+                "type": "number"
+              },
+              "slope": {
+                "description": "Efficiency gain per later build year.",
+                "type": "number"
+              },
+              "year": {
+                "description": "Reference build year of `efficiency`.",
+                "type": "integer"
+              },
+              "max": {
+                "description": "Upper bound of the estimated efficiency.",
+                "type": "number"
+              }
+            },
+            "required": [
+              "efficiency",
+              "slope",
+              "year",
+              "max"
+            ]
+          },
+          "description": "Per carrier: efficiency `efficiency` of a plant built in `year`, rising by `slope` per later build year up to `max`.",
+          "type": "object"
         }
       }
     },
@@ -10333,9 +10467,60 @@
       "description": "Configuration for `conventional` settings.",
       "properties": {
         "estimate_efficiencies": {
-          "default": false,
-          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic.",
-          "type": "boolean"
+          "description": "Configuration for `conventional.estimate_efficiencies` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic. The build year is the year of the last retrofit or, if unknown, of commissioning. Plants without build year or carriers without parameters fall back to the technology cost data.",
+              "type": "boolean"
+            },
+            "reference_year": {
+              "default": 2025,
+              "description": "Year in which the age of power plants is evaluated for degradation.",
+              "type": "integer"
+            },
+            "degradation_start": {
+              "default": 10,
+              "description": "Age in years after which efficiency degradation starts.",
+              "type": "integer"
+            },
+            "degradation_rate": {
+              "default": 0.001,
+              "description": "Relative efficiency loss per year of age after `degradation_start`.",
+              "type": "number"
+            },
+            "parameters": {
+              "additionalProperties": {
+                "description": "Parameters of the linear efficiency heuristic for one carrier.",
+                "properties": {
+                  "efficiency": {
+                    "description": "Efficiency of a plant built in `year`.",
+                    "type": "number"
+                  },
+                  "slope": {
+                    "description": "Efficiency gain per later build year.",
+                    "type": "number"
+                  },
+                  "year": {
+                    "description": "Reference build year of `efficiency`.",
+                    "type": "integer"
+                  },
+                  "max": {
+                    "description": "Upper bound of the estimated efficiency.",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "efficiency",
+                  "slope",
+                  "year",
+                  "max"
+                ]
+              },
+              "description": "Per carrier: efficiency `efficiency` of a plant built in `year`, rising by `slope` per later build year up to `max`.",
+              "type": "object"
+            }
+          }
         },
         "unit_commitment": {
           "default": false,

@@ -251,58 +251,31 @@ def sanitize_locations(n):
         )
 
 
-def estimate_efficiency(df: pd.DataFrame, reference_year: int = 2025) -> pd.Series:
-    carrier = df.carrier
+def estimate_efficiency(df: pd.DataFrame, config: dict) -> pd.Series:
+    """
+    Estimate power plant efficiencies from carrier and build year.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Power plants with columns `carrier`, `datein` and `dateretrofit`.
+    config : dict
+        Settings of `conventional: estimate_efficiencies`.
+
+    Returns
+    -------
+    pd.Series
+        Estimated efficiencies, NaN where carrier parameters or build year are missing.
+    """
+    p = pd.DataFrame(config["parameters"]).T.reindex(df.carrier).set_index(df.index)
     year = df.dateretrofit.combine_first(df.datein)
 
-    offset = carrier.map(
-        {
-            "lignite": 0.25,
-            "coal": 0.28,
-            "CCGT": 0.40,
-            "OCGT": 0.28,
-            "oil": 0.28,
-            "nuclear": 0.33,
-        }
-    )
-    slope = carrier.map(
-        {
-            "lignite": 0.003,
-            "coal": 0.003,
-            "CCGT": 0.004,
-            "OCGT": 0.003,
-            "oil": 0.002,
-            "nuclear": 0.0,
-        }
-    )
-    year0 = carrier.map(
-        {
-            "lignite": 1960,
-            "coal": 1960,
-            "CCGT": 1980,
-            "OCGT": 1970,
-            "oil": 1960,
-            "nuclear": 1960,
-        }
-    )
-    cap = carrier.map(
-        {
-            "lignite": 0.42,
-            "coal": 0.44,
-            "CCGT": 0.60,
-            "OCGT": 0.41,
-            "oil": 0.38,
-            "nuclear": 0.33,
-        }
+    eta = (p.efficiency + p.slope * (year - p.year)).clip(
+        lower=p.efficiency, upper=p["max"]
     )
 
-    # heuristic linear efficiency estimation
-    eta = (offset + slope * (year - year0)).clip(lower=offset, upper=cap)
-
-    # degradation of efficiency
-    eta *= 1 - (reference_year - year - 10).clip(lower=0) * 0.001
-
-    return eta
+    age = config["reference_year"] - year - config["degradation_start"]
+    return eta * (1 - age.clip(lower=0) * config["degradation_rate"])
 
 
 def add_co2_emissions(n, costs, carriers):
@@ -321,7 +294,7 @@ def load_and_aggregate_powerplants(
     consider_efficiency_classes: bool | list[float] = False,
     aggregation_strategies: dict = None,
     exclude_carriers: list = None,
-    estimate_efficiencies: bool = False,
+    estimate_efficiencies: dict | None = None,
 ) -> pd.DataFrame:
     if not aggregation_strategies:
         aggregation_strategies = {}
@@ -366,8 +339,10 @@ def load_and_aggregate_powerplants(
     ppl = ppl.join(costs[cost_columns], on="carrier", rsuffix="_r")
 
     efficiency = ppl.efficiency
-    if estimate_efficiencies:
-        efficiency = efficiency.combine_first(estimate_efficiency(ppl))
+    if estimate_efficiencies and estimate_efficiencies["enable"]:
+        efficiency = efficiency.combine_first(
+            estimate_efficiency(ppl, estimate_efficiencies)
+        )
     ppl["efficiency"] = efficiency.combine_first(ppl.efficiency_r)
     ppl["lifetime"] = (ppl.dateout - ppl.datein).fillna(np.inf)
     ppl["build_year"] = ppl.datein.fillna(0).astype(int)

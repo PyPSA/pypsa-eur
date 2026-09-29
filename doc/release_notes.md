@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Feature: New option `conventional: estimate_efficiencies` (disabled by default) to fill missing power plant efficiencies with a carrier- and age-dependent linear heuristic with configurable parameters ([#2076](https://github.com/PyPSA/pypsa-eur/pull/2076)).
+
 * Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
 
 
