@@ -325,6 +325,8 @@ rule determine_availability_matrix_MD_UA:
 # Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
 def input_ua_md_availability_matrix(w):
     countries = set(config_provider("countries")(w))
+    if w.technology.startswith("offwind"):
+        countries.discard("MD")  # landlocked, no offshore regions
     if {"UA", "MD"}.intersection(countries):
         return {
             "availability_matrix_MD_UA": resources(
