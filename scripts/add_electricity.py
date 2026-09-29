@@ -105,6 +105,8 @@ STORE_LOOKUP = {
         "store": "iron-air battery",
         "charger": "iron-air battery charge",
         "discharger": "iron-air battery discharge",
+        # duration and EUR/kWh are quoted on dispatched, not stored, energy
+        "energy_basis": "dispatched",
     },
     "H2": {
         "store": "hydrogen storage underground",
@@ -249,6 +251,33 @@ def sanitize_locations(n):
         )
 
 
+def estimate_efficiency(df: pd.DataFrame, config: dict) -> pd.Series:
+    """
+    Estimate power plant efficiencies from carrier and build year.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Power plants with columns `carrier`, `datein` and `dateretrofit`.
+    config : dict
+        Settings of `conventional: estimate_efficiencies`.
+
+    Returns
+    -------
+    pd.Series
+        Estimated efficiencies, NaN where carrier parameters or build year are missing.
+    """
+    p = pd.DataFrame(config["parameters"]).T.reindex(df.carrier).set_index(df.index)
+    year = df.dateretrofit.combine_first(df.datein)
+
+    eta = (p.efficiency + p.slope * (year - p.year)).clip(
+        lower=p.efficiency, upper=p["max"]
+    )
+
+    age = config["reference_year"] - year - config["degradation_start"]
+    return eta * (1 - age.clip(lower=0) * config["degradation_rate"])
+
+
 def add_co2_emissions(n, costs, carriers):
     """
     Add CO2 emissions to the network's carriers attribute.
@@ -265,6 +294,7 @@ def load_and_aggregate_powerplants(
     consider_efficiency_classes: bool | list[float] = False,
     aggregation_strategies: dict = None,
     exclude_carriers: list = None,
+    estimate_efficiencies: dict | None = None,
 ) -> pd.DataFrame:
     if not aggregation_strategies:
         aggregation_strategies = {}
@@ -308,7 +338,12 @@ def load_and_aggregate_powerplants(
     ]
     ppl = ppl.join(costs[cost_columns], on="carrier", rsuffix="_r")
 
-    ppl["efficiency"] = ppl.efficiency.combine_first(ppl.efficiency_r)
+    efficiency = ppl.efficiency
+    if estimate_efficiencies and estimate_efficiencies["enable"]:
+        efficiency = efficiency.combine_first(
+            estimate_efficiency(ppl, estimate_efficiencies)
+        )
+    ppl["efficiency"] = efficiency.combine_first(ppl.efficiency_r)
     ppl["lifetime"] = (ppl.dateout - ppl.datein).fillna(np.inf)
     ppl["build_year"] = ppl.datein.fillna(0).astype(int)
     ppl["marginal_cost"] = (
@@ -599,6 +634,9 @@ def attach_conventional_generators(
     fuel_price : pd.DataFrame, optional
         DataFrame containing fuel price data, by default None.
     """
+    if ppl.empty:
+        return
+
     carriers = list(
         set(conventional_carriers)
         | set(extendable_carriers["Generator"]) - set(renewable_carriers)
@@ -1055,6 +1093,20 @@ def attach_storageunits(
 
         roundtrip_correction = lookup.get("roundtrip_correction", 1)
 
+        efficiency_store = costs.at[lookup_charge, "efficiency"] ** roundtrip_correction
+        efficiency_dispatch = (
+            costs.at[lookup_discharge, "efficiency"] ** roundtrip_correction
+        )
+
+        # A dispatched-basis `max_hours` counts hours at rated output, so the store must
+        # be larger by 1/efficiency_dispatch
+        if lookup.get("energy_basis") == "dispatched":
+            max_hour /= efficiency_dispatch
+            logger.info(
+                f"'{carrier}' max_hours counts hours at rated output; sizing its store "
+                f"to {max_hour:.2f} h at efficiency_dispatch={efficiency_dispatch:.2f}."
+            )
+
         n.add(
             "StorageUnit",
             buses_i,
@@ -1064,10 +1116,8 @@ def attach_storageunits(
             p_nom_extendable=True,
             capital_cost=costs.at[carrier, "capital_cost"],
             marginal_cost=costs.at[carrier, "marginal_cost"],
-            efficiency_store=costs.at[lookup_charge, "efficiency"]
-            ** roundtrip_correction,
-            efficiency_dispatch=costs.at[lookup_discharge, "efficiency"]
-            ** roundtrip_correction,
+            efficiency_store=efficiency_store,
+            efficiency_dispatch=efficiency_dispatch,
             max_hours=max_hour,
             cyclic_state_of_charge=True,
             lifetime=costs.at[carrier, "lifetime"],
@@ -1126,6 +1176,13 @@ def attach_stores(
             # NB: fuel cell investment cost is per MWel
             discharge_capital_cost *= costs.at[lookup_discharge, "efficiency"]
 
+        store_capital_cost = costs.at[lookup_store, "capital_cost"]
+        if lookup.get("energy_basis") == "dispatched":
+            # convert cost per MWh dispatched to cost per MWh stored
+            store_capital_cost *= (
+                costs.at[lookup_discharge, "efficiency"] ** roundtrip_correction
+            )
+
         n.add(
             "Bus",
             bus_names,
@@ -1142,7 +1199,7 @@ def attach_stores(
             e_cyclic=True,
             e_nom_extendable=True,
             carrier=carrier,
-            capital_cost=costs.at[lookup_store, "capital_cost"],
+            capital_cost=store_capital_cost,
             lifetime=costs.at[lookup_store, "lifetime"],
         )
 
@@ -1197,13 +1254,19 @@ def main(
         if "landfall_length" in settings.keys()
     }
 
-    ppl = load_and_aggregate_powerplants(
-        inputs["powerplants"],
-        costs,
-        consider_efficiency_classes=params.clustering["consider_efficiency_classes"],
-        aggregation_strategies=params.clustering["aggregation_strategies"],
-        exclude_carriers=params.clustering["exclude_carriers"],
-    )
+    if inputs.powerplants:
+        ppl = load_and_aggregate_powerplants(
+            inputs.powerplants,
+            costs,
+            consider_efficiency_classes=params.clustering[
+                "consider_efficiency_classes"
+            ],
+            aggregation_strategies=params.clustering["aggregation_strategies"],
+            exclude_carriers=params.clustering["exclude_carriers"],
+            estimate_efficiencies=params.conventional["estimate_efficiencies"],
+        )
+    else:
+        ppl = pd.DataFrame()
 
     attach_load(
         n,

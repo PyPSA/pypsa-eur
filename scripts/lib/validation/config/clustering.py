@@ -25,7 +25,7 @@ class _AdministrativeConfig(ConfigModel):
     )
     countries: dict[str, int] = Field(
         default_factory=dict,
-        description="Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`.",
+        description="Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. Keys can also be NUTS codes of subregions, which take precedence over the level of their country, e.g. `{'DE': 1, 'DEA': 3}`. Use `GB` instead of `UK` for NUTS codes of the United Kingdom. Only applies when mode is set to `administrative`.",
     )
 
 
@@ -45,6 +45,10 @@ class _BuildBiddingZonesConfig(BaseModel):
 class _SimplifyNetworkConfig(BaseModel):
     """Configuration for `clustering.simplify_network` settings."""
 
+    to_380: bool = Field(
+        True,
+        description="Map all buses and lines to 380 kV and remove transformers. If false, original voltage levels and transformers are kept. This is only recommended without spatial clustering (`cluster_network: n_clusters: all`), because clustering merges buses of different voltage levels.",
+    )
     to_substations: bool = Field(
         False,
         description="Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",

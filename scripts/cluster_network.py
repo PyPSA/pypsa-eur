@@ -404,7 +404,7 @@ def clustering_for_n_clusters(
         busmap,
         bus_strategies=bus_strategies,
         line_strategies=line_strategies,
-        custom_line_groupers=["build_year"],
+        custom_line_groupers=["build_year", "v_nom"],
     )
 
     return clustering

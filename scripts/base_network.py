@@ -1512,6 +1512,11 @@ def build_admin_shapes(
             for k, v in {**admin_levels, **admin_levels["countries"]}.items()
             if k in countries
         }
+        subregion_level = {
+            k: v
+            for k, v in admin_levels["countries"].items()
+            if len(k) > 2 and k[:2] in countries
+        }
         if country_level:
             country_level_list = "\n".join(
                 [f"- {k}: level {v}" for k, v in country_level.items()]
@@ -1527,6 +1532,12 @@ def build_admin_shapes(
                 ]
                 .map(country_level)
                 .map(level_map)
+            )
+
+        for k, v in subregion_level.items():
+            logger.info(f"Setting administrative level {v} for subregion {k}")
+            nuts3_regions.loc[nuts3_regions.index.str.startswith(k), "column"] = (
+                level_map[v]
             )
 
         # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
