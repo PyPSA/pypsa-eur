@@ -309,11 +309,6 @@ def add_dynamic_emission_prices(n, fn):
     n.generators.loc[affected, "marginal_cost"] = 0.0
 
 
-def set_line_s_max_pu(n, s_max_pu=0.7):
-    n.lines["s_max_pu"] = s_max_pu
-    logger.info(f"N-1 security margin of lines set to {s_max_pu}")
-
-
 def set_transmission_limit(n, kind, factor, costs, Nyears=1):
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
@@ -353,21 +348,6 @@ def set_transmission_limit(n, kind, factor, costs, Nyears=1):
         )
 
     return n
-
-
-def enforce_autarky(n, only_crossborder=False):
-    if only_crossborder:
-        lines_rm = n.lines.loc[
-            n.lines.bus0.map(n.buses.country) != n.lines.bus1.map(n.buses.country)
-        ].index
-        links_rm = n.links.loc[
-            n.links.bus0.map(n.buses.country) != n.links.bus1.map(n.buses.country)
-        ].index
-    else:
-        lines_rm = n.lines.index
-        links_rm = n.links.loc[n.links.carrier == "DC"].index
-    n.remove("Line", lines_rm)
-    n.remove("Link", links_rm)
 
 
 def cap_transmission_capacity(
