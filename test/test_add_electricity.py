@@ -9,7 +9,7 @@ import pandas as pd
 import pypsa
 import xarray as xr
 
-from scripts.add_electricity import attach_load, attach_storageunits
+from scripts.add_electricity import attach_load, attach_storageunits, attach_stores
 
 
 def test_attach_load(tmp_path):
@@ -62,12 +62,34 @@ def test_attach_storageunits_energy_basis():
     su = n.storage_units.set_index("carrier")
 
     iron_air = su.loc["iron-air"]
-    np.testing.assert_allclose(iron_air.max_hours, 158.73)
-    # atol matches the 0.005 h the two-decimal rounding can cost.
-    np.testing.assert_allclose(
-        iron_air.max_hours * iron_air.efficiency_dispatch, 100, atol=0.005
-    )
+    np.testing.assert_allclose(iron_air.max_hours * iron_air.efficiency_dispatch, 100)
     np.testing.assert_allclose(iron_air.capital_cost, 157959.0)
 
     # Stored-basis carriers must be left alone, despite efficiency_dispatch < 1.
     np.testing.assert_allclose(su.loc["battery"].max_hours, 6)
+
+
+def test_attach_stores_energy_basis():
+    """A dispatched-basis store cost is converted to cost per MWh stored."""
+    costs = pd.DataFrame(
+        {
+            "capital_cost": {
+                "iron-air battery": 1000.0,
+                "iron-air battery charge": 0.0,
+                "iron-air battery discharge": 0.0,
+            },
+            "marginal_cost": 0.0,
+            "lifetime": 17.5,
+            "efficiency": {
+                "iron-air battery": 1.0,
+                "iron-air battery charge": 0.74,
+                "iron-air battery discharge": 0.63,
+            },
+        }
+    )
+
+    n = pypsa.Network()
+    n.add("Bus", ["bus_1"])
+    attach_stores(n, costs, n.buses.index, ["iron-air"])
+
+    np.testing.assert_allclose(n.stores.capital_cost, 630.0)
