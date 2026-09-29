@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* **Breaking:** `electricity: transmission_limit` can be set per planning horizon (e.g. `{2030: v1.05, 2040: v1.1}`). With myopic foresight, the limit of each subsequent planning horizon now refers to the transmission capacities built by the previous planning horizon instead of today's grid, allowing for incremental transmission expansion ([#1918](https://github.com/PyPSA/pypsa-eur/pull/1918)).
+
 * Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
 
 
