@@ -8,7 +8,6 @@
 
 * Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
 
-* Streamlined workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)): overnight, myopic, and perfect foresight are now handled by a unified set of rules for both electricity-only and sector-coupled models. See the [migration guide](migration.md) for detailed migration guidance.
 
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 
