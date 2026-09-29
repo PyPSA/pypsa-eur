@@ -9,7 +9,13 @@ import pandas as pd
 import pypsa
 import xarray as xr
 
-from scripts.add_electricity import attach_load, attach_storageunits, attach_stores
+from scripts.add_electricity import (
+    attach_load,
+    attach_storageunits,
+    attach_stores,
+    estimate_efficiency,
+)
+from scripts.lib.validation.config.conventional import _EstimateEfficienciesConfig
 
 
 def test_attach_load(tmp_path):
@@ -93,3 +99,26 @@ def test_attach_stores_energy_basis():
     attach_stores(n, costs, n.buses.index, ["iron-air"])
 
     np.testing.assert_allclose(n.stores.capital_cost, 630.0)
+
+
+def test_estimate_efficiency():
+    """Efficiency rises with build year (retrofit first), is clipped and degrades with age."""
+    ppl = pd.DataFrame(
+        {
+            "carrier": ["CCGT", "coal", "coal", "biomass", "CCGT"],
+            "datein": [2000, 1950, 1970, 2000, np.nan],
+            "dateretrofit": [np.nan, np.nan, 2010, np.nan, np.nan],
+        }
+    )
+    config = _EstimateEfficienciesConfig().model_dump()
+
+    eta = estimate_efficiency(ppl, config)
+
+    expected = [
+        0.48 * (1 - 0.015),
+        0.28 * (1 - 0.065),
+        0.43 * (1 - 0.005),
+        np.nan,
+        np.nan,
+    ]
+    np.testing.assert_allclose(eta, expected)

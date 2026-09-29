@@ -416,6 +416,42 @@ renewable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#conventional_cf
 conventional:
+  estimate_efficiencies:
+    enable: false
+    reference_year: 2025
+    degradation_start: 10
+    degradation_rate: 0.001
+    parameters:
+      lignite:
+        efficiency: 0.25
+        slope: 0.003
+        year: 1960
+        max: 0.42
+      coal:
+        efficiency: 0.28
+        slope: 0.003
+        year: 1960
+        max: 0.44
+      CCGT:
+        efficiency: 0.4
+        slope: 0.004
+        year: 1980
+        max: 0.6
+      OCGT:
+        efficiency: 0.28
+        slope: 0.003
+        year: 1970
+        max: 0.41
+      oil:
+        efficiency: 0.28
+        slope: 0.002
+        year: 1960
+        max: 0.38
+      nuclear:
+        efficiency: 0.33
+        slope: 0.0
+        year: 1960
+        max: 0.33
   unit_commitment: false
   dynamic_fuel_price: false
   fuel_price_rolling_window: 6

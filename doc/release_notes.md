@@ -13,6 +13,8 @@
 
 * Feature: New option `clustering: simplify_network: to_380` to keep original voltage levels and transformers instead of mapping everything to 380 kV. Lines of different voltage levels are no longer merged in clustering. Power plants are now matched to buses by the country of the clustered buses instead of bus name prefixes, which fixes `cluster_network: n_clusters: all` for OSM-based networks whose bus names do not start with the country code.
 
+* Feature: New option `conventional: estimate_efficiencies` (disabled by default) to fill missing power plant efficiencies with a carrier- and age-dependent linear heuristic with configurable parameters ([#2076](https://github.com/PyPSA/pypsa-eur/pull/2076)).
+
 * Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
 
 
