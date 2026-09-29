@@ -38,7 +38,6 @@ from tqdm import tqdm
 from scripts._helpers import (
     REGION_COLS,
     configure_logging,
-    extract_country_level,
     get_snapshots,
     set_scenario_config,
 )
@@ -1508,7 +1507,11 @@ def build_admin_shapes(
         nuts3_regions["column"] = level_map[level]
 
         # Only keep the values whose keys are in countries
-        country_level = extract_country_level(admin_levels, countries)
+        country_level = {
+            k: v
+            for k, v in {**admin_levels, **admin_levels["countries"]}.items()
+            if k in countries
+        }
         if country_level:
             country_level_list = "\n".join(
                 [f"- {k}: level {v}" for k, v in country_level.items()]
