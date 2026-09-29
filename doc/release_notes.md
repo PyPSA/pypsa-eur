@@ -159,6 +159,8 @@ for file name mappings and configuration changes in detail.
 * Fixed typos in the log file extensions of [build_daily_heat_demand][] and [build_hourly_heat_demand][]
   ([#2275](https://github.com/PyPSA/pypsa-eur/pull/2275)).
 
+* **Breaking:** `electricity: max_hours: iron-air` now counts hours at rated output rather than hours of stored energy, matching how duration and cost per kWh are quoted for iron-air. The store is therefore sized by `max_hours / efficiency_dispatch`, and the store cost of iron-air added as `Store` is converted to cost per MWh stored. Cost per MW is unchanged, so iron-air becomes more capable per euro and results including it will change ([#2298](https://github.com/PyPSA/pypsa-eur/pull/2298)).
+
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
 **Features**

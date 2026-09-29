@@ -105,6 +105,8 @@ STORE_LOOKUP = {
         "store": "iron-air battery",
         "charger": "iron-air battery charge",
         "discharger": "iron-air battery discharge",
+        # duration and EUR/kWh are quoted on dispatched, not stored, energy
+        "energy_basis": "dispatched",
     },
     "H2": {
         "store": "hydrogen storage underground",
@@ -1055,6 +1057,20 @@ def attach_storageunits(
 
         roundtrip_correction = lookup.get("roundtrip_correction", 1)
 
+        efficiency_store = costs.at[lookup_charge, "efficiency"] ** roundtrip_correction
+        efficiency_dispatch = (
+            costs.at[lookup_discharge, "efficiency"] ** roundtrip_correction
+        )
+
+        # A dispatched-basis `max_hours` counts hours at rated output, so the store must
+        # be larger by 1/efficiency_dispatch
+        if lookup.get("energy_basis") == "dispatched":
+            max_hour /= efficiency_dispatch
+            logger.info(
+                f"'{carrier}' max_hours counts hours at rated output; sizing its store "
+                f"to {max_hour:.2f} h at efficiency_dispatch={efficiency_dispatch:.2f}."
+            )
+
         n.add(
             "StorageUnit",
             buses_i,
@@ -1064,10 +1080,8 @@ def attach_storageunits(
             p_nom_extendable=True,
             capital_cost=costs.at[carrier, "capital_cost"],
             marginal_cost=costs.at[carrier, "marginal_cost"],
-            efficiency_store=costs.at[lookup_charge, "efficiency"]
-            ** roundtrip_correction,
-            efficiency_dispatch=costs.at[lookup_discharge, "efficiency"]
-            ** roundtrip_correction,
+            efficiency_store=efficiency_store,
+            efficiency_dispatch=efficiency_dispatch,
             max_hours=max_hour,
             cyclic_state_of_charge=True,
             lifetime=costs.at[carrier, "lifetime"],
@@ -1126,6 +1140,13 @@ def attach_stores(
             # NB: fuel cell investment cost is per MWel
             discharge_capital_cost *= costs.at[lookup_discharge, "efficiency"]
 
+        store_capital_cost = costs.at[lookup_store, "capital_cost"]
+        if lookup.get("energy_basis") == "dispatched":
+            # convert cost per MWh dispatched to cost per MWh stored
+            store_capital_cost *= (
+                costs.at[lookup_discharge, "efficiency"] ** roundtrip_correction
+            )
+
         n.add(
             "Bus",
             bus_names,
@@ -1142,7 +1163,7 @@ def attach_stores(
             e_cyclic=True,
             e_nom_extendable=True,
             carrier=carrier,
-            capital_cost=costs.at[lookup_store, "capital_cost"],
+            capital_cost=store_capital_cost,
             lifetime=costs.at[lookup_store, "lifetime"],
         )
 
