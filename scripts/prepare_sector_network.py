@@ -5719,10 +5719,7 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
 
     carrier_i = n.links.query("carrier == @carrier").index
 
-    if (
-        not any((v != 1.0) or (v >= 0) for v in efficiencies.values())
-        or carrier_i.empty
-    ):
+    if all((v == 1.0) for v in efficiencies.values()) or carrier_i.empty:
         return
 
     efficiency_static = efficiencies.get("efficiency_static", 1)

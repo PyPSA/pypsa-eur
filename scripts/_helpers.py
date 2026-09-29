@@ -620,8 +620,9 @@ def mock_snakemake(
 ):
     """
     This function is expected to be executed from the 'scripts'-directory of '
-    the snakemake project. It returns a snakemake.script.Snakemake object,
-    based on the Snakefile.
+    the snakemake project or from one of its subdirectories, e.g.
+    'scripts/build_central_heating_temperature_profiles' or 'scripts/build_cop_profiles'.
+    It returns a snakemake.script.Snakemake object, based on the Snakefile.
 
     If a rule has wildcards, you have to specify them in **wildcards.
 
@@ -660,23 +661,24 @@ def mock_snakemake(
     )
 
     script_dir = Path(__file__).parent.resolve()
+    cwd = Path.cwd().resolve()
     if root_dir is None:
         root_dir = script_dir.parent
     else:
         root_dir = Path(root_dir).resolve()
 
     workdir = None
-    user_in_script_dir = Path.cwd().resolve() == script_dir
+    user_in_script_dir = cwd == script_dir or script_dir in cwd.parents
     if str(submodule_dir) in __file__:
         # the submodule_dir path is only need to locate the project dir
         os.chdir(Path(__file__[: __file__.find(str(submodule_dir))]))
     elif user_in_script_dir:
         os.chdir(root_dir)
-    elif Path.cwd().resolve() != root_dir:
+    elif cwd != root_dir:
         logger.info(
             "Not in scripts or root directory, will assume this is a separate workdir"
         )
-        workdir = Path.cwd()
+        workdir = cwd
 
     try:
         for p in SNAKEFILE_CHOICES:
@@ -751,7 +753,7 @@ def mock_snakemake(
 
     finally:
         if user_in_script_dir:
-            os.chdir(script_dir)
+            os.chdir(cwd)
     return snakemake
 
 

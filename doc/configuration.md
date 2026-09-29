@@ -67,7 +67,7 @@ implementations, and custom extensions all observe the same precedence rules.
 Version of PyPSA-Eur. Descriptive only.
 
 - **Type:** string
-- **Default:** `v2026.08.0`
+- **Default:** `v2026.09.0`
 
 **YAML Syntax**
 
