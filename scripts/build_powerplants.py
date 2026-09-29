@@ -174,13 +174,9 @@ def map_to_country_bus(
     unmatched = []
 
     for country, plants in ppl.groupby("Country"):
-        if "country" in regions.columns:
-            country_regions = regions[regions["country"] == country]
-        else:
-            country_regions = regions[regions.index.str[:2] == country]
-        joined = (
-            plants.sjoin(country_regions[["geometry"]])
-            .rename(columns={"name": "bus"})
+        country_regions = regions.query("country == @country")
+        joined = plants.sjoin(country_regions[["geometry"]]).rename(
+            columns={"name": "bus"}
         )
         # Drop duplicate matches (plant in overlapping onshore/offshore regions)
         joined = joined[~joined.index.duplicated(keep="first")]
@@ -193,13 +189,13 @@ def map_to_country_bus(
     if unmatched:
         unmatched = pd.concat(unmatched)
         for country, plants in unmatched.groupby("Country"):
-            if "country" in regions.columns:
-                country_regions = regions[regions["country"] == country]
-            else:
-                country_regions = regions[regions.index.str[:2] == country]
+            country_regions = regions.query("country == @country")
             nearest = (
                 plants.to_crs(3035)
-                .sjoin_nearest(country_regions[["geometry"]].to_crs(3035), max_distance=max_distance)
+                .sjoin_nearest(
+                    country_regions[["geometry"]].to_crs(3035),
+                    max_distance=max_distance,
+                )
                 .rename(columns={"name": "bus"})
                 .to_crs(4326)
             )

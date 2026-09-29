@@ -29,7 +29,7 @@ Description
 
 The rule [simplify_network][] does up to three things:
 
-1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function `simplify_network(...)`.
+1. Create an equivalent transmission network in which all voltage levels are mapped to the 380 kV level by the function `simplify_network_to_380(...)`, unless disabled with `clustering: simplify_network: to_380: false`.
 
 2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function `simplify_links(...)`.
 
@@ -439,14 +439,10 @@ if __name__ == "__main__":
     Nyears = n.snapshot_weightings.objective.sum() / 8760
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
 
-    if params.simplify_network.get("to_380", True):
+    if params.simplify_network["to_380"]:
         linetype_380 = snakemake.config["lines"]["types"][380]
         n, trafo_map = simplify_network_to_380(n, linetype_380)
     else:
-        logger.info(
-            "Skipping 380kV simplification — preserving original voltage levels"
-            " and transformers"
-        )
         trafo_map = n.buses.index.to_series()
     busmaps = [trafo_map]
 

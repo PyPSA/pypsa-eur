@@ -45,6 +45,10 @@ class _BuildBiddingZonesConfig(BaseModel):
 class _SimplifyNetworkConfig(BaseModel):
     """Configuration for `clustering.simplify_network` settings."""
 
+    to_380: bool = Field(
+        True,
+        description="Map all buses and lines to 380 kV and remove transformers. If false, original voltage levels and transformers are kept. This is only recommended without spatial clustering (`cluster_network: n_clusters: all`), because clustering merges buses of different voltage levels.",
+    )
     to_substations: bool = Field(
         False,
         description="Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
