@@ -11,6 +11,7 @@
 
 * Feature: `clustering: administrative: countries` also accepts NUTS codes of subregions (e.g. `DEA: 3`) to set a different administrative level within a country ([#2146](https://github.com/PyPSA/pypsa-eur/pull/2146)).
 
+* Fix: Offshore wind availability no longer fails when `MD` but not `UA` is in `countries`, since Moldova has no offshore regions.
 * Feature: New option `clustering: simplify_network: to_380` to keep original voltage levels and transformers instead of mapping everything to 380 kV. Lines of different voltage levels are no longer merged in clustering. Power plants are now matched to buses by the country of the clustered buses instead of bus name prefixes, which fixes `cluster_network: n_clusters: all` for OSM-based networks whose bus names do not start with the country code.
 
 * Feature: New option `conventional: estimate_efficiencies` (disabled by default) to fill missing power plant efficiencies with a carrier- and age-dependent linear heuristic with configurable parameters ([#2076](https://github.com/PyPSA/pypsa-eur/pull/2076)).
