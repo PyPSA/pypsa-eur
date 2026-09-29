@@ -6,6 +6,9 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
+
+
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 
 **Streamlined Workflow**
