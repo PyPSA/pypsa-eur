@@ -54,7 +54,7 @@
 
 ## Rule `plot_base_statistics`
 
-<!-- ::: plot_base_statistics (module not found) -->
+::: plot_statistics
 
 ## Rule `build_ambient_air_temperature_yearly_average`
 
@@ -62,7 +62,7 @@
 
 ## Rule `plot_cop_profiles`
 
-<!-- ::: plot_cop_profiles (directory module, not importable) -->
+::: plot_cop_profiles.plot_cop_profiles
 
 ## Rule `plot_interactive_bus_balance`
 

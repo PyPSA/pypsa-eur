@@ -95,7 +95,7 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
 ??? note "How can I change the spatial resolution of my model?"
     Several configuration options control the spatial resolution in PyPSA-Eur. Available mechanisms:
 
-    - Adjust the number of regions via the `clusters` wildcard.
+    - Adjust the number of regions via `clustering: cluster_network: n_clusters`.
     - Restrict the geographical scope using the `countries` configuration.
       Note that the number of clusters must exceed the number of countries.
     - Configure how regions are created through the `clustering` section,
