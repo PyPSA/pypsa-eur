@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Fix: Offshore wind availability no longer fails when `MD` but not `UA` is in `countries`, since Moldova has no offshore regions.
+
 * Fix: Replace hard coded path for EGS capacity factors ([#2319](https://github.com/PyPSA/pypsa-eur/pull/2319))
 
 
