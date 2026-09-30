@@ -27,6 +27,7 @@ from scripts.lib.validation.config.lines import LinesConfig
 from scripts.lib.validation.config.links import LinksConfig
 from scripts.lib.validation.config.load import LoadConfig
 from scripts.lib.validation.config.overpass_api import OverpassApiConfig
+from scripts.lib.validation.config.plotting import PlottingConfig
 from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
 from scripts.lib.validation.config.run import RunConfig
@@ -84,7 +85,7 @@ class ConfigSchema(BaseModel):
 
     # Top-level fields (from TopLevelConfig)
     version: str = Field(
-        "v2026.08.0", description="Version of PyPSA-Eur. Descriptive only."
+        "v2026.09.0", description="Version of PyPSA-Eur. Descriptive only."
     )
     tutorial: bool = Field(
         False,
@@ -222,6 +223,10 @@ class ConfigSchema(BaseModel):
     overpass_api: OverpassApiConfig = Field(
         default_factory=OverpassApiConfig,
         description="Overpass API configuration for OSM data retrieval.",
+    )
+    plotting: PlottingConfig = Field(
+        default_factory=PlottingConfig,
+        description="Plotting and summary settings.",
     )
 
     @model_validator(mode="before")

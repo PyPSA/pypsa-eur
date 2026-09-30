@@ -22,12 +22,10 @@ import numpy as np
 import pandas as pd
 import pypsa
 import pytz
-import requests
 import xarray as xr
 import yaml
 from dask.distributed import Client, LocalCluster
 from snakemake.utils import update_config
-from tqdm import tqdm
 
 from scripts.lib.validation.config.data import VersionsSchema
 
@@ -299,35 +297,6 @@ def get_shadow(run):
     return None
 
 
-def get_opt(opts, expr, flags=None):
-    """
-    Return the first option matching the regular expression.
-
-    The regular expression is case-insensitive by default.
-    """
-    if flags is None:
-        flags = re.IGNORECASE
-    for o in opts:
-        match = re.match(expr, o, flags=flags)
-        if match:
-            return match.group(0)
-    return None
-
-
-def find_opt(opts, expr):
-    """
-    Return if available the float after the expression.
-    """
-    for o in opts:
-        if expr in o:
-            m = re.findall(r"m?\d+(?:[\.p]\d+)?", o)
-            if len(m) > 0:
-                return True, float(m[-1].replace("p", ".").replace("m", "-"))
-            else:
-                return True, None
-    return False, None
-
-
 # Define a context manager to temporarily mute print statements
 @contextlib.contextmanager
 def mute_print():
@@ -414,28 +383,6 @@ def update_p_nom_max(n):
     n.generators.p_nom_max = n.generators[["p_nom_min", "p_nom_max"]].max(1)
 
 
-def aggregate_p_nom(n):
-    return pd.concat(
-        [
-            n.generators.groupby("carrier").p_nom_opt.sum(),
-            n.storage_units.groupby("carrier").p_nom_opt.sum(),
-            n.links.groupby("carrier").p_nom_opt.sum(),
-            n.loads_t.p.groupby(n.loads.carrier, axis=1).sum().mean(),
-        ]
-    )
-
-
-def aggregate_p(n):
-    return pd.concat(
-        [
-            n.generators_t.p.sum().groupby(n.generators.carrier).sum(),
-            n.storage_units_t.p.sum().groupby(n.storage_units.carrier).sum(),
-            n.stores_t.p.sum().groupby(n.stores.carrier).sum(),
-            -n.loads_t.p.sum().groupby(n.loads.carrier).sum(),
-        ]
-    )
-
-
 def get(item, investment_year=None):
     """
     Check whether item depends on investment year.
@@ -466,108 +413,6 @@ def get(item, investment_year=None):
             return lower + (higher - lower) * (investment_year - lower_key) / (
                 higher_key - lower_key
             )
-
-
-def aggregate_e_nom(n):
-    return pd.concat(
-        [
-            (n.storage_units["p_nom_opt"] * n.storage_units["max_hours"])
-            .groupby(n.storage_units["carrier"])
-            .sum(),
-            n.stores["e_nom_opt"].groupby(n.stores.carrier).sum(),
-        ]
-    )
-
-
-def aggregate_p_curtailed(n):
-    return pd.concat(
-        [
-            (
-                (
-                    n.generators_t.p_max_pu.sum().multiply(n.generators.p_nom_opt)
-                    - n.generators_t.p.sum()
-                )
-                .groupby(n.generators.carrier)
-                .sum()
-            ),
-            (
-                (n.storage_units_t.inflow.sum() - n.storage_units_t.p.sum())
-                .groupby(n.storage_units.carrier)
-                .sum()
-            ),
-        ]
-    )
-
-
-def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
-    components = dict(
-        Link=("p_nom", "p0"),
-        Generator=("p_nom", "p"),
-        StorageUnit=("p_nom", "p"),
-        Store=("e_nom", "p"),
-        Line=("s_nom", None),
-        Transformer=("s_nom", None),
-    )
-
-    costs = {}
-    for c, (p_nom, p_attr) in zip(
-        n.components[list(components.keys())], components.values()
-    ):
-        if c.static.empty:
-            continue
-        if not existing_only:
-            p_nom += "_opt"
-        costs[(c.list_name, "capital")] = (
-            (c.static[p_nom] * c.static.capital_cost).groupby(c.static.carrier).sum()
-        )
-        if p_attr is not None:
-            p = c.dynamic[p_attr].sum()
-            if c.name == "StorageUnit":
-                p = p.loc[p > 0]
-            costs[(c.list_name, "marginal")] = (
-                (p * c.static.marginal_cost).groupby(c.static.carrier).sum()
-            )
-    costs = pd.concat(costs)
-
-    if flatten:
-        assert opts is not None
-        conv_techs = opts["conv_techs"]
-
-        costs = costs.reset_index(level=0, drop=True)
-        costs = costs["capital"].add(
-            costs["marginal"].rename({t: t + " marginal" for t in conv_techs}),
-            fill_value=0.0,
-        )
-
-    return costs
-
-
-def progress_retrieve(url, file, disable=False):
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-
-    Path(file).parent.mkdir(parents=True, exist_ok=True)
-
-    # Raise HTTPError for transient errors
-    # 429: Too Many Requests (rate limiting)
-    # 500, 502, 503, 504: Server errors
-    response = requests.get(url, headers=headers, stream=True)
-    if response.status_code in (429, 500, 502, 503, 504):
-        response.raise_for_status()
-    total_size = int(response.headers.get("content-length", 0))
-    chunk_size = 1024
-
-    with tqdm(
-        total=total_size,
-        unit="B",
-        unit_scale=True,
-        unit_divisor=1024,
-        desc=str(file),
-        disable=disable,
-    ) as t:
-        with open(file, "wb") as f:
-            for data in response.iter_content(chunk_size=chunk_size):
-                f.write(data)
-                t.update(len(data))
 
 
 def retry(func: Callable) -> Callable:
@@ -620,8 +465,9 @@ def mock_snakemake(
 ):
     """
     This function is expected to be executed from the 'scripts'-directory of '
-    the snakemake project. It returns a snakemake.script.Snakemake object,
-    based on the Snakefile.
+    the snakemake project or from one of its subdirectories, e.g.
+    'scripts/build_central_heating_temperature_profiles' or 'scripts/build_cop_profiles'.
+    It returns a snakemake.script.Snakemake object, based on the Snakefile.
 
     If a rule has wildcards, you have to specify them in **wildcards.
 
@@ -660,23 +506,24 @@ def mock_snakemake(
     )
 
     script_dir = Path(__file__).parent.resolve()
+    cwd = Path.cwd().resolve()
     if root_dir is None:
         root_dir = script_dir.parent
     else:
         root_dir = Path(root_dir).resolve()
 
     workdir = None
-    user_in_script_dir = Path.cwd().resolve() == script_dir
+    user_in_script_dir = cwd == script_dir or script_dir in cwd.parents
     if str(submodule_dir) in __file__:
         # the submodule_dir path is only need to locate the project dir
         os.chdir(Path(__file__[: __file__.find(str(submodule_dir))]))
     elif user_in_script_dir:
         os.chdir(root_dir)
-    elif Path.cwd().resolve() != root_dir:
+    elif cwd != root_dir:
         logger.info(
             "Not in scripts or root directory, will assume this is a separate workdir"
         )
-        workdir = Path.cwd()
+        workdir = cwd
 
     try:
         for p in SNAKEFILE_CHOICES:
@@ -751,7 +598,7 @@ def mock_snakemake(
 
     finally:
         if user_in_script_dir:
-            os.chdir(script_dir)
+            os.chdir(cwd)
     return snakemake
 
 
@@ -775,27 +622,6 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     week_df = week_df.tz_localize(localize)
 
     return week_df
-
-
-def parse(infix):
-    """
-    Recursively parse a chained wildcard expression into a dictionary or a YAML
-    object.
-
-    Parameters
-    ----------
-    list_to_parse : list
-        The list to parse.
-
-    Returns
-    -------
-    dict or YAML object
-        The parsed list.
-    """
-    if len(infix) == 1:
-        return yaml.safe_load(infix[0])
-    else:
-        return {infix.pop(0): parse(infix)}
 
 
 def get_snapshots(

@@ -44,6 +44,13 @@ def test_versions_csv(pytestconfig, file):
             df.to_csv(file, index=False)
 
 
+def test_data_inventory_matches_versions():
+    """Every dataset in the versions registry has a row in the docs inventory."""
+    inventory = pd.read_csv(Path("doc/data_inventory.csv"))
+    versions = load_data_versions(*VERSIONS_PATHS)
+    assert set(inventory["Short name"]) == set(versions["dataset"])
+
+
 def test_load_data_versions_combined(tmp_path):
     """Test that load_data_versions correctly combines multiple files."""
     file_1 = tmp_path / "versions_1.csv"

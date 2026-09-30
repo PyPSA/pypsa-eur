@@ -9,10 +9,13 @@ import tempfile
 from pathlib import Path
 
 import pytest
+import yaml
 
 from scripts.lib.validation.config import (
+    find_invalid_entries,
     generate_config_defaults,
     generate_config_schema,
+    generate_plotting_defaults,
     normalize_config,
     validate_config,
     validate_scenarios,
@@ -24,6 +27,13 @@ def config_file():
     config = validate_config({})
     config_filename = Path(f"config/config.{config._name}.yaml")
     return config_filename
+
+
+@pytest.fixture(scope="module")
+def plotting_file():
+    config = validate_config({})
+    plotting_filename = Path(f"config/plotting.{config._name}.yaml")
+    return plotting_filename
 
 
 @pytest.fixture(scope="module")
@@ -77,6 +87,18 @@ def test_config_default_yaml_in_sync(config_file, pytestconfig):
     _check_file_in_sync(
         config_file,
         generate_config_defaults,
+        "yaml",
+    )
+
+
+def test_plotting_default_yaml_in_sync(plotting_file, pytestconfig):
+    """Test that config/plotting.default.yaml is in sync with Pydantic schema."""
+    fix = pytestconfig.getoption("fix")
+    if fix:
+        generate_plotting_defaults(plotting_file.as_posix())
+    _check_file_in_sync(
+        plotting_file,
+        generate_plotting_defaults,
         "yaml",
     )
 
@@ -147,3 +169,40 @@ class TestValidateScenarios:
     def test_rejects_incompatible_override(self, override, match):
         with pytest.raises(ValueError, match=match):
             validate_scenarios(self.base, {"s1": override})
+
+
+def _load_config(path: str) -> dict:
+    return yaml.safe_load(Path(path).read_text()) or {}
+
+
+class TestFindInvalidEntries:
+    def test_reports_invalid_config(self):
+        invalid = find_invalid_entries(
+            _load_config("test/test_data/config.invalid.yaml")
+        )
+        assert set(invalid) == {
+            "country",
+            "clustering.cluster_network.nclusters",
+            "snapshots.inclusive",
+            "clustering.temporal.averaging",
+            "conventional.fuel_price_rolling_window",
+        }
+
+    @pytest.mark.parametrize(
+        "test_config", sorted(Path("config/test").glob("config.*.yaml")), ids=str
+    )
+    def test_passes_valid_config(self, test_config):
+        assert not find_invalid_entries(_load_config(test_config))
+
+
+def pytest_generate_tests(metafunc):
+    if "configfile" in metafunc.fixturenames:
+        metafunc.parametrize("configfile", metafunc.config.getoption("validate_config"))
+
+
+def test_config_file_is_valid(configfile):
+    """Check config files given with `--validate-config` for unknown keys and invalid values."""
+    invalid = find_invalid_entries(_load_config(configfile))
+    assert not invalid, f"Invalid config entries in {configfile}:\n" + "\n".join(
+        f"  - {path}: {'; '.join(msgs)}" for path, msgs in invalid.items()
+    )

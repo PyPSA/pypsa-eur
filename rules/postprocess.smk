@@ -220,7 +220,10 @@ rule plot_summary:
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/energy_balance.csv",
         eurostat=resources("eurostat_energy_balances.csv"),
-        co2=rules.retrieve_ghg_emissions.output["csv"],
+        co2=branch(
+            lambda w: config_provider("foresight")(w) == "perfect",
+            rules.retrieve_ghg_emissions.output["csv"],
+        ),
     output:
         costs=RESULTS + "graphs/costs.pdf",
         energy=RESULTS + "graphs/energy.pdf",
@@ -330,9 +333,9 @@ rule build_ambient_air_temperature_yearly_average:
             "temp_ambient_air_temporal_aggregate.nc"
         ),
     log:
-        RESULTS + "logs/build_ambient_air_temperature_yearly_average.log",
+        logs("logs/build_ambient_air_temperature_yearly_average.log"),
     benchmark:
-        (RESULTS + "benchmarks/build_ambient_air_temperature_yearly_average")
+        benchmarks("build_ambient_air_temperature_yearly_average")
     threads: 1
     resources:
         mem_mb=5000,

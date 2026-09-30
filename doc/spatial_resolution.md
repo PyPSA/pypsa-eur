@@ -3,9 +3,9 @@
 
 # Spatial resolution {#spatial_resolution}
 
-The default nodal resolution of the model follows the electricity generation and transmission model [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur), which clusters down the electricity transmission substations in each European country based on the k-means algorithm (See [cluster_network](https://pypsa-eur.readthedocs.io/en/latest/preparation/#cluster) for a complete explanation). This gives nodes which correspond to major load and generation centres (typically cities).
+The default nodal resolution of the model follows the electricity generation and transmission model [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur), which clusters down the electricity transmission substations in each European country based on the k-means algorithm (see [cluster_network][] for a complete explanation). This gives nodes which correspond to major load and generation centres (typically cities).
 
-The total number of nodes for Europe is set in the `config/config.yaml` file under `clusters`. The number of nodes can vary between 37, the number of independent countries / synchronous areas, and several hundred. With 200-300 nodes the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
+The total number of nodes for Europe is set in the `config/config.yaml` file under `clustering: cluster_network: n_clusters` (see [clustering](configuration.md#clustering_cf)). The number of nodes can vary between 37, the number of independent countries / synchronous areas, and several hundred. With 200-300 nodes the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
 
 Exemplary unsolved network clustered to 512 nodes:
 
@@ -15,10 +15,9 @@ Exemplary unsolved network clustered to 37 nodes:
 
 ![Exemplary unsolved network clustered to 37 nodes](img/clustered_37.png)
 
-The total number of nodes for Europe is set in the `config/config.yaml` file under [clusters](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L20).  The number of nodes can vary between 37, the number of independent countries/synchronous areas, and several hundred. With 200-300 nodes, the model needs 100-150 GB RAM to solve with a commercial solver like Gurobi.
 Not all of the sectors are at the full nodal resolution, and some demand for some sectors is distributed to nodes using heuristics that need to be corrected. Some networks are copper-plated to reduce computational times.
 
-Here are some examples of how spatial resolution is set for different sectors in PyPSA-Eur-Sec:
+Here are some examples of how spatial resolution is set for different sectors in PyPSA-Eur:
 
 - **Electricity network:** Modeled as nodal.
 
@@ -32,18 +31,18 @@ Here are some examples of how spatial resolution is set for different sectors in
 
 - **Industry demand (heat, chemicals, etc.):** Modeled as nodal, distributed in each country based on locations of industry from HotMaps database.
 
-- **Hydrogen network:** Modeled as nodal (if activated in the [config](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L260) file).
+- **Hydrogen network:** Modeled as nodal (if activated in the [config](configuration.md#sector_cf) file).
 
-- **Methane network:** It can be modeled as a single node for Europe or it can be nodally resolved if activated in the [config](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L266). One node can be considered reasonable since future demand is expected to be low and no bottlenecks are expected. Also, the nodally resolved methane grid is based on SciGRID_gas data.
+- **Methane network:** It can be modeled as a single node for Europe or it can be nodally resolved if activated in the [config](configuration.md#sector_cf). One node can be considered reasonable since future demand is expected to be low and no bottlenecks are expected. Also, the nodally resolved methane grid is based on SciGRID_gas data.
 
-- **Solid biomass:** It can be modeled as a single node for Europe or it can be nodally resolved if activated in the [config](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L270). Nodal modeling includes modeling biomass potential per country (given per country, then distributed by population density within) and the transport of solid biomass between countries.
+- **Solid biomass:** It can be modeled as a single node for Europe or it can be nodally resolved if activated in the [config](configuration.md#sector_cf). Nodal modeling includes modeling biomass potential per country (given per country, then distributed by population density within) and the transport of solid biomass between countries.
 
-- **CO2:** It can be modeled as a single node for Europe or it can be nodally resolved with CO2 transport pipelines if activated in the [config](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L248). It should mentioned that in single node mode a transport and storage cost is added for sequestered CO2, the cost of which can be adjusted in the [config](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L247).
+- **CO2:** It can be modeled as a single node for Europe or it can be nodally resolved with CO2 transport pipelines if activated in the [config](configuration.md#sector_cf). It should mentioned that in single node mode a transport and storage cost is added for sequestered CO2, the cost of which can be adjusted in the [config](configuration.md#sector_cf).
 
 - **Carbonaceous fuels:** Modeled as a single node for Europe by default, since transport costs for liquids are low and no bottlenecks are expected. Can be regionally resolved in configuration.
 
 **Electricity distribution network**
 
-Contrary to the transmission grid, the grid topology at the distribution level (at and below 110 kV) is not included due to the very high computational burden. However, a link per node can be used (if activated in the [Config](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L257) file) to represent energy transferred between distribution and transmission levels at every node. In essence, the total energy capacity connecting the transmission grid and the low-voltage level is optimized. The cost assumptions for this link can be adjusted in Config file [options](https://github.com/PyPSA/pypsa-eur-sec/blob/3daff49c9999ba7ca7534df4e587e1d516044fc3/config.default.yaml#L258), and is currently assumed to be 500 Eur/kW.
+Contrary to the transmission grid, the grid topology at the distribution level (at and below 110 kV) is not included due to the very high computational burden. However, a link per node can be used (if activated in the [Config](configuration.md#sector_cf) file) to represent energy transferred between distribution and transmission levels at every node. In essence, the total energy capacity connecting the transmission grid and the low-voltage level is optimized. The cost assumptions for this link can be adjusted in Config file [options](configuration.md#sector_cf), and is currently assumed to be 500 Eur/kW.
 
 Rooftop PV, heat pumps, resistive heater, home batteries chargers for passenger EVs, as well as individual heating technologies (heat pumps and resistive heaters)  are connected to low-voltage level. All the remaining generation and storage technologies are connected to the transmission grid. In practice, this means that the distribution grid capacity is only extended if it is necessary to balance the mismatch between local generation and demand.

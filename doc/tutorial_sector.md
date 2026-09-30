@@ -14,9 +14,8 @@ In this tutorial, we will add further sectors to the electricity-only model from
 requires processing of a few more raw data sources.
 
 The sector-coupling code can be run as an overnight / greenfield scenario or
-with multi-horizon investment with myopic foresight. Pathway analysis with
-perfect foresight is under development. See also the documentation on
-[Foresight](configuration.md#foresight_cf).
+with multi-horizon investment with myopic or perfect foresight. See also the
+documentation on [Foresight](foresight.md).
 
 ## Overnight Scenarios
 
@@ -32,7 +31,7 @@ be retrofitted to transport hydrogen instead.
 {{ yaml_section("sector", source="test/config.overnight.yaml") }}
 ```
 
-Documentation for all options will be added successively to [Configuration](configuration.md).
+All options are documented in [Configuration](configuration.md#sector_cf).
 
 Scenarios can be defined like for electricity-only studies, but with additional
 configuration namespaces. Define scenario entries in `config/scenarios.yaml` and
@@ -214,7 +213,7 @@ the share of primary steel production we change below:
 {{ yaml_section("industry", source="test/config.myopic.yaml") }}
 ```
 
-Documentation for all options will be added successively to [Configuration](configuration.md).
+All options are documented in [Configuration](configuration.md#sector_cf).
 
 ### Execution
 

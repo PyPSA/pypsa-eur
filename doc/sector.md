@@ -43,7 +43,7 @@ The sector-specific preprocessing rules generate intermediate data files that ar
 
 ## Rule `build_simplified_population_layouts`
 
-<!-- ::: build_simplified_population_layouts (module not found) -->
+::: build_population_layouts
 
 ## Rule `build_solar_rooftop_potentials`
 
@@ -51,7 +51,7 @@ The sector-specific preprocessing rules generate intermediate data files that ar
 
 ## Rule `build_cop_profiles`
 
-<!-- ::: build_cop_profiles (directory module, not importable) -->
+::: build_cop_profiles.run
 
 ## Rule `build_direct_heat_source_utilisation_profiles`
 
@@ -59,7 +59,7 @@ The sector-specific preprocessing rules generate intermediate data files that ar
 
 ## Rule `build_central_heating_temperature_profiles`
 
-<!-- ::: build_central_heating_temperature_profiles (directory module, not importable) -->
+::: build_central_heating_temperature_profiles.run
 
 ## Rule `build_geothermal_heat_potential`
 
@@ -75,19 +75,15 @@ The sector-specific preprocessing rules generate intermediate data files that ar
 
 ## Rule `build_river_heat_potential`
 
-<!-- ::: build_river_heat_potential (module not found) -->
+::: build_surface_water_heat_potentials.build_river_water_heat_potential
 
 ## Rule `build_sea_heat_potential`
 
-<!-- ::: build_sea_heat_potential (module not found) -->
+::: build_surface_water_heat_potentials.build_sea_water_heat_potential
 
 ## Rule `build_ptes_operations`
 
-<!-- ::: build_ptes_operations (directory module, not importable) -->
-
-## Rule `build_tes_capacity_profiles`
-
-<!-- ::: build_tes_capacity_profiles (module not found) -->
+::: build_ptes_operations.run
 
 ## Rule `build_eurostat_balances`
 

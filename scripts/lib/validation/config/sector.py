@@ -233,7 +233,9 @@ class _TransmissionEfficiencyConfig(BaseModel):
             "H2 pipeline",
             "H2 pipeline retrofitted",
             "gas pipeline",
+            "gas pipeline new",
             "electricity distribution grid",
+            "CO2 pipeline",
         ],
         description="Switch to select the carriers for which transmission efficiency is to be added. Carriers not listed assume lossless transmission.",
     )
@@ -268,10 +270,23 @@ class _TransmissionEfficiencyConfig(BaseModel):
         alias="gas pipeline",
         description="Gas pipeline transmission efficiency.",
     )
+    gas_pipeline_new: dict[str, float] = Field(
+        default_factory=lambda: {
+            "efficiency_per_1000km": 1,
+            "compression_per_1000km": 0.01,
+        },
+        alias="gas pipeline new",
+        description="Gas pipeline new transmission efficiency.",
+    )
     electricity_distribution_grid: dict[str, float] = Field(
         default_factory=lambda: {"efficiency_static": 0.97},
         alias="electricity distribution grid",
         description="Electricity distribution grid efficiency.",
+    )
+    CO2_pipeline: dict[str, float] = Field(
+        default_factory=lambda: {"efficiency_per_1000km": 1},
+        alias="CO2 pipeline",
+        description="CO2 pipeline transmission efficiency.",
     )
 
     model_config = ConfigDict(populate_by_name=True)
