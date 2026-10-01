@@ -1,0 +1,37 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - IFCfg.txt - - - - - - - - - - - - - - - - -
+#
+# The ComputeConfig of the InvestmentFunction, which the OBlockConfig of the
+# InvestmentBlock gives to its Objective [see IBOCfg.txt]: in the extra
+# Configuration, the BlockSolverConfig of the inner Block, here a TSSB, an
+# MSSB or a UCBlock, whose continuous relaxation Gurobi solves whole.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ComputeConfig # exact type of the ComputeConfig object
+
+1  # f_diff == 1 ==> all non-provided parameters are not changed
+
+0  # number of integer parameters
+
+0  # number of double parameters
+
+0  # number of string parameters: no strOutputFilename, so the investments
+   # and the values of the Function are not written to a file
+
+0  # number of vector-of-int parameters
+
+0  # number of vector-of-double parameters
+
+0  # number of vector-of-string parameters
+
+# pointer to the "extra" Configuration: the BlockSolverConfig of the inner
+# Block of the InvestmentFunction
+SimpleConfiguration<std::map<std::string,Configuration*>>
+1                  # the number of elements in the map
+BlockSolverConfig  *BSCfg-IB.txt
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - END IFCfg.txt - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,0 +1,36 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - IFCfg-LD.txt - - - - - - - - - - - - - - - -
+#
+# The ComputeConfig of the InvestmentFunction of IFCfg.txt, whose inner
+# Block is solved by the recursive Lagrangian dual of TSSBSCfg-LDrec.txt
+# instead of the linear program of BSCfg-IB.txt: only the extra
+# Configuration changes.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+*IFCfg.txt +
+
+1  # f_diff == 1 ==> only the entries listed below are changed
+
+0  # number of integer parameters
+
+0  # number of double parameters
+
+0  # number of string parameters
+
+0  # number of vector-of-int parameters
+
+0  # number of vector-of-double parameters
+
+0  # number of vector-of-string parameters
+
+# pointer to the "extra" Configuration: the BlockSolverConfig of the inner
+# Block of the InvestmentFunction
+SimpleConfiguration<std::map<std::string,Configuration*>>
+1                  # the number of elements in the map
+BlockSolverConfig  *TSSBSCfg-LDrec.txt
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - END IFCfg-LD.txt - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

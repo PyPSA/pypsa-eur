@@ -1,9 +1,25 @@
 version: 7
 platforms:
 - name: linux-64
+  virtual-packages:
+  - __unix=0=0
+  - __linux=4.18
+  - __glibc=2.28
+  - __archspec=0=x86_64
 - name: osx-64
+  virtual-packages:
+  - __unix=0=0
+  - __osx=13.0
+  - __archspec=0=x86_64
 - name: osx-arm64
+  virtual-packages:
+  - __unix=0=0
+  - __osx=13.0
+  - __archspec=0=m1
 - name: win-64
+  virtual-packages:
+  - __win=10.0
+  - __archspec=0=x86_64
 environments:
   default:
     channels:
@@ -617,7 +633,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zict-3.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/gurobi/linux-64/gurobi-13.0.1-py313_0.conda
-      - pypi: git+https://github.com/alessandropampado99/pypsa?branch=smspp_optimize#5dd4a0d71916d2efc2a4f44523b8bb53bb24c764
+      - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
       - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/73/60/7138e98884ca105c76ef192f5b43165d6eac6f32b432853ebe9f09ee50c9/levenshtein-0.27.3-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/90/79/2fc252a63bc91d3c3b234d0a3a6ad4ebc460037a23cdcdaf9285f986e6c9/rapidfuzz-3.14.5-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
@@ -1163,7 +1179,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zstandard-0.25.0-py313hcb05632_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zstd-1.5.7-h3eecb57_6.conda
       - conda: https://conda.anaconda.org/gurobi/osx-64/gurobi-13.0.1-py313_0.conda
-      - pypi: git+https://github.com/alessandropampado99/pypsa?branch=smspp_optimize#5dd4a0d71916d2efc2a4f44523b8bb53bb24c764
+      - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
       - pypi: https://files.pythonhosted.org/packages/11/66/252803f2010ba699618cdc048b6e1f7cc1f433c08b4a9a17579b92ab0142/rapidfuzz-3.14.5-cp313-cp313-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/3e/f2/162e9ea7490b36bbf05776c8e3a8114c75aa78546ddda8e8f36731db3da6/levenshtein-0.27.3-cp313-cp313-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
@@ -1709,7 +1725,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstandard-0.25.0-py313h9734d34_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - conda: https://conda.anaconda.org/gurobi/osx-arm64/gurobi-13.0.1-py313_0.conda
-      - pypi: git+https://github.com/alessandropampado99/pypsa?branch=smspp_optimize#5dd4a0d71916d2efc2a4f44523b8bb53bb24c764
+      - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
       - pypi: https://files.pythonhosted.org/packages/01/2d/7316ba7f94e3d60e89bd120526bc71e4812866bb7162767a2a10f73f72c5/levenshtein-0.27.3-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
@@ -2249,7 +2265,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstandard-0.25.0-py313h5fd188c_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_6.conda
       - conda: https://conda.anaconda.org/gurobi/win-64/gurobi-13.0.1-py313_0.conda
-      - pypi: git+https://github.com/alessandropampado99/pypsa?branch=smspp_optimize#5dd4a0d71916d2efc2a4f44523b8bb53bb24c764
+      - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
       - pypi: https://files.pythonhosted.org/packages/42/1d/74f1ff589bb687d0cad2bbdceef208dc070f56d1e38a3831da8c00bf13bb/levenshtein-0.27.3-cp313-cp313-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
@@ -4364,7 +4380,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zict-3.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/gurobi/linux-64/gurobi-13.0.1-py313_0.conda
-      - pypi: git+https://github.com/alessandropampado99/pypsa?branch=smspp_optimize#5dd4a0d71916d2efc2a4f44523b8bb53bb24c764
+      - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
       - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/73/60/7138e98884ca105c76ef192f5b43165d6eac6f32b432853ebe9f09ee50c9/levenshtein-0.27.3-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/90/79/2fc252a63bc91d3c3b234d0a3a6ad4ebc460037a23cdcdaf9285f986e6c9/rapidfuzz-3.14.5-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
@@ -4910,7 +4926,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zstandard-0.25.0-py313hcb05632_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zstd-1.5.7-h3eecb57_6.conda
       - conda: https://conda.anaconda.org/gurobi/osx-64/gurobi-13.0.1-py313_0.conda
-      - pypi: git+https://github.com/alessandropampado99/pypsa?branch=smspp_optimize#5dd4a0d71916d2efc2a4f44523b8bb53bb24c764
+      - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
       - pypi: https://files.pythonhosted.org/packages/11/66/252803f2010ba699618cdc048b6e1f7cc1f433c08b4a9a17579b92ab0142/rapidfuzz-3.14.5-cp313-cp313-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/3e/f2/162e9ea7490b36bbf05776c8e3a8114c75aa78546ddda8e8f36731db3da6/levenshtein-0.27.3-cp313-cp313-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
@@ -5456,7 +5472,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstandard-0.25.0-py313h9734d34_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - conda: https://conda.anaconda.org/gurobi/osx-arm64/gurobi-13.0.1-py313_0.conda
-      - pypi: git+https://github.com/alessandropampado99/pypsa?branch=smspp_optimize#5dd4a0d71916d2efc2a4f44523b8bb53bb24c764
+      - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
       - pypi: https://files.pythonhosted.org/packages/01/2d/7316ba7f94e3d60e89bd120526bc71e4812866bb7162767a2a10f73f72c5/levenshtein-0.27.3-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
@@ -5996,7 +6012,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstandard-0.25.0-py313h5fd188c_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_6.conda
       - conda: https://conda.anaconda.org/gurobi/win-64/gurobi-13.0.1-py313_0.conda
-      - pypi: git+https://github.com/alessandropampado99/pypsa?branch=smspp_optimize#5dd4a0d71916d2efc2a4f44523b8bb53bb24c764
+      - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
       - pypi: https://files.pythonhosted.org/packages/42/1d/74f1ff589bb687d0cad2bbdceef208dc070f56d1e38a3831da8c00bf13bb/levenshtein-0.27.3-cp313-cp313-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
@@ -16457,6 +16473,7 @@ packages:
   - xarray <=2025.9.0
   license: MIT
   license_family: MIT
+  run_exports: {}
   size: 220834
   timestamp: 1762426425913
 - conda: https://conda.anaconda.org/conda-forge/noarch/pyshp-3.0.3-pyhd8ed1ab_0.conda
@@ -34145,17 +34162,17 @@ packages:
   license: PROPRIETARY
   size: 43929220
   timestamp: 1768419842891
-- pypi: git+https://github.com/alessandropampado99/pypsa?branch=smspp_optimize#5dd4a0d71916d2efc2a4f44523b8bb53bb24c764
+- pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
   name: pypsa
-  version: 1.2.0.post1.dev37+g5dd4a0d71
+  version: 1.2.4.post1.dev57+g9b47fb6df
   requires_dist:
   - numpy
   - scipy
   - pandas>=2.0
-  - xarray<2026.4
+  - xarray
   - netcdf4
-  - linopy>=0.6.1
-  - matplotlib
+  - linopy>=0.7.0
+  - matplotlib!=3.11.0
   - plotly
   - pydeck>=0.6
   - seaborn
@@ -34168,8 +34185,8 @@ packages:
   - levenshtein>=0.27.1
   - platformdirs
   - tables ; extra == 'hdf5'
-  - pypsa2smspp>=0.0.3 ; python_full_version >= '3.12' and extra == 'smspp'
-  - pysmspp ; python_full_version >= '3.12' and extra == 'smspp'
+  - pypsa2smspp>=0.0.4 ; extra == 'smspp'
+  - pysmspp>=0.0.9 ; extra == 'smspp'
   - cartopy>=0.16 ; extra == 'cartopy'
   - openpyxl ; extra == 'excel'
   - python-calamine ; extra == 'excel'
@@ -34181,10 +34198,13 @@ packages:
   - pytest-cov ; extra == 'test'
   - pytest-mpl ; extra == 'test'
   - coverage ; extra == 'test'
+  - pyarrow ; extra == 'test'
   - pytest ; extra == 'dev'
   - pytest-cov ; extra == 'dev'
   - pytest-mpl ; extra == 'dev'
   - coverage ; extra == 'dev'
+  - pyarrow ; extra == 'dev'
+  - matplotlib<3.11 ; extra == 'dev'
   - pypower ; extra == 'dev'
   - pandapower>=2.14.11 ; extra == 'dev'
   - scikit-learn ; extra == 'dev'

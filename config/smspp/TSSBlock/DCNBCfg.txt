@@ -1,0 +1,49 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - DCNBCfg.txt - - - - - - - - - - - - - - - - -
+#
+# The BlockConfig of a DCNetworkBlock: its formulation.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockConfig     # exact type of the Configuration object
+
+1   # the BlockConfig is a "differential" one
+
+2  # version of the BlockConfig format
+
+# the Configuration for the structure, i.e., the tree of sub-Block
+*  # [none]
+
+# static constraints Configuration
+*  # [none]
+
+# dynamic constraints Configuration
+*  # [none]
+
+# static variables Configuration
+# a SimpleConfiguration< int > selecting the network formulation
+SimpleConfiguration<int>
+2  # 0 = PTDF, 1 = CYCLE, 2 = KIRCHHOFF
+
+# dynamic variables Configuration
+*  # [none]
+
+# objective Configuration
+*  # [none]
+
+# is_feasible Configuration
+*  # [none]
+
+# is_optimal Configuration
+*  # [none]
+
+# solution Configuration
+*  # [none]
+
+# extra Configuration
+*  # [none]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - END DCNBCfg.txt - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

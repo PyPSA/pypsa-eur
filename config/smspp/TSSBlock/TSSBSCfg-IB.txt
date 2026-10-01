@@ -1,0 +1,107 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - -  TSSBSCfg-IB.txt  - - - - - - - - - - - - - - - -
+#
+# The BundleSolver of InvestmentBlock/BSPar.txt on an InvestmentBlock over a
+# TSSB or an MSSB (the investment_outside form of pypsa2smspp), whose inner
+# stochastic Block is solved whole at every evaluation by BSCfg-IB.txt.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+1  # the BlockSolverConfig is a "differential" one
+
+1  # number of (the names of) Solver in this BlockSolverConfig
+# now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
+BundleSolver    # name of Solver
+
+1  # number of ComputeConfig in this BlockSolverConfig
+
+# now all the ComputeConfig
+# 1st ComputeConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ComputeConfig of the LagrangianDualSolver; it mostly is the
+# ComputeConfig of the inner Solver, which is a [Parallel]BundleSolver
+
+ComputeConfig # exact type of the ComputeConfig object
+
+1  # f_diff == 0 ==> all non-provided parameters are set to the default value
+   # f_diff == 1 ==> all non-provided parameters are not changed
+
+17 # number of integer parameters
+
+# now all the integer parameters
+intMPStbl              0 # stabilization: 0 = proximal, 1 = level, 2 = doubly stabilized
+intDoEasy  0      # do easy components for (some) LagBFunction
+intMaxIter 10000  # max number of iterations for each call
+intMaxThread 6	   # MaxThread, max number of new tasks to spawn
+intLogVerb 16      # log verbosity of main Bundle algorithm
+intWZNorm  10     # which norm to use in the norm-based stopping condition:
+                  # the 2-norm, dblNZEps being relative to that of the first
+                  # full subgradient; taken as absolute, 1e-4 is below what
+                  # the aggregated subgradient reaches on a design in MW,
+                  # and the bundle goes on long after the optimum
+intBPar1   20     # discard items when they have been useless for <this> iterations
+intBPar2 1000     # max bundle size per component
+intBPar3    1     # max n. of items to fetch from Fi() at each iteration
+intBPar4    1     # min n. of items to fetch from Fi() at each iteration
+intBPar6    0     # second parameter for dynamic max n. of items per iteration
+intBPar7   15     # how to deal with the global pools
+intMnSSC    0     # min number of consecutive SS with the same t for a t increase
+intMnNSC    3     # min number of consecutive NS with the same t for a t decrease
+inttSPar1   0     # long-term t-strategy (0 = none, 4 = soft, 8 = hard, 12 = balancing)
+intMaxNrEvls 2    # maximum number of function evaluations at each iteration
+
+intRstAlg  2      # parameter to handle the reset of the algorithm
+
+15 # number of double parameters
+
+# now all the double parameters
+dblRelAcc  1e-4   # relative accuracy required to solution
+dblNZEps   1e-4   # stopping parameter: threshold to declare 0 the || residual ||
+dbltStar   -100   # stopping parameter: multiplied to || residual || to estimate gap
+dblBPar5   4      # first parameter for dynamic max n. of items per iteration
+dblm1      -0.30  # a NS is possible if (~) Fi( Lambda1 ) >= Fi( Lambda ) + | m1 | v*
+dblm2      0.90   # a SS is possible if Fi( Lambda1 ) <= Fi( Lambda ) + ( 1 - m2 ) v*
+dblm3      0.99   # a NR is computed if \sigma^* < - t * m3 * || z* ||
+dblmxIncr  10     # max increase of t
+dblmnIncr  1.5    # min increase of t (each time it is increased)
+dblmxDecr  0.1    # max decrease of t
+dblmnDecr  0.66   # min decrease of t (each time it is decreased)
+dbltMaior  1e+6   # maximum value for t
+dbltMinor  1e-10  # minimum value for t
+dbltInit   1e+0   # initial value for t
+dbltSPar2  1e-2   # parameter for the long-term t-strategy
+
+1 # number of string parameters
+
+# now all the string parameters
+#str_LagBF_BSCfg	LPBSCfg.txt   # BlockSolverConfig for the LagBFunctions
+# not needed if intDoEasy >= 1 && USE_BundleSolver > 0, this is done "by hand"
+strMPBSolverCfg   MPBCfg.txt # BlockSolverConfig for the MasterProblemBlock's Solver
+
+0 # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0 # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0 # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# pointer to the "extra" Configuration
+* # [none]
+
+# end of 1st ComputeConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# end of BlockSolverConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - END BSPar.txt - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

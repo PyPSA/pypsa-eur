@@ -1,0 +1,55 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - ACBCfg.txt  - - - - - - - - - - - - - - - - -
+#
+# The BlockConfig of an ACNetworkBlock: its scaling factors.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockConfig
+
+1   # the BlockConfig is differential
+
+2  # version of the BlockConfig format
+
+# the Configuration for the structure, i.e., the tree of sub-Block
+*  # [none]
+
+# static constraints Configuration
+# a SimpleConfiguration< std::vector< double > > to set
+# the scaling constants in ACNetworkBlock
+# exact type of the Configuration object
+SimpleConfiguration<std::vector<double>>
+4       # the number of elements in the vector
+1.0     # C_v_scal
+0.0     # f_ACvS
+1.0     # f_scale
+16      # f_digits
+
+# dynamic constraints Configuration
+*  # none
+
+# static variables Configuration
+*  # none
+
+# dynamic variables Configuration
+*  # none
+
+# objective Configuration
+*  # none
+
+# is_feasible Configuration
+*  # none
+
+# is_optimal Configuration
+*  # none
+
+# solution Configuration
+*  # none
+
+# extra Configuration
+*  # none
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - END ACBCfg.txt  - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -6,10 +6,16 @@ th_24c24_demand:
     file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_24c24_demand
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_24c24_demand
+      smspp-tssb-lds-lp: *th_24c24_demand
+      smspp-tssb-bds-ld: *th_24c24_demand
+      smspp-tssb-bds-cvx-ld: *th_24c24_demand
+      smspp-tssb-ib: *th_24c24_demand
+      smspp-tssb-ib-ld: *th_24c24_demand
 
 th_48c24_demand:
   clustering:
@@ -19,10 +25,16 @@ th_48c24_demand:
     file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_48c24_demand
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_48c24_demand
+      smspp-tssb-lds-lp: *th_48c24_demand
+      smspp-tssb-bds-ld: *th_48c24_demand
+      smspp-tssb-bds-cvx-ld: *th_48c24_demand
+      smspp-tssb-ib: *th_48c24_demand
+      smspp-tssb-ib-ld: *th_48c24_demand
 
 th_168c24_demand:
   clustering:
@@ -32,10 +44,16 @@ th_168c24_demand:
     file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_168c24_demand
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_168c24_demand
+      smspp-tssb-lds-lp: *th_168c24_demand
+      smspp-tssb-bds-ld: *th_168c24_demand
+      smspp-tssb-bds-cvx-ld: *th_168c24_demand
+      smspp-tssb-ib: *th_168c24_demand
+      smspp-tssb-ib-ld: *th_168c24_demand
 
 th_8760_demand:
   clustering:
@@ -45,10 +63,16 @@ th_8760_demand:
     file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_8760_demand
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_8760_demand
+      smspp-tssb-lds-lp: *th_8760_demand
+      smspp-tssb-bds-ld: *th_8760_demand
+      smspp-tssb-bds-cvx-ld: *th_8760_demand
+      smspp-tssb-ib: *th_8760_demand
+      smspp-tssb-ib-ld: *th_8760_demand
 
 th_24c24_renewable:
   clustering:
@@ -58,10 +82,16 @@ th_24c24_renewable:
     file: config/instances/scenarios/tssb/stochastic-renewable-maxpower_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_24c24_renewable
         stochastic_parameters:
           parameters:
           - renewable_maxpower
+      smspp-tssb-bds: *th_24c24_renewable
+      smspp-tssb-lds-lp: *th_24c24_renewable
+      smspp-tssb-bds-ld: *th_24c24_renewable
+      smspp-tssb-bds-cvx-ld: *th_24c24_renewable
+      smspp-tssb-ib: *th_24c24_renewable
+      smspp-tssb-ib-ld: *th_24c24_renewable
 
 th_48c24_renewable:
   clustering:
@@ -71,10 +101,16 @@ th_48c24_renewable:
     file: config/instances/scenarios/tssb/stochastic-renewable-maxpower_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_48c24_renewable
         stochastic_parameters:
           parameters:
           - renewable_maxpower
+      smspp-tssb-bds: *th_48c24_renewable
+      smspp-tssb-lds-lp: *th_48c24_renewable
+      smspp-tssb-bds-ld: *th_48c24_renewable
+      smspp-tssb-bds-cvx-ld: *th_48c24_renewable
+      smspp-tssb-ib: *th_48c24_renewable
+      smspp-tssb-ib-ld: *th_48c24_renewable
 
 th_168c24_renewable:
   clustering:
@@ -84,10 +120,16 @@ th_168c24_renewable:
     file: config/instances/scenarios/tssb/stochastic-renewable-maxpower_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_168c24_renewable
         stochastic_parameters:
           parameters:
           - renewable_maxpower
+      smspp-tssb-bds: *th_168c24_renewable
+      smspp-tssb-lds-lp: *th_168c24_renewable
+      smspp-tssb-bds-ld: *th_168c24_renewable
+      smspp-tssb-bds-cvx-ld: *th_168c24_renewable
+      smspp-tssb-ib: *th_168c24_renewable
+      smspp-tssb-ib-ld: *th_168c24_renewable
 
 th_8760_renewable:
   clustering:
@@ -97,7 +139,13 @@ th_8760_renewable:
     file: config/instances/scenarios/tssb/stochastic-renewable-maxpower_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_8760_renewable
         stochastic_parameters:
           parameters:
           - renewable_maxpower
+      smspp-tssb-bds: *th_8760_renewable
+      smspp-tssb-lds-lp: *th_8760_renewable
+      smspp-tssb-bds-ld: *th_8760_renewable
+      smspp-tssb-bds-cvx-ld: *th_8760_renewable
+      smspp-tssb-ib: *th_8760_renewable
+      smspp-tssb-ib-ld: *th_8760_renewable

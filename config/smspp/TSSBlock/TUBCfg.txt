@@ -1,0 +1,52 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - TUBCfg.txt  - - - - - - - - - - - - - - - - -
+#
+# The BlockConfig of a ThermalUnitBlock: formulation and perspective cuts.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockConfig # exact type of the ComputeConfig object
+
+1  # the BlockConfig is a "differential" one
+
+2  # version of the BlockConfig format
+
+# the Configuration for the structure, i.e., the tree of sub-Block
+*  # [none]
+
+# static_constraints
+*    # [none]
+
+# dynamic_constraints
+SimpleConfiguration<std::pair<double,double>>
+1e-6    # threshold parameter for P/C separation
+1e-4    # tolerance value to consider a binary variable
+
+# static_variables
+SimpleConfiguration<int>
+0    # 0 = 3bin, 1 = T, 2 = pt, 3 = DP, 4 = SU, 5 = SD, 6 = SUSD (Formulation)
+#9    # +8 with Perspective Cuts
+#17   # +16: start-up / shut-down variables are continuous
+
+# dynamic_variables
+*    # [none]
+
+# objective
+*    # [none]
+
+# is_feasible
+*    # [none]
+
+# is_optimal
+*    # [none]
+
+# solution
+*    # [none]
+
+# extra
+*    # [none]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - END TUBCfg.txt  - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

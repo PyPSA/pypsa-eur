@@ -1,0 +1,23 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - InnerBCfg.txt - - - - - - - - - - - - - - - -
+#
+# A map from classname to BlockConfig: the InvestmentBlock over a TSSB, an
+# MSSB or a UCBlock (IBOCfg.txt, which gives the Solver of the inner Block),
+# and the units and the networks of a UCBlock (TUBCfg.txt, DCNBCfg.txt,
+# ACBCfg.txt, PFBCfg.txt).
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+SimpleConfiguration<std::map<std::string,Configuration*>>
+
+5 # the number of elements in the map
+InvestmentBlock         *IBOCfg.txt
+ThermalUnitBlock        *TUBCfg.txt
+DCNetworkBlock          *DCNBCfg.txt
+ACNetworkBlock          *ACBCfg.txt
+PolyhedralFunctionBlock *PFBCfg.txt
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - END InnerBCfg.txt - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

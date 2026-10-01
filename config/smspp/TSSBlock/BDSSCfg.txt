@@ -1,0 +1,92 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - -  BDSSCfg.txt  - - - - - - - - - - - - - - - -
+#
+# The subproblems of TSSBSCfg-BDS.txt: a :MILPSolver on the linear
+# program of a scenario, with the presolve off, which a Farkas
+# certificate needs.
+#
+# - the duals of an optimal solution, which give the optimality cut: any
+#   optimal dual solution does, basic or not, an interior-point one included;
+#
+# - the unbounded dual direction of an infeasible one, i.e., a Farkas
+#   certificate, which gives the feasibility cut: it is a ray of the dual
+#   polyhedron, hence any method can produce it, but the presolve cannot, it
+#   detecting the infeasibility on the reduced problem and leaving no
+#   certificate for the original one.
+#
+# With Gurobi nothing else is needed, the InfUnbdInfo parameter being set by
+# GRBMILPSolver itself; the equivalent configurations are
+#
+#   CPXMILPSolver:   CPXPARAM_Preprocessing_Presolve 0
+#   HiGHSMILPSolver: presolve off
+#
+# while SCIPMILPSolver has no Farkas certificate at all: with it, only
+# subproblems that are always feasible can be dealt with.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+0  # the BlockSolverConfig is not a "differential" one
+
+1  # number of (the names of) Solver in this BlockSolverConfig
+
+# now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
+GRBMILPSolver
+
+1  # number of ComputeConfig in this BlockSolverConfig
+
+# now all the ComputeConfig - - - - - - - - - - - - - - - - - - - - - - - - -
+ComputeConfig # exact type of the ComputeConfig object
+
+0  # f_diff == 0 ==> all non-provided parameters are set to the default value
+   # f_diff == 1 ==> all non-provided parameters are not changed
+
+6  # number of integer parameters
+
+# now all the integer parameters
+intLogVerb        0  # LogVerb, log verbosity of the MILPSolver
+Threads           1  # one thread, so that the time is that of a sequential
+                     # algorithm, as every other one here is
+intRelaxIntVars   1  # solve the continuous (LP) relaxation
+Method            1  # dual simplex: asked for reproducibility of the duals,
+                     # any optimal ones giving a valid optimality cut
+Presolve          0  # off, or an infeasible subproblem leaves no Farkas
+                     # certificate and no feasibility cut can be generated
+intThrowReducedCostException  0  # a Variable whose bounds are those of its
+                     # type, as a relaxed binary of a leaf, has no
+                     # OneVarConstraint to take its reduced cost, which the
+                     # cut, read off the coupling rows, does not need
+
+1  # number of double parameters
+
+# now all the double parameters
+dblRelAcc      1e-9  # relative accuracy required to solution
+
+0  # number of string parameters
+
+# now all the string parameters
+# [none]
+
+0  # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0  # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0  # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# pointer to the "extra" Configuration
+* # [none]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - -  END BDSSCfg.txt  - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,0 +1,77 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - BSCfg1-IP.txt - - - - - - - - - - - - - - - -
+#
+# A Block solved by a :MILPSolver with its integer Variable.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+1  # the BlockSolverConfig is a "differential" one
+
+1 # number of (the names of) Solver in this BlockSolverConfig
+# now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
+#CPXMILPSolver   # name of Solver
+GRBMILPSolver   # name of Solver
+#SCIPMILPSolver  # name of Solver
+#HiGHSMILPSolver  # name of Solver
+
+1 # number of ComputeConfig in this BlockSolverConfig
+
+# now all the ComputeConfig
+
+ComputeConfig # exact type of the ComputeConfig object
+
+1  # f_diff == 0 ==> all non-provided parameters are set to the default value
+   # f_diff == 1 ==> all non-provided parameters are not changed
+
+2 # number of integer parameters
+
+# now all the integer parameters
+intLogVerb      0 # log verbosity of the MILPSolver
+intRelaxIntVars 0 # nonzero if the continuous relaxation is solved
+
+# All specific CPLEX parameter (uncomment based on Solver)
+#CPXPARAM_Preprocessing_Presolve  0   # 0 = off, 1 = on (default)
+                                      # disable presolve for reproducibility
+#CPXPARAM_Emphasis_Numerical      1   # 0 = off (default), 1 = extreme numerical caution
+
+# All specific GUROBI parameter (uncomment based on Solver)
+#Presolve      0   # 0 = off, 1 = conservative, 2 = aggressive (default -1)
+                   # the scenario MILP keeps the presolve it is given: switching
+                   # it off is a handicap, and this Solver is a competitor here
+#NumericFocus  3   # 0 = auto (default), 1..3 = increasing precision focus
+
+1 # number of double parameters
+
+# now all the double parameters
+dblRelAcc       1e-8 # relative accuracy required to solution
+
+0 # number of string parameters
+
+# now all the string parameters
+#strOutputFile        uc.lp # filename for .lp file
+#strLogFileName uc-milp.log # filename for the Solver log
+
+0 # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0 # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0 # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# pointer to the "extra" Configuration
+* # [none]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - END BSCfg1-IP.txt - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

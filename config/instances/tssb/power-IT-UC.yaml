@@ -52,5 +52,5 @@ solving:
     linearized_unit_commitment: false
     noisy_costs: false
   solver:
-    name: [gurobi, smspp, smspp]
-    options: [gurobi-default, smspp-tssb, smspp-tssb-pips-ipmpp]
+    name: [gurobi, smspp, smspp, smspp, smspp, smspp, smspp]
+    options: [gurobi-default, smspp-tssb, smspp-tssb-pips-ipmpp, smspp-tssb-lds, smspp-tssb-ldld, smspp-tssb-ldrec, smspp-tssb-pph]

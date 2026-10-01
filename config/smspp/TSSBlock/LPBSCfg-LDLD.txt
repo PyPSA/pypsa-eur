@@ -1,0 +1,75 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - LPBSCfg-LDLD.txt  - - - - - - - - - - - - - - -
+#
+# The Lagrangian dual of the units of a scenario, each thermal unit
+# solved by its dynamic programming (InnerBSCfg.txt).
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+1  # the BlockSolverConfig is a "differential" one
+
+1 # number of (the names of) Solver in this BlockSolverConfig
+
+# now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
+LagrangianDualSolver  # name of Solver
+
+1 # number of ComputeConfig in this BlockSolverConfig
+
+# now all the ComputeConfig
+# 1st ComputeConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ComputeConfig of the LagrangianDualSolver; it mostly is the
+# ComputeConfig of the inner Solver, which is a [Parallel]BundleSolver
+
+*LDCfg.txt +
+
+1  # f_diff == 1 ==> only the entries listed below are changed
+
+3 # number of integer parameters
+
+# now all the integer parameters
+intDoEasy         3 # do easy components for (some) LagBFunction
+                    # (bit 0 + bit 1 = enable easy + ChgCosts)
+intMaxIter     1000 # max number of iterations for each call: the cap is not
+                    # binding, the inner dual stops on its own criteria first,
+                    # and it must not be lowered to go faster. The 100 of
+                    # LPBSCfg-LD.txt is tuned on a 24 to 48 period horizon: on
+                    # 40 units over 96 periods it stops the inner duals far
+                    # from their optimum and the bound of the nested dual falls
+                    # to -0.482% of the optimum, against -0.075% with 1000,
+                    # which is 7.4 seconds against 20.5
+intLogVerb        0 # log verbosity of main Bundle algorithm
+
+2 # number of double parameters
+
+# now all the double parameters
+dblRelAcc       1e-4 # relative accuracy required to solution
+dbltInit        1e+0 # initial value for t
+
+1 # number of string parameters
+
+# now all the string parameters
+str_LagBF_BSCfg InnerBSCfg.txt # BlockSolverConfig for the LagBFunctions
+
+0 # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0 # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0 # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# end of BlockSolverConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - END LPBSCfg-LDLD.txt  - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

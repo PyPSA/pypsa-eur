@@ -1,0 +1,38 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - BDSCfg-CVX-LD.txt - - - - - - - - - - - - - - -
+#
+# The ComputeConfig of BDSCfg-LD.txt in the convex regime: the master is
+# solved by the BundleSolver of BDSMCfg-CVX.txt, the value functions of the
+# subproblems being components of its Objective.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+*BDSCfg-LD.txt +
+
+1  # f_diff == 1 ==> only the entries listed below are changed
+
+1  # number of integer parameters
+
+# now all the integer parameters
+int_BDSlv_Regime  0  # 0 = convex master, 1 = MILP master
+
+0  # number of double parameters
+
+1  # number of string parameters
+
+# now all the string parameters
+str_Mstr_BSCfg  BDSMCfg-CVX.txt  # BlockSolverConfig of the master
+
+0  # number of vector-of-int parameters
+
+0  # number of vector-of-double parameters
+
+0  # number of vector-of-string parameters
+
+# pointer to the "extra" Configuration
+* # [none]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - END BDSCfg-CVX-LD.txt - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,0 +1,76 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - TSSBSCfg-LDLD.txt - - - - - - - - - - - - - - -
+#
+# A TSSBlock solved by the Lagrangian dual of its scenarios, each one
+# solved by the Lagrangian dual of its units (LPBSCfg-LDLD.txt).
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+1  # the BlockSolverConfig is a "differential" one
+
+1 # number of (the names of) Solver in this BlockSolverConfig
+
+LagrangianDualSolver  # name of the Solver
+
+1 # number of ComputeConfig in this BlockSolverConfig
+
+# the ComputeConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ComputeConfig of the LagrangianDualSolver; it mostly is the
+# ComputeConfig of the inner Solver, which is a [Parallel]BundleSolver
+
+*LDCfg.txt +
+
+1  # f_diff == 1 ==> only the entries listed below are changed
+
+3 # number of integer parameters
+
+int_LDSlv_iBCopy  0 # 1 if sub-Block must be R3B-copied
+intLogVerb        1 # log verbosity of main Bundle algorithm
+intTrgtMng       31 # bit-wise encoding targets and accuracies management:
+                    # bit 0: if lower/upper target is set to each convex/concave component
+                    # bit 1: if upper/lower target is set to each convex/concave component
+                    # bit 2-3: if accuracy is set (2 = upper - lower, 3 = using EpsU)
+                    # bit 4: if Lipschitz constant is used to compute the upper model
+
+7 # number of double parameters
+
+dblMaxTime        3600 # maximum time for a call, so that the nested dual is
+                       # given the same budget as the MILP it is compared with
+
+dblMinNrEvls        -1 # every component is evaluated at each iteration: a
+                       # component here is an entire inner LagrangianDualSolver,
+                       # so an iteration made on one of the three alone buys
+                       # little and costs a master problem anyway; on the NC
+                       # instances the evaluations go from 865 and 1705 down
+                       # to 132 and 168
+dblRelAcc         1e-5 # relative accuracy required to solution
+dbltStar         -1e+0 # stopping parameter: multiplied to || residual || to estimate gap
+dblmxIncr            2 # max increase of t
+dbltMaior         1e+9 # maximum value for t
+dbltInit          1e-3 # initial value for t
+
+1 # number of string parameters
+
+str_LagBF_BSCfg  LPBSCfg-LDLD.txt # BlockSolverConfig for the LagBFunctions
+
+0 # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0 # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0 # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - END TSSBSCfg-LDLD.txt - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

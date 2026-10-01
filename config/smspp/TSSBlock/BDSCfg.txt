@@ -1,0 +1,56 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - BDSCfg.txt - - - - - - - - - - - - - - - -
+#
+# The ComputeConfig of the BendersDecompositionSolver of TSSBSCfg-BDS.txt:
+# the MILP regime, one cut per scenario, the scenarios of a round evaluated
+# by 8 threads, the master of BDSMCfg.txt and the subproblems of BDSSCfg.txt.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ComputeConfig # exact type of the ComputeConfig object
+
+0  # f_diff == 0 ==> all non-provided parameters are set to the default value
+   # f_diff == 1 ==> all non-provided parameters are not changed
+
+2  # number of integer parameters
+
+# now all the integer parameters
+int_BDSlv_Regime     1  # 0 = convex master, 1 = MILP master
+intMaxThread         8  # threads evaluating the subproblems of a round, at
+                        # most the cores of the machine; the run is the same
+                        # for every value, only faster, and 1 evaluates them
+                        # one after the other
+
+0  # number of double parameters
+
+# now all the double parameters
+# [none]
+
+2  # number of string parameters
+
+# now all the string parameters
+str_Bsub_BSCfg  BDSSCfg.txt  # BlockSolverConfig of the subproblems
+str_Mstr_BSCfg  BDSMCfg.txt  # BlockSolverConfig of the master
+
+0  # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0  # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0  # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# pointer to the "extra" Configuration
+* # [none]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - END BDSCfg.txt - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

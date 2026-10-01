@@ -6,10 +6,20 @@ th_24c24_demand_3:
     file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_24c24_demand_3
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_24c24_demand_3
+      smspp-tssb-lds-lp: *th_24c24_demand_3
+      smspp-tssb-bds-ld: *th_24c24_demand_3
+      smspp-tssb-bds-cvx-ld: *th_24c24_demand_3
+      smspp-tssb-ib: *th_24c24_demand_3
+      smspp-tssb-ib-ld: *th_24c24_demand_3
+      smspp-tssb-lds: *th_24c24_demand_3
+      smspp-tssb-ldld: *th_24c24_demand_3
+      smspp-tssb-ldrec: *th_24c24_demand_3
+      smspp-tssb-pph: *th_24c24_demand_3
 
 th_120c24_demand_3:
   clustering:
@@ -19,10 +29,20 @@ th_120c24_demand_3:
     file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_120c24_demand_3
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_120c24_demand_3
+      smspp-tssb-lds-lp: *th_120c24_demand_3
+      smspp-tssb-bds-ld: *th_120c24_demand_3
+      smspp-tssb-bds-cvx-ld: *th_120c24_demand_3
+      smspp-tssb-ib: *th_120c24_demand_3
+      smspp-tssb-ib-ld: *th_120c24_demand_3
+      smspp-tssb-lds: *th_120c24_demand_3
+      smspp-tssb-ldld: *th_120c24_demand_3
+      smspp-tssb-ldrec: *th_120c24_demand_3
+      smspp-tssb-pph: *th_120c24_demand_3
 
 th_365c24_demand_3:
   clustering:
@@ -32,10 +52,20 @@ th_365c24_demand_3:
     file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_365c24_demand_3
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_365c24_demand_3
+      smspp-tssb-lds-lp: *th_365c24_demand_3
+      smspp-tssb-bds-ld: *th_365c24_demand_3
+      smspp-tssb-bds-cvx-ld: *th_365c24_demand_3
+      smspp-tssb-ib: *th_365c24_demand_3
+      smspp-tssb-ib-ld: *th_365c24_demand_3
+      smspp-tssb-lds: *th_365c24_demand_3
+      smspp-tssb-ldld: *th_365c24_demand_3
+      smspp-tssb-ldrec: *th_365c24_demand_3
+      smspp-tssb-pph: *th_365c24_demand_3
 
 th_24c24_demand_10:
   clustering:
@@ -45,10 +75,20 @@ th_24c24_demand_10:
     file: config/instances/scenarios/tssb/stochastic-demand_10.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_24c24_demand_10
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_24c24_demand_10
+      smspp-tssb-lds-lp: *th_24c24_demand_10
+      smspp-tssb-bds-ld: *th_24c24_demand_10
+      smspp-tssb-bds-cvx-ld: *th_24c24_demand_10
+      smspp-tssb-ib: *th_24c24_demand_10
+      smspp-tssb-ib-ld: *th_24c24_demand_10
+      smspp-tssb-lds: *th_24c24_demand_10
+      smspp-tssb-ldld: *th_24c24_demand_10
+      smspp-tssb-ldrec: *th_24c24_demand_10
+      smspp-tssb-pph: *th_24c24_demand_10
 
 th_120c24_demand_10:
   clustering:
@@ -58,10 +98,20 @@ th_120c24_demand_10:
     file: config/instances/scenarios/tssb/stochastic-demand_10.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_120c24_demand_10
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_120c24_demand_10
+      smspp-tssb-lds-lp: *th_120c24_demand_10
+      smspp-tssb-bds-ld: *th_120c24_demand_10
+      smspp-tssb-bds-cvx-ld: *th_120c24_demand_10
+      smspp-tssb-ib: *th_120c24_demand_10
+      smspp-tssb-ib-ld: *th_120c24_demand_10
+      smspp-tssb-lds: *th_120c24_demand_10
+      smspp-tssb-ldld: *th_120c24_demand_10
+      smspp-tssb-ldrec: *th_120c24_demand_10
+      smspp-tssb-pph: *th_120c24_demand_10
 
 th_365c24_demand_10:
   clustering:
@@ -71,10 +121,20 @@ th_365c24_demand_10:
     file: config/instances/scenarios/tssb/stochastic-demand_10.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_365c24_demand_10
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_365c24_demand_10
+      smspp-tssb-lds-lp: *th_365c24_demand_10
+      smspp-tssb-bds-ld: *th_365c24_demand_10
+      smspp-tssb-bds-cvx-ld: *th_365c24_demand_10
+      smspp-tssb-ib: *th_365c24_demand_10
+      smspp-tssb-ib-ld: *th_365c24_demand_10
+      smspp-tssb-lds: *th_365c24_demand_10
+      smspp-tssb-ldld: *th_365c24_demand_10
+      smspp-tssb-ldrec: *th_365c24_demand_10
+      smspp-tssb-pph: *th_365c24_demand_10
 
 
 th_24c24_demand_20:
@@ -85,10 +145,20 @@ th_24c24_demand_20:
     file: config/instances/scenarios/tssb/stochastic-demand_20.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_24c24_demand_20
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_24c24_demand_20
+      smspp-tssb-lds-lp: *th_24c24_demand_20
+      smspp-tssb-bds-ld: *th_24c24_demand_20
+      smspp-tssb-bds-cvx-ld: *th_24c24_demand_20
+      smspp-tssb-ib: *th_24c24_demand_20
+      smspp-tssb-ib-ld: *th_24c24_demand_20
+      smspp-tssb-lds: *th_24c24_demand_20
+      smspp-tssb-ldld: *th_24c24_demand_20
+      smspp-tssb-ldrec: *th_24c24_demand_20
+      smspp-tssb-pph: *th_24c24_demand_20
 
 th_120c24_demand_20:
   clustering:
@@ -98,10 +168,20 @@ th_120c24_demand_20:
     file: config/instances/scenarios/tssb/stochastic-demand_20.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_120c24_demand_20
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_120c24_demand_20
+      smspp-tssb-lds-lp: *th_120c24_demand_20
+      smspp-tssb-bds-ld: *th_120c24_demand_20
+      smspp-tssb-bds-cvx-ld: *th_120c24_demand_20
+      smspp-tssb-ib: *th_120c24_demand_20
+      smspp-tssb-ib-ld: *th_120c24_demand_20
+      smspp-tssb-lds: *th_120c24_demand_20
+      smspp-tssb-ldld: *th_120c24_demand_20
+      smspp-tssb-ldrec: *th_120c24_demand_20
+      smspp-tssb-pph: *th_120c24_demand_20
 
 th_365c24_demand_20:
   clustering:
@@ -111,7 +191,17 @@ th_365c24_demand_20:
     file: config/instances/scenarios/tssb/stochastic-demand_20.yaml
   solving:
     solver_options:
-      smspp-tssb:
+      smspp-tssb: &th_365c24_demand_20
         stochastic_parameters:
           parameters:
           - demand
+      smspp-tssb-bds: *th_365c24_demand_20
+      smspp-tssb-lds-lp: *th_365c24_demand_20
+      smspp-tssb-bds-ld: *th_365c24_demand_20
+      smspp-tssb-bds-cvx-ld: *th_365c24_demand_20
+      smspp-tssb-ib: *th_365c24_demand_20
+      smspp-tssb-ib-ld: *th_365c24_demand_20
+      smspp-tssb-lds: *th_365c24_demand_20
+      smspp-tssb-ldld: *th_365c24_demand_20
+      smspp-tssb-ldrec: *th_365c24_demand_20
+      smspp-tssb-pph: *th_365c24_demand_20

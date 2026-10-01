@@ -25,7 +25,7 @@ ComputeConfig # exact type of the ComputeConfig object
 1  # f_diff == 0 ==> all non-provided parameters are set to the default value
    # f_diff == 1 ==> all non-provided parameters are not changed
 
-25 # number of integer parameters
+18 # number of integer parameters
 
 # now all the integer parameters
 intMaxIter         10 # max number of iterations of the heuristic itself
@@ -54,27 +54,10 @@ intMnSSC            0 # min number of consecutive SS with the same t for a t inc
 intMnNSC            1 # min number of consecutive NS with the same t for a t decrease
 inttSPar1          12 # long-term t-strategy (0 = none, 4 = soft, 8 = hard, 12 = balancing)
 intMaxNrEvls        2 # maximum number of function evaluations at each iteration
-intMPName          15 # MP solver: 0 = QPP, 7 = Cplex/Gurobi with quadratic stabilization
-                      # + 8 = check for duplicate linearizations
 
-# QPPenalty's parameters :- - - - - - - - - - - - - - - - - - - - - - - - - -
-
-intMPlvl            4 # log verbosity of Master Problem
-intQPmp1            0 # MxAdd, how many variables can be added to the base at each
-                      # iteration in BMinQuad (0 = at will)
-intQPmp2            0 # MxRmv, how many variables can be removed from the base at each
-                      # iteration in BMinQuad (0 = at will)
-
-# OSIMPSolver's parameters :- - - - - - - - - - - - - - - - - - - - - - - - -
-
-intOSImp1           0 # Osi(Cpx/Grb)Solver algorithm (0 = auto (default),
-                      # 1 = primal, 2 = dual, 3 = network, 4 = barrier,
-                      # 5 = sifting, 6 = concurrent)
-intOSImp2           0 # pre-processing (reduction)
-intOSImp3           1 # threads
 intRstAlg           2 # parameter to handle the reset of the algorithm
 
-19 # number of double parameters
+18 # number of double parameters
 
 # now all the double parameters
 dblMaxTime      43200.0 # max CPU time for the whole heuristic
@@ -97,7 +80,6 @@ dbltMaior         1e+6 # maximum value for t
 dbltMinor        1e-10 # minimum value for t
 dbltInit           1e-3 # initial value for t
 dbltSPar2         1e-2 # parameter for the long-term t-strategy
-dblCtOff          0.01 # cut-off factor for pricing in MinQuad
 
 dbl_penaltyFactor  1e+3
 
@@ -110,6 +92,7 @@ str_LDSlv_ISName ParallelBundleSolver # the inner Solver used by LagrangianDualS
 #str_LDSlv_ISName          BundleSolver # the inner Solver used by LagrangianDualSolver
 str_LagBF_BSCfg         InnerBSCfg.txt # BlockSolverConfig for the LagBFunctions,
                                        # the same the LagrangianDualSolver uses
+strMPBSolverCfg  MPBCfg.txt # BlockSolverConfig for the MasterProblemBlock's Solver
 
 0 # number of vector-of-int parameters
 

@@ -1,0 +1,54 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - IBOCfg.txt  - - - - - - - - - - - - - - - -
+#
+# The OBlockConfig of an InvestmentBlock: it reformulates the bounds on the
+# investment, and gives the InvestmentFunction its ComputeConfig [see
+# IFCfg.txt], which holds the BlockSolverConfig of the inner Block.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+OBlockConfig  # exact type of the Configuration object
+
+1  # the BlockConfig is a "differential" one
+
+2  # version of the BlockConfig format
+
+# the Configuration for the structure, i.e., the tree of sub-Block
+*  # [none]
+
+# static_constraints: the bounds l <= x <= u on the investment are
+# reformulated as 0 <= x <= u - l, the only form BundleSolver handles
+SimpleConfiguration<int>
+1
+
+# dynamic_constraints
+*  # [none]
+
+# static_variables
+*  # [none]
+
+# dynamic_variables
+*  # [none]
+
+# objective
+*  # [none]
+
+# is_feasible
+*  # [none]
+
+# is_optimal
+*  # [none]
+
+# solution
+*  # [none]
+
+# extra
+*  # [none]
+
+# the ComputeConfig of the Objective, i.e., of the InvestmentFunction
+*IFCfg.txt
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - END IBOCfg.txt  - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

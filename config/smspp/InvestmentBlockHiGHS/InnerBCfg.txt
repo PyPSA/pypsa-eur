@@ -1,0 +1,18 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - InnerBCfg.txt - - - - - - - - - - - - - - - -
+#
+# A map from classname to BlockConfig, which smspp_investmentblock_solver
+# reads by default (-B InnerBCfg.txt): the InvestmentBlock gets IBOCfg.txt,
+# which gives the Solver of its inner Block (IFCfg.txt, BSCfg.txt).
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+SimpleConfiguration<std::map<std::string,Configuration*>>
+
+1 # the number of elements in the map
+InvestmentBlock         *IBOCfg.txt
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - END InnerBCfg.txt - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
