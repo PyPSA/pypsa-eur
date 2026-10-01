@@ -121,7 +121,10 @@ def concatenate_network_with_previous(
 
             to_densify = static_only.difference(already_dynamic)
             previous_values = c.static.loc[to_densify, attr]
-            to_densify = to_densify[current_values[to_densify].ne(previous_values)]
+            both_nan = current_values[to_densify].isna() & previous_values.isna()
+            to_densify = to_densify[
+                current_values[to_densify].ne(previous_values) & ~both_nan
+            ]
             if not to_densify.empty:
                 expanded = pd.DataFrame(
                     index=n.snapshots, columns=to_densify, dtype=float
@@ -135,9 +138,9 @@ def concatenate_network_with_previous(
     snapshot_periods = list(n.snapshots.get_level_values("period").unique())
     investment_periods_list = list(n.investment_periods)
 
-    assert snapshot_periods == investment_periods_list, (
-        "Investment periods do not match snapshot periods after concatenation"
-    )
+    assert (
+        snapshot_periods == investment_periods_list
+    ), "Investment periods do not match snapshot periods after concatenation"
 
     logger.info(
         f"Successfully concatenated network: {len(n.investment_periods)} investment periods"
