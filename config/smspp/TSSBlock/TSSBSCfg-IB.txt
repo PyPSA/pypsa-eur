@@ -57,8 +57,12 @@ intRstAlg  2      # parameter to handle the reset of the algorithm
 15 # number of double parameters
 
 # now all the double parameters
-dblRelAcc  1e-4   # relative accuracy required to solution
-dblNZEps   1e-4   # stopping parameter: threshold to declare 0 the || residual ||
+dblRelAcc  1e-6   # relative accuracy required to solution
+dblNZEps   1e-9   # stopping parameter: threshold to declare 0 the || residual ||,
+                  # relative to the first full subgradient (intWZNorm 10),
+                  # which at a design of 0 is millions: with 1e-4 the bundle
+                  # stops where the residual is still a few units, far from
+                  # the optimum (2.9% above it on a TSSB of 9 scenarios)
 dbltStar   -100   # stopping parameter: multiplied to || residual || to estimate gap
 dblBPar5   4      # first parameter for dynamic max n. of items per iteration
 dblm1      -0.30  # a NS is possible if (~) Fi( Lambda1 ) >= Fi( Lambda ) + | m1 | v*
