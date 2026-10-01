@@ -138,9 +138,9 @@ def concatenate_network_with_previous(
     snapshot_periods = list(n.snapshots.get_level_values("period").unique())
     investment_periods_list = list(n.investment_periods)
 
-    assert (
-        snapshot_periods == investment_periods_list
-    ), "Investment periods do not match snapshot periods after concatenation"
+    assert snapshot_periods == investment_periods_list, (
+        "Investment periods do not match snapshot periods after concatenation"
+    )
 
     logger.info(
         f"Successfully concatenated network: {len(n.investment_periods)} investment periods"
