@@ -75,7 +75,7 @@ def get_compose_inputs(w):
         sector_inputs = dict(
             **input_heat_source_power(w),
             clustered_gas_network=(
-                rules.cluster_gas_network.output.clustered_gas_network
+                "resources/module_euro_gas_grid/" + RDIR + "pipelines.parquet"
                 if sector["gas_network"] or sector["H2_retrofit"]
                 else []
             ),
