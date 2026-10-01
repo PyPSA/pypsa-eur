@@ -3364,9 +3364,7 @@ def add_heat(
                         + costs.at[fuel, "CO2 intensity"]
                         * (
                             costs.at["biomass CHP capture", "heat-output"]
-                            + costs.at[
-                                "biomass CHP capture", "compression-heat-output"
-                            ]
+                            + costs.at["biomass CHP capture", "compression-heat-output"]
                             - costs.at["biomass CHP capture", "heat-input"]
                         ),
                         efficiency3=costs.at[fuel, "CO2 intensity"]
