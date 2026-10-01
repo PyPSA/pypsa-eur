@@ -187,9 +187,13 @@ class _CHPConfig(BaseModel):
     enable: bool = Field(
         True, description="Add option for using Combined Heat and Power (CHP)."
     )
+    cc: bool = Field(
+        True,
+        description="Add CHP plants with carbon capture (CC) for all fuels in `fuel`.",
+    )
     fuel: list[str] = Field(
         default_factory=lambda: ["solid biomass", "gas"],
-        description='Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are "gas", "oil", "methanol", "lignite", "coal" as well as "solid biomass". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added.',
+        description='Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are "gas", "oil", "methanol", "lignite", "coal" as well as "solid biomass". For all fuels except solid biomass, the techno-economic data from gas CHP is used.',
     )
     micro_chp: bool = Field(
         False,
