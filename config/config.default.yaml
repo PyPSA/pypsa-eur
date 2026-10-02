@@ -21,7 +21,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#run_cf
 run:
   prefix: ""
-  name: ""
+  name: "prueba"
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -527,7 +527,7 @@ load:
   manual_adjustments: true
   scaling_factor: 1.0
   fixed_year: false
-  supplement_synthetic: true
+  demand_source: supplemented
   substation_only: true
   distribution_key:
     gdp: 0.6
