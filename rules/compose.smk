@@ -72,9 +72,7 @@ def get_compose_inputs(w):
 
     # Sector-specific inputs (only when sector coupling is enabled)
     if sector_enabled:
-        enable_ptes = (
-            cfg["sector"]["tes"] and cfg["sector"]["district_heating"]["ptes"]["enable"]
-        )
+        enable_ptes = cfg["sector"]["district_heating"]["ptes"]["enable"]
         sector_inputs = dict(
             **input_heat_source_power(w),
             clustered_gas_network=(
@@ -266,7 +264,6 @@ rule compose_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
-        tes=config_provider("sector", "tes"),
         enable_ptes=config_provider("sector", "district_heating", "ptes", "enable"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"

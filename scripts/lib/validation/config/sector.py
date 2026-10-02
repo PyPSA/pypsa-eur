@@ -67,7 +67,7 @@ class _DistrictHeatingConfig(ConfigModel):
             "max_top_temperature": 90,
             "min_bottom_temperature": 35,
         },
-        description="Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating; it requires `sector: tes: true`. If disabled, all other `ptes` options are ignored.",
+        description="Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating, independently of `sector: tes`. If disabled, all other `ptes` options are ignored.",
     )
     ates: dict[str, Any] = Field(
         default_factory=lambda: {
@@ -645,7 +645,7 @@ class SectorConfig(BaseModel):
 
     tes: bool = Field(
         True,
-        description="Add option for storing thermal energy in water tanks and, if `district_heating: ptes: enable` is true, large water pits associated with district heating systems (TES).",
+        description="Add option for storing thermal energy in water tanks in all heat systems. Pit and aquifer thermal energy storage are controlled separately by `district_heating: ptes: enable` and `district_heating: ates: enable`.",
     )
     boilers: bool = Field(
         True, description="Add option for transforming gas into heat using gas boilers."
