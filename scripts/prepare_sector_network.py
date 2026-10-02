@@ -2992,9 +2992,7 @@ def add_heat(
                 # Load pre-calculated e_max_pu profiles
                 e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
                 e_max_pu = (
-                    e_max_pu_data.sel(name=nodes)
-                    .to_pandas()
-                    .reindex(index=n.snapshots)
+                    e_max_pu_data.sel(name=nodes).to_pandas().reindex(index=n.snapshots)
                 )
             else:
                 e_max_pu = 1
