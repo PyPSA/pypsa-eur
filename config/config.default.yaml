@@ -912,8 +912,10 @@ sector:
     central: 1.0
   chp:
     enable: true
-    cc: true
     fuel:
+    - solid biomass
+    - gas
+    fuel_cc:
     - solid biomass
     - gas
     micro_chp: false

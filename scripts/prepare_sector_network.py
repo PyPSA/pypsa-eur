@@ -3332,7 +3332,7 @@ def add_heat(
                     lifetime=costs.at["central gas CHP", "lifetime"],
                 )
 
-                if options["chp"]["cc"]:
+                if fuel in options["chp"]["fuel_cc"]:
                     n.add(
                         "Link",
                         nodes + f" urban central {fuel} CHP CC",
@@ -4094,7 +4094,7 @@ def add_biomass(
             lifetime=costs.at[key, "lifetime"],
         )
 
-        if options["chp"]["cc"]:
+        if "solid biomass" in options["chp"]["fuel_cc"]:
             n.add(
                 "Link",
                 urban_central + " urban central solid biomass CHP CC",
