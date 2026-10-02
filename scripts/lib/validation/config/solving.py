@@ -167,9 +167,9 @@ class _SolvingOptionsConfig(BaseModel):
         3,
         description="Maximum number of solving iterations in between which resistance and reactence (`x/r`) are updated for branches according to `s_nom_opt` of the previous run.",
     )
-    transmission_losses: int = Field(
-        2,
-        description="Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
+    transmission_losses: bool | dict[str, Any] = Field(
+        {"mode": "secants", "atol": 15, "rtol": 0.5},
+        description='Controls the piecewise linear approximation of transmission losses in AC lines. Set to `false` to disable losses or `true` to enable PyPSAs default secant-based approximation with `atol=1` (MW) and `rtol=0.1`. A dict can configure the approximation; the legacy tangent-based method can be configured with `{"mode": "tangents", "segments": 2}`.The default values for atol and rtol or chosen such that the secant-based approximation requires a small number of extra constraints – comparable to the effort of the previous, tangent-based approximation.',
     )
     linearized_unit_commitment: bool = Field(
         True,
