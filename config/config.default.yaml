@@ -744,6 +744,7 @@ sector:
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
     ptes:
+      enable: true
       dynamic_capacity: false
       supplemental_heating:
         enable: false

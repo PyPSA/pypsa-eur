@@ -2686,6 +2686,8 @@ def add_heat(
     """
     logger.info("Add heat sector")
 
+    enable_ptes = options["tes"] and options["district_heating"]["ptes"]["enable"]
+
     sectors = [sector.value for sector in HeatSector]
 
     heat_demand = build_heat_demand(
@@ -2925,7 +2927,7 @@ def add_heat(
                 ],
             )
 
-            if heat_system == HeatSystem.URBAN_CENTRAL:
+            if heat_system == HeatSystem.URBAN_CENTRAL and enable_ptes:
                 n.add("Carrier", f"{heat_system} water pits")
 
                 n.add(
@@ -3202,7 +3204,8 @@ def add_heat(
                 )
 
             if (
-                heat_source in params.temperature_limited_stores
+                enable_ptes
+                and heat_source in params.temperature_limited_stores
                 and options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]

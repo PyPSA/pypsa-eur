@@ -4912,7 +4912,7 @@
             },
             "ptes": {
               "additionalProperties": true,
-              "description": "Pit thermal energy storage settings.",
+              "description": "Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating; it requires `sector: tes: true`. If disabled, all other `ptes` options are ignored.",
               "type": "object"
             },
             "ates": {
@@ -5258,7 +5258,7 @@
         },
         "tes": {
           "default": true,
-          "description": "Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES).",
+          "description": "Add option for storing thermal energy in water tanks and, if `district_heating: ptes: enable` is true, large water pits associated with district heating systems (TES).",
           "type": "boolean"
         },
         "boilers": {
@@ -7553,7 +7553,7 @@
         },
         "ptes": {
           "additionalProperties": true,
-          "description": "Pit thermal energy storage settings.",
+          "description": "Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating; it requires `sector: tes: true`. If disabled, all other `ptes` options are ignored.",
           "type": "object"
         },
         "ates": {
@@ -12362,7 +12362,7 @@
             },
             "ptes": {
               "additionalProperties": true,
-              "description": "Pit thermal energy storage settings.",
+              "description": "Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating; it requires `sector: tes: true`. If disabled, all other `ptes` options are ignored.",
               "type": "object"
             },
             "ates": {
@@ -12708,7 +12708,7 @@
         },
         "tes": {
           "default": true,
-          "description": "Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES).",
+          "description": "Add option for storing thermal energy in water tanks and, if `district_heating: ptes: enable` is true, large water pits associated with district heating systems (TES).",
           "type": "boolean"
         },
         "boilers": {

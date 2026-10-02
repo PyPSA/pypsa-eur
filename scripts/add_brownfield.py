@@ -445,7 +445,7 @@ def main(
 
     update_heat_pump_efficiency(n, n_previous, current_horizon)
 
-    if params.tes and params.dynamic_ptes_capacity:
+    if params.tes and params.enable_ptes and params.dynamic_ptes_capacity:
         update_dynamic_ptes_capacity(n, n_previous, current_horizon)
 
     logger.info(
