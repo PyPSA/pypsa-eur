@@ -215,9 +215,6 @@ def define_spatial(nodes, options):
     return spatial
 
 
-spatial = SimpleNamespace()
-
-
 def determine_emission_sectors(options):
     sectors = ["electricity"]
     if options["transport"]:
@@ -1696,13 +1693,13 @@ def add_h2_gas_infrastructure(
             lifetime=costs.at["OCGT", "lifetime"],
         )
 
-    h2_caverns = pd.read_csv(h2_cavern_file, index_col=0)
+    h2_caverns = (
+        pd.read_csv(h2_cavern_file, index_col=0)
+        if options["hydrogen_underground_storage"]
+        else pd.DataFrame()
+    )
 
-    if (
-        not h2_caverns.empty
-        and options["hydrogen_underground_storage"]
-        and set(cavern_types).intersection(h2_caverns.columns)
-    ):
+    if not h2_caverns.empty and set(cavern_types).intersection(h2_caverns.columns):
         h2_caverns = h2_caverns[cavern_types].sum(axis=1)
 
         # only use sites with at least 2 TWh potential
@@ -5546,13 +5543,6 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
-def limit_individual_line_extension(n, maxext):
-    logger.info(f"Limiting new HVAC and HVDC extensions to {maxext} MW")
-    n.lines["s_nom_max"] = n.lines["s_nom"] + maxext
-    hvdc = n.links.index[n.links.carrier == "DC"]
-    n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + maxext
-
-
 def _sum_keep_na(s):
     """
     Sum keeping all-NaN groups as NaN instead of collapsing them to 0.
@@ -5941,7 +5931,7 @@ def add_enhanced_geothermal(
             bus_eta = pd.concat(
                 (efficiency[bus].rename(idx) for idx in well_name),
                 axis=1,
-            )
+            ).loc[n.snapshots]
         else:
             bus_eta = efficiency
 
@@ -5959,7 +5949,7 @@ def add_enhanced_geothermal(
             p_nom_extendable=True,
             p_nom_max=p_nom_max.set_axis(well_name) / efficiency_orc,
             capital_cost=capital_cost.set_axis(well_name) * efficiency_orc,
-            efficiency=bus_eta.loc[n.snapshots],
+            efficiency=bus_eta,
             lifetime=costs.at["geothermal", "lifetime"],
         )
 
@@ -6145,13 +6135,14 @@ def main(
         pd.read_csv(inputs["pop_weighted_energy_totals"], index_col=0) * nyears
     )
 
-    pop_weighted_heat_totals = (
-        pd.read_csv(inputs["pop_weighted_heat_totals"], index_col=0) * nyears
-    )
-    pop_weighted_energy_totals.update(pop_weighted_heat_totals)
+    if options["heating"]:
+        pop_weighted_heat_totals = (
+            pd.read_csv(inputs["pop_weighted_heat_totals"], index_col=0) * nyears
+        )
+        pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
     fn = inputs.gas_input_nodes_simplified
-    gas_input_nodes = pd.read_csv(fn, index_col=0)
+    gas_input_nodes = pd.read_csv(fn, index_col=0) if fn else None
 
     carriers_to_keep = params.pypsa_eur
     patch_electricity_network(n, carriers_to_keep)
@@ -6390,7 +6381,7 @@ def main(
             egs_overlap=inputs.egs_overlap,
             egs_config=options["enhanced_geothermal"],
             spatial=spatial,
-            egs_capacity_factors="path/to/capacity_factors.csv",
+            egs_capacity_factors=inputs.egs_capacity_factors,
         )
 
     if options["imports"]["enable"]:
