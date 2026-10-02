@@ -21,7 +21,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#run_cf
 run:
   prefix: ""
-  name: "prueba"
+  name: ""
   scenarios:
     enable: false
     file: config/scenarios.yaml
