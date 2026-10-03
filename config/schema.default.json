@@ -3031,7 +3031,7 @@
         "demand_source": {
           "default": "supplemented",
           "description": "Source of electricity demand data.",
-          "markdownDescription": "Available options:\n\n- `historical`: use historical demand data from ENTSO-E, Open Power System Data (OPSD) and NESO\n- `supplemented`: use historical demand data from ENTSO-E, Open Power System Data (OPSD) and NESO and supplement missing values with synthetic demand from [Zenodo](https://zenodo.org/records/10820928)\n- `synthetic`: use synthetic demand from [Zenodo](https://zenodo.org/records/10820928) wherever available and fall back to historical demand otherwise",
+          "markdownDescription": "Available options:\n\n- `historical`: use historical demand data from ENTSO-E, OPSD and NESO\n- `supplemented`: use historical demand data from ENTSO-E, OPSD and NESO and supplement missing values with synthetic demand from [Zenodo](https://zenodo.org/records/10820928)\n- `synthetic`: use synthetic demand from [Zenodo](https://zenodo.org/records/10820928)",
           "type": "string",
           "enum": [
             "historical",
@@ -12023,7 +12023,7 @@
         "demand_source": {
           "default": "supplemented",
           "description": "Source of electricity demand data.",
-          "markdownDescription": "Available options:\n\n- `historical`: use historical demand data from ENTSO-E, Open Power System Data (OPSD) and NESO\n- `supplemented`: use historical demand data from ENTSO-E, Open Power System Data (OPSD) and NESO and supplement missing values with synthetic demand from [Zenodo](https://zenodo.org/records/10820928)\n- `synthetic`: use synthetic demand from [Zenodo](https://zenodo.org/records/10820928) wherever available and fall back to historical demand otherwise",
+          "markdownDescription": "Available options:\n\n- `historical`: use historical demand data from ENTSO-E, OPSD and NESO\n- `supplemented`: use historical demand data from ENTSO-E, OPSD and NESO and supplement missing values with synthetic demand from [Zenodo](https://zenodo.org/records/10820928)\n- `synthetic`: use synthetic demand from [Zenodo](https://zenodo.org/records/10820928)",
           "type": "string",
           "enum": [
             "historical",
