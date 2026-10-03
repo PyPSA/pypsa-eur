@@ -170,7 +170,12 @@ def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammo
     return df
 
 
-def separate_basic_chemicals(demand, production):
+def separate_basic_chemicals(
+    demand: pd.DataFrame,
+    production: pd.DataFrame,
+    params: dict,
+    endogenous_ammonia: bool,
+) -> pd.DataFrame:
     chlorine = pd.DataFrame(
         {
             "hydrogen": production["Chlorine"] * params["MWh_H2_per_tCl"],
@@ -198,7 +203,7 @@ def separate_basic_chemicals(demand, production):
         }
     ).T
 
-    if snakemake.params.ammonia:
+    if endogenous_ammonia:
         ammonia = pd.DataFrame(
             {"ammonia": production["Ammonia"] * params["MWh_NH3_per_tNH3"]}
         ).T
@@ -231,14 +236,19 @@ def add_non_eu27_industrial_energy_demand(countries, demand, production):
     return pd.concat([demand, demand_non_eu27])
 
 
-def industrial_energy_demand(countries, year):
-    nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+def industrial_energy_demand(
+    countries: pd.Index,
+    year: int,
+    jrc_dir: str,
+    endogenous_ammonia: bool,
+    nprocesses: int,
+    disable_progress: bool,
+) -> pd.DataFrame:
     func = partial(
         industrial_energy_demand_per_country,
         year=year,
-        jrc_dir=snakemake.input.jrc,
-        endogenous_ammonia=snakemake.params.ammonia,
+        jrc_dir=jrc_dir,
+        endogenous_ammonia=endogenous_ammonia,
     )
     tqdm_kwargs = dict(
         ascii=False,
@@ -314,7 +324,14 @@ if __name__ == "__main__":
     year = params.get("reference_year", 2019)
     countries = pd.Index(snakemake.params.countries)
 
-    demand = industrial_energy_demand(countries.intersection(eu27), year)
+    demand = industrial_energy_demand(
+        countries.intersection(eu27),
+        year,
+        snakemake.input.jrc,
+        snakemake.params.ammonia,
+        snakemake.threads,
+        snakemake.config["run"].get("disable_progressbar", False),
+    )
 
     # output in MtMaterial/a
     production = (
@@ -322,7 +339,9 @@ if __name__ == "__main__":
         / 1e3
     )
 
-    demand = separate_basic_chemicals(demand, production)
+    demand = separate_basic_chemicals(
+        demand, production, params, snakemake.params.ammonia
+    )
 
     demand = add_non_eu27_industrial_energy_demand(countries, demand, production)
 

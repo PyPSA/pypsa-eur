@@ -48,12 +48,12 @@ sector_mapping = {
 }
 
 
-def build_nodal_industrial_production():
-    fn = snakemake.input.industrial_production_per_country_tomorrow
-    industrial_production = pd.read_csv(fn, index_col=0)
+def build_nodal_industrial_production(
+    production_fn: str, keys_fn: str, output_fn: str
+) -> None:
+    industrial_production = pd.read_csv(production_fn, index_col=0)
 
-    fn = snakemake.input.industrial_distribution_key
-    keys = pd.read_csv(fn, index_col=0)
+    keys = pd.read_csv(keys_fn, index_col=0)
     keys["country"] = keys.index.str[:2]
 
     nodal_production = pd.DataFrame(
@@ -72,7 +72,7 @@ def build_nodal_industrial_production():
             industrial_production.at[country, sector] * key
         )
 
-    nodal_production.to_csv(snakemake.output.industrial_production_per_node)
+    nodal_production.to_csv(output_fn)
 
 
 if __name__ == "__main__":
@@ -83,4 +83,8 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    build_nodal_industrial_production()
+    build_nodal_industrial_production(
+        snakemake.input.industrial_production_per_country_tomorrow,
+        snakemake.input.industrial_distribution_key,
+        snakemake.output.industrial_production_per_node,
+    )
