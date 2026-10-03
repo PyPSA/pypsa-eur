@@ -84,23 +84,6 @@ rule build_simplified_population_layouts:
         scripts("build_population_layouts.py")
 
 
-rule build_gas_network:
-    input:
-        gas_network=rules.retrieve_gas_infrastructure_data.output["gas_network"],
-    output:
-        cleaned_gas_network=resources("gas_network.csv"),
-    log:
-        logs("build_gas_network.log"),
-    benchmark:
-        benchmarks("build_gas_network")
-    resources:
-        mem_mb=4000,
-    message:
-        "Building cleaned gas network from SciGRID-Gas data"
-    script:
-        scripts("build_gas_network.py")
-
-
 rule build_gas_input_locations:
     input:
         gem="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
@@ -121,25 +104,6 @@ rule build_gas_input_locations:
         "Building gas input locations"
     script:
         scripts("build_gas_input_locations.py")
-
-
-rule cluster_gas_network:
-    input:
-        cleaned_gas_network=resources("gas_network.csv"),
-        onshore_regions=resources("onshore_regions.geojson"),
-        offshore_regions=resources("offshore_regions.geojson"),
-    output:
-        clustered_gas_network=resources("gas_network_clustered.csv"),
-    log:
-        logs("cluster_gas_network.log"),
-    benchmark:
-        benchmarks("cluster_gas_network")
-    resources:
-        mem_mb=4000,
-    message:
-        "Clustering gas network"
-    script:
-        scripts("cluster_gas_network.py")
 
 
 rule build_daily_heat_demand:

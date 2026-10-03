@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+euro_gas_grid:
+  crs:
+    projected: "EPSG:3857"
+  clustering:
+    pipelines:
+      replace_sovereign:
+        NL1: NLD
+        FI1: FIN
+        GB1: GBR
+        DN1: DNK
+    salt_caverns:
+      min_gwh: 0.01
+
+  imputation:
+    inferred_mm: 500
+    recalculate_below_mw: 500
+    capacity_correction_threshold: 6
+    excluded_pipeline_ids: [6055, 6364]
+    bidirectional_below_distance: 10000
