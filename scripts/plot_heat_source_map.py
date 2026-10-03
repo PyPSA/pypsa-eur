@@ -211,12 +211,8 @@ if __name__ == "__main__":
     onshore_regions = onshore_regions.to_crs("EPSG:4326")
 
     # Get colormaps from config
-    temperature_cmap = snakemake.params.plotting.get("heat_source_map", {}).get(
-        "temperature_cmap", "Reds"
-    )
-    energy_cmap = snakemake.params.plotting.get("heat_source_map", {}).get(
-        "energy_cmap", "Oranges"
-    )
+    temperature_cmap = snakemake.params.heat_source_map.get("temperature_cmap", "Reds")
+    energy_cmap = snakemake.params.heat_source_map.get("energy_cmap", "Oranges")
 
     logger.info(
         f"Creating temperature map for {snakemake.wildcards.carrier} heat source"

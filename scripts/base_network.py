@@ -676,7 +676,7 @@ def base_network(
     config,
 ):
     base_network = config["electricity"].get("base_network")
-    osm_version = config["data"]["osm"]["version"]
+    osm_version = config["osm_version"]
     assert base_network in {"entsoegridkit", "osm", "tyndp"}, (
         f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
     )
@@ -1646,7 +1646,7 @@ if __name__ == "__main__":
     europe_shape = snakemake.input.europe_shape
     country_shapes = snakemake.input.country_shapes
     offshore_shapes = snakemake.input.offshore_shapes
-    config = snakemake.config
+    config = snakemake.params
 
     if "links_p_nom" in snakemake.input.keys():
         links_p_nom = snakemake.input.links_p_nom

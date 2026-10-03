@@ -233,7 +233,7 @@ def add_non_eu27_industrial_energy_demand(countries, demand, production):
 
 def industrial_energy_demand(countries, year):
     nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.params.disable_progressbar
     func = partial(
         industrial_energy_demand_per_country,
         year=year,

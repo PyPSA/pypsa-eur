@@ -392,8 +392,8 @@ if __name__ == "__main__":
     pypsa.options.params.statistics.nice_names = False
     pypsa.options.params.statistics.drop_zero = False
 
-    foresight = snakemake.config["foresight"]
-    planning_horizons = pd.Index(snakemake.config["planning_horizons"])
+    foresight = snakemake.params.foresight
+    planning_horizons = pd.Index(snakemake.params.planning_horizons)
     network_files = snakemake.input.networks
 
     logger.debug(f"Processing {foresight} mode with {len(network_files)} network(s)")

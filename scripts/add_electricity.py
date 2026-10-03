@@ -189,7 +189,7 @@ def add_missing_carriers(n, carriers):
         n.add("Carrier", missing_carriers)
 
 
-def sanitize_carriers(n, config):
+def sanitize_carriers(n, nice_names: dict, tech_colors: dict):
     """
     Sanitize the carrier information in a PyPSA Network object.
 
@@ -201,9 +201,10 @@ def sanitize_carriers(n, config):
     ----------
     n : pypsa.Network
         A PyPSA Network object that represents an electrical power system.
-    config : dict
-        A dictionary containing configuration information, specifically the
-        "plotting" key with "nice_names" and "tech_colors" keys for carriers.
+    nice_names : dict
+        Display names of carriers.
+    tech_colors : dict
+        Colors of carriers.
 
     Returns
     -------
@@ -221,16 +222,11 @@ def sanitize_carriers(n, config):
             add_missing_carriers(n, c.static.carrier)
 
     carrier_i = n.carriers.index
-    nice_names = (
-        pd.Series(config["plotting"]["nice_names"])
-        .reindex(carrier_i)
-        .fillna(carrier_i.to_series())
-    )
+    nice_names = pd.Series(nice_names).reindex(carrier_i).fillna(carrier_i.to_series())
     n.carriers["nice_name"] = n.carriers.nice_name.where(
         n.carriers.nice_name != "", nice_names
     )
 
-    tech_colors = config["plotting"]["tech_colors"]
     colors = pd.Series(tech_colors).reindex(carrier_i)
     # try to fill missing colors with tech_colors after renaming
     missing_colors_i = colors[colors.isna()].index

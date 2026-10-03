@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     # Import
     n = pypsa.Network(snakemake.input.network)
-    sanitize_carriers(n, snakemake.config)
+    sanitize_carriers(n, snakemake.params.nice_names, snakemake.params.tech_colors)
     pypsa.options.params.statistics.round = 8
     pypsa.options.params.statistics.drop_zero = True
     pypsa.options.params.statistics.nice_names = False

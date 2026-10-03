@@ -1098,7 +1098,7 @@ if __name__ == "__main__":
     swiss = pd.read_csv(snakemake.input.swiss, index_col=[0, 1])
 
     nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.params.disable_progressbar
     idees = build_idees(
         idees_countries, snakemake.input.idees, nprocesses, disable_progress
     )

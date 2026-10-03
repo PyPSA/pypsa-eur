@@ -439,7 +439,7 @@ if __name__ == "__main__":
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
 
     if params.simplify_network["to_380"]:
-        linetype_380 = snakemake.config["lines"]["types"][380]
+        linetype_380 = params.linetype_380
         n, trafo_map = simplify_network_to_380(n, linetype_380)
     else:
         trafo_map = n.buses.index.to_series()

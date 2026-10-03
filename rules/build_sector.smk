@@ -298,6 +298,10 @@ rule build_dh_areas:
         benchmarks("build_dh_areas")
     resources:
         mem_mb=2000,
+    params:
+        handle_missing_countries=config_provider(
+            "sector", "district_heating", "dh_areas", "handle_missing_countries"
+        ),
     script:
         scripts("build_dh_areas.py")
 
@@ -856,6 +860,7 @@ rule build_energy_totals:
     params:
         countries=config_provider("countries"),
         energy=config_provider("energy"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
     message:
         "Building energy totals"
     script:
@@ -931,6 +936,8 @@ rule build_biomass_potentials:
         mem_mb=2000,
     params:
         biomass=config_provider("biomass"),
+        countries=config_provider("countries"),
+        foresight=config_provider("foresight"),
     message:
         "Building biomass potential estimates for {wildcards.horizon} planning horizon"
     script:
@@ -1109,6 +1116,7 @@ rule build_industrial_production_per_country:
     params:
         industry=config_provider("industry"),
         countries=config_provider("countries"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
     message:
         "Building industrial production statistics per country"
     script:
@@ -1235,6 +1243,7 @@ rule build_industrial_energy_demand_per_country_today:
         countries=config_provider("countries"),
         industry=config_provider("industry"),
         ammonia=config_provider("sector", "ammonia", default=False),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
     message:
         "Building current industrial energy demand by country"
     script:
@@ -1310,6 +1319,7 @@ rule build_population_weighted_energy_totals:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     message:
         "Building population-weighted energy demand totals"
     script:

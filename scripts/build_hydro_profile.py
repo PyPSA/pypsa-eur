@@ -178,17 +178,15 @@ if __name__ == "__main__":
     fn = snakemake.input.eia_hydro_generation
     eia_stats = get_eia_annual_hydro_generation(fn, countries)
 
-    config_hydro = snakemake.config["renewable"]["hydro"]
-
-    if config_hydro.get("eia_correct_by_capacity"):
+    if params_hydro.get("eia_correct_by_capacity"):
         fn = snakemake.input.eia_hydro_capacity
         correct_eia_stats_by_capacity(eia_stats, fn, countries)
 
-    if config_hydro.get("eia_approximate_missing"):
+    if params_hydro.get("eia_approximate_missing"):
         fn = snakemake.input.era5_runoff
         eia_stats = approximate_missing_eia_stats(eia_stats, fn, countries)
 
-    norm_year = config_hydro.get("eia_norm_year")
+    norm_year = params_hydro.get("eia_norm_year")
     missing_years = years_in_time.difference(eia_stats.index)
     if norm_year:
         eia_stats.loc[years_in_time] = eia_stats.loc[norm_year]
