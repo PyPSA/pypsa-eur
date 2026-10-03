@@ -37,7 +37,14 @@ logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 
-def build_existing_heating():
+def build_existing_heating(
+    existing_heating_fn: str,
+    pop_layout_fn: str,
+    district_heat_share_fn: str,
+    energy_layout_fn: str,
+    central_heat_pump_sources: list[str],
+    output_fn: str,
+) -> None:
     """
     Retrieve and clean existing heating capacities for the myopic code.
     Data comes from the study "Mapping and analyses of the current and
@@ -57,9 +64,7 @@ def build_existing_heating():
     """
     # TODO start from original file
 
-    existing_heating = pd.read_csv(
-        snakemake.input.existing_heating, index_col=0, header=0
-    )
+    existing_heating = pd.read_csv(existing_heating_fn, index_col=0, header=0)
 
     # data for Albania, Montenegro, Macedonia, Cyprus, Malta not included in database
     existing_heating.loc["Albania"] = np.nan
@@ -82,18 +87,16 @@ def build_existing_heating():
     existing_heating.drop(["coal boiler"], axis=1, inplace=True)
 
     # distribute technologies to nodes by population
-    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    pop_layout = pd.read_csv(pop_layout_fn, index_col=0)
 
     nodal_heating = existing_heating.loc[pop_layout.ct]
     nodal_heating.index = pop_layout.index
     nodal_heating = nodal_heating.multiply(pop_layout.fraction, axis=0)
 
-    district_heat_info = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
+    district_heat_info = pd.read_csv(district_heat_share_fn, index_col=0)
     urban_fraction = district_heat_info["urban fraction"]
 
-    energy_layout = pd.read_csv(
-        snakemake.input.clustered_pop_energy_layout, index_col=0
-    )
+    energy_layout = pd.read_csv(energy_layout_fn, index_col=0)
 
     uses = ["space", "water"]
     sectors = ["residential", "services"]
@@ -147,12 +150,10 @@ def build_existing_heating():
 
     # add large-scale heat pump sources as columns for district heating with 0 capacity
 
-    for heat_pump_source in snakemake.params.sector["heat_pump_sources"][
-        "urban central"
-    ]:
+    for heat_pump_source in central_heat_pump_sources:
         nodal_heat_name_tech[("urban central", f"{heat_pump_source} heat pump")] = 0.0
 
-    nodal_heat_name_tech.to_csv(snakemake.output.existing_heating_distribution)
+    nodal_heat_name_tech.to_csv(output_fn)
 
 
 if __name__ == "__main__":
@@ -166,4 +167,11 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    build_existing_heating()
+    build_existing_heating(
+        snakemake.input.existing_heating,
+        snakemake.input.clustered_pop_layout,
+        snakemake.input.district_heat_share,
+        snakemake.input.clustered_pop_energy_layout,
+        snakemake.params.sector["heat_pump_sources"]["urban central"],
+        snakemake.output.existing_heating_distribution,
+    )

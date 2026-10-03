@@ -733,7 +733,7 @@ def base_network(
         + ")"
     )
 
-    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    time = get_snapshots(config["snapshots"], config["drop_leap_day"])
     n.set_snapshots(time)
 
     n.add("Bus", buses.index, **buses)
@@ -915,6 +915,7 @@ def build_bus_shapes(
     admin_shapes: gpd.GeoDataFrame,
     offshore_shapes: str,
     countries: list[str],
+    nprocesses: int,
 ) -> tuple[
     list[gpd.GeoDataFrame], list[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame
 ]:
@@ -931,6 +932,8 @@ def build_bus_shapes(
         Path to the file containing offshore shapes.
     countries : list[str]
         List of country codes to process.
+    nprocesses : int
+        Number of worker processes for building onshore regions.
 
     Returns
     -------
@@ -971,7 +974,6 @@ def build_bus_shapes(
     )
 
     # Onshore regions
-    nprocesses = snakemake.threads
     tqdm_kwargs = dict(
         ascii=False,
         unit=" regions",
@@ -1687,6 +1689,7 @@ if __name__ == "__main__":
             admin_shapes,
             offshore_shapes,
             countries,
+            snakemake.threads,
         )
     )
 

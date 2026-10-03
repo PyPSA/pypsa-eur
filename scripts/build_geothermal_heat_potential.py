@@ -116,6 +116,7 @@ def identify_non_covered_regions(
 def get_heat_source_power(
     onshore_regions: gpd.GeoDataFrame,
     supply_potentials: gpd.GeoDataFrame,
+    lau_regions: gpd.GeoDataFrame,
     full_load_hours: float,
     input_unit: str,
     output_unit: str = "MWh",
@@ -134,6 +135,8 @@ def get_heat_source_power(
         GeoDataFrame of the onshore regions.
     supply_potentials : gpd.GeoDataFrame
         GeoDataFrame of the heat source supply potentials.
+    lau_regions : gpd.GeoDataFrame
+        GeoDataFrame of the LAU regions indexed by GISCO_ID.
     full_load_hours : float
         Full load hours assumed in the supply potential computation. Used to scale the supply potentials to technical potentials.
     input_unit : str
@@ -260,6 +263,7 @@ if __name__ == "__main__":
     heat_source_power = get_heat_source_power(
         onshore_regions=onshore_regions,
         supply_potentials=geothermal_supply_potentials,
+        lau_regions=lau_regions,
         full_load_hours=FULL_LOAD_HOURS,
         input_unit=input_unit,
         ignore_missing_regions=snakemake.params.ignore_missing_regions,

@@ -85,7 +85,9 @@ def locate_missing_industrial_sites(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def prepare_hotmaps_database(fn: str, regions: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+def prepare_hotmaps_database(
+    fn: str, regions: gpd.GeoDataFrame, locate_missing: bool
+) -> gpd.GeoDataFrame:
     """
     Load hotmaps database of industrial sites and map onto bus regions.
     """
@@ -93,7 +95,7 @@ def prepare_hotmaps_database(fn: str, regions: gpd.GeoDataFrame) -> gpd.GeoDataF
 
     df[["srid", "coordinates"]] = df.geom.str.split(";", expand=True)
 
-    if snakemake.params.hotmaps_locate_missing:
+    if locate_missing:
         df = locate_missing_industrial_sites(df)
 
     # remove those sites without valid locations
@@ -241,6 +243,7 @@ def build_nodal_distribution_key(
     refineries: gpd.GeoDataFrame,
     regions: gpd.GeoDataFrame,
     countries: list[str],
+    clustered_pop_layout: str,
 ) -> pd.DataFrame:
     """
     Build nodal distribution keys for each sector.
@@ -249,7 +252,7 @@ def build_nodal_distribution_key(
 
     keys = pd.DataFrame(index=regions.index, columns=sectors, dtype=float)
 
-    pop = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    pop = pd.read_csv(clustered_pop_layout, index_col=0)
     pop["country"] = pop.index.str[:2]
     ct_total = pop.total.groupby(pop["country"]).sum()
     keys["population"] = pop.total / pop.country.map(ct_total)
@@ -455,7 +458,9 @@ if __name__ == "__main__":
 
     regions = gpd.read_file(snakemake.input.onshore_regions).set_index("name")
 
-    hotmaps = prepare_hotmaps_database(snakemake.input.hotmaps, regions)
+    hotmaps = prepare_hotmaps_database(
+        snakemake.input.hotmaps, regions, snakemake.params.hotmaps_locate_missing
+    )
 
     steel = prepare_gem_steel_database(snakemake.input.gem_gspt, regions)
 
@@ -468,7 +473,14 @@ if __name__ == "__main__":
     )
 
     keys = build_nodal_distribution_key(
-        hotmaps, steel, ammonia, cement, refineries, regions, countries
+        hotmaps,
+        steel,
+        ammonia,
+        cement,
+        refineries,
+        regions,
+        countries,
+        snakemake.input.clustered_pop_layout,
     )
 
     keys.to_csv(snakemake.output.industrial_distribution_key)

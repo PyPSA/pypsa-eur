@@ -166,7 +166,7 @@ def get_branch_coords_from_geometry(linestring, reversed=False):
     return start_end_coords.flatten()
 
 
-def get_branch_coords_from_buses(line):
+def get_branch_coords_from_buses(line, buses):
     """
     Gets line string for branch component in an pypsa network.
 
@@ -174,13 +174,15 @@ def get_branch_coords_from_buses(line):
     ----------
     line : pandas.Series
         A row from a branch component DataFrame with bus0 and bus1 attributes.
+    buses : pandas.DataFrame
+        Buses with coordinates x and y, indexed by bus name.
 
     Returns
     -------
     numpy.ndarray: Flattened array of start and end coordinates.
     """
-    start_coords = n.buses.loc[line.bus0, ["x", "y"]].values
-    end_coords = n.buses.loc[line.bus1, ["x", "y"]].values
+    start_coords = buses.loc[line.bus0, ["x", "y"]].values
+    end_coords = buses.loc[line.bus1, ["x", "y"]].values
     return np.array([start_coords, end_coords]).flatten()
 
 
@@ -204,7 +206,7 @@ def get_bus_coords_from_port(linestring, port=0):
     return coords
 
 
-def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
+def find_closest_lines(lines, new_lines, buses, distance_upper_bound=0.1, type="new"):
     """
     Find the closest lines in the existing set of lines to a set of new lines.
 
@@ -212,6 +214,7 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     ----------
     lines (pandas.DataFrame): DataFrame of the existing lines.
     new_lines (pandas.DataFrame): DataFrame with column geometry containing the new lines.
+    buses (pandas.DataFrame): Buses with coordinates x and y, indexed by bus name.
     distance_upper_bound (float, optional): Maximum distance to consider a line as a match. Defaults to 0.1 which corresponds to approximately 15 km.
 
     Returns
@@ -220,7 +223,7 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     """
 
     # get coordinates of start and end points of all lines, for new lines we need to check both directions
-    treelines = lines.apply(get_branch_coords_from_buses, axis=1)
+    treelines = lines.apply(get_branch_coords_from_buses, axis=1, buses=buses)
     querylines = pd.concat(
         [
             new_lines["geometry"].apply(get_branch_coords_from_geometry),
@@ -407,7 +410,7 @@ def add_projects(
                 lines, n, new_buses_df, bus_carrier="AC"
             )
             duplicate_lines = find_closest_lines(
-                n.lines, new_lines, distance_upper_bound=0.10, type="new"
+                n.lines, new_lines, n.buses, distance_upper_bound=0.10, type="new"
             )
             new_lines = new_lines.drop(duplicate_lines.index, errors="ignore")
             new_lines_df = pd.concat([new_lines_df, new_lines])
@@ -423,7 +426,7 @@ def add_projects(
                 bus_carrier=["AC", "DC"],
             )
             duplicate_links = find_closest_lines(
-                n.links, new_links, distance_upper_bound=0.10, type="new"
+                n.links, new_links, n.buses, distance_upper_bound=0.10, type="new"
             )
             new_links = new_links.drop(duplicate_links.index, errors="ignore")
             set_underwater_fraction(new_links, offshore_shapes)
@@ -432,7 +435,7 @@ def add_projects(
             n.add("Link", new_links.index, **new_links)
         elif key == "upgraded_lines":
             line_map = find_closest_lines(
-                n.lines, lines, distance_upper_bound=0.30, type="upgraded"
+                n.lines, lines, n.buses, distance_upper_bound=0.30, type="upgraded"
             )
             upgraded_lines = lines.loc[line_map.index]
             lines_to_adjust = adjust_decommissioning(upgraded_lines, line_map)
@@ -443,6 +446,7 @@ def add_projects(
             line_map = find_closest_lines(
                 n.links.query("carrier=='DC'"),
                 lines,
+                n.buses,
                 distance_upper_bound=0.30,
                 type="upgraded",
             )

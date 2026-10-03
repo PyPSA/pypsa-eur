@@ -45,12 +45,12 @@ sector_mapping = {
 }
 
 
-def build_nodal_industrial_energy_demand():
-    fn = snakemake.input.industrial_energy_demand_per_country_today
-    industrial_demand = pd.read_csv(fn, header=[0, 1], index_col=0)
+def build_nodal_industrial_energy_demand(
+    demand_fn: str, keys_fn: str, output_fn: str
+) -> None:
+    industrial_demand = pd.read_csv(demand_fn, header=[0, 1], index_col=0)
 
-    fn = snakemake.input.industrial_distribution_key
-    keys = pd.read_csv(fn, index_col=0)
+    keys = pd.read_csv(keys_fn, index_col=0)
     keys["country"] = keys.index.str[:2]
 
     nodal_demand = pd.DataFrame(
@@ -75,7 +75,7 @@ def build_nodal_industrial_energy_demand():
 
     nodal_demand.index.name = "TWh/a"
 
-    nodal_demand.to_csv(snakemake.output.industrial_energy_demand_per_node_today)
+    nodal_demand.to_csv(output_fn)
 
 
 if __name__ == "__main__":
@@ -86,4 +86,8 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    build_nodal_industrial_energy_demand()
+    build_nodal_industrial_energy_demand(
+        snakemake.input.industrial_energy_demand_per_country_today,
+        snakemake.input.industrial_distribution_key,
+        snakemake.output.industrial_energy_demand_per_node_today,
+    )
