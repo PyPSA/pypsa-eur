@@ -204,15 +204,16 @@ co2_budget:
 
 The `emissions_scope` parameter determines which greenhouse gas(es) are accounted for
 when calculating the 1990 baseline for `relative: true` and applying the corresponding
-budget constraints. This parameter corresponds to the `Pollutant_name` field in the EEA
-UNFCCC emissions database.
+budget constraints. The historical emissions come from the national inventories
+reported to the UNFCCC: the EEA datasets for EU and EEA member countries and for the
+Energy Community Contracting Parties, and the DESNZ statistics for Great Britain.
+Serbia's inventory includes Kosovo, which is split by population. Bosnia and
+Herzegovina and North Macedonia have no inventory and get the per-capita emissions of
+their neighbours. The options are:
 
-Only available options currently is `CO2`, other options that could potentially be tracked
-
+- `CO2` - CO₂ emissions only
 - `All greenhouse gases - (CO2 equivalent)` - All greenhouse gases in CO₂-equivalent,
   including CO₂, CH₄, N₂O, and fluorinated gases (HFCs, PFCs, SF₆, NF₃)
-- `CH4` - Methane emissions only
-- `N2O` - Nitrous oxide emissions only
 
 The choice of emissions scope affects:
 

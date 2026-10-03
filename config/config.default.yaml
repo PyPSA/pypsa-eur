@@ -556,7 +556,6 @@ pypsa_eur:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#energy_cf
 energy:
   energy_totals_year: 2023
-  base_emissions_year: 1990
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#biomass_cf
 biomass:
@@ -1495,7 +1494,13 @@ data:
     source: archive
     version: latest
   ghg_emissions:
-    source: archive
+    source: primary
+    version: latest
+  ghg_emissions_energy_community:
+    source: primary
+    version: latest
+  desnz_ghg_emissions:
+    source: primary
     version: latest
   gebco:
     source: archive
