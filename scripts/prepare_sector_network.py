@@ -3332,44 +3332,47 @@ def add_heat(
                     lifetime=costs.at["central gas CHP", "lifetime"],
                 )
 
-                n.add(
-                    "Link",
-                    nodes + f" urban central {fuel} CHP CC",
-                    bus0=fuel_nodes.loc[nodes, "nodes"].values,
-                    bus1=nodes,
-                    bus2=nodes + " urban central heat",
-                    bus3="co2 atmosphere",
-                    bus4=spatial.co2.df.loc[nodes, "nodes"].values,
-                    carrier=f"urban central {fuel} CHP CC",
-                    p_nom_extendable=True,
-                    capital_cost=costs.at["central gas CHP", "capital_cost"]
-                    * costs.at["central gas CHP", "efficiency"]
-                    + costs.at["biomass CHP capture", "capital_cost"]
-                    * costs.at[fuel, "CO2 intensity"],
-                    marginal_cost=costs.at["central gas CHP", "VOM"]
-                    * costs.at["central gas CHP", "efficiency"],  # NB: VOM is per MWel
-                    efficiency=costs.at["central gas CHP", "efficiency"]
-                    - costs.at[fuel, "CO2 intensity"]
-                    * (
-                        costs.at["biomass CHP capture", "electricity-input"]
-                        + costs.at[
-                            "biomass CHP capture", "compression-electricity-input"
-                        ]
-                    ),
-                    efficiency2=costs.at["central gas CHP", "efficiency"]
-                    / costs.at["central gas CHP", "c_b"]
-                    + costs.at[fuel, "CO2 intensity"]
-                    * (
-                        costs.at["biomass CHP capture", "heat-output"]
-                        + costs.at["biomass CHP capture", "compression-heat-output"]
-                        - costs.at["biomass CHP capture", "heat-input"]
-                    ),
-                    efficiency3=costs.at[fuel, "CO2 intensity"]
-                    * (1 - costs.at["biomass CHP capture", "capture_rate"]),
-                    efficiency4=costs.at[fuel, "CO2 intensity"]
-                    * costs.at["biomass CHP capture", "capture_rate"],
-                    lifetime=costs.at["central gas CHP", "lifetime"],
-                )
+                if fuel in options["chp"]["fuel_cc"]:
+                    n.add(
+                        "Link",
+                        nodes + f" urban central {fuel} CHP CC",
+                        bus0=fuel_nodes.loc[nodes, "nodes"].values,
+                        bus1=nodes,
+                        bus2=nodes + " urban central heat",
+                        bus3="co2 atmosphere",
+                        bus4=spatial.co2.df.loc[nodes, "nodes"].values,
+                        carrier=f"urban central {fuel} CHP CC",
+                        p_nom_extendable=True,
+                        capital_cost=costs.at["central gas CHP", "capital_cost"]
+                        * costs.at["central gas CHP", "efficiency"]
+                        + costs.at["biomass CHP capture", "capital_cost"]
+                        * costs.at[fuel, "CO2 intensity"],
+                        marginal_cost=costs.at["central gas CHP", "VOM"]
+                        * costs.at[
+                            "central gas CHP", "efficiency"
+                        ],  # NB: VOM is per MWel
+                        efficiency=costs.at["central gas CHP", "efficiency"]
+                        - costs.at[fuel, "CO2 intensity"]
+                        * (
+                            costs.at["biomass CHP capture", "electricity-input"]
+                            + costs.at[
+                                "biomass CHP capture", "compression-electricity-input"
+                            ]
+                        ),
+                        efficiency2=costs.at["central gas CHP", "efficiency"]
+                        / costs.at["central gas CHP", "c_b"]
+                        + costs.at[fuel, "CO2 intensity"]
+                        * (
+                            costs.at["biomass CHP capture", "heat-output"]
+                            + costs.at["biomass CHP capture", "compression-heat-output"]
+                            - costs.at["biomass CHP capture", "heat-input"]
+                        ),
+                        efficiency3=costs.at[fuel, "CO2 intensity"]
+                        * (1 - costs.at["biomass CHP capture", "capture_rate"]),
+                        efficiency4=costs.at[fuel, "CO2 intensity"]
+                        * costs.at["biomass CHP capture", "capture_rate"],
+                        lifetime=costs.at["central gas CHP", "lifetime"],
+                    )
 
         if (
             options["chp"]["enable"]
@@ -4091,35 +4094,36 @@ def add_biomass(
             lifetime=costs.at[key, "lifetime"],
         )
 
-        n.add(
-            "Link",
-            urban_central + " urban central solid biomass CHP CC",
-            bus0=spatial.biomass.df.loc[urban_central, "nodes"].values,
-            bus1=urban_central,
-            bus2=urban_central + " urban central heat",
-            bus3="co2 atmosphere",
-            bus4=spatial.co2.df.loc[urban_central, "nodes"].values,
-            carrier="urban central solid biomass CHP CC",
-            p_nom_extendable=True,
-            capital_cost=costs.at[key + " CC", "capital_cost"]
-            * costs.at[key + " CC", "efficiency"]
-            + costs.at["biomass CHP capture", "capital_cost"]
-            * costs.at["solid biomass", "CO2 intensity"],
-            marginal_cost=costs.at[key + " CC", "efficiency"]
-            * costs.at[key + " CC", "VOM"],  # NB: VOM is per MWel
-            efficiency=costs.at[key + " CC", "efficiency"]
-            - costs.at["solid biomass", "CO2 intensity"]
-            * (
-                costs.at["biomass CHP capture", "electricity-input"]
-                + costs.at["biomass CHP capture", "compression-electricity-input"]
-            ),
-            efficiency2=costs.at[key + " CC", "efficiency-heat"],
-            efficiency3=-costs.at["solid biomass", "CO2 intensity"]
-            * costs.at["biomass CHP capture", "capture_rate"],
-            efficiency4=costs.at["solid biomass", "CO2 intensity"]
-            * costs.at["biomass CHP capture", "capture_rate"],
-            lifetime=costs.at[key + " CC", "lifetime"],
-        )
+        if "solid biomass" in options["chp"]["fuel_cc"]:
+            n.add(
+                "Link",
+                urban_central + " urban central solid biomass CHP CC",
+                bus0=spatial.biomass.df.loc[urban_central, "nodes"].values,
+                bus1=urban_central,
+                bus2=urban_central + " urban central heat",
+                bus3="co2 atmosphere",
+                bus4=spatial.co2.df.loc[urban_central, "nodes"].values,
+                carrier="urban central solid biomass CHP CC",
+                p_nom_extendable=True,
+                capital_cost=costs.at[key + " CC", "capital_cost"]
+                * costs.at[key + " CC", "efficiency"]
+                + costs.at["biomass CHP capture", "capital_cost"]
+                * costs.at["solid biomass", "CO2 intensity"],
+                marginal_cost=costs.at[key + " CC", "efficiency"]
+                * costs.at[key + " CC", "VOM"],  # NB: VOM is per MWel
+                efficiency=costs.at[key + " CC", "efficiency"]
+                - costs.at["solid biomass", "CO2 intensity"]
+                * (
+                    costs.at["biomass CHP capture", "electricity-input"]
+                    + costs.at["biomass CHP capture", "compression-electricity-input"]
+                ),
+                efficiency2=costs.at[key + " CC", "efficiency-heat"],
+                efficiency3=-costs.at["solid biomass", "CO2 intensity"]
+                * costs.at["biomass CHP capture", "capture_rate"],
+                efficiency4=costs.at["solid biomass", "CO2 intensity"]
+                * costs.at["biomass CHP capture", "capture_rate"],
+                lifetime=costs.at[key + " CC", "lifetime"],
+            )
 
     if options["biomass_boiler"]:
         # TODO: Add surcharge for pellets
