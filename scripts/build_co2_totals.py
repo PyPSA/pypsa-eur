@@ -92,7 +92,7 @@ def read_eea(fn: str, scope: str) -> pd.DataFrame:
             aggfunc="sum",
         )
         .rename_axis(index=["country", "year"], columns=None)
-        .rename(index={"UK": "GB"}, columns={v: k for k, v in to_ipcc.items()})
+        .rename(columns={v: k for k, v in to_ipcc.items()})
         .div(1e3)
     )
 
@@ -116,7 +116,7 @@ def read_uk(fn: str, scope: str) -> pd.DataFrame:
     df = pd.read_excel(fn, sheet_name="UK_by_source")
     if scope == "CO2":
         df = df.query("GHG == 'CO2'")
-    code = df["CRT category"].str.replace(".", "")
+    code = df["CRT category"]
 
     def sector(c: str) -> pd.Series:
         # CRT category 1 excludes international bunkers (memo item 1.D)
@@ -158,17 +158,19 @@ def build_co2_totals(
         [read_eea(eea, scope), read_eea(energy_community, scope), read_uk(uk, scope)]
     ).fillna(0.0)
 
-    rs = co2.loc["RS"] * POPULATION["RS"] / (POPULATION["RS"] + POPULATION["XK"])
+    # Serbia's inventory includes Kosovo; BA and MK get the per-capita emissions of the region
+    pop = pd.Series(POPULATION)
     balkans = co2.loc[["AL", "ME", "RS"]].groupby("year").sum()
-    per_capita = balkans / sum(POPULATION[c] for c in ["AL", "ME", "RS", "XK"])
+    per_capita_rs = co2.loc["RS"] / pop[["RS", "XK"]].sum()
+    per_capita_region = balkans / pop.drop(["BA", "MK"]).sum()
+    added = {
+        "RS": per_capita_rs * pop.RS,
+        "XK": per_capita_rs * pop.XK,
+        "BA": per_capita_region * pop.BA,
+        "MK": per_capita_region * pop.MK,
+    }
     co2 = pd.concat(
-        [
-            co2.drop("RS", level="country"),
-            pd.concat({"RS": rs, "XK": co2.loc["RS"] - rs}, names=["country"]),
-            pd.concat(
-                {c: per_capita * POPULATION[c] for c in ["BA", "MK"]}, names=["country"]
-            ),
-        ]
+        [co2.drop("RS", level="country"), pd.concat(added, names=["country"])]
     )
 
     missing = pd.Index(countries).difference(co2.index.unique("country"))
@@ -176,7 +178,7 @@ def build_co2_totals(
         raise ValueError(f"No emissions inventory for countries {missing.tolist()}.")
     co2 = co2.loc[countries].sort_index()
 
-    not_industry = [
+    to_subtract = [
         "electricity",
         "services non-elec",
         "residential non-elec",
@@ -186,7 +188,7 @@ def build_co2_totals(
         "domestic navigation",
         "agriculture, forestry and fishing",
     ]
-    co2["industrial non-elec"] = co2["total energy"] - co2[not_industry].sum(axis=1)
+    co2["industrial non-elec"] = co2["total energy"] - co2[to_subtract].sum(axis=1)
     co2["agriculture"] += co2["agriculture, forestry and fishing"]
 
     return co2.drop(columns=["total energy", "agriculture, forestry and fishing"])
