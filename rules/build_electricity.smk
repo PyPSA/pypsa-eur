@@ -10,8 +10,7 @@ rule build_electricity_demand:
         entsoe=rules.retrieve_electricity_demand_entsoe.output["csv"],
         synthetic=lambda w: (
             ancient(rules.retrieve_synthetic_electricity_demand.output["csv"])
-            if config_provider("load", "demand_source")(w)
-            != "historical"
+            if config_provider("load", "demand_source")(w) != "historical"
             else []
         ),
     output:

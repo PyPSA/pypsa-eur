@@ -337,9 +337,7 @@ if __name__ == "__main__":
 
     if demand_source == "supplemented":
         logger.info("Using historical demand supplemented with synthetic data.")
-        synthetic_countries = [
-            c for c in countries if c in synthetic_load.columns
-        ]
+        synthetic_countries = [c for c in countries if c in synthetic_load.columns]
         synthetic_load = synthetic_load.loc[
             snapshots,
             synthetic_countries,
@@ -347,17 +345,12 @@ if __name__ == "__main__":
         load = load.combine_first(synthetic_load)
 
     elif demand_source == "synthetic":
-        missing = sorted(
-            set(countries) - set(synthetic_load.columns)
-        )
+        missing = sorted(set(countries) - set(synthetic_load.columns))
         if missing:
-            raise ValueError(
-                "No synthetic demand available for countries: "
-                f"{missing}"
-            )
+            raise ValueError(f"No synthetic demand available for countries: {missing}")
         logger.info("Using synthetic demand only.")
         load = synthetic_load[countries]
-        
+
     elif demand_source == "historical":
         logger.info("Using historical demand only.")
 

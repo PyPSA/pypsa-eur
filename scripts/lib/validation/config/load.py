@@ -8,9 +8,9 @@ Load configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#load_cf
 """
 
-from pydantic import BaseModel, Field
-
 from typing import Literal
+
+from pydantic import BaseModel, Field
 
 from scripts.lib.validation.config._base import ConfigModel
 
