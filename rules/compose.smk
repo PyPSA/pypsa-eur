@@ -275,5 +275,7 @@ rule compose_network:
         ),
         co2_budget=config_provider("co2_budget"),
         adjustments=config_provider("adjustments"),
+        nice_names=config_provider("plotting", "nice_names"),
+        tech_colors=config_provider("plotting", "tech_colors"),
     script:
         scripts("compose_network.py")

@@ -272,6 +272,10 @@ rule build_dh_areas:
         benchmarks("build_dh_areas")
     resources:
         mem_mb=2000,
+    params:
+        handle_missing_countries=config_provider(
+            "sector", "district_heating", "dh_areas", "handle_missing_countries"
+        ),
     script:
         scripts("build_dh_areas.py")
 
@@ -809,6 +813,7 @@ rule build_energy_totals:
         mem_mb=10000,
     params:
         countries=config_provider("countries"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
     script:
         scripts("build_energy_totals.py")
 
@@ -883,6 +888,8 @@ rule build_biomass_potentials:
         mem_mb=2000,
     params:
         biomass=config_provider("biomass"),
+        countries=config_provider("countries"),
+        foresight=config_provider("foresight"),
     script:
         scripts("build_biomass_potentials.py")
 
@@ -1088,6 +1095,7 @@ rule build_industrial_production_per_country:
             ],
         ),
         countries=config_provider("countries"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
     script:
         scripts("build_industrial_production_per_country.py")
 
@@ -1231,6 +1239,7 @@ rule build_industrial_energy_demand_per_country_today:
             ],
         ),
         ammonia=config_provider("sector", "ammonia", default=False),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
     script:
         scripts("build_industrial_energy_demand_per_country_today.py")
 
@@ -1303,6 +1312,7 @@ rule build_population_weighted_energy_totals:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     script:
         scripts("build_population_weighted_energy_totals.py")
 
