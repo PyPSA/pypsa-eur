@@ -3028,11 +3028,16 @@
           "default": false,
           "description": "To specify a fixed year for the load time series that deviates from the snapshots' year."
         },
-        "supplement_synthetic": {
-          "default": true,
-          "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
-          "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
-          "type": "boolean"
+        "demand_source": {
+          "default": "supplemented",
+          "description": "Source of electricity demand data.",
+          "markdownDescription": "Available options:\n\n- `historical`: use historical demand data from ENTSO-E, OPSD and NESO\n- `supplemented`: use historical demand data from ENTSO-E, OPSD and NESO and supplement missing values with synthetic demand from [Zenodo](https://zenodo.org/records/10820928)\n- `synthetic`: use synthetic demand from [Zenodo](https://zenodo.org/records/10820928)",
+          "type": "string",
+          "enum": [
+            "historical",
+            "supplemented",
+            "synthetic"
+            ]
         },
         "substation_only": {
           "default": true,
@@ -12015,11 +12020,16 @@
           "default": false,
           "description": "To specify a fixed year for the load time series that deviates from the snapshots' year."
         },
-        "supplement_synthetic": {
-          "default": true,
-          "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
-          "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
-          "type": "boolean"
+        "demand_source": {
+          "default": "supplemented",
+          "description": "Source of electricity demand data.",
+          "markdownDescription": "Available options:\n\n- `historical`: use historical demand data from ENTSO-E, OPSD and NESO\n- `supplemented`: use historical demand data from ENTSO-E, OPSD and NESO and supplement missing values with synthetic demand from [Zenodo](https://zenodo.org/records/10820928)\n- `synthetic`: use synthetic demand from [Zenodo](https://zenodo.org/records/10820928)",
+          "type": "string",
+          "enum": [
+            "historical",
+            "supplemented",
+            "synthetic"
+            ]
         },
         "substation_only": {
           "default": true,

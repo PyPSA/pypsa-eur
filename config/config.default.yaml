@@ -527,7 +527,7 @@ load:
   manual_adjustments: true
   scaling_factor: 1.0
   fixed_year: false
-  supplement_synthetic: true
+  demand_source: supplemented
   substation_only: true
   distribution_key:
     gdp: 0.6
