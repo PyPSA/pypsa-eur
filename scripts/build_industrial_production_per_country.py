@@ -256,7 +256,7 @@ def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake)
 
 def industry_production(countries, year, eurostat, jrc_dir):
     nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.params.disable_progressbar
 
     func = partial(
         industry_production_per_country,

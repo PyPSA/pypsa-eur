@@ -142,8 +142,8 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    show_progress = not snakemake.config["run"].get("disable_progressbar", True)
-    show_progress = show_progress and snakemake.config["atlite"]["show_progress"]
+    show_progress = not snakemake.params.disable_progressbar
+    show_progress = show_progress and snakemake.params.show_progress
     dask_kwargs = setup_dask(nprocesses)
 
     n = pypsa.Network(snakemake.input.base_network)

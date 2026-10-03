@@ -261,7 +261,7 @@ def add_unsustainable_potentials(df, input_eurostat):
     pd.DataFrame
         The dataframe with added unsustainable biomass potentials.
     """
-    if "GB" in snakemake.config["countries"]:
+    if "GB" in snakemake.params.countries:
         latest_year = 2019
     else:
         latest_year = 2021
@@ -346,7 +346,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    overnight = snakemake.config["foresight"] == "overnight"
+    overnight = snakemake.params.foresight == "overnight"
     params = snakemake.params.biomass
     investment_year = int(snakemake.wildcards.horizon)
     year = params["year"] if overnight else investment_year

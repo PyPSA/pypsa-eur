@@ -105,6 +105,11 @@ rule base_network:
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
+        electricity=lambda w: {
+            "voltages": config_provider("electricity", "voltages")(w),
+            "base_network": config_provider("electricity", "base_network")(w),
+        },
+        osm_version=config_provider("data", "osm", "version"),
     message:
         "Building base network"
     script:
@@ -316,6 +321,7 @@ rule determine_availability_matrix_MD_UA:
     params:
         renewable=config_provider("renewable"),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+        show_progress=config_provider("atlite", "show_progress"),
     message:
         "Determining availability matrix for {wildcards.technology} technology"
     script:
@@ -391,6 +397,8 @@ rule determine_availability_matrix:
     params:
         renewable=config_provider("renewable"),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
+        show_progress=config_provider("atlite", "show_progress"),
     message:
         "Determining availability matrix for {wildcards.technology} technology"
     script:
@@ -426,6 +434,8 @@ rule build_renewable_profiles:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         renewable=config_provider("renewable"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
+        show_progress=config_provider("atlite", "show_progress"),
     message:
         "Building renewable profiles for {wildcards.technology} technology"
     script:
@@ -538,6 +548,8 @@ rule build_line_rating:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
+        show_progress=config_provider("atlite", "show_progress"),
     message:
         "Building dynamic line ratings"
     script:
@@ -727,6 +739,7 @@ rule simplify_network:
         ),
         p_max_pu=config_provider("links", "p_max_pu", default=1.0),
         p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
+        linetype_380=config_provider("lines", "types", 380),
     message:
         "Simplifying network"
     script:
@@ -810,6 +823,7 @@ rule cluster_network:
         length_factor=config_provider("lines", "length_factor"),
         cluster_mode=config_provider("clustering", "mode"),
         copperplate_regions=config_provider("clustering", "copperplate_regions"),
+        solver_name=config_provider("solving", "solver", "name"),
     message:
         "Clustering network"
     script:

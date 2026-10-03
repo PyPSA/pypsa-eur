@@ -31,6 +31,11 @@ rule base_network_incumbent:
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
+        electricity=lambda w: {
+            "voltages": config_provider("electricity", "voltages")(w),
+            "base_network": config_provider("electricity", "base_network")(w),
+        },
+        osm_version=config_provider("data", "osm", "version"),
     message:
         "Building base network to which to compare against."
     script:
