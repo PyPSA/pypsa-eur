@@ -135,6 +135,7 @@ retrieve_cutout                                         1
 retrieve_desnz_electricity_consumption                  1
 retrieve_dh_areas                                       1
 retrieve_eez                                            1
+retrieve_desnz_ghg_emissions                            1
 retrieve_electricity_demand_energy_atlas                1
 retrieve_electricity_demand_entsoe                      1
 retrieve_electricity_demand_neso                        1
@@ -151,6 +152,7 @@ retrieve_gem_europe_gas_tracker                         1
 retrieve_gem_steel_plant_tracker                        1
 retrieve_geothermal_heat_utilisation_potentials         1
 retrieve_ghg_emissions                                  1
+retrieve_ghg_emissions_energy_community                 1
 retrieve_h2_salt_caverns                                1
 retrieve_hera_data_test_cutout                          1
 retrieve_hotmaps_industrial_sites                       1
@@ -314,6 +316,7 @@ retrieve_cutout                                         1
 retrieve_desnz_electricity_consumption                  1
 retrieve_dh_areas                                       1
 retrieve_eez                                            1
+retrieve_desnz_ghg_emissions                            1
 retrieve_electricity_demand_energy_atlas                1
 retrieve_electricity_demand_entsoe                      1
 retrieve_electricity_demand_neso                        1
@@ -330,6 +333,7 @@ retrieve_gem_europe_gas_tracker                         1
 retrieve_gem_steel_plant_tracker                        1
 retrieve_geothermal_heat_utilisation_potentials         1
 retrieve_ghg_emissions                                  1
+retrieve_ghg_emissions_energy_community                 1
 retrieve_h2_salt_caverns                                1
 retrieve_hera_data_test_cutout                          1
 retrieve_hotmaps_industrial_sites                       1

@@ -188,34 +188,52 @@ if (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] i
 
 
 if (GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions"))["source"] in [
-    "archive",
     "primary",
+    "archive",
 ]:
 
     rule retrieve_ghg_emissions:
         input:
-            ghg=storage(GHG_EMISSIONS_DATASET["url"]),
+            csv=storage(GHG_EMISSIONS_DATASET["url"]),
         output:
-            csv=f"{GHG_EMISSIONS_DATASET['folder']}/UNFCCC_v23.csv",
-            zip=(
-                f"{GHG_EMISSIONS_DATASET['folder']}/UNFCCC_v23.csv.zip"
-                if GHG_EMISSIONS_DATASET["source"] == "primary"
-                else []
-            ),
-            directory=(
-                directory(GHG_EMISSIONS_DATASET["folder"])
-                if GHG_EMISSIONS_DATASET["source"] == "primary"
-                else []
-            ),
+            csv=f"{GHG_EMISSIONS_DATASET['folder']}/UNFCCC_{GHG_EMISSIONS_DATASET['version']}.csv",
         retries: 2
         message:
-            "Retrieving GHG emissions data"
+            "Retrieving EEA GHG emissions data"
         run:
-            if GHG_EMISSIONS_DATASET["source"] == "primary":
-                copy2(input["ghg"], output["zip"])
-                unpack_archive(output["zip"], GHG_EMISSIONS_DATASET["folder"])
-            else:
-                copy2(input["ghg"], output["csv"])
+            copy2(input["csv"], output["csv"])
+
+
+if (GHG_EMISSIONS_ENC_DATASET := dataset_version("ghg_emissions_energy_community"))[
+    "source"
+] in ["primary", "archive"]:
+
+    rule retrieve_ghg_emissions_energy_community:
+        input:
+            csv=storage(GHG_EMISSIONS_ENC_DATASET["url"]),
+        output:
+            csv=f"{GHG_EMISSIONS_ENC_DATASET['folder']}/UNFCCC_{GHG_EMISSIONS_ENC_DATASET['version']}.csv",
+        retries: 2
+        message:
+            "Retrieving EEA GHG emissions data of Energy Community Contracting Parties"
+        run:
+            copy2(input["csv"], output["csv"])
+
+
+if (DESNZ_GHG_EMISSIONS_DATASET := dataset_version("desnz_ghg_emissions"))[
+    "source"
+] in ["primary", "archive"]:
+
+    rule retrieve_desnz_ghg_emissions:
+        input:
+            xlsx=storage(DESNZ_GHG_EMISSIONS_DATASET["url"]),
+        output:
+            xlsx=f"{DESNZ_GHG_EMISSIONS_DATASET['folder']}/final-greenhouse-gas-emissions-by-source.xlsx",
+        retries: 2
+        message:
+            "Retrieving DESNZ UK GHG emissions data"
+        run:
+            copy2(input["xlsx"], output["xlsx"])
 
 
 if (GEBCO_DATASET := dataset_version("gebco"))["source"] in ["archive", "primary"]:

@@ -50,15 +50,8 @@ def get_compose_inputs(w):
             else []
         ),
         co2_price=resources("co2_price.csv"),
-        eurostat=(
-            resources("eurostat_energy_balances.csv")
-            if cfg["co2_budget"]["relative"]
-            else []
-        ),
-        co2=(
-            rules.retrieve_ghg_emissions.output["csv"]
-            if cfg["co2_budget"]["relative"]
-            else []
+        co2_totals=(
+            resources("co2_totals.csv") if cfg["co2_budget"]["relative"] else []
         ),
         load=resources("electricity_demand.nc"),
         snapshot_weightings=resources("snapshot_weightings.csv"),
