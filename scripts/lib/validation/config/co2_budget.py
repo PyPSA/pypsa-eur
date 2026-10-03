@@ -8,6 +8,8 @@ CO2 budget configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#co2_budget_cf
 """
 
+from typing import Literal
+
 from pydantic import Field
 
 from scripts.lib.validation.config._base import ConfigModel
@@ -16,13 +18,17 @@ from scripts.lib.validation.config._base import ConfigModel
 class Co2BudgetConfig(ConfigModel):
     """Configuration for `co2_budget` settings."""
 
-    emissions_scope: str = Field(
+    emissions_scope: Literal["CO2", "All greenhouse gases - (CO2 equivalent)"] = Field(
         "CO2",
-        description="Emissions scope for CO2 budget calculations.",
+        description="Emissions scope of the historical emissions from EDGAR used for `baseline: null`: CO2 only or all greenhouse gases in CO2 equivalent (GWP100 from IPCC AR5).",
     )
     relative: bool = Field(
         True,
         description="If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",
+    )
+    baseline: float | None = Field(
+        4.604,
+        description="1990 emissions in Gt CO2/year for relative budgets. The default is the 1990 CO2 emissions of the default countries and sectors (EEA, 2020). If null, the baseline is computed from EDGAR for the modelled countries and sectors. EDGAR CO2 data is licensed for non-commercial use only (CC BY-NC-ND 4.0).",
     )
     upper: float | dict[int, float | None] | None = Field(
         default_factory=lambda: {

@@ -40,6 +40,8 @@ desnz_electricity_consumption,unknown,primary,latest supported,2026-02-02,,https
 desnz_electricity_consumption,2026-02-16,archive,latest supported,2026-02-16,,https://data.pypsa.org/workflows/eur/desnz_electricity_consumption/2026-02-16/Subnational_electricity_consumption_statistics_2005-2024.xlsx
 dh_areas,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg
 dh_areas,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/dh_areas/341.5/dh_areas.gpkg
+edgar_co2,2026,primary,latest supported,2026-10-03,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EDGAR/datasets/EDGAR_2026_GHG/IEA_EDGAR_CO2_1970_2025.zip
+edgar_ghg,2026,primary,latest supported,2026-10-03,,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EDGAR/datasets/EDGAR_2026_GHG/EDGAR_AR5_GHG_1970_2025.zip
 eez,v12_20231025,primary,latest supported,2025-12-02,API request used,https://www.marineregions.org/download_file.php
 eez,v12_20231025,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eez/v12_20231025/World_EEZ_v12_20231025_LR.zip
 emobility,28-08-2016,primary,latest supported,2025-12-02,,https://zenodo.org/records/16899168/files/emobility.zip
@@ -71,8 +73,6 @@ gem_gspt,march-2025-v1.1,archive,latest supported,2026-02-02,,https://data.pypsa
 gem_gspt,april-2024-v1,archive,not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_gspt/april-2024-v1/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
 geothermal_heat_utilisation_potentials,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx
 geothermal_heat_utilisation_potentials,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/geothermal_heat_utilisation_potentials/341.5/Results_DH_Matching_Cluster.xlsx
-ghg_emissions,v23,primary,latest supported,2025-12-02,,https://web.archive.org/web/20200622130401if_/https%3A//www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16/national-greenhouse-gas-inventories-ipcc-common-reporting-format-sector-classification/ascii-delimited-zip-2/at_download/file
-ghg_emissions,v23,archive,latest supported,2026-01-13,earlier part of databundle,https://data.pypsa.org/workflows/eur/ghg_emissions/v23/UNFCCC_v23.csv
 h2_salt_caverns,16-10-2019,primary,latest supported,2025-12-02,,https://zenodo.org/records/16899309/files/h2_salt_caverns_GWh_per_sqkm.geojson
 h2_salt_caverns,16-10-2019,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/h2_salt_caverns/16-10-2019/h2_salt_caverns_GWh_per_sqkm.geojson
 hotmaps_industrial_sites,version-1.1,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/hotmaps_industrial_sites/version-1.1/Industrial_Database.csv

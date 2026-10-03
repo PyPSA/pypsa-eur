@@ -23,6 +23,7 @@ snapshots:
 co2_budget:
   emissions_scope: CO2
   relative: true
+  baseline:
 
   upper:
     2030: 0.450  # 45% of 1990 emissions (55% reduction by 2030)

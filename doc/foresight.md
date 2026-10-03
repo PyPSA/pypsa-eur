@@ -204,15 +204,22 @@ co2_budget:
 
 The `emissions_scope` parameter determines which greenhouse gas(es) are accounted for
 when calculating the 1990 baseline for `relative: true` and applying the corresponding
-budget constraints. This parameter corresponds to the `Pollutant_name` field in the EEA
-UNFCCC emissions database.
+budget constraints. The historical emissions come from the
+[EDGAR Community GHG Database](https://edgar.jrc.ec.europa.eu/dataset_ghg2026) (Crippa et al., 2026).
+The options are:
 
-Only available options currently is `CO2`, other options that could potentially be tracked
+- `CO2` - Fossil CO₂ emissions (IEA-EDGAR CO2)
+- `All greenhouse gases - (CO2 equivalent)` - All greenhouse gases in CO₂-equivalent
+  (GWP100 from IPCC AR5), including CO₂, CH₄, N₂O and fluorinated gases
 
-- `All greenhouse gases - (CO2 equivalent)` - All greenhouse gases in CO₂-equivalent,
-  including CO₂, CH₄, N₂O, and fluorinated gases (HFCs, PFCs, SF₆, NF₃)
-- `CH4` - Methane emissions only
-- `N2O` - Nitrous oxide emissions only
+By default, relative budgets use a fixed 1990 baseline (`co2_budget: baseline`) of
+4.604 Gt CO₂ for the default countries and sectors. Set `baseline: null` to compute the
+baseline from EDGAR for the modelled countries and sectors instead. Only then are the
+EDGAR data retrieved. The IEA-EDGAR CO₂ data is licensed for non-commercial use only
+(CC BY-NC-ND 4.0), which also forbids sharing derived files such as `co2_totals.csv`.
+
+EDGAR reports international aviation and shipping only as global totals. These bunker
+emissions are therefore not part of the 1990 baseline. LULUCF is not included either.
 
 The choice of emissions scope affects:
 

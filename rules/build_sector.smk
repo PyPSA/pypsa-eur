@@ -793,8 +793,11 @@ rule build_swiss_energy_balances:
 
 rule build_co2_totals:
     input:
-        co2=rules.retrieve_ghg_emissions.output["csv"],
-        eurostat=resources("eurostat_energy_balances.csv"),
+        edgar=branch(
+            lambda w: config_provider("co2_budget", "emissions_scope")(w) == "CO2",
+            rules.retrieve_edgar_co2.output["xlsx"],
+            rules.retrieve_edgar_ghg.output["xlsx"],
+        ),
     output:
         co2_totals=resources("co2_totals.csv"),
     log:
@@ -806,8 +809,8 @@ rule build_co2_totals:
         mem_mb=1000,
     params:
         countries=config_provider("countries"),
-        energy=config_provider("energy"),
-        emissions_scope=config_provider("co2_budget", "emissions_scope"),
+    message:
+        "Building historical emissions per country and sector"
     script:
         scripts("build_co2_totals.py")
 

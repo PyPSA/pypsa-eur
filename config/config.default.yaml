@@ -90,6 +90,7 @@ enable:
 co2_budget:
   emissions_scope: CO2
   relative: true
+  baseline: 4.604
   upper:
     2020: 0.72
     2025: 0.648
@@ -556,7 +557,6 @@ pypsa_eur:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#energy_cf
 energy:
   energy_totals_year: 2023
-  base_emissions_year: 1990
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#biomass_cf
 biomass:
@@ -1494,8 +1494,11 @@ data:
   population_count:
     source: archive
     version: latest
-  ghg_emissions:
-    source: archive
+  edgar_co2:
+    source: primary
+    version: latest
+  edgar_ghg:
+    source: primary
     version: latest
   gebco:
     source: archive

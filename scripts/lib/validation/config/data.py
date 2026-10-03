@@ -297,9 +297,13 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="Population count data source configuration.",
     )
-    ghg_emissions: _DataSourceConfig = Field(
-        default_factory=_DataSourceConfig,
-        description="GHG emissions data source configuration.",
+    edgar_co2: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="EDGAR CO2 emissions data source configuration.",
+    )
+    edgar_ghg: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="EDGAR greenhouse gas emissions data source configuration.",
     )
     gebco: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
