@@ -257,11 +257,6 @@ if __name__ == "__main__":
 
     time_shift = snakemake.params.load["fill_gaps"]["time_shift_for_large_gaps"]
 
-    demand_source = snakemake.params.load.get(
-        "demand_source",
-        "supplemented",
-    )
-
     opsd = load_timeseries(snakemake.input.opsd, years, countries, OPSD_DATE_FORMAT)
 
     entsoe = load_timeseries(snakemake.input.entsoe, years, countries)
@@ -327,56 +322,63 @@ if __name__ == "__main__":
         )
         load = load.apply(fill_large_gaps, shift=time_shift)
 
+    demand_source = snakemake.params.load.get(
+        "demand_source",
+        "supplemented",
+    )
+
     if demand_source in ("supplemented", "synthetic"):
         synthetic_load = pd.read_csv(
             snakemake.input.synthetic,
             index_col=0,
             parse_dates=True,
         )
+        synthetic_load.rename(columns={"KV": "XK"}, inplace=True)
+
+    if demand_source == "supplemented":
+        logger.info("Using historical demand supplemented with synthetic data.")
         synthetic_countries = [
             c for c in countries if c in synthetic_load.columns
         ]
-    if demand_source == "supplemented":
-        logger.info(
-            "Using historical demand supplemented with synthetic data."
-        )
         synthetic_load = synthetic_load.loc[
             snapshots,
             synthetic_countries,
         ]
         load = load.combine_first(synthetic_load)
+
     elif demand_source == "synthetic":
         missing = sorted(
             set(countries) - set(synthetic_load.columns)
         )
         if missing:
-            logger.warning(
+            raise ValueError(
                 "No synthetic demand available for countries: "
-                f"{missing}. Using historical demand for them."
+                f"{missing}"
             )
-        load.update(
-            synthetic_load.loc[
-                snapshots,
-                synthetic_countries,
-            ]
-        )
+        logger.info("Using synthetic demand only.")
+        load = synthetic_load[countries]
+        
     elif demand_source == "historical":
-        logger.info(
-            "Using historical demand only."
-        )
-    else:
-        raise ValueError(
-            f"Unknown demand_source='{demand_source}'. "
-            "Expected one of: historical, supplemented, synthetic."
-        )
+        logger.info("Using historical demand only.")
 
     fixed_year = snakemake.params["load"].get("fixed_year", False)
     load = reindex_to_snapshots(load, snapshots, fixed_year)
 
-    assert not load.isna().any().any(), (
-        "Load data contains nans. Adjust the parameters "
-        "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
-        "for implementing the needed load data modifications."
-    )
+    if load.isna().any().any():
+        missing = sorted(load.columns[load.isna().any()])
+
+        if demand_source == "historical":
+            raise ValueError(
+                f"Historical demand data contains nans for countries: {missing}. "
+                "Consider using demand_source='supplemented' or "
+                "demand_source='synthetic'."
+            )
+
+        raise ValueError(
+            "Load data contains nans for countries: "
+            f"{missing}. Adjust the parameters "
+            "`time_shift_for_large_gaps` or modify the "
+            "`manual_adjustment` function."
+        )
 
     load.to_csv(snakemake.output[0])
