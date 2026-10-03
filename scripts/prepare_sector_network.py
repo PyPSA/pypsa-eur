@@ -34,7 +34,6 @@ from scripts.add_electricity import (
     calculate_annuity,
     flatten,
 )
-from scripts.build_co2_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from scripts.build_transport_demand import transport_degree_factor
 from scripts.definitions.heat_sector import HeatSector
 from scripts.definitions.heat_system import HeatSystem
@@ -220,15 +219,13 @@ def determine_emission_sectors(options):
     if options["transport"]:
         sectors += ["rail non-elec", "road non-elec"]
     if options["heating"]:
-        sectors += ["residential non-elec", "services non-elec"]
+        sectors += ["buildings non-elec"]
     if options["industry"]:
         sectors += [
             "industrial non-elec",
             "industrial processes",
             "domestic aviation",
-            "international aviation",
             "domestic navigation",
-            "international navigation",
         ]
     if options["agriculture"]:
         sectors += ["agriculture"]
@@ -237,28 +234,16 @@ def determine_emission_sectors(options):
 
 
 def co2_emissions_year(
-    countries, input_eurostat, options, emissions_scope, input_co2, year
-):
+    countries: list[str], co2_totals: str, options: dict, year: int
+) -> float:
     """
-    Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
+    Calculate CO2 emissions in Gt of the modelled sectors in one specific year (e.g. 1990).
     """
-    eea_co2 = build_eea_co2(input_co2, year, emissions_scope)
-
-    eurostat = pd.read_csv(input_eurostat)
-
-    # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK, XK
-    eurostat_co2 = build_eurostat_co2(eurostat, year)
-
-    co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
-
+    co2 = pd.read_csv(co2_totals, index_col=[0, 1])
     sectors = determine_emission_sectors(options)
 
-    co2_emissions = co2_totals.loc[countries, sectors].sum().sum()
-
     # convert MtCO2 to GtCO2
-    co2_emissions *= 0.001
-
-    return co2_emissions
+    return co2.loc[(countries, year), sectors].sum().sum() / 1e3
 
 
 def haversine(p, n):

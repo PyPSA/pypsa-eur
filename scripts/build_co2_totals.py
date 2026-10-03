@@ -2,11 +2,24 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Calculate historical CO2 emissions per country using EEA and Eurostat data.
+Build historical CO2 or greenhouse gas emissions per country, year and sector from the EDGAR inventory.
+
+The EDGAR emissions by country and IPCC 2006 source category are mapped to the
+sectors of PyPSA-Eur. Emissions of the energy sector not mapped to a specific
+sector (e.g. refineries, manufacturing, fugitive emissions) are assigned to
+"industrial non-elec". EDGAR reports residential, services and agricultural
+fuel combustion (1.A.4) as one sector and international aviation and shipping
+only as global totals. These bunkers are therefore not included. EDGAR reports
+Serbia, Montenegro and Kosovo as one entity, which is split by population.
 
 Outputs
 -------
-- ``resources/<run_name>/co2_totals.csv``: CO2 emissions per country and sector.
+- ``resources/<run_name>/co2_totals.csv``: Emissions in Mt per country, year and sector.
+
+References
+----------
+- `EDGAR Community GHG Database <https://edgar.jrc.ec.europa.eu/dataset_ghg2026>`_
+- Crippa, M. et al. (2026), GHG emissions of all world countries - 2026 Report, doi:10.2760/7717504
 """
 
 import logging
@@ -16,217 +29,100 @@ import pandas as pd
 
 from scripts._helpers import configure_logging, set_scenario_config
 
-cc = coco.CountryConverter()
 logger = logging.getLogger(__name__)
-idx = pd.IndexSlice
 
-eu28 = cc.EU28as("ISO2").ISO2.tolist()
-eu28_eea = eu28.copy()
-eu28_eea.remove("GB")
-eu28_eea.append("UK")
-
-to_ipcc = {
-    "electricity": "1.A.1.a - Public Electricity and Heat Production",
-    "residential non-elec": "1.A.4.b - Residential",
-    "services non-elec": "1.A.4.a - Commercial/Institutional",
-    "rail non-elec": "1.A.3.c - Railways",
-    "road non-elec": "1.A.3.b - Road Transportation",
-    "domestic navigation": "1.A.3.d - Domestic Navigation",
-    "international navigation": "1.D.1.b - International Navigation",
-    "domestic aviation": "1.A.3.a - Domestic Aviation",
-    "international aviation": "1.D.1.a - International Aviation",
-    "total energy": "1 - Energy",
-    "industrial processes": "2 - Industrial Processes and Product Use",
-    "agriculture": "3 - Agriculture",
-    "agriculture, forestry and fishing": "1.A.4.c - Agriculture/Forestry/Fishing",
-    "LULUCF": "4 - Land Use, Land-Use Change and Forestry",
-    "waste management": "5 - Waste management",
-    "other": "6 - Other Sector",
-    "indirect": "ind_CO2 - Indirect CO2",
-    "total wL": "Total (with LULUCF)",
-    "total woL": "Total (without LULUCF)",
+# Longest matching prefix of the IPCC 2006 code determines the sector
+IPCC_SECTORS = {
+    "1": "industrial non-elec",
+    "1.A.1.a": "electricity",
+    "1.A.3.a": "domestic aviation",
+    "1.A.3.b": "road non-elec",
+    "1.A.3.c": "rail non-elec",
+    "1.A.3.d": "domestic navigation",
+    "1.A.4": "buildings non-elec",
+    "2": "industrial processes",
+    "3": "agriculture",
+    "4": "waste management",
+    "5.A": "indirect",
+    "5.B": "industrial non-elec",  # fossil fuel fires
 }
 
+# Population in 2020 from World Bank (SP.POP.TOTL) to split "Serbia and Montenegro"
+SCG_POPULATION = {"RS": 6899126, "ME": 626590, "XK": 1790151}
 
-def reverse(dictionary: dict) -> dict:
-    return {v: k for k, v in dictionary.items()}
 
-
-def build_eea_co2(
-    input_co2: str, year: int = 1990, emissions_scope: str = "CO2"
-) -> pd.DataFrame:
+def ipcc_to_sector(code: str) -> str:
     """
-    Calculate CO2 emissions for a given year based on EEA data in Mt.
+    Map an IPCC 2006 source category code to a PyPSA-Eur emission sector.
 
     Parameters
     ----------
-    input_co2 : str
-        Path to the input CSV file with CO2 data.
-    year : int, optional
-        Year for which to calculate emissions, by default 1990.
-    emissions_scope : str, optional
-        Scope of the emissions to consider, by default "CO2".
+    code : str
+        IPCC 2006 code, e.g. "1.A.3.b".
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with CO2 emissions for the given year.
-
-    Notes
-    -----
-    - The function reads the `input_co2` data and for a specific `year` and `emission scope`
-    - It calculates "industrial non-elec" and "agriculture" emissions from that data
-    - It drops unneeded columns and converts the emissions to Mt.
-
-    References
-    ----------
-    - `EEA CO2 data <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_ (downloaded 201228, modified by EEA last on 201221)
+    str
+        Emission sector.
     """
-    df = pd.read_csv(input_co2, encoding="latin-1", low_memory=False)
-
-    df.replace(dict(Year="1985-1987"), 1986, inplace=True)
-    df.Year = df.Year.astype(int)
-    index_col = ["Country_code", "Pollutant_name", "Year", "Sector_name"]
-    df = df.set_index(index_col).sort_index()
-
-    cts = ["CH", "EUA", "NO"] + eu28_eea
-
-    slicer = idx[cts, emissions_scope, year, to_ipcc.values()]
-    emissions = (
-        df.loc[slicer, "emissions"]
-        .unstack("Sector_name")
-        .rename(columns=reverse(to_ipcc))
-        .droplevel([1, 2])
-    )
-
-    emissions.rename(index={"EUA": "EU28", "UK": "GB"}, inplace=True)
-
-    to_subtract = [
-        "electricity",
-        "services non-elec",
-        "residential non-elec",
-        "road non-elec",
-        "rail non-elec",
-        "domestic aviation",
-        "international aviation",
-        "domestic navigation",
-        "international navigation",
-        "agriculture, forestry and fishing",
-    ]
-    emissions["industrial non-elec"] = emissions["total energy"] - emissions[
-        to_subtract
-    ].sum(axis=1)
-
-    emissions["agriculture"] += emissions["agriculture, forestry and fishing"]
-
-    to_drop = [
-        "total energy",
-        "total wL",
-        "total woL",
-        "agriculture, forestry and fishing",
-    ]
-    emissions.drop(columns=to_drop, inplace=True)
-
-    # convert from Gt to Mt
-    return emissions / 1e3
+    matches = [k for k in IPCC_SECTORS if code == k or code.startswith(k + ".")]
+    if not matches:
+        raise ValueError(f"IPCC code '{code}' is not mapped to an emission sector.")
+    return IPCC_SECTORS[max(matches, key=len)]
 
 
-def build_eurostat_co2(eurostat: pd.DataFrame, year: int = 1990) -> pd.Series:
+def build_co2_totals(fn: str, countries: list[str]) -> pd.DataFrame:
     """
-    Calculate CO2 emissions for a given year based on Eurostat fuel consumption
-    data and fuel-specific emissions.
+    Read EDGAR emissions and aggregate them by country, year and sector.
 
     Parameters
     ----------
-    eurostat : pd.DataFrame
-        DataFrame with Eurostat data.
-    year : int, optional
-        Year for which to calculate emissions, by default 1990.
-
-    Returns
-    -------
-    pd.Series
-        Series with CO2 emissions for the given year.
-
-    Notes
-    -----
-    - The function hard-sets fuel-specific emissions:
-        - solid fuels: 0.36 tCO2_equi/MW_th (approximates coal)
-        - oil: 0.285 tCO2_equi/MW_th (average of distillate and residue)
-        - natural gas: 0.2 tCO2_equi/MW_th
-    - It then multiplies the Eurostat fuel consumption data for `year` by the specific emissions and sums the result.
-
-    References
-    ----------
-    - Oil values from `EIA <https://www.eia.gov/tools/faqs/faq.cfm?id=74&t=11>`_
-    - Distillate oil (No. 2)  0.276
-    - Residual oil (No. 6)  0.298
-    - `EIA Electricity Annual <https://www.eia.gov/electricity/annual/html/epa_a_03.html>`_
-    """
-    emissions = pd.Series(
-        {
-            "C0000X0350-0370": 0.36,  # solid fossil fuels
-            "O4000XBIO": 0.285,  # oil and petroleum products
-            "G3000": 0.2,  # natural gas
-        }
-    )
-    return (
-        eurostat.query("year == @year and siec in @emissions.index")
-        .assign(value=lambda df: df["value"] * df["siec"].map(emissions))
-        .groupby(["country", "nrg_bal"])["value"]
-        .sum(min_count=1)
-    )
-
-
-def build_co2_totals(
-    countries: list[str], eea_co2: pd.DataFrame, eurostat_co2: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Combine CO2 emissions data from EEA and Eurostat for a list of countries.
-
-    Parameters
-    ----------
+    fn : str
+        Path to the EDGAR Excel file with emissions by country and IPCC 2006 code.
     countries : list[str]
-        List of country codes for which CO2 totals need to be built.
-    eea_co2 : pd.DataFrame
-        DataFrame with EEA CO2 emissions data.
-    eurostat_co2 : pd.DataFrame
-        DataFrame with Eurostat CO2 emissions data.
+        ISO2 country codes to include.
 
     Returns
     -------
     pd.DataFrame
-        Combined CO2 emissions data for the given countries.
-
-    Notes
-    -----
-    - The function combines the CO2 emissions from EEA and Eurostat into a single DataFrame for the given countries.
+        Emissions in Mt with a (country, year) index and sectors as columns.
     """
-    co2 = eea_co2.reindex(countries)
+    df = pd.read_excel(fn, sheet_name="IPCC 2006", skiprows=9)
+    years = df.filter(like="Y_").columns
 
-    for ct in pd.Index(countries).intersection(
-        ["BA", "RS", "XK", "AL", "ME", "MK", "UA", "MD"]
-    ):
-        mappings = {
-            "electricity": "TI_EHG_E",
-            "residential non-elec": "FC_OTH_HH_E",
-            "services non-elec": "FC_OTH_CP_E",
-            "road non-elec": "FC_TRA_ROAD_E",
-            "rail non-elec": "FC_TRA_RAIL_E",
-            "domestic navigation": "FC_TRA_DNAVI_E",
-            "international navigation": "INTMARB",
-            "domestic aviation": "FC_TRA_DAVI_E",
-            "international aviation": "INTAVI",
-            # does not include industrial process emissions or fuel processing/refining
-            "industrial non-elec": "FC_IND_E",
-            # does not include non-energy emissions
-            "agriculture": ["FC_OTH_AF_E", "FC_OTH_FISH_E"],
-        }
+    codes = df.Country_code_A3.unique()
+    iso2 = dict(zip(codes, coco.convert(codes, to="ISO2", not_found=None)))
+    df["country"] = df.Country_code_A3.map(iso2)
 
-        for i, mi in mappings.items():
-            co2.at[ct, i] = eurostat_co2.loc[ct, mi].sum()
+    scg = df.query("Country_code_A3 == 'SCG'")
+    shares = pd.Series(SCG_POPULATION) / sum(SCG_POPULATION.values())
+    df = pd.concat(
+        [df.query("Country_code_A3 != 'SCG'")]
+        + [scg.assign(country=ct, **scg[years].mul(s)) for ct, s in shares.items()]
+    )
 
-    return co2
+    missing = pd.Index(countries).difference(df.country.unique())
+    if not missing.empty:
+        raise ValueError(f"No EDGAR emissions for countries {missing.tolist()}.")
+
+    emissions = (
+        df.query("country in @countries")
+        .assign(
+            sector=lambda d: d.ipcc_code_2006_for_standard_report.map(ipcc_to_sector)
+        )
+        .melt(id_vars=["country", "sector"], value_vars=years, var_name="year")
+        .assign(year=lambda d: d.year.str.removeprefix("Y_").astype(int))
+        .pivot_table(
+            index=["country", "year"],
+            columns="sector",
+            values="value",
+            aggfunc="sum",
+            fill_value=0.0,
+        )
+    )
+
+    # convert from Gg to Mt
+    return emissions / 1e3
 
 
 if __name__ == "__main__":
@@ -237,14 +133,5 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    params = snakemake.params.energy
-    countries = snakemake.params.countries
-    base_year_emissions = params["base_emissions_year"]
-    emissions_scope = snakemake.params.emissions_scope
-
-    eurostat = pd.read_csv(snakemake.input.eurostat)
-    eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)
-    eurostat_co2 = build_eurostat_co2(eurostat, base_year_emissions)
-
-    co2 = build_co2_totals(countries, eea_co2, eurostat_co2)
+    co2 = build_co2_totals(snakemake.input.edgar, snakemake.params.countries)
     co2.to_csv(snakemake.output.co2_totals)

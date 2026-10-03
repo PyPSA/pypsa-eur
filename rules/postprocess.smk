@@ -219,10 +219,11 @@ rule plot_summary:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/energy_balance.csv",
-        eurostat=resources("eurostat_energy_balances.csv"),
-        co2=branch(
-            lambda w: config_provider("foresight")(w) == "perfect",
-            rules.retrieve_ghg_emissions.output["csv"],
+        co2_totals=branch(
+            lambda w: config_provider("foresight")(w) == "perfect"
+            and config_provider("co2_budget", "relative")(w)
+            and config_provider("co2_budget", "baseline")(w) is None,
+            resources("co2_totals.csv"),
         ),
     output:
         costs=RESULTS + "graphs/costs.pdf",
@@ -236,7 +237,6 @@ rule plot_summary:
     params:
         countries=config_provider("countries"),
         planning_horizons=config_provider("planning_horizons"),
-        emissions_scope=config_provider("co2_budget", "emissions_scope"),
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),
         sector=config_provider("sector"),

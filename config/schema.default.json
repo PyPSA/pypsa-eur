@@ -689,13 +689,29 @@
       "properties": {
         "emissions_scope": {
           "default": "CO2",
-          "description": "Emissions scope for CO2 budget calculations.",
+          "description": "Emissions scope of the historical emissions from EDGAR used for `baseline: null`: CO2 only or all greenhouse gases in CO2 equivalent (GWP100 from IPCC AR5).",
+          "enum": [
+            "CO2",
+            "All greenhouse gases - (CO2 equivalent)"
+          ],
           "type": "string"
         },
         "relative": {
           "default": true,
           "description": "If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",
           "type": "boolean"
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 4.604,
+          "description": "1990 emissions in Gt CO2/year for relative budgets. The default is the 1990 CO2 emissions of the default countries and sectors (EEA, 2020). If null, the baseline is computed from EDGAR for the modelled countries and sectors. EDGAR CO2 data is licensed for non-commercial use only (CC BY-NC-ND 4.0)."
         },
         "upper": {
           "anyOf": [
@@ -1677,7 +1693,27 @@
             }
           }
         },
-        "ghg_emissions": {
+        "edgar_co2": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "edgar_ghg": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -2542,12 +2578,6 @@
         "energy_totals_year": {
           "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
-          "type": "integer"
-        },
-        "base_emissions_year": {
-          "default": 1990,
-          "description": "The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
-          "markdownDescription": "The base year for the sector emissions. See [European Environment Agency (EEA) ](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
           "type": "integer"
         }
       }
@@ -10053,13 +10083,29 @@
       "properties": {
         "emissions_scope": {
           "default": "CO2",
-          "description": "Emissions scope for CO2 budget calculations.",
+          "description": "Emissions scope of the historical emissions from EDGAR used for `baseline: null`: CO2 only or all greenhouse gases in CO2 equivalent (GWP100 from IPCC AR5).",
+          "enum": [
+            "CO2",
+            "All greenhouse gases - (CO2 equivalent)"
+          ],
           "type": "string"
         },
         "relative": {
           "default": true,
           "description": "If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",
           "type": "boolean"
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 4.604,
+          "description": "1990 emissions in Gt CO2/year for relative budgets. The default is the 1990 CO2 emissions of the default countries and sectors (EEA, 2020). If null, the baseline is computed from EDGAR for the modelled countries and sectors. EDGAR CO2 data is licensed for non-commercial use only (CC BY-NC-ND 4.0)."
         },
         "upper": {
           "anyOf": [
@@ -12089,12 +12135,6 @@
         "energy_totals_year": {
           "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
-          "type": "integer"
-        },
-        "base_emissions_year": {
-          "default": 1990,
-          "description": "The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
-          "markdownDescription": "The base year for the sector emissions. See [European Environment Agency (EEA) ](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
           "type": "integer"
         }
       }
@@ -15118,7 +15158,27 @@
             }
           }
         },
-        "ghg_emissions": {
+        "edgar_co2": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "edgar_ghg": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

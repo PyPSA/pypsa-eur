@@ -187,35 +187,42 @@ if (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] i
                 ds_reqd.rio.to_raster(file_path)
 
 
-if (GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions"))["source"] in [
-    "archive",
+if (EDGAR_CO2_DATASET := dataset_version("edgar_co2"))["source"] in [
     "primary",
+    "archive",
 ]:
 
-    rule retrieve_ghg_emissions:
+    rule retrieve_edgar_co2:
         input:
-            ghg=storage(GHG_EMISSIONS_DATASET["url"]),
+            zip_file=storage(EDGAR_CO2_DATASET["url"]),
         output:
-            csv=f"{GHG_EMISSIONS_DATASET['folder']}/UNFCCC_v23.csv",
-            zip=(
-                f"{GHG_EMISSIONS_DATASET['folder']}/UNFCCC_v23.csv.zip"
-                if GHG_EMISSIONS_DATASET["source"] == "primary"
-                else []
-            ),
-            directory=(
-                directory(GHG_EMISSIONS_DATASET["folder"])
-                if GHG_EMISSIONS_DATASET["source"] == "primary"
-                else []
-            ),
+            zip_file=f"{EDGAR_CO2_DATASET['folder']}/{Path(EDGAR_CO2_DATASET['url']).name}",
+            xlsx=f"{EDGAR_CO2_DATASET['folder']}/{Path(EDGAR_CO2_DATASET['url']).stem}.xlsx",
         retries: 2
         message:
-            "Retrieving GHG emissions data"
+            "Retrieving EDGAR CO2 emissions data"
         run:
-            if GHG_EMISSIONS_DATASET["source"] == "primary":
-                copy2(input["ghg"], output["zip"])
-                unpack_archive(output["zip"], GHG_EMISSIONS_DATASET["folder"])
-            else:
-                copy2(input["ghg"], output["csv"])
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], EDGAR_CO2_DATASET["folder"])
+
+
+if (EDGAR_GHG_DATASET := dataset_version("edgar_ghg"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_edgar_ghg:
+        input:
+            zip_file=storage(EDGAR_GHG_DATASET["url"]),
+        output:
+            zip_file=f"{EDGAR_GHG_DATASET['folder']}/{Path(EDGAR_GHG_DATASET['url']).name}",
+            xlsx=f"{EDGAR_GHG_DATASET['folder']}/{Path(EDGAR_GHG_DATASET['url']).stem}.xlsx",
+        retries: 2
+        message:
+            "Retrieving EDGAR greenhouse gas emissions data"
+        run:
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], EDGAR_GHG_DATASET["folder"])
 
 
 if (GEBCO_DATASET := dataset_version("gebco"))["source"] in ["archive", "primary"]:

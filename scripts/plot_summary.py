@@ -18,7 +18,7 @@ from scripts._helpers import (
     rename_techs,
     set_scenario_config,
 )
-from scripts.prepare_sector_network import co2_emissions_year
+from scripts.prepare_sector_network import determine_emission_sectors
 
 logger = logging.getLogger(__name__)
 plt.style.use("bmh")
@@ -338,99 +338,18 @@ def plot_balances():
         )
 
 
-def historical_emissions(countries):
+def historical_emissions(
+    co2_totals: str, countries: list[str], options: dict
+) -> pd.Series:
     """
-    Read historical emissions to add them to the carbon budget plot.
+    Read historical emissions in Gt of the modelled sectors since 1990.
     """
-    # https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
-    # downloaded 201228 (modified by EEA last on 201221)
-    df = pd.read_csv(snakemake.input.co2, encoding="latin-1", low_memory=False)
-    df["Year"] = df["Year"].replace("1985-1987", "1986").astype(int)
-    df = df.set_index(
-        ["Year", "Sector_name", "Country_code", "Pollutant_name"]
-    ).sort_index()
-
-    e = pd.Series()
-    e["electricity"] = "1.A.1.a - Public Electricity and Heat Production"
-    e["residential non-elec"] = "1.A.4.b - Residential"
-    e["services non-elec"] = "1.A.4.a - Commercial/Institutional"
-    e["rail non-elec"] = "1.A.3.c - Railways"
-    e["road non-elec"] = "1.A.3.b - Road Transportation"
-    e["domestic navigation"] = "1.A.3.d - Domestic Navigation"
-    e["international navigation"] = "1.D.1.b - International Navigation"
-    e["domestic aviation"] = "1.A.3.a - Domestic Aviation"
-    e["international aviation"] = "1.D.1.a - International Aviation"
-    e["total energy"] = "1 - Energy"
-    e["industrial processes"] = "2 - Industrial Processes and Product Use"
-    e["agriculture"] = "3 - Agriculture"
-    e["LULUCF"] = "4 - Land Use, Land-Use Change and Forestry"
-    e["waste management"] = "5 - Waste management"
-    e["other"] = "6 - Other Sector"
-    e["indirect"] = "ind_CO2 - Indirect CO2"
-    e["other LULUCF"] = "4.H - Other LULUCF"
-
-    pol = ["CO2"]  # ["All greenhouse gases - (CO2 equivalent)"]
-    if "GB" in countries:
-        countries.remove("GB")
-        countries.append("UK")
-
-    year = df.index.levels[0][df.index.levels[0] >= 1990]
-
-    missing = pd.Index(countries).difference(df.index.levels[2])
-    if not missing.empty:
-        logger.warning(
-            f"The following countries are missing and not considered when plotting historic CO2 emissions: {missing}"
-        )
-        countries = pd.Index(df.index.levels[2]).intersection(countries)
-
-    idx = pd.IndexSlice
-    co2_totals = (
-        df.loc[idx[year, e.values, countries, pol], "emissions"]
-        .unstack("Year")
-        .rename(index=pd.Series(e.index, e.values))
-    )
-
-    co2_totals = (1 / 1e6) * co2_totals.groupby(level=0).sum()  # Gton CO2
-
-    co2_totals.loc["industrial non-elec"] = (
-        co2_totals.loc["total energy"]
-        - co2_totals.loc[
-            [
-                "electricity",
-                "services non-elec",
-                "residential non-elec",
-                "road non-elec",
-                "rail non-elec",
-                "domestic aviation",
-                "international aviation",
-                "domestic navigation",
-                "international navigation",
-            ]
-        ].sum()
-    )
-
-    emissions = co2_totals.loc["electricity"]
-    if options["transport"]:
-        emissions += co2_totals.loc[[i + " non-elec" for i in ["rail", "road"]]].sum()
-    if options["heating"]:
-        emissions += co2_totals.loc[
-            [i + " non-elec" for i in ["residential", "services"]]
-        ].sum()
-    if options["industry"]:
-        emissions += co2_totals.loc[
-            [
-                "industrial non-elec",
-                "industrial processes",
-                "domestic aviation",
-                "international aviation",
-                "domestic navigation",
-                "international navigation",
-            ]
-        ].sum()
-    return emissions
+    co2 = pd.read_csv(co2_totals, index_col=[0, 1]).loc[countries]
+    sectors = determine_emission_sectors(options)
+    return co2[sectors].sum(axis=1).groupby("year").sum().loc[1990:] / 1e3
 
 
-def plot_carbon_budget_distribution(input_eurostat, options):
+def plot_carbon_budget_distribution(co2_totals, options):
     """
     Plot historical carbon emissions in the EU and decarbonization path.
     """
@@ -443,25 +362,10 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     plt.rcParams["xtick.labelsize"] = 20
     plt.rcParams["ytick.labelsize"] = 20
 
-    emissions_scope = snakemake.params.emissions_scope
-    input_co2 = snakemake.input.co2
-
     # historic emissions
     countries = snakemake.params.countries
-    e_1990 = co2_emissions_year(
-        countries,
-        input_eurostat,
-        options,
-        emissions_scope,
-        input_co2,
-        year=1990,
-    )
-    emissions = historical_emissions(countries)
-    # add other years https://sdi.eea.europa.eu/data/0569441f-2853-4664-a7cd-db969ef54de0
-    emissions.loc[2019] = 3.414362
-    emissions.loc[2020] = 3.092434
-    emissions.loc[2021] = 3.290418
-    emissions.loc[2022] = 3.213025
+    emissions = historical_emissions(co2_totals, countries, options)
+    e_1990 = emissions[1990]
 
     if snakemake.config["foresight"] == "myopic":
         path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
@@ -574,6 +478,6 @@ if __name__ == "__main__":
 
     plot_balances()
 
-    if snakemake.params["foresight"] == "perfect":
+    if snakemake.input.get("co2_totals"):
         options = snakemake.params.sector
-        plot_carbon_budget_distribution(snakemake.input.eurostat, options)
+        plot_carbon_budget_distribution(snakemake.input.co2_totals, options)

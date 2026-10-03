@@ -203,14 +203,14 @@ def apply_co2_budget_constraints(
         upper_raw = bound_value_for_horizon(upper_cfg, current_horizon)
         lower_raw = bound_value_for_horizon(lower_cfg, current_horizon)
         if upper_raw is not None or lower_raw is not None:
-            baseline_1990 = co2_emissions_year(
-                countries=params.countries,
-                input_eurostat=inputs["eurostat"],
-                options=params.sector,
-                emissions_scope=co2_budget["emissions_scope"],
-                input_co2=inputs["co2"],
-                year=1990,
-            )
+            baseline_1990 = co2_budget["baseline"]
+            if baseline_1990 is None:
+                baseline_1990 = co2_emissions_year(
+                    countries=params.countries,
+                    co2_totals=inputs["co2_totals"],
+                    options=params.sector,
+                    year=1990,
+                )
 
     upper, lower = co2_budget_for_horizon(
         co2_budget,
