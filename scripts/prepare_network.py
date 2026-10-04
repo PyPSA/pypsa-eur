@@ -205,10 +205,8 @@ def apply_co2_budget_constraints(
         if upper_raw is not None or lower_raw is not None:
             baseline_1990 = co2_emissions_year(
                 countries=params.countries,
-                input_eurostat=inputs["eurostat"],
+                co2_totals=inputs["co2_totals"],
                 options=params.sector,
-                emissions_scope=co2_budget["emissions_scope"],
-                input_co2=inputs["co2"],
                 year=1990,
             )
 

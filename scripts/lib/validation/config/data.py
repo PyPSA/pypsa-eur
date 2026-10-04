@@ -298,8 +298,16 @@ class DataConfig(BaseModel):
         description="Population count data source configuration.",
     )
     ghg_emissions: _DataSourceConfig = Field(
-        default_factory=_DataSourceConfig,
-        description="GHG emissions data source configuration.",
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="EEA GHG emissions data source configuration.",
+    )
+    ghg_emissions_energy_community: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="EEA GHG emissions of Energy Community Contracting Parties data source configuration.",
+    )
+    desnz_ghg_emissions: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="DESNZ UK GHG emissions data source configuration.",
     )
     gebco: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,

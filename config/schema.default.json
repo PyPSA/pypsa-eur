@@ -689,7 +689,11 @@
       "properties": {
         "emissions_scope": {
           "default": "CO2",
-          "description": "Emissions scope for CO2 budget calculations.",
+          "description": "Emissions scope of the national inventories used for the 1990 baseline: CO2 only or all greenhouse gases in CO2 equivalent.",
+          "enum": [
+            "CO2",
+            "All greenhouse gases - (CO2 equivalent)"
+          ],
           "type": "string"
         },
         "relative": {
@@ -1697,6 +1701,46 @@
             }
           }
         },
+        "ghg_emissions_energy_community": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "desnz_ghg_emissions": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "gebco": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -2542,12 +2586,6 @@
         "energy_totals_year": {
           "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
-          "type": "integer"
-        },
-        "base_emissions_year": {
-          "default": 1990,
-          "description": "The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
-          "markdownDescription": "The base year for the sector emissions. See [European Environment Agency (EEA) ](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
           "type": "integer"
         }
       }
@@ -10053,7 +10091,11 @@
       "properties": {
         "emissions_scope": {
           "default": "CO2",
-          "description": "Emissions scope for CO2 budget calculations.",
+          "description": "Emissions scope of the national inventories used for the 1990 baseline: CO2 only or all greenhouse gases in CO2 equivalent.",
+          "enum": [
+            "CO2",
+            "All greenhouse gases - (CO2 equivalent)"
+          ],
           "type": "string"
         },
         "relative": {
@@ -12089,12 +12131,6 @@
         "energy_totals_year": {
           "default": 2023,
           "description": "The year for the sector energy use. The year must be available in the Eurostat report.",
-          "type": "integer"
-        },
-        "base_emissions_year": {
-          "default": 1990,
-          "description": "The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
-          "markdownDescription": "The base year for the sector emissions. See [European Environment Agency (EEA) ](https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16).",
           "type": "integer"
         }
       }
@@ -15119,6 +15155,46 @@
           }
         },
         "ghg_emissions": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "ghg_emissions_energy_community": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "desnz_ghg_emissions": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

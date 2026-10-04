@@ -8,6 +8,8 @@ CO2 budget configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#co2_budget_cf
 """
 
+from typing import Literal
+
 from pydantic import Field
 
 from scripts.lib.validation.config._base import ConfigModel
@@ -16,9 +18,9 @@ from scripts.lib.validation.config._base import ConfigModel
 class Co2BudgetConfig(ConfigModel):
     """Configuration for `co2_budget` settings."""
 
-    emissions_scope: str = Field(
+    emissions_scope: Literal["CO2", "All greenhouse gases - (CO2 equivalent)"] = Field(
         "CO2",
-        description="Emissions scope for CO2 budget calculations.",
+        description="Emissions scope of the national inventories used for the 1990 baseline: CO2 only or all greenhouse gases in CO2 equivalent.",
     )
     relative: bool = Field(
         True,
