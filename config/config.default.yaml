@@ -78,9 +78,8 @@ countries:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#snapshots_cf
 snapshots:
-  start: "2013-01-01"
-  end: "2014-01-01"
-  inclusive: left
+  start: "2013-01-01 00:00"
+  end: "2013-12-31 23:00"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#enable_cf
 enable:

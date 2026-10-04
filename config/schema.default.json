@@ -5885,8 +5885,8 @@
               "type": "array"
             }
           ],
-          "default": "2013-01-01",
-          "description": "Left bound of date range."
+          "default": "2013-01-01 00:00",
+          "description": "First snapshot (included)."
         },
         "end": {
           "anyOf": [
@@ -5900,25 +5900,8 @@
               "type": "array"
             }
           ],
-          "default": "2014-01-01",
-          "description": "Right bound of date range."
-        },
-        "inclusive": {
-          "anyOf": [
-            {
-              "enum": [
-                "left",
-                "right",
-                "both"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "left",
-          "description": "Make the time interval closed to the `left`, `right`, or both sides `both` or neither side `None`."
+          "default": "2013-12-31 23:00",
+          "description": "Last snapshot (included). A date without time refers to 00:00 of that day."
         }
       }
     },
@@ -10001,8 +9984,8 @@
               "type": "array"
             }
           ],
-          "default": "2013-01-01",
-          "description": "Left bound of date range."
+          "default": "2013-01-01 00:00",
+          "description": "First snapshot (included)."
         },
         "end": {
           "anyOf": [
@@ -10016,25 +9999,8 @@
               "type": "array"
             }
           ],
-          "default": "2014-01-01",
-          "description": "Right bound of date range."
-        },
-        "inclusive": {
-          "anyOf": [
-            {
-              "enum": [
-                "left",
-                "right",
-                "both"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "left",
-          "description": "Make the time interval closed to the `left`, `right`, or both sides `both` or neither side `None`."
+          "default": "2013-12-31 23:00",
+          "description": "Last snapshot (included). A date without time refers to 00:00 of that day."
         }
       }
     },

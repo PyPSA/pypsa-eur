@@ -633,8 +633,8 @@ def get_snapshots(
     Parameters
     ----------
     snapshots : dict
-        Dictionary containing time range parameters. 'start' and 'end' can be
-        strings or lists of strings for multiple date ranges.
+        Dictionary with the first ('start') and last ('end') snapshot, both
+        included. Both can be strings or lists of strings for multiple date ranges.
     drop_leap_day : bool, default False
         If True, removes February 29th from the DateTimeIndex in leap years.
     freq : str, default "h"
@@ -659,9 +659,7 @@ def get_snapshots(
 
     time_periods = []
     for s, e in zip(start, end):
-        period = pd.date_range(
-            start=s, end=e, freq=freq, inclusive=snapshots["inclusive"], **kwargs
-        )
+        period = pd.date_range(start=s, end=e, freq=freq, **kwargs)
         time_periods.append(period)
 
     time = pd.DatetimeIndex([ts for period in time_periods for ts in period])
