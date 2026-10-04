@@ -307,7 +307,7 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
 
     # get names of heat pumps in previous iteration that cannot be replaced by direct utilisation in this iteration
     heat_pump_idx_previous_iteration = n_p.links.index[
-        n_p.links.index.str.contains("heat pump")
+        n_p.links.index.str.contains("urban central.*heat pump")
         & n_p.links.index.str[:-4].isin(
             n.links_t.efficiency.columns.str.rstrip(  # sources that can be directly used are no longer represented by heat pumps in the dynamic efficiency dataframe
                 str(year)

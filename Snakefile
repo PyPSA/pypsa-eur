@@ -31,7 +31,9 @@ configfile: "config/config.default.yaml"
 configfile: "config/plotting.default.yaml"
 
 
-if Path("config/config.yaml").exists():
+if Path("config/config.yaml").exists() and yaml.safe_load(
+    Path("config/config.yaml").read_text()
+):
 
     configfile: "config/config.yaml"
 
