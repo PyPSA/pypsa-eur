@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from scripts._helpers import get_snapshots
 from scripts.lib.validation.config import (
     find_invalid_entries,
     generate_config_defaults,
@@ -171,6 +172,34 @@ class TestValidateScenarios:
             validate_scenarios(self.base, {"s1": override})
 
 
+@pytest.mark.parametrize(
+    "snapshots, match",
+    [
+        ({"inclusive": "left"}, "inclusive"),
+        ({"end": "2014-01-01"}, "single snapshot"),
+        ({"start": ["2013-01-01"], "end": ["2014-01-01"]}, "single snapshot"),
+    ],
+)
+def test_snapshots_reject_legacy_settings(snapshots, match):
+    with pytest.raises(ValueError, match=match):
+        validate_config({"snapshots": snapshots})
+
+
+@pytest.mark.parametrize(
+    "start, end, length",
+    [
+        ("2013-01-01", "2013-12-31 23:00", 8760),
+        ("2013-03-01", "2013-03-07 23:00", 168),
+        ("2013-01-01", "2014-01-01 00:00", 8761),
+        ("2013-03-01 06:00", "2013-03-01 17:00", 12),
+        (["2013-01-01", "2013-07-01"], ["2013-01-01 23:00", "2013-07-01 23:00"], 48),
+    ],
+)
+def test_snapshots_include_first_and_last(start, end, length):
+    config = validate_config({"snapshots": {"start": start, "end": end}})
+    assert len(get_snapshots(config.snapshots)) == length
+
+
 def _load_config(path: str) -> dict:
     return yaml.safe_load(Path(path).read_text()) or {}
 
@@ -183,7 +212,7 @@ class TestFindInvalidEntries:
         assert set(invalid) == {
             "country",
             "clustering.cluster_network.nclusters",
-            "snapshots.inclusive",
+            "snapshots",
             "clustering.temporal.averaging",
             "conventional.fuel_price_rolling_window",
         }

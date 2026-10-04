@@ -214,7 +214,7 @@ Configuration for `countries` settings.
 
 ## `snapshots` {#snapshots_cf}
 
-Specifies the temporal range to build an energy system model for as arguments to [pandas.date_range ](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html)
+Specifies the first and last snapshot of the model. Both are included, as in [pandas.date_range](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html) with default arguments. Write them with the hour (e.g. `"2013-12-31 23:00"`); a date without time refers to 00:00 of that day.
 
 Configuration for `snapshots` settings.
 

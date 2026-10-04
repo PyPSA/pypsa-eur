@@ -5,6 +5,18 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* **Breaking:** `snapshots: start` and `snapshots: end` are now the first and last snapshot, both included, as in `pandas.date_range` with default arguments. The option `snapshots: inclusive` was removed ([#2101](https://github.com/PyPSA/pypsa-eur/issues/2101)). The workflow stops with an error that points to this note if `inclusive` is set, or if `end` is a date-only 1 January (the old exclusive end of a full year). Migration guide:
+
+    | Before | After |
+    |---|---|
+    | `start: "2013-01-01"`<br>`end: "2014-01-01"`<br>`inclusive: left` (default) | `start: "2013-01-01 00:00"`<br>`end: "2013-12-31 23:00"` |
+    | `start: "2013-03-01"`<br>`end: "2013-03-08"` | `start: "2013-03-01 00:00"`<br>`end: "2013-03-07 23:00"` |
+    | `inclusive: both` | remove `inclusive`, keep `start` and `end` |
+    | `inclusive: right` | remove `inclusive`; move `start` one hour later |
+    | `inclusive: null` (neither) | remove `inclusive`; move `start` one hour later and `end` one hour earlier |
+
+    A date without time refers to 00:00 of that day, so `end: "2013-12-31"` ends at `2013-12-31 00:00`. Write `end` with the hour. A date-only `start` keeps its meaning. A date-only `end` other than 1 January, for example `end: "2013-03-08"` from an old config, now adds one snapshot at 00:00 of that day without an error; check such entries.
+
 * Fix: Retrofitting costs of countries without own data (e.g. Montenegro) no longer change between runs. Missing countries are now filled in a fixed order, so countries estimated from neighbours that are themselves estimated get reproducible values.
 * Fix: `load: fixed_year` no longer yields all-NaN load when it differs from the snapshot year ([#2209](https://github.com/PyPSA/pypsa-eur/pull/2209)).
 * Fix: Per-country levels in `clustering: administrative: countries` are no longer ignored. Country keys directly under `clustering: administrative` remain supported ([#2210](https://github.com/PyPSA/pypsa-eur/pull/2210)).
