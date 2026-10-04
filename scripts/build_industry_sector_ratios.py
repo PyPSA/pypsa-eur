@@ -77,14 +77,14 @@ index = [
 ]
 
 
-def load_idees_data(sector, country="EU27"):
+def load_idees_data(sector: str, idees_dir: str, year: int, country: str = "EU27"):
     suffixes = {"out": "", "fec": "_fec", "ued": "_ued", "emi": "_emi"}
     sheets = {k: sheet_names[sector] + v for k, v in suffixes.items()}
 
     def usecols(x):
         return isinstance(x, str) or x == year
 
-    root = Path(snakemake.input.idees, country)
+    root = Path(idees_dir, country)
     fn = next(
         p
         for y in ("2023", "2021")
@@ -107,7 +107,7 @@ def load_idees_data(sector, country="EU27"):
     return idees
 
 
-def iron_and_steel():
+def iron_and_steel(idees_dir: str, year: int, params: dict):
     """
     This function calculates the energy consumption and emissions for different
     approaches to producing iron and steel. The two primary approaches are
@@ -124,7 +124,7 @@ def iron_and_steel():
     """
 
     sector = "Iron and steel"
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -301,7 +301,13 @@ def iron_and_steel():
     return df
 
 
-def chemicals_industry():
+def chemicals_industry(
+    idees_dir: str,
+    year: int,
+    params: dict,
+    ammonia_production: str,
+    ammonia_carrier: bool,
+):
     """
     This function calculates the energy consumption and emissions for the
     chemicals industry, focusing on various subsectors such as basic chemicals,
@@ -315,7 +321,7 @@ def chemicals_industry():
                       within the chemicals industry.
     """
     sector = "Chemicals Industry"
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -437,7 +443,7 @@ def chemicals_industry():
     df.loc[sources, sector] *= toe_to_MWh
 
     # subtract ammonia energy demand (in ktNH3/a)
-    ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
+    ammonia = pd.read_csv(ammonia_production, index_col=0)
     ammonia_total = ammonia.loc[
         ammonia.index.intersection(eu27), str(max(2018, year))
     ].sum()
@@ -475,7 +481,7 @@ def chemicals_industry():
 
     sector = "Ammonia"
     df[sector] = 0.0
-    if snakemake.params.ammonia:
+    if ammonia_carrier:
         df.loc["ammonia", sector] = params["MWh_NH3_per_tNH3"]
     else:
         df.loc["hydrogen", sector] = params["MWh_H2_per_tNH3_electrolysis"]
@@ -640,7 +646,7 @@ def chemicals_industry():
     return df
 
 
-def nonmetalic_mineral_products():
+def nonmetalic_mineral_products(idees_dir: str, year: int):
     """
     This function calculates the energy consumption and emissions for the non-
     metallic mineral products industry, focusing on three main sectors: cement,
@@ -654,7 +660,7 @@ def nonmetalic_mineral_products():
     """
 
     sector = "Non-metallic mineral products"
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -837,7 +843,7 @@ def nonmetalic_mineral_products():
     return df
 
 
-def pulp_paper_printing():
+def pulp_paper_printing(idees_dir: str, year: int):
     """
     Models the energy consumption for the pulp, paper, and printing sector,
     assuming complete electrification of all processes. This sector does not
@@ -849,7 +855,7 @@ def pulp_paper_printing():
     """
 
     sector = "Pulp, paper and printing"
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -996,7 +1002,7 @@ def pulp_paper_printing():
     return df
 
 
-def food_beverages_tobacco():
+def food_beverages_tobacco(idees_dir: str, year: int):
     """
     Calculates the energy consumption for the food, beverages, and tobacco
     sector, assuming complete electrification of all processes. This sector
@@ -1008,7 +1014,7 @@ def food_beverages_tobacco():
     """
 
     sector = "Food, beverages and tobacco"
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -1062,9 +1068,9 @@ def food_beverages_tobacco():
     return df
 
 
-def non_ferrous_metals():
+def non_ferrous_metals(idees_dir: str, year: int):
     sector = "Non Ferrous Metals"
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -1264,9 +1270,9 @@ def non_ferrous_metals():
     return df
 
 
-def transport_equipment():
+def transport_equipment(idees_dir: str, year: int):
     sector = "Transport equipment"
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -1314,10 +1320,10 @@ def transport_equipment():
     return df
 
 
-def machinery_equipment():
+def machinery_equipment(idees_dir: str, year: int):
     sector = "Machinery equipment"
 
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -1366,10 +1372,10 @@ def machinery_equipment():
     return df
 
 
-def textiles_and_leather():
+def textiles_and_leather(idees_dir: str, year: int):
     sector = "Textiles and leather"
 
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -1415,10 +1421,10 @@ def textiles_and_leather():
     return df
 
 
-def wood_and_wood_products():
+def wood_and_wood_products(idees_dir: str, year: int):
     sector = "Wood and wood products"
 
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -1460,9 +1466,9 @@ def wood_and_wood_products():
     return df
 
 
-def other_industrial_sectors():
+def other_industrial_sectors(idees_dir: str, year: int):
     sector = "Other industrial sectors"
-    idees = load_idees_data(sector)
+    idees = load_idees_data(sector, idees_dir, year)
 
     df = pd.DataFrame(index=index)
 
@@ -1530,20 +1536,27 @@ if __name__ == "__main__":
     params = snakemake.params.industry
 
     year = params["reference_year"]
+    idees_dir = snakemake.input.idees
 
     df = pd.concat(
         [
-            iron_and_steel(),
-            chemicals_industry(),
-            nonmetalic_mineral_products(),
-            pulp_paper_printing(),
-            food_beverages_tobacco(),
-            non_ferrous_metals(),
-            transport_equipment(),
-            machinery_equipment(),
-            textiles_and_leather(),
-            wood_and_wood_products(),
-            other_industrial_sectors(),
+            iron_and_steel(idees_dir, year, params),
+            chemicals_industry(
+                idees_dir,
+                year,
+                params,
+                snakemake.input.ammonia_production,
+                snakemake.params.ammonia,
+            ),
+            nonmetalic_mineral_products(idees_dir, year),
+            pulp_paper_printing(idees_dir, year),
+            food_beverages_tobacco(idees_dir, year),
+            non_ferrous_metals(idees_dir, year),
+            transport_equipment(idees_dir, year),
+            machinery_equipment(idees_dir, year),
+            textiles_and_leather(idees_dir, year),
+            wood_and_wood_products(idees_dir, year),
+            other_industrial_sectors(idees_dir, year),
         ],
         axis=1,
     )

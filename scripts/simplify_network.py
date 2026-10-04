@@ -262,7 +262,7 @@ def remove_stubs(
 
 
 def remove_stubs_within_admin(
-    n: pypsa.Network, simplify_network: dict, admin_shapes: str
+    n: pypsa.Network, simplify_network: dict, admin_shapes: str, params: dict
 ) -> tuple[pypsa.Network, pd.Series]:
     busmap = busmap_for_admin_regions(
         n,
@@ -461,7 +461,7 @@ if __name__ == "__main__":
     if params.simplify_network["remove_stubs"]:
         if params.mode == "administrative":
             n, stub_map = remove_stubs_within_admin(
-                n, params.simplify_network, snakemake.input.admin_shapes
+                n, params.simplify_network, snakemake.input.admin_shapes, params
             )
             busmaps.append(stub_map)
         else:

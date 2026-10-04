@@ -44,7 +44,16 @@ def build_nodal_transport_data(fn, pop_layout, year):
     return nodal_transport_data
 
 
-def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
+def build_transport_demand(
+    traffic_fn: str,
+    airtemp_fn: str,
+    nodes: pd.Index,
+    nodal_transport_data: pd.DataFrame,
+    snapshots: pd.DatetimeIndex,
+    options: dict,
+    pop_weighted_energy_totals: pd.DataFrame,
+    nyears: float,
+) -> pd.DataFrame:
     """
     Returns transport demand per bus in unit km driven [100 km].
     """
@@ -198,6 +207,10 @@ if __name__ == "__main__":
         snakemake.input.temp_air_total,
         nodes,
         nodal_transport_data,
+        snapshots,
+        options,
+        pop_weighted_energy_totals,
+        nyears,
     )
 
     avail_profile = bev_availability_profile(
