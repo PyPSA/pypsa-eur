@@ -673,6 +673,7 @@ def base_network(
     offshore_shapes,
     countries,
     parameter_corrections,
+    snapshots,
     config,
 ):
     base_network = config["electricity"].get("base_network")
@@ -733,8 +734,7 @@ def base_network(
         + ")"
     )
 
-    time = get_snapshots(config["snapshots"], config["drop_leap_day"])
-    n.set_snapshots(time)
+    n.set_snapshots(snapshots)
 
     n.add("Bus", buses.index, **buses)
     n.add("Line", lines.index, **lines)
@@ -1672,6 +1672,7 @@ if __name__ == "__main__":
         offshore_shapes,
         countries,
         parameter_corrections,
+        get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day),
         config,
     )
 
