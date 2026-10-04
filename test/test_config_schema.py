@@ -6,16 +6,19 @@
 
 import difflib
 import tempfile
+from functools import reduce
 from pathlib import Path
 
 import pytest
 import yaml
 
 from scripts.lib.validation.config import (
+    DEPRECATED_KEYS,
     find_invalid_entries,
     generate_config_defaults,
     generate_config_schema,
     generate_plotting_defaults,
+    migrate_deprecated_keys,
     normalize_config,
     validate_config,
     validate_scenarios,
@@ -169,6 +172,29 @@ class TestValidateScenarios:
     def test_rejects_incompatible_override(self, override, match):
         with pytest.raises(ValueError, match=match):
             validate_scenarios(self.base, {"s1": override})
+
+
+@pytest.mark.parametrize("tes", [True, False])
+def test_migrate_deprecated_keys(tes):
+    cfg = {"sector": {"tes": tes}}
+    with pytest.warns(FutureWarning, match="sector.tes"):
+        migrate_deprecated_keys(cfg)
+    assert cfg == {
+        "sector": {"ttes": tes, "district_heating": {"ptes": {"enable": tes}}}
+    }
+
+
+def test_migrate_deprecated_keys_ignores_current_keys():
+    cfg = {"sector": {"ttes": False}, "countries": ["DE"]}
+    migrate_deprecated_keys(cfg)
+    assert cfg == {"sector": {"ttes": False}, "countries": ["DE"]}
+
+
+@pytest.mark.parametrize("old", DEPRECATED_KEYS)
+def test_deprecated_keys_not_in_default_config(old, config_file):
+    *parents, key = old.split(".")
+    defaults = yaml.safe_load(config_file.read_text())
+    assert key not in reduce(dict.get, parents, defaults)
 
 
 def _load_config(path: str) -> dict:

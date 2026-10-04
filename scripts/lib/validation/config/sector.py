@@ -647,6 +647,12 @@ class SectorConfig(BaseModel):
         True,
         description="Add tank thermal energy storage (water tanks) in all heat systems. Pit and aquifer thermal energy storage are controlled separately by `district_heating: ptes: enable` and `district_heating: ates: enable`.",
     )
+    tes: bool | None = Field(
+        None,
+        deprecated=True,
+        exclude=True,
+        description="Deprecated, use `ttes` and `district_heating: ptes: enable`.",
+    )
     boilers: bool = Field(
         True, description="Add option for transforming gas into heat using gas boilers."
     )

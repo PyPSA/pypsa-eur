@@ -147,7 +147,7 @@ For the myopic transition paths, capacities already existing for technologies su
 
 **Thermal Energy Storage**
 
-Activated in Config from the [tes](configuration.md#sector_cf) option.
+Water tanks are activated in Config from the [ttes](configuration.md#sector_cf) option, water pits from `district_heating: ptes: enable`.
 
 Thermal energy can be stored in large water pits associated with district heating systems and individual thermal energy storage (TES), i.e., small water tanks. Water tanks are modelled as [stores](https://docs.pypsa.org/latest/user-guide/components/stores/), which are connected to heat demand buses through water charger/discharger links.
 A thermal energy density of 46.8 kWh $_{th}$/m3 is assumed, corresponding to a temperature difference of 40 K. The decay of thermal energy in the stores: 1- $e^{-1/24\tau}$ is assumed to have a time constant  of  $\tau$=180 days for central TES and  $\tau$=3 days for individual TES, both modifiable through [tes_tau](configuration.md#sector_cf) in config file. Charging and discharging efficiencies are 90% due to pipe losses.

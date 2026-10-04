@@ -21,6 +21,7 @@ from scripts._helpers import (
     script_path_provider,
 )
 from scripts.lib.validation.config import (
+    migrate_deprecated_keys,
     normalize_config,
     validate_config,
     validate_scenarios,
@@ -36,6 +37,7 @@ if Path("config/config.yaml").exists():
     configfile: "config/config.yaml"
 
 
+migrate_deprecated_keys(config)
 validated = validate_config(config)
 normalize_config(config, validated)
 
