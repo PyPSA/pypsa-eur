@@ -1262,6 +1262,11 @@ def extra_functionality(
 
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
+        if config["sector"]["enabled"]:
+            logger.warning(
+                "Operational reserve margin only considers electricity generators "
+                "and ignores sector-coupling components."
+            )
         add_operational_reserve_margin(n, snapshots, config)
 
     if EQ_o := constraints["EQ"]:

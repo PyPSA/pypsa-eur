@@ -159,7 +159,9 @@ def add_brownfield(
             fr = "H2 pipeline retrofitted"
             to = "gas pipeline"
             CH4_per_H2 = 1 / h2_retrofit_capacity_per_ch4
-            already_retrofitted.index = already_retrofitted.index.str.replace(fr, to)
+            already_retrofitted.index = already_retrofitted.index.str.replace(
+                fr, to
+            ).str.removesuffix(f"-{year}")
             remaining_capacity = (
                 pipe_capacity
                 - CH4_per_H2

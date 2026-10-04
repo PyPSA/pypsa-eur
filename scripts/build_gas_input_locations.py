@@ -130,7 +130,7 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
     lng["capacity"] = lng["CapacityInMtpa"] * mtpa_to_mw
     entry["capacity"] = entry["max_cap_from_to_M_m3_per_d"] * mcm_per_day_to_mw
     prod["capacity"] = prod["mcm_per_year"] * mcm_per_year_to_mw
-    sto["capacity"] = sto["max_cushionGas_M_m3"] * mcm_to_gwh
+    sto["capacity"] = sto["max_workingGas_M_m3"] * mcm_to_gwh
 
     lng["type"] = "lng"
     entry["type"] = "pipeline"

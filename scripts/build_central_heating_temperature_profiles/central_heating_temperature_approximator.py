@@ -2,7 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 
+import logging
+
 import xarray as xr
+
+logger = logging.getLogger(__name__)
 
 
 class CentralHeatingTemperatureApproximator:
@@ -82,11 +86,17 @@ class CentralHeatingTemperatureApproximator:
         xr.DataArray
             Rolling mean of ambient temperature input.
         """
+        window = self.rolling_window_ambient_temperature
+        n_time = self._ambient_temperature.sizes["time"]
+        if window > n_time:
+            logger.warning(
+                f"Rolling window ({window}) exceeds number of snapshots ({n_time}). "
+                "Clipping window to number of snapshots."
+            )
+            window = n_time
         # bfill to avoid NAs in the beginning
         return (
-            self._ambient_temperature.rolling(
-                time=self.rolling_window_ambient_temperature
-            )
+            self._ambient_temperature.rolling(time=window)
             .mean(skip_na=True)
             .bfill(dim="time")
         )

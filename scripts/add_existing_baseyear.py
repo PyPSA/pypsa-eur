@@ -396,9 +396,10 @@ def add_power_capacities_installed_before_baseyear(
 
             # this is for the year 2020
             if not already_build.empty:
-                n.links.loc[already_build, "p_nom_min"] = capacity.loc[
-                    already_build.str.replace(name_suffix, "")
-                ].values
+                n.links.loc[already_build, "p_nom_min"] = (
+                    capacity.loc[already_build.str.replace(name_suffix, "")].values
+                    / n.links.loc[already_build, "efficiency"]
+                )
 
             if not new_build.empty:
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]

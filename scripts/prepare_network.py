@@ -29,7 +29,6 @@ from scripts._helpers import (
     PYPSA_V1,
     get,
 )
-from scripts.add_electricity import set_transmission_costs
 from scripts.co2_budget import (
     bound_value_for_horizon,
     co2_budget_for_horizon,
@@ -309,7 +308,7 @@ def add_dynamic_emission_prices(n, fn):
     n.generators.loc[affected, "marginal_cost"] = 0.0
 
 
-def set_transmission_limit(n, kind, factor, costs, Nyears=1):
+def set_transmission_limit(n, kind, factor, Nyears=1):
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
     _lines_s_nom = (
@@ -325,8 +324,6 @@ def set_transmission_limit(n, kind, factor, costs, Nyears=1):
         lines_s_nom @ n.lines[col]
         + n.links.loc[links_dc_b, "p_nom"] @ n.links.loc[links_dc_b, col]
     )
-
-    set_transmission_costs(n, costs)
 
     if factor == "opt" or float(factor) > 1.0:
         n.lines["s_nom_min"] = lines_s_nom
@@ -485,7 +482,7 @@ def main(
             "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
         )
 
-    set_transmission_limit(n, kind, factor, costs, nyears)
+    set_transmission_limit(n, kind, factor, nyears)
 
     cap_transmission_capacity(
         n,
