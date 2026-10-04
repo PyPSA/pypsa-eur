@@ -32,6 +32,8 @@
 
 * Documentation: removed stale wildcard-era instructions and links to the old PyPSA-Eur-Sec configuration, corrected paths and commands in the tutorials, installation, foresight and retrieve pages, and restored the rule documentation for scripts in subdirectories (`build_cop_profiles`, `build_ptes_operations`, ...). The installation page now recommends checking out a release. The `sector`, `data` and new `pypsa_eur` configuration tables are generated from the schema, all wildcards and the collection targets are documented, the retrieve page now focuses on rules needing credentials, and the data inventory is complete and checked against `data/versions.csv` by a unit test.
 
+* **Breaking:** The linear approximation of AC line losses (`solving: options: transmission_losses`) now uses secants instead of tangents, which underestimates losses less. The option now takes `false`, `true` (PyPSA defaults) or a dict passed to PyPSA (default `{mode: secants, atol: 15, rtol: 0.5}`). Integers are deprecated; use `{mode: tangents, segments: 2}` for the previous behaviour ([#2301](https://github.com/PyPSA/pypsa-eur/pull/2301)).
+
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 
 **Streamlined Workflow**
@@ -162,9 +164,6 @@ for file name mappings and configuration changes in detail.
   lines split at more than 26 overpassed buses no longer fail; segment IDs continue after `z` with `aa`, `ab`,
   etc. ([#2300](https://github.com/PyPSA/pypsa-eur/pull/2300)).
 
-* Switched the linear approximation of losses in AC transmission lines from tangents to secants. Losses representation is now improved. For a typical run this may induce changes in the objective function on the order of 1%. The config option for `transmission_losses` has changed from `int` to `boolean | dict`. ([#2301](https://github.com/PyPSA/pypsa-eur/pull/2301)).
-
-* Unified temporal resolution configuration: `clustering: temporal: resolution_elec` and `clustering: temporal: resolution_sector` have been merged into `clustering: temporal`, which exposes three mutually exclusive options: `averaging` (average over a pandas offset such as `24h`), `segmentation` (aggregate into `n` `tsam` segments) and `representative` (use every `n`-th snapshot). Electricity-only and sector-coupled runs now share the same aggregation path.
 * Fixed a `TypeError` with focus weights in [cluster_network][], caused by `pandas` dropping the index name
   ([#2277](https://github.com/PyPSA/pypsa-eur/pull/2277)).
 
