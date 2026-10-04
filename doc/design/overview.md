@@ -32,10 +32,12 @@ transport and sequestration.
 
 ## Model variants
 
-The workflow can stop after the electricity system or continue to the full
-sector-coupled model, and it can plan a single year or a pathway of several
-planning years, see [Foresight](foresight.md). Every design page starts with a
-row of badges that says in which variants its content applies:
+The model is built either as an electricity-only model or as a
+sector-coupled model. The sector-coupled model starts from the electricity
+system and adds the other sectors on top. Both can plan a single year or a
+pathway of several planning years, see [Foresight](foresight.md). Every page
+of the model description starts with a row of badges that says in which
+variants its content applies:
 
 {{ scope(electricity="on", sector="partial", overnight="off") }}
 
@@ -93,5 +95,4 @@ optimisation. The carrier pages note where imports connect.
 weather reanalysis to energy balances and industrial site locations. The
 [data sources](../data_sources.md) page lists them with their licences; the
 rule documentation describes how each dataset is processed, and the
-[configuration](../configuration.md) reference lists the settings. This
-section explains what is represented and why, not how it is computed.
+[configuration](../configuration.md) reference lists the settings.

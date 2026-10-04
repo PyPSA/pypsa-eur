@@ -49,7 +49,7 @@ nav:
     - Support: support.md
     - Publications: publications.md
 
-- Design:
+- Model Description:
   - Model Overview: design/overview.md
   - Model Resolution: design/resolution.md
   - Foresight: design/foresight.md
@@ -64,7 +64,7 @@ nav:
   - Methanol: design/methanol.md
   - Biomass: design/biomass.md
   - Carbon Management: design/carbon.md
-  - Techno-Economic Assumptions: costs.md
+  - Techno-Economic Assumptions: design/costs.md
   - OETC Integration: oetc.md
 
 - Configuration:

@@ -6,10 +6,10 @@
 {{ scope() }}
 
 The resolution of the model is a choice in three dimensions: how many regions,
-how many hours, and how many sectors and carriers. Finer resolution captures
+how many hours, and which sectors and carriers should be modelled. Finer resolution captures
 more of the grid, the weather and the regional variety of demand, but the
 optimisation problem grows with every dimension. This page explains what the
-resolution knobs do so that the trade-off can be made deliberately
+resolution settings do so that the trade-off can be made deliberately
 [@horschRoleSpatial2017; @frysztackiStrongEffect2021a].
 
 ## Spatial resolution
@@ -21,22 +21,23 @@ network, built from OpenStreetMap by default or, alternatively, from the
 ENTSO-E reference grid of the Ten-Year Network Development Plan. It contains
 the substations, AC lines and cables, HVDC links with their converters, and
 transformers across all synchronous areas of the ENTSO-E region. Planned
-transmission projects can be added on top. How the grid is derived from the
-map data is described under [Electricity](electricity.md#transmission).
+transmission projects can be added on top. How the grid is derived from
+OpenStreetMap data is described under [Electricity](electricity.md#transmission).
 
 Every substation defines a base region: the area that is closer to this
 substation than to any other, cut at country borders so that national totals
-stay intact. These Voronoi cells are the catchment areas for demand, renewable
+stay intact. The areas around the substations are built as Voronoi cells and are the catchment areas for demand, renewable
 potentials and power plants. Whatever lies in a cell is assumed to connect to
 its substation. Offshore regions are built the same way from the exclusive
-economic zones and the nearest coastal substations.
+economic zones (EEZs) and the nearest coastal substations.
 
 ![Onshore regions of the base network](../img/regions_onshore.png)
 
 ### Simplification and clustering
 
 Solving a capacity expansion problem for thousands of substations is out of
-reach, so the network is reduced in two steps.
+reach due to its computational complexity.
+So the network complexity is reduced in two steps, simplification and clustering:
 
 **Simplification** brings all lines to one voltage level, removes dead-end
 branches by attaching their resources to the neighbouring node, and collapses
