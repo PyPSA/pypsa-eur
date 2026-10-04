@@ -989,7 +989,8 @@ def sample_dE_costs_area(
     )
 
     # map missing countries
-    for ct in set(countries).difference(cost_dE.index.levels[0]):
+    missing = set(countries).difference(cost_dE.index.levels[0])
+    for ct in sorted(missing, key=list(map_for_missings).index):
         averaged_data = (
             cost_dE.reindex(index=map_for_missings[ct], level=0)
             .groupby(level=1)
@@ -1000,13 +1001,13 @@ def sample_dE_costs_area(
 
     # weights costs after construction index
     if construction_index:
-        for ct in list(map_for_missings.keys() - cost_w.index):
+        for ct in [ct for ct in map_for_missings if ct not in cost_w.index]:
             cost_w.loc[ct] = cost_w.reindex(index=map_for_missings[ct]).mean()
         cost_dE.cost = cost_dE.cost.mul(cost_w, level=0, axis=0)
 
     # weights cost depending on country taxes
     if tax_weighting:
-        for ct in list(map_for_missings.keys() - tax_w.index):
+        for ct in [ct for ct in map_for_missings if ct not in tax_w.index]:
             tax_w[ct] = tax_w.reindex(index=map_for_missings[ct]).mean()
         cost_dE.cost = cost_dE.cost.mul(tax_w, level=0, axis=0)
 
