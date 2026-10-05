@@ -49,11 +49,22 @@ nav:
     - Support: support.md
     - Publications: publications.md
 
-- Design:
-  - Spatial Resolution: spatial_resolution.md
-  - Supply and Demand: supply_demand.md
-  - Foresight Options: foresight.md
-  - Techno-Economic Assumptions: costs.md
+- Model Description:
+  - Model Overview: design/overview.md
+  - Model Resolution: design/resolution.md
+  - Foresight: design/foresight.md
+  - Techno-Economic Assumptions: design/techno-economic-assumptions.md
+  - Electricity: design/electricity.md
+  - Heating: design/heat.md
+  - Transport: design/transport.md
+  - Industry: design/industry.md
+  - Ammonia: design/ammonia.md
+  - Biomass: design/biomass.md
+  - Carbon Management: design/carbon-management.md
+  - Hydrogen: design/hydrogen.md
+  - Methane: design/methane.md
+  - Methanol: design/methanol.md
+  - Oil: design/oil.md
   - OETC Integration: oetc.md
 
 - Configuration:
@@ -125,6 +136,9 @@ markdown_extensions:
     generic: true
 - pymdownx.tabbed:
     alternate_style: true
+- pymdownx.emoji:
+    emoji_index: !!python/name:material.extensions.emoji.twemoji
+    emoji_generator: !!python/name:material.extensions.emoji.to_svg
 - pymdownx.highlight
 - pymdownx.inlinehilite
 - tables
