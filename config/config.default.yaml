@@ -1260,7 +1260,10 @@ solving:
     track_iterations: false
     min_iterations: 2
     max_iterations: 3
-    transmission_losses: 2
+    transmission_losses:
+      mode: secants
+      atol: 15
+      rtol: 0.5
     linearized_unit_commitment: true
     horizon: 365
     overlap: 0

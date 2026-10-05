@@ -6092,9 +6092,24 @@
               "type": "integer"
             },
             "transmission_losses": {
-              "default": 2,
-              "description": "Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              ],
+              "default": {
+                "mode": "secants",
+                "atol": 15,
+                "rtol": 0.5
+              },
+              "description": "Piecewise linear approximation of losses in AC lines. `false` disables losses, `true` uses the PyPSA default secant-based approximation (`atol=1` MW, `rtol=0.1`). A dict sets the approximation, e.g. `{\"mode\": \"tangents\", \"segments\": 2}` for the former tangent-based method. An integer is deprecated and sets the number of tangents. The default `atol` and `rtol` keep the number of extra constraints close to that of the former tangent-based method."
             },
             "linearized_unit_commitment": {
               "default": true,
@@ -9510,9 +9525,24 @@
           "type": "integer"
         },
         "transmission_losses": {
-          "default": 2,
-          "description": "Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
-          "type": "integer"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "additionalProperties": true,
+              "type": "object"
+            }
+          ],
+          "default": {
+            "mode": "secants",
+            "atol": 15,
+            "rtol": 0.5
+          },
+          "description": "Piecewise linear approximation of losses in AC lines. `false` disables losses, `true` uses the PyPSA default secant-based approximation (`atol=1` MW, `rtol=0.1`). A dict sets the approximation, e.g. `{\"mode\": \"tangents\", \"segments\": 2}` for the former tangent-based method. An integer is deprecated and sets the number of tangents. The default `atol` and `rtol` keep the number of extra constraints close to that of the former tangent-based method."
         },
         "linearized_unit_commitment": {
           "default": true,
@@ -14188,9 +14218,24 @@
               "type": "integer"
             },
             "transmission_losses": {
-              "default": 2,
-              "description": "Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              ],
+              "default": {
+                "mode": "secants",
+                "atol": 15,
+                "rtol": 0.5
+              },
+              "description": "Piecewise linear approximation of losses in AC lines. `false` disables losses, `true` uses the PyPSA default secant-based approximation (`atol=1` MW, `rtol=0.1`). A dict sets the approximation, e.g. `{\"mode\": \"tangents\", \"segments\": 2}` for the former tangent-based method. An integer is deprecated and sets the number of tangents. The default `atol` and `rtol` keep the number of extra constraints close to that of the former tangent-based method."
             },
             "linearized_unit_commitment": {
               "default": true,
