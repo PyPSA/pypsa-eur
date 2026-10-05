@@ -724,12 +724,13 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         lgrouper = n.loads.bus
         sgrouper = n.storage_units.bus
     load = (
-        n.snapshot_weightings.generators
-        @ n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
+        n.snapshot_weightings.generators @ n.loads_t.p_set.T.groupby(lgrouper).sum().T
     )
+    eff = n.storage_units.efficiency_dispatch
+    inflow = n.storage_units_t.inflow
     inflow = (
         n.snapshot_weightings.stores
-        @ n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum()
+        @ (inflow * eff[inflow.columns]).T.groupby(sgrouper).sum().T
     )
     inflow = inflow.reindex(load.index).fillna(0.0)
     rhs = scaling * (level * load - inflow)
@@ -744,7 +745,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     if not n.storage_units_t.inflow.empty:
         spillage = n.model["StorageUnit-spill"]
         lhs_spill = (
-            (spillage * (-n.snapshot_weightings.stores * scaling))
+            (spillage * (-n.snapshot_weightings.stores * scaling) * eff.to_xarray())
             .groupby(sgrouper.to_xarray())
             .sum()
             .sum("snapshot")
@@ -1262,6 +1263,11 @@ def extra_functionality(
 
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
+        if config["sector"]["enabled"]:
+            logger.warning(
+                "Operational reserve margin only considers electricity generators "
+                "and ignores sector-coupling components."
+            )
         add_operational_reserve_margin(n, snapshots, config)
 
     if EQ_o := constraints["EQ"]:

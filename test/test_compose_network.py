@@ -7,7 +7,7 @@
 import pandas as pd
 import pypsa
 
-from scripts.add_brownfield import adjust_renewable_capacity_limits
+from scripts.add_brownfield import add_brownfield, adjust_renewable_capacity_limits
 from scripts.prepare_perfect_foresight import (
     concatenate_network_with_previous,
     extend_snapshot_multiindex,
@@ -882,3 +882,20 @@ def test_concatenate_static_to_time_varying():
     # Check that gen2 was added with static marginal_cost
     assert "gen2" in n_result.generators.index
     assert n_result.generators.loc["gen2", "marginal_cost"] == 0.0
+
+
+def test_add_brownfield_h2_retrofit_reduces_gas_pipeline():
+    """Test that retrofitted H2 capacity is removed from the gas pipeline."""
+    n = pypsa.Network()
+    n.add("Bus", ["A", "B"])
+    n.add("Link", "gas pipeline A-B", bus0="A", bus1="B", carrier="gas pipeline")
+    n.links["p_nom"] = n.links["p_nom_max"] = 100.0
+    n_p = n.copy()
+    kwargs = dict(bus0="A", bus1="B", carrier="H2 pipeline retrofitted", lifetime=50)
+    n_p.add("Link", "H2 pipeline retrofitted A-B-2030", build_year=2030, **kwargs)
+    n_p.links["p_nom_opt"] = 30.0
+    n.add("Link", "H2 pipeline retrofitted A-B-2040", build_year=2040, **kwargs)
+
+    add_brownfield(n, n_p, 2040, h2_retrofit=True, h2_retrofit_capacity_per_ch4=0.6)
+
+    assert n.links.at["gas pipeline A-B", "p_nom"] == 50.0

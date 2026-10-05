@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 MMBTU_PER_MWH = 3.41214
 BBL_PER_MWH = 0.5883
 METRIC_TON_PER_MWH_COAL = 0.1433
+GAS_NCV_PER_GCV = 0.9
+OIL_NCV_PER_GCV = 0.95
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -70,8 +72,8 @@ if __name__ == "__main__":
     df = df[df.index.year >= 1999]  # only available from 1999 onwards
     df = df.drop(columns=["year", "iso_code"])
 
-    df["oil"] *= BBL_PER_MWH
-    df["gas"] *= MMBTU_PER_MWH
+    df["oil"] *= BBL_PER_MWH / OIL_NCV_PER_GCV
+    df["gas"] *= MMBTU_PER_MWH / GAS_NCV_PER_GCV
     df["coal"] *= METRIC_TON_PER_MWH_COAL
 
     # rolling mean for smoothing

@@ -182,8 +182,10 @@ if (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] i
                 import rioxarray as rio
 
                 file_path = output["tif"]
-                ds = xr.open_dataarray(file_path)
-                ds_reqd = ds.sel(x=slice(15.55, 40.41), y=slice(52.49, 41.72))
+                with xr.open_dataarray(file_path) as ds:
+                    ds_reqd = ds.sel(
+                        x=slice(15.55, 40.41), y=slice(52.49, 41.72)
+                    ).load()
                 ds_reqd.rio.to_raster(file_path)
 
 
@@ -1122,12 +1124,13 @@ if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
                 r"WDPA_(\w{3}\d{4})_Public_shp.zip",
                 input["zip_file"],
             ).group(1)
-            for i in range(3):
+            layers = sorted(output_folder.glob(f"WDPA_{bYYYY}_Public_shp_*.zip"))
+            for i, layer in enumerate(layers):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
-                layer_path = (
-                    f"/vsizip/{output_folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
+                layer_path = f"/vsizip/{layer}"
+                print(
+                    f"Adding layer {i+1} of {len(layers)} to combined output file."
                 )
-                print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
@@ -1157,10 +1160,15 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
                 r"WDPA_WDOECM_(\w{3}\d{4})_Public_marine_shp.zip",
                 input["zip_file"],
             ).group(1)
-            for i in range(3):
+            layers = sorted(
+                output_folder.glob(f"WDPA_WDOECM_{bYYYY}_Public_marine_shp_*.zip")
+            )
+            for i, layer in enumerate(layers):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
-                layer_path = f"/vsizip/{output_folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
-                print(f"Adding layer {i+1} of 3 to combined output file.")
+                layer_path = f"/vsizip/{layer}"
+                print(
+                    f"Adding layer {i+1} of {len(layers)} to combined output file."
+                )
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
@@ -1244,7 +1252,7 @@ def get_osm_archive_files(version):
         "links.csv",
         "transformers.csv",
         # Newer versions include the additional map.html file for visualisation
-        *(["map.html"] if float(version) >= 0.6 else []),
+        *([] if str(version) in ["0.1", "0.2", "0.3", "0.4", "0.5"] else ["map.html"]),
     ]
 
 
