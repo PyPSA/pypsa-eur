@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* **Breaking:** New option `sector: chp: fuel_cc` to select the fuels for which urban central CHP plants with carbon capture are added in addition to the CHP plants without carbon capture. Previously, they were added for all fuels in `sector: chp: fuel`. The default (`solid biomass`, `gas`) keeps default results unchanged; configurations with other CHP fuels must add them to `fuel_cc` to keep their CC variants. An empty list disables CHP with carbon capture ([#2325](https://github.com/PyPSA/pypsa-eur/pull/2325)).
 * Fix: Retrofitting costs of countries without own data (e.g. Montenegro) no longer change between runs. Missing countries are now filled in a fixed order, so countries estimated from neighbours that are themselves estimated get reproducible values.
 * Fix: `load: fixed_year` no longer yields all-NaN load when it differs from the snapshot year ([#2209](https://github.com/PyPSA/pypsa-eur/pull/2209)).
 * Fix: Per-country levels in `clustering: administrative: countries` are no longer ignored. Country keys directly under `clustering: administrative` remain supported ([#2210](https://github.com/PyPSA/pypsa-eur/pull/2210)).
