@@ -110,7 +110,7 @@ solving:
     enable: true
     expected_value: 50009078.82
   options:
-    transmission_losses: 0
+    transmission_losses: false
 
 conventional:
   dynamic_fuel_price: false
