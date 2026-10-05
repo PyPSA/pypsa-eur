@@ -24,7 +24,7 @@ equivalents instead.
 Ammonia is synthesised from hydrogen and electricity in Haber-Bosch plants,
 whose capacity is optimised. The waste heat of synthesis can supply district
 heating. Ammonia is one of the carriers that can be imported from outside
-Europe at a fixed price, see [Model overview](overview.md#design-overview).
+Europe at a fixed price, see [Model overview](overview.md#overview-imports).
 
 ## Conversion
 

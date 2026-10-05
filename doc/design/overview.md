@@ -84,7 +84,7 @@ exogenous shares are given per planning year, so that they can follow a
 transition path. Each page states which quantities are optimised and which are
 prescribed.
 
-**Energy imports.** Europe is not closed. Besides fossil fuels, which enter
+**Energy imports.** [](){ #overview-imports }Europe is not closed. Besides fossil fuels, which enter
 at a price, the model can import green hydrogen and its derivatives, ammonia,
 methanol, synthetic methane and oil, as well as solid biomass, from outside
 the modelled countries at fixed prices and with an optional cap on the total.

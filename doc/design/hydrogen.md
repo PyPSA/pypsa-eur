@@ -45,7 +45,7 @@ Several production routes compete:
 
 Hydrogen and its derivatives can also be imported from outside Europe at a
 fixed price, with an optional cap on the total, see
-[Model overview](overview.md#design-overview). The split between routes and
+[Model overview](overview.md#overview-imports). The split between routes and
 the installed capacities are results of the optimisation.
 
 ## Storage

@@ -41,14 +41,16 @@ feedstock is assigned to one of four classes:
 | Municipal solid waste | Biodegradable waste | Waste-to-energy, optional |
 | Not included | Energy crops, roundwood | Excluded |
 
-The default excludes crops that compete with food and primary wood whose
-sustainability is contested [@bentsenCarbonDebt2017]. Two transitions
-overlap along the planning years. Feedstocks that are used today but excluded
-in the future, such as energy crops and roundwood, are represented explicitly
-as unsustainable solid biomass, biogas and bioliquids with a minimum use that
-is phased out, so that early horizons reflect today's consumption. At the
-same time the sustainable potential is phased in, so that it is not fully
-available in the first horizons. Imports of solid biomass at a fixed price
+By default, the potential excludes crops that compete with food and primary
+wood whose sustainability is contested [@bentsenCarbonDebt2017]. Which
+feedstocks count towards the future potential is configurable through the
+classes. Two transitions overlap along the planning horizons. Today's biomass
+use, including energy crops and roundwood, is taken from energy balances
+rather than from the potentials. It is represented as unsustainable solid
+biomass, biogas and bioliquids with a minimum use. This minimum use is phased out from today's level until 2025 to
+zero in 2040, so that early horizons reflect today's consumption. At the same
+time the sustainable potential is phased in from zero until 2025 to its full
+value in 2040. Both phase-in paths are configurable. Imports of solid biomass at a fixed price
 can be allowed with a cap. No further biomass is assumed to arrive from
 outside Europe.
 
@@ -64,7 +66,7 @@ Unsustainable bioliquids feed the oil supply directly. Biogas is upgraded to
 methane before it enters the gas system. Which conversion routes are built is
 a result of the optimisation; the carbon captured from biogenic sources
 counts as negative emissions when it is sequestered, see
-[Carbon management](carbon.md).
+[Carbon management](carbon-management.md).
 
 ## Transport
 
