@@ -121,7 +121,10 @@ def concatenate_network_with_previous(
 
             to_densify = static_only.difference(already_dynamic)
             previous_values = c.static.loc[to_densify, attr]
-            to_densify = to_densify[current_values[to_densify].ne(previous_values)]
+            both_nan = current_values[to_densify].isna() & previous_values.isna()
+            to_densify = to_densify[
+                current_values[to_densify].ne(previous_values) & ~both_nan
+            ]
             if not to_densify.empty:
                 expanded = pd.DataFrame(
                     index=n.snapshots, columns=to_densify, dtype=float
