@@ -9,7 +9,7 @@ Description
 -----------
 Reads the full Delaunay edge table produced by build_transmission_delaunay_graph
 and applies Gabriel graph filtering and min-degree backfilling to produce a
-candidate edge set for one (min_degree, max_offshore_haversine_distance) pair.
+candidate edge set for the H2 and CO2 pipeline networks.
 
 Outputs
 -------
@@ -31,6 +31,7 @@ import logging
 
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -93,8 +94,6 @@ def enforce_min_degree(
             min_degree,
         )
         return delaunay_graph.copy()
-
-    import pandas as pd
 
     result = delaunay_graph[delaunay_graph["gabriel_edge"]].copy()
     all_sorted = delaunay_graph.sort_values("length").reset_index(drop=True)
@@ -191,24 +190,16 @@ def filter_by_max_offshore_haversine_distance(
 
 
 if __name__ == "__main__":
-    is_mock_run = "snakemake" not in globals()
-
-    if is_mock_run:
+    if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_transmission_topology",
-            clusters="50",
-            min_degree=1,
-            max_offdist="inf",
-            configfiles=["config/config.200.yaml"],
-        )
+        snakemake = mock_snakemake("build_transmission_topology", clusters="50")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    min_degree = snakemake.params["min_degree"]
-    max_offdist = snakemake.params["max_offdist"]
+    min_degree = snakemake.params.pipeline_topology["min_degree"]
+    max_offdist = snakemake.params.pipeline_topology["max_offshore_distance"]
 
     delaunay_graph = gpd.read_file(snakemake.input.delaunay_graph)
 

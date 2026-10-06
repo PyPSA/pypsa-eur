@@ -11,7 +11,7 @@ Creates the full Delaunay edge table from clustered network bus coordinates,
 enriched with Gabriel edge flags and offshore underwater fractions.
 
 The output GeoDataFrame is consumed by build_transmission_topology to filter
-candidate edges per carrier configuration.
+candidate edges.
 
 Outputs
 -------
@@ -288,15 +288,10 @@ def add_underwater_fraction(
 
 
 if __name__ == "__main__":
-    is_mock_run = "snakemake" not in globals()
-
-    if is_mock_run:
+    if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_transmission_delaunay_graph",
-            clusters="50",
-        )
+        snakemake = mock_snakemake("build_transmission_delaunay_graph", clusters="50")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
