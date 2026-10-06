@@ -72,6 +72,7 @@ def get_compose_inputs(w):
 
     # Sector-specific inputs (only when sector coupling is enabled)
     if sector_enabled:
+        enable_ptes = cfg["sector"]["district_heating"]["ptes"]["enable"]
         sector_inputs = dict(
             **input_heat_source_power(w),
             clustered_gas_network=(
@@ -138,12 +139,14 @@ def get_compose_inputs(w):
             ),
             ptes_e_max_pu_profiles=(
                 resources("ptes_e_max_pu_profiles_{horizon}.nc")
-                if cfg["sector"]["district_heating"]["ptes"]["dynamic_capacity"]
+                if enable_ptes
+                and cfg["sector"]["district_heating"]["ptes"]["dynamic_capacity"]
                 else []
             ),
             ptes_direct_utilisation_profiles=(
                 resources("ptes_direct_utilisation_profiles_{horizon}.nc")
-                if cfg["sector"]["district_heating"]["ptes"]["supplemental_heating"][
+                if enable_ptes
+                and cfg["sector"]["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
                 else []
@@ -262,7 +265,7 @@ rule compose_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
-        tes=config_provider("sector", "tes"),
+        enable_ptes=config_provider("sector", "district_heating", "ptes", "enable"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
