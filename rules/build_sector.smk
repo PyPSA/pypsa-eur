@@ -117,27 +117,11 @@ rule cluster_gas_network:
         scripts("cluster_gas_network.py")
 
 
-rule build_transmission_delaunay_graph:
-    """Builds the Delaunay graph between clustered buses as candidate pipeline corridors."""
+rule build_transmission_topology:
+    """Builds candidate corridors for new H2 and CO2 pipelines from the Delaunay graph of regions."""
     input:
         network=resources("networks/clustered.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
-    output:
-        delaunay_graph=resources("delaunay_graph.geojson"),
-    log:
-        logs("build_transmission_delaunay_graph.log"),
-    benchmark:
-        benchmarks("build_transmission_delaunay_graph")
-    resources:
-        mem_mb=4000,
-    script:
-        scripts("build_transmission_delaunay_graph.py")
-
-
-rule build_transmission_topology:
-    """Filters the Delaunay graph to the candidate corridors for new H2 and CO2 pipelines."""
-    input:
-        delaunay_graph=resources("delaunay_graph.geojson"),
     output:
         candidates=resources("transmission_candidates.geojson"),
     log:

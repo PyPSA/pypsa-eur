@@ -3,13 +3,26 @@
 # SPDX-License-Identifier: MIT
 
 """
-Filter the Delaunay graph to the candidate corridors for new H2 and CO2 pipelines.
+Build the candidate corridors for new H2 and CO2 pipelines between clustered buses.
 
-Edges with an offshore length above the maximum are removed first. The
-remaining Gabriel edges form the base set. Then the shortest remaining
-Delaunay edges are added until each bus reaches the minimum degree or has no
-more Delaunay neighbours. A minimum degree of zero keeps the full Delaunay
-graph.
+The bus coordinates are triangulated in a metric projection (EPSG:3035). Each
+edge gets its great-circle length and the fraction of its length that lies in
+offshore regions; edges with an offshore length above the maximum are removed.
+The remaining edges of the Gabriel graph form the base set: an edge belongs to
+it if the circle with the edge as its diameter contains no other bus [Gabriel
+and Sokal, 1969]. As both ends lie on this circle, the test only needs the
+distance from the edge midpoint to the nearest bus, found with a k-d tree
+[Bentley, 1975], and only Delaunay edges need testing, as the Gabriel graph is
+a subgraph of the Delaunay triangulation [Matula and Sokal, 1980]. Then the
+shortest remaining Delaunay edges are added until each bus reaches the minimum
+degree or has no more Delaunay neighbours. A minimum degree of zero keeps the
+full Delaunay graph.
+
+References
+----------
+- Gabriel and Sokal (1969), [A New Statistical Approach to Geographic Variation Analysis](https://doi.org/10.2307/2412323)
+- Matula and Sokal (1980), [Properties of Gabriel Graphs Relevant to Geographic Variation Research and the Clustering of Points in the Plane](https://doi.org/10.1111/j.1538-4632.1980.tb00031.x)
+- Bentley (1975), [Multidimensional binary search trees used for associative searching](https://doi.org/10.1145/361002.361007)
 """
 
 import logging
@@ -17,161 +30,135 @@ import logging
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import pypsa
+from pypsa.geo import haversine_pts
+from scipy.spatial import Delaunay, KDTree
+from shapely.geometry import LineString
 
 from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
-COLS_EDGES = [
-    "name",
-    "bus0",
-    "bus1",
-    "length",
-    "gabriel_edge",
-    "geometry",
-    "underwater_fraction",
-]
+DISTANCE_CRS = "EPSG:3035"
+
+
+def delaunay_edges(coords: np.ndarray) -> np.ndarray:
+    """Return the unique Delaunay edges as sorted index pairs ``(i, j)`` with ``i < j``."""
+    triangles = Delaunay(coords).simplices
+    edges = np.vstack(
+        [triangles[:, [0, 1]], triangles[:, [1, 2]], triangles[:, [0, 2]]]
+    )
+    return np.unique(np.sort(edges, axis=1), axis=0)
+
+
+def is_gabriel(edges: np.ndarray, coords: np.ndarray) -> np.ndarray:
+    """Flag the edges with no other point closer to their midpoint than half their length."""
+    midpoints = coords[edges].mean(axis=1)
+    radius = np.linalg.norm(coords[edges[:, 0]] - coords[edges[:, 1]], axis=1) / 2
+    distance, _ = KDTree(coords).query(midpoints)
+    return distance >= radius * (1 - 1e-9)
+
+
+def build_delaunay_graph(
+    n: pypsa.Network, offshore_shapes: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
+    """
+    Build the Delaunay edges between buses.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network with bus coordinates ``x`` and ``y`` in EPSG:4326.
+    offshore_shapes : gpd.GeoDataFrame
+        Offshore regions used for the offshore fraction of each edge.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        One row per edge with columns name, bus0, bus1 (in lexicographic order),
+        length (km), gabriel_edge, underwater_fraction and geometry.
+    """
+    buses = n.buses.dropna(subset=["x", "y"])
+    lonlat = buses[["x", "y"]].to_numpy()
+    points = gpd.GeoSeries(gpd.points_from_xy(*lonlat.T), crs="EPSG:4326")
+    coords = points.to_crs(DISTANCE_CRS).get_coordinates().to_numpy()
+
+    edges = delaunay_edges(coords)
+    logger.info(f"Delaunay triangulation has {len(edges)} edges.")
+
+    bus0, bus1 = np.sort(buses.index.to_numpy()[edges], axis=1).T
+    graph = gpd.GeoDataFrame(
+        {
+            "name": bus0 + " -> " + bus1,
+            "bus0": bus0,
+            "bus1": bus1,
+            "length": haversine_pts(lonlat[edges[:, 0]], lonlat[edges[:, 1]]),
+            "gabriel_edge": is_gabriel(edges, coords),
+        },
+        geometry=[LineString(lonlat[e]) for e in edges],
+        crs="EPSG:4326",
+    )
+
+    lines = graph.geometry.to_crs(DISTANCE_CRS)
+    offshore = offshore_shapes.to_crs(DISTANCE_CRS).union_all()
+    graph["underwater_fraction"] = (
+        (lines.intersection(offshore).length / lines.length).fillna(0.0).round(2)
+    )
+    return graph
 
 
 def enforce_min_degree(
-    delaunay_graph: gpd.GeoDataFrame,
-    node_count: int,
-    min_degree: int,
+    graph: gpd.GeoDataFrame, buses: pd.Index, min_degree: int
 ) -> gpd.GeoDataFrame:
     """
-    Add shortest Delaunay edges to satisfy a minimum node degree.
-
-    Iterates over all Delaunay edges in ascending order of length and adds
-    edges to the selected set until every node reaches the requested minimum
-    degree, or until no further Delaunay edges are available for that node.
+    Select the Gabriel edges and add the shortest other edges up to a minimum degree.
 
     Parameters
     ----------
-    delaunay_graph : gpd.GeoDataFrame
-        Full Delaunay triangulation edge table.
-        Must contain integer columns ``source``, ``target``, and ``length``,
-        with canonical ordering ``source < target`` and a boolean
-        ``gabriel_edge`` column.
-    node_count : int
-        Total number of nodes in the graph. Used to size degree arrays.
+    graph : gpd.GeoDataFrame
+        Delaunay edges with columns bus0, bus1, length and gabriel_edge.
+    buses : pd.Index
+        All buses, used to report buses below the minimum degree.
     min_degree : int
-        Minimum number of edges required per node. Values <= 0 disable
-        Gabriel filtering and return the full ``delaunay_graph``.
+        Minimum number of edges per bus. Values <= 0 return all edges.
 
     Returns
     -------
     gpd.GeoDataFrame
-        Edge GeoDataFrame with the same schema as ``delaunay_graph``.
-        For ``min_degree > 0``, starts from Gabriel edges and extends with any
-        backfill edges needed to meet the degree constraint.
-        Nodes whose maximum possible Delaunay degree is below ``min_degree``
-        are handled gracefully with a warning.
-
-    Warns
-    -----
-    Logs a warning if the minimum degree cannot be fully satisfied, either
-    because a node has too few Delaunay neighbours (unreachable) or because
-    the greedy backfill did not converge (unmet after backfill).
+        Selected edges.
     """
     if min_degree <= 0:
-        logger.info(
-            "Gabriel filtering disabled via min_degree=%s; returning full Delaunay graph.",
-            min_degree,
-        )
-        return delaunay_graph.copy()
+        return graph
 
-    result = delaunay_graph[delaunay_graph["gabriel_edge"]].copy()
-    all_sorted = delaunay_graph.sort_values("length").reset_index(drop=True)
-    source_arr = all_sorted["source"].to_numpy(dtype=int)
-    target_arr = all_sorted["target"].to_numpy(dtype=int)
+    selected = graph["gabriel_edge"].to_numpy(copy=True)
+    gabriel_ends = graph.loc[selected, ["bus0", "bus1"]].stack().value_counts()
+    degree = pd.Series(0, index=buses).add(gabriel_ends, fill_value=0)
 
-    max_possible_degree = np.bincount(
-        np.concatenate([source_arr, target_arr]), minlength=node_count
-    )
+    for i in np.argsort(graph["length"].to_numpy(), kind="stable"):
+        u, v = graph["bus0"].iat[i], graph["bus1"].iat[i]
+        if not selected[i] and min(degree[u], degree[v]) < min_degree:
+            selected[i] = True
+            degree[[u, v]] += 1
 
-    sel_source = result["source"].to_numpy(dtype=int)
-    sel_target = result["target"].to_numpy(dtype=int)
-    edge_set: set[tuple[int, int]] = set(zip(sel_source, sel_target))
-    degrees = np.bincount(
-        np.concatenate([sel_source, sel_target]), minlength=node_count
-    )
-
-    deficits = np.maximum(0, min_degree - degrees)
-    remaining_deficits = int(deficits.sum())
-    additions_idx: list[int] = []
-
-    for idx, (u, v) in enumerate(zip(source_arr, target_arr)):
-        if remaining_deficits == 0:
-            break
-        if (u, v) in edge_set:
-            continue
-        if deficits[u] <= 0 and deficits[v] <= 0:
-            continue
-        edge_set.add((u, v))
-        additions_idx.append(idx)
-        if deficits[u] > 0:
-            deficits[u] -= 1
-            remaining_deficits -= 1
-        if deficits[v] > 0:
-            deficits[v] -= 1
-            remaining_deficits -= 1
-
-    if additions_idx:
-        to_add = all_sorted.iloc[additions_idx]
-        result = gpd.GeoDataFrame(
-            pd.concat([result, to_add], ignore_index=True),
-            geometry="geometry",
-            crs=delaunay_graph.crs,
-        )
-
-    result_source = result["source"].to_numpy(dtype=int)
-    result_target = result["target"].to_numpy(dtype=int)
-    achieved_degree = np.bincount(
-        np.concatenate([result_source, result_target]), minlength=node_count
-    )
-    target_degree = np.minimum(min_degree, max_possible_degree)
-    unreachable_mask = max_possible_degree < min_degree
-    unmet_mask = achieved_degree < target_degree
-
-    if np.any(unreachable_mask) or np.any(unmet_mask):
+    if unmet := int((degree < min_degree).sum()):
         logger.warning(
-            "Min-degree not fully met: requested=%s, unreachable=%s/%s, unmet_after_backfill=%s/%s.",
-            min_degree,
-            int(unreachable_mask.sum()),
-            node_count,
-            int(unmet_mask.sum()),
-            node_count,
+            f"{unmet} of {len(degree)} buses have fewer than {min_degree} candidate corridors."
         )
+    return graph[selected]
 
-    return result
 
-
-def filter_by_max_offshore_haversine_distance(
-    delaunay_graph: gpd.GeoDataFrame,
-    max_offdist: float = float("inf"),
+def build_transmission_topology(
+    n: pypsa.Network,
+    offshore_shapes: gpd.GeoDataFrame,
+    min_degree: int,
+    max_offshore_distance: float,
 ) -> gpd.GeoDataFrame:
-    """
-    Filter Delaunay edges by maximum offshore haversine distance.
-
-    Parameters
-    ----------
-    delaunay_graph : gpd.GeoDataFrame
-        Full Delaunay edge table.
-    max_offdist : float, default inf
-        Maximum allowed offshore edge length in km, computed as
-        ``underwater_fraction * length``. ``inf`` disables this filter.
-
-    Returns
-    -------
-    gpd.GeoDataFrame
-        Delaunay edge table after applying offshore-distance filtering.
-    """
-    if np.isfinite(max_offdist):
-        offshore_length = (
-            delaunay_graph["length"] * delaunay_graph["underwater_fraction"]
-        )
-        return delaunay_graph[offshore_length <= max_offdist].copy()
-    return delaunay_graph.copy()
+    """Build the candidate corridors; see the module docstring for the method."""
+    graph = build_delaunay_graph(n, offshore_shapes)
+    offshore_length = graph["length"] * graph["underwater_fraction"]
+    candidates = graph[offshore_length <= max_offshore_distance]
+    buses = n.buses.dropna(subset=["x", "y"]).index
+    return enforce_min_degree(candidates, buses, min_degree)
 
 
 if __name__ == "__main__":
@@ -183,30 +170,11 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    min_degree = snakemake.params.pipeline_topology["min_degree"]
-    max_offdist = snakemake.params.pipeline_topology["max_offshore_distance"]
+    n = pypsa.Network(snakemake.input.network)
+    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
+    params = snakemake.params.pipeline_topology
 
-    delaunay_graph = gpd.read_file(snakemake.input.delaunay_graph)
-
-    source_arr = delaunay_graph["source"].to_numpy(dtype=int)
-    target_arr = delaunay_graph["target"].to_numpy(dtype=int)
-    node_count = int(max(source_arr.max(), target_arr.max())) + 1
-
-    logger.info(
-        "Filtering topology: min_degree=%s, max_offdist=%s.",
-        min_degree,
-        max_offdist,
+    candidates = build_transmission_topology(
+        n, offshore_shapes, params["min_degree"], params["max_offshore_distance"]
     )
-
-    candidate_pool = filter_by_max_offshore_haversine_distance(
-        delaunay_graph=delaunay_graph,
-        max_offdist=max_offdist,
-    )
-
-    selected_edges = enforce_min_degree(
-        delaunay_graph=candidate_pool,
-        node_count=node_count,
-        min_degree=min_degree,
-    )[COLS_EDGES]
-
-    selected_edges.to_file(snakemake.output.candidates)
+    candidates.to_file(snakemake.output.candidates)

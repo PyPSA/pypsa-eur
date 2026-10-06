@@ -20,7 +20,7 @@ management](../design/carbon-management.md) in the design section.
 
 ## Pipeline candidates
 
-{{ rules("build_transmission_delaunay_graph", "build_transmission_topology") }}
+{{ rules("build_transmission_topology") }}
 
 ## Carbon sequestration
 
