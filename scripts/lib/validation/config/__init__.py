@@ -5,22 +5,43 @@
 """
 Config validation for PyPSA-EUR.
 
-The schema is exported to both `config/config.default.yaml` and `config/schema.default.json`.
-The json schema is also contributed to the schemastore.org and matches
-`**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
+The schema is exported to `config/config.default.yaml`, `config/plotting.default.yaml`,
+and `config/schema.default.json` (a single schema shared by both YAML files). The json
+schema is also contributed to the schemastore.org and matches `**/pypsa-eur*/config/*.yaml`
+to get IDE support without additional configuration.
 """
 
+import copy
+import pathlib
 import re
+import warnings
+from functools import reduce
 
 from pydantic import ValidationError
 from ruamel.yaml import YAML
+from snakemake.utils import update_config
 
 from scripts.lib.validation.config._base import _registry
 from scripts.lib.validation.config._schema import ConfigSchema
 
 
-def validate_config(config: dict) -> ConfigSchema:
-    """Validate config dict against schema."""
+def validate_config(config: dict, extra: str | None = None) -> ConfigSchema:
+    """
+    Validate config dict against schema.
+
+    Parameters
+    ----------
+    config : dict
+        Config dict to validate.
+    extra : {"ignore", "allow", "forbid"}, optional
+        Override how unknown keys are handled in all (nested) models, e.g.
+        ``"forbid"`` to raise a validation error for each of them. If None,
+        the behaviour configured in each model is used.
+
+    Returns
+    -------
+    Validated config model, with all config updaters applied.
+    """
     config_schema = ConfigSchema
     name = config_schema._name.default
     docs_url = config_schema._docs_url.default
@@ -31,24 +52,143 @@ def validate_config(config: dict) -> ConfigSchema:
             docs_url = updater_config.docs_url
         if updater_config.name:
             name += f".{updater_config.name}"
-    validated_config = config_schema(**config)
+    validated_config = config_schema.model_validate(config, extra=extra)
     validated_config._name = name
     validated_config._docs_url = docs_url
     return validated_config
 
 
-def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
-    """Generate config defaults YAML file and return the defaults dict."""
+# Sections not covered by the schema or deliberately accepting arbitrary keys,
+# for which unknown keys are not reported
+UNCHECKED_SECTIONS = {"plotting", "conventional"}
+
+
+def find_invalid_entries(config: dict) -> dict[str, list[str]]:
+    """
+    Find config entries that are unknown or have invalid values, including in nested sections.
+
+    Invalid values are those violating the type or allowed values of the schema,
+    e.g. a value outside a set of choices or a numeric range. Missing entries are
+    ignored, so partial override configs can be checked on their own.
+
+    Parameters
+    ----------
+    config : dict
+        Config dict to check.
+
+    Returns
+    -------
+    Error messages by dotted path of the invalid entries.
+    """
+    try:
+        validate_config(config, extra="forbid")
+    except ValidationError as e:
+        invalid = {}
+        for err in e.errors():
+            if err["type"] == "missing":
+                continue
+            if err["type"] == "extra_forbidden":
+                if err["loc"][0] in UNCHECKED_SECTIONS:
+                    continue
+                err["msg"] = "Unknown key, not part of the schema"
+            invalid.setdefault(_config_path(config, err["loc"]), []).append(err["msg"])
+        return invalid
+    return {}
+
+
+def _config_path(config: dict, loc: tuple) -> str:
+    """Dotted path of an error location, without pydantic's union member tags."""
+    path, data = [], config
+    for key in loc:
+        if isinstance(data, dict) and key in data:
+            data = data[key]
+        elif isinstance(data, list) and isinstance(key, int) and key < len(data):
+            data = data[key]
+        else:
+            break
+        path.append(str(key))
+    return ".".join(path) or "<root>"
+
+
+#: Deprecated config keys and the keys that take over their value. Remove an
+#: entry one release after adding it.
+DEPRECATED_KEYS: dict[str, list[str]] = {
+    "sector.tes": ["sector.ttes", "sector.district_heating.ptes.enable"],
+}
+
+
+def migrate_deprecated_keys(config: dict) -> None:
+    """
+    Move values of deprecated keys in place to the keys that replace them.
+
+    Apply it to each raw config and scenario override, since scripts read the
+    raw config and not the validated model.
+
+    Parameters
+    ----------
+    config : dict
+        Config or scenario override.
+    """
+    for old, new in DEPRECATED_KEYS.items():
+        *parents, key = old.split(".")
+        section = reduce(lambda d, k: d.get(k, {}), parents, config)
+        if key not in section:
+            continue
+        value = section.pop(key)
+        msg = f"`{old}` is deprecated and will be removed in the next release. Its value is used for `{'`, `'.join(new)}` instead."
+        warnings.warn(msg, FutureWarning)
+        for path in new:
+            *parents, key = path.split(".")
+            reduce(lambda d, k: d.setdefault(k, {}), parents, config)[key] = value
+
+
+def normalize_config(config: dict, validated: ConfigSchema) -> None:
+    """Normalize config values in place (e.g., ensure planning_horizons is a list)."""
+    config["planning_horizons"] = validated.planning_horizons
+
+
+def validate_scenarios(config: dict, scenarios: dict) -> None:
+    """Validate that each scenario override yields a valid, compatible config."""
+    for scenario_name, scenario_overrides in scenarios.items():
+        if "data" in scenario_overrides:
+            raise ValueError(
+                f"Scenario '{scenario_name}' overrides the 'data' block, but dataset "
+                "versions are resolved globally at workflow construction and cannot vary "
+                "per scenario. Move 'data' settings to the base config."
+            )
+        merged = copy.deepcopy(config)
+        update_config(merged, scenario_overrides)
+        for key in ("foresight", "planning_horizons"):
+            if merged[key] != config[key]:
+                raise ValueError(
+                    f"Scenario '{scenario_name}' changes '{key}', but collection and "
+                    "default targets are built from the base config, so it must be "
+                    "identical across scenarios. Set it at the top level and run "
+                    "differing values as separate workflows with their own run.name."
+                )
+        try:
+            validate_config(merged)
+        except Exception as e:
+            raise ValueError(
+                f"Scenario '{scenario_name}' failed config validation: {e}"
+            ) from e
+
+
+#: Top-level config keys that are written to their own defaults YAML file (via
+#: `generate_split_defaults`) instead of `config/config.{configname}.yaml`.
+SPLIT_CONFIG_FILES: dict[str, str] = {
+    "plotting": "config/plotting.{configname}.yaml",
+}
+
+
+def _convert_to_field_name(key: str) -> str:
+    """Convert dash-case to snake_case for field lookup."""
+    return key.replace("-", "_")
+
+
+def _write_defaults_yaml(path: str, config: ConfigSchema, defaults: dict) -> None:
+    """Write `defaults` (a subset of the validated config's top-level keys) to `path` as YAML."""
     from ruamel.yaml.comments import CommentedMap
-
-    def convert_to_field_name(key: str) -> str:
-        """Convert dash-case to snake_case for field lookup."""
-        return key.replace("-", "_")
-
-    # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
-    # the goal should be to use snake_case consistently
-    config = validate_config({})
-    defaults = config.model_dump(by_alias=True)
 
     # Create YAML instance with custom settings
     yaml_writer = YAML()
@@ -61,6 +201,7 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
     def str_representer(dumper, data):
         """Use block style for multiline, quotes for special chars, plain otherwise."""
         TAG = "tag:yaml.org,2002:str"
+        data = str(data)  # Ensure it's a plain string (not e.g. Path)
         if "\n" in data:
             return dumper.represent_scalar(TAG, data, style="|")
         if data == "" or any(c in data for c in ":{}[]&*#?|-<>=!%@"):
@@ -68,6 +209,7 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
         return dumper.represent_scalar(TAG, data, style="")
 
     yaml_writer.representer.add_representer(str, str_representer)
+    yaml_writer.representer.add_multi_representer(pathlib.PurePath, str_representer)
 
     # Create a CommentedMap to add comments
     data = CommentedMap()
@@ -80,15 +222,63 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
     for key, value in defaults.items():
         data[key] = value
 
-        field_name = convert_to_field_name(key)
+        field_name = _convert_to_field_name(key)
         docs_url = config._docs_url.format(field_name=field_name)
         data.yaml_set_comment_before_after_key(key, before=f"\ndocs in {docs_url}")
 
     # Write to file
-    with open(path.format(configname=config._name), "w") as f:
+    with open(path, "w") as f:
         yaml_writer.dump(data, f)
 
-    return defaults
+
+def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
+    """
+    Generate config defaults YAML file and return the defaults dict.
+
+    Top-level keys listed in `SPLIT_CONFIG_FILES` (e.g. `plotting`) are excluded here;
+    use `generate_split_defaults` to generate their dedicated defaults files.
+    """
+    # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
+    # the goal should be to use snake_case consistently
+    config = validate_config({})
+    defaults = config.model_dump(by_alias=True)
+    main_defaults = {
+        key: value for key, value in defaults.items() if key not in SPLIT_CONFIG_FILES
+    }
+
+    _write_defaults_yaml(path.format(configname=config._name), config, main_defaults)
+
+    return main_defaults
+
+
+def generate_split_defaults(key: str, path: str | None = None) -> dict:
+    """
+    Generate the dedicated defaults YAML file for a top-level key listed in `SPLIT_CONFIG_FILES`.
+
+    Returns the defaults dict for that single top-level key (e.g. `{"plotting": {...}}`).
+    """
+    if key not in SPLIT_CONFIG_FILES:
+        raise ValueError(
+            f"'{key}' is not a split-out config key. Known keys: "
+            f"{sorted(SPLIT_CONFIG_FILES)}"
+        )
+    if path is None:
+        path = SPLIT_CONFIG_FILES[key]
+
+    config = validate_config({})
+    defaults = config.model_dump(by_alias=True)
+    key_defaults = {key: defaults[key]}
+
+    _write_defaults_yaml(path.format(configname=config._name), config, key_defaults)
+
+    return key_defaults
+
+
+def generate_plotting_defaults(
+    path: str = "config/plotting.{configname}.yaml",
+) -> dict:
+    """Generate plotting defaults YAML file and return the plotting defaults dict."""
+    return generate_split_defaults("plotting", path)
 
 
 def generate_config_schema(path: str = "config/schema.{configname}.json") -> dict:
@@ -194,8 +384,16 @@ def generate_config_schema(path: str = "config/schema.{configname}.json") -> dic
 
 __all__ = [
     "ConfigSchema",
+    "SPLIT_CONFIG_FILES",
+    "DEPRECATED_KEYS",
     "validate_config",
+    "migrate_deprecated_keys",
+    "find_invalid_entries",
+    "validate_scenarios",
+    "normalize_config",
     "generate_config_defaults",
+    "generate_split_defaults",
+    "generate_plotting_defaults",
     "generate_config_schema",
     "ValidationError",
 ]

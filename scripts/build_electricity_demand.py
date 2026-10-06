@@ -2,11 +2,10 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This rule downloads the load data from `Open Power System Data Time series
-<https://data.open-power-system-data.org/time_series/>`_. For all countries in
+This rule downloads the load data from [Open Power System Data Time series](https://data.open-power-system-data.org/time_series/). For all countries in
 the network, the per country load timeseries are extracted from the dataset.
 After filling small gaps linearly and large gaps by copying time-slice of a
-given period, the load data is exported to a ``.csv`` file.
+given period, the load data is exported to a `.csv` file.
 """
 
 import logging
@@ -118,16 +117,18 @@ def manual_adjustment(load, fn_load, countries):
 
     Parameters
     ----------
-     load : pd.DataFrame
-         Load time-series with UTC timestamps x ISO-2 countries
-    load_fn: str
-         File name or url location (file format .csv)
+    load : pd.DataFrame
+        Load time-series with UTC timestamps x ISO-2 countries.
+    fn_load : str
+        File name or url location (file format .csv).
+    countries : list
+        List of country codes.
 
     Returns
     -------
-     load : pd.DataFrame
-         Manual adjusted and interpolated load time-series with UTC
-         timestamps x ISO-2 countries
+    load : pd.DataFrame
+        Manual adjusted and interpolated load time-series with UTC
+        timestamps x ISO-2 countries.
     """
 
     copy_timeslice(load, "UA", "2010-01-01 00:00", "2010-01-01 01:00", Delta(days=-1))
@@ -217,6 +218,22 @@ def repeat_years(s: pd.Series, years: list) -> pd.Series:
     return pd.concat(
         [s.set_axis(s.index.map(lambda t: t.replace(year=y))) for y in years]
     )
+
+
+def reindex_to_snapshots(
+    load: pd.DataFrame, snapshots: pd.DatetimeIndex, fixed_year: int | bool = False
+) -> pd.DataFrame:
+    """Reindex load to snapshots, optionally taking the profile from `fixed_year`."""
+    if not fixed_year:
+        return load.reindex(snapshots)
+    has_leap_day = ((snapshots.month == 2) & (snapshots.day == 29)).any()
+    if has_leap_day and not pd.Timestamp(str(fixed_year)).is_leap_year:
+        raise ValueError(
+            f"Snapshots contain February 29 but load `fixed_year` {fixed_year} is "
+            "not a leap year. Set `enable: drop_leap_day: true` or use a leap year."
+        )
+    index = snapshots.map(lambda t: t.replace(year=fixed_year))
+    return load.reindex(index).set_axis(snapshots)
 
 
 if __name__ == "__main__":
@@ -314,23 +331,13 @@ if __name__ == "__main__":
         synthetic_load = synthetic_load.loc[snapshots, countries]
         load = load.combine_first(synthetic_load)
 
+    fixed_year = snakemake.params["load"].get("fixed_year", False)
+    load = reindex_to_snapshots(load, snapshots, fixed_year)
+
     assert not load.isna().any().any(), (
         "Load data contains nans. Adjust the parameters "
         "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
         "for implementing the needed load data modifications."
     )
-
-    fixed_year = snakemake.params["load"].get("fixed_year", False)
-    years = (
-        slice(str(fixed_year), str(fixed_year))
-        if fixed_year
-        else slice(snapshots[0], snapshots[-1])
-    )
-
-    load = load.loc[years].reindex(index=snapshots)
-
-    # need to reindex load time series to target year
-    if fixed_year:
-        load.index = load.index.map(lambda t: t.replace(year=snapshots.year[0]))
 
     load.to_csv(snakemake.output[0])

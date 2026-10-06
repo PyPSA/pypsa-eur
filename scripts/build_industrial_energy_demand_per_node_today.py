@@ -2,15 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build industrial energy demand per model region.
+Distribute today's industrial energy demand per country to model regions in TWh/a.
 
-Description
--------
-
-This rule maps the industrial energy demand per country `industrial_energy_demand_per_country_today.csv` to each bus region.
-The energy demand per country is multiplied by the mapping value from the file ``industrial_distribution_key_base_s_{clusters}.csv`` between 0 and 1 to get the industrial energy demand per bus.
-
-The unit of the energy demand is TWh/a.
+Each country's demand per subsector and carrier from [build_industrial_energy_demand_per_country_today][] is multiplied by the matching regional distribution key from [build_industrial_distribution_key][]. Subsectors are mapped to the key of a site database where one exists, for example the steel routes to the steel plant tracker, cement to the cement plant tracker, ammonia to ammonia plants and all chemicals to the Hotmaps chemical industry; other subsectors are distributed by population. The output sums over subsectors, giving one value per region and carrier.
 """
 
 import logging
@@ -82,10 +76,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_industrial_energy_demand_per_node_today",
-            clusters=48,
-        )
+        snakemake = mock_snakemake("build_industrial_energy_demand_per_node_today")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

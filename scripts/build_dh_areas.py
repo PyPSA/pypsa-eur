@@ -2,38 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build and validate district heating areas for energy system modeling.
-District heating areas are used for computing heat source and storage potentials.
+Build district heating areas covering all modelled countries.
 
-This script processes district heating (DH) areas data from external sources and
-ensures all modeled countries have consistent representation. It handles missing
-countries that exist in the onshore regions but lack district heating data according
-to configurable strategies.
-
-The script supports three strategies for handling missing countries:
-- 'ignore': Countries without DH data are assumed to have no district heating
-- 'fill': Countries are assigned their full onshore region as potential DH area
-- 'raise': Missing countries cause an error to ensure explicit handling
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    countries: ['DE', 'FR', 'ES', ...]  # List of modeled countries
-    sector:
-        district_heating:
-            dh_areas:
-                handle_missing_countries: 'ignore'  # or 'fill' or 'raise'
-
-Inputs
-------
-- `data/dh_areas.gpkg`: District heating areas data (GeoPackage format)
-- `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Onshore regions for reference
-
-Outputs
--------
-- `resources/<run_name>/dh_areas_base_s_{clusters}.geojson`: Processed district heating areas with missing countries handled
+District heating area shapes from Fraunhofer ISI are checked against the
+countries of the onshore regions. Countries without data are handled by the
+configured strategy: ignored (assumed to have no district heating), filled
+with the country's full onshore area as potential district heating area, or
+reported as an error. The areas restrict where heat source and thermal storage
+potentials are computed; they do not affect heat demand.
 """
 
 import logging
@@ -47,7 +23,7 @@ from scripts._helpers import set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def handle_missing_countries(dh_areas, regions_onshore, missing_countries, handle_mode):
+def handle_missing_countries(dh_areas, onshore_regions, missing_countries, handle_mode):
     """
     Handle countries that exist in onshore regions but lack district heating data.
 
@@ -59,7 +35,7 @@ def handle_missing_countries(dh_areas, regions_onshore, missing_countries, handl
     ----------
     dh_areas : gpd.GeoDataFrame
         Existing district heating areas data with columns: Label, country, Dem_GWh, geometry
-    regions_onshore : gpd.GeoDataFrame
+    onshore_regions : gpd.GeoDataFrame
         Onshore regions data to use for filling missing countries
     missing_countries : pd.Index
         Index of country codes (2-letter ISO codes) missing from dh_areas
@@ -92,8 +68,8 @@ def handle_missing_countries(dh_areas, regions_onshore, missing_countries, handl
         for country_code in missing_countries:
             # Find all regions belonging to this country
             # Region names typically start with 2-letter country code (e.g., 'DE 1', 'FR 2')
-            country_regions = regions_onshore[
-                regions_onshore["name"].str.startswith(country_code)
+            country_regions = onshore_regions[
+                onshore_regions["name"].str.startswith(country_code)
             ]
 
             # Merge all regions of this country into a single geometry
@@ -103,7 +79,7 @@ def handle_missing_countries(dh_areas, regions_onshore, missing_countries, handl
             # Handle CRS conversion using temporary GeoSeries
             if country_geometry is not None and not country_geometry.is_empty:
                 temp_geoseries = gpd.GeoSeries(
-                    [country_geometry], crs=regions_onshore.crs
+                    [country_geometry], crs=onshore_regions.crs
                 )
                 country_geometry = temp_geoseries.to_crs(dh_areas.crs).iloc[0]
 
@@ -149,7 +125,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_dh_areas",  # Rule name for testing
-            clusters=48,  # Number of network clusters
         )
 
     # Apply scenario configuration from Snakemake workflow
@@ -161,11 +136,11 @@ if __name__ == "__main__":
 
     # Onshore regions: contains all modeled country/region boundaries
     # Used as reference for identifying missing countries and potential fill geometries
-    regions_onshore: gpd.GeoDataFrame = gpd.read_file(snakemake.input.regions_onshore)
+    onshore_regions: gpd.GeoDataFrame = gpd.read_file(snakemake.input.onshore_regions)
 
     # Identify discrepancies between modeled countries and available DH data
     # Extract country codes from region names (assumes format like 'DE 1', 'FR 2', etc.)
-    region_countries = set([name.split()[0][:2] for name in regions_onshore["name"]])
+    region_countries = set([name.split()[0][:2] for name in onshore_regions["name"]])
 
     # Get countries that already have DH area data
     dh_countries = set(dh_areas["country"].unique())
@@ -185,7 +160,7 @@ if __name__ == "__main__":
 
         dh_areas = handle_missing_countries(
             dh_areas,
-            regions_onshore,
+            onshore_regions,
             missing_countries,
             snakemake.params["handle_missing_countries"],
         )

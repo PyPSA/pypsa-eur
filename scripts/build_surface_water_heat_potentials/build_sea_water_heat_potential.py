@@ -6,36 +6,11 @@ Calculate sea water heat potential for district heating systems.
 
 This script computes the thermal potential of sea water as a heat source for district
 heating applications. It uses sea water temperature data to estimate average water
-temperatures across regions intersected with district heating areas.
+temperatures across regions intersected with district heating areas. The district
+heating areas are buffered by `dh_area_buffer` (in meters) to include nearby coastal areas.
 
 The approximation accounts for spatial variations in sea water temperature,
 providing both spatial and temporal aggregates. Temporal aggregates are only used for plotting.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    sector:
-        district_heating:
-            dh_area_buffer: # Buffer around DH areas in meters to include nearby coastal areas
-            heat_source_cooling: # Exploitable temperature delta
-    snapshots:
-        start:
-        end:
-    enable:
-        drop_leap_day:
-
-Inputs
-------
-- `data/seawater_temperature.nc`: Sea water temperature data
-- `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Onshore regions
-- `resources/<run_name>/dh_areas_base_s_{clusters}.geojson`: District heating areas
-
-Outputs
--------
-- `resources/<run_name>/temp_sea_water_base_s_{clusters}.nc`: Sea water temperature profiles by region
-- `resources/<run_name>/temp_sea_water_base_s_{clusters}_temporal_aggregate.nc`: Temporal aggregated temperature data
 """
 
 import logging
@@ -48,7 +23,6 @@ from _helpers import (
     configure_logging,
     get_snapshots,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 from approximators.sea_water_heat_approximator import SeaWaterHeatApproximator
 
@@ -222,19 +196,11 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_sea_heat_potential",
-            clusters="39",
-            opts="",
-            ll="vopt",
-            sector_opts="",
-            planning_horizons=2050,
-        )
+        snakemake = mock_snakemake("build_sea_heat_potential")
 
     # Configure logging and scenario
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # Get simulation snapshots
     snapshots: pd.DatetimeIndex = get_snapshots(
@@ -243,9 +209,9 @@ if __name__ == "__main__":
 
     # Load geographic data for processing
     # Load onshore regions (countries/NUTS regions) for sea water analysis
-    regions_onshore = gpd.read_file(snakemake.input["regions_onshore"])
-    regions_onshore.set_index("name", inplace=True)  # Use region name as index
-    regions_onshore.set_crs("EPSG:4326", inplace=True)  # Ensure WGS84 CRS
+    onshore_regions = gpd.read_file(snakemake.input["onshore_regions"])
+    onshore_regions.set_index("name", inplace=True)  # Use region name as index
+    onshore_regions.set_crs("EPSG:4326", inplace=True)  # Ensure WGS84 CRS
 
     # Load and preprocess district heating areas
     # These define where sea water heat pumps could be connected
@@ -257,11 +223,11 @@ if __name__ == "__main__":
 
     # Each region is processed independently to calculate its sea water temperature
     results = []
-    for region_name in regions_onshore.index:
+    for region_name in onshore_regions.index:
         logging.info(f"Processing region {region_name}")
 
         # Extract region geometry and create a copy to avoid modification conflicts
-        region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
+        region = gpd.GeoSeries(onshore_regions.loc[region_name].copy(deep=True))
 
         # Submit region processing task to Dask cluster
         # Each task will:
@@ -288,7 +254,7 @@ if __name__ == "__main__":
             [res["spatial aggregate"]["average_temperature"] for res in results],
             dim="name",
         )
-        .assign_coords(name=regions_onshore.index)
+        .assign_coords(name=onshore_regions.index)
         .dropna(dim="time")
     )  # Remove invalid time points
 
@@ -307,5 +273,5 @@ if __name__ == "__main__":
     # Used for analysis and plotting
     xr.concat(
         [res["temporal aggregate"]["average_temperature"] for res in results],
-        dim=regions_onshore.index,
+        dim=onshore_regions.index,
     ).to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)

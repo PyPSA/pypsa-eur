@@ -2,22 +2,23 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build district heat shares at each node, depending on investment year.
+Build the district heating share of heat demand at each node for a planning horizon.
 
-Inputs:
--------
-- `resources/<run_name>/pop_layout.csv`: Population layout for each node: Total, urban and rural population.
-- `resources/<run_name>/district_heat_share.csv`: Historical district heat share at each country. Output of `scripts/build_energy_totals.py`.
+Today's country-level district heat share from [build_energy_totals][] is
+scaled to each node by the ratio of its share of the country's urban
+population to its share of the total population. The maximum share is the
+node's urban fraction times the potential set in
+`sector.district_heating.potential`, either a single value or one per
+country. The gap between today's share and this maximum is closed by the
+progress factor of the planning horizon from
+`sector.district_heating.progress`. Where today's share exceeds the urban
+fraction, the urban fraction is raised to match.
 
-Outputs:
---------
-- `resources/<run_name>/district_heat_share.csv`: District heat share at each node, potential for each investment year.
-
-Notes
------
-- The district heat share is calculated as the share of urban population at each node, multiplied by the share of district heating in the respective country.
-- The `sector.district_heating.potential` setting defines the max. district heating share.
-- The max. share of district heating is increased by a progress factor, depending on the investment year (See `sector.district_heating.progress` setting).
+| Column | Description |
+|---|---|
+| `original district heat share` | Today's share of the country |
+| `district fraction of node` | Share of the node's heat demand served by district heating |
+| `urban fraction` | Share of the node's population living in urban areas |
 """
 
 import logging
@@ -36,13 +37,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_district_heat_share",
-            clusters=60,
-            planning_horizons="2050",
+            horizon="2050",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    investment_year = int(snakemake.wildcards.planning_horizons)
+    investment_year = int(snakemake.wildcards.horizon)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 

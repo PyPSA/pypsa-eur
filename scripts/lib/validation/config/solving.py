@@ -5,7 +5,7 @@
 """
 Solving configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#solving_cf
 """
 
 from typing import Any
@@ -142,7 +142,7 @@ class _SolvingOptionsConfig(BaseModel):
     )
     rolling_horizon: bool = Field(
         False,
-        description="Switch for rule `solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
+        description="Switch for rule `solve_network` whether to optimize the network in a rolling horizon manner instead of capacity expansion, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
     )
     seed: int = Field(
         123, description="Random seed for increased deterministic behaviour."
@@ -167,9 +167,9 @@ class _SolvingOptionsConfig(BaseModel):
         3,
         description="Maximum number of solving iterations in between which resistance and reactence (`x/r`) are updated for branches according to `s_nom_opt` of the previous run.",
     )
-    transmission_losses: int = Field(
-        2,
-        description="Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
+    transmission_losses: bool | int | dict[str, Any] = Field(
+        {"mode": "secants", "atol": 15, "rtol": 0.5},
+        description='Piecewise linear approximation of losses in AC lines. `false` disables losses, `true` uses the PyPSA default secant-based approximation (`atol=1` MW, `rtol=0.1`). A dict sets the approximation, e.g. `{"mode": "tangents", "segments": 2}` for the former tangent-based method. An integer is deprecated and sets the number of tangents. The default `atol` and `rtol` keep the number of extra constraints close to that of the former tangent-based method.',
     )
     linearized_unit_commitment: bool = Field(
         True,
@@ -203,6 +203,23 @@ class _SolvingOptionsConfig(BaseModel):
         if self.rolling_horizon and self.store_model:
             raise ValueError("store_model is not supported with rolling_horizon")
         return self
+
+
+class _OperationsConfig(BaseModel):
+    """Configuration for `solving.operations` settings (rule `solve_operations_network`)."""
+
+    rolling_horizon: bool = Field(
+        False,
+        description="Whether rule `solve_operations_network` re-dispatches the fixed-capacity network in a rolling horizon manner, splitting the snapshots into slices of size `horizon` which are solved consecutively. Independent from `solving.options.rolling_horizon`, which controls rule `solve_network`.",
+    )
+    horizon: int = Field(
+        365,
+        description="Number of snapshots per slice in rolling horizon operational dispatch.",
+    )
+    overlap: int = Field(
+        0,
+        description="Number of overlapping snapshots between consecutive slices in rolling horizon operational dispatch.",
+    )
 
 
 class _AggPNomLimitsConfig(BaseModel):
@@ -263,9 +280,12 @@ class _CheckObjectiveConfig(BaseModel):
     """Configuration for `solving.check_objective` settings."""
 
     enable: bool = Field(False, description="Enable objective value checking.")
-    expected_value: float | None = Field(None, description="Expected objective value.")
-    atol: float = Field(1_000_000, description="Absolute tolerance.")
-    rtol: float = Field(0.01, description="Relative tolerance.")
+    expected_value: float | dict[int, float] | None = Field(
+        None,
+        description="Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight.",
+    )
+    atol: float = Field(10_000, description="Absolute tolerance.")
+    rtol: float = Field(0.001, description="Relative tolerance.")
 
     @field_validator("expected_value", mode="before")
     @classmethod
@@ -310,6 +330,10 @@ class SolvingConfig(BaseModel):
     options: _SolvingOptionsConfig = Field(
         default_factory=_SolvingOptionsConfig, description="Solving options."
     )
+    operations: _OperationsConfig = Field(
+        default_factory=_OperationsConfig,
+        description="Operational dispatch options for rule `solve_operations_network`.",
+    )
     agg_p_nom_limits: _AggPNomLimitsConfig = Field(
         default_factory=_AggPNomLimitsConfig,
         description="Aggregate p_nom limits configuration.",
@@ -341,6 +365,14 @@ class SolvingConfig(BaseModel):
                 "dual_feasibility_tolerance": 1e-5,
                 "random_seed": 123,
             },
+            "highs-hipo": {
+                "solver": "hipo",
+                "parallel": "on",
+                "primal_feasibility_tolerance": 1e-5,
+                "dual_feasibility_tolerance": 1e-5,
+                "random_seed": 123,
+                "run_crossover": "off",
+            },
             "gurobi-default": {
                 "threads": 32,
                 "method": 2,
@@ -350,6 +382,7 @@ class SolvingConfig(BaseModel):
                 "AggFill": 0,
                 "PreDual": 0,
                 "GURO_PAR_BARDENSETHRESH": 200,
+                "IISMethod": 1,
             },
             "gurobi-numeric-focus": {
                 "NumericFocus": 3,

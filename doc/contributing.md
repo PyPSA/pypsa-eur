@@ -1,0 +1,79 @@
+<!-- SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur> -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
+# Contributing
+
+We welcome anyone interested in contributing to this project, be it with new
+ideas, suggestions, by filing bug reports or contributing code to our [GitHub
+repository](https://github.com/PyPSA/PyPSA-Eur).
+
+## Where to start
+
+* If you already have some code changes, you can submit them directly as a [pull request](https://github.com/PyPSA/pypsa-eur/pulls).
+* If you are wondering where we would greatly appreciate your efforts, check out the `help wanted` tag in the [issues list](https://github.com/PyPSA/pypsa-eur/issues) and initiate a discussion there.
+* If you start working on a feature in the code, let us know by opening an issue or a draft pull request.
+  This helps all of us to keep an overview on what is being done and helps to avoid a situation where we
+  are doing the same work twice in parallel.
+
+## Setting up the development environment
+
+For linting, formatting and checking your code contributions
+against our guidelines (e.g. we use [Ruff](https://github.com/astral-sh/ruff) as code style)
+use [pre-commit](https://pre-commit.com/index.html):
+
+1. Install [pixi](https://pixi.sh/latest/).
+1. Usage:
+    * To automatically activate `pre-commit` on every `git commit`: Run `pixi run -e dev pre-commit install`
+    * To manually run it: `pixi run -e dev pre-commit run --all`
+
+!!! note
+    Note that installing `pre-commit` locally is not strictly necessary. If you create a Pull Request the `pre-commit CI` will be triggered automatically and take care of the checks.
+
+For all code contributions we follow the four eyes principle (two person principle), i.e. all suggested code
+including our own are reviewed by a second person before they are incorporated into our repository.
+
+If you are unfamiliar with pull requests, the GitHub help pages have a nice [guide](https://help.github.com/en/articles/about-pull-requests).
+
+To **discuss** with other PyPSA users, organise projects, share news, and get in touch with the community you can use the [Discord server](https://discord.gg/AnuJBk23FU).
+
+## Contributing to the documentation
+
+We strive to keep documentation useful and up to date for all PyPSA users. If you encounter an area where documentation is not available or insufficient, we very much welcome your contribution. Here is How To:
+
+1. Install [pixi](https://pixi.sh/latest/).
+2. Make your changes in the corresponding `.md` file under `pypsa-eur/doc`.
+3. Rules are documented in three places that must stay together: a one-line docstring
+   after the `rule` line in `rules/*.smk` (one sentence, starts with a verb, at most
+   100 characters; it is also printed as the job message, so rules carry no `message:` block), a module docstring in the script (one sentence on the output,
+   two to five sentences on the method, an optional `References` list; no input,
+   output or configuration listings, these are generated from the rule) and an entry
+   in one of the rules pages under `doc/rules/` through the `rules()` macro. `test/test_docs.py` checks that
+   every rule is covered.
+4. Compile your changes by running `pixi run build-docs site` from the project root.
+   You can also preview live with `pixi run -e doc mkdocs serve`. HTML files to review can be found under `site/html/`.
+5. Contribute your documentation in a pull request ([here is a guide](https://help.github.com/en/articles/about-pull-requests)).
+
+
+## Release notes
+
+Every pull request adds a bullet to the upcoming release section at the top of
+`doc/release_notes.md`. State what changed for the user in one or two
+sentences, start bugfixes with `Bugfix:`, and refer to rules with the
+`[rule_name][]` syntax. The bullets are sorted into features, changes and
+bugfixes at release time.
+
+## AI-based Contributions
+
+To handle the influx of AI-assisted contributions and protect maintainer time, we have established some basic principles.
+
+We do not impose general restrictions on the use of AI for contributions.
+But we require that all contributions, whether AI-assisted or not, adhere to the same standards of quality, relevance, and maintainability.
+This boils down to:
+
+1. PR and issue descriptions should read like you wrote them. Keep them concise and human. Any potentially verbose AI-generated content should be marked, e.g. in a collapsed `<details>` block. Please don't mix both.
+2. Take responsibility for the content and quality of your contribution, even if you used AI.
+3. Keep the code simple. AI tools often produce verbose or over-engineered code. Review and trim it back before submitting.
+4. Before you submit large contributions, coordinate with the maintainers to ensure they align with the project's goals and roadmap.
+5. Minimize the review burden on us by keeping your contributions focused, don't solve multiple tangential issues in one PR.
+
+We may close AI-based contributions without further review if we consider them to bind up excessive maintainer time.

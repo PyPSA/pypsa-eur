@@ -1,0 +1,725 @@
+<!-- SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur> -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
+
+<a id="config"></a>
+
+# Configuration
+
+PyPSA-Eur has several configuration options which are documented in this section.
+
+<a id="defaultconfig"></a>
+
+
+## Configuration Files
+
+Any PyPSA-Eur configuration can be set in a `.yaml` file. The default configurations
+`config/config.default.yaml` and `config/plotting.default.yaml` are maintained in
+the repository and cover all the options that are used/ can be set.
+
+To pass your own configuration, you can create a new file, e.g. `my_config.yaml`,
+and specify the options you want to change. They will override the default settings and
+options which are not set, will be inherited from the defaults above.
+
+Another way is to use the `config/config.yaml` file, which does not exist in the
+repository and is also not tracked by git. But snakemake will always use this file if
+it exists. This way you can run snakemake with a custom config without having to
+specify the config file each time.
+
+Configuration order of precedence is as follows:
+1. Command line options specified with `--config` (optional)
+2. Custom configuration file specified with `--configfile` (optional)
+3. The `config/config.yaml` file (optional)
+4. The default configuration files `config/config.default.yaml` and `config/plotting.default.yaml`
+
+To use your custom configuration file, you need to pass it to the `snakemake` command
+using the `--configfile` option:
+
+```console
+$ snakemake -call --configfile my_config.yaml
+```
+
+
+!!! warning
+    In a previous version of PyPSA-Eur (`<=2025.04.0`), a full copy of the created config
+    was stored in the `config/config.yaml` file. This is no longer the case. If the
+    file exists, snakemake will use it, but no new copy will be created.
+
+
+## Accessing configuration inside Snakemake
+
+Rules should **not** access the `snakemake.config` object directly because overrides from
+`run.scenarios` are only applied through the helpers in `rules/common.smk`:
+
+- `config_provider("electricity", "extendable_carriers")` returns a callable
+  that Snakemake evaluates per wildcard combination. This keeps caching fast and
+  ensures the right scenario is used.
+- `get_config(w)` materialises the fully merged dictionary for a specific set
+  of wildcards. Use this sparingly inside Python helper functions that need to
+  read several keys at once.
+
+Reusing these helpers guarantees that documentation examples, rule
+implementations, and custom extensions all observe the same precedence rules.
+
+
+## `version` {#version_cf}
+
+Version of PyPSA-Eur. Descriptive only.
+
+- **Type:** string
+- **Default:** `v2026.09.0`
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("version") }}
+```
+
+
+## `tutorial` {#tutorial_cf}
+
+Switch to retrieve the tutorial data set instead of the full data set.
+
+- **Type:** boolean
+- **Default:** `false`
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("tutorial") }}
+```
+
+
+## `logging` {#logging_cf}
+
+Configuration for top level `logging` settings.
+
+{{ schema_table("logging") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("logging") }}
+```
+
+
+## `remote` {#remote_cf}
+
+"Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
+
+Configuration for top level `remote` settings.
+
+{{ schema_table("remote") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("remote") }}
+```
+
+
+## `run` {#run_cf}
+
+It is common conduct to analyse energy system optimisation models for **multiple scenarios** for a variety of reasons,
+e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
+investment changes as more ambitious greenhouse-gas emission reduction targets are applied.
+
+The `run` section is used for running and storing scenarios with different configurations which are not covered by [wildcards](wildcards.md).
+It determines the path at which resources, networks and results are stored.
+Therefore the user can run different configurations within the same directory.
+
+Configuration for top level `run` settings.
+
+{{ schema_table("run") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("run") }}
+```
+
+
+## `foresight` {#foresight_cf}
+
+[planning_horizons](#planning_horizons_cf) has to be set.
+
+Configuration for `foresight` settings.
+
+- **Type:** enum (`overnight`, `myopic`, `perfect`)
+- **Default:** `overnight`
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("foresight") }}
+```
+
+!!! note
+    If you use myopic or perfect foresight, define at least two values in the
+    top-level [planning_horizons](#planning_horizons_cf) list.
+
+!!! note
+    The `foresight` setting cannot vary across scenarios defined in
+    `run.scenarios`. It is evaluated at workflow parsing time
+    to determine which outputs to include. If you need to compare different
+    foresight modes, run them as separate workflows with distinct `run.name`.
+
+
+## `planning_horizons` {#planning_horizons_cf}
+
+Configure planning horizons at the top level rather than through wildcards.
+Provide either a single year (for overnight studies) or a list of investment
+years that should be simulated sequentially:
+
+```yaml
+planning_horizons: [2030, 2040, 2050]
+```
+
+Configuration for top level `planning_horizons` settings.
+
+- **Type:** list of integer
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("planning_horizons") }}
+```
+
+- Overnight runs require a single value.
+- Myopic runs expect strictly ascending values and continue each horizon from
+  the previous year's `results/{run}/networks/solved_{horizon}.nc`.
+- Perfect foresight also iterates over the list but reuses the previous year's
+  `resources/{run}/networks/composed_{horizon}.nc` as the brownfield seed.
+
+!!! note
+    Earlier releases derived planning horizons from `scenario` wildcard
+    entries. That block is ignored now; define `planning_horizons` at the top
+    level and keep scenario sweeps inside `run.scenarios`. See
+    [migration](migration.md) for detailed conversion steps.
+
+
+## `countries` {#countries_cf}
+
+Configuration for `countries` settings.
+
+- **Type:** list of string
+- **Default:** `[...]`
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("countries") }}
+```
+
+
+## `snapshots` {#snapshots_cf}
+
+Specifies the temporal range to build an energy system model for as arguments to [pandas.date_range ](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html)
+
+Configuration for `snapshots` settings.
+
+{{ schema_table("snapshots") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("snapshots") }}
+```
+
+
+## `enable` {#enable_cf}
+
+Switches for some rules and optional features.
+
+Configuration for `enable` settings.
+
+{{ schema_table("enable") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("enable") }}
+```
+
+
+## `co2_budget` {#co2_budget_cf}
+
+Carbon budgets share one schema for all foresight modes. The `relative` flag
+selects whether yearly entries inside `upper`/`lower` are interpreted as
+fractions of the 1990 baseline (`true`) or absolute GtCO₂/year
+(`false`). Enable `upper` and/or `lower` to enforce those caps only for
+the explicitly listed years or a total budget across all [planning_horizons](#planning_horizons_cf).
+
+Configuration for `co2_budget` settings.
+
+- **Type:** dict (str -> number)
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("co2_budget") }}
+```
+
+
+## `electricity` {#electricity_cf}
+
+Configuration for `electricity` settings.
+
+{{ schema_table("electricity") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("electricity") }}
+```
+
+
+## `atlite` {#atlite_cf}
+
+Define and specify the `atlite.Cutout` used for calculating renewable potentials and time-series. All options except for `features` are directly used as [cutout parameters ](https://atlite.readthedocs.io/en/latest/ref_api.html#cutout).
+
+Configuration for `atlite` settings.
+
+{{ schema_table("atlite") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("atlite") }}
+```
+
+
+## `renewable` {#renewable_cf}
+
+### `onwind`
+
+Configuration for onshore wind.
+
+{{ schema_table("renewable.onwind") }}
+
+Configuration for offshore wind.
+
+{{ schema_table("renewable.offwind-ac") }}
+
+Configuration for offshore wind.
+
+{{ schema_table("renewable.offwind-dc") }}
+
+Configuration for offshore wind.
+
+{{ schema_table("renewable.offwind-float") }}
+
+Configuration for solar PV.
+
+{{ schema_table("renewable.solar") }}
+
+Configuration for hydropower.
+
+{{ schema_table("renewable.hydro") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("renewable") }}
+```
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("renewable.offwind-ac") }}
+```
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("renewable.solar") }}
+```
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("renewable.hydro") }}
+```
+
+!!! note
+    Notes on `capacity_per_sqkm`. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
+       area is available for installation of wind generators due to competing land use and likely public
+       acceptance issues.
+
+!!! note
+    The default choice for corine `grid_codes` was based on Scholz, Y. (2012). Renewable energy based electricity supply at low costs
+    development of the REMix model and application for Europe. ( p.42 / p.28)
+
+
+!!! note
+    Notes on `capacity_per_sqkm`. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
+       area is available for installation of wind generators due to competing land use and likely public
+       acceptance issues.
+
+!!! note
+    Notes on `correction_factor`. Correction due to proxy for wake losses
+    from 10.1016/j.energy.2018.08.153
+    until done more rigorously in #153
+
+
+!!! note
+    Notes on `capacity_per_sqkm`. ScholzPhd Tab 4.3.1: 170 MW/km^2 and assuming 1% of the area can be used for solar PV panels.
+       Correction factor determined by comparing uncorrected area-weighted full-load hours to those
+       published in Supplementary Data to Pietzcker, Robert Carl, et al. "Using the sun to decarbonize the power
+       sector -- The economic potential of photovoltaics and concentrating solar
+       power." Applied Energy 135 (2014): 704-720.
+       This correction factor of 0.854337 may be in order if using reanalysis data.
+       for discussion refer to this https://github.com/PyPSA/pypsa-eur/issues/285
+
+
+## `conventional` {#conventional_cf}
+
+Define additional generator attribute for conventional carrier types. If a
+scalar value is given it is applied to all generators. However if a string
+starting with "data/" is given, the value is interpreted as a path to a csv file
+with country specific values. Then, the values are read in and applied to all
+generators of the given carrier in the given country. Note that the value(s)
+overwrite the existing values.
+
+Configuration for `conventional` settings.
+
+{{ schema_table("conventional") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("conventional") }}
+```
+
+
+## `lines` {#lines_cf}
+
+Configuration for `lines` settings.
+
+{{ schema_table("lines") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("lines") }}
+```
+
+
+## `links` {#links_cf}
+
+Configuration for `links` settings.
+
+{{ schema_table("links") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("links") }}
+```
+
+
+## `transmission_projects` {#transmission_projects_cf}
+
+Allows to define additional transmission projects that will be added to the base network, e.g., from the TYNDP 2020 dataset. The projects are read in from the CSV files in the subfolder of `data/transmission_projects/`. New transmission projects, e.g. from TYNDP 2024, can be added in a new subfolder of transmission projects, e.g. `data/transmission_projects/tyndp2024` while extending the list of `transmission_projects` in the `config.yaml` by `tyndp2024`. The CSV files in the project folder should have the same columns as the CSV files in the template folder `data/transmission_projects/template`.
+
+Configuration for `transmission_projects` settings.
+
+{{ schema_table("transmission_projects") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("transmission_projects") }}
+```
+
+
+## `transformers` {#transformers_cf}
+
+Configuration for `transformers` settings.
+
+{{ schema_table("transformers") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("transformers") }}
+```
+
+
+## `load` {#load_cf}
+
+Configuration for `load` settings.
+
+{{ schema_table("load") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("load") }}
+```
+
+
+## `pypsa_eur` {#pypsa_eur_cf}
+
+Only used for sector-coupling studies.
+
+Carriers of the electricity-only network that are kept per component type when
+the sector-coupling components are added. Components with other carriers, for
+example conventional generators, are removed and re-added in their
+sector-coupled form.
+
+{{ schema_table("pypsa_eur") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("pypsa_eur") }}
+```
+
+## `energy` {#energy_cf}
+
+Only used for sector-coupling studies.
+
+Configuration for `energy` settings.
+
+{{ schema_table("energy") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("energy") }}
+```
+
+!!! note
+    Only used for sector-coupling studies.
+
+
+## `biomass` {#biomass_cf}
+
+- Manure solid, liquid
+- Residues from landscape care
+- Bioethanol barley, wheat, grain maize, oats, other cereals and rye
+- Sugar from sugar beet
+- Miscanthus, switchgrass, RCG
+- Willow
+- Poplar
+- Sunflower, soya seed
+- Rape seed
+- Fuelwood residues
+- FuelwoodRW
+- C&P_RW
+- Secondary Forestry residues - woodchips
+- Sawdust
+- Municipal waste
+- Sludge
+
+Configuration for `biomass` settings.
+
+{{ schema_table("biomass") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("biomass") }}
+```
+
+!!! note
+    Only used for sector-coupling studies.
+
+    The list of available biomass is given by the category in [ENSPRESO_BIOMASS](https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx), namely:
+
+    - Agricultural waste
+
+
+## `solar_thermal` {#solar_thermal_cf}
+
+Only used for sector-coupling studies.
+
+Configuration for `solar_thermal` settings.
+
+{{ schema_table("solar_thermal") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("solar_thermal") }}
+```
+
+!!! note
+    Only used for sector-coupling studies.
+
+
+## `existing_capacities` {#existing_capacities_cf}
+
+Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect foresight scenarios.
+
+In myopic and perfect foresight runs, [compose_network][] merges the historical
+assets stored in `resources/powerplants.csv` into `networks/composed_{horizon}.nc`
+at the first planning horizon, which also serves as the base year for existing
+capacities.
+
+Configuration for `existing_capacities` settings.
+
+{{ schema_table("existing_capacities") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("existing_capacities") }}
+```
+
+!!! note
+    Only used for sector-coupling studies. The value for grouping years are only used in myopic or perfect foresight scenarios.
+
+
+## `sector` {#sector_cf}
+
+Only used for sector-coupling studies.
+
+??? note "Details"
+
+    Configuration for `sector` settings.
+
+    {{ schema_table("sector") | indent(4) }}
+
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("sector") }}
+```
+
+
+!!! note
+    Only used for sector-coupling studies.
+
+
+## `industry` {#industry_cf}
+
+Only used for sector-coupling studies.
+
+Configuration for `industry` settings.
+
+{{ schema_table("industry") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("industry") }}
+```
+
+!!! note
+    Only used for sector-coupling studies.
+
+
+## `costs` {#costs_cf}
+
+Configuration for `costs` settings.
+
+{{ schema_table("costs") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("costs") }}
+```
+
+
+## `clustering` {#clustering_cf}
+
+use `min` in `p_nom_max:` for more conservative assumptions.
+
+Configuration for `clustering` settings.
+
+{{ schema_table("clustering") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("clustering") }}
+```
+
+!!! tip
+    use `min` in `p_nom_max:` for more conservative assumptions.
+
+
+## `adjustments` {#adjustments_cf}
+
+Configuration for top-level adjustments key.
+
+{{ schema_table("adjustments") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("adjustments") }}
+```
+
+
+## `solving` {#solving_cf}
+
+Configuration for `solving` settings.
+
+{{ schema_table("solving") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("solving") }}
+```
+
+
+## `data` {#data_cf}
+
+Controls which versions of input data are used for building the model.
+Versions that are available for each dataset can be found in `data/versions.csv`.
+By default, we retrieve the `latest` supported version for each dataset from an archive source.
+This means that when upgrading between PyPSA-Eur versions, new versions of input data may also be downloaded and used.
+To freeze a model to a specific version of input data, you can set a specific version in the `version` field for each dataset to one specific version as listed in `data/versions.csv`.
+
+Some datasets support `primary` or `build` as a source option, meaning that the data can be retrieved from the original
+data source or build it from the latest available data.
+See the `data/versions.csv` file for all available datasets and their sources/versions that are supported.
+
+In your own project, you can define additional version files to modify the contents of `data/versions.csv`.
+See the [data versioning documentation](data_sources.md#managing_data_versions) for more details.
+
+??? note "Configuration for `data` settings."
+
+    {{ schema_table("data") | indent(4) }}
+
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("data") }}
+```
+
+
+## `overpass_api` {#overpass_api_cf}
+
+Configuration for `overpass_api` settings.
+
+{{ schema_table("overpass_api") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("overpass_api") }}
+```
+
+
+
+## `plotting` {#plotting_cf}
+
+Configuration for `plotting` settings, used to style post-processing summaries, static
+and interactive maps, and timeseries plots.
+
+{{ schema_table("plotting") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("plotting", source="plotting") }}
+```
+

@@ -2,7 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Preprocess energy balances from Eurostat.
+Build long-format Eurostat energy balances per country and year in TWh/a.
+
+The compressed Eurostat energy balance table is read, melted to long format
+and restricted to entries reported in GWh. Missing totals for domestic
+aviation are filled from the nearest reported year, country codes are
+harmonised with the JRC-IDEES convention (UK to GB, EL to GR), and values are
+converted from GWh to TWh. The result feeds the country-level energy totals
+from which sectoral demands are derived.
 """
 
 import logging

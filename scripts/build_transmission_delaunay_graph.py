@@ -291,7 +291,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_transmission_delaunay_graph", clusters="50")
+        snakemake = mock_snakemake("build_transmission_delaunay_graph")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

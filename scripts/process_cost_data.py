@@ -2,27 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Prepare and extend default cost data with custom cost modifications. Custom costs can target all planning horizons
-and / or technologies using the 'all' identifier.
+Prepares the technology cost table of one planning horizon for the model.
 
-Preparing the cost data includes:
-- aligning all units to conventional units (i.e. MW / MWh),
-- filling in missing data,
-- computing 'capital_cost' parameter (annualised investment costs and FOM),
-- computing 'marginal_cost' parameter (fuel costs and VOM),
-- computing storage costs for batteries and hydrogen,
-- (deprecated) overwriting attributes using config-based modifications.
-
-Inputs
-------
-
-- ``resources/costs_{planning_horizons}.csv``: Default cost data for specified planning horizon
-- (by default) ``data/custom_costs.csv``: Custom cost modifications (can be configured with `costs:custom_costs:file`
-
-Outputs
--------
-
-- ``resources/costs_{planning_horizons}_processed.csv``: Prepared cost data with custom modifications applied
+Units are aligned to MW and MWh, missing values are filled with defaults, the
+annualised `capital_cost` (investment annuity plus fixed operation and
+maintenance) and the `marginal_cost` (fuel plus variable operation and
+maintenance) are computed, and combined storage costs for batteries and
+hydrogen are derived. Custom cost modifications from the configuration can
+target single technologies and horizons or all of them with the `all`
+identifier.
 """
 
 import logging
@@ -79,6 +67,7 @@ def overwrite_costs(costs: pd.DataFrame, custom_costs: pd.DataFrame) -> pd.DataF
 def prepare_costs(
     costs: pd.DataFrame,
     config: dict,
+    cost_year: str,
     max_hours: dict = None,
     nyears: float = 1.0,
     custom_costs_fn: str = None,
@@ -92,6 +81,8 @@ def prepare_costs(
         DataFrame containing extended costs
     config : dict
         Dictionary containing cost-related configuration parameters
+    cost_year : str
+        Year of the cost assumptions, used to select custom cost entries
     max_hours : dict, optional
         Dictionary specifying maximum hours for storage technologies
     nyears : float, optional
@@ -120,10 +111,10 @@ def prepare_costs(
     # - Prepared attributes: overwritten after cost preparation
     if custom_costs_fn is not None:
         custom_costs = pd.read_csv(
-            snakemake.input.custom_costs,
+            custom_costs_fn,
             dtype={"planning_horizon": "str"},
             index_col=["technology", "parameter"],
-        ).query("planning_horizon in [@planning_horizon, 'all']")
+        ).query("planning_horizon in [@cost_year, 'all']")
 
         custom_costs = _convert_to_MW(custom_costs)
 
@@ -254,13 +245,13 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("process_cost_data", planning_horizons=2030)
+        snakemake = mock_snakemake("process_cost_data", horizon=2030)
 
     cost_params = snakemake.params["costs"]
 
     n = pypsa.Network(snakemake.input.network)
     nyears = n.snapshot_weightings.generators.sum() / 8760.0
-    planning_horizon = str(snakemake.wildcards.planning_horizons)
+    cost_year = str(snakemake.params.cost_year)
 
     # Retrieve costs assumptions
     costs = pd.read_csv(snakemake.input.costs, index_col=["technology", "parameter"])
@@ -269,6 +260,7 @@ if __name__ == "__main__":
     costs_processed = prepare_costs(
         costs,
         cost_params,
+        cost_year,
         snakemake.params.max_hours,
         nyears,
         snakemake.input.custom_costs,

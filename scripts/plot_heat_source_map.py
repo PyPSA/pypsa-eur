@@ -2,47 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create interactive maps for heat source temperature and energy data.
+Plots interactive maps of heat source temperatures and energy potentials by region.
 
-This script generates interactive Folium maps displaying heat source temperature
-and energy potential data across European regions. It visualizes spatial distributions
-of renewable heat sources like river water, sea water, and ambient air temperatures,
-along with their energy potentials for district heating applications.
-
-The script creates two types of maps:
-- Temperature maps showing spatial temperature distributions (°C)
-- Energy maps showing total energy potential (TWh) where available
-
-Maps include regional boundaries with aggregated values and detailed point data
-with interactive tooltips. Temperature data is averaged by region while energy
-data is summed by region to show total potential.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    plotting:
-        heat_source_map:
-            temperature_cmap: "Reds"  # Colormap for temperature data
-            energy_cmap: "Oranges"    # Colormap for energy data
-
-Inputs
-------
-- `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Regional boundaries
-- `resources/<run_name>/temp_{carrier}_base_s_{clusters}_temporal_aggregate.nc`: Temperature data
-- `resources/<run_name>/heat_source_energy_{carrier}_base_s_{clusters}_temporal_aggregate.nc`: Energy data (optional)
-
-Outputs
--------
-- `results/<run_name>/plots/heat_source_map_{carrier}_temperature.html`: Interactive temperature map
-- `results/<run_name>/plots/heat_source_map_{carrier}_energy.html`: Interactive energy potential map
-
-Notes
------
-Uses Folium for interactive web-based mapping. Temperature values in °C,
-energy values converted from MWh to TWh for display. Handles missing energy
-data by creating empty placeholder maps.
+Reads the temporally aggregated temperature and, where available, energy
+potential of a heat source such as river water, sea water or ambient air.
+Grid cell values are drawn as points and aggregated per onshore region, with
+temperatures averaged and energy potentials summed, and shown in tooltips. The
+maps are rendered with Folium as HTML files and serve to inspect the spatial
+distribution of heat sources available for district heating. Missing energy
+data yields an empty map.
 """
 
 import logging
@@ -53,7 +21,6 @@ import xarray as xr
 from _helpers import (
     configure_logging,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 
 logger = logging.getLogger(__name__)
@@ -61,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 def plot_heat_source_map(
     da: xr.DataArray,
-    regions_onshore: gpd.GeoDataFrame,
+    onshore_regions: gpd.GeoDataFrame,
     var_name: str,
     longitude_name: str = "longitude",
     latitude_name: str = "latitude",
@@ -82,7 +49,7 @@ def plot_heat_source_map(
     ----------
     da : xr.DataArray
         DataArray containing heat source data with spatial coordinates.
-    regions_onshore : gpd.GeoDataFrame
+    onshore_regions : gpd.GeoDataFrame
         GeoDataFrame with onshore region geometries for boundary overlay.
     var_name : str
         Name of the variable to plot from the DataArray.
@@ -91,7 +58,7 @@ def plot_heat_source_map(
     latitude_name : str, default 'latitude'
         Name of the latitude coordinate in the DataArray.
     onshore_region_name : str, default 'name'
-        Column name in regions_onshore containing region identifiers.
+        Column name in onshore_regions containing region identifiers.
     title : str, optional
         Title for the map legend. If None, uses var_name.
     cmap : str, default 'viridis'
@@ -111,11 +78,11 @@ def plot_heat_source_map(
         If required columns/coordinates are missing or invalid aggregate_type.
     """
     # Reset index if needed and check for required column
-    if hasattr(regions_onshore, "index"):
-        regions_onshore = regions_onshore.reset_index()
+    if hasattr(onshore_regions, "index"):
+        onshore_regions = onshore_regions.reset_index()
 
-    if onshore_region_name not in regions_onshore.columns:
-        raise ValueError(f"Column '{onshore_region_name}' not found in regions_onshore")
+    if onshore_region_name not in onshore_regions.columns:
+        raise ValueError(f"Column '{onshore_region_name}' not found in onshore_regions")
 
     # Convert DataArray to DataFrame
     df = da.to_dataframe().reset_index()
@@ -153,7 +120,7 @@ def plot_heat_source_map(
         )
 
     # Merge region totals back to regions
-    regions_with_totals = regions_onshore.merge(
+    regions_with_totals = onshore_regions.merge(
         region_totals, on=onshore_region_name, how="left"
     )
 
@@ -200,20 +167,16 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_heat_source_map",
-            clusters="39",
-            opts="",
-            sector_opts="",
-            planning_horizons="2050",
+            horizon=2050,
             carrier="river_water",
         )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # Load onshore regions shapefile
-    regions_onshore = gpd.read_file(snakemake.input.regions)
-    region_onshore = regions_onshore.to_crs("EPSG:4326")
+    onshore_regions = gpd.read_file(snakemake.input.regions)
+    onshore_regions = onshore_regions.to_crs("EPSG:4326")
 
     # Get colormaps from config
     temperature_cmap = snakemake.params.plotting.get("heat_source_map", {}).get(
@@ -245,7 +208,7 @@ if __name__ == "__main__":
         # Create and save the temperature map
         temp_map = plot_heat_source_map(
             da=plot_data,
-            regions_onshore=regions_onshore,
+            onshore_regions=onshore_regions,
             var_name=temp_var,
             title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Temperature (°C)",
             cmap=temperature_cmap,
@@ -272,7 +235,7 @@ if __name__ == "__main__":
             # Create and save the energy map
             energy_map = plot_heat_source_map(
                 da=energy_data["total_energy"] / 1e6,  # Convert to TWh
-                regions_onshore=regions_onshore,
+                onshore_regions=onshore_regions,
                 var_name="total_energy",
                 title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Energy Potential (TWh)",
                 cmap=energy_cmap,
