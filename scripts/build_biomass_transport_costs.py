@@ -2,16 +2,17 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Reads biomass transport costs for different countries of the JRC report.
+Build biomass transport costs per country in EUR per km and MWh.
 
-    "The JRC-EU-TIMES model.
-    Bioenergy potentials
-    for EU and neighbouring countries."
-    (2015)
+Transport costs per tonne-kilometre for two supply chains are read from tables
+extracted from the JRC-EU-TIMES bioenergy report and averaged. The average is
+converted from EUR/(km t) to EUR/(km MWh) using the energy content of wood
+pellets (4.8 MWh/t). Norway, which the report does not cover, takes the value
+of Sweden.
 
-converts them from units 'EUR per km/ton' -> 'EUR/ (km MWh)'
-
-assuming as an approximation energy content of wood pellets
+References
+----------
+- Ruiz et al. (2015), [The JRC-EU-TIMES model. Bioenergy potentials for EU and neighbouring countries](https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass%20potentials%20in%20europe_web%20rev.pdf)
 """
 
 import logging

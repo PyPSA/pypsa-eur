@@ -4,16 +4,10 @@
 """
 Build country-level heating degree days in Europe for each country. Used for rescaling heat demand in weather years not covered by energy balance statistics.
 
-Outputs
--------
-
-- `data/country_runoff/build/unknown/era5-hdd-per-country.csv`:
-
 | Field | Dimensions | Unit | Description |
 | --- | --- | --- | --- |
 | index/time | time | day | Datestamp, YYYY-MM-DD |
 | &lt;columns&gt; | country | ISO-3166 A2 | Aggregated HDDs per country |
-
 """
 
 import logging

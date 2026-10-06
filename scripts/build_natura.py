@@ -2,37 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Rasters the vector data of the [Natura 2000.](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas onto all
-cutout regions.
+Rasterises the [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas onto the extent of the weather cutout.
 
-Relevant Settings
------------------
-
-```yaml
-renewable:
-    {technology}:
-        cutout:
-```
-
-!!! info "See also"
-    Documentation of the configuration file `config/config.yaml` at renewable_cf
-
-Inputs
-------
-
-- `data/bundle/natura/Natura2000_end2015.shp`: [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas.
-
-    ![](img/natura.png)
-
-Outputs
--------
-
-- `resources/natura.tiff`: Rasterized version of [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas to reduce computation times.
-
-    ![](img/natura.png)
-
-Description
------------
+The Natura 2000 shapefile is unpacked, projected to the European LAEA grid
+(EPSG:3035) and burned into a binary raster with 100 m resolution covering the
+cutout extent. The raster serves as an exclusion layer in the land availability
+calculations, which is much faster than intersecting the vector data directly.
 """
 
 import logging

@@ -2,7 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Prepares brownfield data from previous planning horizon.
+Carry optimised capacities from the previous planning horizon into the
+current network under myopic foresight.
+
+Transmission lines and DC links receive the previous optimum as lower bound.
+Generators, links and stores from the previous solved network are copied over
+with fixed capacities, dropping assets that reach the end of their lifetime
+before the current horizon or fall below a capacity threshold, while assets
+newly built in the current horizon are tagged with their build year.
+Renewable availability profiles are switched to the technology vintage
+closest to the current horizon, heat pump efficiencies and dynamic pit
+storage capacities of earlier vintages are updated to the current values, and
+the gas pipeline capacity still available for hydrogen retrofitting is
+reduced by what was already retrofitted. Transmission expansion is disabled
+once its global limit is reached, and renewable potentials are reduced by the
+existing capacities.
 """
 
 import logging

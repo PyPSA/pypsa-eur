@@ -97,7 +97,7 @@ CO~2~ as the default.
 ## Further reading
 
 - Rules: [compose_network][], [solve_network][], [add_existing_baseyear][],
-  [add_brownfield][], `prepare_perfect_foresight`
+  [add_brownfield][], [prepare_perfect_foresight][]
 - Configuration: [foresight](../configuration.md#foresight_cf),
   [planning_horizons](../configuration.md#planning_horizons_cf),
   [existing_capacities](../configuration.md#existing_capacities_cf),

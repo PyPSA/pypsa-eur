@@ -2,15 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This rule builds heat demand time series using heating degree day (HDD)
-approximation.
+Build daily heat demand time series per clustered region from heating degree days.
 
-Snapshots are resampled to daily time resolution and `Atlite.convert.heat_demand` is used to convert ambient temperature from the default weather cutout to heat demand time series for the respective cutout.
-
-Heat demand is distributed by population to clustered onshore regions.
-
-!!! info "See also"
-    [Atlite.Cutout.heat_demand](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
+Ambient temperature from the weather cutout is converted to heat demand with
+[atlite.Cutout.heat_demand](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert),
+which counts the degrees by which the daily mean temperature falls below a
+threshold. Grid cells are aggregated to clustered onshore regions weighted by
+population and the result is kept at daily resolution. The daily profile is
+disaggregated to hours in [build_hourly_heat_demand][].
 """
 
 import logging

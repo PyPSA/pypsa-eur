@@ -2,8 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates map of optimised gas network, storage and selected other
-infrastructure.
+Plots the optimised methane network and regional gas sources on a map.
+
+Reads the solved network and aggregates annual fossil gas extraction,
+methanation and biogas supply per electricity bus as circle sizes. Gas
+pipelines are drawn in three layers: capacity existing in 2020, total
+available capacity after expansion, and the maximum flow actually used.
+Pipelines below a capacity threshold are omitted. Networks without gas
+pipelines produce a placeholder figure.
 """
 
 import logging

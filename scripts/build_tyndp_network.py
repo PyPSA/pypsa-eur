@@ -1,6 +1,17 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Builds a zonal transmission network from the ENTSO-E TYNDP reference grid with one bus per bidding zone.
+
+Bidding zone shapes are reduced to representative points that serve as
+coordinates for the electricity and hydrogen nodes of the TYNDP node table. The
+net transfer capacities (NTC) of the reference grid become unidirectional DC
+links, one per direction, drawn as straight lines between the zone points with an
+assumed voltage of 380 kV. Lines, converters and transformers are exported as
+empty placeholder tables so that the output has the same format as the OSM
+network and can be read by the base network rule.
+"""
 
 import logging
 

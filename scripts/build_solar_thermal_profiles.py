@@ -2,13 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build solar thermal collector profile time series.
+Build solar thermal collector heat generation time series per clustered region.
 
-Uses ``atlite.Cutout.solar_thermal` to compute heat generation for clustered onshore regions from population layout and weather data cutout.
-The rule is executed in `build_sector.smk`.
-
-!!! info "See also"
-    [Atlite.Cutout.solar_thermal](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
+[atlite.Cutout.solar_thermal](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
+converts irradiation and ambient temperature from the weather cutout into
+heat output per unit collector area with the collector parameters of the
+`solar_thermal` configuration. Grid cells are aggregated to clustered onshore
+regions weighted by population, so the profile represents collectors located
+where people live.
 """
 
 import logging
