@@ -5840,7 +5840,7 @@ def add_enhanced_geothermal(
     Nyears = n.snapshot_weightings.generators.sum() / 8760
     dr = costs_config["fill_values"]["discount rate"]
     lt = costs.at["geothermal", "lifetime"]
-    FOM = costs.at["geothermal", "FOM"]
+    FOM = costs.at["geothermal", "FOM"] / 100
 
     egs_annuity = calculate_annuity(lt, dr)
 
