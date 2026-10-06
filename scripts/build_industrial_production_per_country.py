@@ -300,9 +300,9 @@ if __name__ == "__main__":
 
     countries = snakemake.params.countries
 
-    year = snakemake.params.industry["reference_year"]
+    year = snakemake.params.reference_year
 
-    params = snakemake.params.industry
+    params = snakemake.params
 
     jrc_dir = snakemake.input.jrc
 

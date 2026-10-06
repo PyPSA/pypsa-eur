@@ -273,7 +273,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    params = snakemake.params.industry
+    params = snakemake.params
     year = params.get("reference_year", 2019)
     countries = pd.Index(snakemake.params.countries)
 

@@ -65,7 +65,7 @@ if __name__ == "__main__":
     urban_fraction = pop_layout.urban / pop_layout[["rural", "urban"]].sum(axis=1)
 
     # maximum potential of urban demand covered by district heating
-    central_fraction = snakemake.config["sector"]["district_heating"]["potential"]
+    central_fraction = snakemake.params.district_heating_potential
     if isinstance(central_fraction, dict):
         # Check if individual district heating shares are given for all countries of the network
         other_countries = set(pop_layout.ct.unique()).difference(
@@ -101,9 +101,7 @@ if __name__ == "__main__":
 
     # difference of max potential and today's share of district heating
     diff = ((urban_fraction * central_fraction) - dist_fraction_node).clip(lower=0)
-    progress = get(
-        snakemake.config["sector"]["district_heating"]["progress"], investment_year
-    )
+    progress = get(snakemake.params.district_heating_progress, investment_year)
     dist_fraction_node += diff * progress
     logger.info(
         f"Increase district heating share by a progress factor of {progress:.2%} "

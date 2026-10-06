@@ -74,7 +74,7 @@ if __name__ == "__main__":
     noprogress = snakemake.config["run"].get("disable_progressbar", True)
     noprogress = noprogress or not snakemake.config["atlite"]["show_progress"]
     technology = snakemake.wildcards.technology
-    params = snakemake.params.renewable[technology]
+    params = snakemake.params.renewable
     resource = params["resource"]  # pv panel params / wind turbine params
     resource["show_progress"] = not noprogress
 

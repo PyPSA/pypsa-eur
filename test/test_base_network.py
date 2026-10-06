@@ -126,7 +126,7 @@ def test_load_buses(buses_dataframe, config, italy_shape, tmpdir):
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
     df_buses_output = _load_buses(
-        buses_path, italy_shape, countries, config
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
     ).reset_index()
     pathlib.Path(buses_path).unlink(missing_ok=True)
     df_comparison = df_buses_output.compare(df_buses_reference)
@@ -153,7 +153,9 @@ def test_load_converters_from_eg(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     converters_path = pathlib.Path(tmpdir, "converters_exercise.csv")
     converters_dataframe.to_csv(converters_path, index=False)
     df_converters_output = (
@@ -187,7 +189,9 @@ def test_load_converters_from_raw(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     converters_path = pathlib.Path(tmpdir, "converters_exercise.csv")
     converters_dataframe.to_csv(converters_path, index=False)
     df_converters_output = (
@@ -223,7 +227,9 @@ def test_load_lines(buses_dataframe, config, italy_shape, lines_dataframe, tmpdi
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
     df_lines_output = (
@@ -275,7 +281,9 @@ def test_load_links_from_eg(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     links_path = pathlib.Path(tmpdir, "links_exercise.csv")
     links_dataframe.to_csv(links_path, index=False)
     df_links_output = (
@@ -327,7 +335,9 @@ def test_load_links_from_raw(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     links_path = pathlib.Path(tmpdir, "links_exercise.csv")
     links_dataframe.to_csv(links_path, index=False)
     df_links_output = (
@@ -374,7 +384,9 @@ def test_load_transformers(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     transformers_path = pathlib.Path(tmpdir, "transformers_exercise.csv")
     transformers_dataframe.to_csv(transformers_path, index=False)
     df_transformers_output = (
@@ -424,7 +436,9 @@ def test_reconnect_crimea(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
     df_lines = _load_lines(df_buses, lines_path).loc[
@@ -476,7 +490,9 @@ def test_set_electrical_parameters_lines_eg(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
     df_lines = (
@@ -498,7 +514,12 @@ def test_set_electrical_parameters_lines_eg(
             ),
         ]
     )
-    df_lines_output = _set_electrical_parameters_lines_eg(df_lines, config)
+    df_lines_output = _set_electrical_parameters_lines_eg(
+        df_lines,
+        config["electricity"]["voltages"],
+        config["lines"]["types"],
+        config["lines"]["s_max_pu"],
+    )
     pathlib.Path(buses_path).unlink(missing_ok=True)
     pathlib.Path(lines_path).unlink(missing_ok=True)
     df_lines_comparison = df_lines_output.compare(df_lines_parameters_reference)
@@ -532,7 +553,9 @@ def test_set_electrical_parameters_lines_raw(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
     df_lines = (
@@ -554,7 +577,12 @@ def test_set_electrical_parameters_lines_raw(
             ),
         ]
     )
-    df_lines_output = _set_electrical_parameters_lines_raw(df_lines, config)
+    df_lines_output = _set_electrical_parameters_lines_raw(
+        df_lines,
+        config["electricity"]["voltages"],
+        config["lines"]["types"],
+        config["lines"]["s_max_pu"],
+    )
     pathlib.Path(buses_path).unlink(missing_ok=True)
     pathlib.Path(lines_path).unlink(missing_ok=True)
     df_lines_comparison = df_lines_output.compare(df_lines_parameters_reference)
@@ -588,7 +616,9 @@ def test_set_electrical_parameters_links_raw(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     links_path = pathlib.Path(tmpdir, "links_exercise.csv")
     links_dataframe.to_csv(links_path, index=False)
     df_links = (
@@ -610,7 +640,9 @@ def test_set_electrical_parameters_links_raw(
             ),
         ]
     )
-    df_links_output = _set_electrical_parameters_links_raw(df_links, config)
+    df_links_output = _set_electrical_parameters_links_raw(
+        df_links, config["links"]["p_max_pu"], config["links"]["p_min_pu"]
+    )
     df_links_comparison = df_links_output.compare(df_links_parameters_reference)
     pathlib.Path(buses_path).unlink(missing_ok=True)
     pathlib.Path(links_path).unlink(missing_ok=True)
@@ -643,7 +675,9 @@ def test_set_electrical_parameters_converters(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    df_buses = _load_buses(
+        buses_path, italy_shape, countries, config["electricity"]["voltages"]
+    )
     converters_path = pathlib.Path(tmpdir, "converters_exercise.csv")
     converters_dataframe.to_csv(converters_path, index=False)
     df_converters = (
@@ -651,7 +685,9 @@ def test_set_electrical_parameters_converters(
         .reset_index()
         .loc[:, ("converter_id", "bus0", "bus1", "voltage", "geometry", "carrier")]
     )
-    df_converters_output = _set_electrical_parameters_converters(df_converters, config)
+    df_converters_output = _set_electrical_parameters_converters(
+        df_converters, config["links"]["p_max_pu"], config["links"]["p_min_pu"]
+    )
     df_converters_comparison = df_converters_output.compare(
         df_converters_parameters_reference
     )
