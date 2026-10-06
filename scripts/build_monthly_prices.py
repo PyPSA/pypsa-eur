@@ -5,13 +5,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-This script extracts monthly fuel prices of oil, gas and coal.
-
-Description
------------
-
-The rule [build_monthly_prices][] collects monthly fuel prices
-and translates them from different input sources to pypsa syntax.
+This script extracts monthly fuel prices of oil, gas and coal. It collects
+them from different input sources and translates them to pypsa syntax.
 """
 
 import logging

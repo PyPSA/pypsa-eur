@@ -2,6 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Shared helper functions used across the workflow scripts.
+
+Covers Snakemake integration (logging setup, scenario configuration,
+`mock_snakemake` for running scripts outside the workflow, run-specific
+resource paths), loading of costs, cutouts and snapshot definitions, network
+utilities such as renaming components and aggregating capacities and costs,
+and small conveniences for downloading data and retrying flaky calls.
+"""
+
 import atexit
 import contextlib
 import logging
@@ -27,6 +37,7 @@ import yaml
 from dask.distributed import Client, LocalCluster
 from snakemake.utils import update_config
 
+from scripts.lib.validation.config import migrate_deprecated_keys
 from scripts.lib.validation.config.data import VersionsSchema
 
 logger = logging.getLogger(__name__)
@@ -149,6 +160,8 @@ def get_scenarios(run):
         fn = Path(scenario_config["file"])
         if fn.exists():
             scenarios = yaml.safe_load(fn.read_text())
+            for overrides in scenarios.values():
+                migrate_deprecated_keys(overrides)
             if run["name"] == "all":
                 run["name"] = list(scenarios.keys())
             return scenarios
@@ -317,7 +330,9 @@ def set_scenario_config(snakemake):
             root_dir = script_dir.parent
             with open(root_dir / scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
-        update_config(snakemake.config, scenario_config[snakemake.wildcards.run])
+        overrides = scenario_config[snakemake.wildcards.run]
+        migrate_deprecated_keys(overrides)
+        update_config(snakemake.config, overrides)
 
 
 def configure_logging(snakemake, skip_handlers=False):

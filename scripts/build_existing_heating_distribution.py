@@ -2,26 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Builds table of existing heat generation capacities for initial planning
-horizon.
+Build existing heat generation capacities per node, sector and technology for the first planning horizon.
 
-Existing heat generation capacities are distributed to nodes based on population.
-Within the nodes, the capacities are distributed to sectors (residential and services) based on sectoral consumption and urban/rural based population distribution.
-
-Outputs:
---------
-- Existing heat generation capacities distributed to nodes: `resources/{run}/existing_heating_distribution_{horizon}.csv`
-
-
-Notes
------
-- Data for Albania, Montenegro and Macedonia is not included in input database and assumed 0.
-- Coal and oil boilers are assimilated to oil boilers.
-- All ground-source heat pumps are assumed in rural areas and all air-source heat pumps are assumed to be in urban areas.
+Country-level capacities of gas, oil, coal and biomass boilers, resistive
+heaters and air- and ground-source heat pumps in buildings in 2012, taken from
+a study for the European Commission, are distributed to nodes by population.
+Within a node, capacities are split between residential and services by
+their heat consumption and between urban and rural areas by the urban
+fraction from [build_district_heat_share][]. Coal boilers are merged into oil
+boilers; all ground-source heat pumps are assigned to rural areas and all
+air-source heat pumps to urban areas. Albania, Montenegro, North Macedonia,
+Cyprus and Malta are missing from the dataset and get zero capacity.
 
 References
 ----------
-- "Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)" (https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
+- European Commission (2016), [Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)](https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
 """
 
 import logging

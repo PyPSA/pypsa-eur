@@ -2,36 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create profiles for road transport demand using measured data from vehicle monitoring by the German Federal Highway Research Institute (BASt).
+Build weekly hourly road traffic profiles from German traffic counts.
 
-This rule downloads the data files, extracts them, and then aggregates the data to weekly profiles for two vehicle types:
-- "kfz": All motor vehicles (="Kraftfahrzeuge", i.e. cars, trucks, buses, motorcycles)
-- "pkw": Passenger cars only (="Personenkraftwagen")
+Hourly vehicle counts from the automatic counting stations of the German Federal Highway Research Institute (BASt) are unpacked, both directions of each station are summed, and the counts are aggregated by day of week and hour of day over all stations, road types and years provided. Two profiles are written: `kfz` for all motor vehicles and `pkw` for passenger cars only. Both are used by [build_transport_demand][] to shape land transport demand and electric vehicle availability.
 
-Outputs
--------
-
-- `data/mobility_profiles/build/<version>/kfz.csv`: Weekly profile for all motor vehicles (cars, trucks, buses, motorcycles).
-- `data/mobility_profiles/build/<version>/pkw.csv`: Weekly profile for passenger cars only.
-
-**kfz.csv**
-
-| Field | Dimensions | Unit | Description |
-| --- | --- | --- | --- |
-| day | day | day of week | Day of the week (0=Monday, 6=Sunday) |
-| hour | hour | hour of day | Hour of the day (0-23) |
-| count | day, hour | -- | Aggregated vehicle counts for all motor vehicles (across all aggregated years and street types) |
-| n_counts | day, hour | -- | Number of data points that were aggregated. |
-
-**pkw.csv**
-
-| Field | Dimensions | Unit | Description |
-| --- | --- | --- | --- |
-| day | day | day of week | Day of the week (0=Monday, 6=Sunday) |
-| hour | hour | hour of day | Hour of the day (0-23) |
-| count | day, hour | -- | Aggregated vehicle counts for passenger cars only (across all aggregated years and street types) |
-| n_counts | day, hour | -- | Number of data points that were aggregated. |
-
+| Column | Description |
+| --- | --- |
+| day | Day of week, 0 = Monday to 6 = Sunday |
+| hour | Hour of day, 0 to 23 |
+| count | Summed vehicle counts |
+| n_counts | Number of station-hours aggregated |
 """
 
 import logging

@@ -2,13 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Adds all sector-coupling components to the network, including demand and supply
-technologies for the buildings, transport and industry sectors.
+Add the sector-coupling components to the network: demand and supply technologies for buildings, transport, industry, agriculture, shipping and aviation, plus the carrier infrastructure connecting them.
 
-.. note::
+Starting from the electricity network, the script adds carrier buses, CO2
+tracking and conventional generation, then the sectors enabled in the
+configuration: land transport, heating, biomass, ammonia, methanol, industry,
+shipping, aviation, waste heat and agriculture. Optional infrastructure follows:
+hydrogen and gas networks, direct air capture, a CO2 network, Allam cycle gas
+turbines, electricity and gas distribution grids, enhanced geothermal and
+energy imports. Demands come from the population-weighted energy and heat
+totals and the industrial demand per node; technology costs come from the cost
+assumptions of the planning horizon.
 
-    This script's functionality has been integrated into :mod:`compose_network`
-    in the streamlined workflow. This script is maintained for backwards compatibility.
+!!! note "Called from compose_network"
+    This module has no Snakemake rule of its own. Its `main` function is
+    called by [compose_network][].
 """
 
 import logging
@@ -2686,6 +2694,8 @@ def add_heat(
     """
     logger.info("Add heat sector")
 
+    enable_ptes = options["district_heating"]["ptes"]["enable"]
+
     sectors = [sector.value for sector in HeatSector]
 
     heat_demand = build_heat_demand(
@@ -2848,7 +2858,7 @@ def add_heat(
 
             logger.info(f"Adding DSM in {heat_system} heating.")
 
-        if options["tes"]:
+        if options["ttes"]:
             n.add("Carrier", f"{heat_system} water tanks")
 
             n.add(
@@ -2925,98 +2935,90 @@ def add_heat(
                 ],
             )
 
-            if heat_system == HeatSystem.URBAN_CENTRAL:
-                n.add("Carrier", f"{heat_system} water pits")
+        if enable_ptes and heat_system == HeatSystem.URBAN_CENTRAL:
+            n.add("Carrier", f"{heat_system} water pits")
 
-                n.add(
-                    "Bus",
-                    nodes + f" {heat_system} water pits",
-                    location=nodes,
-                    carrier=f"{heat_system} water pits",
-                    unit="MWh_th",
+            n.add(
+                "Bus",
+                nodes + f" {heat_system} water pits",
+                location=nodes,
+                carrier=f"{heat_system} water pits",
+                unit="MWh_th",
+            )
+
+            energy_to_power_ratio_water_pit = costs.at[
+                "central water pit storage", "energy to power ratio"
+            ]
+
+            n.add(
+                "Link",
+                nodes,
+                suffix=f" {heat_system} water pits charger",
+                bus0=nodes + f" {heat_system} heat",
+                bus1=nodes + f" {heat_system} water pits",
+                efficiency=costs.at[
+                    "central water pit charger",
+                    "efficiency",
+                ],
+                carrier=f"{heat_system} water pits charger",
+                p_nom_extendable=True,
+                lifetime=costs.at["central water pit storage", "lifetime"],
+                marginal_cost=costs.at["central water pit charger", "marginal_cost"],
+            )
+
+            if options["district_heating"]["ptes"]["supplemental_heating"]["enable"]:
+                ptes_supplemental_heating_required = (
+                    xr.open_dataarray(ptes_direct_utilisation_profile)
+                    .sel(name=nodes)
+                    .to_pandas()
+                    .reindex(index=n.snapshots)
                 )
+            else:
+                ptes_supplemental_heating_required = 1
 
-                energy_to_power_ratio_water_pit = costs.at[
-                    "central water pit storage", "energy to power ratio"
+            n.add(
+                "Link",
+                nodes,
+                suffix=f" {heat_system} water pits discharger",
+                bus0=nodes + f" {heat_system} water pits",
+                bus1=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} water pits discharger",
+                efficiency=costs.at[
+                    "central water pit discharger",
+                    "efficiency",
                 ]
+                * ptes_supplemental_heating_required,
+                p_nom_extendable=True,
+                lifetime=costs.at["central water pit storage", "lifetime"],
+            )
+            n.links.loc[
+                nodes + f" {heat_system} water pits charger",
+                "energy to power ratio",
+            ] = energy_to_power_ratio_water_pit
 
-                n.add(
-                    "Link",
-                    nodes,
-                    suffix=f" {heat_system} water pits charger",
-                    bus0=nodes + f" {heat_system} heat",
-                    bus1=nodes + f" {heat_system} water pits",
-                    efficiency=costs.at[
-                        "central water pit charger",
-                        "efficiency",
-                    ],
-                    carrier=f"{heat_system} water pits charger",
-                    p_nom_extendable=True,
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                    marginal_cost=costs.at[
-                        "central water pit charger", "marginal_cost"
-                    ],
+            if options["district_heating"]["ptes"]["dynamic_capacity"]:
+                # Load pre-calculated e_max_pu profiles
+                e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
+                e_max_pu = (
+                    e_max_pu_data.sel(name=nodes).to_pandas().reindex(index=n.snapshots)
                 )
+            else:
+                e_max_pu = 1
 
-                if options["district_heating"]["ptes"]["supplemental_heating"][
-                    "enable"
-                ]:
-                    ptes_supplemental_heating_required = (
-                        xr.open_dataarray(ptes_direct_utilisation_profile)
-                        .sel(name=nodes)
-                        .to_pandas()
-                        .reindex(index=n.snapshots)
-                    )
-                else:
-                    ptes_supplemental_heating_required = 1
-
-                n.add(
-                    "Link",
-                    nodes,
-                    suffix=f" {heat_system} water pits discharger",
-                    bus0=nodes + f" {heat_system} water pits",
-                    bus1=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} water pits discharger",
-                    efficiency=costs.at[
-                        "central water pit discharger",
-                        "efficiency",
-                    ]
-                    * ptes_supplemental_heating_required,
-                    p_nom_extendable=True,
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                )
-                n.links.loc[
-                    nodes + f" {heat_system} water pits charger",
-                    "energy to power ratio",
-                ] = energy_to_power_ratio_water_pit
-
-                if options["district_heating"]["ptes"]["dynamic_capacity"]:
-                    # Load pre-calculated e_max_pu profiles
-                    e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
-                    e_max_pu = (
-                        e_max_pu_data.sel(name=nodes)
-                        .to_pandas()
-                        .reindex(index=n.snapshots)
-                    )
-                else:
-                    e_max_pu = 1
-
-                n.add(
-                    "Store",
-                    nodes,
-                    suffix=f" {heat_system} water pits",
-                    bus=nodes + f" {heat_system} water pits",
-                    e_cyclic=True,
-                    e_nom_extendable=True,
-                    e_max_pu=e_max_pu,
-                    carrier=f"{heat_system} water pits",
-                    standing_loss=costs.at[
-                        "central water pit storage", "standing_losses"
-                    ]
-                    / 100,  # convert %/hour into unit/hour
-                    capital_cost=costs.at["central water pit storage", "capital_cost"],
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                )
+            n.add(
+                "Store",
+                nodes,
+                suffix=f" {heat_system} water pits",
+                bus=nodes + f" {heat_system} water pits",
+                e_cyclic=True,
+                e_nom_extendable=True,
+                e_max_pu=e_max_pu,
+                carrier=f"{heat_system} water pits",
+                standing_loss=costs.at["central water pit storage", "standing_losses"]
+                / 100,  # convert %/hour into unit/hour
+                capital_cost=costs.at["central water pit storage", "capital_cost"],
+                lifetime=costs.at["central water pit storage", "lifetime"],
+            )
 
         if enable_ates and heat_system == HeatSystem.URBAN_CENTRAL:
             n.add("Carrier", f"{heat_system} aquifer thermal energy storage")
@@ -3202,7 +3204,8 @@ def add_heat(
                 )
 
             if (
-                heat_source in params.temperature_limited_stores
+                enable_ptes
+                and heat_source in params.temperature_limited_stores
                 and options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]

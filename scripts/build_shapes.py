@@ -2,8 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates GIS shape files of country boundaries and the Europe bounding shape,
-derived from NUTS3 regions and offshore EEZ shapes.
+Creates the country shapes and a single bounding shape of the modelled area.
+
+Country shapes are the union of each country's NUTS3 regions. The Europe shape is
+the exterior of the union of all country and offshore EEZ shapes, keeping only the
+largest polygon and filling holes. Both are used by the base network and the land
+availability rules.
 """
 
 import logging

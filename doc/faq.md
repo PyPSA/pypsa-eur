@@ -73,7 +73,7 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
     For reference, PyPSA-Eur typically solves efficiently with 128 spatial clusters and 4-hour temporal resolution, assuming no custom constraints are added. If you increase either the temporal or spatial resolution, you may need to decrease the other to keep solution times manageable.
 
 ??? note "What can I do if my dispatch model reports 'infeasible or unbounded'?"
-    This message typically indicates that the model cannot satisfy demand in all timesteps or that some generators have lower bounds exceeding the available load. If not already enabled, activate `load_shedding` and curtailment mode in the [solving](solving.md) configuration. These options introduce a high-cost load-shedding generator and a curtailment generator, allowing the optimisation to remain feasible.
+    This message typically indicates that the model cannot satisfy demand in all timesteps or that some generators have lower bounds exceeding the available load. If not already enabled, activate `load_shedding` and curtailment mode in the [solving](rules/solving.md) configuration. These options introduce a high-cost load-shedding generator and a curtailment generator, allowing the optimisation to remain feasible.
 
     If enabling these options resolves the issue, examine the resulting dispatch to determine the bus regions and snapshots where the system was unable to meet demand. A simple way to quantify the total load shedding is:
 

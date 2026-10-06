@@ -1,6 +1,24 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Builds the topologically connected OpenStreetMap transmission network as tables of buses, lines, links, converters and transformers.
+
+Cleaned OSM substations, lines, HVDC links and converter polygons are turned into
+an electrically consistent network. Lines are split where they pass over buses,
+merged across junctions that are not substations, and connected to stations
+formed by aggregating substations within 500 m; the station location is the pole
+of inaccessibility of the merged polygon. Voltages are floored to full kV levels,
+transformers are added between voltage levels within a station, DC buses and
+converter links are created from converter and switching stations, and assets
+under construction are kept or removed by configuration. The output feeds the
+base network and the prebuilt OSM network release.
+
+References
+----------
+- Xiong et al. (2025), [Modelling the high-voltage grid using open data for Europe and beyond](https://doi.org/10.1038/s41597-025-04550-7)
+- Garcia-Castellanos and Lombardo (2007), [Poles of inaccessibility: A calculation algorithm for the remotest places on earth](https://doi.org/10.1080/14702540801897809)
+"""
 
 import itertools
 import logging

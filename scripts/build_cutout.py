@@ -2,46 +2,40 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create cutouts with [atlite](https://atlite.readthedocs.io/en/latest/).
+Create a weather data cutout with [atlite](https://atlite.readthedocs.io/en/latest/).
 
-For this rule to work you must have
-
-- installed the [Copernicus Climate Data Store](https://cds.climate.copernicus.eu) `cdsapi` package  (`install with `pip``) and
-- registered and setup your CDS API key as described [on their website](https://cds.climate.copernicus.eu/how-to-api).
-
-!!! info "See also"
-    For details on the weather data read the [atlite documentation](https://atlite.readthedocs.io/en/latest/). If you need help specifically for creating cutouts [the corresponding section in the atlite documentation](https://atlite.readthedocs.io/en/latest/examples/create_cutout.html) should be helpful.
-
-Outputs
--------
-
-- `cutouts/{cutout}`: weather data from either the [ERA5](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5)
-  reanalysis weather dataset or [SARAH-3](https://wui.cmsaf.eu/safira/action/viewProduktSearch)
-  satellite-based historic weather data with the following structure:
-
-**ERA5 cutout:**
+The cutout holds gridded hourly weather variables for the configured bounding
+box and period, downloaded from the
+[ERA5](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5)
+reanalysis and optionally amended with
+[SARAH-3](https://wui.cmsaf.eu/safira/action/viewProduktSearch) satellite-based
+radiation observations. Downloading ERA5 requires the `cdsapi` package and a
+registered [Copernicus Climate Data Store API key](https://cds.climate.copernicus.eu/how-to-api).
+It is the weather input of the renewable profile, hydro inflow and temperature
+profile rules downstream. See the
+[atlite documentation](https://atlite.readthedocs.io/en/latest/examples/create_cutout.html)
+for details on creating cutouts.
 
 | Field | Dimensions | Unit | Description |
 | --- | --- | --- | --- |
 | pressure | time, y, x | Pa | Surface pressure |
-| temperature | time, y, x | K | Air temperature 2 meters above the surface. |
-| soil temperature | time, y, x | K | Soil temperature between 1 meters and 3 meters depth (layer 4). |
-| influx_toa | time, y, x | Wm**-2 | Top of Earth's atmosphere TOA incident solar radiation |
-| influx_direct | time, y, x | Wm**-2 | Total sky direct solar radiation at surface |
-| runoff | time, y, x | m | [Runoff](https://en.wikipedia.org/wiki/Surface_runoff) (volume per area) |
-| roughness | y, x | m | Forecast surface roughness ([roughness length](https://en.wikipedia.org/wiki/Roughness_length)) |
+| temperature | time, y, x | K | Air temperature 2 m above the surface |
+| soil temperature | time, y, x | K | Soil temperature between 1 m and 3 m depth (layer 4) |
+| influx_toa | time, y, x | W/m2 | Top of atmosphere incident solar radiation |
+| influx_direct | time, y, x | W/m2 | Total sky direct solar radiation at surface |
+| influx_diffuse | time, y, x | W/m2 | Diffuse solar radiation at surface (downward minus direct) |
+| albedo | time, y, x | - | Share of downward solar radiation reflected by the surface, between 0 and 1 |
+| runoff | time, y, x | m | Surface runoff (volume per area) |
+| wnd100m | time, y, x | m/s | Wind speed at 100 m |
+| roughness | y, x | m | Forecast surface roughness length |
 | height | y, x | m | Surface elevation above sea level |
-| albedo | time, y, x | -- | [Albedo](https://en.wikipedia.org/wiki/Albedo) measure of diffuse reflection of solar radiation. Calculated from relation between surface solar radiation downwards (Jm**-2) and surface net solar radiation (Jm**-2). Takes values between 0 and 1. |
-| influx_diffuse | time, y, x | Wm**-2 | Diffuse solar radiation at surface. Surface solar radiation downwards minus direct solar radiation. |
-| wnd100m | time, y, x | ms**-1 | Wind speeds at 100 meters (regardless of direction) |
 
-![](img/era5.png)
+![](../img/era5.png)
 
-A **SARAH-3 cutout** can be used to amend the fields `temperature`, `influx_toa`, `influx_direct`, `albedo`,
-`influx_diffuse` of ERA5 using satellite-based radiation observations.
+A SARAH-3 cutout amends the ERA5 fields `temperature`, `influx_toa`,
+`influx_direct`, `influx_diffuse` and `albedo`.
 
-![](img/sarah.png)
-
+![](../img/sarah.png)
 """
 
 import logging

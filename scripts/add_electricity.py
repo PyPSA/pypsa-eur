@@ -3,48 +3,26 @@
 # SPDX-License-Identifier: MIT
 
 """
-Adds existing electrical generators, hydro-electric plants as well as
-greenfield and battery and hydrogen storage to the clustered network.
+Add electricity components to the clustered network: load, existing conventional and hydro power plants, renewable generators and extendable storage.
 
-Description
------------
+Load time series are attached from the clustered electricity demand. Power
+plants from [build_powerplants][] are aggregated per bus and carrier
+(optionally by efficiency class) and attached as conventional generators with
+fuel costs, efficiencies and emissions from the cost assumptions; hydro plants
+become run-of-river generators, reservoir and pumped hydro storage units with
+inflow from [build_hydro_profile][]. Wind and solar generators are added with
+the profiles from [build_renewable_profiles][] and zero existing capacity,
+unless existing capacities are estimated from IRENASTAT or powerplantmatching.
+Transmission costs of lines and links are set from the cost assumptions.
+Carriers in `electricity.extendable_carriers` are added with zero initial
+capacity. Storage is either a `StorageUnit` whose energy-to-power ratio is
+fixed by `electricity.max_hours` (one investment variable) or a `Store` on an
+extra bus with separate charging and discharging links (three investment
+variables).
 
-The rule [add_electricity][] ties all the different data inputs from the
-preceding rules together into a detailed PyPSA network. It includes:
-
-- today's transmission topology and transfer capacities (optionally including
-  lines which are under construction according to the config settings ``lines:
-  under_construction` and `links: under_construction``),
-- today's thermal and hydro power generation capacities (for the technologies
-  listed in the config setting `electricity: conventional_carriers`), and
-- today's load time-series (upsampled in a top-down approach according to
-  population and gross domestic product)
-
-It further adds extendable `generators` with **zero** capacity for
-
-- photovoltaic, onshore and AC- as well as DC-connected offshore wind
-  installations with today's locational, hourly wind and solar capacity factors
-  (but **no** current capacities),
-- additional open- and combined-cycle gas turbines (if `OCGT` and/or `CCGT`
-  is listed in the config setting `electricity: extendable_carriers`)
-
-Furthermore, it attaches additional extendable components to the clustered
-network with **zero** initial capacity:
-
-- `StorageUnits` of carrier 'H2' and/or 'battery'. If this option is chosen,
-  every bus is given an extendable `StorageUnit` of the corresponding carrier.
-  The energy and power capacities are linked through a parameter that specifies
-  the energy capacity as maximum hours at full dispatch power and is configured
-  in `electricity: max_hours:`. This linkage leads to one investment variable
-  per storage unit. The default `max_hours` lead to long-term hydrogen and
-  short-term battery storage units.
-
-- `Stores` of carrier 'H2' and/or 'battery' in combination with `Links`. If
-  this option is chosen, the script adds extra buses with corresponding carrier
-  where energy `Stores` are attached and which are connected to the
-  corresponding power buses via two links, one each for charging and
-  discharging. This leads to three investment variables for the energy capacity,
-  charging and discharging capacity of the storage unit.
+!!! note "Called from compose_network"
+    This module has no Snakemake rule of its own. Its `main` function is
+    called by [compose_network][].
 """
 
 import logging

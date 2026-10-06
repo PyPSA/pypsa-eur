@@ -108,7 +108,9 @@ modelled as stores with standing losses; pit storage capacity can follow the
 network temperatures [@sorknaesSimulationMethod2018], and supplemental heating covers the
 times when the stored water is not hot enough. **Aquifer storage** is
 available where suitable aquifers underlie district heating areas
-[@jacksonAquiferThermal2024].
+[@jacksonAquiferThermal2024]. Water tanks are switched on by `ttes`, pit
+storage by `district_heating: ptes: enable` and aquifer storage by
+`district_heating: ates: enable`.
 
 **Building thermal mass** can optionally be used for demand-side management
 of residential space heating: supply may run ahead of demand within a day, as
@@ -124,4 +126,4 @@ can be vented so that heat supply never has to be curtailed.
   [build_ptes_operations][build_ptes_operations.run],
   [build_ates_potentials][], [build_retro_cost][], [build_solar_thermal_profiles][]
 - Configuration: [sector](../configuration.md#sector_cf), in particular
-  `district_heating`, `heat_pump_sources`, `tes` and `retrofitting`
+  `district_heating`, `heat_pump_sources`, `ttes` and `retrofitting`

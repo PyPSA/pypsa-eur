@@ -8,11 +8,8 @@ iteratively optimize while updating line reactances.
 This script is used for optimizing the electrical network as well as the
 sector coupled network.
 
-Description
------------
-
 Total annual system costs are minimised with PyPSA. The full formulation of the
-linear optimal power flow (plus investment planning
+linear optimal power flow (plus investment planning)
 is provided in the
 [documentation of PyPSA](https://docs.pypsa.org/latest/user-guide/network-optimization/).
 
@@ -932,7 +929,7 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
     ]
 
     if indices_charger_p_nom_extendable.empty or indices_stores_e_nom_extendable.empty:
-        logger.warning(
+        logger.debug(
             "No valid extendable charger links or stores found for TES energy-to-power constraints.Not enforcing TES energy-to-power ratio constraints!"
         )
         return
@@ -1003,7 +1000,7 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
         indices_charger_p_nom_extendable.empty
         or indices_discharger_p_nom_extendable.empty
     ):
-        logger.warning(
+        logger.debug(
             "No valid extendable TES discharger or charger links found for TES charger ratio constraints. Not enforcing TES charger_ratio constraints."
         )
         return
@@ -1274,15 +1271,8 @@ def extra_functionality(
     ):
         add_solar_potential_constraints(n, config)
 
-    if n.config.get("sector", {}).get("tes", False):
-        if n.buses.index.str.contains(
-            r"urban central heat|urban decentral heat|rural heat",
-            case=False,
-            na=False,
-        ).any():
-            add_TES_energy_to_power_ratio_constraints(n)
-            add_TES_charger_ratio_constraints(n)
-
+    add_TES_energy_to_power_ratio_constraints(n)
+    add_TES_charger_ratio_constraints(n)
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
