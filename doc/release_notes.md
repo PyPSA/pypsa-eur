@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Convert FOM for EGS from %/yr to fractional value ([#2350](https://github.com/PyPSA/pypsa-eur/pull/2350)).
+
 * Refactor: perfect foresight: avoid unnecessary densification of unset attributes between horizons (memory optimization).
 * **Breaking:** New option `sector: chp: fuel_cc` to select the fuels for which urban central CHP plants with carbon capture are added in addition to the CHP plants without carbon capture. Previously, they were added for all fuels in `sector: chp: fuel`. The default (`solid biomass`, `gas`) keeps default results unchanged; configurations with other CHP fuels must add them to `fuel_cc` to keep their CC variants. An empty list disables CHP with carbon capture ([#2325](https://github.com/PyPSA/pypsa-eur/pull/2325)).
 * Fix: Retrofitting costs of countries without own data (e.g. Montenegro) no longer change between runs. Missing countries are now filled in a fixed order, so countries estimated from neighbours that are themselves estimated get reproducible values.
