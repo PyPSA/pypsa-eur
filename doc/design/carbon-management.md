@@ -95,8 +95,8 @@ larger and far from settlements, and onshore formations as well.
 ## Transport
 
 CO~2~ can be transported in a pipeline network between regions, onshore and
-submarine, whose capacity is optimised, with candidate routes following the
-existing electricity network. An optional compression stage with its
+submarine, whose capacity is optimised, with the same candidate corridors as
+new [hydrogen pipelines](hydrogen.md#transport). An optional compression stage with its
 electricity demand can be added for transport in dense phase. Alternatively
 CO~2~ is copperplated, with a transport and storage cost per tonne. Venting
 captured CO~2~ back to the atmosphere can be allowed as an escape valve.

@@ -85,6 +85,11 @@ def get_compose_inputs(w):
                 if sector["gas_network"] or {"gas", "H2"} & set(import_carriers)
                 else []
             ),
+            transmission_candidates=(
+                rules.build_transmission_topology.output.candidates
+                if sector["H2_network"] or sector["co2_network"]
+                else []
+            ),
             pop_weighted_energy_totals=resources("pop_weighted_energy_totals.csv"),
             pop_weighted_heat_totals=(
                 resources("pop_weighted_heat_totals.csv") if sector["heating"] else []

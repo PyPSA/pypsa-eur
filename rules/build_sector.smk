@@ -117,6 +117,25 @@ rule cluster_gas_network:
         scripts("cluster_gas_network.py")
 
 
+rule build_transmission_topology:
+    """Builds candidate corridors for new H2 and CO2 pipelines from the Delaunay graph of regions."""
+    input:
+        network=resources("networks/clustered.nc"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+    output:
+        candidates=resources("transmission_candidates.geojson"),
+    log:
+        logs("build_transmission_topology.log"),
+    benchmark:
+        benchmarks("build_transmission_topology")
+    resources:
+        mem_mb=2000,
+    params:
+        pipeline_topology=config_provider("sector", "pipeline_topology"),
+    script:
+        scripts("build_transmission_topology.py")
+
+
 rule build_daily_heat_demand:
     """Builds daily heat demand time series per region from cutout temperatures and population."""
     input:

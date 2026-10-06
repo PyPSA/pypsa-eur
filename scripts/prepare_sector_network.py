@@ -23,6 +23,7 @@ import logging
 from itertools import product
 from types import SimpleNamespace
 
+import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -328,6 +329,27 @@ def create_network_topology(
         topo = pd.concat([topo, topo_reverse])
 
     return topo
+
+
+def read_pipeline_candidates(fn: str, length_factor: float) -> pd.DataFrame:
+    """
+    Read candidate pipeline corridors between locations.
+
+    Parameters
+    ----------
+    fn : str
+        Path to the candidate corridors from ``build_transmission_topology``.
+    length_factor : float
+        Factor applied to the great-circle lengths of the corridors.
+
+    Returns
+    -------
+    pd.DataFrame with index ``"bus0 -> bus1"`` and columns bus0, bus1, length,
+    underwater_fraction
+    """
+    candidates = gpd.read_file(fn).set_index("name")
+    candidates["length"] *= length_factor
+    return pd.DataFrame(candidates[["bus0", "bus1", "length", "underwater_fraction"]])
 
 
 def add_carrier_buses(
@@ -738,7 +760,9 @@ def add_co2_tracking(
         )
 
 
-def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=False):
+def add_co2_network(
+    n, costs, pipeline_candidates, co2_network_cost_factor=1.0, co2_liquefaction=False
+):
     """
     Add CO2 transport network to the PyPSA network.
 
@@ -754,6 +778,8 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=Fals
         Cost assumptions for different technologies. Must contain entries for
         'CO2 pipeline' and 'CO2 submarine pipeline' with 'capital_cost' and 'lifetime'
         columns
+    pipeline_candidates : pd.DataFrame
+        Candidate pipeline corridors from `read_pipeline_candidates`
     co2_network_cost_factor : float, optional
         Factor to scale the capital costs of the CO2 network, default 1.0
     co2_liquefaction : bool, optional
@@ -768,10 +794,10 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=Fals
     -----
     The function creates bidirectional CO2 pipeline links between nodes, with costs
     depending on the underwater fraction of the pipeline. The network topology is
-    created using the create_network_topology helper function.
+    given by the candidate pipeline corridors.
     """
     logger.info("Adding CO2 network.")
-    co2_links = create_network_topology(n, "CO2 pipeline ")
+    co2_links = pipeline_candidates.add_prefix("CO2 pipeline ", axis=0)
 
     if "underwater_fraction" not in co2_links.columns:
         co2_links["underwater_fraction"] = 0.0
@@ -1589,6 +1615,7 @@ def add_h2_gas_infrastructure(
     gas_input_nodes,
     spatial,
     options,
+    pipeline_candidates,
 ):
     """
     Add hydrogen and gas infrastructure to the network.
@@ -1626,6 +1653,8 @@ def add_h2_gas_infrastructure(
         - SMR : bool
         - min_part_load_methanation : float
         - cc_fraction : float
+    pipeline_candidates : pd.DataFrame
+        Candidate pipeline corridors from `read_pipeline_candidates`
 
     Returns
     -------
@@ -1903,9 +1932,7 @@ def add_h2_gas_infrastructure(
     if options["H2_network"]:
         logger.info("Add options for new hydrogen pipelines.")
 
-        h2_pipes = create_network_topology(
-            n, "H2 pipeline ", carriers=["DC", "gas pipeline"]
-        )
+        h2_pipes = pipeline_candidates.add_prefix("H2 pipeline ", axis=0)
         h2_buses_loc = n.buses.query("carrier == 'H2'").location  # noqa: F841
         h2_pipes = h2_pipes.query("bus0 in @h2_buses_loc and bus1 in @h2_buses_loc")
 
@@ -6160,6 +6187,14 @@ def main(
 
     spatial = define_spatial(pop_layout.index, options)
 
+    pipeline_candidates = (
+        read_pipeline_candidates(
+            inputs.transmission_candidates, params.lines["length_factor"]
+        )
+        if inputs.transmission_candidates
+        else None
+    )
+
     if foresight in ["myopic", "perfect"]:
         fuel_carriers = params.fuel_carriers
         for carrier in fuel_carriers:
@@ -6210,6 +6245,7 @@ def main(
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
+        pipeline_candidates=pipeline_candidates,
     )
 
     # Hydrogen already implemented in add_h2_gas_infrastructure
@@ -6366,6 +6402,7 @@ def main(
         add_co2_network(
             n,
             costs,
+            pipeline_candidates,
             co2_network_cost_factor=options["co2_network_cost_factor"],
             co2_liquefaction=options["co2_network_liquefaction"],
         )

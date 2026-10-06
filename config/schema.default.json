@@ -5668,6 +5668,23 @@
           "description": "Add option for new hydrogen pipelines.",
           "type": "boolean"
         },
+        "pipeline_topology": {
+          "description": "Configuration for `sector.pipeline_topology` settings.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate pipelines per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate pipeline (km).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
         "gas_network": {
           "default": true,
           "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
@@ -8926,6 +8943,23 @@
         "countries",
         "year"
       ]
+    },
+    "_PipelineTopologyConfig": {
+      "description": "Configuration for `sector.pipeline_topology` settings.",
+      "properties": {
+        "min_degree": {
+          "default": 1,
+          "description": "Minimum number of candidate pipelines per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_offshore_distance": {
+          "default": null,
+          "description": "Maximum offshore length of a candidate pipeline (km).",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      }
     },
     "_PostDiscretizationConfig": {
       "description": "Configuration for `solving.options.post_discretization` settings.",
@@ -13174,6 +13208,23 @@
           "default": true,
           "description": "Add option for new hydrogen pipelines.",
           "type": "boolean"
+        },
+        "pipeline_topology": {
+          "description": "Configuration for `sector.pipeline_topology` settings.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate pipelines per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate pipeline (km).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
         },
         "gas_network": {
           "default": true,
