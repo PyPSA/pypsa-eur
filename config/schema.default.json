@@ -3028,11 +3028,28 @@
           "default": false,
           "description": "To specify a fixed year for the load time series that deviates from the snapshots' year."
         },
+        "demand_source": {
+          "default": "supplemented",
+          "description": "Source of electricity demand data.",
+          "enum": [
+            "historical",
+            "supplemented",
+            "synthetic"
+          ],
+          "type": "string"
+        },
         "supplement_synthetic": {
-          "default": true,
-          "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
-          "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "deprecated": true,
+          "description": "Deprecated, use `demand_source`."
         },
         "substation_only": {
           "default": true,
@@ -12072,11 +12089,28 @@
           "default": false,
           "description": "To specify a fixed year for the load time series that deviates from the snapshots' year."
         },
+        "demand_source": {
+          "default": "supplemented",
+          "description": "Source of electricity demand data.",
+          "enum": [
+            "historical",
+            "supplemented",
+            "synthetic"
+          ],
+          "type": "string"
+        },
         "supplement_synthetic": {
-          "default": true,
-          "description": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
-          "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "deprecated": true,
+          "description": "Deprecated, use `demand_source`."
         },
         "substation_only": {
           "default": true,
