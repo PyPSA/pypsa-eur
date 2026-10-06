@@ -143,8 +143,8 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
     Other useful entry points include:
 
     ```python
-    n.statistics.capex()      # investment costs
-    n.statistics.opex()       # operational costs
+    n.statistics.capex()  # investment costs
+    n.statistics.opex()  # operational costs
     ```
 
     These tools help you go beyond the default outputs and systematically explore the solved system.
