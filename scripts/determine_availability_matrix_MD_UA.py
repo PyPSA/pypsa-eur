@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     nprocesses = int(snakemake.threads)
     noprogress = not snakemake.config["atlite"].get("show_progress", True)
-    config = snakemake.params["renewable"][snakemake.wildcards.technology]
+    config = snakemake.params["renewable"]
 
     cutout = load_cutout(snakemake.input.cutout)
     regions = (

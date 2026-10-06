@@ -87,6 +87,6 @@ if __name__ == "__main__":
 
     year = int(snakemake.wildcards.horizon)
 
-    params = snakemake.params.industry
+    params = snakemake.params
 
     build_industry_sector_ratios_intermediate()

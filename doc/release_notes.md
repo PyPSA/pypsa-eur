@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Refactor: rules receive only the configuration keys and input files their scripts use. For example, changing `electricity: max_hours` no longer reruns `cluster_network`, changing `lines: s_nom_max_extension` or `lines: dynamic_line_rating` no longer reruns `base_network`, changing the settings of one technology under `renewable` no longer reruns the availability matrices and profiles of the others, and changing unrelated `sector` or `industry` options no longer reruns heat, transport and industry preprocessing.
+
 * Renamed `sector: tes` to `sector: ttes` (tank thermal energy storage), as it now only controls water tanks. Until the next release, `sector: tes` is still accepted with a warning and sets both `sector: ttes` and `sector: district_heating: ptes: enable`, which keeps previous results. Feature: New option `sector: district_heating: ptes: enable` (default `true`) to enable or disable pit thermal energy storage (water pits). Like `sector: district_heating: ates: enable`, it is independent of `sector: ttes`. Fix: the thermal energy storage constraints on energy-to-power ratio and charger-discharger ratio are now added whenever water tanks, water pits or aquifer thermal energy storage are present; previously they were skipped for pit and aquifer storage with `sector: tes: false` ([#2330](https://github.com/PyPSA/pypsa-eur/pull/2330))
 
 * Fix: Convert FOM for EGS from %/yr to fractional value ([#2350](https://github.com/PyPSA/pypsa-eur/pull/2350)).

@@ -90,7 +90,7 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
     )
 
 
-def _load_buses(buses, europe_shape, countries, config):
+def _load_buses(buses, europe_shape, countries, voltages):
     buses = (
         pd.read_csv(
             buses,
@@ -122,8 +122,8 @@ def _load_buses(buses, europe_shape, countries, config):
         else pd.Series(True, buses.index)
     )
 
-    v_nom_min = min(config["electricity"]["voltages"])
-    v_nom_max = max(config["electricity"]["voltages"])
+    v_nom_min = min(voltages)
+    v_nom_max = max(voltages)
 
     buses_with_v_nom_to_keep_b = (
         (v_nom_min <= buses.v_nom) & (buses.v_nom <= v_nom_max)
@@ -304,25 +304,21 @@ def _reconnect_crimea(lines):
     return pd.concat([lines, lines_to_crimea])
 
 
-def _set_electrical_parameters_lines_eg(lines, config):
-    v_noms = config["electricity"]["voltages"]
-    linetypes = config["lines"]["types"]
+def _set_electrical_parameters_lines_eg(lines, voltages, line_types, s_max_pu):
+    for v_nom in voltages:
+        lines.loc[lines["v_nom"] == v_nom, "type"] = line_types[v_nom]
 
-    for v_nom in v_noms:
-        lines.loc[lines["v_nom"] == v_nom, "type"] = linetypes[v_nom]
-
-    lines["s_max_pu"] = config["lines"]["s_max_pu"]
+    lines["s_max_pu"] = s_max_pu
 
     return lines
 
 
-def _set_electrical_parameters_lines_raw(lines, config):
+def _set_electrical_parameters_lines_raw(lines, voltages, line_types, s_max_pu):
     if lines.empty:
         lines["type"] = []
         return lines
 
-    v_noms = config["electricity"]["voltages"]
-    linetypes = _get_linetypes_config(config["lines"]["types"], v_noms)
+    linetypes = _get_linetypes_config(line_types, voltages)
 
     lines["carrier"] = "AC"
     lines["dc"] = False
@@ -331,7 +327,7 @@ def _set_electrical_parameters_lines_raw(lines, config):
         lambda x: _get_linetype_by_voltage(x, linetypes)
     )
 
-    lines["s_max_pu"] = config["lines"]["s_max_pu"]
+    lines["s_max_pu"] = s_max_pu
 
     return lines
 
@@ -345,12 +341,10 @@ def _set_lines_s_nom_from_linetypes(n):
     )
 
 
-def _set_electrical_parameters_links_eg(links, config, links_p_nom):
+def _set_electrical_parameters_links_eg(links, p_max_pu, p_min_pu, links_p_nom):
     if links.empty:
         return links
 
-    p_max_pu = config["links"].get("p_max_pu", 1.0)
-    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
     links["p_max_pu"] = p_max_pu
     links["p_min_pu"] = p_min_pu
 
@@ -378,12 +372,10 @@ def _set_electrical_parameters_links_eg(links, config, links_p_nom):
     return links
 
 
-def _set_electrical_parameters_links_raw(links, config):
+def _set_electrical_parameters_links_raw(links, p_max_pu, p_min_pu):
     if links.empty:
         return links
 
-    p_max_pu = config["links"].get("p_max_pu", 1.0)
-    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
     links["p_max_pu"] = p_max_pu
     links["p_min_pu"] = p_min_pu
     links["carrier"] = "DC"
@@ -392,9 +384,7 @@ def _set_electrical_parameters_links_raw(links, config):
     return links
 
 
-def _set_electrical_parameters_converters(converters, config):
-    p_max_pu = config["links"].get("p_max_pu", 1.0)
-    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
+def _set_electrical_parameters_converters(converters, p_max_pu, p_min_pu):
     converters["p_max_pu"] = p_max_pu
     converters["p_min_pu"] = p_min_pu
 
@@ -411,8 +401,6 @@ def _set_electrical_parameters_converters(converters, config):
 
 
 def _set_electrical_parameters_transformers(transformers, config):
-    config = config["transformers"]
-
     ## Add transformer parameters
     transformers["x"] = config.get("x", 0.1)
     if "s_nom" not in transformers:
@@ -444,7 +432,7 @@ def _remove_unconnected_components(network, threshold=6):
     return network[component == component_sizes.index[0]]
 
 
-def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
+def _set_countries_and_substations(n, countries, country_shapes, offshore_shapes):
     buses = n.buses
 
     def buses_in_shape(shape):
@@ -461,7 +449,6 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
             index=buses.index,
         )
 
-    countries = config["countries"]
     country_shapes = gpd.read_file(country_shapes).set_index("name")["geometry"]
     # reindexing necessary for supporting empty geo-dataframes
     offshore_shapes = gpd.read_file(offshore_shapes)
@@ -621,8 +608,7 @@ def _set_links_underwater_fraction(n, offshore_shapes):
         )
 
 
-def _adjust_capacities_of_under_construction_branches(n, config):
-    lines_mode = config["lines"].get("under_construction", "undef")
+def _adjust_capacities_of_under_construction_branches(n, lines_mode, links_mode):
     if lines_mode == "zero":
         n.lines.loc[n.lines.under_construction, "num_parallel"] = 0.0
         n.lines.loc[n.lines.under_construction, "s_nom"] = 0.0
@@ -633,7 +619,6 @@ def _adjust_capacities_of_under_construction_branches(n, config):
             "Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines."
         )
 
-    links_mode = config["links"].get("under_construction", "undef")
     if links_mode == "zero":
         n.links.loc[n.links.under_construction, "p_nom"] = 0.0
     elif links_mode == "remove":
@@ -678,10 +663,11 @@ def base_network(
     offshore_shapes,
     countries,
     parameter_corrections,
-    config,
+    params,
 ):
-    base_network = config["electricity"].get("base_network")
-    osm_version = config["data"]["osm"]["version"]
+    base_network = params.base_network
+    osm_version = params.osm_version
+    voltages = params.voltages
     assert base_network in {"entsoegridkit", "osm", "tyndp"}, (
         f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
     )
@@ -698,7 +684,7 @@ def base_network(
     )
     logger.info(logger_str)
 
-    buses = _load_buses(buses, europe_shape, countries, config)
+    buses = _load_buses(buses, europe_shape, countries, voltages)
     transformers = _load_transformers(buses, transformers)
     lines = _load_lines(buses, lines)
 
@@ -707,29 +693,39 @@ def base_network(
         converters = _load_converters_from_eg(buses, converters)
 
         # Optionally reconnect Crimea
-        if (config["lines"].get("reconnect_crimea", True)) & (
-            "UA" in config["countries"]
-        ):
+        if params.reconnect_crimea and "UA" in countries:
             lines = _reconnect_crimea(lines)
 
         # Set electrical parameters of lines and links
-        lines = _set_electrical_parameters_lines_eg(lines, config)
-        links = _set_electrical_parameters_links_eg(links, config, links_p_nom)
+        lines = _set_electrical_parameters_lines_eg(
+            lines, voltages, params.line_types, params.line_s_max_pu
+        )
+        links = _set_electrical_parameters_links_eg(
+            links, params.link_p_max_pu, params.link_p_min_pu, links_p_nom
+        )
     elif base_network in {"osm", "tyndp"}:
         links = _load_links_from_raw(buses, links)
         converters = _load_converters_from_raw(buses, converters)
 
         # Set electrical parameters of lines and links
-        lines = _set_electrical_parameters_lines_raw(lines, config)
-        links = _set_electrical_parameters_links_raw(links, config)
+        lines = _set_electrical_parameters_lines_raw(
+            lines, voltages, params.line_types, params.line_s_max_pu
+        )
+        links = _set_electrical_parameters_links_raw(
+            links, params.link_p_max_pu, params.link_p_min_pu
+        )
     else:
         raise ValueError(
             "base_network must be either 'entsoegridkit', 'osm', or 'tyndp'"
         )
 
     # Set electrical parameters of transformers and converters
-    transformers = _set_electrical_parameters_transformers(transformers, config)
-    converters = _set_electrical_parameters_converters(converters, config)
+    transformers = _set_electrical_parameters_transformers(
+        transformers, params.transformers
+    )
+    converters = _set_electrical_parameters_converters(
+        converters, params.link_p_max_pu, params.link_p_min_pu
+    )
 
     n = pypsa.Network()
     n.name = (
@@ -748,18 +744,20 @@ def base_network(
     n.add("Link", converters.index, **converters)
 
     _set_lines_s_nom_from_linetypes(n)
-    if config["electricity"].get("base_network") == "entsoegridkit":
+    if base_network == "entsoegridkit":
         _apply_parameter_corrections(n, parameter_corrections)
 
     n = _remove_unconnected_components(n)
 
-    _set_countries_and_substations(n, config, country_shapes, offshore_shapes)
+    _set_countries_and_substations(n, countries, country_shapes, offshore_shapes)
 
     _set_links_underwater_fraction(n, offshore_shapes)
 
     _replace_b2b_converter_at_country_border_by_link(n)
 
-    n = _adjust_capacities_of_under_construction_branches(n, config)
+    n = _adjust_capacities_of_under_construction_branches(
+        n, params.lines_under_construction, params.links_under_construction
+    )
 
     _set_shapes(n, country_shapes, offshore_shapes)
 
@@ -1651,7 +1649,6 @@ if __name__ == "__main__":
     europe_shape = snakemake.input.europe_shape
     country_shapes = snakemake.input.country_shapes
     offshore_shapes = snakemake.input.offshore_shapes
-    config = snakemake.config
 
     if "links_p_nom" in snakemake.input.keys():
         links_p_nom = snakemake.input.links_p_nom
@@ -1675,7 +1672,7 @@ if __name__ == "__main__":
         offshore_shapes,
         countries,
         parameter_corrections,
-        config,
+        snakemake.params,
     )
 
     admin_shapes = build_admin_shapes(
