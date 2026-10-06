@@ -916,6 +916,9 @@ sector:
     fuel:
     - solid biomass
     - gas
+    fuel_cc:
+    - solid biomass
+    - gas
     micro_chp: false
   solar_thermal: true
   solar_cf_correction: 0.788457

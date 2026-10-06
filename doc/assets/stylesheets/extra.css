@@ -11,3 +11,46 @@
   --md-accent-fg-color: rgb(75, 115, 215, 0.5);
   --md-typeset-a-color:    #4b73d7;
 }
+
+/* Scope badges on the design pages, see doc/macros.py:scope.
+   Model variants (electricity-only, sector-coupled) are blue,
+   foresight modes (overnight, myopic, perfect) are teal. */
+.scope {
+  --scope-variant: var(--md-primary-fg-color);
+  --scope-foresight: #1a9c8a;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1.2rem 0;
+  font-size: 0.7rem;
+}
+.scope span {
+  border-radius: 1rem;
+  padding: 0.15rem 0.7rem;
+  border: 1px solid var(--md-default-fg-color--lighter);
+  color: var(--md-default-fg-color--light);
+  white-space: nowrap;
+}
+.scope .scope-variant.scope-on {
+  background: var(--scope-variant);
+  border-color: var(--scope-variant);
+  color: white;
+}
+.scope .scope-foresight.scope-on {
+  background: var(--scope-foresight);
+  border-color: var(--scope-foresight);
+  color: white;
+}
+.scope .scope-variant.scope-partial {
+  border-color: var(--scope-variant);
+  color: var(--scope-variant);
+  background: color-mix(in srgb, var(--scope-variant) 15%, transparent);
+}
+.scope .scope-foresight.scope-partial {
+  border-color: var(--scope-foresight);
+  color: var(--scope-foresight);
+  background: color-mix(in srgb, var(--scope-foresight) 15%, transparent);
+}
+.scope .scope-off {
+  text-decoration: line-through;
+}
