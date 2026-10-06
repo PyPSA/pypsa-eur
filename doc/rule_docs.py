@@ -16,6 +16,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 RULES_DIR = Path(__file__).resolve().parents[1] / "rules"
+RULE_PAGES_DIR = Path(__file__).resolve().parent / "rules"
+
+_RULES_CALL_RE = re.compile(r"\{\{\s*rules\((.*?)\)\s*\}\}", re.S)
 
 _RULE_RE = re.compile(r"^(\s*)rule (\w+):\s*$")
 _SECTION_RE = re.compile(r"^(\w+):\s*(.*)$")
@@ -148,3 +151,11 @@ def parse_rules(files: list[str] | None = None) -> dict[str, Rule]:
         for rule in parse_file(path):
             rules.setdefault(rule.name, rule)
     return rules
+
+
+def documented_rules(page: str) -> list[str]:
+    """Return the rules a page under `doc/rules/` renders with `{{ rules(...) }}`, in order."""
+    text = (RULE_PAGES_DIR / page).read_text()
+    calls = _RULES_CALL_RE.findall(text)
+    names = [n for call in calls for n in re.findall(r'"(\w+)"', call)]
+    return list(dict.fromkeys(names))

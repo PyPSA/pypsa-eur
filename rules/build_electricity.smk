@@ -386,7 +386,7 @@ rule determine_availability_matrix:
 
 
 rule build_renewable_profiles:
-    """Computes per-region capacity factor time series, installable potentials and grid distances."""
+    """Computes {wildcards.technology} capacity factors, potentials and grid distances per region."""
     input:
         availability_matrix=resources("availability_matrix_{technology}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),

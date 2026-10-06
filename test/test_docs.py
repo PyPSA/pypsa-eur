@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from doc.rule_docs import parse_rules
+from doc.rule_docs import RULE_PAGES_DIR, documented_rules, parse_rules
 
 DOCUMENTED_FILES = [
     "build_electricity.smk",
@@ -20,12 +20,8 @@ DOCUMENTED_FILES = [
 
 
 def _documented_rule_names() -> set[str]:
-    names: set[str] = set()
-    for page in Path("doc/rules").glob("*.md"):
-        text = page.read_text()
-        for call in re.findall(r"\{\{\s*rules\((.*?)\)\s*\}\}", text, re.S):
-            names.update(re.findall(r'"(\w+)"', call))
-    return names
+    pages = RULE_PAGES_DIR.glob("*.md")
+    return {name for page in pages for name in documented_rules(page.name)}
 
 
 def test_every_rule_is_documented():
@@ -42,6 +38,15 @@ def test_every_rule_has_summary(rule):
     assert rule.summary, f"rule {rule.name} in {rule.file} has no docstring"
     assert rule.summary.endswith("."), rule.summary
     assert len(rule.summary) <= 100, rule.summary
+
+
+@pytest.mark.parametrize("rule", parse_rules().values(), ids=lambda r: r.name)
+def test_summary_placeholders_are_wildcards(rule):
+    """Docstrings double as job messages, so placeholders must be `{wildcards.<name>}`."""
+    for field in re.findall(r"\{([^{}]*)\}", rule.summary):
+        name = field.removeprefix("wildcards.")
+        assert field.startswith("wildcards."), f"{rule.name}: use {{wildcards.{field}}}"
+        assert name in rule.wildcards, f"{rule.name}: unknown wildcard {name}"
 
 
 def test_rule_scripts_exist():

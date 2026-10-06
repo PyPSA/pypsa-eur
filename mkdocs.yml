@@ -78,6 +78,7 @@ nav:
   - Data Repositories: data-repos.md
 
 - Rules Overview:
+  - rules/index.md
   - Retrieving Data: rules/retrieve.md
   - Regions and Weather: rules/regions.md
   - Transmission Grid: rules/grid.md

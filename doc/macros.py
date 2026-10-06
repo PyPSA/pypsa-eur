@@ -115,7 +115,8 @@ def _rule_block(rule, anchors):
     anchor = rule.name if rule.module != rule.name else f"rule-{rule.name}"
     lines = [f"### `{rule.name}` {{ #{anchor} }}", ""]
     if rule.summary:
-        lines += [f'<p class="rule-summary" markdown="0">{rule.summary}</p>', ""]
+        summary = re.sub(r"\{wildcards\.(\w+)\}", r"<code>{\1}</code>", rule.summary)
+        lines += [f'<p class="rule-summary" markdown="0">{summary}</p>', ""]
     facts = []
     if rule.script:
         facts.append(

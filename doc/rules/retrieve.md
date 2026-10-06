@@ -30,6 +30,28 @@ file in the repository root, which is loaded automatically and ignored by git.
 | `retrieve_corine` | A [Copernicus Land Monitoring Service](https://land.copernicus.eu/user/login) API key in `CORINE_API_TOKEN`. Only needed when `data: corine: source: primary`. |
 | `retrieve_seawater_temperature` | [Copernicus Marine Service](https://marine.copernicus.eu/) credentials configured for the `copernicusmarine` package. Only needed when heat pumps use the `sea_water` heat source with a non-test cutout. |
 
+??? example "Example `.env` file"
+
+    A `.env` file with all credentials looks like this. Only add the lines for
+    the rules you run. The file is listed in `.gitignore`, so git does not
+    commit it.
+
+    ```bash title=".env"
+    # build_cutout: Copernicus Climate Data Store (alternative to ~/.cdsapirc)
+    CDSAPI_URL=https://cds.climate.copernicus.eu/api
+    CDSAPI_KEY=<your-personal-access-token>
+
+    # retrieve_electricity_demand_entsoe: ENTSO-E Transparency Platform
+    ENTSOE_API_TOKEN=<your-entsoe-token>
+
+    # retrieve_corine: Copernicus Land Monitoring Service
+    CORINE_API_TOKEN=<your-clms-api-key>
+
+    # retrieve_seawater_temperature: Copernicus Marine Service
+    COPERNICUSMARINE_SERVICE_USERNAME=<your-username>
+    COPERNICUSMARINE_SERVICE_PASSWORD=<your-password>
+    ```
+
 ## Rules with special handling {#special}
 
 - `retrieve_cutout` downloads pre-built weather cutouts; see [cutouts](../configuration.md#atlite_cf).
