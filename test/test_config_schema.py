@@ -14,6 +14,7 @@ import yaml
 
 from scripts.lib.validation.config import (
     DEPRECATED_KEYS,
+    DEPRECATED_VALUES,
     find_invalid_entries,
     generate_config_defaults,
     generate_config_schema,
@@ -182,6 +183,21 @@ def test_migrate_deprecated_keys(tes):
     assert cfg == {
         "sector": {"ttes": tes, "district_heating": {"ptes": {"enable": tes}}}
     }
+
+
+@pytest.mark.parametrize(
+    ("supplement_synthetic", "demand_source"),
+    [(True, "supplemented"), (False, "historical")],
+)
+def test_migrate_deprecated_keys_translates_values(supplement_synthetic, demand_source):
+    cfg = {"load": {"supplement_synthetic": supplement_synthetic}}
+    with pytest.warns(FutureWarning, match="load.supplement_synthetic"):
+        migrate_deprecated_keys(cfg)
+    assert cfg == {"load": {"demand_source": demand_source}}
+
+
+def test_deprecated_values_cover_deprecated_keys():
+    assert DEPRECATED_VALUES.keys() == DEPRECATED_KEYS.keys()
 
 
 def test_migrate_deprecated_keys_ignores_current_keys():

@@ -72,6 +72,12 @@ class LoadConfig(BaseModel):
         "supplemented",
         description="Source of electricity demand data.",
     )
+    supplement_synthetic: bool | None = Field(
+        None,
+        deprecated=True,
+        exclude=True,
+        description="Deprecated, use `demand_source`.",
+    )
     substation_only: bool = Field(
         True,
         description="Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data.",

@@ -113,7 +113,17 @@ def _config_path(config: dict, loc: tuple) -> str:
 #: Deprecated config keys and the keys that take over their value. Remove an
 #: entry one release after adding it.
 DEPRECATED_KEYS: dict[str, list[str]] = {
+    # Deprecated in release after PyPSA-Eur v2026.09.0
     "sector.tes": ["sector.ttes", "sector.district_heating.ptes.enable"],
+    "load.supplement_synthetic": ["load.demand_source"],
+}
+
+# Values of deprecated keys and the values their replacements take.
+# Requires an entry for each key in `DEPRECATED_KEYS`.
+DEPRECATED_VALUES: dict[str, dict] = {
+    # Deprecated in release after PyPSA-Eur v2026.09.0
+    "sector.tes": {True: True, False: False},
+    "load.supplement_synthetic": {True: "supplemented", False: "historical"},
 }
 
 
@@ -129,17 +139,18 @@ def migrate_deprecated_keys(config: dict) -> None:
     config : dict
         Config or scenario override.
     """
-    for old, new in DEPRECATED_KEYS.items():
-        *parents, key = old.split(".")
+    for old_key, new_key in DEPRECATED_KEYS.items():
+        *parents, key = old_key.split(".")
         section = reduce(lambda d, k: d.get(k, {}), parents, config)
         if key not in section:
             continue
-        value = section.pop(key)
-        msg = f"`{old}` is deprecated and will be removed in the next release. Its value is used for `{'`, `'.join(new)}` instead."
+        old_value = section.pop(key)
+        new_value = DEPRECATED_VALUES[old_key][old_value]
+        msg = f"`{old_key}` is deprecated and will be removed in the next release. Its value is used for `{'`, `'.join(new_key)}` instead (`{new_value}`)."
         warnings.warn(msg, FutureWarning)
-        for path in new:
+        for path in new_key:
             *parents, key = path.split(".")
-            reduce(lambda d, k: d.setdefault(k, {}), parents, config)[key] = value
+            reduce(lambda d, k: d.setdefault(k, {}), parents, config)[key] = new_value
 
 
 def normalize_config(config: dict, validated: ConfigSchema) -> None:

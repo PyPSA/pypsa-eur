@@ -3038,6 +3038,19 @@
           ],
           "type": "string"
         },
+        "supplement_synthetic": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "deprecated": true,
+          "description": "Deprecated, use `demand_source`."
+        },
         "substation_only": {
           "default": true,
           "description": "Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data.",
@@ -12085,6 +12098,19 @@
             "synthetic"
           ],
           "type": "string"
+        },
+        "supplement_synthetic": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "deprecated": true,
+          "description": "Deprecated, use `demand_source`."
         },
         "substation_only": {
           "default": true,
