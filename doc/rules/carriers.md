@@ -18,6 +18,10 @@ management](../design/carbon-management.md) in the design section.
 
 {{ rules("build_gas_network", "build_gas_input_locations", "cluster_gas_network", "build_salt_cavern_potentials") }}
 
+## Pipeline candidates
+
+{{ rules("build_transmission_delaunay_graph", "build_transmission_topology") }}
+
 ## Carbon sequestration
 
 {{ rules("build_co2_sequestration_potentials", "build_clustered_co2_sequestration_potentials") }}

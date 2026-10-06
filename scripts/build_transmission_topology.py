@@ -3,28 +3,13 @@
 # SPDX-License-Identifier: MIT
 
 """
-Filter the Delaunay graph to transmission topology candidates.
+Filter the Delaunay graph to the candidate corridors for new H2 and CO2 pipelines.
 
-Description
------------
-Reads the full Delaunay edge table produced by build_transmission_delaunay_graph
-and applies Gabriel graph filtering and min-degree backfilling to produce a
-candidate edge set for the H2 and CO2 pipeline networks.
-
-Outputs
--------
-GeoJSON file in WGS84 (EPSG:4326) format:
-
-``candidates``
-    Selected candidate corridor table (subset of Delaunay edges) with columns:
-
-    - ``name``
-    - ``bus0``
-    - ``bus1``
-    - ``length``
-    - ``gabriel_edge``
-    - ``underwater_fraction``
-    - ``geometry``
+Edges with an offshore length above the maximum are removed first. The
+remaining Gabriel edges form the base set. Then the shortest remaining
+Delaunay edges are added until each bus reaches the minimum degree or has no
+more Delaunay neighbours. A minimum degree of zero keeps the full Delaunay
+graph.
 """
 
 import logging

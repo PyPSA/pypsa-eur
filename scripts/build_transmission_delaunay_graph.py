@@ -3,33 +3,12 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build the Delaunay triangulation graph for transmission corridor candidates.
+Build the Delaunay graph between clustered buses as candidate pipeline corridors.
 
-Description
------------
-Creates the full Delaunay edge table from clustered network bus coordinates,
-enriched with Gabriel edge flags and offshore underwater fractions.
-
-The output GeoDataFrame is consumed by build_transmission_topology to filter
-candidate edges.
-
-Outputs
--------
-GeoJSON file in WGS84 (EPSG:4326) format:
-
-``delaunay_graph``
-    Full Delaunay edge table with columns:
-
-    - ``name``: Canonical undirected edge identifier ``"bus0 -> bus1"``.
-    - ``bus0``: Canonically ordered first bus id (lexicographic order).
-    - ``bus1``: Canonically ordered second bus id.
-    - ``source``: Integer index of the first bus.
-    - ``target``: Integer index of the second bus.
-    - ``length``: Great-circle edge length in km.
-    - ``gabriel_edge``: ``True`` if the edge satisfies the Gabriel empty
-        circle criterion.
-    - ``underwater_fraction``: Fraction of edge length over offshore regions.
-    - ``geometry``: LineString geometry in ``EPSG:4326``.
+The bus coordinates of the clustered network are triangulated in a metric
+projection (EPSG:3035). Each edge gets its great-circle length, a flag that
+marks whether it belongs to the Gabriel graph, and the fraction of its length
+that lies in offshore regions.
 """
 
 import logging

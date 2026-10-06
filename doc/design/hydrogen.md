@@ -58,8 +58,9 @@ constraint is usually where caverns exist, not how much they can hold.
 
 ## Transport
 
-Hydrogen moves through pipelines. New pipelines can be built along corridors
-where an electricity or gas connection exists today. Optionally, existing gas
+Hydrogen moves through pipelines. New pipelines can be built along candidate
+corridors between neighbouring regions, taken from a Delaunay triangulation of
+the regions and by default reduced to its Gabriel graph. Optionally, existing gas
 pipelines can be retrofitted [@gasforclimateEuropeanHydrogen2020], which is
 cheaper but tied to the gas network: for every unit of gas capacity taken out
 of service, a fixed share becomes available for hydrogen on the same route.

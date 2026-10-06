@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Candidate corridors for new hydrogen and carbon dioxide pipelines now come from a Delaunay triangulation of the regions instead of the electricity grid topology. By default, they are reduced to the Gabriel graph with at least one candidate per region, which yields shortest-path connections also between regions that the electricity grid does not link directly. The new option `sector: pipeline_topology` sets the minimum number of candidates per region (`min_degree`, 0 keeps the full Delaunay graph) and the maximum offshore length of a candidate (`max_offshore_distance`). This changes default results; existing configuration keys are unchanged ([#2153](https://github.com/PyPSA/pypsa-eur/pull/2153)).
+
 * Renamed `sector: tes` to `sector: ttes` (tank thermal energy storage), as it now only controls water tanks. Until the next release, `sector: tes` is still accepted with a warning and sets both `sector: ttes` and `sector: district_heating: ptes: enable`, which keeps previous results. Feature: New option `sector: district_heating: ptes: enable` (default `true`) to enable or disable pit thermal energy storage (water pits). Like `sector: district_heating: ates: enable`, it is independent of `sector: ttes`. Fix: the thermal energy storage constraints on energy-to-power ratio and charger-discharger ratio are now added whenever water tanks, water pits or aquifer thermal energy storage are present; previously they were skipped for pit and aquifer storage with `sector: tes: false` ([#2330](https://github.com/PyPSA/pypsa-eur/pull/2330))
 
 * Fix: Convert FOM for EGS from %/yr to fractional value ([#2350](https://github.com/PyPSA/pypsa-eur/pull/2350)).
