@@ -312,11 +312,6 @@ def add_dynamic_emission_prices(n, fn):
     n.generators.loc[affected, "marginal_cost"] = 0.0
 
 
-def set_line_s_max_pu(n, s_max_pu=0.7):
-    n.lines["s_max_pu"] = s_max_pu
-    logger.info(f"N-1 security margin of lines set to {s_max_pu}")
-
-
 def set_transmission_limit(n, kind, factor, costs, Nyears=1):
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
@@ -356,21 +351,6 @@ def set_transmission_limit(n, kind, factor, costs, Nyears=1):
         )
 
     return n
-
-
-def enforce_autarky(n, only_crossborder=False):
-    if only_crossborder:
-        lines_rm = n.lines.loc[
-            n.lines.bus0.map(n.buses.country) != n.lines.bus1.map(n.buses.country)
-        ].index
-        links_rm = n.links.loc[
-            n.links.bus0.map(n.buses.country) != n.links.bus1.map(n.buses.country)
-        ].index
-    else:
-        lines_rm = n.lines.index
-        links_rm = n.links.loc[n.links.carrier == "DC"].index
-    n.remove("Line", lines_rm)
-    n.remove("Link", links_rm)
 
 
 def cap_transmission_capacity(
@@ -467,6 +447,7 @@ def main(
     params,
     costs: pd.DataFrame,
     nyears: float,
+    current_horizon: int,
 ) -> None:
     logger.info("Preparing network for solving")
 
@@ -492,6 +473,11 @@ def main(
             add_emission_prices(n, {"co2": emission_prices["co2"]}, exclude_co2=False)
 
     transmission_limit = electricity_cfg["transmission_limit"]
+    if isinstance(transmission_limit, dict) and params.foresight == "perfect":
+        raise ValueError(
+            "Per-horizon `transmission_limit` is not supported for perfect foresight."
+        )
+    transmission_limit = get(transmission_limit, current_horizon)
     if isinstance(transmission_limit, str):
         kind = transmission_limit[0]
         factor = transmission_limit[1:] or "opt"

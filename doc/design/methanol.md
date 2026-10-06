@@ -21,7 +21,7 @@ Methanol is synthesised from hydrogen and captured CO~2~, or produced from
 solid biomass with or without carbon capture. The waste heat of synthesis can
 supply district heating. A biomass route boosted with hydrogen, as
 electrobiofuels are for oil, is not represented for methanol. Methanol can also be imported from outside Europe at
-a fixed price, see [Model overview](overview.md#design-overview).
+a fixed price, see [Model overview](overview.md#overview-imports).
 
 ## Conversion
 
@@ -29,6 +29,11 @@ Optionally, methanol can be reformed to hydrogen, burned in power plants for
 electricity, or converted to kerosene for aviation. These routes matter when
 methanol is imported: they turn an easily shipped liquid into the carriers
 that are needed inland.
+
+## Storage
+
+Methanol is stored in tanks with the cost of generic liquid hydrocarbon
+storage, which is small per unit of energy. Storage capacity is optimised.
 
 ## Transport
 

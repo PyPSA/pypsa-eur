@@ -59,9 +59,10 @@ density [@bodisHighresolutionGeospatial2019]. Each region can further be
 split into resource classes so that sites of different quality within one
 region are represented separately.
 
-**Time series.** Hourly capacity factors are computed from gridded weather
-data with [atlite](https://atlite.readthedocs.io)
-[@hofmannAtliteLightweight2021]: wind speeds through turbine power curves,
+**Time series.** Hourly capacity factors are computed from the ERA5
+reanalysis [@ecmwf] and the SARAH satellite irradiation record [@SARAH] with
+[atlite](https://atlite.readthedocs.io) [@hofmannAtliteLightweight2021]:
+wind speeds through turbine power curves,
 solar irradiation through panel models with fixed or single-axis tracking
 mounts, and hydro inflow from surface runoff scaled to historical generation
 statistics. The grid-cell time series are aggregated to regions in proportion

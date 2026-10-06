@@ -111,7 +111,7 @@ if __name__ == "__main__":
                 n, str(current_horizon), renewable_carriers
             )
 
-    prepare_network_for_solving(n, inputs, params, costs, nyears)
+    prepare_network_for_solving(n, inputs, params, costs, nyears, current_horizon)
 
     if foresight == "myopic" and not is_first_horizon:
         apply_brownfield(

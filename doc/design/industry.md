@@ -94,7 +94,7 @@ decided on the carrier pages: [Hydrogen](hydrogen.md),
 Process emissions are tracked separately from energy-related emissions. They
 can be captured at a given capture rate, which turns them into a captured
 CO~2~ stream for usage or sequestration, see
-[Carbon management](carbon.md). Emissions from refining fossil oil can be
+[Carbon management](carbon-management.md). Emissions from refining fossil oil can be
 added in proportion to fossil oil consumption.
 
 ## Agriculture, forestry and fishing

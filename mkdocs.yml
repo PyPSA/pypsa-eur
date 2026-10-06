@@ -49,22 +49,22 @@ nav:
     - Support: support.md
     - Publications: publications.md
 
-- Design:
+- Model Description:
   - Model Overview: design/overview.md
   - Model Resolution: design/resolution.md
   - Foresight: design/foresight.md
+  - Techno-Economic Assumptions: design/techno-economic-assumptions.md
   - Electricity: design/electricity.md
   - Heating: design/heat.md
   - Transport: design/transport.md
   - Industry: design/industry.md
-  - Hydrogen: design/hydrogen.md
   - Ammonia: design/ammonia.md
-  - Methane: design/methane.md
-  - Oil: design/oil.md
-  - Methanol: design/methanol.md
   - Biomass: design/biomass.md
-  - Carbon Management: design/carbon.md
-  - Techno-Economic Assumptions: costs.md
+  - Carbon Management: design/carbon-management.md
+  - Hydrogen: design/hydrogen.md
+  - Methane: design/methane.md
+  - Methanol: design/methanol.md
+  - Oil: design/oil.md
   - OETC Integration: oetc.md
 
 - Configuration:

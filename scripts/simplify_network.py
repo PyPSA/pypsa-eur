@@ -6,8 +6,9 @@
 """
 Simplify the base network to a single 380 kV voltage layer, remove dead-ends and fold multi-hop HVDC connections into single links.
 
-All voltage levels are mapped to 380 kV by replacing the line types and
-removing transformers while preserving transmission capacity. Converters are
+By default, all voltage levels are mapped to 380 kV by replacing the line
+types and removing transformers while preserving transmission capacity; this
+step can be disabled to keep the original voltage levels. Converters are
 removed and DC-only sub-networks connected to the AC network at two buses are
 reduced to one representative link. Stub lines and links, i.e. dead-ends of
 the network, are removed sequentially, optionally only within a country or
@@ -423,11 +424,13 @@ if __name__ == "__main__":
     params = snakemake.params
 
     n = pypsa.Network(snakemake.input.network)
-    Nyears = n.snapshot_weightings.objective.sum() / 8760
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
 
-    linetype_380 = snakemake.config["lines"]["types"][380]
-    n, trafo_map = simplify_network_to_380(n, linetype_380)
+    if params.simplify_network["to_380"]:
+        linetype_380 = snakemake.config["lines"]["types"][380]
+        n, trafo_map = simplify_network_to_380(n, linetype_380)
+    else:
+        trafo_map = n.buses.index.to_series()
     busmaps = [trafo_map]
 
     n, converter_map = remove_converters(n)

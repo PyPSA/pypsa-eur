@@ -8,7 +8,7 @@ the carriers that are not electricity: biomass potentials and transport costs,
 the gas network with its entry points, salt caverns for hydrogen storage and
 geological CO~2~ sequestration potentials. See [Biomass](../design/biomass.md),
 [Methane](../design/methane.md), [Hydrogen](../design/hydrogen.md) and [Carbon
-management](../design/carbon.md) in the design section.
+management](../design/carbon-management.md) in the design section.
 
 ## Biomass
 

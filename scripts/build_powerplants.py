@@ -140,12 +140,13 @@ def map_to_country_bus(
     unmatched = []
 
     for country, plants in ppl.groupby("Country"):
-        country_regions = regions[regions.index.str[:2] == country]
-        joined = (
-            plants.sjoin(country_regions)
-            .rename(columns={"name": "bus"})
-            .reindex(plants.index)
+        country_regions = regions.query("country == @country")
+        joined = plants.sjoin(country_regions[["geometry"]]).rename(
+            columns={"name": "bus"}
         )
+        # Drop duplicate matches (plant in overlapping onshore/offshore regions)
+        joined = joined[~joined.index.duplicated(keep="first")]
+        joined = joined.reindex(plants.index)
         assigned.append(joined.dropna(subset=["bus"]))
         missing = joined[joined["bus"].isna()]
         if not missing.empty:
@@ -154,15 +155,17 @@ def map_to_country_bus(
     if unmatched:
         unmatched = pd.concat(unmatched)
         for country, plants in unmatched.groupby("Country"):
-            country_regions = regions[regions.index.str[:2] == country]
+            country_regions = regions.query("country == @country")
             nearest = (
                 plants.to_crs(3035)
-                .sjoin_nearest(country_regions.to_crs(3035), max_distance=max_distance)
+                .sjoin_nearest(
+                    country_regions[["geometry"]].to_crs(3035),
+                    max_distance=max_distance,
+                )
                 .rename(columns={"name": "bus"})
                 .to_crs(4326)
             )
             missing = plants.index.difference(nearest.index)
-            print(country, missing)
             nearest = pd.concat([nearest, plants.loc[missing]])
             assigned.append(nearest)
 
@@ -186,6 +189,7 @@ if __name__ == "__main__":
     regions = pd.concat([gpd.read_file(fn_onshore), gpd.read_file(fn_offshore)])
     regions = regions.dissolve("name")
     regions["geometry"] = fill_unoccupied_holes(regions)
+    regions["country"] = n.buses.country
 
     # Steps copied from PPM: Usually run by PPM when using pm.powerplants(...) from cache
     ppl = (

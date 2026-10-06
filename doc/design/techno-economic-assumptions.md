@@ -19,7 +19,7 @@ values from public sources, above all the technology catalogues of the
 Danish Energy Agency [@DEA], and projects them to future years. PyPSA-Eur
 retrieves one table per year. A pinned version of the database can be
 selected so that results stay reproducible, see
-[Managing data versions](data_sources.md#managing_data_versions).
+[Managing data versions](../data_sources.md#managing_data_versions).
 
 ## Cost years
 
@@ -40,7 +40,7 @@ $$
 
 and the fixed operation and maintenance cost is added to obtain the annual
 capital cost of one unit of capacity. The discount rate expresses the cost of
-capital, see [Foresight](design/foresight.md#discount-rates) for its
+capital, see [Foresight](foresight.md#discount-rates) for its
 interplay with the social discount rate of pathways. Marginal costs follow
 from fuel cost, variable operation and maintenance cost and efficiency.
 
@@ -48,8 +48,9 @@ from fuel cost, variable operation and maintenance cost and efficiency.
 
 Selected values can be overridden in the configuration, for example to test
 a cheaper electrolyser or a higher gas price, without editing the database.
-Missing values are filled with defaults.
+For using and overwriting a larger number of cost entries, a `custom_costs`
+file can be configured and used. Missing values are filled with defaults.
 
 ## Further reading
 
-- Configuration: [costs](configuration.md#costs_cf)
+- Configuration: [costs](../configuration.md#costs_cf)

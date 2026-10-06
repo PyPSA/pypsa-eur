@@ -38,6 +38,11 @@ feedstocks also feed the oil supply and are phased out, see
 [Biomass](biomass.md). Imports at a fixed price can be enabled. The share of
 fossil and synthetic supply is a result of the optimisation.
 
+## Storage
+
+Oil is stored in tanks with the cost of generic liquid hydrocarbon storage.
+Storage capacity is optimised.
+
 ## Transport
 
 Liquids are cheap to transport, so supply is copperplated at a single

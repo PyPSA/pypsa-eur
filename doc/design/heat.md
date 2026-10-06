@@ -86,8 +86,8 @@ limited by a regional potential derived from geological and hydrological data
 within reach of the district heating areas. Their coefficient of performance
 is approximated from the source temperature and the network supply
 temperature with a thermodynamic model. The supply temperature itself is
-approximated from ambient temperature following measured reference curves
-[@pieperAssessmentCombination2019]: it is highest on cold days and lowest on mild days, and it
+approximated from ambient temperature following measured reference curves [@pieperAssessmentCombination2019]:
+it is highest on cold days and lowest on mild days, and it
 can decline over the planning years as networks modernise. Sources that are
 hot enough can feed the network directly without a heat pump.
 
