@@ -5,6 +5,11 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Feature: New option `load: demand_source` to select whether electricity demand data follows `historical` (ENTSO-E data only), `supplemented` (default, ENTSO-E data with gaps filled by synthetic data) or `synthetic` (synthetic data only) ([#2339](https://github.com/PyPSA/pypsa-eur/pull/2339)).
+* **Breaking**: Config option `load: supplement_synthetic` will be deprecated and replaced by the new option `load:demand_source` in the next release.
+  Previous values `true`/`false` correspond to `supplemented`/`historical` with the new option ([#2339](https://github.com/PyPSA/pypsa-eur/pull/2339)).
+
+
 * Renamed `sector: tes` to `sector: ttes` (tank thermal energy storage), as it now only controls water tanks. Until the next release, `sector: tes` is still accepted with a warning and sets both `sector: ttes` and `sector: district_heating: ptes: enable`, which keeps previous results. Feature: New option `sector: district_heating: ptes: enable` (default `true`) to enable or disable pit thermal energy storage (water pits). Like `sector: district_heating: ates: enable`, it is independent of `sector: ttes`. Fix: the thermal energy storage constraints on energy-to-power ratio and charger-discharger ratio are now added whenever water tanks, water pits or aquifer thermal energy storage are present; previously they were skipped for pit and aquifer storage with `sector: tes: false` ([#2330](https://github.com/PyPSA/pypsa-eur/pull/2330))
 
 * Fix: Convert FOM for EGS from %/yr to fractional value ([#2350](https://github.com/PyPSA/pypsa-eur/pull/2350)).
