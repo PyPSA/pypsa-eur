@@ -7,7 +7,7 @@ Create profiles for road transport demand using measured data from vehicle monit
 This rule downloads the data files, extracts them, and then aggregates the data to weekly profiles for all and the five distinguishable motor vehicle types:
 - "kfz": All motor vehicles (="Kraftfahrzeuge", i.e. cars, trucks, buses, motorcycles)
 - "pkw": Passenger cars (="Personenkraftwagen" and "PmA" "Personenkraftwagen mit Anhänger" passenger cars with trailer )
-- "mot": Motorcycles only (="Motorräder")
+- "mot": Motorcycles only (="Motorräder")  # codespell:ignore mot
 - "bus": Buses only (="Busse")
 - "lfw": Light commercial vehicles only (="Lieferwagen")
 - "lkw": Heavy goods vehicles only (="Lastkraftwagen" constituted of "LoA" "Lastkraftwagen mit Anhänger" lorry with trailer, "Lzg" "Zugmaschinen" lorry, and "Son" "Sonderfahrzeuge" special vehicles)
@@ -17,27 +17,16 @@ Outputs
 
 - `data/mobility_profiles/build/<version>/kfz.csv`: Weekly profile for all motor vehicles (cars, trucks, buses, motorcycles).
 - `data/mobility_profiles/build/<version>/pkw.csv`: Weekly profile for passenger cars.
-- `data/mobility_profiles/build/<version>/mot.csv`: Weekly profile for motorcycles only.
+- `data/mobility_profiles/build/<version>/mot.csv`: Weekly profile for motorcycles only.  # codespell:ignore mot
 - `data/mobility_profiles/build/<version>/bus.csv`: Weekly profile for buses only.
 - `data/mobility_profiles/build/<version>/lfw.csv`: Weekly profile for light commercial vehicles only.
 - `data/mobility_profiles/build/<version>/lkw.csv`: Weekly profile for heavy goods vehicles.
 
-**kfz.csv**
-
 | Field | Dimensions | Unit | Description |
 | --- | --- | --- | --- |
 | day | day | day of week | Day of the week (0=Monday, 6=Sunday) |
 | hour | hour | hour of day | Hour of the day (0-23) |
-| count | day, hour | -- | Aggregated vehicle counts for all motor vehicles (across all aggregated years and street types) |
-| n_counts | day, hour | -- | Number of data points that were aggregated. |
-
-**pkw.csv**
-
-| Field | Dimensions | Unit | Description |
-| --- | --- | --- | --- |
-| day | day | day of week | Day of the week (0=Monday, 6=Sunday) |
-| hour | hour | hour of day | Hour of the day (0-23) |
-| count | day, hour | -- | Aggregated vehicle counts for passenger cars only (across all aggregated years and street types) |
+| count | day, hour | -- | Aggregated vehicle counts for respective motor vehicles (across all aggregated years and street types) |
 | n_counts | day, hour | -- | Number of data points that were aggregated. |
 
 """
@@ -139,7 +128,7 @@ if __name__ == "__main__":
         + vehicle_counts["PmA_R1"]
         + vehicle_counts["PmA_R2"]
     )
-    vehicle_counts["mot"] = vehicle_counts["Mot_R1"] + vehicle_counts["Mot_R2"]
+    vehicle_counts["mot"] = vehicle_counts["Mot_R1"] + vehicle_counts["Mot_R2"]  # codespell:ignore mot
     vehicle_counts["bus"] = vehicle_counts["Bus_R1"] + vehicle_counts["Bus_R2"]
     vehicle_counts["lfw"] = vehicle_counts["Lfw_R1"] + vehicle_counts["Lfw_R2"]
     vehicle_counts["lkw"] = (
@@ -155,7 +144,7 @@ if __name__ == "__main__":
     vehicle_types = {
         "kfz": snakemake.output["kfz"],
         "pkw": snakemake.output["pkw"],
-        "mot": snakemake.output["mot"],
+        "mot": snakemake.output["mot"],  # codespell:ignore mot
         "bus": snakemake.output["bus"],
         "lfw": snakemake.output["lfw"],
         "lkw": snakemake.output["lkw"],

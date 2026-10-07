@@ -84,7 +84,7 @@ def build_transport_demand(
     """
     Returns transport demand per bus in unit km driven [100 km] for the five distinguishable motor vehicle types:
     - "pkw" - pc = passenger cars,
-    - "mot" - ptw = powered two-wheelers,
+    - "mot" - ptw = powered two-wheelers,  # codespell:ignore mot
     - "bus" = buses/coaches,
     - "lcv" = light commercial vehicles,
     - "hgv" = heavy goods vehicles.
