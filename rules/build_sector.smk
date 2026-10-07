@@ -1001,40 +1001,31 @@ rule build_industry_sector_ratios:
     resources:
         mem_mb=1000,
     params:
-        reference_year=config_provider("industry", "reference_year"),
-        H2_DRI=config_provider("industry", "H2_DRI"),
-        elec_DRI=config_provider("industry", "elec_DRI"),
-        MWh_NH3_per_tNH3=config_provider("industry", "MWh_NH3_per_tNH3"),
-        MWh_CH4_per_tNH3_SMR=config_provider("industry", "MWh_CH4_per_tNH3_SMR"),
-        MWh_elec_per_tNH3_SMR=config_provider("industry", "MWh_elec_per_tNH3_SMR"),
-        MWh_H2_per_tNH3_electrolysis=config_provider(
-            "industry", "MWh_H2_per_tNH3_electrolysis"
+        industry=config_provider(
+            "industry",
+            subset=[
+                "reference_year",
+                "H2_DRI",
+                "elec_DRI",
+                "MWh_NH3_per_tNH3",
+                "MWh_CH4_per_tNH3_SMR",
+                "MWh_elec_per_tNH3_SMR",
+                "MWh_H2_per_tNH3_electrolysis",
+                "MWh_elec_per_tNH3_electrolysis",
+                "NH3_process_emissions",
+                "petrochemical_process_emissions",
+                "HVC_production_today",
+                "MWh_elec_per_tHVC_mechanical_recycling",
+                "MWh_elec_per_tHVC_chemical_recycling",
+                "chlorine_production_today",
+                "MWh_elec_per_tCl",
+                "MWh_H2_per_tCl",
+                "methanol_production_today",
+                "MWh_elec_per_tMeOH",
+                "MWh_CH4_per_tMeOH",
+                "MWh_MeOH_per_tMeOH",
+            ],
         ),
-        MWh_elec_per_tNH3_electrolysis=config_provider(
-            "industry", "MWh_elec_per_tNH3_electrolysis"
-        ),
-        NH3_process_emissions=config_provider("industry", "NH3_process_emissions"),
-        petrochemical_process_emissions=config_provider(
-            "industry", "petrochemical_process_emissions"
-        ),
-        HVC_production_today=config_provider("industry", "HVC_production_today"),
-        MWh_elec_per_tHVC_mechanical_recycling=config_provider(
-            "industry", "MWh_elec_per_tHVC_mechanical_recycling"
-        ),
-        MWh_elec_per_tHVC_chemical_recycling=config_provider(
-            "industry", "MWh_elec_per_tHVC_chemical_recycling"
-        ),
-        chlorine_production_today=config_provider(
-            "industry", "chlorine_production_today"
-        ),
-        MWh_elec_per_tCl=config_provider("industry", "MWh_elec_per_tCl"),
-        MWh_H2_per_tCl=config_provider("industry", "MWh_H2_per_tCl"),
-        methanol_production_today=config_provider(
-            "industry", "methanol_production_today"
-        ),
-        MWh_elec_per_tMeOH=config_provider("industry", "MWh_elec_per_tMeOH"),
-        MWh_CH4_per_tMeOH=config_provider("industry", "MWh_CH4_per_tMeOH"),
-        MWh_MeOH_per_tMeOH=config_provider("industry", "MWh_MeOH_per_tMeOH"),
         ammonia=config_provider("sector", "ammonia", default=False),
     script:
         scripts("build_industry_sector_ratios.py")
@@ -1086,16 +1077,15 @@ rule build_industrial_production_per_country:
     resources:
         mem_mb=2000,
     params:
-        reference_year=config_provider("industry", "reference_year"),
-        HVC_production_today=config_provider("industry", "HVC_production_today"),
-        basic_chemicals_without_NH3_production_today=config_provider(
-            "industry", "basic_chemicals_without_NH3_production_today"
-        ),
-        chlorine_production_today=config_provider(
-            "industry", "chlorine_production_today"
-        ),
-        methanol_production_today=config_provider(
-            "industry", "methanol_production_today"
+        industry=config_provider(
+            "industry",
+            subset=[
+                "reference_year",
+                "HVC_production_today",
+                "basic_chemicals_without_NH3_production_today",
+                "chlorine_production_today",
+                "methanol_production_today",
+            ],
         ),
         countries=config_provider("countries"),
     script:
@@ -1120,15 +1110,16 @@ rule build_industrial_production_per_country_tomorrow:
     resources:
         mem_mb=1000,
     params:
-        St_primary_fraction=config_provider("industry", "St_primary_fraction"),
-        DRI_fraction=config_provider("industry", "DRI_fraction"),
-        Al_primary_fraction=config_provider("industry", "Al_primary_fraction"),
-        HVC_primary_fraction=config_provider("industry", "HVC_primary_fraction"),
-        HVC_mechanical_recycling_fraction=config_provider(
-            "industry", "HVC_mechanical_recycling_fraction"
-        ),
-        HVC_chemical_recycling_fraction=config_provider(
-            "industry", "HVC_chemical_recycling_fraction"
+        industry=config_provider(
+            "industry",
+            subset=[
+                "St_primary_fraction",
+                "DRI_fraction",
+                "Al_primary_fraction",
+                "HVC_primary_fraction",
+                "HVC_mechanical_recycling_fraction",
+                "HVC_chemical_recycling_fraction",
+            ],
         ),
     script:
         scripts("build_industrial_production_per_country_tomorrow.py")
@@ -1226,18 +1217,19 @@ rule build_industrial_energy_demand_per_country_today:
         mem_mb=2000,
     params:
         countries=config_provider("countries"),
-        reference_year=config_provider("industry", "reference_year"),
-        MWh_NH3_per_tNH3=config_provider("industry", "MWh_NH3_per_tNH3"),
-        MWh_H2_per_tNH3_electrolysis=config_provider(
-            "industry", "MWh_H2_per_tNH3_electrolysis"
+        industry=config_provider(
+            "industry",
+            subset=[
+                "reference_year",
+                "MWh_NH3_per_tNH3",
+                "MWh_H2_per_tNH3_electrolysis",
+                "MWh_elec_per_tNH3_electrolysis",
+                "MWh_elec_per_tCl",
+                "MWh_H2_per_tCl",
+                "MWh_elec_per_tMeOH",
+                "MWh_CH4_per_tMeOH",
+            ],
         ),
-        MWh_elec_per_tNH3_electrolysis=config_provider(
-            "industry", "MWh_elec_per_tNH3_electrolysis"
-        ),
-        MWh_elec_per_tCl=config_provider("industry", "MWh_elec_per_tCl"),
-        MWh_H2_per_tCl=config_provider("industry", "MWh_H2_per_tCl"),
-        MWh_elec_per_tMeOH=config_provider("industry", "MWh_elec_per_tMeOH"),
-        MWh_CH4_per_tMeOH=config_provider("industry", "MWh_CH4_per_tMeOH"),
         ammonia=config_provider("sector", "ammonia", default=False),
     script:
         scripts("build_industrial_energy_demand_per_country_today.py")
@@ -1389,18 +1381,19 @@ rule build_transport_demand:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        transport_heating_deadband_lower=config_provider(
-            "sector", "transport_heating_deadband_lower"
+        sector=config_provider(
+            "sector",
+            subset=[
+                "transport_heating_deadband_lower",
+                "transport_heating_deadband_upper",
+                "ICE_lower_degree_factor",
+                "ICE_upper_degree_factor",
+                "bev_avail_max",
+                "bev_avail_mean",
+                "bev_dsm_restriction_time",
+                "bev_dsm_restriction_value",
+            ],
         ),
-        transport_heating_deadband_upper=config_provider(
-            "sector", "transport_heating_deadband_upper"
-        ),
-        ICE_lower_degree_factor=config_provider("sector", "ICE_lower_degree_factor"),
-        ICE_upper_degree_factor=config_provider("sector", "ICE_upper_degree_factor"),
-        bev_avail_max=config_provider("sector", "bev_avail_max"),
-        bev_avail_mean=config_provider("sector", "bev_avail_mean"),
-        bev_dsm_restriction_time=config_provider("sector", "bev_dsm_restriction_time"),
-        bev_dsm_restriction_value=config_provider("sector", "bev_dsm_restriction_value"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     script:
         scripts("build_transport_demand.py")

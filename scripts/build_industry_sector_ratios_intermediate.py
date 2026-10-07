@@ -18,7 +18,7 @@ from scripts.prepare_sector_network import get
 logger = logging.getLogger(__name__)
 
 
-def build_industry_sector_ratios_intermediate():
+def build_industry_sector_ratios_intermediate(fraction_future: float):
     # in TWh/a
     demand = pd.read_csv(
         snakemake.input.industrial_energy_demand_per_country_today,
@@ -51,8 +51,6 @@ def build_industry_sector_ratios_intermediate():
         "liquid": "naphtha",
     }
     today_sector_ratios = today_sector_ratios.rename(rename).groupby(level=0).sum()
-
-    fraction_future = get(params["sector_ratios_fraction_future"], year)
 
     intermediate_sector_ratios = {}
     for ct, group in today_sector_ratios.T.groupby(level=0):
@@ -87,6 +85,6 @@ if __name__ == "__main__":
 
     year = int(snakemake.wildcards.horizon)
 
-    params = snakemake.params
+    fraction_future = get(snakemake.params.sector_ratios_fraction_future, year)
 
-    build_industry_sector_ratios_intermediate()
+    build_industry_sector_ratios_intermediate(fraction_future)

@@ -133,7 +133,7 @@ def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammo
     return df
 
 
-def separate_basic_chemicals(demand, production):
+def separate_basic_chemicals(demand, production, params, endogenous_ammonia):
     chlorine = pd.DataFrame(
         {
             "hydrogen": production["Chlorine"] * params["MWh_H2_per_tCl"],
@@ -161,7 +161,7 @@ def separate_basic_chemicals(demand, production):
         }
     ).T
 
-    if snakemake.params.ammonia:
+    if endogenous_ammonia:
         ammonia = pd.DataFrame(
             {"ammonia": production["Ammonia"] * params["MWh_NH3_per_tNH3"]}
         ).T
@@ -194,14 +194,14 @@ def add_non_eu27_industrial_energy_demand(countries, demand, production):
     return pd.concat([demand, demand_non_eu27])
 
 
-def industrial_energy_demand(countries, year):
+def industrial_energy_demand(countries, year, endogenous_ammonia):
     nprocesses = snakemake.threads
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     func = partial(
         industrial_energy_demand_per_country,
         year=year,
         jrc_dir=snakemake.input.jrc,
-        endogenous_ammonia=snakemake.params.ammonia,
+        endogenous_ammonia=endogenous_ammonia,
     )
     tqdm_kwargs = dict(
         ascii=False,
@@ -273,11 +273,14 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    params = snakemake.params
+    params = snakemake.params.industry
+    endogenous_ammonia = snakemake.params.ammonia
     year = params.get("reference_year", 2019)
     countries = pd.Index(snakemake.params.countries)
 
-    demand = industrial_energy_demand(countries.intersection(eu27), year)
+    demand = industrial_energy_demand(
+        countries.intersection(eu27), year, endogenous_ammonia
+    )
 
     # output in MtMaterial/a
     production = (
@@ -285,7 +288,7 @@ if __name__ == "__main__":
         / 1e3
     )
 
-    demand = separate_basic_chemicals(demand, production)
+    demand = separate_basic_chemicals(demand, production, params, endogenous_ammonia)
 
     demand = add_non_eu27_industrial_energy_demand(countries, demand, production)
 

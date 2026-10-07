@@ -663,11 +663,14 @@ def base_network(
     offshore_shapes,
     countries,
     parameter_corrections,
-    params,
+    snapshots,
+    base_network,
+    osm_version,
+    voltages,
+    line_config,
+    link_config,
+    transformer_config,
 ):
-    base_network = params.base_network
-    osm_version = params.osm_version
-    voltages = params.voltages
     assert base_network in {"entsoegridkit", "osm", "tyndp"}, (
         f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
     )
@@ -693,15 +696,15 @@ def base_network(
         converters = _load_converters_from_eg(buses, converters)
 
         # Optionally reconnect Crimea
-        if params.reconnect_crimea and "UA" in countries:
+        if line_config["reconnect_crimea"] and "UA" in countries:
             lines = _reconnect_crimea(lines)
 
         # Set electrical parameters of lines and links
         lines = _set_electrical_parameters_lines_eg(
-            lines, voltages, params.line_types, params.line_s_max_pu
+            lines, voltages, line_config["types"], line_config["s_max_pu"]
         )
         links = _set_electrical_parameters_links_eg(
-            links, params.link_p_max_pu, params.link_p_min_pu, links_p_nom
+            links, link_config["p_max_pu"], link_config["p_min_pu"], links_p_nom
         )
     elif base_network in {"osm", "tyndp"}:
         links = _load_links_from_raw(buses, links)
@@ -709,10 +712,10 @@ def base_network(
 
         # Set electrical parameters of lines and links
         lines = _set_electrical_parameters_lines_raw(
-            lines, voltages, params.line_types, params.line_s_max_pu
+            lines, voltages, line_config["types"], line_config["s_max_pu"]
         )
         links = _set_electrical_parameters_links_raw(
-            links, params.link_p_max_pu, params.link_p_min_pu
+            links, link_config["p_max_pu"], link_config["p_min_pu"]
         )
     else:
         raise ValueError(
@@ -721,10 +724,10 @@ def base_network(
 
     # Set electrical parameters of transformers and converters
     transformers = _set_electrical_parameters_transformers(
-        transformers, params.transformers
+        transformers, transformer_config
     )
     converters = _set_electrical_parameters_converters(
-        converters, params.link_p_max_pu, params.link_p_min_pu
+        converters, link_config["p_max_pu"], link_config["p_min_pu"]
     )
 
     n = pypsa.Network()
@@ -734,8 +737,7 @@ def base_network(
         + ")"
     )
 
-    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
-    n.set_snapshots(time)
+    n.set_snapshots(snapshots)
 
     n.add("Bus", buses.index, **buses)
     n.add("Line", lines.index, **lines)
@@ -756,7 +758,7 @@ def base_network(
     _replace_b2b_converter_at_country_border_by_link(n)
 
     n = _adjust_capacities_of_under_construction_branches(
-        n, params.lines_under_construction, params.links_under_construction
+        n, line_config["under_construction"], link_config["under_construction"]
     )
 
     _set_shapes(n, country_shapes, offshore_shapes)
@@ -1672,7 +1674,13 @@ if __name__ == "__main__":
         offshore_shapes,
         countries,
         parameter_corrections,
-        snakemake.params,
+        get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day),
+        snakemake.params.base_network,
+        snakemake.params.osm_version,
+        snakemake.params.voltages,
+        snakemake.params.lines,
+        snakemake.params.links,
+        snakemake.params.transformers,
     )
 
     admin_shapes = build_admin_shapes(

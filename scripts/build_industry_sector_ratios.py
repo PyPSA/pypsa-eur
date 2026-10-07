@@ -97,7 +97,7 @@ def load_idees_data(sector, country="EU27"):
     return idees
 
 
-def iron_and_steel():
+def iron_and_steel(params: dict):
     """
     This function calculates the energy consumption and emissions for different
     approaches to producing iron and steel. The two primary approaches are
@@ -106,11 +106,17 @@ def iron_and_steel():
     furnaces due to their higher efficiency and greater reliance on
     electricity.
 
-    Returns:
-        pd.DataFrame: A DataFrame containing the energy consumption (in MWh/t material)
-                      and process emissions (in tCO2/t material) for different steel
-                      production approaches, including electric arc, DRI + electric arc,
-                      and integrated steelworks.
+    Parameters
+    ----------
+    params : dict
+        Industry configuration with the DRI energy demands.
+
+    Returns
+    -------
+    pd.DataFrame
+        Energy consumption (in MWh/t material) and process emissions (in
+        tCO2/t material) for different steel production approaches, including
+        electric arc, DRI + electric arc, and integrated steelworks.
     """
 
     sector = "Iron and steel"
@@ -291,7 +297,7 @@ def iron_and_steel():
     return df
 
 
-def chemicals_industry():
+def chemicals_industry(params: dict, endogenous_ammonia: bool | str):
     """
     This function calculates the energy consumption and emissions for the
     chemicals industry, focusing on various subsectors such as basic chemicals,
@@ -299,10 +305,19 @@ def chemicals_industry():
     for specific processes in ammonia, chlorine, methanol production, and other
     chemicals.
 
-    Returns:
-        pd.DataFrame: A DataFrame containing the energy consumption (in MWh/t material)
-                      and process emissions (in tCO2/t material) for various subsectors
-                      within the chemicals industry.
+    Parameters
+    ----------
+    params : dict
+        Industry configuration with production volumes, energy demands and
+        process emissions of basic chemicals.
+    endogenous_ammonia : bool or str
+        Whether ammonia is modelled as an energy carrier.
+
+    Returns
+    -------
+    pd.DataFrame
+        Energy consumption (in MWh/t material) and process emissions (in
+        tCO2/t material) for various subsectors within the chemicals industry.
     """
     sector = "Chemicals Industry"
     idees = load_idees_data(sector)
@@ -465,7 +480,7 @@ def chemicals_industry():
 
     sector = "Ammonia"
     df[sector] = 0.0
-    if snakemake.params.ammonia:
+    if endogenous_ammonia:
         df.loc["ammonia", sector] = params["MWh_NH3_per_tNH3"]
     else:
         df.loc["hydrogen", sector] = params["MWh_H2_per_tNH3_electrolysis"]
@@ -1517,14 +1532,14 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    params = snakemake.params
+    params = snakemake.params.industry
 
     year = params["reference_year"]
 
     df = pd.concat(
         [
-            iron_and_steel(),
-            chemicals_industry(),
+            iron_and_steel(params),
+            chemicals_industry(params, snakemake.params.ammonia),
             nonmetalic_mineral_products(),
             pulp_paper_printing(),
             food_beverages_tobacco(),

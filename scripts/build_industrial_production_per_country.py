@@ -250,7 +250,7 @@ def industry_production(countries, year, eurostat, jrc_dir):
     return demand
 
 
-def separate_basic_chemicals(demand, year):
+def separate_basic_chemicals(demand, year, params):
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """
@@ -300,9 +300,9 @@ if __name__ == "__main__":
 
     countries = snakemake.params.countries
 
-    year = snakemake.params.reference_year
+    year = snakemake.params.industry["reference_year"]
 
-    params = snakemake.params
+    params = snakemake.params.industry
 
     jrc_dir = snakemake.input.jrc
 
@@ -310,7 +310,7 @@ if __name__ == "__main__":
 
     demand = industry_production(countries, year, eurostat, jrc_dir)
 
-    separate_basic_chemicals(demand, year)
+    separate_basic_chemicals(demand, year, params)
 
     demand.fillna(0.0, inplace=True)
 

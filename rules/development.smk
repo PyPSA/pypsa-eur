@@ -30,13 +30,13 @@ rule base_network_incumbent:
         voltages=config_provider("electricity", "voltages"),
         base_network=config_provider("electricity", "base_network"),
         osm_version=config_provider("data", "osm", "version"),
-        line_types=config_provider("lines", "types"),
-        line_s_max_pu=config_provider("lines", "s_max_pu"),
-        lines_under_construction=config_provider("lines", "under_construction"),
-        reconnect_crimea=config_provider("lines", "reconnect_crimea"),
-        link_p_max_pu=config_provider("links", "p_max_pu"),
-        link_p_min_pu=config_provider("links", "p_min_pu"),
-        links_under_construction=config_provider("links", "under_construction"),
+        lines=config_provider(
+            "lines",
+            subset=["types", "s_max_pu", "under_construction", "reconnect_crimea"],
+        ),
+        links=config_provider(
+            "links", subset=["p_max_pu", "p_min_pu", "under_construction"]
+        ),
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),

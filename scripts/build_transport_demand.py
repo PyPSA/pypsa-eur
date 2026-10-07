@@ -190,7 +190,7 @@ if __name__ == "__main__":
         snakemake.input.pop_weighted_energy_totals, index_col=0
     )
 
-    options = snakemake.params
+    options = snakemake.params.sector
 
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day, tz="UTC"

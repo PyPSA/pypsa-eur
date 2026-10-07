@@ -102,13 +102,13 @@ rule base_network:
         voltages=config_provider("electricity", "voltages"),
         base_network=config_provider("electricity", "base_network"),
         osm_version=config_provider("data", "osm", "version"),
-        line_types=config_provider("lines", "types"),
-        line_s_max_pu=config_provider("lines", "s_max_pu"),
-        lines_under_construction=config_provider("lines", "under_construction"),
-        reconnect_crimea=config_provider("lines", "reconnect_crimea"),
-        link_p_max_pu=config_provider("links", "p_max_pu"),
-        link_p_min_pu=config_provider("links", "p_min_pu"),
-        links_under_construction=config_provider("links", "under_construction"),
+        lines=config_provider(
+            "lines",
+            subset=["types", "s_max_pu", "under_construction", "reconnect_crimea"],
+        ),
+        links=config_provider(
+            "links", subset=["p_max_pu", "p_min_pu", "under_construction"]
+        ),
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
@@ -310,7 +310,7 @@ rule determine_availability_matrix_MD_UA:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     params:
-        renewable=lambda w: config_provider("renewable", w.technology)(w),
+        technology=lambda w: config_provider("renewable", w.technology)(w),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     script:
         scripts("determine_availability_matrix_MD_UA.py")
@@ -383,7 +383,7 @@ rule determine_availability_matrix:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     params:
-        renewable=lambda w: config_provider("renewable", w.technology)(w),
+        technology=lambda w: config_provider("renewable", w.technology)(w),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     script:
         scripts("determine_availability_matrix.py")
@@ -417,7 +417,7 @@ rule build_renewable_profiles:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        renewable=lambda w: config_provider("renewable", w.technology)(w),
+        technology=lambda w: config_provider("renewable", w.technology)(w),
     script:
         scripts("build_renewable_profiles.py")
 
@@ -702,6 +702,7 @@ rule simplify_network:
     resources:
         mem_mb=12000,
     params:
+        countries=config_provider("countries"),
         mode=config_provider("clustering", "mode"),
         administrative=config_provider("clustering", "administrative"),
         simplify_network=config_provider("clustering", "simplify_network"),

@@ -27,7 +27,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    params = snakemake.params
+    params = snakemake.params.industry
 
     investment_year = int(snakemake.wildcards.horizon)
 
