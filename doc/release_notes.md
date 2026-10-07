@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: correct GEBCO bathymetry CRS typo for Moldova and Ukraine (EPSG: 4236 → 4326)
 
 * Removed unused `build_transformation_output_coke()` function from `scripts/build_energy_totals.py`. `build_transformation_output_coke` is its own rule and its code lives in `scripts/build_transformation_output_coke.py` ([#2353](https://github.com/PyPSA/pypsa-eur/pull/2353)).
 
