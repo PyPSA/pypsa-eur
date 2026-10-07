@@ -5,7 +5,7 @@
 """
 Transmission projects configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission-projects
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#transmission_projects_cf
 """
 
 from typing import Literal

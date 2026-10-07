@@ -330,11 +330,16 @@ def prepare_building_topology(u_values, same_building_topology=True):
     Reads in typical building topologies (e.g. average surface of building
     elements) and typical losses through thermal bridging and air ventilation.
     """
-    data_tabula = pd.read_csv(
-        snakemake.input.data_tabula,
-        skiprows=lambda x: x in range(1, 11),
-        low_memory=False,
-    ).iloc[:2974]
+    data_tabula = (
+        pd.read_excel(
+            snakemake.input.data_tabula,
+            sheet_name="Calc.Set.Building",
+            header=0,
+            skiprows=range(1, 11),
+        )
+        .iloc[:2974]
+        .reset_index(drop=True)
+    )
 
     parameters = [
         "Code_Country",
@@ -1053,11 +1058,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_retro_cost",
-            clusters=48,
-            sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
-        )
+        snakemake = mock_snakemake("build_retro_cost")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

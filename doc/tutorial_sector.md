@@ -22,7 +22,7 @@ perfect foresight is under development. See also the documentation on
 
 ### Configuration
 
-The default configuration file (``config/config.default.yaml``) is set up for running
+The default configuration file (`config/config.default.yaml`) is set up for running
 overnight scenarios. Running a sector-coupled model unlocks many further
 configuration options. In the example below, we say that the gas network should
 be added and spatially resolved. We also say that the existing gas network may
@@ -35,13 +35,9 @@ be retrofitted to transport hydrogen instead.
 Documentation for all options will be added successively to [Configuration](configuration.md).
 
 Scenarios can be defined like for electricity-only studies, but with additional
-wildcard options.
-
-```yaml
-{{ yaml_section("scenario", source="test/config.overnight.yaml") }}
-```
-
-For allowed wildcard values, refer to [Wildcards](wildcards.md).
+configuration namespaces. Define scenario entries in `config/scenarios.yaml` and
+enable them via `run.scenarios.enable: true` to sweep different combinations of
+settings.
 
 ### Execution
 
@@ -51,29 +47,35 @@ To run an overnight / greenfiled scenario with the specifications above, run
 $ snakemake -call all --configfile config/test/config.overnight.yaml
 ```
 
-which will result in the following jobs ``snakemake`` wants to run, some of
+which will result in the following jobs `snakemake` wants to run, some of
 which were already included in the electricity-only tutorial:
 
 ```console
 job                                                 count
 ------------------------------------------------  -------
-add_electricity                                         1
 add_transmission_projects_and_dlr                       1
 all                                                     1
 base_network                                            1
 build_ammonia_production                                1
+build_ates_potentials                                   1
 build_biomass_potentials                                1
 build_central_heating_temperature_profiles              1
 build_clustered_population_layouts                      1
+build_co2_prices                                        1
+build_co2_totals                                        1
 build_cop_profiles                                      1
 build_daily_heat_demand                                 1
+build_dh_areas                                          1
 build_direct_heat_source_utilisation_profiles           1
 build_district_heat_share                               1
 build_electricity_demand                                1
 build_electricity_demand_base                           1
 build_energy_totals                                     1
+build_eurostat_balances                                 1
+build_existing_heating_distribution                     1
 build_gas_input_locations                               1
 build_gas_network                                       1
+build_geothermal_heat_potential                         1
 build_heat_totals                                       1
 build_hourly_heat_demand                                1
 build_industrial_distribution_key                       1
@@ -85,60 +87,101 @@ build_industrial_production_per_country_tomorrow        1
 build_industrial_production_per_node                    1
 build_industry_sector_ratios                            1
 build_industry_sector_ratios_intermediate               1
+build_nuts3_shapes                                      1
+build_offshore_shapes                                   1
 build_osm_boundaries                                    4
 build_population_layouts                                1
 build_population_weighted_energy_totals                 2
 build_powerplants                                       1
+build_ptes_operations                                   1
 build_renewable_profiles                                6
+build_river_heat_potential                              1
 build_salt_cavern_potentials                            1
+build_sea_heat_potential                                1
 build_shapes                                            1
 build_ship_raster                                       1
 build_shipping_demand                                   1
+build_solar_rooftop_potentials                          1
+build_solar_thermal_profiles                            1
+build_swiss_energy_balances                             1
 build_temperature_profiles                              1
+build_transformation_output_coke                        1
 build_transmission_projects                             1
 build_transport_demand                                  1
+cluster_electricity_demand                              1
 cluster_gas_network                                     1
 cluster_network                                         1
+compose_network                                         1
 determine_availability_matrix                           6
 make_summary                                            1
+plot_balance_map                                        7
+plot_balance_map_interactive                            7
+plot_balance_timeseries                                 1
+plot_base_network                                       1
+plot_clustered_network                                  1
+plot_cop_profiles                                       1
 plot_gas_network                                        1
+plot_heatmap_timeseries                                 1
 plot_hydrogen_network                                   1
 plot_power_network                                      1
-plot_power_network_clustered                            1
 plot_summary                                            1
-prepare_network                                         1
-prepare_sector_network                                  1
+process_cost_data                                       1
+retrieve_aquifer_data_bgr                               1
+retrieve_attributed_ports                               1
+retrieve_co2_prices                                     1
+retrieve_corine                                         1
 retrieve_cost_data                                      1
-retrieve_databundle                                     1
+retrieve_country_hdd                                    1
+retrieve_cutout                                         1
+retrieve_desnz_electricity_consumption                  1
+retrieve_dh_areas                                       1
 retrieve_eez                                            1
-retrieve_electricity_demand                             1
-retrieve_eurostat_data                                  1
-retrieve_eurostat_household_data                        1
+retrieve_electricity_demand_energy_atlas                1
+retrieve_electricity_demand_entsoe                      1
+retrieve_electricity_demand_neso                        1
+retrieve_electricity_demand_opsd                        1
+retrieve_enspreso_biomass                               1
+retrieve_eu_nuts_2013                                   1
+retrieve_eu_nuts_2021                                   1
+retrieve_eurostat_balances                              1
+retrieve_eurostat_household_balances                    1
 retrieve_gas_infrastructure_data                        1
+retrieve_gdp_per_capita                                 1
+retrieve_gem_cement_concrete_tracker                    1
 retrieve_gem_europe_gas_tracker                         1
 retrieve_gem_steel_plant_tracker                        1
+retrieve_geothermal_heat_utilisation_potentials         1
+retrieve_ghg_emissions                                  1
+retrieve_h2_salt_caverns                                1
+retrieve_hera_data_test_cutout                          1
 retrieve_hotmaps_industrial_sites                       1
 retrieve_jrc_ardeco                                     1
-retrieve_jrc_enspreso_biomass                           1
 retrieve_jrc_idees                                      1
-retrieve_nuts_2013_shapes                               1
-retrieve_nuts_2021_shapes                               1
-retrieve_osm_boundaries                                 4
-retrieve_osm_prebuilt                                   1
+retrieve_lau_regions                                    1
+retrieve_mobility_profiles                              1
+retrieve_natura                                         1
+retrieve_nitrogen_statistics                            1
+retrieve_nuts3_population                               1
+retrieve_ons_lad                                        1
+retrieve_osm_archive                                    1
+retrieve_osm_boundaries                                 1
+retrieve_population_count                               1
+retrieve_powerplants                                    1
+retrieve_seawater_temperature                           1
 retrieve_ship_raster                                    1
+retrieve_swiss_energy_balances                          1
 retrieve_synthetic_electricity_demand                   1
-retrieve_usgs_ammonia_production                        1
 retrieve_worldbank_urban_population                     1
 simplify_network                                        1
-solve_sector_network                                    1
+solve_network                                           1
 time_aggregation                                        1
-total                                                  92
+total                                                 148
 ```
 
 This covers the retrieval of additional raw data from online resources and
 preprocessing data about the transport, industry, and heating sectors as well as
 additional rules about geological storage and sequestration potentials, gas
-infrastructure, and biomass potentials. The collection rule ``all`` will also
+infrastructure, and biomass potentials. The collection rule `all` will also
 generate summary CSV files and plots after the network has been solved
 successfully.
 
@@ -155,14 +198,14 @@ To activate the myopic foresight mode, set
 ```
 
 Scenarios can be defined like for electricity-only studies, but with additional
-wildcard options. For the myopic foresight mode, the ``{planning_horizons}`` wildcard
-defines the sequence of investment horizons.
+configuration namespaces. The myopic foresight mode relies on the top-level
+`planning_horizons` list to define the sequence of investment horizons:
 
 ```yaml
-{{ yaml_section("scenario", source="test/config.myopic.yaml") }}
+{{ yaml_section("planning_horizons", source="test/config.myopic.yaml") }}
 ```
 
-For allowed wildcard values, refer to [Wildcards](wildcards.md).
+For allowed wildcard values (e.g., `{horizon}`), refer to [Wildcards](wildcards.md).
 
 In the myopic foresight mode, you can tweak for instance exogenously given transition paths, like the one for
 the share of primary steel production we change below:
@@ -181,22 +224,155 @@ To run a myopic foresight scenario with the specifications above, run
 $ snakemake -call all --configfile config/test/config.myopic.yaml
 ```
 
-which will result in additional jobs ``snakemake`` wants to run, which
-translates to the following workflow diagram which nicely outlines how the
-sequential pathway optimisation with myopic foresight is implemented in the
-workflow:
+which will result in additional jobs `snakemake` wants to run, which
+translates to the following job summary. Note how the rules `compose_network`
+and `solve_network` are now called multiple times (once per planning horizon),
+while most other rules remain the same as in the overnight case:
 
-[![Sector-coupled myopic DAG](img/dag_myopic.svg)](img/dag_myopic.svg)
+```console
+job                                                 count
+------------------------------------------------  -------
+add_transmission_projects_and_dlr                       1
+all                                                     1
+base_network                                            1
+build_ammonia_production                                1
+build_ates_potentials                                   3
+build_biomass_potentials                                3
+build_central_heating_temperature_profiles              3
+build_clustered_population_layouts                      1
+build_co2_prices                                        1
+build_co2_totals                                        1
+build_cop_profiles                                      3
+build_daily_heat_demand                                 1
+build_dh_areas                                          1
+build_direct_heat_source_utilisation_profiles           3
+build_district_heat_share                               3
+build_electricity_demand                                1
+build_electricity_demand_base                           1
+build_energy_totals                                     1
+build_eurostat_balances                                 1
+build_existing_heating_distribution                     3
+build_gas_input_locations                               1
+build_gas_network                                       1
+build_geothermal_heat_potential                         1
+build_heat_totals                                       1
+build_hourly_heat_demand                                1
+build_industrial_distribution_key                       1
+build_industrial_energy_demand_per_country_today        1
+build_industrial_energy_demand_per_node                 3
+build_industrial_energy_demand_per_node_today           1
+build_industrial_production_per_country                 1
+build_industrial_production_per_country_tomorrow        3
+build_industrial_production_per_node                    3
+build_industry_sector_ratios                            1
+build_industry_sector_ratios_intermediate               3
+build_nuts3_shapes                                      1
+build_offshore_shapes                                   1
+build_osm_boundaries                                    4
+build_population_layouts                                1
+build_population_weighted_energy_totals                 2
+build_powerplants                                       1
+build_ptes_operations                                   3
+build_renewable_profiles                                6
+build_river_heat_potential                              1
+build_salt_cavern_potentials                            1
+build_sea_heat_potential                                1
+build_shapes                                            1
+build_ship_raster                                       1
+build_shipping_demand                                   1
+build_solar_rooftop_potentials                          1
+build_solar_thermal_profiles                            1
+build_swiss_energy_balances                             1
+build_temperature_profiles                              1
+build_transformation_output_coke                        1
+build_transmission_projects                             1
+build_transport_demand                                  1
+cluster_electricity_demand                              1
+cluster_gas_network                                     1
+cluster_network                                         1
+compose_network                                         3
+determine_availability_matrix                           6
+make_summary                                            1
+plot_balance_map                                       21
+plot_balance_map_interactive                           21
+plot_balance_timeseries                                 3
+plot_base_network                                       1
+plot_clustered_network                                  1
+plot_cop_profiles                                       3
+plot_gas_network                                        3
+plot_heatmap_timeseries                                 3
+plot_hydrogen_network                                   3
+plot_power_network                                      3
+plot_summary                                            1
+process_cost_data                                       3
+retrieve_aquifer_data_bgr                               1
+retrieve_attributed_ports                               1
+retrieve_co2_prices                                     1
+retrieve_corine                                         1
+retrieve_cost_data                                      3
+retrieve_country_hdd                                    1
+retrieve_cutout                                         1
+retrieve_desnz_electricity_consumption                  1
+retrieve_dh_areas                                       1
+retrieve_eez                                            1
+retrieve_electricity_demand_energy_atlas                1
+retrieve_electricity_demand_entsoe                      1
+retrieve_electricity_demand_neso                        1
+retrieve_electricity_demand_opsd                        1
+retrieve_enspreso_biomass                               1
+retrieve_eu_nuts_2013                                   1
+retrieve_eu_nuts_2021                                   1
+retrieve_eurostat_balances                              1
+retrieve_eurostat_household_balances                    1
+retrieve_gas_infrastructure_data                        1
+retrieve_gdp_per_capita                                 1
+retrieve_gem_cement_concrete_tracker                    1
+retrieve_gem_europe_gas_tracker                         1
+retrieve_gem_steel_plant_tracker                        1
+retrieve_geothermal_heat_utilisation_potentials         1
+retrieve_ghg_emissions                                  1
+retrieve_h2_salt_caverns                                1
+retrieve_hera_data_test_cutout                          1
+retrieve_hotmaps_industrial_sites                       1
+retrieve_jrc_ardeco                                     1
+retrieve_jrc_idees                                      1
+retrieve_lau_regions                                    1
+retrieve_mobility_profiles                              1
+retrieve_natura                                         1
+retrieve_nitrogen_statistics                            1
+retrieve_nuts3_population                               1
+retrieve_ons_lad                                        1
+retrieve_osm_archive                                    1
+retrieve_osm_boundaries                                 1
+retrieve_population_count                               1
+retrieve_powerplants                                    1
+retrieve_seawater_temperature                           1
+retrieve_ship_raster                                    1
+retrieve_swiss_energy_balances                          1
+retrieve_synthetic_electricity_demand                   1
+retrieve_worldbank_urban_population                     1
+simplify_network                                        1
+solve_network                                           3
+time_aggregation                                        1
+total                                                 220
+```
 
-!!! note
-    The above DAG is abbreviated. The full DAG for the myopic foresight scenario
-    contains all intermediate rules for each planning horizon (2030, 2040, 2050).
+This sequential workflow nicely outlines how the pathway optimisation with
+myopic foresight is implemented: each planning horizon depends on the solved
+network from the previous horizon, which allows for warm-starting the
+optimisation and tracking existing infrastructure over time.
+
+You can visualise the full DAG with:
+
+```console
+$ snakemake --dag all --configfile config/test/config.myopic.yaml | dot -Tpng -o myopic-dag.png
+```
 
 ## Scaling-Up
 
 If you now feel confident and want to tackle runs with larger temporal, technological and
-spatial scope, clean-up the repository and after modifying the ``config/config.yaml`` file
-target the collection rule ``all`` again without providing the test
+spatial scope, clean-up the repository and after modifying the `config/config.yaml` file
+target the collection rule `all` again without providing the test
 configuration file.
 
 ```console

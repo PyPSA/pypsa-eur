@@ -5,8 +5,9 @@
 
 The database of cost assumptions is retrieved from the repository
 [PyPSA/technology-data](https://github.com/pypsa/technology-data) and then
-saved to a file `data/costs/*/costs_{year}.csv`. The `config/config.yaml` provides options
-to choose a reference year. To select a specific version of the cost assumptions, see [Managing Data Versions](data_sources.md#managing_data_versions).
+saved to a file `data/costs/*/costs_{year}.csv`. By default each planning horizon uses
+the cost assumptions of its own year; `costs.year` overrides this with a single
+reference year for all horizons. To select a specific version of the cost assumptions, see [Managing Data Versions](data_sources.md#managing_data_versions).
 
 ```yaml
 {{ yaml_section("costs.year") }}
@@ -24,7 +25,7 @@ years compiled from various sources, namely for
 - efficiency, and
 - carbon-dioxide intensity.
 
-Many values are taken from a database published by the Danish Energy Agency ([DEA](https://ens.dk/en/our-services/projections-and-models/technology-data)).
+Many values are taken from a database published by the Danish Energy Agency ([DEA](https://ens.dk/en/analyses-and-statistics/technology-catalogues)).
 
 The given overnight capital costs are annualised to net present costs
 with a discount rate of $r$ over the economic lifetime $n$ using the annuity factor

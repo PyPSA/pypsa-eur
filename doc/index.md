@@ -34,14 +34,16 @@ effects for renewable power generation and their varying resource availability.
 
 ## Sector-Coupled Energy System
 
-A sector-coupled extension (previously known as **PyPSA-Eur-Sec**, which is now
-deprecated) adds demand and supply for the following sectors: transport, space
-and water heating, biomass, energy consumption in the agriculture, industry and
-industrial feedstocks, carbon management, carbon capture and
-usage/sequestration. This completes the energy system and includes all
-greenhouse gas emitters except waste management, agriculture, forestry and land
-use. The diagram below gives an overview of the sectors and the links between
-them:
+A sector-coupled extension adds demand and supply for the following sectors:
+transport, space and water heating, biomass, energy consumption in the
+agriculture, industry and industrial feedstocks, carbon management, carbon
+capture and usage/sequestration. This completes the energy system and includes
+all greenhouse gas emitters except waste management, agriculture, forestry and
+land use. The diagram below gives an overview of the sectors and the links
+between them:
+
+!!! note
+    This extension replaces the functionality that previously shipped under the **PyPSA-Eur-Sec** name.
 
 ![](img/multisector_figure.png){width=70%}
 
@@ -84,7 +86,7 @@ Transformation in Energy Systems](https://www.tu.berlin/en/ensys) at the
 developed within the [IAI](http://www.iai.kit.edu) at the [Karlsruhe Institute
 of Technology (KIT)](http://www.kit.edu/english/index.php) which was funded by
 the [Helmholtz Association](https://www.helmholtz.de/en/), and by the
-[Renewable Energy Group](https://fias.uni-frankfurt.de/physics/schramm/renewable-energy-system-and-network-analysis/)
+[Renewable Energy Group](https://web.archive.org/web/20250425151540/https://www.fias.science/en/theoretical-sciences/research-groups/stefan-schramm/)
 at [FIAS](https://fias.uni-frankfurt.de/) to carry out simulations for the
 [CoNDyNet project](http://condynet.de/), financed by the [German Federal
 Ministry for Education and Research (BMBF)](https://www.bmbf.de/en/index.html)
@@ -96,7 +98,12 @@ as part of the [Stromnetze Research Initiative](http://forschung-stromnetze.info
 
 !!! note
     The graph above was generated using
-    `pixi run snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tsvg -o doc/img/workflow.svg`
+    `pixi run snakemake --rulegraph dot --forceall | sed -n "/digraph/,/}/p" | pixi run dot -Tsvg -o doc/img/workflow.svg`
+
+The rule set follows `base → simplified → clustered → composed → solved`.
+Intermediate networks (`networks/simplified.nc`, `networks/clustered.nc`,
+`networks/composed_{horizon}.nc`) are stored in `resources/{run}`, while solved
+networks are always written to `results/{run}/networks/solved_{horizon}.nc`.
 
 ## Learning Energy System Modelling
 
@@ -108,8 +115,8 @@ to reading this documentation.
   modelling energy systems which PyPSA-Eur uses under the hood.
 - Course on [Energy Systems](https://nworbmot.org/courses/es-22/) given at
   Technical University of Berlin by [Prof. Dr. Tom Brown](https://nworbmot.org).
-- Course on [Data Science for Energy System Modelling](https://fneum.github.io/data-science-for-esm/intro.html)
-  given at Technical University of Berlin by [Dr. Fabian Neumann](https://neumann.fyi).
+- Course on [Data Science for Energy System Modelling](https://fneum.github.io/data-science-for-esm/)
+  given at Technical University of Berlin by [Dr. Fabian Neumann](https://fneum.org/).
 
 ## Citing PyPSA-Eur
 
