@@ -15,7 +15,6 @@ requires-pixi = ">=0.71.0"
 linopy = "0d"
 pypsa = "0d"
 atlite = "0d"
-snakemake-executor-plugin-slurm = "0d"  # drop once the pandas 3 build is older than 7d
 
 [tasks]
 
