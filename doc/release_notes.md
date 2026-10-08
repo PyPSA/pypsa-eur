@@ -6,6 +6,9 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* data: Update to use the power plant dataset from `powerplantmatching` v0.9.1 ([#2356](https://github.com/PyPSA/pypsa-eur/pull/2356)).
+
+
 * Removed `exclude-newer` exception for `snakemake-executor-plugin-slurm` from `pixi.toml` ([#2352](https://github.com/PyPSA/pypsa-eur/pull/2352)).
 * Fix: correct GEBCO bathymetry CRS typo for Moldova and Ukraine (EPSG: 4236 → 4326)
 
