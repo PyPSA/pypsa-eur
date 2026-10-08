@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Feature: New switches `industry: solid_biomass_for_industry_cc`, `industry: gas_for_industry_cc` and `industry: process_emissions_cc` to disable the carbon capture options for solid biomass for industry, gas for industry and industrial process emissions. All default to `true`, which matches the previous behaviour ([#2357](https://github.com/PyPSA/pypsa-eur/pull/2357)).
+
 * Feature: Split logging levels between console and log file. The console now defaults to `WARNING`, while the log file of each rule still records `INFO`. Configure via `logging: console_level` and `logging: file_level`. To print info messages to the console as before, set `logging: console_level: INFO` ([#2144](https://github.com/PyPSA/pypsa-eur/pull/2144)).
 
 * Removed `exclude-newer` exception for `snakemake-executor-plugin-slurm` from `pixi.toml` ([#2352](https://github.com/PyPSA/pypsa-eur/pull/2352)).
