@@ -1149,6 +1149,9 @@ industry:
   HVC_environment_sequestration_fraction: 0.0
   waste_to_energy: false
   waste_to_energy_cc: false
+  solid_biomass_for_industry_cc: true
+  gas_for_industry_cc: true
+  process_emissions_cc: true
   sector_ratios_fraction_future:
     2020: 0.0
     2025: 0.05
