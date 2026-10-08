@@ -20,7 +20,12 @@ from scripts._helpers import (
     path_provider,
     script_path_provider,
 )
-from scripts.lib.validation.config import validate_config
+from scripts.lib.validation.config import (
+    migrate_deprecated_keys,
+    normalize_config,
+    validate_config,
+    validate_scenarios,
+)
 
 
 configfile: "config/config.default.yaml"
@@ -32,21 +37,44 @@ if Path("config/config.yaml").exists():
     configfile: "config/config.yaml"
 
 
-validate_config(config)
+migrate_deprecated_keys(config)
+validated = validate_config(config)
+normalize_config(config, validated)
 
 run = config["run"]
 scenarios = get_scenarios(run)
+
+validate_scenarios(config, scenarios)
+
 RDIR = get_rdir(run)
+PROJ_DIR = Path(workflow.snakefile).parent
+
 shadow_config = get_shadow(run)
 
 shared_resources = run["shared_resources"]["policy"]
 exclude_from_shared = run["shared_resources"]["exclude"]
 logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
-benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
+_benchmark_provider = path_provider(
+    "benchmarks/", RDIR, shared_resources, exclude_from_shared
+)
 resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
-scripts = script_path_provider(Path(workflow.snakefile).parent)
+scripts = script_path_provider(PROJ_DIR)
+
+
+def benchmarks(fn):
+    """Return a benchmark file path, even if legacy directories already exist."""
+
+    path = Path(_benchmark_provider(fn))
+    if path.is_dir():
+        # Preserve existing benchmark directories by placing the file inside.
+        path = path / "benchmark.tsv"
+    elif not path.suffix:
+        path = path.with_suffix(".tsv")
+    return str(path)
+
 
 RESULTS = "results/" + RDIR
+workflow.default_target = config["run"]["default_target_rule"]
 
 
 localrules:
@@ -54,10 +82,7 @@ localrules:
 
 
 wildcard_constraints:
-    clusters="[0-9]+(m|c)?|all|adm",
-    opts=r"[-+a-zA-Z0-9\.]*",
-    sector_opts=r"[-+a-zA-Z0-9\.\s]*",
-    planning_horizons=r"[0-9]{4}",
+    horizon=r"[0-9]{4}",
 
 
 include: "rules/common.smk"
@@ -71,158 +96,131 @@ include: "rules/collect.smk"
 include: "rules/retrieve.smk"
 include: "rules/build_electricity.smk"
 include: "rules/build_sector.smk"
-include: "rules/solve_electricity.smk"
+include: "rules/compose.smk"
+include: "rules/solve.smk"
 include: "rules/postprocess.smk"
 include: "rules/development.smk"
 
 
-if config["foresight"] == "overnight":
+# Define output categories based on foresight mode
+# This follows the same pattern as postprocess.smk for consistency
 
-    include: "rules/solve_overnight.smk"
+# Core outputs that always run
+CORE_OUTPUTS = [
+    RESULTS + "graphs/costs.pdf",
+    RESULTS + "graphs/energy.pdf",
+    RESULTS + "graphs/balances_energy.pdf",
+]
 
+# Network and timeseries plots (excluded for perfect foresight)
+if config["foresight"] != "perfect":
+    NETWORK_PLOT_OUTPUTS = [
+        resources("maps/base_network.pdf"),
+        resources("maps/clustered_network.pdf"),
+        RESULTS + "maps/static/power_network_{horizon}.pdf",
+    ]
+    if config["sector"]["enabled"]:
+        NETWORK_PLOT_OUTPUTS.append(RESULTS + "graphs/cop_profiles_{horizon}.html")
+    TIMESERIES_OUTPUTS = [
+        RESULTS + "graphs/balance_timeseries_{horizon}",
+        RESULTS + "graphs/heatmap_timeseries_{horizon}",
+    ]
+else:
+    NETWORK_PLOT_OUTPUTS = []
+    TIMESERIES_OUTPUTS = []
 
+# Myopic-specific outputs
 if config["foresight"] == "myopic":
+    MYOPIC_OUTPUTS = [RESULTS + "csvs/cumulative_costs.csv"]
+else:
+    MYOPIC_OUTPUTS = []
 
-    include: "rules/solve_myopic.smk"
+
+def get_sector_network_plots(w):
+    """Returns sector-specific network plots if enabled and not perfect foresight."""
+    if config["foresight"] == "perfect" or not config_provider("sector", "enabled")(w):
+        return []
+
+    plots = []
+    if config_provider("sector", "H2_network")(w):
+        plots.extend(
+            expand(
+                RESULTS + "maps/static/h2_network_{horizon}.pdf",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+            )
+        )
+    if config_provider("sector", "gas_network")(w):
+        plots.extend(
+            expand(
+                RESULTS + "maps/static/ch4_network_{horizon}.pdf",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+            )
+        )
+    return plots
 
 
-if config["foresight"] == "perfect":
+def get_balance_map_plots(w):
+    """Returns balance map plots (static + interactive) if configured and not perfect foresight."""
+    if config["foresight"] == "perfect":
+        return []
 
-    include: "rules/solve_perfect.smk"
+    plots = []
+
+    # Static balance maps (PDF)
+    static_carriers = config_provider("plotting", "balance_map", "bus_carriers")(w)
+    if static_carriers:
+        plots.extend(
+            expand(
+                RESULTS + "maps/static/balance_map_{carrier}_{horizon}.pdf",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+                carrier=static_carriers,
+            )
+        )
+
+        # Interactive balance maps (HTML)
+    interactive_carriers = config_provider(
+        "plotting", "balance_map_interactive", "bus_carriers"
+    )(w)
+    if interactive_carriers:
+        plots.extend(
+            expand(
+                RESULTS + "maps/interactive/balance_map_{carrier}_{horizon}.html",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+                carrier=interactive_carriers,
+            )
+        )
+
+    return plots
 
 
 rule all:
-    default_target: True
     input:
-        expand(RESULTS + "graphs/costs.pdf", run=config["run"]["name"]),
-        expand(resources("maps/power-network.pdf"), run=config["run"]["name"]),
-        expand(
-            resources("maps/power-network-s-{clusters}.pdf"),
-            run=config["run"]["name"],
-            **config["scenario"],
+        expand(CORE_OUTPUTS, run=config["run"]["name"]),
+        (
+            expand(
+                NETWORK_PLOT_OUTPUTS,
+                run=config["run"]["name"],
+                horizon=config["planning_horizons"],
+            )
+            if NETWORK_PLOT_OUTPUTS
+            else []
         ),
-        expand(
-            RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-            run=config["run"]["name"],
-            **config["scenario"],
+        (
+            expand(
+                TIMESERIES_OUTPUTS,
+                run=config["run"]["name"],
+                horizon=config["planning_horizons"],
+            )
+            if TIMESERIES_OUTPUTS
+            else []
         ),
-        # COP profiles plots
-        expand(
-            RESULTS + "graphs/cop_profiles_s_{clusters}_{planning_horizons}.html",
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
-                if config_provider("sector", "H2_network")(w)
-                else []
-            ),
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
-                if config_provider("sector", "gas_network")(w)
-                else []
-            ),
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
-        lambda w: expand(
-            (
-                RESULTS + "csvs/cumulative_costs.csv"
-                if config_provider("foresight")(w) == "myopic"
-                else []
-            ),
-            run=config["run"]["name"],
-        ),
-        expand(
-            RESULTS
-            + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
-        expand(
-            RESULTS
-            + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
-        # Explicitly list heat source types for temperature maps
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_river_water.html"
-                if config_provider("plotting", "enable_heat_source_maps")(w)
-                and "river_water"
-                in config_provider("sector", "heat_pump_sources", "urban central")(w)
-                else []
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-        ),
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_sea_water.html"
-                if config_provider("plotting", "enable_heat_source_maps")(w)
-                and "sea_water"
-                in config_provider("sector", "heat_pump_sources", "urban central")(w)
-                else []
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-        ),
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_ambient_air.html"
-                if config_provider("plotting", "enable_heat_source_maps")(w)
-                and "air"
-                in config_provider("sector", "heat_pump_sources", "urban central")(w)
-                else []
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-        ),
-        # Only river_water has energy maps
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_river_water.html"
-                if config_provider("plotting", "enable_heat_source_maps")(w)
-                and "river_water"
-                in config_provider("sector", "heat_pump_sources", "urban central")(w)
-                else []
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-        ),
-        expand(
-            RESULTS
-            + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
-        expand(
-            RESULTS
-            + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
-        expand(
-            RESULTS
-            + "graphics/interactive_bus_balance/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
-        lambda w: balance_map_paths("static", w),
-        lambda w: balance_map_paths("interactive", w),
+        (expand(MYOPIC_OUTPUTS, run=config["run"]["name"]) if MYOPIC_OUTPUTS else []),
+        get_sector_network_plots,
+        get_balance_map_plots,
 
 
 rule create_scenarios:
@@ -232,6 +230,7 @@ rule create_scenarios:
         "config/create_scenarios.py"
 
 
+# fmt: off[next]
 rule purge:
     run:
         import builtins
@@ -280,13 +279,15 @@ rule rulegraph:
         pdf=resources("dag_rulegraph.pdf"),
         png=resources("dag_rulegraph.png"),
         svg=resources("dag_rulegraph.svg"),
+    params:
+        default_target=workflow.default_target,  # track default target to ensure rule is re-triggered
     message:
         "Creating RULEGRAPH dag in multiple formats using the final configuration."
     shell:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
         echo "[Rule rulegraph] Using final config file: {input.config_file}"
-        snakemake --rulegraph --configfile {input.config_file} --quiet | sed -n "/digraph/,\$p" > {output.dot}
+        snakemake --rulegraph --configfile {input.config_file} --quiet | sed -n "/digraph/,\$p" >{output.dot}
 
         # Generate visualizations from the DOT file
         if [ -s {output.dot} ]; then
@@ -317,13 +318,15 @@ rule filegraph:
         pdf=resources("dag_filegraph.pdf"),
         png=resources("dag_filegraph.png"),
         svg=resources("dag_filegraph.svg"),
+    params:
+        default_target=workflow.default_target,  # track default target to ensure rule is re-triggered
     message:
         "Creating FILEGRAPH dag in multiple formats using the final configuration."
     shell:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
         echo "[Rule filegraph] Using final config file: {input.config_file}"
-        snakemake --filegraph all --configfile {input.config_file} --quiet | sed -n "/digraph/,\$p" > {output.dot}
+        snakemake --filegraph all --configfile {input.config_file} --quiet | sed -n "/digraph/,\$p" >{output.dot}
 
         # Generate visualizations from the DOT file
         if [ -s {output.dot} ]; then
@@ -375,3 +378,9 @@ rule sync_dry:
         rsync -uvarh --no-g {params.cluster}/results . -n || echo "No results directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/logs . -n || echo "No logs directory, skipping rsync"
         """
+
+
+# use the one-line rule docstrings as job messages
+for r in workflow.rules:
+    if r.message is None and r.docstring:
+        r.message = r.docstring

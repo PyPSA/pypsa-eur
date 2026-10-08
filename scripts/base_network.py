@@ -4,15 +4,19 @@
 
 
 """
-Creates the network topology from a `ENTSO-E map extract.
-<https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022)
-or `OpenStreetMap data <https://www.openstreetmap.org/>`_ (Aug 2024)
-as a PyPSA
-network.
+Build the base transmission network as a PyPSA network from the chosen grid dataset, together with the onshore and offshore Voronoi regions of its buses.
 
-Description
------------
-Creates the network topology from an ENTSO-E map extract, and create Voronoi shapes for each bus representing both onshore and offshore regions.
+Buses, lines, links, transformers and converters come from an
+[ENTSO-E map extract](https://github.com/PyPSA/GridKit/tree/master/entsoe)
+(March 2022, deprecated), from [OpenStreetMap data](https://www.openstreetmap.org/)
+or from the TYNDP reference grid, as selected by `electricity.base_network`.
+Buses outside the modelled countries and small unconnected components are
+dropped, electrical parameters are set from the configured line types per
+voltage level and the link and converter settings, and branches under
+construction are kept or removed according to the configuration. Each bus is
+assigned a country and marked as substation. Onshore regions are Voronoi cells
+of the buses within administrative shapes derived from NUTS3 regions; offshore
+regions are Voronoi cells within the exclusive economic zones.
 """
 
 import logging
@@ -425,7 +429,9 @@ def _remove_dangling_branches(branches, buses):
 
 
 def _remove_unconnected_components(network, threshold=6):
-    _, labels = csgraph.connected_components(network.adjacency_matrix(), directed=False)
+    _, labels = csgraph.connected_components(
+        network.adjacency_matrix(return_dataframe=False), directed=False
+    )
     component = pd.Series(labels, index=network.buses.index)
 
     component_sizes = component.value_counts()
@@ -922,20 +928,23 @@ def build_bus_shapes(
 
     Parameters
     ----------
-        n (pypsa.Network) : The network for which the bus shapes will be built.
-        admin_shapes (gpd.GeoDataFrame) : GeoDataFrame with administrative region shapes indexed by name.
-        offshore_shapes (str) : Path to the file containing offshore shapes.
-        countries (list[str]) : List of country codes to process.
+    n : pypsa.Network
+        The network for which the bus shapes will be built.
+    admin_shapes : gpd.GeoDataFrame
+        GeoDataFrame with administrative region shapes indexed by name.
+    offshore_shapes : str
+        Path to the file containing offshore shapes.
+    countries : list[str]
+        List of country codes to process.
 
     Returns
     -------
-        tuple[list[gpd.GeoDataFrame], list[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame]
-
+    tuple[list[gpd.GeoDataFrame], list[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame]
         A tuple containing:
-            - List of GeoDataFrames for each onshore region
-            - List of GeoDataFrames for each offshore region
-            - Combined GeoDataFrame of all onshore shapes
-            - Combined GeoDataFrame of all offshore shapes
+        - List of GeoDataFrames for each onshore region
+        - List of GeoDataFrames for each offshore region
+        - Combined GeoDataFrame of all onshore shapes
+        - Combined GeoDataFrame of all offshore shapes
     """
     offshore_shapes = gpd.read_file(offshore_shapes)
     offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index("name")[
@@ -1011,13 +1020,16 @@ def append_bus_shapes(n, shapes, type):
 
     Parameters
     ----------
-        n (pypsa.Network): The network to which the shapes will be appended.
-        shapes (geopandas.GeoDataFrame): The shapes to be appended.
-        **kwargs: Additional keyword arguments used in `n.add`.
+    n : pypsa.Network
+        The network to which the shapes will be appended.
+    shapes : geopandas.GeoDataFrame
+        The shapes to be appended.
+    type : str
+        The type of shapes to append.
 
     Returns
     -------
-        None
+    None
     """
     remove = n.shapes.query("component == 'Bus' and type == @type").index
     n.remove("Shape", remove)
@@ -1042,13 +1054,17 @@ def find_neighbours(
 
     Parameters
     ----------
-        polygon (shapely.geometry.Polygon): Polygon for which to find neighbours.
-        index (str): Index of the polygon.
-        gdf (gpd.GeoDataFrame): GeoDataFrame containing all polygons.
+    polygon : shapely.geometry.Polygon
+        Polygon for which to find neighbours.
+    index : str
+        Index of the polygon.
+    gdf : gpd.GeoDataFrame
+        GeoDataFrame containing all polygons.
 
     Returns
     -------
-        list: List of indices of neighbouring polygons.
+    list
+        List of indices of neighbouring polygons.
     """
     possible_neighbours = gdf.sindex.intersection(polygon.bounds)
 
@@ -1075,14 +1091,19 @@ def keep_good_neighbours(
 
     Parameters
     ----------
-        adm (str): Index of the administrative region.
-        neighbours (list): List of neighbours.
-        parent_dict (dict): Dictionary with parent of each administrative region.
-        country_dict (dict): Dictionary with country of each administrative region.
+    adm : str
+        Index of the administrative region.
+    neighbours : list
+        List of neighbours.
+    parent_dict : dict
+        Dictionary with parent of each administrative region.
+    country_dict : dict
+        Dictionary with country of each administrative region.
 
     Returns
     -------
-        list: List of filtered
+    list
+        List of filtered neighbours.
     """
     # Only keep neighbours that are located in the same country
 
@@ -1108,13 +1129,17 @@ def sort_values_by_dict(
 
     Parameters
     ----------
-        neighbours (list): List of keys to sort.
-        dicts (list): List of dictionaries containing values to sort by.
-        ascending (bool): Whether to sort in ascending order.
+    neighbours : list
+        List of keys to sort.
+    dicts : list
+        List of dictionaries containing values to sort by.
+    ascending : bool
+        Whether to sort in ascending order.
 
     Returns
     -------
-        list: Sorted list of keys.
+    list
+        Sorted list of keys.
     """
     return sorted(
         neighbours,
@@ -1135,13 +1160,17 @@ def create_merged_admin_region(
 
     Parameters
     ----------
-        row (pd.Series): Series containing information about the region to be merged.
-        first_neighbours_dict (dict): Dictionary containing first neighbours for each region.
-        admin_shapes (gpd.GeoDataFrame): GeoDataFrame containing all administrative regions.
+    row : pd.Series
+        Series containing information about the region to be merged.
+    first_neighbours_dict : dict
+        Dictionary containing first neighbours for each region.
+    admin_shapes : gpd.GeoDataFrame
+        GeoDataFrame containing all administrative regions.
 
     Returns
     -------
-        pd.Series: Series containing information about the merged region.
+    pd.Series
+        Series containing information about the merged region.
     """
     first_neighbours = first_neighbours_dict[row.name]
     neighbours_contain = list(
@@ -1208,11 +1237,13 @@ def update_names(
 
     Parameters
     ----------
-        names (list): List of names to update.
+    names : list[str]
+        List of names to update.
 
     Returns
     -------
-        str: Updated name.
+    str
+        Updated name.
     """
     if len(names) == 1:
         return names[0]
@@ -1231,11 +1262,13 @@ def clean_dict(
 
     Parameters
     ----------
-        diction (dict): Dictionary to clean.
+    diction : dict
+        Dictionary to clean.
 
     Returns
     -------
-        dict: Cleaned dictionary.
+    dict
+        Cleaned dictionary.
     """
 
     if not diction:
@@ -1288,12 +1321,15 @@ def get_nearest_neighbour(
 
     Parameters
     ----------
-        row (pd.Series): Series containing information about the region.
-        admin_shapes (gpd.GeoDataFrame): GeoDataFrame containing all administrative regions.
+    row : pd.Series
+        Series containing information about the region.
+    admin_shapes : gpd.GeoDataFrame
+        GeoDataFrame containing all administrative regions.
 
     Returns
     -------
-        str: Index of the nearest neighbour.
+    str
+        Index of the nearest neighbour.
     """
     country = row["country"]
     gdf = gpd.GeoDataFrame([row.loc[["country", "geometry"]]], crs=admin_shapes.crs)
@@ -1331,12 +1367,15 @@ def merge_regions_recursive(
 
     Parameters
     ----------
-        admin_shapes (gpd.GeoDataFrame): GeoDataFrame containing all administrative regions.
-        neighbours_missing (bool): Whether to find neighbours if they are missing.
+    admin_shapes : gpd.GeoDataFrame
+        GeoDataFrame containing all administrative regions.
+    neighbours_missing : bool
+        Whether to find neighbours if they are missing.
 
     Returns
     -------
-        gpd.GeoDataFrame: GeoDataFrame containing the merged administrative regions
+    gpd.GeoDataFrame
+        GeoDataFrame containing the merged administrative regions.
     """
     while True:
         # Calculate area
@@ -1474,7 +1513,14 @@ def build_admin_shapes(
 
         # Only keep the values whose keys are in countries
         country_level = {
-            k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
+            k: v
+            for k, v in {**admin_levels, **admin_levels["countries"]}.items()
+            if k in countries
+        }
+        subregion_level = {
+            k: v
+            for k, v in admin_levels["countries"].items()
+            if len(k) > 2 and k[:2] in countries
         }
         if country_level:
             country_level_list = "\n".join(
@@ -1491,6 +1537,12 @@ def build_admin_shapes(
                 ]
                 .map(country_level)
                 .map(level_map)
+            )
+
+        for k, v in subregion_level.items():
+            logger.info(f"Setting administrative level {v} for subregion {k}")
+            nuts3_regions.loc[nuts3_regions.index.str.startswith(k), "column"] = (
+                level_map[v]
             )
 
         # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
@@ -1648,10 +1700,10 @@ if __name__ == "__main__":
     n.export_to_netcdf(snakemake.output.base_network)
 
     # Export shapes
-    onshore_shapes.to_file(snakemake.output.regions_onshore)
+    onshore_shapes.to_file(snakemake.output.onshore_regions)
     # append_bus_shapes(n, shapes, "onshore")
 
-    offshore_shapes.to_file(snakemake.output.regions_offshore)
+    offshore_shapes.to_file(snakemake.output.offshore_regions)
     # append_bus_shapes(n, offshore_shapes, "offshore")
 
     # Convert contains columns into strings (pyogrio-friendly)

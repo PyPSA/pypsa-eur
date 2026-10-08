@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+"""
+Build solar rooftop capacity potentials per clustered region and resource class.
+
+The gridded total population layout is summed over each solar resource class
+region using the cutout indicator matrix. The potential assumes 20 m2 of
+usable roof area per person and 0.1 kW per m2, i.e. 2 kW per person. The
+result in MW caps the solar rooftop capacity expansion in the network.
+"""
+
+import geopandas as gpd
+import pandas as pd
+import xarray as xr
+
+from scripts._helpers import load_cutout, set_scenario_config
+
+if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from scripts._helpers import mock_snakemake
+
+        snakemake = mock_snakemake(
+            "build_solar_rooftop_potentials",
+            configfiles="config/test/config.myopic.yaml",
+        )
+
+    set_scenario_config(snakemake)
+
+    cutout = load_cutout(snakemake.input.cutout)
+
+    class_regions = gpd.read_file(snakemake.input.class_regions).set_index(
+        ["bus", "bin"]
+    )
+
+    I = cutout.indicatormatrix(class_regions)  # noqa: E741
+
+    with xr.open_dataarray(snakemake.input.pop_layout) as pop_layout:
+        pop = I.dot(pop_layout.stack(spatial=("y", "x")))
+
+    # add max solar rooftop potential assuming 0.1 kW/m2 and 20 m2/person,
+    # i.e. 2 kW/person (population data is in thousands of people) so we get MW
+    potentials = 0.1 * 20 * pd.Series(pop, index=class_regions.index)
+
+    potentials.to_csv(snakemake.output.potentials)

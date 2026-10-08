@@ -2,9 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build regionalised geological sequestration potential for carbon dioxide using
-data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
-database_en>`_.
+Allocate geological CO2 sequestration potentials to clustered model regions.
+
+Storage unit polygons from CO2Stop with the configured capacity estimate
+(conservative, neutral or optimistic) are overlaid with the offshore regions
+and, optionally, the onshore regions. Each unit's capacity is split between
+regions in proportion to the overlapped area. Units and regional totals below
+the configured minimum size are dropped. The result limits how much CO2 can be
+stored underground per region in the sector-coupled network.
 """
 
 import logging
@@ -42,7 +47,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_sequestration_potentials", clusters="128")
+        snakemake = mock_snakemake("build_clustered_co2_sequestration_potentials")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -51,9 +56,9 @@ if __name__ == "__main__":
 
     gdf = gpd.read_file(snakemake.input.sequestration_potential)
 
-    regions = gpd.read_file(snakemake.input.regions_offshore)
+    regions = gpd.read_file(snakemake.input.offshore_regions)
     if cf["include_onshore"]:
-        onregions = gpd.read_file(snakemake.input.regions_onshore)
+        onregions = gpd.read_file(snakemake.input.onshore_regions)
         regions = pd.concat([regions, onregions]).dissolve(by="name").reset_index()
 
     s = allocate_sequestration_potential(

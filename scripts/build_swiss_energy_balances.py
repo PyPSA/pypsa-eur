@@ -2,7 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Extract historic Swiss energy balances in TWh/a from Excel file.
+Extract historic Swiss energy balances per sector and year in TWh/a.
+
+Switzerland is not covered by the Eurostat energy balances, so final energy
+use is read from the tables of the Swiss Federal Office of Energy (BFE)
+overall energy statistics. Total and electricity consumption are extracted
+for residential and services (space heating, hot water, cooking), for road,
+rail, domestic aviation and navigation, and for international aviation;
+international navigation is set to zero. Values are converted from PJ/a to
+TWh/a and indexed like the Eurostat balances so that both can be merged into
+the country-level energy totals.
 """
 
 import logging

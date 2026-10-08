@@ -2,9 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build regionalised geological sequestration potential for carbon dioxide using
-data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
-database_en>`_.
+Build a map of geological CO2 storage capacities from the CO2Stop database.
+
+Storage units and traps from
+[CO2Stop](https://setis.ec.europa.eu/european-co2-storage-database_en) are
+joined with their capacity tables. Conservative, neutral and optimistic
+estimates in Mt are derived from the minimum, mean and maximum capacity
+columns; missing values fall back to the next more conservative estimate.
+Trap capacities sum the aquifer, oil and gas contributions. Both sets are
+merged into one map with 2D geometries, which a later rule clusters to model
+regions.
 """
 
 from typing import Any
@@ -296,6 +303,14 @@ def merge_maps(
     gdf = gpd.GeoDataFrame(pd.concat([storage_map, traps_map]), crs=CRS)
 
     gdf.drop_duplicates(inplace=True)
+    gdf.reset_index(drop=True, inplace=True)
+
+    if "name" not in gdf.columns:
+        gdf["name"] = (
+            gdf.get("COUNTRYCOD", "XX").fillna("XX").astype(str)
+            + "_"
+            + gdf.index.astype(str)
+        )
 
     return gdf
 

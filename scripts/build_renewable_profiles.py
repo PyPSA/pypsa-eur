@@ -2,90 +2,42 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Calculates for each clustered region the (i) installable capacity (based on
-land-use from :mod:`determine_availability_matrix`), (ii) the available
-generation time series (based on weather data), and (iii) the average distance
-from the node for onshore wind, AC-connected offshore wind, DC-connected
-offshore wind and solar PV generators.
+Build per-region capacity factor time series, installable potential and average grid distance for one renewable technology.
 
-.. note:: Hydroelectric profiles are built in script :mod:`build_hydro_profiles`.
+The script works at two resolutions: the cutout grid cells of the weather data
+and the coarser network regions. For each grid cell it computes the average
+capacity factor with [atlite](https://atlite.readthedocs.io/en/latest/) and
+takes the eligible land share from [determine_availability_matrix][]. Within
+each region the cells are split into a configurable number of resource classes
+by capacity factor, and the capacity layout is assumed proportional to eligible
+area and capacity factor, since more capacity is expected where the resource is
+better. This layout weights the hourly cell time series into one profile per
+region and class; the installable potential sums the eligible area times the
+configured capacity density; and the average distance of the layout-weighted
+cells is measured to the region's representative point for onshore
+technologies and to the shoreline for offshore wind. If several turbine or
+panel models are configured by year, one profile per model year is produced.
+Regions with too little potential or too low a capacity factor are dropped.
 
-Outputs
--------
+| Field | Dimensions | Description |
+| --- | --- | --- |
+| profile | year, bus, bin, time | Hourly availability factor per unit of installed capacity |
+| p_nom_max | bus, bin | Maximal installable capacity in MW |
+| average_distance | bus, bin | Average distance in km of the units to the grid bus (onshore) or the shoreline (offshore) |
 
-- ``resources/profile_{technology}.nc`` with the following structure
+![](../img/onwind-gridcell.png)
 
-    ===================  ====================  =========================================================
-    Field                Dimensions            Description
-    ===================  ====================  =========================================================
-    profile              year, bus, bin, time  the per unit hourly availability factors for each bus
-    -------------------  --------------------  ---------------------------------------------------------
-    p_nom_max            bus, bin              maximal installable capacity at the bus (in MW)
-    -------------------  --------------------  ---------------------------------------------------------
-    average_distance     bus, bin              average distance of units in the region to the
-                                               grid bus for onshore technologies and to the shoreline
-                                               for offshore technologies (in km)
-    ===================  ====================  =========================================================
+![](../img/offwindac-gridcell.png)
 
-    - **profile**
+![](../img/offwinddc-gridcell.png)
 
-    .. image:: img/profile_ts.png
-        :scale: 33 %
-        :align: center
+![](../img/solar-gridcell.png)
 
-    - **p_nom_max**
+![](../img/profile_ts.png)
 
-    .. image:: img/p_nom_max_hist.png
-        :scale: 33 %
-        :align: center
+![](../img/p_nom_max_hist.png)
 
-    - **average_distance**
-
-    .. image:: img/distance_hist.png
-        :scale: 33 %
-        :align: center
-
-Description
------------
-
-This script functions at two main spatial resolutions: the resolution of the
-clustered network regions, and the resolution of the cutout grid cells for the
-weather data. Typically the weather data grid is finer than the network regions,
-so we have to work out the distribution of generators across the grid cells
-within each region. This is done by taking account of a combination of the
-available land at each grid cell (computed in
-:mod:`determine_availability_matrix`) and the capacity factor there.
-
-Based on the availability matrix, the script first computes how much of the
-technology can be installed at each cutout grid cell. To compute the layout of
-generators in each clustered region, the installable potential in each grid cell
-is multiplied with the capacity factor at each grid cell. This is done since we
-assume more generators are installed at cells with a higher capacity factor.
-
-Based on the average capacity factor, the potentials are further divided into a
-configurable number of resource classes (bins).
-
-.. image:: img/offwinddc-gridcell.png
-    :scale: 50 %
-    :align: center
-
-.. image:: img/offwindac-gridcell.png
-    :scale: 50 %
-    :align: center
-
-.. image:: img/onwind-gridcell.png
-    :scale: 50 %
-    :align: center
-
-.. image:: img/solar-gridcell.png
-    :scale: 50 %
-    :align: center
-
-This layout is then used to compute the generation availability time series from
-the weather data cutout from ``atlite``.
-
-The maximal installable potential for the node (`p_nom_max`) is computed by
-adding up the installable potentials of the individual grid cells.
+![](../img/distance_hist.png)
 """
 
 import logging
@@ -99,13 +51,13 @@ import xarray as xr
 from atlite.gis import ExclusionContainer
 
 from scripts._helpers import (
+    _simplify_polys,
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
     setup_dask,
 )
-from scripts.build_shapes import _simplify_polys
 
 logger = logging.getLogger(__name__)
 
@@ -114,9 +66,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_renewable_profiles", clusters=38, technology="offwind-ac"
-        )
+        snakemake = mock_snakemake("build_renewable_profiles", technology="offwind-ac")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

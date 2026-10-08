@@ -2,56 +2,24 @@
 #
 # SPDX-License-Identifier: MIT
 """
-The script performs a land eligibility analysis of what share of land is
-availability for developing the selected technology at each cutout grid cell.
-The script uses the `atlite <https://github.com/pypsa/atlite>`_ library and
-several GIS datasets like the CORINE land use data, LUISA land use data,
-Natura2000 nature reserves, GEBCO bathymetry data, and shipping lanes.
+Determine the share of each cutout grid cell that is available for one renewable technology in each network region.
 
+Land eligibility is computed with [atlite](https://github.com/pypsa/atlite)
+by excluding rasters and geometries: selected classes of the
+[CORINE Land Cover](https://land.copernicus.eu/pan-european/corine-land-cover)
+inventory (44 land use classes at 100 m resolution) and of the similar 50 m
+[LUISA Base Map](https://publications.jrc.ec.europa.eu/repository/handle/JRC124621),
+optionally with a buffer distance around some classes; Natura 2000 nature
+reserves; and for offshore wind, water depths from the
+[GEBCO](https://www.gebco.net/data_and_products/gridded_bathymetry_data/)
+bathymetry, shipping lane density and distance to the shore. Onshore regions
+are used for onshore technologies and offshore regions for offshore wind. For
+Moldova and Ukraine, areas not covered by CORINE are overwritten with
+externally determined availabilities.
 
-Inputs
-------
+![](../img/corine.png)
 
-- ``data/bundle/corine/g250_clc06_V18_5.tif``: `CORINE Land Cover (CLC)
-  <https://land.copernicus.eu/pan-european/corine-land-cover>`_ inventory on `44
-  classes <https://wiki.openstreetmap.org/wiki/Corine_Land_Cover#Tagging>`_ of
-  land use (e.g. forests, arable land, industrial, urban areas) at 100m
-  resolution.
-
-    .. image:: img/corine.png
-        :scale: 33 %
-
-- ``data/LUISA_basemap_020321_50m.tif``: `LUISA Base Map
-  <https://publications.jrc.ec.europa.eu/repository/handle/JRC124621>`_ land
-  coverage dataset at 50m resolution similar to CORINE. For codes in relation to
-  CORINE land cover, see `Annex 1 of the technical documentation
-  <https://publications.jrc.ec.europa.eu/repository/bitstream/JRC124621/technical_report_luisa_basemap_2018_v7_final.pdf>`_.
-
-- ``data/bundle/gebco/GEBCO_2014_2D.nc``: A `bathymetric
-  <https://en.wikipedia.org/wiki/Bathymetry>`_ data set with a global terrain
-  model for ocean and land at 15 arc-second intervals by the `General
-  Bathymetric Chart of the Oceans (GEBCO)
-  <https://www.gebco.net/data_and_products/gridded_bathymetry_data/>`_.
-
-    .. image:: img/gebco_2019_grid_image.jpg
-        :scale: 50 %
-
-    **Source:** `GEBCO
-    <https://www.gebco.net/data_and_products/images/gebco_2019_grid_image.jpg>`_
-
-- ``resources/natura.tiff``: confer :ref:`natura`
-- ``resources/offshore_shapes.geojson``: confer :ref:`shapes`
-- ``resources/regions_onshore_base_s_{clusters}.geojson``: (if not offshore
-  wind), confer :ref:`busregions`
-- ``resources/regions_offshore_base_s_{clusters}.geojson``: (if offshore wind),
-  :ref:`busregions`
-- ``"cutouts/" + params["renewable"][{technology}]['cutout']``: :ref:`cutout`
-- ``networks/_base_s_{clusters}.nc``: :ref:`base`
-
-Outputs
--------
-
-- ``resources/availability_matrix_{clusters_{technology}.nc``
+![](../img/gebco_2019_grid_image.jpg)
 """
 
 import functools
@@ -76,7 +44,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "determine_availability_matrix", clusters="adm", technology="offwind-dc"
+            "determine_availability_matrix", technology="offwind-dc"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -169,7 +137,7 @@ if __name__ == "__main__":
         f"Completed landuse availability calculation for {technology} ({duration:2.2f}s)"
     )
 
-    if params.get("plot_availability_matrix", False):
+    if snakemake.params.plot_availability_matrix:
         logger.info(f"Plotting landuse availability matrix for {technology}.")
         band, transform = shape_availability(
             regions.geometry.to_crs(excluder.crs), excluder
@@ -177,7 +145,7 @@ if __name__ == "__main__":
         fig, ax = plt.subplots(figsize=(10, 10))
         regions.to_crs(excluder.crs).plot(ax=ax, color="none")
         show(band, transform=transform, cmap="Greens", ax=ax)
-        plt.savefig(snakemake.output[0].replace(".nc", ".png"), dpi=300)
+        plt.savefig(snakemake.output["plot"], dpi=300)
 
     # For Moldova and Ukraine: Overwrite parts not covered by Corine with
     # externally determined available areas
@@ -187,4 +155,4 @@ if __name__ == "__main__":
         )
         availability.loc[availability_MDUA.coords] = availability_MDUA
 
-    availability.to_netcdf(snakemake.output[0])
+    availability.to_netcdf(snakemake.output["nc"])

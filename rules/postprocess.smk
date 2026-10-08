@@ -2,168 +2,132 @@
 #
 # SPDX-License-Identifier: MIT
 
-
 if config["foresight"] != "perfect":
 
     rule plot_base_network:
+        """Plots the base transmission network topology with line and link capacities on a map."""
         input:
             network=resources("networks/base.nc"),
-            regions_onshore=resources("regions_onshore.geojson"),
+            onshore_regions=resources("onshore_regions_base.geojson"),
         output:
-            map=resources("maps/power-network.pdf"),
+            map=resources("maps/base_network.pdf"),
         benchmark:
-            benchmarks("plot_base_network/base")
+            benchmarks("plot_base_network")
         threads: 1
         resources:
             mem_mb=4000,
         params:
             plotting=config_provider("plotting"),
-        message:
-            "Plotting base power network"
         script:
             scripts("plot_base_network.py")
 
-    rule plot_power_network_clustered:
+    rule plot_clustered_network:
+        """Plots the clustered transmission network with existing and planned HVDC links on a map."""
         input:
-            network=resources("networks/base_s_{clusters}.nc"),
-            regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=resources("networks/clustered.nc"),
+            regions=resources("onshore_regions.geojson"),
         output:
-            map=resources("maps/power-network-s-{clusters}.pdf"),
+            map=resources("maps/clustered_network.pdf"),
         benchmark:
-            benchmarks("plot_power_network_clustered/base_s_{clusters}")
+            benchmarks("plot_clustered_network")
         threads: 1
         resources:
             mem_mb=4000,
         params:
             plotting=config_provider("plotting"),
-        message:
-            "Plotting clustered power network for {wildcards.clusters} clusters"
         script:
             scripts("plot_power_network_clustered.py")
 
     rule plot_power_network:
+        """Plots the optimised power network with regional technology costs and grid expansion."""
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/solved_{horizon}.nc",
+            regions=resources("onshore_regions.geojson"),
         output:
-            map=RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            map=RESULTS + "maps/static/power_network_{horizon}.pdf",
         log:
-            RESULTS
-            + "logs/plot_power_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+            RESULTS + "logs/plot_power_network_{horizon}.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_power_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-            )
+            (RESULTS + "benchmarks/plot_power_network_{horizon}")
         threads: 2
         resources:
             mem_mb=10000,
         params:
             plotting=config_provider("plotting"),
             transmission_limit=config_provider("electricity", "transmission_limit"),
-        message:
-            "Plotting power network for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizons"
         script:
             scripts("plot_power_network.py")
 
     rule plot_hydrogen_network:
+        """Plots the optimised hydrogen pipelines, storage, electrolysis and fuel cells on a map."""
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/solved_{horizon}.nc",
+            regions=resources("onshore_regions.geojson"),
         output:
-            map=RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+            map=RESULTS + "maps/static/h2_network_{horizon}.pdf",
         log:
-            RESULTS
-            + "logs/plot_hydrogen_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+            RESULTS + "logs/plot_hydrogen_network_{horizon}.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_hydrogen_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-            )
+            (RESULTS + "benchmarks/plot_hydrogen_network_{horizon}")
         threads: 2
         resources:
             mem_mb=10000,
         params:
             plotting=config_provider("plotting"),
             foresight=config_provider("foresight"),
-        message:
-            "Plotting hydrogen network for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizons"
         script:
             scripts("plot_hydrogen_network.py")
 
     rule plot_gas_network:
+        """Plots the optimised methane pipeline network and regional gas sources on a map."""
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/solved_{horizon}.nc",
+            regions=resources("onshore_regions.geojson"),
         output:
-            map=RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+            map=RESULTS + "maps/static/ch4_network_{horizon}.pdf",
         log:
-            RESULTS
-            + "logs/plot_gas_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+            RESULTS + "logs/plot_gas_network_{horizon}.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_gas_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-            )
+            (RESULTS + "benchmarks/plot_gas_network_{horizon}")
         threads: 2
         resources:
             mem_mb=10000,
         params:
             plotting=config_provider("plotting"),
-        message:
-            "Plotting methane network for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizon"
         script:
             scripts("plot_gas_network.py")
 
     rule plot_balance_map:
+        """Plots a static map of the nodal energy balance, flows and prices for one bus carrier."""
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/solved_{horizon}.nc",
+            regions=resources("onshore_regions.geojson"),
         output:
-            RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf",
+            RESULTS + "maps/static/balance_map_{carrier}_{horizon}.pdf",
         log:
-            RESULTS
-            + "logs/plot_balance_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+            RESULTS + "logs/plot_balance_map_{horizon}_{carrier}.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_balance_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
-            )
+            (RESULTS + "benchmarks/plot_balance_map_{horizon}_{carrier}")
         threads: 1
         resources:
             mem_mb=8000,
         params:
             plotting=config_provider("plotting"),
             settings=lambda w: config_provider("plotting", "balance_map", w.carrier),
-        message:
-            "Plotting balance map for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options, {wildcards.planning_horizons} planning horizons and {wildcards.carrier} carrier"
         script:
             scripts("plot_balance_map.py")
 
     rule plot_balance_map_interactive:
+        """Plots an interactive map of the nodal energy balance, flows and prices for one bus carrier."""
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/solved_{horizon}.nc",
+            regions=resources("onshore_regions.geojson"),
         output:
-            RESULTS
-            + "maps/interactive/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.html",
+            RESULTS + "maps/interactive/balance_map_{carrier}_{horizon}.html",
         log:
-            RESULTS
-            + "logs/plot_balance_map_interactive/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+            RESULTS + "logs/plot_balance_map_interactive/{horizon}_{carrier}.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_interactive_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
-            )
+            RESULTS + "benchmarks/plot_balance_map_interactive/{horizon}_{carrier}"
         threads: 1
         resources:
             mem_mb=8000,
@@ -175,273 +139,91 @@ if config["foresight"] != "perfect":
             scripts("plot_balance_map_interactive.py")
 
     rule plot_heat_source_map:
+        """Plots interactive maps of heat source temperatures and energy potentials by region."""
         input:
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            regions=resources("onshore_regions.geojson"),
             heat_source_temperature=lambda w: (
-                resources(
-                    "temp_" + w.carrier + "_base_s_{clusters}_temporal_aggregate.nc"
-                )
+                resources("temp_" + w.carrier + "_temporal_aggregate.nc")
                 if w.carrier in ["river_water", "sea_water", "ambient_air"]
                 else []
             ),
             heat_source_energy=lambda w: (
-                resources(
-                    "heat_source_energy_"
-                    + w.carrier
-                    + "_base_s_{clusters}_temporal_aggregate.nc"
-                )
+                resources("heat_source_energy_" + w.carrier + "_temporal_aggregate.nc")
                 if w.carrier in ["river_water"]
                 else []
             ),
         output:
             temp_map=RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_{carrier}.html",
+            + "maps/static/heat_source_temperature_map_{carrier}_{horizon}.html",
             energy_map=RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_{carrier}.html",
+            + "maps/static/heat_source_energy_map_{carrier}_{horizon}.html",
         log:
-            RESULTS
-            + "logs/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+            RESULTS + "logs/plot_heat_source_map/{carrier}_{horizon}.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
-            )
+            (RESULTS + "benchmarks/plot_heat_source_map/{carrier}_{horizon}")
         threads: 1
         resources:
             mem_mb=150000,
-        params:
-            plotting=config_provider("plotting"),
-            heat_sources=config_provider("sector", "heat_pump_sources"),
         script:
             scripts("plot_heat_source_map.py")
 
 
-if config["foresight"] == "perfect":
-
-    def output_map_year(w):
-        return {
-            f"map_{year}": RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_"
-            + f"{year}.pdf"
-            for year in config_provider("scenario", "planning_horizons")(w)
-        }
-
-    rule plot_power_network_perfect:
-        input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
-        output:
-            unpack(output_map_year),
-        threads: 2
-        resources:
-            mem_mb=10000,
-        params:
-            plotting=config_provider("plotting"),
-        message:
-            "Plotting power network with perfect foresight for {wildcards.clusters} clusters, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
-        script:
-            scripts("plot_power_network_perfect.py")
-
-
 rule make_summary:
+    """Computes summary tables of costs, capacities, energy balances, prices and metrics."""
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        networks=lambda w: (
+            [RESULTS + f"networks/solved_{config['planning_horizons'][-1]}.nc"]
+            if config["foresight"] == "perfect"
+            else [
+                RESULTS + f"networks/solved_{h}.nc"
+                for h in config["planning_horizons"]
+            ]
+        ),
     output:
-        nodal_costs=RESULTS
-        + "csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        nodal_capacities=RESULTS
-        + "csvs/individual/nodal_capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        nodal_capacity_factors=RESULTS
-        + "csvs/individual/nodal_capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        capacity_factors=RESULTS
-        + "csvs/individual/capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        costs=RESULTS
-        + "csvs/individual/costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        capacities=RESULTS
-        + "csvs/individual/capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        curtailment=RESULTS
-        + "csvs/individual/curtailment_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        energy=RESULTS
-        + "csvs/individual/energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        energy_balance=RESULTS
-        + "csvs/individual/energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        nodal_energy_balance=RESULTS
-        + "csvs/individual/nodal_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        prices=RESULTS
-        + "csvs/individual/prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        weighted_prices=RESULTS
-        + "csvs/individual/weighted_prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        market_values=RESULTS
-        + "csvs/individual/market_values_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        metrics=RESULTS
-        + "csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
+        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
+        nodal_capacity_factors=RESULTS + "csvs/nodal_capacity_factors.csv",
+        capacity_factors=RESULTS + "csvs/capacity_factors.csv",
+        costs=RESULTS + "csvs/costs.csv",
+        capacities=RESULTS + "csvs/capacities.csv",
+        curtailment=RESULTS + "csvs/curtailment.csv",
+        energy=RESULTS + "csvs/energy.csv",
+        energy_balance=RESULTS + "csvs/energy_balance.csv",
+        nodal_energy_balance=RESULTS + "csvs/nodal_energy_balance.csv",
+        prices=RESULTS + "csvs/prices.csv",
+        weighted_prices=RESULTS + "csvs/weighted_prices.csv",
+        market_values=RESULTS + "csvs/market_values.csv",
+        metrics=RESULTS + "csvs/metrics.csv",
+        cumulative_costs=RESULTS + "csvs/cumulative_costs.csv",
     log:
-        RESULTS
-        + "logs/make_summary_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS + "logs/make_summary.log",
     benchmark:
-        (
-            RESULTS
-            + "benchmarks/make_summary_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-        )
+        RESULTS + "benchmarks/make_summary"
     threads: 1
     resources:
-        mem_mb=8000,
-    message:
-        "Creating optimization results summary statistics"
+        mem_mb=16000,
+    params:
+        foresight=config_provider("foresight"),
+        planning_horizons=config_provider("planning_horizons"),
     script:
         scripts("make_summary.py")
 
 
-rule make_global_summary:
-    input:
-        nodal_costs=expand(
-            RESULTS
-            + "csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        nodal_capacities=expand(
-            RESULTS
-            + "csvs/individual/nodal_capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        nodal_capacity_factors=expand(
-            RESULTS
-            + "csvs/individual/nodal_capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        capacity_factors=expand(
-            RESULTS
-            + "csvs/individual/capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        costs=expand(
-            RESULTS
-            + "csvs/individual/costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        capacities=expand(
-            RESULTS
-            + "csvs/individual/capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        curtailment=expand(
-            RESULTS
-            + "csvs/individual/curtailment_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        energy=expand(
-            RESULTS
-            + "csvs/individual/energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        energy_balance=expand(
-            RESULTS
-            + "csvs/individual/energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        nodal_energy_balance=expand(
-            RESULTS
-            + "csvs/individual/nodal_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        prices=expand(
-            RESULTS
-            + "csvs/individual/prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        weighted_prices=expand(
-            RESULTS
-            + "csvs/individual/weighted_prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        market_values=expand(
-            RESULTS
-            + "csvs/individual/market_values_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        metrics=expand(
-            RESULTS
-            + "csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-    output:
-        costs=RESULTS + "csvs/costs.csv",
-        capacities=RESULTS + "csvs/capacities.csv",
-        energy=RESULTS + "csvs/energy.csv",
-        energy_balance=RESULTS + "csvs/energy_balance.csv",
-        capacity_factors=RESULTS + "csvs/capacity_factors.csv",
-        metrics=RESULTS + "csvs/metrics.csv",
-        curtailment=RESULTS + "csvs/curtailment.csv",
-        prices=RESULTS + "csvs/prices.csv",
-        weighted_prices=RESULTS + "csvs/weighted_prices.csv",
-        market_values=RESULTS + "csvs/market_values.csv",
-        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
-        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
-        nodal_energy_balance=RESULTS + "csvs/nodal_energy_balance.csv",
-        nodal_capacity_factors=RESULTS + "csvs/nodal_capacity_factors.csv",
-    log:
-        RESULTS + "logs/make_global_summary.log",
-    benchmark:
-        RESULTS + "benchmarks/make_global_summary"
-    threads: 1
-    resources:
-        mem_mb=8000,
-    params:
-        scenario=config_provider("scenario"),
-        RDIR=RDIR,
-    message:
-        "Creating global summary of optimization results for all scenarios"
-    script:
-        scripts("make_global_summary.py")
-
-
-rule make_cumulative_costs:
-    input:
-        costs=RESULTS + "csvs/costs.csv",
-    output:
-        cumulative_costs=RESULTS + "csvs/cumulative_costs.csv",
-    log:
-        RESULTS + "logs/make_cumulative_costs.log",
-    benchmark:
-        RESULTS + "benchmarks/make_cumulative_costs"
-    threads: 1
-    resources:
-        mem_mb=4000,
-    params:
-        scenario=config_provider("scenario"),
-    message:
-        "Calculating cumulative costs over time horizon"
-    script:
-        scripts("make_cumulative_costs.py")
-
-
 rule plot_summary:
+    """Plots stacked bar charts of system costs, energy and balances across planning horizons."""
     input:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/energy_balance.csv",
         eurostat=resources("eurostat_energy_balances.csv"),
-        co2=rules.retrieve_ghg_emissions.output["csv"],
+        co2=branch(
+            lambda w: config_provider("foresight")(w) == "perfect",
+            rules.retrieve_ghg_emissions.output["csv"],
+        ),
     output:
         costs=RESULTS + "graphs/costs.pdf",
         energy=RESULTS + "graphs/energy.pdf",
-        balances=RESULTS + "graphs/balances-energy.pdf",
+        balances=RESULTS + "graphs/balances_energy.pdf",
     log:
         RESULTS + "logs/plot_summary.log",
     threads: 2
@@ -449,35 +231,27 @@ rule plot_summary:
         mem_mb=10000,
     params:
         countries=config_provider("countries"),
-        planning_horizons=config_provider("scenario", "planning_horizons"),
-        emissions_scope=config_provider("energy", "emissions"),
+        planning_horizons=config_provider("planning_horizons"),
+        emissions_scope=config_provider("co2_budget", "emissions_scope"),
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),
-        co2_budget=config_provider("co2_budget"),
         sector=config_provider("sector"),
         RDIR=RDIR,
-    message:
-        "Plotting summary statistics and results"
     script:
         scripts("plot_summary.py")
 
 
 rule plot_balance_timeseries:
+    """Plots stacked energy balance time series per carrier at annual and monthly resolution."""
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
     output:
-        directory(
-            RESULTS
-            + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-        ),
+        directory(RESULTS + "graphs/balance_timeseries_{horizon}"),
     log:
-        RESULTS
-        + "logs/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS + "logs/plot_balance_timeseries_{horizon}.log",
     benchmark:
-        RESULTS
-        + "benchmarks/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        RESULTS + "benchmarks/plot_balance_timeseries_{horizon}"
     threads: 16
     resources:
         mem_mb=10000,
@@ -485,28 +259,21 @@ rule plot_balance_timeseries:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-    message:
-        "Plotting energy balance time series for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizons"
     script:
         scripts("plot_balance_timeseries.py")
 
 
 rule plot_heatmap_timeseries:
+    """Plots hour-by-day heatmaps of utilisation rates, marginal prices and storage levels."""
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
     output:
-        directory(
-            RESULTS
-            + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-        ),
+        directory(RESULTS + "graphs/heatmap_timeseries_{horizon}"),
     log:
-        RESULTS
-        + "logs/plot_heatmap_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS + "logs/plot_heatmap_timeseries_{horizon}.log",
     benchmark:
-        RESULTS
-        + "benchmarks/plot_heatmap_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        RESULTS + "benchmarks/plot_heatmap_timeseries_{horizon}"
     threads: 16
     resources:
         mem_mb=10000,
@@ -514,8 +281,6 @@ rule plot_heatmap_timeseries:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-    message:
-        "Plotting heatmap time series visualization for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizons"
     script:
         scripts("plot_heatmap_timeseries.py")
 
@@ -534,40 +299,35 @@ STATISTICS_BARPLOTS = [
 
 
 rule plot_base_statistics:
+    """Plots bar charts of capacities, costs, curtailment, supply and market values per carrier."""
     input:
-        network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
     output:
         **{
-            f"{plot}_bar": RESULTS
-            + f"figures/statistics_{plot}_bar_base_s_{{clusters}}_elec_{{opts}}.pdf"
+            f"{plot}_bar": RESULTS + f"figures/statistics_{plot}_bar_{{horizon}}.pdf"
             for plot in STATISTICS_BARPLOTS
         },
-        barplots_touch=RESULTS
-        + "figures/.statistics_plots_base_s_{clusters}_elec_{opts}",
+        barplots_touch=RESULTS + "figures/.statistics_plots_{horizon}",
     params:
         plotting=config_provider("plotting"),
         barplots=STATISTICS_BARPLOTS,
-    message:
-        "Plotting base scenario statistics for {wildcards.clusters} clusters and {wildcards.opts} electric options"
     script:
         scripts("plot_statistics.py")
 
 
 rule build_ambient_air_temperature_yearly_average:
+    """Averages ambient air temperature over the year for each onshore grid cell."""
     input:
         cutout=lambda w: input_cutout(w),
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        onshore_regions=resources("onshore_regions.geojson"),
     output:
         average_ambient_air_temperature=resources(
-            "temp_ambient_air_base_s_{clusters}_temporal_aggregate.nc"
+            "temp_ambient_air_temporal_aggregate.nc"
         ),
     log:
-        RESULTS + "logs/build_ambient_air_temperature_yearly_average/base_s_{clusters}",
+        logs("logs/build_ambient_air_temperature_yearly_average.log"),
     benchmark:
-        (
-            RESULTS
-            + "benchmarks/build_ambient_air_temperature_yearly_average/base_s_{clusters}"
-        )
+        benchmarks("build_ambient_air_temperature_yearly_average")
     threads: 1
     resources:
         mem_mb=5000,
@@ -576,14 +336,15 @@ rule build_ambient_air_temperature_yearly_average:
 
 
 rule plot_cop_profiles:
+    """Plots interactive heat pump coefficient of performance profiles per region."""
     input:
-        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
+        cop_profiles=resources("cop_profiles_{horizon}.nc"),
     output:
-        html=RESULTS + "graphs/cop_profiles_s_{clusters}_{planning_horizons}.html",
+        html=RESULTS + "graphs/cop_profiles_{horizon}.html",
     log:
-        RESULTS + "logs/plot_cop_profiles_s_{clusters}_{planning_horizons}.log",
+        RESULTS + "logs/plot_cop_profiles_{horizon}.log",
     benchmark:
-        RESULTS + "benchmarks/plot_cop_profiles/s_{clusters}_{planning_horizons}"
+        RESULTS + "benchmarks/plot_cop_profiles/{horizon}"
     resources:
         mem_mb=10000,
     script:
@@ -591,21 +352,16 @@ rule plot_cop_profiles:
 
 
 rule plot_interactive_bus_balance:
+    """Plots interactive energy balance time series for each bus matching a name pattern."""
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
     output:
-        directory=directory(
-            RESULTS
-            + "graphics/interactive_bus_balance/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-        ),
+        directory=directory(RESULTS + "graphics/interactive_bus_balance/{horizon}"),
     log:
-        RESULTS
-        + "logs/plot_interactive_bus_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS + "logs/plot_interactive_bus_balance/{horizon}.log",
     benchmark:
-        RESULTS
-        + "benchmarks/plot_interactive_bus_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        RESULTS + "benchmarks/plot_interactive_bus_balance/{horizon}"
     resources:
         mem_mb=20000,
     params:

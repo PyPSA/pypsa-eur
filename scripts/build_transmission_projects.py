@@ -5,24 +5,16 @@
 
 """
 Gets the transmission projects defined in the config file, concatenates and
-deduplicates them. Projects are later included in :mod:`add_electricity.py`.
+deduplicates them. Projects are later included in [add_electricity][].
 
-Inputs
-------
-
-- ``networks/base_network.nc``:  Base network topology for the electricity grid. This is processed in :mod:`base_network.py`.
-- ``data/transmission_projects/"project_name"/``: Takes the transmission projects from the subfolder of data/transmission_projects. The subfolder name is the project name.
-- ``offshore_shapes.geojson``: Shapefile containing the offshore regions. Used to determine if a new bus should be added for a new line or link.
-- ``europe_shape.geojson``: Shapefile containing the shape of Europe. Used to determine if a project is within the considered countries.
-
-Outputs
--------
-
-- ``transmission_projects/new_lines.csv``: New project lines to be added to the network. This includes new lines and upgraded lines.
-- ``transmission_projects/new_links.csv``: New project links to be added to the network. This includes new links and upgraded links.
-- ``transmission_projects/adjust_lines.csv``: For lines which are upgraded, the decommissioning year of the existing line is adjusted to the build year of the upgraded line.
-- ``transmission_projects/adjust_links.csv``: For links which are upgraded, the decommissioning year of the existing link is adjusted to the build year of the upgraded link.
-- ``transmission_projects/new_buses.csv``: For some links, we have to add new buses (e.g. North Sea Wind Power Hub).
+Each project is read from a subfolder of `data/transmission_projects/` named
+after the project. The offshore shapes are used to determine if a new bus
+should be added for a new line or link, and the shape of Europe to determine if
+a project is within the considered countries. New and upgraded lines and links
+are written to separate files. For lines and links which are upgraded, the
+decommissioning year of the existing line or link is adjusted to the build year
+of the upgraded one. For some links, new buses have to be added (e.g. North Sea
+Wind Power Hub).
 """
 
 import logging
@@ -61,6 +53,7 @@ def add_new_buses(n, new_ports):
         substation_off=True,
         substation_lv=False,
         carrier="AC",
+        return_names=True,
     )
     new_buses = n.buses.loc[added_buses].copy().dropna(axis=1, how="all")
     new_ports.loc[to_add.index, "neighbor"] = added_buses
@@ -148,13 +141,16 @@ def get_branch_coords_from_geometry(linestring, reversed=False):
 
     Parameters
     ----------
-    linestring: Shapely linestring
-    reversed (bool, optional): If True, returns the end and start points instead of the start and end points.
-                               Defaults to False.
+    linestring : Shapely linestring
+        The linestring to reduce.
+    reversed : bool, optional
+        If True, returns the end and start points instead of the start and end points.
+        Defaults to False.
 
     Returns
     -------
-    numpy.ndarray: Flattened array of start and end coordinates.
+    numpy.ndarray
+        Flattened array of start and end coordinates.
     """
     coords = np.asarray(linestring.coords)
     ind = [0, -1] if not reversed else [-1, 0]
@@ -168,9 +164,8 @@ def get_branch_coords_from_buses(line):
 
     Parameters
     ----------
-    linestring: shapely linestring
-    reversed (bool, optional): If True, returns the end and start points instead of the start and end points.
-                               Defaults to False.
+    line : pandas.Series
+        A row from a branch component DataFrame with bus0 and bus1 attributes.
 
     Returns
     -------

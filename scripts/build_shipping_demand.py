@@ -2,8 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build regional demand for international navigation based on outflow volume of
-ports.
+Distribute national energy demand for international navigation to model
+regions by port activity.
+
+Ports from a global port dataset with attributed cargo outflows are filtered
+to those inside the modelled area and assigned to the nearest onshore region.
+The country-level demand for international navigation from the energy totals
+is then split between the regions of each country in proportion to their
+share of the country's port outflows. Regions without ports receive zero
+demand.
 """
 
 import json
@@ -20,7 +27,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_shipping_demand", clusters=48)
+        snakemake = mock_snakemake("build_shipping_demand")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

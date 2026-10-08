@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build mapping between cutout grid cells and population (total, urban, rural).
+Build gridded total, urban and rural population layouts on the cutout grid.
+
+NUTS3 population is spread over the cutout grid cells in proportion to the
+area each NUTS3 region covers in a cell. Within each country, cells are sorted
+by population density and the least dense cells count as rural until their
+cumulative population reaches the country's rural share from World Bank
+urbanisation statistics; the remaining cells count as urban. Kosovo takes the
+urbanisation rate of Serbia. The layouts serve to regionalise demands and
+population-based potentials.
 """
 
 import logging
@@ -41,7 +49,8 @@ if __name__ == "__main__":
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
 
     # Indicator matrix NUTS3 -> grid cells
-    I = atlite.cutout.compute_indicatormatrix(nuts3.geometry, grid_cells)  # noqa: E741
+    # atlite looks up these shapes by position, not by index label
+    I = atlite.cutout.compute_indicatormatrix(list(nuts3.geometry), grid_cells)  # noqa: E741
 
     # Indicator matrix grid_cells -> NUTS3; inprinciple Iinv*I is identity
     # but imprecisions mean not perfect

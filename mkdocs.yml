@@ -1,0 +1,169 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC-BY-4.0
+
+site_name: PyPSA-Eur
+site_url: https://pypsa-eur.readthedocs.io
+repo_url: https://github.com/pypsa/pypsa-eur
+repo_name: pypsa/pypsa-eur
+
+docs_dir: doc
+
+theme:
+  name: material
+  logo: img/logo.svg
+  features:
+  - navigation.tabs
+  - navigation.tabs.sticky
+  - navigation.sections
+  - navigation.expand
+  - navigation.indexes
+  - navigation.top
+  - navigation.tracking
+  - search.suggest
+  - content.code.copy
+  - content.tabs.link
+  - content.action.edit
+  - content.action.view
+  - toc.follow
+  - search.highlight
+  - search.share
+  font:
+    text: Overpass
+
+nav:
+- Home:
+  - Home: index.md
+  - Getting Started:
+    - Introduction: introduction.md
+    - Installation: installation.md
+    - "Tutorial: Electricity-Only": tutorial.md
+    - "Tutorial: Sector-Coupled": tutorial_sector.md
+  - References:
+    - Release Notes: release_notes.md
+    - Migration Guide: migration.md
+    - Licenses: licenses.md
+    - Validation: validation.md
+    - Limitations: limitations.md
+    - FAQ and Troubleshooting: faq.md
+    - Support: support.md
+    - Publications: publications.md
+
+- Model Description:
+  - Model Overview: design/overview.md
+  - Model Resolution: design/resolution.md
+  - Foresight: design/foresight.md
+  - Techno-Economic Assumptions: design/techno-economic-assumptions.md
+  - Electricity: design/electricity.md
+  - Heating: design/heat.md
+  - Transport: design/transport.md
+  - Industry: design/industry.md
+  - Ammonia: design/ammonia.md
+  - Biomass: design/biomass.md
+  - Carbon Management: design/carbon-management.md
+  - Hydrogen: design/hydrogen.md
+  - Methane: design/methane.md
+  - Methanol: design/methanol.md
+  - Oil: design/oil.md
+  - OETC Integration: oetc.md
+
+- Configuration:
+  - Wildcards: wildcards.md
+  - Configuration: configuration.md
+
+- Data Sources:
+  - Data Sources: data_sources.md
+  - Base Network: data-base-network.md
+  - Cutouts: data-cutouts.md
+  - Data Repositories: data-repos.md
+
+- Rules Overview:
+  - rules/index.md
+  - Retrieving Data: rules/retrieve.md
+  - Regions and Weather: rules/regions.md
+  - Transmission Grid: rules/grid.md
+  - Electricity Demand and Supply: rules/electricity.md
+  - Population and Energy Balances: rules/balances.md
+  - Heating: rules/heating.md
+  - Transport: rules/transport.md
+  - Industry: rules/industry.md
+  - Costs and Prices: rules/costs.md
+  - Biomass, Gas and Carbon: rules/carriers.md
+  - Composing and Solving: rules/solving.md
+  - Plotting and Summaries: rules/plotting.md
+
+- Contributing:
+  - contributing.md
+  - Validation Development: validation_dev.md
+
+
+plugins:
+- search
+- autorefs
+- macros:
+    module_name: doc/macros
+    j2_comment_start_string: "{%#"
+    j2_comment_end_string: "#%}"
+- table-reader
+- mkdocstrings:
+    default_handler: python
+    enable_inventory: true
+    handlers:
+      python:
+        paths: [scripts, .]
+        options:
+          docstring_style: numpy
+          show_source: false
+          show_root_heading: false
+          show_root_full_path: false
+          show_root_toc_entry: true
+          heading_level: 6
+          members: false
+          allow_inspection: true
+        inventories:
+        - https://docs.python.org/3/objects.inv
+- bibtex:
+    bib_file: doc/publications.bib
+    enable_inline_citations: false
+
+markdown_extensions:
+- footnotes
+- admonition
+- pymdownx.details
+- pymdownx.caret
+- pymdownx.tilde
+- abbr
+- pymdownx.snippets:
+    base_path: .
+- pymdownx.superfences:
+    custom_fences:
+    - name: mermaid
+      class: mermaid
+      format: !!python/name:pymdownx.superfences.fence_code_format
+- pymdownx.arithmatex:
+    generic: true
+- pymdownx.tabbed:
+    alternate_style: true
+- pymdownx.emoji:
+    emoji_index: !!python/name:material.extensions.emoji.twemoji
+    emoji_generator: !!python/name:material.extensions.emoji.to_svg
+- pymdownx.highlight
+- pymdownx.inlinehilite
+- tables
+- attr_list
+- md_in_html
+- toc:
+    permalink: true
+    toc_depth: 5
+
+hooks:
+- doc/hooks.py
+
+extra_css:
+- assets/stylesheets/extra.css
+
+extra_javascript:
+- https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+copyright: >-
+  &copy Copyright PyPSA-Eur Contributors | CC-BY-4.0
