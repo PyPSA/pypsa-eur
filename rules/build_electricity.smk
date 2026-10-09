@@ -375,14 +375,14 @@ rule determine_availability_matrix:
         logs("determine_availability_matrix_{technology}.log"),
     benchmark:
         benchmarks("determine_availability_matrix_{technology}")
+    wildcard_constraints:
+        technology=r"(?!MD-UA_)[^/]+",
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     params:
         renewable=config_provider("renewable"),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
-    wildcard_constraints:
-        technology=r"(?!MD-UA_)[^/]+",
     script:
         scripts("determine_availability_matrix.py")
 
