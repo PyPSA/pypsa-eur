@@ -1616,6 +1616,7 @@ def add_h2_gas_infrastructure(
         Key options include:
         - hydrogen_fuel_cell : bool
         - hydrogen_turbine : bool
+        - electrolysis : bool
         - hydrogen_underground_storage : bool
         - gas_network : bool
         - H2_retrofit : bool
@@ -1651,18 +1652,20 @@ def add_h2_gas_infrastructure(
 
     n.add("Bus", nodes + " H2", location=nodes, carrier="H2", unit="MWh_LHV")
 
-    n.add(
-        "Link",
-        nodes + " H2 Electrolysis",
-        bus1=nodes + " H2",
-        bus0=nodes,
-        p_nom_extendable=True,
-        carrier="H2 Electrolysis",
-        efficiency=costs.at["electrolysis", "efficiency"],
-        capital_cost=costs.at["electrolysis", "capital_cost"],
-        p_min_pu=options["min_part_load_electrolysis"],
-        lifetime=costs.at["electrolysis", "lifetime"],
-    )
+    if options["electrolysis"]:
+        logger.info("Adding hydrogen electrolysis for power-to-gas conversion.")
+        n.add(
+            "Link",
+            nodes + " H2 Electrolysis",
+            bus1=nodes + " H2",
+            bus0=nodes,
+            p_nom_extendable=True,
+            carrier="H2 Electrolysis",
+            efficiency=costs.at["electrolysis", "efficiency"],
+            capital_cost=costs.at["electrolysis", "capital_cost"],
+            p_min_pu=options["min_part_load_electrolysis"],
+            lifetime=costs.at["electrolysis", "lifetime"],
+        )
 
     if options["hydrogen_fuel_cell"]:
         logger.info("Adding hydrogen fuel cell for re-electrification.")

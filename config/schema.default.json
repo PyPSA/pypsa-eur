@@ -5419,6 +5419,11 @@
           "description": "Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs.",
           "type": "boolean"
         },
+        "electrolysis": {
+          "default": true,
+          "description": "Add option to include hydrogen electrolysis for power-to-gas conversion.",
+          "type": "boolean"
+        },
         "SMR": {
           "default": true,
           "description": "Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR).",
@@ -12955,6 +12960,11 @@
         "hydrogen_turbine": {
           "default": true,
           "description": "Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs.",
+          "type": "boolean"
+        },
+        "electrolysis": {
+          "default": true,
+          "description": "Add option to include hydrogen electrolysis for power-to-gas conversion.",
           "type": "boolean"
         },
         "SMR": {
