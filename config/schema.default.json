@@ -2750,6 +2750,21 @@
           "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.",
           "type": "boolean"
         },
+        "solid_biomass_for_industry_cc": {
+          "default": true,
+          "description": "Add option for using solid biomass for industry with carbon capture, in addition to solid biomass for industry without carbon capture.",
+          "type": "boolean"
+        },
+        "gas_for_industry_cc": {
+          "default": true,
+          "description": "Add option for using gas for industry with carbon capture, in addition to gas for industry without carbon capture.",
+          "type": "boolean"
+        },
+        "process_emissions_cc": {
+          "default": true,
+          "description": "Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
+          "type": "boolean"
+        },
         "sector_ratios_fraction_future": {
           "additionalProperties": {
             "type": "number"
@@ -13582,6 +13597,21 @@
         "waste_to_energy_cc": {
           "default": false,
           "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.",
+          "type": "boolean"
+        },
+        "solid_biomass_for_industry_cc": {
+          "default": true,
+          "description": "Add option for using solid biomass for industry with carbon capture, in addition to solid biomass for industry without carbon capture.",
+          "type": "boolean"
+        },
+        "gas_for_industry_cc": {
+          "default": true,
+          "description": "Add option for using gas for industry with carbon capture, in addition to gas for industry without carbon capture.",
+          "type": "boolean"
+        },
+        "process_emissions_cc": {
+          "default": true,
+          "description": "Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
           "type": "boolean"
         },
         "sector_ratios_fraction_future": {
