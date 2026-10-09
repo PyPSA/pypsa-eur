@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Fix: Removed a duplicate tranmission project between NEP and TYNDP sources; improved the matching algorithm for duplicate projects
+
 * Feature: New switches `industry: solid_biomass_for_industry_cc`, `industry: gas_for_industry_cc` and `industry: process_emissions_cc` to disable the carbon capture options for solid biomass for industry, gas for industry and industrial process emissions. All default to `true`, which matches the previous behaviour ([#2357](https://github.com/PyPSA/pypsa-eur/pull/2357)).
 
 * Feature: New option `sector: electrolysis` to allow hydrogen electrolysis to be configurable ([#2358](https://github.com/PyPSA/pypsa-eur/pull/2358)).
