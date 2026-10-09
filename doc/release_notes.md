@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Feature: New option `sector: electrolysis` to allow hydrogen electrolysis to be configurable ([#2358](https://github.com/PyPSA/pypsa-eur/pull/2358)).
+
 * Feature: Split logging levels between console and log file. The console now defaults to `WARNING`, while the log file of each rule still records `INFO`. Configure via `logging: console_level` and `logging: file_level`. To print info messages to the console as before, set `logging: console_level: INFO` ([#2144](https://github.com/PyPSA/pypsa-eur/pull/2144)).
 
 * Removed `exclude-newer` exception for `snakemake-executor-plugin-slurm` from `pixi.toml` ([#2352](https://github.com/PyPSA/pypsa-eur/pull/2352)).
