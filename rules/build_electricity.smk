@@ -381,6 +381,8 @@ rule determine_availability_matrix:
     params:
         renewable=config_provider("renewable"),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+    wildcard_constraints:
+        technology=r"(?!MD-UA_)[^/]+",
     script:
         scripts("determine_availability_matrix.py")
 
