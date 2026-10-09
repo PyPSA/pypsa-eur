@@ -936,6 +936,7 @@ sector:
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: true
+  electrolysis: true
   SMR: true
   SMR_cc: true
   regional_oil_demand: true
