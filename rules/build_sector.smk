@@ -259,6 +259,10 @@ rule build_central_heating_temperature_profiles:
 
 rule build_dh_areas:
     """Builds district heating area shapes and fills in countries missing from the source data."""
+    params:
+        handle_missing_countries=config_provider(
+            "sector", "district_heating", "dh_areas", "handle_missing_countries"
+        ),
     input:
         dh_areas=rules.retrieve_dh_areas.output["dh_areas"],
         onshore_regions=resources("onshore_regions.geojson"),
