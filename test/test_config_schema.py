@@ -241,4 +241,6 @@ class TestLineTypes:
 
     def test_missing_380kv_is_rejected(self):
         with pytest.raises(ValueError, match="380"):
-            validate_config({"lines": {"types": {220.0: "Al/St 240/40 2-bundle 220.0"}}})
+            validate_config(
+                {"lines": {"types": {220.0: "Al/St 240/40 2-bundle 220.0"}}}
+            )
