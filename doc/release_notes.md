@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Fix: pass the missing `handle_missing_countries` parameter to the `build_dh_areas` rule, which failed when district heating area data was missing for a country ([#2359](https://github.com/PyPSA/pypsa-eur/issues/2359)).
+
 * Feature: New switches `industry: solid_biomass_for_industry_cc`, `industry: gas_for_industry_cc` and `industry: process_emissions_cc` to disable the carbon capture options for solid biomass for industry, gas for industry and industrial process emissions. All default to `true`, which matches the previous behaviour ([#2357](https://github.com/PyPSA/pypsa-eur/pull/2357)).
 
 * Feature: New option `sector: electrolysis` to allow hydrogen electrolysis to be configurable ([#2358](https://github.com/PyPSA/pypsa-eur/pull/2358)).
