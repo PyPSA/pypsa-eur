@@ -714,12 +714,14 @@ def add_co2_tracking(
         e_nom_max = np.inf
 
     n.add(
-        "Store",
+        "Generator",
         sequestration_buses,
-        e_nom_extendable=True,
-        e_nom_max=e_nom_max,
-        marginal_cost=-0.1,
         bus=sequestration_buses,
+        p_nom_extendable=True,
+        p_min_pu=-1.0,
+        p_max_pu=0,
+        e_sum_min=-e_nom_max,
+        e_sum_max=0,
         lifetime=options["co2_sequestration_lifetime"],
         carrier="co2 sequestered",
     )
