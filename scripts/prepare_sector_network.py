@@ -660,31 +660,6 @@ def add_co2_tracking(
             carrier="co2 expansion",
             unit="t_co2",
         )
-        n.add(
-            "Link",
-            sequestration_buses,
-            bus0=spatial.co2.dense,
-            bus1=sequestration_buses,
-            carrier="co2 sequestered",
-            marginal_cost=options["co2_sequestration_cost"],
-            efficiency=1.0,
-            p_nom=np.inf,
-            p_nom_extendable=False,
-        )
-
-    else:
-        n.add(
-            "Link",
-            sequestration_buses,
-            bus0=spatial.co2.nodes,
-            bus1=sequestration_buses,
-            carrier="co2 sequestered",
-            marginal_cost=options["co2_sequestration_cost"],
-            efficiency=1.0,
-            p_nom=np.inf,
-            p_nom_extendable=False,
-        )
-
     if options["regional_co2_sequestration_potential"]["enable"]:
         if sequestration_potential_file is None:
             raise ValueError(
@@ -713,16 +688,35 @@ def add_co2_tracking(
     else:
         e_nom_max = np.inf
 
+    p_nom = (
+        e_nom_max
+        if options["regional_co2_sequestration_potential"]["enable"]
+        else 1e7
+    )
+    n.add(
+        "Link",
+        sequestration_buses,
+        bus0=spatial.co2.dense if co2_liquefaction else spatial.co2.nodes,
+        bus1=sequestration_buses,
+        carrier="co2 sequestered",
+        efficiency=1.0,
+        p_nom=p_nom,
+        p_nom_extendable=False,
+        lifetime=np.inf,
+    )
+
     n.add(
         "Generator",
         sequestration_buses,
         bus=sequestration_buses,
-        p_nom_extendable=True,
+        p_nom=p_nom,
+        p_nom_extendable=False,
         p_min_pu=-1.0,
         p_max_pu=0,
         e_sum_min=-e_nom_max,
         e_sum_max=0,
-        lifetime=options["co2_sequestration_lifetime"],
+        marginal_cost=-options["co2_sequestration_cost"],
+        lifetime=np.inf, # Lifetime inf means assets from previous horizons get dropped in add_brownfield
         carrier="co2 sequestered",
     )
 
