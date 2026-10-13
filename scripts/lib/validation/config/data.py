@@ -203,7 +203,7 @@ class DataConfig(BaseModel):
     )
     co2_removal_data: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
-        description="Carbon dioxide removal (afforestation, perennialisation) input data source configuration.",
+        description="Carbon dioxide removal (CO2-removal) dataset: afforestation, perennialisation and unsustainable biomass inputs.",
     )
     co2stop: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
