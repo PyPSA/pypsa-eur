@@ -1,0 +1,11 @@
+# Add-on for the test: same run, but WITHOUT demand response.
+# Use together with config.dr-test.yaml (this file second, so it wins):
+#   snakemake -call results/dr-test-nodr/networks/solved_2025.nc \
+#     --configfile config/test/config.dr-test.yaml config/test/config.dr-test-nodr.yaml
+
+run:
+  name: dr-test-nodr   # separate results folder, so the DR run isn't overwritten
+
+load:
+  demand_response:
+    enable: false

@@ -1,0 +1,79 @@
+# Scenarios for the residential DR thesis
+# Every scenario only lists what differs from the main config.
+# Method: one-at-a-time sensitivity around the base case.
+#
+# Base case (from meeting with Mostafa, 12 Oct 2026):
+#   participation = O'Reilly et al. (2024) base rates
+#   shift times   = base shift time per load category
+#   weather       = one normal atlite weather year
+#
+# Use it by setting in the main config:
+#   run:
+#     name: all
+#     scenarios:
+#       enable: true
+#       file: config/scenarios.dr.yaml
+#
+# Only works once load.demand_response exists in the config validation.
+
+# ---------- reference ----------
+
+no-dr:                     # same system, DR switched off
+  load:
+    demand_response:
+      enable: false
+
+base:
+  load:
+    demand_response:
+      enable: true
+      participation_scale: 1.0
+      shift_time_scale: 1.0
+
+# ---------- sensitivity 1: participation rate ----------
+
+participation-low:
+  load:
+    demand_response:
+      enable: true
+      participation_scale: 0.5
+      shift_time_scale: 1.0
+
+participation-high:
+  load:
+    demand_response:
+      enable: true
+      participation_scale: 2.0
+      shift_time_scale: 1.0
+
+# ---------- sensitivity 2: shift time ----------
+
+shift-short:
+  load:
+    demand_response:
+      enable: true
+      participation_scale: 1.0
+      shift_time_scale: 0.5
+
+shift-long:
+  load:
+    demand_response:
+      enable: true
+      participation_scale: 1.0
+      shift_time_scale: 2.0
+
+# ---------- sensitivity 3: weather year (full runs only) ----------
+# Needs a Europe-wide cutout for each year, so not part of the laptop test.
+# Pick years together with Mostafa, e.g. a low-wind year and a cold year.
+#
+# weather-low-wind:
+#   snapshots:
+#     start: "YYYY-01-01"
+#     end: "YYYY+1-01-01"
+#   atlite:
+#     default_cutout: europe-YYYY-era5
+#   load:
+#     demand_response:
+#       enable: true
+#       participation_scale: 1.0
+#       shift_time_scale: 1.0
