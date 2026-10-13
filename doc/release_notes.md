@@ -6,6 +6,19 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+## Upcoming Release
+
+* Added afforestation as a carbon dioxide removal technology (`sector: afforestation`, settings under
+  `afforestation:`). The land available per node is transitional woodland-shrub in CORINE
+  (`renewable: afforestation`). The potential uses rotation-averaged CO2 sequestration rates per NUTS-2
+  region from the JRC forest yield tables (Pilli et al., 2024), with monthly profiles from FluxCom gross
+  primary production. The credited removal is the gross sequestration times `afforestation: crcf_efficiency`
+  (0.8, EU CRCF uncertainty and buffer deductions). The investment is annualised over the node's optimal
+  rotation age, which is also the lifetime of the forest. In myopic runs, forests planted in earlier horizons
+  reduce the remaining potential; a forest that reaches its rotation age is no longer credited but keeps its
+  land. The input data come from the new dataset `co2_removal_data` (CO2-removal v1.0.4 on Zenodo,
+  https://doi.org/10.5281/zenodo.23954311), method documented in its `docs/afforestation_method.pdf`.
+
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
 **Features**

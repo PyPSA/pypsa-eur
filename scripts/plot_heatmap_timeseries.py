@@ -111,6 +111,15 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
+    # Redistribute the afforestation dispatch with its seasonal profile
+    _aff_profile = getattr(snakemake.input, "afforestation_seasonal_profile", None)
+    if _aff_profile:
+        from scripts.afforestation_postprocess import (
+            redistribute_afforestation_seasonal,
+        )
+
+        redistribute_afforestation_seasonal(n, _aff_profile)
+
     snapshots = get_snapshots(snakemake.params.snapshots, drop_leap_day)
     carriers = n.carriers
 

@@ -669,6 +669,10 @@ class SectorConfig(BaseModel):
         False, description="Add option for coal CHPs with carbon capture."
     )
     dac: bool = Field(True, description="Add option for Direct Air Capture (DAC).")
+    afforestation: bool = Field(
+        False,
+        description="Add afforestation as a carbon dioxide removal technology, configured under `afforestation`.",
+    )
     co2_vent: bool = Field(
         False,
         description="Add option for vent out CO2 from storages to the atmosphere.",

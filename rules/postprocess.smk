@@ -467,6 +467,11 @@ rule plot_balance_timeseries:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
         rc="matplotlibrc",
+        afforestation_seasonal_profile=lambda w: (
+            resources("afforestation_seasonal_profile_s_{clusters}.csv".format(**w))
+            if config_provider("sector", "afforestation")(w)
+            else []
+        ),
     output:
         directory(
             RESULTS
@@ -496,6 +501,11 @@ rule plot_heatmap_timeseries:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
         rc="matplotlibrc",
+        afforestation_seasonal_profile=lambda w: (
+            resources("afforestation_seasonal_profile_s_{clusters}.csv".format(**w))
+            if config_provider("sector", "afforestation")(w)
+            else []
+        ),
     output:
         directory(
             RESULTS

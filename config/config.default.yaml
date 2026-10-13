@@ -419,6 +419,12 @@ renewable:
     eia_norm_year: false
     eia_correct_by_capacity: false
     eia_approximate_missing: false
+  afforestation:
+    corine:
+    - 29
+    natura: false
+    cutout: default
+    excluder_resolution: 250
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -837,6 +843,7 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
+  afforestation: false
   co2_vent: false
   heat_vent:
     urban central: true
@@ -1075,6 +1082,11 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2023
   oil_refining_emissions: 0.013
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#afforestation
+afforestation:
+  use_discount_rate: false
+  crcf_efficiency: 0.8
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
@@ -1323,6 +1335,9 @@ data:
     source: archive
     version: latest
   instrat_co2_prices:
+    source: primary
+    version: latest
+  co2_removal_data:
     source: primary
     version: latest
   co2stop:

@@ -302,6 +302,22 @@ class _HydroConfig(BaseModel):
     )
 
 
+class _AfforestationLandConfig(BaseModel):
+    """Configuration for the land eligible for afforestation."""
+
+    corine: list[int] = Field(
+        default_factory=lambda: [29],
+        description="CORINE Land Cover codes eligible for afforestation (29: transitional woodland-shrub).",
+    )
+    natura: bool = Field(False, description="Exclude Natura 2000 areas.")
+    cutout: str | list[str] = Field(
+        "default", description="Specifies the weather data cutout file(s) to use."
+    )
+    excluder_resolution: int = Field(
+        250, description="Resolution in meters of the land eligibility raster."
+    )
+
+
 class RenewableConfig(BaseModel):
     """Configuration for `renewable` settings."""
 
@@ -352,6 +368,10 @@ class RenewableConfig(BaseModel):
     hydro: _HydroConfig = Field(
         default_factory=_HydroConfig,
         description="Hydropower configuration.",
+    )
+    afforestation: _AfforestationLandConfig = Field(
+        default_factory=_AfforestationLandConfig,
+        description="Land eligible for afforestation (carbon dioxide removal), used when `sector: afforestation` is enabled.",
     )
 
     model_config = ConfigDict(populate_by_name=True)

@@ -755,6 +755,22 @@ Configuration for `industry` settings.
     Only used for sector-coupling studies.
 
 
+## `afforestation` {#afforestation_cf}
+
+Only used for sector-coupling studies with `sector: afforestation: true`. The eligible land is set
+under `renewable: afforestation`.
+
+Configuration for `afforestation` settings.
+
+{{ schema_table("afforestation") }}
+
+**YAML Syntax**
+
+```yaml
+{{ yaml_section("afforestation") }}
+```
+
+
 ## `costs` {#costs_cf}
 
 Configuration for `costs` settings.

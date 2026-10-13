@@ -75,9 +75,37 @@ def add_brownfield(
         n_p.remove(c.name, c.static.index[c.static.lifetime == np.inf])
 
         # remove assets whose build_year + lifetime <= year
-        n_p.remove(
-            c.name, c.static.index[c.static.build_year + c.static.lifetime <= year]
-        )
+        aged = c.static.build_year + c.static.lifetime <= year
+        if c.name == "Store":
+            # afforestation: a forest that reached its rotation age (lifetime)
+            # is no longer credited (its link retires) but keeps its land, as
+            # cutting and replanting it would release the carbon. Keep its
+            # store, without cost and unable to store CO2 (e_max_pu = 0, so it
+            # takes nothing from the links of younger forests on the same bus),
+            # so that its land stays used.
+            mature = aged & (c.static.carrier == "co2 afforestation")
+            c.static.loc[mature, "capital_cost"] = 0.0
+            c.static.loc[mature, "e_max_pu"] = 0.0
+            aged &= ~mature
+        n_p.remove(c.name, c.static.index[aged])
+
+        if c.name == "Link":
+            # afforestation: the link has a fixed p_nom, so it is not
+            # dropped by the capacity threshold below. Drop the links of
+            # vintages whose forest (store on the same bus, same build year)
+            # was not built, so that unused link capacity does not pile up.
+            affo_l = c.static.index[
+                (c.static.carrier == "co2 afforestation")
+                & ~c.static.p_nom_extendable
+            ]
+            if not affo_l.empty:
+                s = n_p.stores[n_p.stores.carrier == "co2 afforestation"]
+                built_s = s.e_nom_opt.groupby([s.bus, s.build_year]).sum()
+                key = pd.MultiIndex.from_arrays(
+                    [c.static.loc[affo_l, "bus1"], c.static.loc[affo_l, "build_year"]]
+                )
+                store_built = built_s.reindex(key).fillna(0).values
+                n_p.remove(c.name, affo_l[store_built < capacity_threshold])
 
         # remove assets if their optimized nominal capacity is lower than a threshold
         # since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
@@ -125,6 +153,46 @@ def add_brownfield(
         for tattr in n.component_attrs[c.name].index[selection]:
             # TODO: Needs to be rewritten to
             n._import_series_from_df(c.dynamic[tattr], c.name, tattr)
+
+    # afforestation: the potential is land area x growth rate, so forests
+    # planted in earlier horizons (growing or mature) occupy part of it.
+    # Subtract their capacity from the new vintage's cap per node.
+    affo = n.stores[n.stores.carrier == "co2 afforestation"]
+    if not affo.empty:
+        new_i = affo.index[affo.e_nom_extendable]
+        built = affo.loc[~affo.e_nom_extendable].groupby("bus").e_nom.sum()
+        remaining = (
+            affo.loc[new_i, "e_nom_max"]
+            - affo.loc[new_i, "bus"].map(built).fillna(0).values
+        ).clip(lower=0)
+        n.stores.loc[new_i, "e_nom_max"] = remaining
+        # afforestation: the new link's fixed p_nom is the peak rate of the full
+        # potential; scale it to the remaining cap of its node.
+        new_l = n.links.index[
+            (n.links.carrier == "co2 afforestation")
+            & (n.links.build_year == year)
+            & ~n.links.p_nom_extendable
+        ]
+        if not new_l.empty:
+            share = (
+                remaining / affo.loc[new_i, "e_nom_max"].where(lambda x: x > 0)
+            ).fillna(0)
+            share.index = affo.loc[new_i, "bus"]
+            n.links.loc[new_l, "p_nom"] *= (
+                n.links.loc[new_l, "bus1"].map(share).fillna(1).values
+            )
+        # all forests of a node (new, growing and mature) stay within its potential
+        potential = affo.loc[new_i].groupby("bus").e_nom_max.sum()
+        excess = built.reindex(potential.index).fillna(0) - potential
+        if (excess > 1e-3 * potential.clip(lower=1)).any():
+            logger.warning(
+                "Afforestation: forests already built exceed the potential at "
+                f"{list(excess.index[excess > 1e-3 * potential.clip(lower=1)])}."
+            )
+        logger.info(
+            f"Afforestation: {built.sum() / 1e6:.1f} MtCO2/yr already built, "
+            f"{remaining.sum() / 1e6:.1f} MtCO2/yr left for {year}."
+        )
 
     # deal with gas network
     if h2_retrofit:

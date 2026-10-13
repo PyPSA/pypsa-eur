@@ -156,6 +156,21 @@
         }
       }
     },
+    "AfforestationConfig": {
+      "description": "Configuration for `afforestation` settings (used with `sector: afforestation: true`).",
+      "properties": {
+        "use_discount_rate": {
+          "default": false,
+          "description": "Annualise the investment with the discount rate of the cost data; if false, without discounting.",
+          "type": "boolean"
+        },
+        "crcf_efficiency": {
+          "default": 0.8,
+          "description": "Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012): uncertainty deduction (at least 10%) and buffer-pool contribution (8-17% risk rate), (1-0.10)*(1-0.11) = 0.80, range 0.72-0.83.",
+          "type": "number"
+        }
+      }
+    },
     "AtliteConfig": {
       "description": "Configuration for `atlite` settings.",
       "properties": {
@@ -1025,6 +1040,26 @@
           }
         },
         "instrat_co2_prices": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "co2_removal_data": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -3998,6 +4033,43 @@
               "type": "boolean"
             }
           }
+        },
+        "afforestation": {
+          "description": "Configuration for the land eligible for afforestation.",
+          "properties": {
+            "corine": {
+              "description": "CORINE Land Cover codes eligible for afforestation (29: transitional woodland-shrub).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Exclude Natura 2000 areas.",
+              "type": "boolean"
+            },
+            "cutout": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ],
+              "default": "default",
+              "description": "Specifies the weather data cutout file(s) to use."
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters of the land eligibility raster.",
+              "type": "integer"
+            }
+          }
         }
       }
     },
@@ -4645,6 +4717,11 @@
         "dac": {
           "default": true,
           "description": "Add option for Direct Air Capture (DAC).",
+          "type": "boolean"
+        },
+        "afforestation": {
+          "default": false,
+          "description": "Add afforestation as a carbon dioxide removal technology, configured under `afforestation`.",
           "type": "boolean"
         },
         "co2_vent": {
@@ -5805,6 +5882,43 @@
           },
           "description": "Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`.",
           "type": "object"
+        }
+      }
+    },
+    "_AfforestationLandConfig": {
+      "description": "Configuration for the land eligible for afforestation.",
+      "properties": {
+        "corine": {
+          "description": "CORINE Land Cover codes eligible for afforestation (29: transitional woodland-shrub).",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "natura": {
+          "default": false,
+          "description": "Exclude Natura 2000 areas.",
+          "type": "boolean"
+        },
+        "cutout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": "default",
+          "description": "Specifies the weather data cutout file(s) to use."
+        },
+        "excluder_resolution": {
+          "default": 250,
+          "description": "Resolution in meters of the land eligibility raster.",
+          "type": "integer"
         }
       }
     },
@@ -10088,6 +10202,43 @@
               "type": "boolean"
             }
           }
+        },
+        "afforestation": {
+          "description": "Configuration for the land eligible for afforestation.",
+          "properties": {
+            "corine": {
+              "description": "CORINE Land Cover codes eligible for afforestation (29: transitional woodland-shrub).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Exclude Natura 2000 areas.",
+              "type": "boolean"
+            },
+            "cutout": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ],
+              "default": "default",
+              "description": "Specifies the weather data cutout file(s) to use."
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters of the land eligibility raster.",
+              "type": "integer"
+            }
+          }
         }
       }
     },
@@ -11139,6 +11290,11 @@
           "description": "Add option for Direct Air Capture (DAC).",
           "type": "boolean"
         },
+        "afforestation": {
+          "default": false,
+          "description": "Add afforestation as a carbon dioxide removal technology, configured under `afforestation`.",
+          "type": "boolean"
+        },
         "co2_vent": {
           "default": false,
           "description": "Add option for vent out CO2 from storages to the atmosphere.",
@@ -11850,6 +12006,21 @@
         "oil_refining_emissions": {
           "default": 0.013,
           "description": "The emissions from oil fuel processing (e.g. oil in petrochemical refinieries). The default value of 0.013 tCO2/MWh is based on DE statistics for 2019; the EU value is very similar.",
+          "type": "number"
+        }
+      }
+    },
+    "afforestation": {
+      "description": "Configuration for `afforestation` settings (used with `sector: afforestation: true`).",
+      "properties": {
+        "use_discount_rate": {
+          "default": false,
+          "description": "Annualise the investment with the discount rate of the cost data; if false, without discounting.",
+          "type": "boolean"
+        },
+        "crcf_efficiency": {
+          "default": 0.8,
+          "description": "Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012): uncertainty deduction (at least 10%) and buffer-pool contribution (8-17% risk rate), (1-0.10)*(1-0.11) = 0.80, range 0.72-0.83.",
           "type": "number"
         }
       }
@@ -12882,6 +13053,26 @@
           }
         },
         "instrat_co2_prices": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "co2_removal_data": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

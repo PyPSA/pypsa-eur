@@ -206,6 +206,16 @@ if __name__ == "__main__":
 
     # Load network and prepare data
     n = pypsa.Network(snakemake.input.network)
+
+    # Redistribute the afforestation dispatch with its seasonal profile
+    _aff_profile = getattr(snakemake.input, "afforestation_seasonal_profile", None)
+    if _aff_profile:
+        from scripts.afforestation_postprocess import (
+            redistribute_afforestation_seasonal,
+        )
+
+        redistribute_afforestation_seasonal(n, _aff_profile)
+
     config = snakemake.params.plotting["balance_timeseries"]
     output_dir = snakemake.output[0]
     os.makedirs(output_dir, exist_ok=True)
