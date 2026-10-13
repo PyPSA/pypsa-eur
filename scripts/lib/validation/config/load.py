@@ -42,6 +42,12 @@ class _DistributionKeyConfig(BaseModel):
         description="Weighting factor for the population data in the distribution key.",
     )
 
+class _DemandResponseConfig(ConfigModel):
+    """Configuration for `load.demand_response` settings."""
+
+    enable: bool = Field(False, description="Whether to add residential demand response.")
+    share: float = Field(0.1, ge=0, le=1, description="Share of hourly load that can be shifted (test value).")
+    shift_time: int = Field(3, ge=1, description="Hours within which shifted load must be recovered (S).")
 
 class LoadConfig(BaseModel):
     """Configuration for `load` settings."""
@@ -73,4 +79,8 @@ class LoadConfig(BaseModel):
     distribution_key: _DistributionKeyConfig = Field(
         default_factory=_DistributionKeyConfig,
         description="Distribution key for spatially disaggregating the per-country electricity demand data.",
+    )
+    demand_response: _DemandResponseConfig = Field(
+        default_factory=_DemandResponseConfig,
+        description="Residential demand response settings.",
     )

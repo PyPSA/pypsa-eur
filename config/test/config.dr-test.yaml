@@ -1,0 +1,119 @@
+# yaml-language-server: $schema=../schema.default.json
+#
+# Tiny test case for the residential DR thesis
+# Belgium, 5 buses, one week, hourly, operations only (fixed capacities)
+# Small enough to run on a laptop with 8 GB RAM
+#
+# Written for PyPSA-Eur v2026.09.0
+#
+# Put this file in config/ and run from the pypsa-eur folder inside pixi shell:
+#   snakemake -call results/dr-test/networks/solved_2025.nc --configfile config/config.dr-test.yaml
+#
+# Then open the result in Python:
+#   import pypsa
+#   n = pypsa.Network("results/dr-test/networks/solved_2025.nc")
+#   n.loads, n.stores, n.statistics()
+
+tutorial: true            # uses the small tutorial data bundles (fast download)
+
+run:
+  name: dr-test
+  scenarios:
+    enable: false         # switch to true once the DR config block exists (see bottom)
+    file: config/scenarios.dr.yaml
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+
+foresight: overnight
+planning_horizons:
+- 2025                    # model year still open (2022 / 2024 / 2025), change when decided
+
+# ---------- space and time ----------
+
+countries:
+- BE                      # tutorial weather data only covers this area
+
+snapshots:
+  start: "2013-03-01"
+  end: "2013-03-08"       # one week; the full run uses a whole year
+
+clustering:
+  cluster_network:
+    n_clusters: 5
+  temporal:
+    averaging: false      # IMPORTANT: keep hourly, otherwise DR shift times lose meaning
+
+# ---------- weather (atlite) ----------
+# Test: tutorial cutout for one week.
+# Base case (full run): one "normal" weather year for all of Europe.
+
+atlite:
+  default_cutout: be-03-2013-era5
+  cutouts:
+    be-03-2013-era5:
+      module: era5
+      x: [4.0, 15.0]
+      y: [46.0, 56.0]
+      time: ["2013-03-01", "2013-03-08"]
+
+# ---------- operations only: no new investments ----------
+
+electricity:
+  extendable_carriers:    # existing fleet only, EXCEPT extra gas in this test:
+    Generator: [CCGT]     # Belgium alone can't cover demand, so extra CCGT fills the gaps
+                          # instead of load shedding. Remove for operations-only runs.
+                          # (Only works for technologies Belgium already has, so not OCGT.)
+    StorageUnit: []
+    Store: []
+    Link: []
+  transmission_limit: v1.0   # grid kept at today's size
+  renewable_carriers:     # hydro left out ONLY in this test: its inflow calculation
+  - solar                 # needs a full year of weather data, and the test has one week.
+  - solar-hsat            # Put hydro back for the full-year runs.
+  - onwind
+  - offwind-ac
+  - offwind-dc
+  - offwind-float
+  estimate_renewable_capacities:
+    enable: true          # existing wind and solar from IRENA statistics
+    from_powerplantmatching: true
+    year: 2020
+    expansion_limit: false
+    technology_mapping:
+      Offshore: offwind-ac
+      Onshore: onwind
+      PV: solar
+
+co2_budget:
+  relative: false
+  upper: null             # no CO2 cap; a cap plus fixed capacity can make it infeasible
+
+conventional:
+  dynamic_fuel_price: false
+  unit_commitment: false
+
+# ---------- solver ----------
+
+solving:
+  solver:
+    name: highs           # free solver for the test; use gurobi for the full runs
+    options: highs-default
+  options:
+    transmission_losses: false
+    load_shedding:
+      enable: true        # safety valve so the test never turns infeasible
+      default_cost: 100000   # €/MWh, high so it is only used if truly needed
+
+sector:
+  enabled: false          # electricity only
+
+# ---------- demand response ----------
+# Needs _DemandResponseConfig in scripts/lib/validation/config/load.py
+# and a matching load: demand_response: block in config/config.default.yaml.
+
+load:
+  demand_response:
+    enable: true
+    share: 0.1        # TEST value: max share of hourly load shifted up or down
+    shift_time: 3     # S, hours within which shifted load must be recovered

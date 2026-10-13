@@ -403,6 +403,101 @@ def attach_load(
 
     n.add("Load", load.columns, bus=load.columns, p_set=load, carrier="electricity")
 
+def attach_demand_response(
+    n: pypsa.Network,
+    share: float = 0.10,
+    shift_time: int = 3,
+) -> None:
+    """
+    Attach residential demand response (load shifting) to every electricity bus.
+
+    TEST VERSION WITH MADE-UP NUMBERS. Later the limits come from the
+    O'Reilly-based DR profile file and the settings from the config.
+
+    For each bus this adds:
+      - a DR bus
+      - a Link "DR up"   (electricity bus -> DR bus): L_up[h],   extra load now
+      - a Link "DR down" (DR bus -> electricity bus): L_down[h], less load now
+      - a Store on the DR bus: e[h] = DR_act[h]
+            DR_act > 0  load advanced (consumed earlier)
+            DR_act < 0  load delayed  (consumed later)
+
+    The Store bookkeeping gives the balance constraint
+        DR_act[h] = DR_act[h-1] + L_up[h] - L_down[h]
+    and e_cyclic=True gives the end balance DR_act[end] = DR_act[0].
+    The S-hour recovery constraints (3) and (4) are added separately in
+    data/custom_extra_functionality.py.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network that already has its electricity Loads attached.
+    share : float
+        MADE-UP: max share of the hourly load that can be shifted up or down.
+    shift_time : int
+        MADE-UP: S, hours within which shifted load must be recovered.
+        Only used here to give the Store a safe size.
+    """
+    loads = n.loads[n.loads.carrier == "electricity"]
+    demand = n.loads_t.p_set[loads.index]          # MW, hours x loads
+    demand.columns = loads.bus                      # one column per bus
+    buses = demand.columns
+
+    # max shiftable power per bus and hour (MW). MADE-UP: a fixed share of load
+    dr_max = share * demand
+    p_nom = dr_max.max()                            # MW, the peak of that limit
+    p_max_pu = dr_max / p_nom                       # 0..1 profile over the year
+
+    n.add("Carrier", ["DR", "DR up", "DR down"])
+
+    dr_buses = buses + " DR"
+    n.add("Bus", dr_buses, location=buses, carrier="DR", unit="MWh_el")
+
+    # L_up: electricity bus -> DR bus (load increased now)
+    n.add(
+        "Link",
+        buses + " DR up",
+        bus0=buses,
+        bus1=dr_buses,
+        carrier="DR up",
+        p_nom=p_nom.values,
+        p_max_pu=p_max_pu.set_axis(buses + " DR up", axis=1),
+        efficiency=1.0,
+    )
+
+    # L_down: DR bus -> electricity bus (load decreased now)
+    n.add(
+        "Link",
+        buses + " DR down",
+        bus0=dr_buses,
+        bus1=buses,
+        carrier="DR down",
+        p_nom=p_nom.values,
+        p_max_pu=p_max_pu.set_axis(buses + " DR down", axis=1),
+        efficiency=1.0,
+    )
+
+    # DR_act: the running balance. Allowed to go negative (delayed load).
+    # Constraints (3) and (4) already keep |DR_act| below S * peak limit,
+    # so this size never binds. It just has to be big enough.
+    e_nom = shift_time * p_nom.values
+    n.add(
+        "Store",
+        dr_buses,
+        bus=dr_buses,
+        carrier="DR",
+        e_nom=e_nom,
+        e_min_pu=-1.0,      # delayed load
+        e_max_pu=1.0,       # advanced load
+        e_cyclic=True,      # (5) end balance
+        standing_loss=0.0,  # no losses in our formulation
+    )
+
+    logger.info(
+        f"Added demand response (TEST numbers) to {len(buses)} buses: "
+        f"share={share}, shift_time={shift_time} h."
+    )
+
 
 def set_transmission_costs(
     n: pypsa.Network,
@@ -1210,6 +1305,10 @@ def main(
         inputs["load"],
         params.load["scaling_factor"],
     )
+    
+    dr = params.load["demand_response"]
+    if dr["enable"]:
+        attach_demand_response(n, share=dr["share"], shift_time=dr["shift_time"])
 
     set_transmission_costs(
         n,

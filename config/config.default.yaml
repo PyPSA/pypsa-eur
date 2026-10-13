@@ -484,6 +484,10 @@ transformers:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#load_cf
 load:
+  demand_response:
+    enable: false
+    share: 0.1
+    shift_time: 3
   fill_gaps:
     enable: true
     interpolate_limit: 6
