@@ -7,6 +7,7 @@ using data from JRC ENSPRESO.
 """
 
 import logging
+import re
 
 import geopandas as gpd
 import numpy as np
@@ -247,6 +248,29 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     return bio_regions
 
 
+def upstream_per_node(nodes, fn, year):
+    """
+    Upstream emission factors of the unsustainable bioliquids per node, from
+    the country table of the CO2-removal dataset (columns "<quantity>_<year>"),
+    linearly interpolated to the given year (constant outside the table years).
+    """
+    table = pd.read_csv(fn, index_col=0)
+    # bioliquids factors only; the table's solid biomass and price columns are
+    # not used
+    quantities = ["bioethanol", "biodiesel"]
+    data = {}
+    for q in quantities:
+        columns = table.filter(regex=rf"^{re.escape(q)}_\d{{4}}$")
+        years = [int(c[-4:]) for c in columns.columns]
+        per_country = columns.apply(lambda row: np.interp(year, years, row), axis=1)
+        data[q] = per_country.reindex(nodes.str[:2]).values
+    data = pd.DataFrame(data, index=nodes)
+    missing = data.index[data.isna().any(axis=1)].str[:2].unique()
+    if len(missing):
+        logger.warning(f"No upstream data for {list(missing)}, using 0.")
+    return data.fillna(0)
+
+
 def add_unsustainable_potentials(df, input_eurostat):
     """
     Add unsustainable biomass potentials to the given dataframe. The difference
@@ -264,6 +288,11 @@ def add_unsustainable_potentials(df, input_eurostat):
     -------
     pd.DataFrame
         The dataframe with added unsustainable biomass potentials.
+    pd.DataFrame
+        Per node, the shares of biogasoline ("bioethanol share") and of
+        biodiesels, bio jet kerosene and other liquid biofuels ("biodiesel
+        share") in the unsustainable bioliquids, from the country's Eurostat
+        primary production.
     """
     if "GB" in snakemake.config["countries"]:
         latest_year = 2019
@@ -296,6 +325,19 @@ def add_unsustainable_potentials(df, input_eurostat):
     ]
 
     df_unsustainable = df_unsustainable[bio_carriers]
+
+    bioliquids = df_unsustainable.filter(regex="R5210|R5220|R5230|R5290")
+    share_bioethanol = (
+        bioliquids.filter(regex="R5210").sum(axis=1) / bioliquids.sum(axis=1)
+    ).fillna(0)
+    country = df.index.str[:2]
+    bioliquids_mix = pd.DataFrame(
+        {
+            "bioethanol share": share_bioethanol.reindex(country).fillna(0).values,
+            "biodiesel share": (1 - share_bioethanol).reindex(country).fillna(0).values,
+        },
+        index=df.index,
+    )
 
     # Phase out unsustainable biomass potentials linearly from 2020 to 2035 while phasing in sustainable potentials
     share_unsus = params.get("share_unsustainable_use_retained").get(investment_year)
@@ -335,7 +377,7 @@ def add_unsustainable_potentials(df, input_eurostat):
         .infer_objects(copy=False)
     )
 
-    return df
+    return df, bioliquids_mix
 
 
 if __name__ == "__main__":
@@ -396,9 +438,19 @@ if __name__ == "__main__":
     df = df.T.groupby(grouper).sum().T
 
     input_eurostat = snakemake.input.eurostat
-    df = add_unsustainable_potentials(df, input_eurostat)
+    df, upstream = add_unsustainable_potentials(df, input_eurostat)
+
+    if snakemake.input.get("unsustainable_biomass_upstream_data"):
+        upstream = upstream.join(
+            upstream_per_node(
+                upstream.index,
+                snakemake.input.unsustainable_biomass_upstream_data,
+                investment_year,
+            )
+        )
 
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"
 
     df.to_csv(snakemake.output.biomass_potentials)
+    upstream.to_csv(snakemake.output.unsustainable_biomass_upstream)

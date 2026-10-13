@@ -1629,3 +1629,37 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
         run:
             copy2(input["kfz"], output["kfz"])
             copy2(input["pkw"], output["pkw"])
+
+
+if (CO2_REMOVAL_DATASET := dataset_version("co2_removal_data"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_co2_removal_data:
+        input:
+            zip=storage(CO2_REMOVAL_DATASET["url"]),
+        output:
+            unsustainable_biomass_upstream=resources(
+                "unsustainable_biomass_upstream.csv"
+            ),
+        retries: 2
+        message:
+            "Downloading carbon dioxide removal data"
+        run:
+            with ZipFile(input.zip) as z:
+                # GitHub's release archive nests everything under a single
+                # top-level "<owner>-<repo>-<commit-sha>/" folder whose name
+                # changes with every release, so resolve it at runtime.
+                top_dir = z.namelist()[0].split("/")[0]
+                for src_path, dest in [
+                    (
+                        "outputs/biomass_inputs/unsustainable_biomass_upstream.csv",
+                        output.unsustainable_biomass_upstream,
+                    ),
+                ]:
+                    with (
+                        z.open(f"{top_dir}/{src_path}") as src,
+                        open(dest, "wb") as dst,
+                    ):
+                        dst.write(src.read())

@@ -3853,6 +3853,7 @@ def add_biomass(
     biomass_potentials_file,
     biomass_transport_costs_file=None,
     nyears=1,
+    unsustainable_biomass_upstream_file=None,
 ):
     """
     Add biomass-related components to the PyPSA network.
@@ -3888,6 +3889,12 @@ def add_biomass(
         Required if biomass_transport or biomass_spatial options are True.
     nyears : float
         Number of years for which to scale the biomass potentials.
+    unsustainable_biomass_upstream_file : str, optional
+        Path to CSV file with, per node, the shares of bioethanol and biodiesel
+        in the unsustainable bioliquids ("bioethanol share", "biodiesel share"),
+        the upstream emission factors of "bioethanol" and "biodiesel"
+        (tCO2eq/MWh). Required if unsustainable_biomass_upstream_emissions is
+        True.
 
     Returns
     -------
@@ -3948,6 +3955,30 @@ def add_biomass(
         unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
             "unsustainable bioliquids"
         ].sum()
+
+    # upstream (feedstock cultivation) emissions of the unsustainable
+    # bioliquids per node (tCO2eq/MWh), weighted by the node's biofuel mix;
+    # unsustainable solid biomass is mostly forest wood and black liquor,
+    # without cultivation emissions
+    if options["unsustainable_biomass_upstream_emissions"]:
+        upstream_data = pd.read_csv(unsustainable_biomass_upstream_file, index_col=0)
+        bioliquids_intensity = (
+            upstream_data["bioethanol share"] * upstream_data["bioethanol"]
+            + upstream_data["biodiesel share"] * upstream_data["biodiesel"]
+        )
+        if options.get("biomass_spatial", options["biomass_transport"]):
+            bioliquids_upstream_emissions = bioliquids_intensity.rename(
+                index=lambda x: x + " unsustainable bioliquids"
+            )
+        else:
+            weight = biomass_potentials["unsustainable bioliquids"]
+            bioliquids_upstream_emissions = (
+                (bioliquids_intensity * weight).sum() / weight.sum()
+                if weight.sum() > 0
+                else 0.0
+            )
+    else:
+        bioliquids_upstream_emissions = 0.0
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
@@ -4136,7 +4167,8 @@ def add_biomass(
             bus2="co2 atmosphere",
             carrier="unsustainable bioliquids",
             efficiency=1,
-            efficiency2=-costs.at["oil", "CO2 intensity"],
+            efficiency2=-costs.at["oil", "CO2 intensity"]
+            + bioliquids_upstream_emissions,
             p_nom=unsustainable_liquid_biofuel_potentials_spatial,
             marginal_cost=costs.at["BtL", "VOM"],
         )
@@ -6574,6 +6606,9 @@ if __name__ == "__main__":
             biomass_potentials_file=snakemake.input.biomass_potentials,
             biomass_transport_costs_file=snakemake.input.biomass_transport_costs,
             nyears=nyears,
+            unsustainable_biomass_upstream_file=snakemake.input.get(
+                "unsustainable_biomass_upstream"
+            ),
         )
 
     if options["ammonia"]:

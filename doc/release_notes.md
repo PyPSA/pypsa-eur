@@ -6,6 +6,24 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+## Upcoming Release
+
+* Added the option `sector: unsustainable_biomass_upstream_emissions` to account for the upstream (feedstock
+  cultivation) emissions of the unsustainable bioliquids, as exogenous emission factors from the
+  new dataset `co2_removal_data` (CO2-removal v1.0.4 on Zenodo,
+  https://doi.org/10.5281/zenodo.23954311). The 1st-generation crops of the bioliquids (bioethanol
+  from wheat, biodiesel from rapeseed; JRC input data for the RED default values, Edwards et al. 2019) are
+  allocated to the energy system: the factor counts their field emissions in full (N2O and soil acidification from
+  the N fertiliser) and the production emissions of the imported N fertiliser (30%, made outside Europe from fossil
+  fuels). The N fertiliser made in Europe is already in the industrial ammonia demand, which is not changed (land
+  freed by the phase-out is assumed to grow food/feed with the same fertiliser per hectare, outside the model), and
+  farm diesel is in the agriculture energy demand. This gives 0.091 (bioethanol) and 0.066 (biodiesel) tCO2eq/MWh
+  of fuel, weighted by each country's Eurostat production mix of biogasoline vs. biodiesels and added to the CO2
+  balance of the `unsustainable bioliquids` link. Unsustainable solid biomass is not changed: in Eurostat it is
+  mostly fuelwood, wood residues and black liquor (about 93%), without cultivation emissions; its harvest,
+  processing and transport energy in Europe is already in the energy demand (JRC, Giuntoli et al. 2017), and forest
+  carbon stock changes belong to the LULUCF sink.
+
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
 **Features**
