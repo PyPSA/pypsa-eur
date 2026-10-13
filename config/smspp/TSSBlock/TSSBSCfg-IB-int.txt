@@ -1,0 +1,76 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - -  TSSBSCfg-IB-int.txt  - - - - - - - - - - - - - -
+#
+# The BundleSolver of InvestmentBlock/BSPar.txt on an InvestmentBlock over a
+# TSSB or an MSSB (the investment_outside form of pypsa2smspp), whose inner
+# stochastic Block is solved whole at every evaluation by BSCfg-IB.txt,
+# with the integer design kept integer: the master is primal, in the raw
+# form, stabilized by a trust region and solved as a MILP by MPBCfg-int.txt,
+# and the bundle stops when the gap between the best design found and the
+# lower bound of the master without stabilization closes.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+1  # the BlockSolverConfig is a "differential" one
+
+1  # number of (the names of) Solver in this BlockSolverConfig
+# now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
+BundleSolver    # name of Solver
+
+1  # number of ComputeConfig in this BlockSolverConfig
+
+# now all the ComputeConfig
+# 1st ComputeConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ComputeConfig of the BundleSolver
+
+*IBBundleCfg.txt +  # ComputeConfig of the BundleSolver, changed in
+
+1  # f_diff == 1 ==> only the entries listed below are changed
+
+5  # number of integer parameters
+
+# now all the integer parameters
+intMPPrimal     1 # the primal master, where the x are the Variable
+intMPV2Form     1 # raw form: the Variable of the master are x itself
+intMPStbl       4 # 4 = trust region || x - x_bar ||_inf <= t
+intIntVars      1 # the integer Variable are kept integer
+intBPar1  1000000 # items are never discarded with integer Variable
+
+1  # number of double parameters
+
+# now all the double parameters
+dbltInit       10 # radius of the trust region, in modules
+
+1  # number of string parameters
+
+# now all the string parameters
+strMPBSolverCfg MPBCfg-int.txt # BlockSolverConfig of the master
+
+0  # number of vector-of-int parameters
+
+# now all the vector-of-int parameters
+# [none]
+
+0  # number of vector-of-double parameters
+
+# now all the vector-of-double parameters
+# [none]
+
+0  # number of vector-of-string parameters
+
+# now all the vector-of-string parameters
+# [none]
+
+# pointer to the "extra" Configuration
+* # [none]
+
+# end of 1st ComputeConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# end of BlockSolverConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - END TSSBSCfg-IB-int.txt - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,0 +1,74 @@
+th_7c24_demand_3:
+  clustering:
+    temporal:
+      resolution_elec: 7c24
+  stochastic_scenarios:
+    file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
+  solving:
+    solver_options:
+      smspp-tssb-uc: &th_7c24_demand_3
+        stochastic_parameters:
+          parameters:
+          - demand
+      smspp-tssb-lds: *th_7c24_demand_3
+      smspp-tssb-ldrec: *th_7c24_demand_3
+
+th_7c24_demand_10:
+  clustering:
+    temporal:
+      resolution_elec: 7c24
+  stochastic_scenarios:
+    file: config/instances/scenarios/tssb/stochastic-demand_10.yaml
+  solving:
+    solver_options:
+      smspp-tssb-uc: &th_7c24_demand_10
+        stochastic_parameters:
+          parameters:
+          - demand
+      smspp-tssb-lds: *th_7c24_demand_10
+      smspp-tssb-ldrec: *th_7c24_demand_10
+
+th_7c24_demand_20:
+  clustering:
+    temporal:
+      resolution_elec: 7c24
+  stochastic_scenarios:
+    file: config/instances/scenarios/tssb/stochastic-demand_20.yaml
+  solving:
+    solver_options:
+      smspp-tssb-uc: &th_7c24_demand_20
+        stochastic_parameters:
+          parameters:
+          - demand
+      smspp-tssb-lds: *th_7c24_demand_20
+      smspp-tssb-ldrec: *th_7c24_demand_20
+
+th_14c24_demand_3:
+  clustering:
+    temporal:
+      resolution_elec: 14c24
+  stochastic_scenarios:
+    file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
+  solving:
+    solver_options:
+      smspp-tssb-uc: &th_14c24_demand_3
+        stochastic_parameters:
+          parameters:
+          - demand
+      smspp-tssb-lds: *th_14c24_demand_3
+      smspp-tssb-ldrec: *th_14c24_demand_3
+
+th_14c24_demand_10:
+  clustering:
+    temporal:
+      resolution_elec: 14c24
+  stochastic_scenarios:
+    file: config/instances/scenarios/tssb/stochastic-demand_10.yaml
+  solving:
+    solver_options:
+      smspp-tssb-uc: &th_14c24_demand_10
+        stochastic_parameters:
+          parameters:
+          - demand
+      smspp-tssb-lds: *th_14c24_demand_10
+      smspp-tssb-ldrec: *th_14c24_demand_10

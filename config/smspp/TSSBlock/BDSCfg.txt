@@ -22,10 +22,12 @@ intMaxThread         8  # threads evaluating the subproblems of a round, at
                         # for every value, only faster, and 1 evaluates them
                         # one after the other
 
-0  # number of double parameters
+1  # number of double parameters
 
 # now all the double parameters
-# [none]
+dblMaxTime  43200  # seconds for the whole call: the master gets what is
+                   # left of it, the loop stops at the first round that
+                   # finds it over
 
 2  # number of string parameters
 

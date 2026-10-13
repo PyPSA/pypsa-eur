@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=../../schema.default.json
+
+run:
+  prefix: "capacity-expansion-tssb-power-IT-UC-20"
+  name: all
+  scenarios:
+    enable: true
+    file: config/instances/scenarios/tssb/scenarios-power-UC.yaml
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+    exclude: []
+  use_shadow_directory: false
+
+foresight: overnight
+
+scenario:
+  clusters:
+  - 20
+
+  opts:
+  - ''
+
+countries:
+- IT
+
+stochastic_scenarios:
+  enable: true
+  file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
+  export:
+    average: true
+    scenarios: true
+  postprocess:
+    use_average: false
+    scenarios: false
+
+clustering:
+  temporal:
+    resolution_elec: 7c24
+
+conventional:
+  unit_commitment: true
+
+# the thermal units have their installed capacity: committable units cannot be
+# expanded, neither by the stochastic PyPSA model nor by UCBlock
+electricity:
+  extendable_carriers:
+    Generator:
+    - solar
+    - "solar-hsat"
+    - onwind
+    - "offwind-ac"
+    - "offwind-dc"
+    - "offwind-float"
+
+solving:
+  options:
+    load_shedding: 
+      enable: true
+    skip_iterations: true
+    transmission_losses: 0
+    linearized_unit_commitment: false
+    noisy_costs: false
+  solver:
+    name: [gurobi, smspp, smspp, smspp]
+    options: [gurobi-default, smspp-tssb-uc, smspp-tssb-lds, smspp-tssb-ldrec]

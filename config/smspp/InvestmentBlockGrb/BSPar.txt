@@ -46,7 +46,7 @@ intBPar6    0     # second parameter for dynamic max n. of items per iteration
 intBPar7   15     # how to deal with the global pools
 intMnSSC    0     # min number of consecutive SS with the same t for a t increase
 intMnNSC    3     # min number of consecutive NS with the same t for a t decrease
-inttSPar1   0     # long-term t-strategy (0 = none, 4 = soft, 8 = hard, 12 = balancing)
+inttSPar1  12     # long-term t-strategy (0 = none, 4 = soft, 8 = hard, 12 = balancing)
 intMaxNrEvls 2    # maximum number of function evaluations at each iteration
 
 intRstAlg  2      # parameter to handle the reset of the algorithm

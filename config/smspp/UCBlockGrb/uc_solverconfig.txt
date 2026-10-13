@@ -13,7 +13,7 @@ GRBMILPSolver
 ComputeConfig  # Type of the object
 1  # differential
 
-7  # Number of integer parameters
+8  # Number of integer parameters
 intLogVerb 1
 Method 2      # barrier: the default concurrent LP races the dual simplex
               # against it and leaves it a third of the cores
@@ -23,8 +23,8 @@ AggFill 0     # no fill-in from presolve aggregation: it halves the nonzeros
               # of the barrier factorization
 Seed 123      # so that two runs are comparable
 Threads 32    # the same core count the reference run is given
-# GURO_PAR_BARDENSETHRESH 200  # see the note in TSSBlock/TSSBCfg_grb.txt: the
-              # count above becomes 8 once this line is uncommented
+GURO_PAR_BARDENSETHRESH 200  # how dense a column has to be to be treated
+              # as such, the value PyPSA passes
 
 2  # Number of double parameters
 #dblAAccSol 1e-08

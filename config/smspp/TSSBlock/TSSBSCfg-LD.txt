@@ -57,10 +57,11 @@ intTrgtMng  31    # bit-wise encoding targets and accuracies management:
 
 intRstAlg  2      # parameter to handle the reset of the algorithm
 
-15 # number of double parameters
+16 # number of double parameters
 
 # now all the double parameters
 dblRelAcc  1e-6   # relative accuracy required to solution
+dblMaxTime 43200  # seconds for the whole call
 dblNZEps   1e-2   # stopping parameter: threshold to declare 0 the || residual ||
 dbltStar   -1e+0   # stopping parameter: multiplied to || residual || to estimate gap
 dblBPar5   4      # first parameter for dynamic max n. of items per iteration

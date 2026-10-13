@@ -1316,11 +1316,23 @@ solving:
         parameters:
         - demand
         - renewable_maxpower
+    "smspp-tssb-uc":
+      capacity_expansion_ucblock: true
+      enable_thermal_units: true
+      configfile: "config/smspp/TSSBlock/TSSBCfg_grb-UC.txt"
+      pysmspp_options:
+        B: InnerBCfg.txt
+      stochastic_parameters:
+        stochastic_type: tssb
+        parameters:
+        - demand
+        - renewable_maxpower
     "smspp-tssb-bds":
       capacity_expansion_ucblock: true
       configfile: "config/smspp/TSSBlock/TSSBSCfg-BDS.txt"
       pysmspp_options:
         k:
+        v2:  # -v2: the log of the BendersDecompositionSolver, a line per round
       stochastic_parameters:
         stochastic_type: tssb
         parameters:
@@ -1403,6 +1415,17 @@ solving:
     "smspp-tssb-ib":
       capacity_expansion_ucblock: false
       configfile: "config/smspp/TSSBlock/TSSBSCfg-IB.txt"
+      pysmspp_options:
+        B: InnerBCfg.txt
+      stochastic_parameters:
+        stochastic_type: tssb
+        investment_outside: true
+        parameters:
+        - demand
+        - renewable_maxpower
+    "smspp-tssb-ib-int":
+      capacity_expansion_ucblock: false
+      configfile: "config/smspp/TSSBlock/TSSBSCfg-IB-int.txt"
       pysmspp_options:
         B: InnerBCfg.txt
       stochastic_parameters:

@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=../../schema.default.json
+
+run:
+  prefix: "capacity-expansion-tssb-power-IT-modular"
+  name: all
+  scenarios:
+    enable: true
+    file: config/instances/scenarios/tssb/scenarios-power-modular.yaml
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+    exclude: []
+  use_shadow_directory: false
+
+foresight: overnight
+
+scenario:
+  clusters:
+  - 20
+
+  opts:
+  - ''
+
+countries:
+- IT
+
+stochastic_scenarios:
+  enable: true
+  file: config/instances/scenarios/tssb/stochastic-demand_3.yaml
+  export:
+    average: true
+    scenarios: true
+  postprocess:
+    use_average: false
+    scenarios: false
+
+clustering:
+  temporal:
+    resolution_elec: 48c24
+
+# solar and onshore wind are built in modules of 100 MW, which makes the
+# design integer: the number of modules of each of them at each bus
+adjustments:
+  electricity:
+    absolute:
+      Generator:
+        solar:
+          p_nom_mod: 100
+        onwind:
+          p_nom_mod: 100
+
+solving:
+  options:
+    load_shedding: 
+      enable: true
+    skip_iterations: true
+    transmission_losses: 0
+    linearized_unit_commitment: false
+    noisy_costs: false
+  solver:
+    name: [gurobi, smspp, smspp, smspp]
+    options: [gurobi-default, smspp-tssb, smspp-tssb-bds, smspp-tssb-ib-int]

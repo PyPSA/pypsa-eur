@@ -46,7 +46,8 @@ intRelaxIntVars 0 # nonzero if the continuous relaxation is solved
 1 # number of double parameters
 
 # now all the double parameters
-dblRelAcc       1e-8 # relative accuracy required to solution
+dblRelAcc       1e-4 # relative gap of each scenario MILP, the one the
+                     # monolithic MILP it is compared with is given
 
 0 # number of string parameters
 

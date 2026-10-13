@@ -32,9 +32,8 @@ PrimalProximalHeur    # name of 2nd Solver
 
 1  # f_diff == 1 ==> only the entries listed below are changed
 
-6 # number of integer parameters
+5 # number of integer parameters
 
-intInnerMaxIter   200 # iterations of the Lagrangian Dual at each proximal one
 intUseWarmStartPSol 0 # the first iteration solves the plain Lagrangian Dual,
                       # so its bound is valid for the integer problem and
                       # stronger than the one of the continuous relaxation
@@ -44,12 +43,12 @@ intLogVerb        0 # log verbosity of main Bundle algorithm
 intTrgtMng       31 # bit-wise targets and accuracies management: lower
                     # and upper targets, accuracy as upper - lower, and
                     # the Lipschitz constant in the upper model
-intRecoveryThreads 8 # threads solving the scenarios of the recovery
+intMaxThread      7 # threads solving the scenarios of the recovery,
+                    # besides the one calling compute()
 
-9 # number of double parameters
+8 # number of double parameters
 
 dbl_penaltyFactor 1e-1 # weight of the proximal term
-dblInnerRelAcc    1e-5 # accuracy asked of the Lagrangian Dual
 
 dblMaxTime        3600 # maximum time for a call, so that the nested dual is
                        # given the same budget as the MILP it is compared with
@@ -66,8 +65,11 @@ dblmxIncr            2 # max increase of t
 dbltMaior         1e+9 # maximum value for t
 dbltInit          1e-3 # initial value for t
 
-2 # number of string parameters
+3 # number of string parameters
 
+str_LDSlv_ISCfg  ISCfg-PPH.txt # ComputeConfig of the inner Solver: the
+                                # iterations and the accuracy of the
+                                # Lagrangian Dual at each proximal step
 str_LagBF_BSCfg  LPBSCfg-LDLD.txt
 strRecoveryBSC   BSCfg1-IP.txt # BlockSolverConfig of the recovery: each
                                 # scenario a MILP at the fixed design
