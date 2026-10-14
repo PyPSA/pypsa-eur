@@ -486,8 +486,21 @@ transformers:
 load:
   demand_response:
     enable: false
-    share: 0.1
-    shift_time: 3
+    data_dir: data/demand_response/achievable
+    # Shift times and directions from O'Reilly et al. (2022)'s own "energy
+    # shift constraints" table for the residential DR dataset, not assumed.
+    devices:
+      WM: {shift_time: 6, direction: both}      # washing machine
+      TD: {shift_time: 6, direction: both}      # tumble drier
+      DW: {shift_time: 6, direction: both}      # dish washer
+      EV: {shift_time: 4, direction: delay}     # battery electric vehicle
+      RF: {shift_time: 2, direction: delay}     # refrigerator
+      FR: {shift_time: 2, direction: delay}     # freezer
+      AC: {shift_time: 2, direction: delay}     # air conditioning
+      CP: {shift_time: 2, direction: delay}     # heat circulation pump
+      HP: {shift_time: 2, direction: advance}   # air-to-air heat pump
+      SH: {shift_time: 12, direction: advance}  # storage heater
+      WH: {shift_time: 12, direction: advance}  # water heater
   fill_gaps:
     enable: true
     interpolate_limit: 6

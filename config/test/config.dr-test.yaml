@@ -109,11 +109,10 @@ sector:
   enabled: false          # electricity only
 
 # ---------- demand response ----------
-# Needs _DemandResponseConfig in scripts/lib/validation/config/load.py
-# and a matching load: demand_response: block in config/config.default.yaml.
+# Real O'Reilly et al. data (see prepare_dr_data.py / config_dr.yaml); the
+# full device list, shift times and directions are inherited from
+# config/config.default.yaml's load.demand_response.devices.
 
 load:
   demand_response:
     enable: true
-    share: 0.1        # TEST value: max share of hourly load shifted up or down
-    shift_time: 3     # S, hours within which shifted load must be recovered
