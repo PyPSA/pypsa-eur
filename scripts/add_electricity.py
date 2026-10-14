@@ -405,19 +405,18 @@ def attach_load(
 
 def attach_demand_response(
     n: pypsa.Network,
-    share: float = 0.10,
-    shift_time: int = 3,
+    profile_fn: str,
+    devices: dict,
 ) -> None:
     """
-    Attach residential demand response (load shifting) to every electricity bus.
+    Attach residential demand response (load shifting) to the network, one
+    DR set per bus and per device, from real per-device up/down shift
+    potential profiles (see scripts/build_demand_response_profile.py).
 
-    TEST VERSION WITH MADE-UP NUMBERS. Later the limits come from the
-    O'Reilly-based DR profile file and the settings from the config.
-
-    For each bus this adds:
+    For each (bus, device) with any nonzero potential this adds:
       - a DR bus
-      - a Link "DR up"   (electricity bus -> DR bus): L_up[h],   extra load now
-      - a Link "DR down" (DR bus -> electricity bus): L_down[h], less load now
+      - a Link "DR {device} up"   (electricity bus -> DR bus): extra load now
+      - a Link "DR {device} down" (DR bus -> electricity bus): less load now
       - a Store on the DR bus: e[h] = DR_act[h]
             DR_act > 0  load advanced (consumed earlier)
             DR_act < 0  load delayed  (consumed later)
@@ -425,77 +424,100 @@ def attach_demand_response(
     The Store bookkeeping gives the balance constraint
         DR_act[h] = DR_act[h-1] + L_up[h] - L_down[h]
     and e_cyclic=True gives the end balance DR_act[end] = DR_act[0].
-    The S-hour recovery constraints (3) and (4) are added separately in
+    The per-device S-hour recovery constraints are added separately in
     data/custom_extra_functionality.py.
+
+    `direction` bounds the Store, not the Links: a "delay"-only device still
+    gets both Links (shifting needs both an initial reduction and a later
+    make-up) but can only ever be net delayed (e_max_pu=0); "advance"-only
+    is the mirror (e_min_pu=0); "both" is unrestricted (-1/1).
 
     Parameters
     ----------
     n : pypsa.Network
         Network that already has its electricity Loads attached.
-    share : float
-        MADE-UP: max share of the hourly load that can be shifted up or down.
-    shift_time : int
-        MADE-UP: S, hours within which shifted load must be recovered.
-        Only used here to give the Store a safe size.
+    profile_fn : str
+        Path to the demand_response_profile_{horizon}.nc file built by
+        scripts/build_demand_response_profile.py (dims time, bus, device;
+        variables dr_max_down, dr_max_up, in MW).
+    devices : dict
+        Mapping device code -> {"shift_time": int, "direction": "delay" |
+        "advance" | "both"}, from config load.demand_response.devices.
     """
-    loads = n.loads[n.loads.carrier == "electricity"]
-    demand = n.loads_t.p_set[loads.index]          # MW, hours x loads
-    demand.columns = loads.bus                      # one column per bus
-    buses = demand.columns
+    ds = xr.open_dataset(profile_fn)
+    e_bounds = {"both": (-1.0, 1.0), "delay": (-1.0, 0.0), "advance": (0.0, 1.0)}
 
-    # max shiftable power per bus and hour (MW). MADE-UP: a fixed share of load
-    dr_max = share * demand
-    p_nom = dr_max.max()                            # MW, the peak of that limit
-    p_max_pu = dr_max / p_nom                       # 0..1 profile over the year
+    n.add("Carrier", [f"DR {dev}" for dev in devices])
+    n.add("Carrier", [f"DR {dev} up" for dev in devices])
+    n.add("Carrier", [f"DR {dev} down" for dev in devices])
 
-    n.add("Carrier", ["DR", "DR up", "DR down"])
+    n_combinations = 0
+    for dev, cfg in devices.items():
+        down = ds["dr_max_down"].sel(device=dev).to_pandas()  # MW, time x bus
+        up = ds["dr_max_up"].sel(device=dev).to_pandas()
 
-    dr_buses = buses + " DR"
-    n.add("Bus", dr_buses, location=buses, carrier="DR", unit="MWh_el")
+        peak_down = down.max()
+        peak_up = up.max()
+        # Only drop a (bus, device) combination if there's no potential in
+        # either direction; keep both Links whenever either side is nonzero,
+        # so carrier/component names stay aligned across devices for the
+        # custom_extra_functionality.py constraints.
+        active = peak_down.index[(peak_down > 0) | (peak_up > 0)]
+        if active.empty:
+            continue
+        n_combinations += len(active)
 
-    # L_up: electricity bus -> DR bus (load increased now)
-    n.add(
-        "Link",
-        buses + " DR up",
-        bus0=buses,
-        bus1=dr_buses,
-        carrier="DR up",
-        p_nom=p_nom.values,
-        p_max_pu=p_max_pu.set_axis(buses + " DR up", axis=1),
-        efficiency=1.0,
-    )
+        dr_buses = active + f" DR {dev}"
+        n.add("Bus", dr_buses, location=active, carrier=f"DR {dev}", unit="MWh_el")
 
-    # L_down: DR bus -> electricity bus (load decreased now)
-    n.add(
-        "Link",
-        buses + " DR down",
-        bus0=dr_buses,
-        bus1=buses,
-        carrier="DR down",
-        p_nom=p_nom.values,
-        p_max_pu=p_max_pu.set_axis(buses + " DR down", axis=1),
-        efficiency=1.0,
-    )
+        p_nom_up = peak_up.reindex(active)
+        p_nom_down = peak_down.reindex(active)
 
-    # DR_act: the running balance. Allowed to go negative (delayed load).
-    # Constraints (3) and (4) already keep |DR_act| below S * peak limit,
-    # so this size never binds. It just has to be big enough.
-    e_nom = shift_time * p_nom.values
-    n.add(
-        "Store",
-        dr_buses,
-        bus=dr_buses,
-        carrier="DR",
-        e_nom=e_nom,
-        e_min_pu=-1.0,      # delayed load
-        e_max_pu=1.0,       # advanced load
-        e_cyclic=True,      # (5) end balance
-        standing_loss=0.0,  # no losses in our formulation
-    )
+        n.add(
+            "Link",
+            active + f" DR {dev} up",
+            bus0=active,
+            bus1=dr_buses,
+            carrier=f"DR {dev} up",
+            p_nom=p_nom_up.to_numpy(),
+            p_max_pu=up[active]
+            .div(p_nom_up.replace(0, 1), axis=1)
+            .set_axis(active + f" DR {dev} up", axis=1),
+            efficiency=1.0,
+        )
+        n.add(
+            "Link",
+            active + f" DR {dev} down",
+            bus0=dr_buses,
+            bus1=active,
+            carrier=f"DR {dev} down",
+            p_nom=p_nom_down.to_numpy(),
+            p_max_pu=down[active]
+            .div(p_nom_down.replace(0, 1), axis=1)
+            .set_axis(active + f" DR {dev} down", axis=1),
+            efficiency=1.0,
+        )
+
+        # DR_act: the running balance. Sized off whichever direction (up or
+        # down) has the larger peak, so the Store never binds before the
+        # per-device recovery constraints in custom_extra_functionality.py do.
+        e_min, e_max = e_bounds[cfg["direction"]]
+        e_nom = cfg["shift_time"] * np.maximum(p_nom_up.to_numpy(), p_nom_down.to_numpy())
+        n.add(
+            "Store",
+            dr_buses,
+            bus=dr_buses,
+            carrier=f"DR {dev}",
+            e_nom=e_nom,
+            e_min_pu=e_min,
+            e_max_pu=e_max,
+            e_cyclic=True,
+            standing_loss=0.0,
+        )
 
     logger.info(
-        f"Added demand response (TEST numbers) to {len(buses)} buses: "
-        f"share={share}, shift_time={shift_time} h."
+        f"Added demand response for {len(devices)} device types "
+        f"({n_combinations} bus-device combinations with nonzero potential)."
     )
 
 
@@ -1308,7 +1330,7 @@ def main(
     
     dr = params.load["demand_response"]
     if dr["enable"]:
-        attach_demand_response(n, share=dr["share"], shift_time=dr["shift_time"])
+        attach_demand_response(n, inputs["dr_profile"], dr["devices"])
 
     set_transmission_costs(
         n,
