@@ -649,6 +649,40 @@ rule build_electricity_demand_base:
         scripts("build_electricity_demand_base.py")
 
 
+def input_dr_csvs(w):
+    data_dir = config_provider("load", "demand_response", "data_dir")(w)
+    devices = config_provider("load", "demand_response", "devices")(w)
+    return {
+        f"{var}_{dev}": f"{data_dir}/{var}_{dev}_{w.horizon}.csv"
+        for dev in devices
+        for var in ["load", "max_increase"]
+    }
+
+
+rule build_demand_response_profile:
+    input:
+        unpack(input_dr_csvs),
+        onshore_regions=resources("onshore_regions.geojson"),
+        nuts3=resources("nuts3_shapes.geojson"),
+    output:
+        resources("demand_response_profile_{horizon}.nc"),
+    log:
+        logs("build_demand_response_profile_{horizon}.log"),
+    benchmark:
+        benchmarks("build_demand_response_profile_{horizon}")
+    resources:
+        mem_mb=5000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        devices=config_provider("load", "demand_response", "devices"),
+        countries=config_provider("countries"),
+    message:
+        "Building demand-response profiles for horizon {wildcards.horizon}"
+    script:
+        scripts("build_demand_response_profile.py")
+
+
 rule build_hac_features:
     input:
         cutout=lambda w: input_cutout(w),
