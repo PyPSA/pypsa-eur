@@ -21,6 +21,7 @@ from pathlib import Path
 
 import pandas as pd
 import xarray as xr
+import yaml
 
 logger = logging.getLogger(__name__)
 SMSPP_BENCHMARK_SUFFIX = ".smspp"
@@ -179,6 +180,31 @@ def result_directory(path: Path) -> Path:
     return Path(*path.parts[:benchmark_index])
 
 
+def read_solver_metadata(config: dict) -> dict:
+    """Read solver identity and limits from a saved run configuration."""
+    metadata = {}
+    solving = config.get("solving", {})
+    solver = solving.get("solver", {})
+    option_name = solver.get("options")
+    option_values = solving.get("solver_options", {}).get(option_name, {})
+    time_limit = option_values.get("TimeLimit", pd.NA)
+    configfile = option_values.get("configfile")
+    if pd.isna(time_limit) and configfile and Path(configfile).exists():
+        config_text = Path(configfile).read_text(errors="replace")
+        match = re.search(r"\bdblMaxTime\s+(\d+(?:\.\d+)?)", config_text)
+        if match:
+            time_limit = float(match[1])
+    metadata.update(
+        {
+            "solver": config.get("wildcards", {}).get("solver"),
+            "solver_name": solver.get("name", pd.NA),
+            "solver_options": option_name,
+            "time_limit_s": time_limit,
+        }
+    )
+    return metadata
+
+
 def read_network_metadata(path: Path) -> dict:
     """Read scalar result metadata without loading network component tables."""
     if not path.exists():
@@ -198,25 +224,7 @@ def read_network_metadata(path: Path) -> dict:
         return metadata
     try:
         config = json.loads(meta)
-        solving = config.get("solving", {})
-        solver = solving.get("solver", {})
-        option_name = solver.get("options")
-        option_values = solving.get("solver_options", {}).get(option_name, {})
-        time_limit = option_values.get("TimeLimit", pd.NA)
-        configfile = option_values.get("configfile")
-        if pd.isna(time_limit) and configfile and Path(configfile).exists():
-            config_text = Path(configfile).read_text(errors="replace")
-            match = re.search(r"\bdblMaxTime\s+(\d+(?:\.\d+)?)", config_text)
-            if match:
-                time_limit = float(match[1])
-        metadata.update(
-            {
-                "solver": config.get("wildcards", {}).get("solver"),
-                "solver_name": solver.get("name", pd.NA),
-                "solver_options": option_name,
-                "time_limit_s": time_limit,
-            }
-        )
+        metadata.update(read_solver_metadata(config))
     except (TypeError, json.JSONDecodeError):
         logger.warning("Could not parse network metadata in %s", path)
     return metadata
@@ -230,13 +238,33 @@ def collect_benchmarks(roots: list[Path], case_folders: bool = False) -> pd.Data
             path = benchmark_path.with_name(benchmark_path.name.removesuffix(".failed"))
             result_dir = result_directory(path)
             network_path = result_dir / "networks" / f"{path.name}.nc"
+            config_path = result_dir / "configs" / f"config.{path.name}.yaml"
             network_metadata = {} if failed else read_network_metadata(network_path)
+            if failed:
+                # Failed runs may not have exported their own config. Reuse the
+                # same solver variant from another run within this results prefix.
+                solver_match = re.search(r"__(?P<solver>[^/]+)$", path.name)
+                solver_id = solver_match["solver"] if solver_match else None
+                if not config_path.exists() and solver_id:
+                    search_root = root.parent if case_folders else root
+                    candidates = sorted(
+                        search_root.glob(f"**/configs/config.*__{solver_id}.yaml")
+                    )
+                    if candidates:
+                        config_path = candidates[0]
+                if config_path.exists():
+                    network_metadata = read_solver_metadata(
+                        yaml.safe_load(config_path.read_text())
+                    )
+                if solver_id:
+                    network_metadata["solver"] = solver_id
             metadata_root = root.parent if case_folders else root
             row = {
                 "prefix": metadata_root.as_posix(),
                 "case": result_dir.relative_to(metadata_root).as_posix(),
                 "benchmark_rule": path.parent.name,
                 "benchmark_file": benchmark_path.as_posix(),
+                "failed": failed,
             }
             row.update(network_metadata)
             row.update(parse_benchmark_name(path.name, row.get("solver")))

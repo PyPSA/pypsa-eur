@@ -57,7 +57,7 @@ intTrgtMng  31    # bit-wise encoding targets and accuracies management:
 
 intRstAlg  2      # parameter to handle the reset of the algorithm
 
-16 # number of double parameters
+17 # number of double parameters
 
 # now all the double parameters
 dblRelAcc  1e-6   # relative accuracy required to solution
@@ -76,6 +76,7 @@ dbltMaior  1e+6   # maximum value for t
 dbltMinor  1e-10  # minimum value for t
 dbltInit   1e-3   # initial value for t
 dbltSPar2  1e-2   # parameter for the long-term t-strategy
+dblMaxTime 43200
 
 3 # number of string parameters
 

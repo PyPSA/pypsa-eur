@@ -121,6 +121,16 @@ clustering:
   temporal:
     resolution_sector: 48c24
 
+electricity:
+  extendable_carriers:
+    Generator:
+    - solar
+    - "solar-hsat"
+    - onwind
+    - "offwind-ac"
+    - "offwind-dc"
+    - "offwind-float"
+
 conventional:
   unit_commitment: true
 

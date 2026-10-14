@@ -14,7 +14,7 @@ th_168c24:
     temporal:
       resolution_elec: 168c24
 
-th_8760:
+th_365c24:
   clustering:
     temporal:
       resolution_elec: 1H

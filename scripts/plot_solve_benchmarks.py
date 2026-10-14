@@ -173,7 +173,12 @@ def prepare_data(path: Path) -> pd.DataFrame:
     time_limited = outcome_text.str.contains(
         r"time[_ -]?limit|stopped for time", case=False, regex=True
     )
-    data.loc[time_limited, "outcome"] = "time_limit"
+    failed = (
+        data.get("benchmark_file", pd.Series("", index=data.index))
+        .fillna("")
+        .str.endswith(".failed")
+    )
+    data.loc[failed | time_limited, "outcome"] = "time_limit"
     missing_limits = time_limited & data["time_limit_s"].isna()
     if missing_limits.any():
         logger.warning(

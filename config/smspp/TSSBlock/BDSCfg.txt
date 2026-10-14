@@ -17,7 +17,7 @@ ComputeConfig # exact type of the ComputeConfig object
 
 # now all the integer parameters
 int_BDSlv_Regime     1  # 0 = convex master, 1 = MILP master
-intMaxThread         8  # threads evaluating the subproblems of a round, at
+intMaxThread         32  # threads evaluating the subproblems of a round, at
                         # most the cores of the machine; the run is the same
                         # for every value, only faster, and 1 evaluates them
                         # one after the other
