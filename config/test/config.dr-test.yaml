@@ -1,13 +1,14 @@
 # yaml-language-server: $schema=../schema.default.json
 #
-# Tiny test case for the residential DR thesis
-# Belgium, 5 buses, one week, hourly, operations only (fixed capacities)
-# Small enough to run on a laptop with 8 GB RAM
+# Test case for the residential DR thesis
+# Belgium, 5 buses, one full year, hourly, operations only (fixed capacities)
+# Needs more RAM than a laptop (run on solstorm); scaled up from a one-week
+# version (see this file's git history for that smaller, laptop-sized config).
 #
 # Written for PyPSA-Eur v2026.09.0
 #
-# Put this file in config/ and run from the pypsa-eur folder inside pixi shell:
-#   snakemake -call results/dr-test/networks/solved_2025.nc --configfile config/config.dr-test.yaml
+# Run from the pypsa-eur folder inside pixi shell:
+#   snakemake -call results/dr-test/networks/solved_2025.nc --configfile config/test/config.dr-test.yaml
 #
 # Then open the result in Python:
 #   import pypsa
@@ -32,11 +33,10 @@ planning_horizons:
 # ---------- space and time ----------
 
 countries:
-- BE                      # tutorial weather data only covers this area
+- BE
 
-snapshots:
-  start: "2013-03-01"
-  end: "2013-03-08"       # one week; the full run uses a whole year
+# snapshots: not overridden - inherits config.default.yaml's full year
+# (2013-01-01 to 2014-01-01), matching the atlite cutout below.
 
 clustering:
   cluster_network:
@@ -45,17 +45,13 @@ clustering:
     averaging: false      # IMPORTANT: keep hourly, otherwise DR shift times lose meaning
 
 # ---------- weather (atlite) ----------
-# Test: tutorial cutout for one week.
-# Base case (full run): one "normal" weather year for all of Europe.
-
-atlite:
-  default_cutout: be-03-2013-era5
-  cutouts:
-    be-03-2013-era5:
-      module: era5
-      x: [4.0, 15.0]
-      y: [46.0, 56.0]
-      time: ["2013-03-01", "2013-03-08"]
+# atlite: not overridden - inherits config.default.yaml's standard, pre-built
+# full-Europe, full-year cutout ("europe-2013-sarah3-era5"). The one-week
+# test's custom be-03-2013-era5 cutout only covers that one week - cutouts are
+# pre-built archive files fetched by exact name, not built from config fields,
+# so there's no "just widen the time range" option. This is a much bigger
+# download than the one-week cutout, but it's the same file every other
+# PyPSA-Eur run already uses.
 
 # ---------- operations only: no new investments ----------
 
@@ -68,13 +64,8 @@ electricity:
     Store: []
     Link: []
   transmission_limit: v1.0   # grid kept at today's size
-  renewable_carriers:     # hydro left out ONLY in this test: its inflow calculation
-  - solar                 # needs a full year of weather data, and the test has one week.
-  - solar-hsat            # Put hydro back for the full-year runs.
-  - onwind
-  - offwind-ac
-  - offwind-dc
-  - offwind-float
+  # renewable_carriers: not overridden - now matches config.default.yaml's
+  # default list exactly (hydro needs a full year, which this run now has).
   estimate_renewable_capacities:
     enable: true          # existing wind and solar from IRENA statistics
     from_powerplantmatching: true
