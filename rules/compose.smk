@@ -46,6 +46,11 @@ def get_compose_inputs(w):
             else []
         ),
         load=resources("electricity_demand.nc"),
+        dr_profile=(
+            resources(f"demand_response_profile_{horizon}.nc")
+            if cfg["load"]["demand_response"]["enable"]
+            else []
+        ),
         snapshot_weightings=resources("snapshot_weightings.csv"),
         network=resources("networks/clustered.nc"),
         solar_rooftop_potentials=(
