@@ -2,8 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Compute biogas and solid biomass potentials for each clustered model region
-using data from JRC ENSPRESO.
+Build biogas and solid biomass potentials per clustered model region from JRC ENSPRESO.
+
+ENSPRESO gives sustainable biomass potentials per commodity at NUTS2 level for a
+chosen scenario and year; years between the available decades are linearly
+interpolated. Commodities only reported at country level are disaggregated to
+NUTS2 by population. Potentials are mapped to model regions by area overlap and
+grouped into the configured biomass classes. Unsustainable potentials are
+estimated from the Eurostat primary production of solid biofuels, biogas and
+bioliquids, allocated to regions by their share of the sustainable potential,
+and scaled by year-dependent shares that phase them out. The potentials limit
+the biomass supply in the sector-coupled network.
+
+References
+----------
+- Ruiz et al. (2019), [ENSPRESO - an open, EU-28 wide, transparent and coherent database of wind, solar and biomass energy potentials](https://doi.org/10.1016/j.esr.2019.100379)
 """
 
 import logging

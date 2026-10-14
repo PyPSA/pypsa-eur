@@ -6,36 +6,11 @@ Calculate sea water heat potential for district heating systems.
 
 This script computes the thermal potential of sea water as a heat source for district
 heating applications. It uses sea water temperature data to estimate average water
-temperatures across regions intersected with district heating areas.
+temperatures across regions intersected with district heating areas. The district
+heating areas are buffered by `dh_area_buffer` (in meters) to include nearby coastal areas.
 
 The approximation accounts for spatial variations in sea water temperature,
 providing both spatial and temporal aggregates. Temporal aggregates are only used for plotting.
-
-Relevant Settings
------------------
-
-```yaml
-sector:
-    district_heating:
-        dh_area_buffer: # Buffer around DH areas in meters to include nearby coastal areas
-        heat_source_cooling: # Exploitable temperature delta
-snapshots:
-    start:
-    end:
-enable:
-    drop_leap_day:
-```
-
-Inputs
-------
-- `data/seawater_temperature.nc`: Sea water temperature data
-- `resources/{run}/onshore_regions.geojson`: Onshore regions
-- `resources/{run}/dh_areas.geojson`: District heating areas
-
-Outputs
--------
-- `resources/{run}/temp_sea_water.nc`: Sea water temperature profiles by region
-- `resources/{run}/temp_sea_water_temporal_aggregate.nc`: Temporal aggregated temperature data
 """
 
 import logging

@@ -2,17 +2,24 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This rule extracts potential and cost for electricity generation through
-enhanced geothermal systems.
+Build potentials, costs and capacity factors of enhanced geothermal systems (EGS) per clustered region.
 
-For this, we use data from "From hot rock to useful energy..." by Aghahosseini, Breyer (2020)
-'https://doi.org/10.1016/j.apenergy.2020.115769'
-Note that we input data used here is not the same as in the paper, but was passed on by the authors.
+Gridded data (1 degree by 1 degree) from Aghahosseini and Breyer (2020) gives
+the sustainable power potential and CAPEX per cell for several years; the
+data was passed on by the authors and differs from the published values.
+Costs are taken for 2020, and cells with cost data only for later years get
+their 2020 cost back-calculated with the mean cost reduction of the other
+cells. The sustainable potential is divided by the configured
+`sustainability_factor` to obtain `p_nom_max`. The area overlap of each grid
+cell with each clustered region is saved to allocate the cells to regions
+later. Capacity factors vary with the deviation of the air temperature from
+its annual mean, since air cooling is more efficient at low temperatures,
+following Ricks et al. (2022).
 
-The data provides a lon-lat gridded map of Europe (1° x 1°), with each grid cell assigned
-a heat potential (in GWh) and a cost (in EUR/MW).
-
-This scripts overlays that map with the network's regions, and builds a csv with CAPEX, OPEX and p_nom_max
+References
+----------
+- Aghahosseini and Breyer (2020), [From hot rock to useful energy: A global estimate of enhanced geothermal systems potential](https://doi.org/10.1016/j.apenergy.2020.115769)
+- Ricks et al. (2022), [The Role of Flexible Geothermal Power in Decarbonized Electricity Systems](https://zenodo.org/records/7093330)
 """
 
 import json

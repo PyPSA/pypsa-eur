@@ -3,8 +3,8 @@
 
 # Installation {#installation}
 
-The subsequently described installation steps are demonstrated as shell commands, where the path before the `%` sign denotes the
-directory in which the commands following the `%` should be entered.
+The subsequently described installation steps are demonstrated as shell commands, where the `$` sign denotes the
+shell prompt.
 
 ## Clone the Repository
 
@@ -12,6 +12,14 @@ First of all, clone the [PyPSA-Eur repository](https://github.com/PyPSA/pypsa-eu
 
 ```console
 $ git clone https://github.com/PyPSA/pypsa-eur.git
+```
+
+The `master` branch is under active development. Unless you want to contribute,
+check out the latest [release](https://github.com/PyPSA/pypsa-eur/releases), for example:
+
+```console
+$ cd pypsa-eur
+$ git checkout v2026.09.0
 ```
 
 ## Install Python Dependencies {#deps}
@@ -93,16 +101,8 @@ Nevertheless, you can still use open-source solvers for smaller problems.
 !!! note
     The rules [cluster_network][] solves a mixed-integer quadratic optimisation problem for clustering.
     The open-source solvers HiGHS, Cbc and GlPK cannot handle this. A fallback to SCIP is implemented in this case, which is included in the standard environment specifications.
-    For an open-source solver setup install for example HiGHS **and** SCIP in your `conda` environment on OSX/Linux.
-
-    To install the default solver Gurobi, run
-
-    ```console
-    $ conda activate pypsa-eur
-    $ conda install -c gurobi gurobi"=12.0.1"
-    ```
-
-    Additionally, you need to setup your [Gurobi license](https://www.gurobi.com/solutions/licensing/).
+    The `pixi` environment already includes HiGHS, SCIP and the Gurobi Python package.
+    To use Gurobi, you additionally need to set up your [Gurobi license](https://www.gurobi.com/solutions/licensing/).
 
     To use Xpress, install the `xpress` Python package and ensure you have:
 

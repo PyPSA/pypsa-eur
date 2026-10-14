@@ -2,8 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Preprocess gas network based on data from bthe SciGRID_gas project
-(https://web.archive.org/web/20241210201605/https://www.gas.scigrid.de/).
+Clean the SciGRID_gas pipeline dataset into a table of gas transmission pipelines.
+
+Pipeline attributes nested in the SciGRID_gas GeoJSON are unpacked and
+converted to model units: maximum daily flow to capacity in MW, line ends to
+point coordinates. Where SciGRID_gas inferred a diameter, 500 mm is assumed.
+Capacities that deviate strongly from the diameter-based estimate of the
+European Hydrogen Backbone report are replaced by that estimate, lengths that
+deviate strongly from the great-circle distance are replaced by 1.5 times that
+distance, and short pipelines are treated as bidirectional. A later rule
+clusters the cleaned table to model regions.
+
+References
+----------
+- Pluta et al. (2022), [SciGRID_gas: Data Model of the European Gas Transport Network](https://doi.org/10.1109/OSMSES54027.2022.9769122)
+- Gas for Climate (2020), [European Hydrogen Backbone - How a Dedicated Hydrogen Infrastructure Can Be Created](https://ehb.eu/files/downloads/2020_European-Hydrogen-Backbone_Report.pdf)
 """
 
 import json

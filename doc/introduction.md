@@ -48,15 +48,30 @@ read carefully through the documentation of the [command line interface](https:/
 arguments `-j`, `-c`, `-f`, `-F`, `-n`, `-r`, `--dag` and `-t`
 in particular.
 
+## Collection targets
+
+Besides requesting individual files, you can run whole stages of the workflow
+with the collection rules defined in `rules/collect.smk`:
+
+- `cluster_networks`: builds `resources/{run}/networks/clustered.nc` and the busmap.
+- `compose_networks`: builds `resources/{run}/networks/composed_{horizon}.nc` for all planning horizons.
+- `solve_networks`: solves all planning horizons; this is the default target.
+- `solve_operations_networks`: runs the operational dispatch of the solved networks.
+- `plot_power_networks`, `plot_balance_maps`, `plot_balance_maps_static`, `plot_balance_maps_interactive`: create the corresponding maps.
+- `process_costs`: prepares the cost assumptions for all planning horizons.
+
+All of them cover every run listed under `run: name:`, for example
+`snakemake -call solve_networks`.
+
 ## Scenarios, Configuration and Modification
 
-PyPSA-Eur can be used to run multiple scenarios using the [wildcards feature](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#wildcards)
-of `snakemake`. Wildcards allow to generalise a rule to produce all files that
-follow a [regular expression](https://en.wikipedia.org/wiki/Regular_expression) pattern, which defines
-a particular scenario. One can think of a wildcard as a parameter that shows
-up in the input/output file names and thereby determines which rules to run,
-what data to retrieve and what files to produce. Details are explained in
-[Wildcards](wildcards.md) and [Scenarios](configuration.md#run_cf).
+PyPSA-Eur can be used to run multiple scenarios. Each scenario is a set of
+configuration overrides defined in `config/scenarios.yaml` and enabled via
+`run.scenarios.enable`. The scenario name then appears as the `{run}`
+[wildcard](https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#wildcards)
+in the `resources/` and `results/` paths. Further wildcards, such as the
+planning `{horizon}`, are explained in [Wildcards](wildcards.md); scenarios in
+[Scenarios](configuration.md#run_cf).
 
 The model also has several further configuration options collected in the
 `config/config.default.yaml` file located in the root directory, which can be

@@ -5,14 +5,17 @@
 """
 Config validation for PyPSA-EUR.
 
-The schema is exported to both `config/config.default.yaml` and `config/schema.default.json`.
-The json schema is also contributed to the schemastore.org and matches
-`**/pypsa-eur*/config/*.yaml` to get IDE support without additional configuration.
+The schema is exported to `config/config.default.yaml`, `config/plotting.default.yaml`,
+and `config/schema.default.json` (a single schema shared by both YAML files). The json
+schema is also contributed to the schemastore.org and matches `**/pypsa-eur*/config/*.yaml`
+to get IDE support without additional configuration.
 """
 
 import copy
 import pathlib
 import re
+import warnings
+from functools import reduce
 
 from pydantic import ValidationError
 from ruamel.yaml import YAML
@@ -107,6 +110,38 @@ def _config_path(config: dict, loc: tuple) -> str:
     return ".".join(path) or "<root>"
 
 
+#: Deprecated config keys and the keys that take over their value. Remove an
+#: entry one release after adding it.
+DEPRECATED_KEYS: dict[str, list[str]] = {
+    "sector.tes": ["sector.ttes", "sector.district_heating.ptes.enable"],
+}
+
+
+def migrate_deprecated_keys(config: dict) -> None:
+    """
+    Move values of deprecated keys in place to the keys that replace them.
+
+    Apply it to each raw config and scenario override, since scripts read the
+    raw config and not the validated model.
+
+    Parameters
+    ----------
+    config : dict
+        Config or scenario override.
+    """
+    for old, new in DEPRECATED_KEYS.items():
+        *parents, key = old.split(".")
+        section = reduce(lambda d, k: d.get(k, {}), parents, config)
+        if key not in section:
+            continue
+        value = section.pop(key)
+        msg = f"`{old}` is deprecated and will be removed in the next release. Its value is used for `{'`, `'.join(new)}` instead."
+        warnings.warn(msg, FutureWarning)
+        for path in new:
+            *parents, key = path.split(".")
+            reduce(lambda d, k: d.setdefault(k, {}), parents, config)[key] = value
+
+
 def normalize_config(config: dict, validated: ConfigSchema) -> None:
     """Normalize config values in place (e.g., ensure planning_horizons is a list)."""
     config["planning_horizons"] = validated.planning_horizons
@@ -139,18 +174,21 @@ def validate_scenarios(config: dict, scenarios: dict) -> None:
             ) from e
 
 
-def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
-    """Generate config defaults YAML file and return the defaults dict."""
+#: Top-level config keys that are written to their own defaults YAML file (via
+#: `generate_split_defaults`) instead of `config/config.{configname}.yaml`.
+SPLIT_CONFIG_FILES: dict[str, str] = {
+    "plotting": "config/plotting.{configname}.yaml",
+}
+
+
+def _convert_to_field_name(key: str) -> str:
+    """Convert dash-case to snake_case for field lookup."""
+    return key.replace("-", "_")
+
+
+def _write_defaults_yaml(path: str, config: ConfigSchema, defaults: dict) -> None:
+    """Write `defaults` (a subset of the validated config's top-level keys) to `path` as YAML."""
     from ruamel.yaml.comments import CommentedMap
-
-    def convert_to_field_name(key: str) -> str:
-        """Convert dash-case to snake_case for field lookup."""
-        return key.replace("-", "_")
-
-    # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
-    # the goal should be to use snake_case consistently
-    config = validate_config({})
-    defaults = config.model_dump(by_alias=True)
 
     # Create YAML instance with custom settings
     yaml_writer = YAML()
@@ -184,15 +222,63 @@ def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> d
     for key, value in defaults.items():
         data[key] = value
 
-        field_name = convert_to_field_name(key)
+        field_name = _convert_to_field_name(key)
         docs_url = config._docs_url.format(field_name=field_name)
         data.yaml_set_comment_before_after_key(key, before=f"\ndocs in {docs_url}")
 
     # Write to file
-    with open(path.format(configname=config._name), "w") as f:
+    with open(path, "w") as f:
         yaml_writer.dump(data, f)
 
-    return defaults
+
+def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
+    """
+    Generate config defaults YAML file and return the defaults dict.
+
+    Top-level keys listed in `SPLIT_CONFIG_FILES` (e.g. `plotting`) are excluded here;
+    use `generate_split_defaults` to generate their dedicated defaults files.
+    """
+    # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
+    # the goal should be to use snake_case consistently
+    config = validate_config({})
+    defaults = config.model_dump(by_alias=True)
+    main_defaults = {
+        key: value for key, value in defaults.items() if key not in SPLIT_CONFIG_FILES
+    }
+
+    _write_defaults_yaml(path.format(configname=config._name), config, main_defaults)
+
+    return main_defaults
+
+
+def generate_split_defaults(key: str, path: str | None = None) -> dict:
+    """
+    Generate the dedicated defaults YAML file for a top-level key listed in `SPLIT_CONFIG_FILES`.
+
+    Returns the defaults dict for that single top-level key (e.g. `{"plotting": {...}}`).
+    """
+    if key not in SPLIT_CONFIG_FILES:
+        raise ValueError(
+            f"'{key}' is not a split-out config key. Known keys: "
+            f"{sorted(SPLIT_CONFIG_FILES)}"
+        )
+    if path is None:
+        path = SPLIT_CONFIG_FILES[key]
+
+    config = validate_config({})
+    defaults = config.model_dump(by_alias=True)
+    key_defaults = {key: defaults[key]}
+
+    _write_defaults_yaml(path.format(configname=config._name), config, key_defaults)
+
+    return key_defaults
+
+
+def generate_plotting_defaults(
+    path: str = "config/plotting.{configname}.yaml",
+) -> dict:
+    """Generate plotting defaults YAML file and return the plotting defaults dict."""
+    return generate_split_defaults("plotting", path)
 
 
 def generate_config_schema(path: str = "config/schema.{configname}.json") -> dict:
@@ -298,11 +384,16 @@ def generate_config_schema(path: str = "config/schema.{configname}.json") -> dic
 
 __all__ = [
     "ConfigSchema",
+    "SPLIT_CONFIG_FILES",
+    "DEPRECATED_KEYS",
     "validate_config",
+    "migrate_deprecated_keys",
     "find_invalid_entries",
     "validate_scenarios",
     "normalize_config",
     "generate_config_defaults",
+    "generate_split_defaults",
+    "generate_plotting_defaults",
     "generate_config_schema",
     "ValidationError",
 ]

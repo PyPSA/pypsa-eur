@@ -63,7 +63,7 @@ jobs:
         token: ${{ steps.generate-token.outputs.token }}
 
     - name: Setup Pixi
-      uses: prefix-dev/setup-pixi@v0.10.2
+      uses: prefix-dev/setup-pixi@v0.11.0
       with:
         cache: true
         # Do not cache in branches
@@ -90,3 +90,5 @@ jobs:
         tagging_message: '${{ github.ref_name }}' # add tag again
         push_options: '${{ github.ref_name }}'
         add_options: '-u' # Never add untracked files
+        skip_dirty_check: true # Commit and re-tag even if DAGs are unchanged
+        commit_options: '--allow-empty'

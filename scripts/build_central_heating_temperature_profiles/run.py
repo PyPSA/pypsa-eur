@@ -11,24 +11,6 @@ threshold levels, forward temperatures are linearly interpolated.
 By default, `max_forward_temperature` from Euroheat DHC Market Outlook 2024 is used; `min_forward_temperature` and `return_temperature` for Germany is used from AGFW-Hauptbericht 2022.
 `min_forward_temperature` and `return_temperature` for other countries are extrapolated based on the ratio between `max_forward_temperature` and `min_forward_temperature` and `return_temperature` for those countries not missing (by default only Germany).
 
-Relevant Settings
------------------
-
-```yaml
-sector:
-    district_heating:
-        max_forward_temperature:
-        min_forward_temperature:
-        return_temperature:
-```
-Inputs
-------
-- `resources/<run_name>/temp_air_total`: Air temperature
-
-Outputs
--------
-- `resources/<run_name>/central_heating_temperature_profiles.nc`:
-
 References
 ----------
 - Pieper, et al. (2019): "Assessment of a combination of three heat sources for heat pumps to supply district heating" (https://doi.org/10.1016/j.energy.2019.03.165).

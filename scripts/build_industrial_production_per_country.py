@@ -2,43 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This rule builds the historical industrial production per country.
+Build today's industrial production per country and subsector in kt/a.
 
-Description
--------
+Physical production per subsector for the configured `industry: reference_year` is read from the JRC-IDEES industry sheets of each EU27 country. The subsectors follow JRC-IDEES: steel (electric arc, integrated steelworks), chemicals (basic, other, pharmaceutical), non-metallic minerals (cement, ceramics, glass), pulp, paper and printing, non-ferrous metals (alumina, primary and secondary aluminium, other), and the index-based sectors food, transport equipment, machinery, textiles, wood and other industry. For countries outside the EU27, the EU27 production is scaled by the ratio of the country's to the EU27's sectoral final energy consumption, taken from the Eurostat energy balances or, for Switzerland, from the [Swiss Federal Office of Energy](https://pubdb.bfe.admin.ch/de/publication/download/11817).
 
-The industrial production is taken from the `JRC-IDEES <https://joint-research-centre.ec.europa.eu/potencia-policy-oriented-tool-energy-and-climate-change-impact-assessment/jrc-idees_en)>`.
-This dataset provides detailed information about the consumption of energy for various processes.
-If the country is not part of the EU28, the energy consumption in the industrial sectors is taken from the `Eurostat <https://ec.europa.eu/eurostat/de/data/database>` dataset. The industrial production is calculated for the year specified in the `config["industry"]["reference_year"]`.
-
-The ammonia production is provided by the rule `build_ammonia_production <https://pypsa-eur.readthedocs.io/en/latest/sector/#rule-build_ammonia_production>`. Since Switzerland is not part of the EU28 nor reported by eurostat, the energy consumption in the industrial sectors is taken from the `BFE <https://pubdb.bfe.admin.ch/de/publication/download/11817> dataset.
-After the industrial production is calculated, the basic chemicals are separated into ammonia, chlorine, methanol and HVC. The production of these chemicals is assumed to be proportional to the production of basic chemicals without ammonia.
-
-The following subcategories [kton/a] are considered:
-- Electric arc
-- Integrated steelworks
-- Other chemicals
-- Pharmaceutical products etc.
-- Cement
-- Ceramics & other NMM
-- Glass production
-- Pulp production
-- Paper production
-- Printing and media reproduction
-- Food, beverages and tobacco
-- Alumina production
-- Aluminium - primary production
-- Aluminium - secondary production
-- Other non-ferrous metals
-- Transport equipment
-- Machinery equipment
-- Textiles and leather
-- Wood and wood products
-- Other industrial sectors
-- Ammonia
-- HVC
-- Chlorine
-- Methanol
+Basic chemicals are then split: the ammonia production from [build_ammonia_production][] is subtracted, and the remainder is distributed to high-value chemicals, chlorine and methanol in proportion to today's European totals given in the `industry` configuration.
 """
 
 import logging

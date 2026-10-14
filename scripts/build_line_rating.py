@@ -6,9 +6,6 @@
 """
 Calculates dynamic line rating time series from base network.
 
-Description
------------
-
 The rule [build_line_rating][] calculates the line rating for transmission lines.
 The line rating provides the maximal capacity of a transmission line considering the heat exchange with the environment.
 

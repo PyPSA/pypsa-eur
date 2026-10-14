@@ -2,18 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build total energy demands per country using JRC IDEES and Eurostat data.
+Build annual energy demand totals per country, sector and end use from JRC-IDEES and Eurostat data.
 
-- Country-specific data is read in `build_idees` and read in from [build_eurostat_balances][] and `build_swiss_energy_balances`.
-- `build_energy_totals` then combines energy data from Eurostat, Swiss, and IDEES data.
-- `build_district_heat_share` calculates the share of district heating for each country from IDEES data.
+For EU27 countries, final energy per sector and end use (residential and services space, water and cooking heat, transport modes, agriculture) is read from the JRC-IDEES balances. Other countries are filled from the Eurostat balances of [build_eurostat_balances][] and the Swiss energy balances, with end-use splits taken from the EU average; Norway's heating fractions use national statistics. Residential totals are then updated with Eurostat's disaggregated household balances.
 
-Outputs
--------
-- ``resources/<run_name>/energy_totals.csv``: Energy totals per country, sector and year.
-- ``resources/<run_name>/transport_data_raw.csv``: Transport data per country and year.
-- ``resources/<run_name>/district_heat_share.csv``: District heating share per country and year.
-- ``resources/<run_name>/heating_efficiencies.csv``: Heating efficiencies per country and year.
+Three further outputs are derived: the district heating share per country, with a fallback file for countries without IDEES data; transport data with the number of passenger cars and average fuel efficiency, using the BFS vehicle stock for Switzerland and averages for missing countries; and space and water heating efficiencies per carrier.
 """
 
 import logging
@@ -994,36 +987,6 @@ def update_residential_from_eurostat(
     logger.info(
         "Updated energy balances for residential using disaggregate final energy consumption data in Households from Eurostat"
     )
-
-
-def build_transformation_output_coke(eurostat, fn):
-    """
-    Extracts and builds the transformation output data for coke ovens from the
-    Eurostat dataset.
-
-    This function specifically filters the Eurostat data to extract
-    transformation output related to coke ovens.
-    Since the transformation output for coke ovens
-    is not included in the final energy consumption of the iron and steel sector,
-    it needs to be processed and added separately. The filtered data is saved
-    as a CSV file.
-
-    Parameters
-    ----------
-    eurostat : pd.DataFrame
-        A pandas DataFrame containing Eurostat data with a multi-level index.
-    fn : str
-        The file path where the resulting CSV file should be saved.
-
-    Notes
-    -----
-    The resulting transformation output data for coke ovens is saved as a CSV
-    file at the path specified in fn.
-    """
-
-    eurostat.query("nrg_bal == 'TO_CO'").set_index(["country", "year", "siec"])[
-        "value"
-    ].unstack("siec").to_csv(fn)
 
 
 def build_heating_efficiencies(

@@ -2,7 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Prepares brownfield data from previous planning horizon.
+Carry optimised capacities from the previous planning horizon into the
+current network under myopic foresight.
+
+Transmission lines and DC links receive the previous optimum as lower bound.
+Generators, links and stores from the previous solved network are copied over
+with fixed capacities, dropping assets that reach the end of their lifetime
+before the current horizon or fall below a capacity threshold, while assets
+newly built in the current horizon are tagged with their build year.
+Renewable availability profiles are switched to the technology vintage
+closest to the current horizon, heat pump efficiencies and dynamic pit
+storage capacities of earlier vintages are updated to the current values, and
+the gas pipeline capacity still available for hydrogen retrofitting is
+reduced by what was already retrofitted. Transmission expansion is disabled
+once its global limit is reached, and renewable potentials are reduced by the
+existing capacities.
 """
 
 import logging
@@ -13,6 +27,7 @@ import pypsa
 import xarray as xr
 
 from scripts._helpers import (
+    get,
     get_snapshots,
 )
 from scripts.add_electricity import flatten
@@ -166,6 +181,33 @@ def add_brownfield(
             ).clip(lower=0)
             n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
             n.links.loc[gas_pipes_i, "p_nom_max"] = remaining_capacity
+
+
+def update_transmission_limit(n: pypsa.Network, transmission_limit: str) -> None:
+    """
+    Set the transmission limit relative to the capacities of the previous horizon.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network with minimum capacities set to the previous horizon's optimum.
+    transmission_limit : str
+        Limit of the current horizon, e.g. `v1.1` or `copt`.
+    """
+    kind, factor = transmission_limit[0], transmission_limit[1:] or "opt"
+    if factor == "opt":
+        return
+
+    dc_b = n.links.carrier == "DC"
+    n.lines["s_nom"] = n.lines[["s_nom", "s_nom_min"]].max(axis=1)
+    n.links.loc[dc_b, "p_nom"] = n.links.loc[dc_b, ["p_nom", "p_nom_min"]].max(axis=1)
+
+    col = "capital_cost" if kind == "c" else "length"
+    ref = (
+        n.lines.s_nom @ n.lines[col]
+        + n.links.loc[dc_b, "p_nom"] @ n.links.loc[dc_b, col]
+    )
+    n.global_constraints.loc[f"l{kind}_limit", "constant"] = float(factor) * ref
 
 
 def disable_grid_expansion_if_limit_hit(n):
@@ -417,7 +459,7 @@ def main(
 
     update_heat_pump_efficiency(n, n_previous, current_horizon)
 
-    if params.tes and params.dynamic_ptes_capacity:
+    if params.enable_ptes and params.dynamic_ptes_capacity:
         update_dynamic_ptes_capacity(n, n_previous, current_horizon)
 
     logger.info(
@@ -431,6 +473,9 @@ def main(
         h2_retrofit=params["h2_retrofit"],
         h2_retrofit_capacity_per_ch4=params["h2_retrofit_capacity_per_ch4"],
         capacity_threshold=params["capacity_threshold"],
+    )
+    update_transmission_limit(
+        n, get(params.electricity["transmission_limit"], current_horizon)
     )
     disable_grid_expansion_if_limit_hit(n)
 

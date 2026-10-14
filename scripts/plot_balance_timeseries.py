@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot balance time series.
+Plots stacked energy balance time series per bus carrier from a solved network.
+
+Reads the solved network and computes the time-resolved energy balance per
+technology carrier with the PyPSA statistics module. Balances are grouped by
+bus carrier or by configured carrier groups, supply is stacked above and
+consumption below the zero line, and technologies with negligible contribution
+are lumped into "other". One figure is drawn for the whole year at coarse
+resolution and one per month at finer resolution, processed in parallel across
+carrier groups.
 """
 
 import logging

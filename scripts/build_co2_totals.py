@@ -2,11 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Calculate historical CO2 emissions per country using EEA and Eurostat data.
-
-Outputs
--------
-- ``resources/<run_name>/co2_totals.csv``: CO2 emissions per country and sector.
+Calculate historical CO2 emissions per country and sector using EEA and Eurostat data.
 """
 
 import logging

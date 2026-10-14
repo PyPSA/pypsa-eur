@@ -27,6 +27,7 @@ from scripts.lib.validation.config.lines import LinesConfig
 from scripts.lib.validation.config.links import LinksConfig
 from scripts.lib.validation.config.load import LoadConfig
 from scripts.lib.validation.config.overpass_api import OverpassApiConfig
+from scripts.lib.validation.config.plotting import PlottingConfig
 from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
 from scripts.lib.validation.config.run import RunConfig
@@ -45,7 +46,15 @@ class LoggingConfig(ConfigModel):
 
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         "INFO",
-        description="Restrict console outputs to all infos, warning or errors only",
+        description="Root log level. Messages below this level are discarded before reaching any handler.",
+    )
+    console_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
+        "WARNING",
+        description="Minimum level emitted to the console (stderr). Defaults to ``WARNING`` so parallel rule output stays readable; the full log is kept in the rule's log file.",
+    )
+    file_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | None = Field(
+        None,
+        description="Minimum level written to the rule log file. Defaults to ``level`` when unset.",
     )
     format: str = Field(
         "%(levelname)s:%(name)s:%(message)s",
@@ -222,6 +231,10 @@ class ConfigSchema(BaseModel):
     overpass_api: OverpassApiConfig = Field(
         default_factory=OverpassApiConfig,
         description="Overpass API configuration for OSM data retrieval.",
+    )
+    plotting: PlottingConfig = Field(
+        default_factory=PlottingConfig,
+        description="Plotting and summary settings.",
     )
 
     @model_validator(mode="before")

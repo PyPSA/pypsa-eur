@@ -2,7 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates GIS shape files of offshore exclusive economic zones (EEZ).
+Creates the offshore shapes of the exclusive economic zones (EEZ) of the modelled countries.
+
+The Marine Regions world EEZ dataset is filtered to the 200 nautical mile zones
+and overlapping claims of the selected countries, mapped to ISO2 country codes
+and simplified by dropping very small polygons. The shapes bound the offshore
+wind regions and are used to clip onshore regions to land.
 """
 
 import logging

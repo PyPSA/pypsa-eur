@@ -6,15 +6,19 @@
 
 import difflib
 import tempfile
+from functools import reduce
 from pathlib import Path
 
 import pytest
 import yaml
 
 from scripts.lib.validation.config import (
+    DEPRECATED_KEYS,
     find_invalid_entries,
     generate_config_defaults,
     generate_config_schema,
+    generate_plotting_defaults,
+    migrate_deprecated_keys,
     normalize_config,
     validate_config,
     validate_scenarios,
@@ -26,6 +30,13 @@ def config_file():
     config = validate_config({})
     config_filename = Path(f"config/config.{config._name}.yaml")
     return config_filename
+
+
+@pytest.fixture(scope="module")
+def plotting_file():
+    config = validate_config({})
+    plotting_filename = Path(f"config/plotting.{config._name}.yaml")
+    return plotting_filename
 
 
 @pytest.fixture(scope="module")
@@ -79,6 +90,18 @@ def test_config_default_yaml_in_sync(config_file, pytestconfig):
     _check_file_in_sync(
         config_file,
         generate_config_defaults,
+        "yaml",
+    )
+
+
+def test_plotting_default_yaml_in_sync(plotting_file, pytestconfig):
+    """Test that config/plotting.default.yaml is in sync with Pydantic schema."""
+    fix = pytestconfig.getoption("fix")
+    if fix:
+        generate_plotting_defaults(plotting_file.as_posix())
+    _check_file_in_sync(
+        plotting_file,
+        generate_plotting_defaults,
         "yaml",
     )
 
@@ -151,6 +174,29 @@ class TestValidateScenarios:
             validate_scenarios(self.base, {"s1": override})
 
 
+@pytest.mark.parametrize("tes", [True, False])
+def test_migrate_deprecated_keys(tes):
+    cfg = {"sector": {"tes": tes}}
+    with pytest.warns(FutureWarning, match="sector.tes"):
+        migrate_deprecated_keys(cfg)
+    assert cfg == {
+        "sector": {"ttes": tes, "district_heating": {"ptes": {"enable": tes}}}
+    }
+
+
+def test_migrate_deprecated_keys_ignores_current_keys():
+    cfg = {"sector": {"ttes": False}, "countries": ["DE"]}
+    migrate_deprecated_keys(cfg)
+    assert cfg == {"sector": {"ttes": False}, "countries": ["DE"]}
+
+
+@pytest.mark.parametrize("old", DEPRECATED_KEYS)
+def test_deprecated_keys_not_in_default_config(old, config_file):
+    *parents, key = old.split(".")
+    defaults = yaml.safe_load(config_file.read_text())
+    assert key not in reduce(dict.get, parents, defaults)
+
+
 def _load_config(path: str) -> dict:
     return yaml.safe_load(Path(path).read_text()) or {}
 
@@ -168,10 +214,11 @@ class TestFindInvalidEntries:
             "conventional.fuel_price_rolling_window",
         }
 
-    def test_passes_valid_config(self):
-        assert not find_invalid_entries(
-            _load_config("config/test/config.overnight.yaml")
-        )
+    @pytest.mark.parametrize(
+        "test_config", sorted(Path("config/test").glob("config.*.yaml")), ids=str
+    )
+    def test_passes_valid_config(self, test_config):
+        assert not find_invalid_entries(_load_config(test_config))
 
 
 def pytest_generate_tests(metafunc):
@@ -185,3 +232,15 @@ def test_config_file_is_valid(configfile):
     assert not invalid, f"Invalid config entries in {configfile}:\n" + "\n".join(
         f"  - {path}: {'; '.join(msgs)}" for path, msgs in invalid.items()
     )
+
+
+class TestLineTypes:
+    def test_default_defines_380kv(self):
+        config = validate_config({})
+        assert 380.0 in config.lines.types
+
+    def test_missing_380kv_is_rejected(self):
+        with pytest.raises(ValueError, match="380"):
+            validate_config(
+                {"lines": {"types": {220.0: "Al/St 240/40 2-bundle 220.0"}}}
+            )

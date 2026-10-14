@@ -2,40 +2,22 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Approximate heat pump coefficient-of-performance (COP) profiles for different
-heat sources and systems. Returns zero where source temperature higher than sink temperature.
+Build heat pump coefficient-of-performance (COP) time series per clustered region, heat source and heat system.
 
-For central heating, this is based on Jensen et al. (2018) (c.f. `CentralHeatingCopApproximator <CentralHeatingCopApproximator.py>`_) and for decentral heating, the approximation is based on Staffell et al. (2012) (c.f. `DecentralHeatingCopApproximator <DecentralHeatingCopApproximator.py>`_).
+For central heating, the COP follows the approximation of Jensen et al.
+(2018) with the district heating forward and return temperatures from
+[build_central_heating_temperature_profiles][] as sink temperatures. For
+decentral heating, a quadratic regression on the temperature difference
+between source and sink from Staffell et al. (2012) is used. Source
+temperatures come from the temperature profiles of the respective heat
+source or, where configured, from a constant source temperature. The COP is
+set to zero where the temperature lift is infeasible or the approximation
+falls below one.
 
-Relevant Settings
------------------
-
-```yaml
-sector:
-    heat_pump_sink_T_decentral_heating:
-    district_heating:
-        forward_temperature:
-        return_temperature:
-        heat_source_cooling:
-        heat_pump_cop_approximation:
-            refrigerant:
-            heat_exchanger_pinch_point_temperature_difference
-            isentropic_compressor_efficiency:
-            heat_loss:
-            min_delta_t_lift:
-        heat_pump_sources:
-            urban central:
-            urban decentral:
-            rural:
-```
-Inputs
-------
-- `resources/<run_name>/temp_soil_total`: Ground temperature
-- `resources/<run_name>/temp_air_total`: Air temperature
-
-Outputs
--------
-- `resources/<run_name>/cop_profiles.nc`: Heat pump coefficient-of-performance (COP) profiles
+References
+----------
+- Jensen et al. (2018), Heat pump COP, part 2: Generalized COP estimation of heat pump processes, 13th IIR Gustav Lorentzen Conference on Natural Refrigerants
+- Staffell et al. (2012), [A review of domestic heat pumps](https://doi.org/10.1039/C2EE22653G)
 """
 
 import pandas as pd

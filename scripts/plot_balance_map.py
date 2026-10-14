@@ -2,7 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create static energy balance maps for the defined carriers using`n.plot()`.
+Plots a static map of the nodal energy balance of one bus carrier.
+
+Reads the solved network and computes the annual energy balance per bus and
+technology carrier with the PyPSA statistics module, split into supply and
+consumption. Bus sizes show the balance as split circles, branch widths and
+arrows show net transmission flows, and regions are shaded by the
+time-averaged marginal price of the carrier. Transmission losses are removed
+from the balance. For stored CO2, dense-phase buses are merged into the
+balance and the CO2 emission shadow price is subtracted from the regional
+price. Carriers absent from the network produce a placeholder figure.
 """
 
 import geopandas as gpd

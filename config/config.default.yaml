@@ -11,6 +11,8 @@ tutorial: false
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#logging_cf
 logging:
   level: INFO
+  console_level: WARNING
+  file_level:
   format: "%(levelname)s:%(name)s:%(message)s"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#remote_cf
@@ -416,6 +418,42 @@ renewable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#conventional_cf
 conventional:
+  estimate_efficiencies:
+    enable: false
+    reference_year: 2025
+    degradation_start: 10
+    degradation_rate: 0.001
+    parameters:
+      lignite:
+        efficiency: 0.25
+        slope: 0.003
+        year: 1960
+        max: 0.42
+      coal:
+        efficiency: 0.28
+        slope: 0.003
+        year: 1960
+        max: 0.44
+      CCGT:
+        efficiency: 0.4
+        slope: 0.004
+        year: 1980
+        max: 0.6
+      OCGT:
+        efficiency: 0.28
+        slope: 0.003
+        year: 1970
+        max: 0.41
+      oil:
+        efficiency: 0.28
+        slope: 0.002
+        year: 1960
+        max: 0.38
+      nuclear:
+        efficiency: 0.33
+        slope: 0.0
+        year: 1960
+        max: 0.33
   unit_commitment: false
   dynamic_fuel_price: false
   fuel_price_rolling_window: 6
@@ -725,6 +763,7 @@ sector:
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
     ptes:
+      enable: true
       dynamic_capacity: false
       supplemental_heating:
         enable: false
@@ -883,7 +922,7 @@ sector:
     annualise_cost: true
     tax_weighting: false
     construction_index: true
-  tes: true
+  ttes: true
   boilers: true
   resistive_heaters: true
   oil_boilers: false
@@ -894,6 +933,9 @@ sector:
   chp:
     enable: true
     fuel:
+    - solid biomass
+    - gas
+    fuel_cc:
     - solid biomass
     - gas
     micro_chp: false
@@ -911,6 +953,7 @@ sector:
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: true
+  electrolysis: true
   SMR: true
   SMR_cc: true
   regional_oil_demand: true
@@ -1124,6 +1167,9 @@ industry:
   HVC_environment_sequestration_fraction: 0.0
   waste_to_energy: false
   waste_to_energy_cc: false
+  solid_biomass_for_industry_cc: true
+  gas_for_industry_cc: true
+  process_emissions_cc: true
   sector_ratios_fraction_future:
     2020: 0.0
     2025: 0.05
@@ -1183,6 +1229,7 @@ clustering:
     remove_islands: false
     aggregate_to_tyndp: false
   simplify_network:
+    to_380: true
     to_substations: false
     remove_stubs: true
     remove_stubs_across_borders: false
@@ -1240,7 +1287,10 @@ solving:
     track_iterations: false
     min_iterations: 2
     max_iterations: 3
-    transmission_losses: 2
+    transmission_losses:
+      mode: secants
+      atol: 15
+      rtol: 0.5
     linearized_unit_commitment: true
     horizon: 365
     overlap: 0

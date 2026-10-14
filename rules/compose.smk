@@ -19,6 +19,9 @@ def get_compose_inputs(w):
     horizon = int(w.horizon)
     sector_enabled = cfg["sector"]["enabled"]
     horizons = cfg["planning_horizons"]
+    elec = cfg["electricity"]
+    sector = cfg["sector"]
+    import_carriers = sector["imports"]["price"] if sector["imports"]["enable"] else {}
 
     # Electricity-only inputs (always included)
     inputs = dict(
@@ -26,7 +29,19 @@ def get_compose_inputs(w):
         **input_class_regions(w),
         **input_conventional(w),
         tech_costs=resources(f"costs_{horizon}_processed.csv"),
-        powerplants=resources("powerplants.csv"),
+        powerplants=(
+            resources("powerplants.csv")
+            if elec["conventional_carriers"]
+            or elec["extendable_carriers"]["Generator"]
+            or "hydro" in elec["renewable_carriers"]
+            or elec["estimate_battery_capacities"]
+            or (
+                elec["estimate_renewable_capacities"]["enable"]
+                and elec["estimate_renewable_capacities"]["from_powerplantmatching"]
+            )
+            or (foresight != "overnight" and horizon == horizons[0])
+            else []
+        ),
         hydro_capacities=ancient("data/hydro_capacities.csv"),
         unit_commitment="data/unit_commitment.csv",
         fuel_price=(
@@ -62,21 +77,35 @@ def get_compose_inputs(w):
 
     # Sector-specific inputs (only when sector coupling is enabled)
     if sector_enabled:
+        enable_ptes = cfg["sector"]["district_heating"]["ptes"]["enable"]
         sector_inputs = dict(
             **input_heat_source_power(w),
-            **rules.cluster_gas_network.output,
-            **rules.build_gas_input_locations.output,
+            clustered_gas_network=(
+                rules.cluster_gas_network.output.clustered_gas_network
+                if sector["gas_network"] or sector["H2_retrofit"]
+                else []
+            ),
+            gas_input_nodes_simplified=(
+                rules.build_gas_input_locations.output.gas_input_nodes_simplified
+                if sector["gas_network"] or {"gas", "H2"} & set(import_carriers)
+                else []
+            ),
             pop_weighted_energy_totals=resources("pop_weighted_energy_totals.csv"),
-            pop_weighted_heat_totals=resources("pop_weighted_heat_totals.csv"),
+            pop_weighted_heat_totals=(
+                resources("pop_weighted_heat_totals.csv") if sector["heating"] else []
+            ),
             shipping_demand=resources("shipping_demand.csv"),
             transport_demand=resources("transport_demand.csv"),
             transport_data=resources("transport_data.csv"),
             avail_profile=resources("avail_profile.csv"),
             dsm_profile=resources("dsm_profile.csv"),
             heat_dsm_profile=resources("residential_heat_dsm_profile.csv"),
-            co2_totals_name=resources("co2_totals.csv"),
             biomass_potentials=resources("biomass_potentials_{horizon}.csv"),
-            h2_cavern=resources("salt_cavern_potentials.csv"),
+            h2_cavern=(
+                resources("salt_cavern_potentials.csv")
+                if sector["hydrogen_underground_storage"]
+                else []
+            ),
             clustered_pop_layout=resources("pop_layout.csv"),
             industrial_demand=resources("industrial_energy_demand_{horizon}.csv"),
             hourly_heat_demand_total=resources("hourly_heat_demand_total.nc"),
@@ -115,12 +144,14 @@ def get_compose_inputs(w):
             ),
             ptes_e_max_pu_profiles=(
                 resources("ptes_e_max_pu_profiles_{horizon}.nc")
-                if cfg["sector"]["district_heating"]["ptes"]["dynamic_capacity"]
+                if enable_ptes
+                and cfg["sector"]["district_heating"]["ptes"]["dynamic_capacity"]
                 else []
             ),
             ptes_direct_utilisation_profiles=(
                 resources("ptes_direct_utilisation_profiles_{horizon}.nc")
-                if cfg["sector"]["district_heating"]["ptes"]["supplemental_heating"][
+                if enable_ptes
+                and cfg["sector"]["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
                 else []
@@ -190,6 +221,7 @@ def get_compose_inputs(w):
 
 # Main composition rule - combines all network building steps
 rule compose_network:
+    """Assembles the full network by adding electricity and sector components to the clustered grid."""
     input:
         unpack(get_compose_inputs),
     output:
@@ -238,7 +270,7 @@ rule compose_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
-        tes=config_provider("sector", "tes"),
+        enable_ptes=config_provider("sector", "district_heating", "ptes", "enable"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
@@ -247,7 +279,5 @@ rule compose_network:
         ),
         co2_budget=config_provider("co2_budget"),
         adjustments=config_provider("adjustments"),
-    message:
-        "Composing network for horizon {wildcards.horizon}"
     script:
         scripts("compose_network.py")

@@ -1,6 +1,16 @@
 # SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
+"""
+Builds first-level administrative boundaries (ADM1) of a country from OpenStreetMap relations.
+
+Raw OSM boundary relations are assembled into polygons from their outer and inner
+member ways, labelled with ISO 3166-2 codes and English names, and clipped to
+onshore territory by removing the exclusive economic zones. Regions without an
+ISO code are numbered by OSM id; duplicate relations for disputed territories are
+dropped. The boundaries stand in for NUTS3 regions in countries not covered by
+Eurostat (BA, MD, UA, XK).
+"""
 
 import json
 import logging

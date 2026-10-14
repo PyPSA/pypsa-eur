@@ -2,13 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build time series for air and soil temperatures per clustered model region.
+Build air and soil temperature time series per clustered region.
 
-Uses `atlite.Cutout.temperature` and `atlite.Cutout.soil_temperature compute temperature ambient air and soil temperature for the respective cutout. The rule is executed in `build_sector.smk``.
-
-
-!!! info "See also"
-    [Atlite.Cutout.temperature](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert) [Atlite.Cutout.soil_temperature](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
+[atlite.Cutout.temperature](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
+and `atlite.Cutout.soil_temperature` read ambient air and soil temperature
+from the weather cutout. Grid cells are aggregated to clustered onshore
+regions weighted by population, giving the temperature experienced by the
+average inhabitant. The profiles serve, among others, as heat source
+temperatures in [build_cop_profiles][] and as ambient temperatures in
+[build_central_heating_temperature_profiles][].
 """
 
 import logging

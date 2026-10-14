@@ -220,6 +220,22 @@ def repeat_years(s: pd.Series, years: list) -> pd.Series:
     )
 
 
+def reindex_to_snapshots(
+    load: pd.DataFrame, snapshots: pd.DatetimeIndex, fixed_year: int | bool = False
+) -> pd.DataFrame:
+    """Reindex load to snapshots, optionally taking the profile from `fixed_year`."""
+    if not fixed_year:
+        return load.reindex(snapshots)
+    has_leap_day = ((snapshots.month == 2) & (snapshots.day == 29)).any()
+    if has_leap_day and not pd.Timestamp(str(fixed_year)).is_leap_year:
+        raise ValueError(
+            f"Snapshots contain February 29 but load `fixed_year` {fixed_year} is "
+            "not a leap year. Set `enable: drop_leap_day: true` or use a leap year."
+        )
+    index = snapshots.map(lambda t: t.replace(year=fixed_year))
+    return load.reindex(index).set_axis(snapshots)
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -315,23 +331,13 @@ if __name__ == "__main__":
         synthetic_load = synthetic_load.loc[snapshots, countries]
         load = load.combine_first(synthetic_load)
 
+    fixed_year = snakemake.params["load"].get("fixed_year", False)
+    load = reindex_to_snapshots(load, snapshots, fixed_year)
+
     assert not load.isna().any().any(), (
         "Load data contains nans. Adjust the parameters "
         "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
         "for implementing the needed load data modifications."
     )
-
-    fixed_year = snakemake.params["load"].get("fixed_year", False)
-    years = (
-        slice(str(fixed_year), str(fixed_year))
-        if fixed_year
-        else slice(snapshots[0], snapshots[-1])
-    )
-
-    load = load.loc[years].reindex(index=snapshots)
-
-    # need to reindex load time series to target year
-    if fixed_year:
-        load.index = load.index.map(lambda t: t.replace(year=snapshots.year[0]))
 
     load.to_csv(snakemake.output[0])
