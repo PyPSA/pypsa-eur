@@ -30,14 +30,37 @@ import yaml
 FILE_PATTERN = re.compile(r"^([dp])_([A-Z]{2})V(\d+)\.csv$")
 ISO2_TO_EUROSTAT = {"GR": "EL", "GB": "UK"}
 COUNTRY_NAMES = {
-    "Austria": "AT", "Belgium": "BE", "Bulgaria": "BG", "Croatia": "HR",
-    "Cyprus": "CY", "Czechia": "CZ", "Denmark": "DK", "Estonia": "EE",
-    "Finland": "FI", "France": "FR", "Germany": "DE", "Greece": "EL",
-    "Hungary": "HU", "Ireland": "IE", "Italy": "IT", "Latvia": "LV",
-    "Lithuania": "LT", "Luxembourg": "LU", "Malta": "MT", "Norway": "NO",
-    "Poland": "PL", "Portugal": "PT", "Romania": "RO", "Slovakia": "SK",
-    "Slovenia": "SI", "Spain": "ES", "Sweden": "SE", "Switzerland": "CH",
-    "Netherlands": "NL", "Turkey": "TR", "United Kingdom": "UK",
+    "Austria": "AT",
+    "Belgium": "BE",
+    "Bulgaria": "BG",
+    "Croatia": "HR",
+    "Cyprus": "CY",
+    "Czechia": "CZ",
+    "Denmark": "DK",
+    "Estonia": "EE",
+    "Finland": "FI",
+    "France": "FR",
+    "Germany": "DE",
+    "Greece": "EL",
+    "Hungary": "HU",
+    "Ireland": "IE",
+    "Italy": "IT",
+    "Latvia": "LV",
+    "Lithuania": "LT",
+    "Luxembourg": "LU",
+    "Malta": "MT",
+    "Norway": "NO",
+    "Poland": "PL",
+    "Portugal": "PT",
+    "Romania": "RO",
+    "Slovakia": "SK",
+    "Slovenia": "SI",
+    "Spain": "ES",
+    "Sweden": "SE",
+    "Switzerland": "CH",
+    "Netherlands": "NL",
+    "Turkey": "TR",
+    "United Kingdom": "UK",
 }
 
 problems = []
@@ -61,26 +84,31 @@ def find_file(data_dir, prefix, device):
     return os.path.join(data_dir, max(hits)[1]) if hits else None
 
 
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config_dr.yaml")
-    ap.add_argument("--samples", type=int, default=20,
-                    help="random values to compare per output file")
+    ap.add_argument(
+        "--samples",
+        type=int,
+        default=20,
+        help="random values to compare per output file",
+    )
     args = ap.parse_args()
 
     with open(args.config) as fh:
         cfg = yaml.safe_load(fh)
-    countries = ["NO" if c is False else str(c).upper()
-                 for c in (cfg.get("countries") or [])]
+    countries = [
+        "NO" if c is False else str(c).upper() for c in (cfg.get("countries") or [])
+    ]
     codes = {ISO2_TO_EUROSTAT.get(c, c) for c in countries}
     data_dir = cfg["retrieve"]["data_dir"]
     variables = cfg["variables"]
     need_p = bool({"capacity", "max_increase"} & set(variables))
     use_rates = bool((cfg.get("participation") or {}).get("apply"))
-    out_dir = os.path.join(cfg["output"]["dir"],
-                           "achievable" if use_rates else "theoretical")
-                           
+    out_dir = os.path.join(
+        cfg["output"]["dir"], "achievable" if use_rates else "theoretical"
+    )
+
     n_hours = 366 * 24  # month, day, hour incl. 29 February
 
     print(f"Config: {args.config}")
@@ -116,8 +144,9 @@ def main():
             name = os.path.basename(path)
             years_missing = [y for y in cfg["years"] if str(y) not in df.columns]
             n_reg = df["nutscode"].nunique()
-            bad_layout = (df.groupby(["nutscode", "TIME"]).size() != 24).any() \
-                or df["TIME"].nunique() != 12
+            bad_layout = (df.groupby(["nutscode", "TIME"]).size() != 24).any() or df[
+                "TIME"
+            ].nunique() != 12
             if years_missing:
                 fail(f"{name}: years {years_missing} not in file")
             elif bad_layout:
@@ -157,7 +186,9 @@ def main():
                 if (f < 0).any().any():
                     errs.append("negative values")
                 if cfg.get("nuts_to_bus") is None and sorted(f.columns) != regions:
-                    errs.append(f"{f.shape[1]} columns, expected {len(regions)} regions")
+                    errs.append(
+                        f"{f.shape[1]} columns, expected {len(regions)} regions"
+                    )
                 for m, grp in f.groupby(level="month"):
                     days = grp.to_numpy().reshape(-1, 24, grp.shape[1])
                     if not (days == days[0]).all():
@@ -177,33 +208,56 @@ def main():
                         reg = random.choice(regions)
 
                         def raw_val(df):
-                            row = df[(df.nutscode == reg) & (df.month == ts[0]) & (df.hour == ts[2])]
+                            row = df[
+                                (df.nutscode == reg)
+                                & (df.month == ts[0])
+                                & (df.hour == ts[2])
+                            ]
                             v = row[str(y)].iloc[0]
                             if pd.isna(v):  # the script fills gaps from nearby years
                                 ycols = [c for c in df.columns if c.isdigit()]
-                                v = row[ycols].ffill(axis=1).bfill(axis=1)[str(y)].iloc[0]
+                                v = (
+                                    row[ycols]
+                                    .ffill(axis=1)
+                                    .bfill(axis=1)[str(y)]
+                                    .iloc[0]
+                                )
                             return v
 
                         if var == "load":
                             expect = raw_val(src["load"])
                         else:
                             cap = raw_val(src["cap"])
-                            expect = cap if var == "capacity" else max(cap - raw_val(src["load"]), 0)
+                            expect = (
+                                cap
+                                if var == "capacity"
+                                else max(cap - raw_val(src["load"]), 0)
+                            )
                         if rates is not None:
                             expect *= rates[dev][reg[:2]]
                         got = f.loc[ts, reg]
-                        if abs(got - expect) > 10 ** -dec:
-                            errs.append(f"{reg} {ts}: file {got}, raw data {expect:.{dec}f}")
+                        if abs(got - expect) > 10**-dec:
+                            errs.append(
+                                f"{reg} {ts}: file {got}, raw data {expect:.{dec}f}"
+                            )
                             break
 
                 if errs:
                     fail(f"{name}: " + "; ".join(errs))
                 else:
-                    ok(f"{name}: {len(f)} hours x {f.shape[1]} regions, "
-                       f"{args.samples} values match raw data")
+                    ok(
+                        f"{name}: {len(f)} hours x {f.shape[1]} regions, "
+                        f"{args.samples} values match raw data"
+                    )
 
-    print("\n" + ("PASS - everything found, read and written correctly"
-                  if not problems else f"FAIL - {len(problems)} problem(s) listed above"))
+    print(
+        "\n"
+        + (
+            "PASS - everything found, read and written correctly"
+            if not problems
+            else f"FAIL - {len(problems)} problem(s) listed above"
+        )
+    )
     return 0 if not problems else 1
 
 

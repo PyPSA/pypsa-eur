@@ -87,7 +87,7 @@ electricity:
 
 co2_budget:
   relative: false
-  upper: null             # no CO2 cap; a cap plus fixed capacity can make it infeasible
+  upper:                  # no CO2 cap; a cap plus fixed capacity can make it infeasible
 
 conventional:
   dynamic_fuel_price: false

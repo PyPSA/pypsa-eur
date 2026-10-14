@@ -83,8 +83,8 @@ def nuts2_bus_weights(
     # onshore_regions's "name" (bus name) during the overlay below and would
     # get silently suffixed away - rename it first (same fix as the existing
     # nuts3_distribution_keys() in build_electricity_demand_base.py).
-    nuts3 = gpd.read_file(nuts3_fn).rename(columns={"name": "nuts3_name"}).to_crs(
-        epsg=3035
+    nuts3 = (
+        gpd.read_file(nuts3_fn).rename(columns={"name": "nuts3_name"}).to_crs(epsg=3035)
     )
     regions = (
         gpd.read_file(onshore_regions_fn)
@@ -116,9 +116,11 @@ def nuts2_bus_weights(
 
 
 def report_region_mismatch(oreilly_codes: set[str], model_codes: set[str]) -> None:
-    """Log NUTS2 codes that don't match between the O'Reilly data and the
+    """
+    Log NUTS2 codes that don't match between the O'Reilly data and the
     model's own NUTS3-derived regions (both already filtered to the model's
-    countries)."""
+    countries).
+    """
     missing_in_model = sorted(oreilly_codes - model_codes)
     missing_in_oreilly = sorted(model_codes - oreilly_codes)
     if missing_in_model:
@@ -170,9 +172,7 @@ def build_demand_response_profile(
         down_t = to_utc(raw[dev, "down"], year, drop_leap_day).reindex(
             snap, fill_value=0.0
         )
-        up_t = to_utc(raw[dev, "up"], year, drop_leap_day).reindex(
-            snap, fill_value=0.0
-        )
+        up_t = to_utc(raw[dev, "up"], year, drop_leap_day).reindex(snap, fill_value=0.0)
         down_bus = down_t.reindex(columns=weights.columns, fill_value=0.0) @ weights.T
         up_bus = up_t.reindex(columns=weights.columns, fill_value=0.0) @ weights.T
 

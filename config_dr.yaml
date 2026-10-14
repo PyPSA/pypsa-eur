@@ -7,8 +7,8 @@ retrieve:
   zenodo_record: 7871106
   data_dir: data/oreilly     # where raw Zenodo files are stored
   extra_files:               # downloaded in addition to the device files
-    - metaData.Full_potential.xlsx
-    - participation_rates_country.csv
+  - metaData.Full_potential.xlsx
+  - participation_rates_country.csv
 
 # Devices to process. Codes:
 #   AC air conditioning      CP heat circulation pump  DW dish washer
@@ -58,7 +58,7 @@ participation: #if true, then the participation rates are applied, if false then
 
 # Optional CSV with columns nutscode,bus[,weight] to aggregate NUTS2 regions
 # to PyPSA-Eur buses. Leave null to keep NUTS2 columns.
-nuts_to_bus: null
+nuts_to_bus:
 
 output:
   dir: data/demand_response

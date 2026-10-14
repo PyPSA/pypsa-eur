@@ -45,27 +45,50 @@ DEVICES = {
     "WM": "washing machine",
 }
 
-# The dataset uses Eurostat codes and PyPSA-Eur uses ISO2, this translates between them: 
+# The dataset uses Eurostat codes and PyPSA-Eur uses ISO2, this translates between them:
 EUROSTAT_TO_ISO2 = {"EL": "GR", "UK": "GB"}
 ISO2_TO_EUROSTAT = {v: k for k, v in EUROSTAT_TO_ISO2.items()}
 
 # Country names in participation_rates_country.csv translated to Eurostat codes
 COUNTRY_NAMES = {
-    "Austria": "AT", "Belgium": "BE", "Bulgaria": "BG", "Croatia": "HR",
-    "Cyprus": "CY", "Czechia": "CZ", "Denmark": "DK", "Estonia": "EE",
-    "Finland": "FI", "France": "FR", "Germany": "DE", "Greece": "EL",
-    "Hungary": "HU", "Ireland": "IE", "Italy": "IT", "Latvia": "LV",
-    "Lithuania": "LT", "Luxembourg": "LU", "Malta": "MT", "Norway": "NO",
-    "Poland": "PL", "Portugal": "PT", "Romania": "RO", "Slovakia": "SK",
-    "Slovenia": "SI", "Spain": "ES", "Sweden": "SE", "Switzerland": "CH",
-    "Netherlands": "NL", "Turkey": "TR", "United Kingdom": "UK",
+    "Austria": "AT",
+    "Belgium": "BE",
+    "Bulgaria": "BG",
+    "Croatia": "HR",
+    "Cyprus": "CY",
+    "Czechia": "CZ",
+    "Denmark": "DK",
+    "Estonia": "EE",
+    "Finland": "FI",
+    "France": "FR",
+    "Germany": "DE",
+    "Greece": "EL",
+    "Hungary": "HU",
+    "Ireland": "IE",
+    "Italy": "IT",
+    "Latvia": "LV",
+    "Lithuania": "LT",
+    "Luxembourg": "LU",
+    "Malta": "MT",
+    "Norway": "NO",
+    "Poland": "PL",
+    "Portugal": "PT",
+    "Romania": "RO",
+    "Slovakia": "SK",
+    "Slovenia": "SI",
+    "Spain": "ES",
+    "Sweden": "SE",
+    "Switzerland": "CH",
+    "Netherlands": "NL",
+    "Turkey": "TR",
+    "United Kingdom": "UK",
 }
 
 FILE_PATTERN = re.compile(r"^([dp])_([A-Z]{2})V(\d+)\.csv$")
 
 
-
 # 1. Retrieve
+
 
 def zenodo_file_list(record_id):
     """Return {filename: (download_url, md5)} for a Zenodo record."""
@@ -111,13 +134,16 @@ def download(url, dest, md5=None, retries=5):
                         fh.write(block)
                         done += len(block)
                         if total:
-                            print(f"\r    {done / 1e6:6.1f} / {total / 1e6:.1f} MB", end="")
+                            print(
+                                f"\r    {done / 1e6:6.1f} / {total / 1e6:.1f} MB",
+                                end="",
+                            )
                 print()
             if md5 and md5sum(tmp) != md5:
-                raise IOError("checksum mismatch")
+                raise OSError("checksum mismatch")
             os.replace(tmp, dest)
             return
-        except (requests.RequestException, IOError) as e:
+        except (OSError, requests.RequestException) as e:
             wait = 15 * (attempt + 1)
             print(f"    failed ({e}); retrying in {wait}s")
             time.sleep(wait)
@@ -153,6 +179,7 @@ def retrieve(cfg):
 
 
 # 2-4. Process
+
 
 def needs_capacity(cfg):
     return bool({"capacity", "max_increase"} & set(cfg["variables"]))
@@ -198,10 +225,13 @@ def read_representative_days(path, years, countries):
 
     out = {}
     for y in years:
-        wide = df.pivot_table(index=["month", "hour"], columns="nutscode",
-                              values=str(y), aggfunc="first")
+        wide = df.pivot_table(
+            index=["month", "hour"], columns="nutscode", values=str(y), aggfunc="first"
+        )
         if wide.shape[0] != 12 * 24:
-            raise ValueError(f"{path}: expected 288 (month, hour) rows, got {wide.shape[0]}")
+            raise ValueError(
+                f"{path}: expected 288 (month, hour) rows, got {wide.shape[0]}"
+            )
         out[y] = wide.fillna(0.0)
     return out
 
@@ -213,10 +243,11 @@ def expand_to_year(rep_days):
     (same as any other February day), so the data fits any year.
     """
     days = pd.date_range("2024-01-01", "2024-12-31 23:00", freq="h")  # 2024 = leap year
-    # Any leap year works, it is only used to list all days (incl. 29 Feb). 
+    # Any leap year works, it is only used to list all days (incl. 29 Feb).
     full = rep_days.reindex(pd.MultiIndex.from_arrays([days.month, days.hour]))
-    full.index = pd.MultiIndex.from_arrays([days.month, days.day, days.hour],
-                                           names=["month", "day", "hour"])
+    full.index = pd.MultiIndex.from_arrays(
+        [days.month, days.day, days.hour], names=["month", "day", "hour"]
+    )
     return full
 
 
@@ -228,10 +259,13 @@ def aggregate_to_buses(df, mapping):
     m = m[m["nutscode"].isin(df.columns)]
     unmapped = sorted(set(df.columns) - set(m["nutscode"]))
     if unmapped:
-        print(f"    {len(unmapped)} NUTS2 regions have no bus and are dropped: "
-              f"{unmapped[:8]}{'...' if len(unmapped) > 8 else ''}")
-    weights = m.pivot_table(index="nutscode", columns="bus", values="weight",
-                            aggfunc="sum", fill_value=0.0)
+        print(
+            f"    {len(unmapped)} NUTS2 regions have no bus and are dropped: "
+            f"{unmapped[:8]}{'...' if len(unmapped) > 8 else ''}"
+        )
+    weights = m.pivot_table(
+        index="nutscode", columns="bus", values="weight", aggfunc="sum", fill_value=0.0
+    )
     return df[weights.index] @ weights
 
 
@@ -273,8 +307,9 @@ def process(cfg):
     pcfg = cfg.get("participation") or {}
     use_rates = bool(pcfg.get("apply"))
     rates = read_participation_rates(cfg) if use_rates else None
-    out_dir = os.path.join(cfg["output"]["dir"],
-                           "achievable" if use_rates else "theoretical")
+    out_dir = os.path.join(
+        cfg["output"]["dir"], "achievable" if use_rates else "theoretical"
+    )
     decimals = cfg["output"].get("decimals", 4)
     years = cfg["years"]
     countries = cfg.get("countries") or []
@@ -323,11 +358,6 @@ def process(cfg):
     return written
 
 
-
-
-
-
-
 def load_config(path):
     with open(path) as fh:
         cfg = yaml.safe_load(fh)
@@ -335,8 +365,9 @@ def load_config(path):
     if unknown:
         raise ValueError(f"Unknown device codes in config: {sorted(unknown)}")
     # YAML reads an unquoted NO (Norway) as boolean false - turn it back
-    cfg["countries"] = ["NO" if c is False else str(c).upper()
-                        for c in (cfg.get("countries") or [])]
+    cfg["countries"] = [
+        "NO" if c is False else str(c).upper() for c in (cfg.get("countries") or [])
+    ]
     bad_vars = set(cfg["variables"]) - {"load", "capacity", "max_increase"}
     if bad_vars:
         raise ValueError(f"Unknown variables in config: {sorted(bad_vars)}")
@@ -344,12 +375,16 @@ def load_config(path):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--config", default="config_dr.yaml")
     ap.add_argument("--retrieve-only", action="store_true")
-    ap.add_argument("--no-retrieve", action="store_true",
-                    help="skip download even if enabled in the config")
+    ap.add_argument(
+        "--no-retrieve",
+        action="store_true",
+        help="skip download even if enabled in the config",
+    )
     args = ap.parse_args()
 
     cfg = load_config(args.config)

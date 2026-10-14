@@ -44,6 +44,7 @@ class _DistributionKeyConfig(BaseModel):
         description="Weighting factor for the population data in the distribution key.",
     )
 
+
 class _DeviceDRConfig(ConfigModel):
     """One device's demand-response settings."""
 
@@ -61,7 +62,9 @@ class _DeviceDRConfig(ConfigModel):
 class _DemandResponseConfig(ConfigModel):
     """Configuration for `load.demand_response` settings."""
 
-    enable: bool = Field(False, description="Whether to add residential demand response.")
+    enable: bool = Field(
+        False, description="Whether to add residential demand response."
+    )
     data_dir: str = Field(
         "data/demand_response/achievable",
         description="Directory with prepare_dr_data.py's per-device, per-year CSV output.",
@@ -70,6 +73,7 @@ class _DemandResponseConfig(ConfigModel):
         default_factory=dict,
         description="Devices to model, keyed by O'Reilly device code (WM, TD, DW, EV, RF, FR, AC, CP, HP, SH, WH).",
     )
+
 
 class LoadConfig(BaseModel):
     """Configuration for `load` settings."""

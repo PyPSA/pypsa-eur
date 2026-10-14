@@ -403,6 +403,7 @@ def attach_load(
 
     n.add("Load", load.columns, bus=load.columns, p_set=load, carrier="electricity")
 
+
 def attach_demand_response(
     n: pypsa.Network,
     profile_fn: str,
@@ -502,7 +503,9 @@ def attach_demand_response(
         # down) has the larger peak, so the Store never binds before the
         # per-device recovery constraints in custom_extra_functionality.py do.
         e_min, e_max = e_bounds[cfg["direction"]]
-        e_nom = cfg["shift_time"] * np.maximum(p_nom_up.to_numpy(), p_nom_down.to_numpy())
+        e_nom = cfg["shift_time"] * np.maximum(
+            p_nom_up.to_numpy(), p_nom_down.to_numpy()
+        )
         n.add(
             "Store",
             dr_buses,
@@ -1327,7 +1330,7 @@ def main(
         inputs["load"],
         params.load["scaling_factor"],
     )
-    
+
     dr = params.load["demand_response"]
     if dr["enable"]:
         attach_demand_response(n, inputs["dr_profile"], dr["devices"])
