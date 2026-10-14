@@ -8,6 +8,8 @@ Load configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#load_cf
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from scripts.lib.validation.config._base import ConfigModel
@@ -42,12 +44,36 @@ class _DistributionKeyConfig(BaseModel):
         description="Weighting factor for the population data in the distribution key.",
     )
 
+
+class _DeviceDRConfig(ConfigModel):
+    """One device's demand-response settings."""
+
+    shift_time: int = Field(
+        ...,
+        ge=1,
+        description="Hours within which shifted load for this device must be recovered (S).",
+    )
+    direction: Literal["delay", "advance", "both"] = Field(
+        ...,
+        description="Which way this device's load can be shifted.",
+    )
+
+
 class _DemandResponseConfig(ConfigModel):
     """Configuration for `load.demand_response` settings."""
 
-    enable: bool = Field(False, description="Whether to add residential demand response.")
-    share: float = Field(0.1, ge=0, le=1, description="Share of hourly load that can be shifted (test value).")
-    shift_time: int = Field(3, ge=1, description="Hours within which shifted load must be recovered (S).")
+    enable: bool = Field(
+        False, description="Whether to add residential demand response."
+    )
+    data_dir: str = Field(
+        "data/demand_response/achievable",
+        description="Directory with prepare_dr_data.py's per-device, per-year CSV output.",
+    )
+    devices: dict[str, _DeviceDRConfig] = Field(
+        default_factory=dict,
+        description="Devices to model, keyed by O'Reilly device code (WM, TD, DW, EV, RF, FR, AC, CP, HP, SH, WH).",
+    )
+
 
 class LoadConfig(BaseModel):
     """Configuration for `load` settings."""
