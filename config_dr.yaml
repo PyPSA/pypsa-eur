@@ -1,0 +1,65 @@
+# Configuration for prepare_dr_data.py
+# Demand-response data from O'Reilly et al. (2022), openENTRANCE Case Study 1
+# Zenodo: https://doi.org/10.5281/zenodo.7871106
+
+retrieve:
+  enable: true               # download missing files from Zenodo
+  zenodo_record: 7871106
+  data_dir: data/oreilly     # where raw Zenodo files are stored
+  extra_files:               # downloaded in addition to the device files
+    - metaData.Full_potential.xlsx
+    - participation_rates_country.csv
+
+# Devices to process. Codes:
+#   AC air conditioning      CP heat circulation pump  DW dish washer
+#   EV electric vehicle      FR freezer                HP air-to-air heat pump
+#   RF refrigerator          SH storage heater         TD tumble drier
+#   WH water heater          WM washing machine
+devices: [AC, CP, DW, EV, FR, HP, RF, SH, TD, WH, WM]
+
+# Planning years to keep (data covers 2018-2050).
+# Must include every PyPSA-Eur horizon you solve for: 2025 is the Belgium
+# test horizon, 2030/2040/2050 are the thesis's full-run horizons.
+years: [2025, 2030, 2040, 2050]
+
+
+# Countries to keep, as PyPSA-Eur ISO2 codes (GB and GR, not UK and EL).
+# Leave empty to keep all 30 countries in the dataset.
+# Quote the codes, e.g. ["NO", "SE", "DK"] - unquoted NO means "false" in YAML.
+countries: []
+
+# Which time series to write per device:
+#   load          hourly load = maximum possible reduction   (d_ files)
+#   capacity      maximum capacity                           (p_ files)
+#   max_increase  capacity - load = maximum possible increase
+variables: [load, capacity, max_increase]
+
+# Participation rates: scale the theoretical potential to the achievable
+# potential (share of households willing to take part, per country).
+participation: #if true, then the participation rates are applied, if false then everyone is participating, (theoretical scenario)
+  apply: true
+  file: participation_rates_country.csv   # in retrieve.data_dir
+  # Which column of the file applies to each device.
+  # Checked against the authors' acheivable_NUTS2_summary.csv:
+  #   AC, CP, DW, EV reproduce it exactly (note: CP uses the SH column).
+  # FR, RF, TD, WM, WH, SH follow the column names; HP is an assumption.
+  device_groups:
+    AC: AC
+    CP: SH
+    DW: Wash
+    TD: Wash
+    WM: Wash
+    EV: EV
+    FR: FRRF
+    RF: FRRF
+    WH: WH
+    SH: SH
+    HP: Other
+
+# Optional CSV with columns nutscode,bus[,weight] to aggregate NUTS2 regions
+# to PyPSA-Eur buses. Leave null to keep NUTS2 columns.
+nuts_to_bus: null
+
+output:
+  dir: data/demand_response
+  decimals: 4
