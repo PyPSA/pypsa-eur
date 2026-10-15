@@ -69,12 +69,16 @@ def _default_dr_devices() -> dict[str, _DeviceDRConfig]:
         "WM": _DeviceDRConfig(shift_time=6, direction="both"),  # washing machine
         "TD": _DeviceDRConfig(shift_time=6, direction="both"),  # tumble drier
         "DW": _DeviceDRConfig(shift_time=6, direction="both"),  # dish washer
-        "EV": _DeviceDRConfig(shift_time=4, direction="delay"),  # battery electric vehicle
+        "EV": _DeviceDRConfig(
+            shift_time=4, direction="delay"
+        ),  # battery electric vehicle
         "RF": _DeviceDRConfig(shift_time=2, direction="delay"),  # refrigerator
         "FR": _DeviceDRConfig(shift_time=2, direction="delay"),  # freezer
         "AC": _DeviceDRConfig(shift_time=2, direction="delay"),  # air conditioning
         "CP": _DeviceDRConfig(shift_time=2, direction="delay"),  # heat circulation pump
-        "HP": _DeviceDRConfig(shift_time=2, direction="advance"),  # air-to-air heat pump
+        "HP": _DeviceDRConfig(
+            shift_time=2, direction="advance"
+        ),  # air-to-air heat pump
         "SH": _DeviceDRConfig(shift_time=12, direction="advance"),  # storage heater
         "WH": _DeviceDRConfig(shift_time=12, direction="advance"),  # water heater
     }
