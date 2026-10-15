@@ -2982,6 +2982,48 @@
               "type": "number"
             }
           }
+        },
+        "demand_response": {
+          "description": "Configuration for `load.demand_response` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Whether to add residential demand response.",
+              "type": "boolean"
+            },
+            "data_dir": {
+              "default": "data/demand_response/achievable",
+              "description": "Directory with prepare_dr_data.py's per-device, per-year CSV output.",
+              "type": "string"
+            },
+            "devices": {
+              "additionalProperties": {
+                "description": "One device's demand-response settings.",
+                "properties": {
+                  "shift_time": {
+                    "description": "Hours within which shifted load for this device must be recovered (S).",
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "direction": {
+                    "description": "Which way this device's load can be shifted.",
+                    "enum": [
+                      "delay",
+                      "advance",
+                      "both"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "shift_time",
+                  "direction"
+                ]
+              },
+              "description": "Devices to model, keyed by O'Reilly device code (WM, TD, DW, EV, RF, FR, AC, CP, HP, SH, WH). Default shift times and directions are from O'Reilly et al. (2022)'s own \"energy shift constraints\" table for the residential DR dataset.",
+              "type": "object"
+            }
+          }
         }
       }
     },
@@ -6435,6 +6477,71 @@
           "type": "string"
         }
       }
+    },
+    "_DemandResponseConfig": {
+      "description": "Configuration for `load.demand_response` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Whether to add residential demand response.",
+          "type": "boolean"
+        },
+        "data_dir": {
+          "default": "data/demand_response/achievable",
+          "description": "Directory with prepare_dr_data.py's per-device, per-year CSV output.",
+          "type": "string"
+        },
+        "devices": {
+          "additionalProperties": {
+            "description": "One device's demand-response settings.",
+            "properties": {
+              "shift_time": {
+                "description": "Hours within which shifted load for this device must be recovered (S).",
+                "minimum": 1,
+                "type": "integer"
+              },
+              "direction": {
+                "description": "Which way this device's load can be shifted.",
+                "enum": [
+                  "delay",
+                  "advance",
+                  "both"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "shift_time",
+              "direction"
+            ]
+          },
+          "description": "Devices to model, keyed by O'Reilly device code (WM, TD, DW, EV, RF, FR, AC, CP, HP, SH, WH). Default shift times and directions are from O'Reilly et al. (2022)'s own \"energy shift constraints\" table for the residential DR dataset.",
+          "type": "object"
+        }
+      }
+    },
+    "_DeviceDRConfig": {
+      "description": "One device's demand-response settings.",
+      "properties": {
+        "shift_time": {
+          "description": "Hours within which shifted load for this device must be recovered (S).",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "direction": {
+          "description": "Which way this device's load can be shifted.",
+          "enum": [
+            "delay",
+            "advance",
+            "both"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "shift_time",
+        "direction"
+      ]
     },
     "_DistributionKeyConfig": {
       "description": "Configuration for `load.distribution_key` settings.",
@@ -10656,6 +10763,48 @@
               "default": 0.4,
               "description": "Weighting factor for the population data in the distribution key.",
               "type": "number"
+            }
+          }
+        },
+        "demand_response": {
+          "description": "Configuration for `load.demand_response` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Whether to add residential demand response.",
+              "type": "boolean"
+            },
+            "data_dir": {
+              "default": "data/demand_response/achievable",
+              "description": "Directory with prepare_dr_data.py's per-device, per-year CSV output.",
+              "type": "string"
+            },
+            "devices": {
+              "additionalProperties": {
+                "description": "One device's demand-response settings.",
+                "properties": {
+                  "shift_time": {
+                    "description": "Hours within which shifted load for this device must be recovered (S).",
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "direction": {
+                    "description": "Which way this device's load can be shifted.",
+                    "enum": [
+                      "delay",
+                      "advance",
+                      "both"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "shift_time",
+                  "direction"
+                ]
+              },
+              "description": "Devices to model, keyed by O'Reilly device code (WM, TD, DW, EV, RF, FR, AC, CP, HP, SH, WH). Default shift times and directions are from O'Reilly et al. (2022)'s own \"energy shift constraints\" table for the residential DR dataset.",
+              "type": "object"
             }
           }
         }

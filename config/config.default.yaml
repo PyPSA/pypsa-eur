@@ -484,23 +484,6 @@ transformers:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#load_cf
 load:
-  demand_response:
-    enable: false
-    data_dir: data/demand_response/achievable
-    # Shift times and directions from O'Reilly et al. (2022)'s own "energy
-    # shift constraints" table for the residential DR dataset, not assumed.
-    devices:
-      WM: {shift_time: 6, direction: both}      # washing machine
-      TD: {shift_time: 6, direction: both}      # tumble drier
-      DW: {shift_time: 6, direction: both}      # dish washer
-      EV: {shift_time: 4, direction: delay}     # battery electric vehicle
-      RF: {shift_time: 2, direction: delay}     # refrigerator
-      FR: {shift_time: 2, direction: delay}     # freezer
-      AC: {shift_time: 2, direction: delay}     # air conditioning
-      CP: {shift_time: 2, direction: delay}     # heat circulation pump
-      HP: {shift_time: 2, direction: advance}   # air-to-air heat pump
-      SH: {shift_time: 12, direction: advance}  # storage heater
-      WH: {shift_time: 12, direction: advance}  # water heater
   fill_gaps:
     enable: true
     interpolate_limit: 6
@@ -513,6 +496,43 @@ load:
   distribution_key:
     gdp: 0.6
     population: 0.4
+  demand_response:
+    enable: false
+    data_dir: data/demand_response/achievable
+    devices:
+      WM:
+        shift_time: 6
+        direction: both
+      TD:
+        shift_time: 6
+        direction: both
+      DW:
+        shift_time: 6
+        direction: both
+      EV:
+        shift_time: 4
+        direction: delay
+      RF:
+        shift_time: 2
+        direction: delay
+      FR:
+        shift_time: 2
+        direction: delay
+      AC:
+        shift_time: 2
+        direction: delay
+      CP:
+        shift_time: 2
+        direction: delay
+      HP:
+        shift_time: 2
+        direction: advance
+      SH:
+        shift_time: 12
+        direction: advance
+      WH:
+        shift_time: 12
+        direction: advance
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#pypsa_eur_cf
 pypsa_eur:

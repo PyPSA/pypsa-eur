@@ -59,6 +59,27 @@ class _DeviceDRConfig(ConfigModel):
     )
 
 
+def _default_dr_devices() -> dict[str, _DeviceDRConfig]:
+    """
+    Default demand-response devices: shift times and directions from
+    O'Reilly et al. (2022)'s own "energy shift constraints" table for the
+    residential DR dataset (Zenodo 10.5281/zenodo.7871106), not assumed.
+    """
+    return {
+        "WM": _DeviceDRConfig(shift_time=6, direction="both"),  # washing machine
+        "TD": _DeviceDRConfig(shift_time=6, direction="both"),  # tumble drier
+        "DW": _DeviceDRConfig(shift_time=6, direction="both"),  # dish washer
+        "EV": _DeviceDRConfig(shift_time=4, direction="delay"),  # battery electric vehicle
+        "RF": _DeviceDRConfig(shift_time=2, direction="delay"),  # refrigerator
+        "FR": _DeviceDRConfig(shift_time=2, direction="delay"),  # freezer
+        "AC": _DeviceDRConfig(shift_time=2, direction="delay"),  # air conditioning
+        "CP": _DeviceDRConfig(shift_time=2, direction="delay"),  # heat circulation pump
+        "HP": _DeviceDRConfig(shift_time=2, direction="advance"),  # air-to-air heat pump
+        "SH": _DeviceDRConfig(shift_time=12, direction="advance"),  # storage heater
+        "WH": _DeviceDRConfig(shift_time=12, direction="advance"),  # water heater
+    }
+
+
 class _DemandResponseConfig(ConfigModel):
     """Configuration for `load.demand_response` settings."""
 
@@ -70,8 +91,10 @@ class _DemandResponseConfig(ConfigModel):
         description="Directory with prepare_dr_data.py's per-device, per-year CSV output.",
     )
     devices: dict[str, _DeviceDRConfig] = Field(
-        default_factory=dict,
-        description="Devices to model, keyed by O'Reilly device code (WM, TD, DW, EV, RF, FR, AC, CP, HP, SH, WH).",
+        default_factory=_default_dr_devices,
+        description="Devices to model, keyed by O'Reilly device code (WM, TD, DW, EV, RF, FR, AC, CP, HP, SH, WH). "
+        "Default shift times and directions are from O'Reilly et al. (2022)'s own "
+        '"energy shift constraints" table for the residential DR dataset.',
     )
 
 
