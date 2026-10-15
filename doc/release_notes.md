@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Fix: Regional CO2 sequestration allowances no longer accumulate across myopic planning horizons. Sequestration Stores are replaced by fixed-capacity Generators with energy-sum limits and infinite lifetimes, preventing brownfield carry-over from duplicating regional potentials. Sequestration costs are charged on Generator dispatch instead of the connecting Links. This can change sequestration locations and CO2 pipeline expansion ([#2369](https://github.com/PyPSA/pypsa-eur/pull/2369), fixes [#2368](https://github.com/PyPSA/pypsa-eur/issues/2368)).
+
 * Feature: New switches `industry: solid_biomass_for_industry_cc`, `industry: gas_for_industry_cc` and `industry: process_emissions_cc` to disable the carbon capture options for solid biomass for industry, gas for industry and industrial process emissions. All default to `true`, which matches the previous behaviour ([#2357](https://github.com/PyPSA/pypsa-eur/pull/2357)).
 
 * Feature: New option `sector: electrolysis` to allow hydrogen electrolysis to be configurable ([#2358](https://github.com/PyPSA/pypsa-eur/pull/2358)).
