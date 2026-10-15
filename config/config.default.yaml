@@ -1338,6 +1338,17 @@ solving:
         parameters:
         - demand
         - renewable_maxpower
+    "smspp-tssb-bds-cvx-pre":
+      capacity_expansion_ucblock: true
+      configfile: "config/smspp/TSSBlock/TSSBSCfg-BDS-CVX-pre.txt"
+      pysmspp_options:
+        k:
+        v2:  # -v2: the log of the BendersDecompositionSolver, a line per round
+      stochastic_parameters:
+        stochastic_type: tssb
+        parameters:
+        - demand
+        - renewable_maxpower
     "smspp-tssb-lds":
       capacity_expansion_ucblock: true
       enable_thermal_units: true

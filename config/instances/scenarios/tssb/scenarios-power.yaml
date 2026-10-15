@@ -11,6 +11,7 @@ th_24c24_demand_3:
           parameters:
           - demand
       smspp-tssb-bds: *th_24c24_demand_3
+      smspp-tssb-bds-cvx-pre: *th_24c24_demand_3
       smspp-tssb-lds-lp: *th_24c24_demand_3
       smspp-tssb-bds-ld: *th_24c24_demand_3
       smspp-tssb-bds-cvx-ld: *th_24c24_demand_3
@@ -34,6 +35,7 @@ th_120c24_demand_3:
           parameters:
           - demand
       smspp-tssb-bds: *th_120c24_demand_3
+      smspp-tssb-bds-cvx-pre: *th_120c24_demand_3
       smspp-tssb-lds-lp: *th_120c24_demand_3
       smspp-tssb-bds-ld: *th_120c24_demand_3
       smspp-tssb-bds-cvx-ld: *th_120c24_demand_3
@@ -57,6 +59,7 @@ th_365c24_demand_3:
           parameters:
           - demand
       smspp-tssb-bds: *th_365c24_demand_3
+      smspp-tssb-bds-cvx-pre: *th_365c24_demand_3
       smspp-tssb-lds-lp: *th_365c24_demand_3
       smspp-tssb-bds-ld: *th_365c24_demand_3
       smspp-tssb-bds-cvx-ld: *th_365c24_demand_3
@@ -80,6 +83,7 @@ th_24c24_demand_10:
           parameters:
           - demand
       smspp-tssb-bds: *th_24c24_demand_10
+      smspp-tssb-bds-cvx-pre: *th_24c24_demand_10
       smspp-tssb-lds-lp: *th_24c24_demand_10
       smspp-tssb-bds-ld: *th_24c24_demand_10
       smspp-tssb-bds-cvx-ld: *th_24c24_demand_10
@@ -103,6 +107,7 @@ th_120c24_demand_10:
           parameters:
           - demand
       smspp-tssb-bds: *th_120c24_demand_10
+      smspp-tssb-bds-cvx-pre: *th_120c24_demand_10
       smspp-tssb-lds-lp: *th_120c24_demand_10
       smspp-tssb-bds-ld: *th_120c24_demand_10
       smspp-tssb-bds-cvx-ld: *th_120c24_demand_10
@@ -126,6 +131,7 @@ th_365c24_demand_10:
           parameters:
           - demand
       smspp-tssb-bds: *th_365c24_demand_10
+      smspp-tssb-bds-cvx-pre: *th_365c24_demand_10
       smspp-tssb-lds-lp: *th_365c24_demand_10
       smspp-tssb-bds-ld: *th_365c24_demand_10
       smspp-tssb-bds-cvx-ld: *th_365c24_demand_10
@@ -150,6 +156,7 @@ th_24c24_demand_20:
           parameters:
           - demand
       smspp-tssb-bds: *th_24c24_demand_20
+      smspp-tssb-bds-cvx-pre: *th_24c24_demand_20
       smspp-tssb-lds-lp: *th_24c24_demand_20
       smspp-tssb-bds-ld: *th_24c24_demand_20
       smspp-tssb-bds-cvx-ld: *th_24c24_demand_20
@@ -173,6 +180,7 @@ th_120c24_demand_20:
           parameters:
           - demand
       smspp-tssb-bds: *th_120c24_demand_20
+      smspp-tssb-bds-cvx-pre: *th_120c24_demand_20
       smspp-tssb-lds-lp: *th_120c24_demand_20
       smspp-tssb-bds-ld: *th_120c24_demand_20
       smspp-tssb-bds-cvx-ld: *th_120c24_demand_20
@@ -196,6 +204,7 @@ th_365c24_demand_20:
           parameters:
           - demand
       smspp-tssb-bds: *th_365c24_demand_20
+      smspp-tssb-bds-cvx-pre: *th_365c24_demand_20
       smspp-tssb-lds-lp: *th_365c24_demand_20
       smspp-tssb-bds-ld: *th_365c24_demand_20
       smspp-tssb-bds-cvx-ld: *th_365c24_demand_20

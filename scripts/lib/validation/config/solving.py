@@ -490,6 +490,17 @@ class SolvingConfig(BaseModel):
                     "parameters": ["demand", "renewable_maxpower"],
                 },
             },
+            "smspp-tssb-bds-cvx-pre": {
+                "capacity_expansion_ucblock": True,
+                "configfile": "config/smspp/TSSBlock/TSSBSCfg-BDS-CVX-pre.txt",
+                "pysmspp_options": {
+                    "k": None,
+                },
+                "stochastic_parameters": {
+                    "stochastic_type": "tssb",
+                    "parameters": ["demand", "renewable_maxpower"],
+                },
+            },
             "smspp-tssb-lds": {
                 "capacity_expansion_ucblock": True,
                 "enable_thermal_units": True,

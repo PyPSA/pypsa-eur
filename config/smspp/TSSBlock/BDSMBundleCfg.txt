@@ -12,7 +12,7 @@ ComputeConfig # exact type of the ComputeConfig object
 1  # f_diff == 0 ==> all non-provided parameters are set to the default value
    # f_diff == 1 ==> all non-provided parameters are not changed
 
-13 # number of integer parameters
+14 # number of integer parameters
 
 # now all the integer parameters
 intMPStbl         0 # stabilization: 0 = proximal, 1 = level,
@@ -36,6 +36,9 @@ inttSPar1        12 # long-term t-strategy (0 = none, 4 = soft, 8 = hard,
                     # of the design Variable, and letting it balance the
                     # stabilization against the model is what finds it
 intMaxNrEvls      2 # maximum number of function evaluations per iteration
+intMaxThread      8 # threads evaluating the components (the subproblems)
+                    # of an iteration in ParallelBundleSolver, as the 8 of
+                    # BDSCfg.txt in the MILP regime
 
 15 # number of double parameters
 

@@ -2,10 +2,10 @@
 # - - - - - - - - - - - - - - - BDSMCfg-CVX.txt - - - - - - - - - - - - - - -
 #
 # The BlockSolverConfig of the master problem of BendersDecompositionSolver
-# in the convex regime (BDSCfg-CVX-LD.txt): a BundleSolver, which drives the
-# stabilized cutting-plane loop, the value functions of the subproblems
-# being components of its Objective; its master problem is solved by the
-# Solver of MPBCfg.txt.
+# in the convex regime (BDSCfg-CVX-LD.txt): a ParallelBundleSolver, which
+# drives the stabilized cutting-plane loop, the value functions of the
+# subproblems being components of its Objective evaluated in intMaxThread
+# threads; its master problem is solved by the Solver of MPBCfg.txt.
 #
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -16,7 +16,7 @@ BlockSolverConfig     # exact type of the Configuration object
 
 1  # number of (the names of) Solver in this BlockSolverConfig
 # now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
-BundleSolver # name of Solver
+ParallelBundleSolver # name of Solver
 
 1  # number of ComputeConfig in this BlockSolverConfig
 
