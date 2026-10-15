@@ -689,9 +689,7 @@ def add_co2_tracking(
         e_nom_max = np.inf
 
     p_nom = (
-        e_nom_max
-        if options["regional_co2_sequestration_potential"]["enable"]
-        else 1e7
+        e_nom_max if options["regional_co2_sequestration_potential"]["enable"] else 1e7
     )
     n.add(
         "Link",
@@ -716,7 +714,7 @@ def add_co2_tracking(
         e_sum_min=-e_nom_max,
         e_sum_max=0,
         marginal_cost=-options["co2_sequestration_cost"],
-        lifetime=np.inf, # Lifetime inf means assets from previous horizons get dropped in add_brownfield
+        lifetime=np.inf,  # Lifetime inf means assets from previous horizons get dropped in add_brownfield
         carrier="co2 sequestered",
     )
 
