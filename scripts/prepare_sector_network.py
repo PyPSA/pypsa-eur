@@ -1372,7 +1372,7 @@ def add_perennials(n, costs):
         snakemake.input.perennials_yields_1G_biofuels
     ).set_index("name")
 
-    # calculate perennials potential based on the conversion on first generation biofuels for equal area
+    # calculate potential of CO2 removed via perennials based on the conversion on first generation biofuels for equal area
     perennials_area = (
         biomass_potentials.filter(regex="biofuels_1G")
         / perennials_yields_1G_biofuels.filter(regex="biofuels_1G")
