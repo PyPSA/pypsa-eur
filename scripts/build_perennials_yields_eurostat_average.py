@@ -10,7 +10,7 @@ NUTS2 and NUTS0 resolution, and compute production-weighted average yields
 "Eurostat average" in the name refers to this production-weighted averaging
 across crop codes and years - not the geometric area-weighted overlay used
 downstream in ``build_perennials_yields.py`` to reproject these NUTS2-level
-yields onto clustered network regions; do not confuse the two.
+yields onto clustered network regions.
 
 Missing NUTS2 coverage is filled via a three-tier fallback (NUTS2 data ->
 NUTS0 country-level data -> spatial neighbor mean or nearest valid NUTS2 for
