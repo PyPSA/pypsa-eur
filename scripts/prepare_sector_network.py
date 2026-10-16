@@ -1432,7 +1432,7 @@ def add_perennials(n, costs):
     n.add(
         "Store",
         nodes,
-        suffix=" CO2s perennials",
+        suffix=" co2 perennials",
         bus=nodes + " co2 perennials",
         e_nom=perennials_potentials.values,
         carrier="co2 perennials",
