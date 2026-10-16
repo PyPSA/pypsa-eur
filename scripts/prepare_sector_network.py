@@ -1416,16 +1416,20 @@ def insert_electricity_distribution_grid(
     loads = n.loads.index[n.loads.carrier.str.contains("electric")]
     n.loads.loc[loads, "bus"] += " low voltage"
 
-    # only connect selected segments to low voltage
-    lv_charging_segments = options["low_voltage_charging"]
-    segment_pattern = "|".join(lv_charging_segments)
+    # segmented mode: only connect selected segments to low voltage
+    if options["transport_segmentation_enable"]:
+        lv_charging_segments = options["transport_segmentation"]["low_voltage_charging"]
+        segment_pattern = "|".join(lv_charging_segments)
 
-    bevs = n.links.index[
-        n.links.carrier.str.contains(f"BEV charger ({segment_pattern})")
-    ]
+        bevs = n.links.index[
+            n.links.carrier.str.contains(f"BEV charger ({segment_pattern})")
+        ]
+        v2gs = n.links.index[n.links.carrier.str.contains(f"V2G ({segment_pattern})")]
+    else:
+        bevs = n.links.index[n.links.carrier == "BEV charger"]
+        v2gs = n.links.index[n.links.carrier == "V2G"]
+
     n.links.loc[bevs, "bus0"] += " low voltage"
-
-    v2gs = n.links.index[n.links.carrier.str.contains(f"V2G ({segment_pattern})")]
     n.links.loc[v2gs, "bus1"] += " low voltage"
 
     hps = n.links.index[n.links.carrier.str.contains("heat pump")]
@@ -2045,7 +2049,7 @@ def get_temp_efficency(
     return car_efficiency * temp_eff
 
 
-def add_EVs(
+def add_EVs_segmentation(
     n: pypsa.Network,
     avail_profile: pd.DataFrame,
     dsm_profile: pd.DataFrame,
@@ -2059,7 +2063,7 @@ def add_EVs(
     options: dict,
 ) -> None:
     """
-    Add electric vehicle (EV) infrastructure to the network.
+    Add electric vehicle (EV) infrastructure for segmented transport types to the network.
 
     Creates EV batteries, chargers, and optional vehicle-to-grid (V2G) components
     with temperature-dependent efficiency and demand-side management capabilities.
@@ -2157,7 +2161,11 @@ def add_EVs(
     )
 
     # Add BEV chargers
-    p_nom = number_cars * options["bev_charge_rate"][transport_type] * electric_share
+    p_nom = (
+        number_cars
+        * options["transport_segmentation"]["bev_charge_rate"][transport_type]
+        * electric_share
+    )
     n.add(
         "Link",
         spatial.nodes,
@@ -2172,11 +2180,11 @@ def add_EVs(
     )
 
     # Add demand-side management components if enabled
-    if options["bev_dsm"][transport_type]:
+    if options["transport_segmentation"]["bev_dsm"][transport_type]:
         e_nom = (
             number_cars
-            * options["bev_energy"][transport_type]
-            * options["bev_dsm_availability"][transport_type]
+            * options["transport_segmentation"]["bev_energy"][transport_type]
+            * options["transport_segmentation"]["bev_dsm_availability"][transport_type]
             * electric_share
         )
 
@@ -2193,15 +2201,183 @@ def add_EVs(
         )
 
         # Add vehicle-to-grid if enabled
-        if options["v2g"][transport_type]:
+        if options["transport_segmentation"]["v2g"][transport_type]:
             n.add(
                 "Link",
                 spatial.nodes,
                 suffix=f" V2G {transport_type}",
                 bus1=spatial.nodes,
                 bus0=spatial.nodes + f" EV battery {transport_type}",
-                p_nom=p_nom * options["bev_dsm_availability"][transport_type],
+                p_nom=p_nom
+                * options["transport_segmentation"]["bev_dsm_availability"][
+                    transport_type
+                ],
                 carrier=f"V2G {transport_type}",
+                p_max_pu=avail_profile.loc[n.snapshots, spatial.nodes],
+                lifetime=1,
+                efficiency=options["bev_charge_efficiency"],
+            )
+
+
+def add_EVs(
+    n: pypsa.Network,
+    avail_profile: pd.DataFrame,
+    dsm_profile: pd.DataFrame,
+    p_set: pd.Series,
+    electric_share: pd.Series,
+    number_cars: pd.Series,
+    temperature: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+) -> None:
+    """
+    Add electric vehicle (EV) infrastructure for segmented transport types to the network.
+
+    Creates EV batteries, chargers, and optional vehicle-to-grid (V2G) components
+    with temperature-dependent efficiency and demand-side management capabilities.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object to be modified
+    avail_profile : pd.DataFrame
+        Availability profile for EV charging with snapshots as index and nodes as columns
+    dsm_profile : pd.DataFrame
+        Demand-side management profile defining minimum state of charge
+        with snapshots as index and nodes as columns
+    p_set : pd.Series
+        Base power demand profile for EVs
+    electric_share : pd.Series
+        Share of electric vehicles per node
+    number_cars : pd.Series
+        Whole-fleet number of cars per node (summed across all vehicle segments)
+    temperature : pd.DataFrame
+        Ambient temperature per node and timestamp
+    spatial : SimpleNamespace
+        Spatial configuration containing at least:
+        - nodes: list or Index of node names
+    options : dict
+        Configuration options containing at least:
+        - transport_electric_efficiency: float
+        - transport_heating_deadband_lower: float
+        - transport_heating_deadband_upper: float
+        - EV_lower_degree_factor: float
+        - EV_upper_degree_factor: float
+        - bev_dem_smoothing: bool
+        - bev_charge_rate: float
+        - bev_charge_efficiency: float
+        - bev_dsm: bool
+        - bev_energy: float
+        - bev_dsm_availability: float
+        - v2g: bool
+
+    Returns
+    -------
+    None
+        Modifies the network object in-place by adding EV components
+
+    Notes
+    -----
+    Components added to the network:
+    - EV battery buses for each node
+    - EV loads with temperature-corrected efficiency
+    - BEV chargers with availability profiles
+    - Optional EV battery storage if DSM is enabled
+    - Optional V2G links if V2G is enabled
+
+    The function accounts for temperature effects on efficiency and, if
+    `bev_dem_smoothing` is enabled, applies a rolling average smoothing for
+    the power profile.
+    """
+    # Add EV battery carrier and buses
+    n.add("Carrier", "EV battery")
+
+    n.add(
+        "Bus",
+        spatial.nodes,
+        suffix=" EV battery",
+        location=spatial.nodes,
+        carrier="EV battery",
+        unit="MWh_el",
+    )
+
+    car_efficiency = options["transport_electric_efficiency"]
+
+    # Calculate temperature-corrected efficiency
+    efficiency = get_temp_efficency(
+        car_efficiency,
+        temperature,
+        options["transport_heating_deadband_lower"],
+        options["transport_heating_deadband_upper"],
+        options["EV_lower_degree_factor"],
+        options["EV_upper_degree_factor"],
+    )
+
+    if options["bev_dem_smoothing"]:
+        # Apply rolling average smoothing to power profile
+        p_shifted = (p_set + cycling_shift(p_set, 1) + cycling_shift(p_set, 2)) / 3
+        cyclic_eff = p_set.div(p_shifted)
+        efficiency *= cyclic_eff
+
+    # Calculate load profile
+    profile = electric_share * p_set.div(efficiency)
+
+    # Add EV load
+    n.add(
+        "Load",
+        spatial.nodes,
+        suffix=" land transport EV",
+        bus=spatial.nodes + " EV battery",
+        carrier="land transport EV",
+        p_set=profile.loc[n.snapshots],
+    )
+
+    # Add BEV chargers
+    p_nom = number_cars * options["bev_charge_rate"] * electric_share
+    n.add(
+        "Link",
+        spatial.nodes,
+        suffix=" BEV charger",
+        bus0=spatial.nodes,
+        bus1=spatial.nodes + " EV battery",
+        p_nom=p_nom,
+        carrier="BEV charger",
+        p_max_pu=avail_profile.loc[n.snapshots, spatial.nodes],
+        lifetime=1,
+        efficiency=options["bev_charge_efficiency"],
+    )
+
+    # Add demand-side management components if enabled
+    if options["bev_dsm"]:
+        e_nom = (
+            number_cars
+            * options["bev_energy"]
+            * options["bev_dsm_availability"]
+            * electric_share
+        )
+
+        n.add(
+            "Store",
+            spatial.nodes,
+            suffix=" EV battery",
+            bus=spatial.nodes + " EV battery",
+            carrier="EV battery",
+            e_cyclic=True,
+            e_nom=e_nom,
+            e_max_pu=1,
+            e_min_pu=dsm_profile.loc[n.snapshots, spatial.nodes],
+        )
+
+        # Add vehicle-to-grid if enabled
+        if options["v2g"]:
+            n.add(
+                "Link",
+                spatial.nodes,
+                suffix=" V2G",
+                bus1=spatial.nodes,
+                bus0=spatial.nodes + " EV battery",
+                p_nom=p_nom * options["bev_dsm_availability"],
+                carrier="V2G",
                 p_max_pu=avail_profile.loc[n.snapshots, spatial.nodes],
                 lifetime=1,
                 efficiency=options["bev_charge_efficiency"],
@@ -2434,20 +2610,20 @@ car_keys = {
 }
 
 
-def get_car_efficiencies():
+def get_car_efficiencies(options, costs):
     car_efficiencies = pd.DataFrame()
     # engine_types = ["fuel_cell", "electric", "ice"]
     engine_types = ["electric"]
     for engine in engine_types:
-        car_efficiencies.loc[engine, "pc"] = options[f"transport_{engine}_efficiency"][
-            "pc"
-        ]
-        car_efficiencies.loc[engine, "ptw"] = options[f"transport_{engine}_efficiency"][
-            "ptw"
-        ]
-        car_efficiencies.loc[engine, "lcv"] = options[f"transport_{engine}_efficiency"][
-            "lcv"
-        ]
+        car_efficiencies.loc[engine, "pc"] = options["transport_segmentation"][
+            f"transport_{engine}_efficiency"
+        ]["pc"]
+        car_efficiencies.loc[engine, "ptw"] = options["transport_segmentation"][
+            f"transport_{engine}_efficiency"
+        ]["ptw"]
+        car_efficiencies.loc[engine, "lcv"] = options["transport_segmentation"][
+            f"transport_{engine}_efficiency"
+        ]["lcv"]
         # from technology data
         bus_efficiency = costs.loc[car_keys[engine]["bus"], "efficiency"].mean()
         hgv_efficiency = costs.loc[car_keys[engine]["hgv"], "efficiency"].mean()
@@ -2541,17 +2717,21 @@ def add_land_transport(
 
     # exogenous share of passenger car type
     engine_types = ["fuel_cell", "electric", "ice"]
-    transport_types = transport.columns.levels[0]
+    transport_types = transport.columns.get_level_values(0).unique()
 
     shares = pd.DataFrame()
-    car_efficiencies = get_car_efficiencies()
+    if options["transport_segmentation_enable"]:
+        car_efficiencies = get_car_efficiencies(options, costs)
     for engine in engine_types:
         for transport_type in transport_types:
-            # introduce transport types to config
-            shares.loc[engine, transport_type] = get(
-                options[f"land_transport_{engine}_share"][transport_type],
-                investment_year,
-            )
+            if options["transport_segmentation_enable"]:
+                # introduce transport types to config
+                share_source = options["transport_segmentation"][
+                    f"land_transport_{engine}_share"
+                ][transport_type]
+            else:
+                share_source = options[f"land_transport_{engine}_share"]
+            shares.loc[engine, transport_type] = get(share_source, investment_year)
             if logger:
                 logger.info(
                     f"{engine} share: {shares.loc[engine, transport_type] * 100}%"
@@ -2559,12 +2739,10 @@ def add_land_transport(
 
     check_land_transport_shares(shares)
 
-    # p_set = transport[nodes]
-
     # temperature for correction factor for heating/cooling
     temperature = xr.open_dataarray(temp_air_total_file).to_pandas()
 
-    # respective columns for transport types
+    # respective columns for transport types (segmented mode only)
     car_cols = {
         "pc": "Number Passenger cars",
         "ptw": "Number Powered two-wheelers",
@@ -2577,44 +2755,57 @@ def add_land_transport(
         p_set = transport[transport_type][nodes]
 
         if shares.loc["electric", transport_type] > 0:
-            add_EVs(
-                n,
-                avail_profile[transport_type][nodes],
-                dsm_profile[transport_type][nodes],
-                p_set,
-                shares.loc["electric", transport_type],
-                number_cars[car_cols[transport_type]],
-                temperature,
-                car_efficiencies.loc["electric", transport_type],
-                transport_type=transport_type,
-                spatial=spatial,
-                options=options,
-            )
+            if options["transport_segmentation_enable"]:
+                add_EVs_segmentation(
+                    n,
+                    avail_profile[transport_type][nodes],
+                    dsm_profile[transport_type][nodes],
+                    p_set,
+                    shares.loc["electric", transport_type],
+                    number_cars[car_cols[transport_type]],
+                    temperature,
+                    car_efficiencies.loc["electric", transport_type],
+                    transport_type=transport_type,
+                    spatial=spatial,
+                    options=options,
+                )
+            else:
+                add_EVs(
+                    n,
+                    avail_profile[transport_type][nodes],
+                    dsm_profile[transport_type][nodes],
+                    p_set,
+                    shares.loc["electric", transport_type],
+                    number_cars.sum(axis=1),
+                    temperature,
+                    spatial=spatial,
+                    options=options,
+                )
 
-        if shares.loc["fuel_cell", "pc"] > 0:  # TEMP: pc
+        # segmented mode: ICE/fuel-cell demand is still only resolved against
+        # the "pc" share - per-segment ICE/FC disaggregation deferred to follow-up.
+        fc_ice_key = "pc" if options["transport_segmentation_enable"] else transport_type
+
+        if shares.loc["fuel_cell", fc_ice_key] > 0:  # TEMP: pc in segmented mode
             add_fuel_cell_cars(
                 n=n,
                 p_set=p_set,
-                fuel_cell_share=shares.loc["fuel_cell", "pc"],  # TEMP: pc
+                fuel_cell_share=shares.loc["fuel_cell", fc_ice_key],
                 temperature=temperature,
-                # car_efficiencies.loc["electric", transport_type], # TEMP: not implemented yet
                 options=options,
                 spatial=spatial,
-                # transport_type=transport_type, # TEMP: not implemented yet
             )
 
-        if shares.loc["ice", "pc"] > 0:  # TEMP: pc
+        if shares.loc["ice", fc_ice_key] > 0:  # TEMP: pc in segmented mode
             add_ice_cars(
                 n,
                 costs,
                 p_set,
-                shares.loc["ice", "pc"],  # TEMP: pc
+                shares.loc["ice", fc_ice_key],
                 temperature,
-                # car_efficiencies.loc["electric", transport_type], # TEMP: not implemented yet
                 cf_industry,
                 spatial,
                 options,
-                # transport_type=transport_type, # TEMP: not implemented yet
             )
 
 

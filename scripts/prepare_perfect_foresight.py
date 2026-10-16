@@ -325,7 +325,6 @@ def adjust_stores_for_perfect_foresight(n: pypsa.Network) -> None:
         "co2 sequestered",
         "solid biomass",
         "biogas",
-        "EV battery",
     ]
 
     for carrier in non_cyclic_carriers:
@@ -334,6 +333,13 @@ def adjust_stores_for_perfect_foresight(n: pypsa.Network) -> None:
             n.stores.loc[store_i, "e_cyclic"] = False
             n.stores.loc[store_i, "e_cyclic_per_period"] = False
             logger.debug(f"Set {len(store_i)} '{carrier}' stores to non-cyclic")
+
+    # EV battery: matched by substring due to per-segment-suffixed ("EV battery pc", "EV battery ptw", ...) in segmented mode
+    ev_battery_i = n.stores.index[n.stores.carrier.str.contains("EV battery")]
+    if not ev_battery_i.empty:
+        n.stores.loc[ev_battery_i, "e_cyclic"] = False
+        n.stores.loc[ev_battery_i, "e_cyclic_per_period"] = False
+        logger.debug(f"Set {len(ev_battery_i)} 'EV battery*' stores to non-cyclic")
 
     # Stores that should reset to initial energy at start of each period
     # Biomass and biogas: annual resource availability is renewed each year

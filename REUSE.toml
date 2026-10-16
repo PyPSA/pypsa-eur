@@ -127,3 +127,15 @@ path = [
 ]
 SPDX-FileCopyrightText = "Wikipedia contributors"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+[[annotations]]
+path = [
+    "data/mobility_profiles_interim/kfz.csv",
+    "data/mobility_profiles_interim/pkw.csv",
+    "data/mobility_profiles_interim/mot.csv",
+    "data/mobility_profiles_interim/bus.csv",
+    "data/mobility_profiles_interim/lfw.csv",
+    "data/mobility_profiles_interim/lkw.csv",
+]
+SPDX-FileCopyrightText = "Federal Highway Research Institute (BASt)"
+SPDX-License-Identifier = "CC-BY-4.0"

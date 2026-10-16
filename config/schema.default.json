@@ -4237,6 +4237,11 @@
           "description": "Add transport sector.",
           "type": "boolean"
         },
+        "transport_segmentation_enable": {
+          "default": false,
+          "description": "Model land transport as five distinct motor-vehicle segments (passenger cars, powered two-wheelers, buses/coaches, light commercial vehicles, heavy goods vehicles) instead of a single lumped fleet. When enabled, the per-segment settings in `transport_segmentation` are used instead of the plain scalar settings below.",
+          "type": "boolean"
+        },
         "heating": {
           "default": true,
           "description": "Add heating sector.",
@@ -4412,33 +4417,15 @@
           "type": "string"
         },
         "bev_dsm_restriction_value": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values.",
-          "markdownDescription": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values."
+          "default": 0.8,
+          "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "markdownDescription": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_dsm_restriction_time": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Time at which SOC of BEV has to be dsm_restriction_value. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 7,
+          "description": "Time at which SOC of BEV has to be dsm_restriction_value. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "transport_heating_deadband_upper": {
           "default": 20.0,
@@ -4475,54 +4462,20 @@
           "description": "Apply a rolling average smoothing to the electric vehicle (EV) power profile to correct for cyclical efficiency effects.",
           "type": "boolean"
         },
-        "low_voltage_charging": {
-          "description": "List of vehicle segments (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) whose BEV chargers and V2G links connect to the low voltage side of the electricity distribution grid rather than the transmission grid. Only used if `electricity_distribution_grid` is enabled.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "bev_dsm": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "additionalProperties": {
-                "type": "boolean"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM). Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values."
+          "default": true,
+          "description": "Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM). Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "boolean"
         },
         "bev_dsm_availability": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The share for battery electric vehicles (BEV) that are able to do demand side management (DSM). Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.5,
+          "description": "The share for battery electric vehicles (BEV) that are able to do demand side management (DSM). Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_energy": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.05,
+          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_charge_efficiency": {
           "default": 0.9,
@@ -4530,134 +4483,50 @@
           "type": "number"
         },
         "bev_charge_rate": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.011,
+          "description": "The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_avail_max": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The maximum share plugged-in availability for passenger electric vehicles. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.95,
+          "description": "The maximum share plugged-in availability for passenger electric vehicles. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_avail_mean": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The average share plugged-in availability for passenger electric vehicles. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.8,
+          "description": "The average share plugged-in availability for passenger electric vehicles. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "v2g": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "additionalProperties": {
-                "type": "boolean"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Allows feed-in to grid from EV battery. This is only enabled if BEV demand-side management is enabled, and the share of vehicles participating is V2G is given by `bev_dsm_availability`. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values."
+          "default": true,
+          "description": "Allows feed-in to grid from EV battery. This is only enabled if BEV demand-side management is enabled, and the share of vehicles participating is V2G is given by `bev_dsm_availability`. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "boolean"
         },
         "land_transport_fuel_cell_share": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            },
-            {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The share of vehicles that uses fuel cells in a given year. Can be given as a single year-indexed dictionary applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`), each holding its own year-indexed share."
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The share of vehicles that uses fuel cells in a given year. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "object"
         },
         "land_transport_electric_share": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            },
-            {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The share of vehicles that uses electric vehicles (EV) in a given year. Can be given as a single year-indexed dictionary applied to all vehicle segments, or as a dictionary keyed by vehicle segment, each holding its own year-indexed share."
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The share of vehicles that uses electric vehicles (EV) in a given year. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "object"
         },
         "land_transport_ice_share": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            },
-            {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Can be given as a single year-indexed dictionary applied to all vehicle segments, or as a dictionary keyed by vehicle segment, each holding its own year-indexed share."
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "object"
         },
         "transport_electric_efficiency": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The conversion efficiencies of electric vehicles in transport. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values."
+          "default": 53.19,
+          "description": "The conversion efficiencies of electric vehicles in transport. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "transport_fuel_cell_efficiency": {
           "default": 30.003,
@@ -4668,6 +4537,118 @@
           "default": 16.0712,
           "description": "The oil conversion efficiencies of internal combustion engine (ICE) in transport.",
           "type": "number"
+        },
+        "transport_segmentation": {
+          "description": "Configuration for `sector.transport_segmentation` settings.\n\nOnly used when `sector.transport_segmentation_enable` is enabled. Holds the\nper-vehicle-segment variants of the options that are plain scalars at the\ntop level of `sector` (used when `transport_segmentation_enable` is\ndisabled). Every dictionary-valued field below must specify exactly the\nfive vehicle segments: `pc` (passenger cars), `ptw` (powered\ntwo-wheelers), `bus` (buses/coaches), `lcv` (light commercial vehicles),\n`hgv` (heavy goods vehicles).",
+          "properties": {
+            "bev_dsm_restriction_value": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM), keyed by vehicle segment. Set to 0 for no restriction on BEV DSM.",
+              "type": "object"
+            },
+            "bev_dsm_restriction_time": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Time at which SOC of BEV has to be `bev_dsm_restriction_value`, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_dsm": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "description": "Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM), keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_dsm_availability": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The share of battery electric vehicles (BEV) that are able to do demand side management (DSM), keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_energy": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_charge_rate": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_avail_max": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The maximum share plugged-in availability for electric vehicles, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_avail_mean": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The average share plugged-in availability for electric vehicles, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "v2g": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "description": "Allows feed-in to grid from EV battery, keyed by vehicle segment. Only enabled if BEV demand-side management is enabled for that segment, with the participating share given by `bev_dsm_availability`.",
+              "type": "object"
+            },
+            "land_transport_fuel_cell_share": {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              "description": "The share of vehicles that uses fuel cells in a given year, keyed by vehicle segment, each holding its own year-indexed share.",
+              "type": "object"
+            },
+            "land_transport_electric_share": {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              "description": "The share of vehicles that uses electric vehicles (EV) in a given year, keyed by vehicle segment, each holding its own year-indexed share.",
+              "type": "object"
+            },
+            "land_transport_ice_share": {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              "description": "The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Keyed by vehicle segment, each holding its own year-indexed share.",
+              "type": "object"
+            },
+            "transport_electric_efficiency": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The conversion efficiencies of electric vehicles in transport, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "low_voltage_charging": {
+              "description": "List of vehicle segments (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) whose BEV chargers and V2G links connect to the low voltage side of the electricity distribution grid rather than the transmission grid. Only used if `electricity_distribution_grid` is enabled.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
         },
         "agriculture_machinery_electric_share": {
           "default": 0.5,
@@ -8512,6 +8493,118 @@
         }
       }
     },
+    "_TransportSegmentationConfig": {
+      "description": "Configuration for `sector.transport_segmentation` settings.\n\nOnly used when `sector.transport_segmentation_enable` is enabled. Holds the\nper-vehicle-segment variants of the options that are plain scalars at the\ntop level of `sector` (used when `transport_segmentation_enable` is\ndisabled). Every dictionary-valued field below must specify exactly the\nfive vehicle segments: `pc` (passenger cars), `ptw` (powered\ntwo-wheelers), `bus` (buses/coaches), `lcv` (light commercial vehicles),\n`hgv` (heavy goods vehicles).",
+      "properties": {
+        "bev_dsm_restriction_value": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM), keyed by vehicle segment. Set to 0 for no restriction on BEV DSM.",
+          "type": "object"
+        },
+        "bev_dsm_restriction_time": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Time at which SOC of BEV has to be `bev_dsm_restriction_value`, keyed by vehicle segment.",
+          "type": "object"
+        },
+        "bev_dsm": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "description": "Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM), keyed by vehicle segment.",
+          "type": "object"
+        },
+        "bev_dsm_availability": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The share of battery electric vehicles (BEV) that are able to do demand side management (DSM), keyed by vehicle segment.",
+          "type": "object"
+        },
+        "bev_energy": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh, keyed by vehicle segment.",
+          "type": "object"
+        },
+        "bev_charge_rate": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Keyed by vehicle segment.",
+          "type": "object"
+        },
+        "bev_avail_max": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The maximum share plugged-in availability for electric vehicles, keyed by vehicle segment.",
+          "type": "object"
+        },
+        "bev_avail_mean": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The average share plugged-in availability for electric vehicles, keyed by vehicle segment.",
+          "type": "object"
+        },
+        "v2g": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "description": "Allows feed-in to grid from EV battery, keyed by vehicle segment. Only enabled if BEV demand-side management is enabled for that segment, with the participating share given by `bev_dsm_availability`.",
+          "type": "object"
+        },
+        "land_transport_fuel_cell_share": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "description": "The share of vehicles that uses fuel cells in a given year, keyed by vehicle segment, each holding its own year-indexed share.",
+          "type": "object"
+        },
+        "land_transport_electric_share": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "description": "The share of vehicles that uses electric vehicles (EV) in a given year, keyed by vehicle segment, each holding its own year-indexed share.",
+          "type": "object"
+        },
+        "land_transport_ice_share": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "description": "The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Keyed by vehicle segment, each holding its own year-indexed share.",
+          "type": "object"
+        },
+        "transport_electric_efficiency": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The conversion efficiencies of electric vehicles in transport, keyed by vehicle segment.",
+          "type": "object"
+        },
+        "low_voltage_charging": {
+          "description": "List of vehicle segments (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) whose BEV chargers and V2G links connect to the low voltage side of the electricity distribution grid rather than the transmission grid. Only used if `electricity_distribution_grid` is enabled.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
     "_UserAgentConfig": {
       "description": "Configuration for `overpass_api.user_agent` settings.",
       "properties": {
@@ -11021,6 +11114,11 @@
           "description": "Add transport sector.",
           "type": "boolean"
         },
+        "transport_segmentation_enable": {
+          "default": false,
+          "description": "Model land transport as five distinct motor-vehicle segments (passenger cars, powered two-wheelers, buses/coaches, light commercial vehicles, heavy goods vehicles) instead of a single lumped fleet. When enabled, the per-segment settings in `transport_segmentation` are used instead of the plain scalar settings below.",
+          "type": "boolean"
+        },
         "heating": {
           "default": true,
           "description": "Add heating sector.",
@@ -11196,33 +11294,15 @@
           "type": "string"
         },
         "bev_dsm_restriction_value": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values.",
-          "markdownDescription": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values."
+          "default": 0.8,
+          "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "markdownDescription": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in [build_transport_demand.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py). Set to 0 for no restriction on BEV DSM. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_dsm_restriction_time": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Time at which SOC of BEV has to be dsm_restriction_value. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 7,
+          "description": "Time at which SOC of BEV has to be dsm_restriction_value. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "transport_heating_deadband_upper": {
           "default": 20.0,
@@ -11259,54 +11339,20 @@
           "description": "Apply a rolling average smoothing to the electric vehicle (EV) power profile to correct for cyclical efficiency effects.",
           "type": "boolean"
         },
-        "low_voltage_charging": {
-          "description": "List of vehicle segments (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) whose BEV chargers and V2G links connect to the low voltage side of the electricity distribution grid rather than the transmission grid. Only used if `electricity_distribution_grid` is enabled.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "bev_dsm": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "additionalProperties": {
-                "type": "boolean"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM). Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values."
+          "default": true,
+          "description": "Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM). Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "boolean"
         },
         "bev_dsm_availability": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The share for battery electric vehicles (BEV) that are able to do demand side management (DSM). Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.5,
+          "description": "The share for battery electric vehicles (BEV) that are able to do demand side management (DSM). Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_energy": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.05,
+          "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_charge_efficiency": {
           "default": 0.9,
@@ -11314,134 +11360,50 @@
           "type": "number"
         },
         "bev_charge_rate": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.011,
+          "description": "The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_avail_max": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The maximum share plugged-in availability for passenger electric vehicles. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.95,
+          "description": "The maximum share plugged-in availability for passenger electric vehicles. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "bev_avail_mean": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The average share plugged-in availability for passenger electric vehicles. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values."
+          "default": 0.8,
+          "description": "The average share plugged-in availability for passenger electric vehicles. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "v2g": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "additionalProperties": {
-                "type": "boolean"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Allows feed-in to grid from EV battery. This is only enabled if BEV demand-side management is enabled, and the share of vehicles participating is V2G is given by `bev_dsm_availability`. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values."
+          "default": true,
+          "description": "Allows feed-in to grid from EV battery. This is only enabled if BEV demand-side management is enabled, and the share of vehicles participating is V2G is given by `bev_dsm_availability`. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "boolean"
         },
         "land_transport_fuel_cell_share": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            },
-            {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The share of vehicles that uses fuel cells in a given year. Can be given as a single year-indexed dictionary applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`), each holding its own year-indexed share."
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The share of vehicles that uses fuel cells in a given year. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "object"
         },
         "land_transport_electric_share": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            },
-            {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The share of vehicles that uses electric vehicles (EV) in a given year. Can be given as a single year-indexed dictionary applied to all vehicle segments, or as a dictionary keyed by vehicle segment, each holding its own year-indexed share."
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The share of vehicles that uses electric vehicles (EV) in a given year. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "object"
         },
         "land_transport_ice_share": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            },
-            {
-              "additionalProperties": {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Can be given as a single year-indexed dictionary applied to all vehicle segments, or as a dictionary keyed by vehicle segment, each holding its own year-indexed share."
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "object"
         },
         "transport_electric_efficiency": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "additionalProperties": {
-                "type": "number"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "The conversion efficiencies of electric vehicles in transport. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values."
+          "default": 53.19,
+          "description": "The conversion efficiencies of electric vehicles in transport. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
+          "type": "number"
         },
         "transport_fuel_cell_efficiency": {
           "default": 30.003,
@@ -11452,6 +11414,118 @@
           "default": 16.0712,
           "description": "The oil conversion efficiencies of internal combustion engine (ICE) in transport.",
           "type": "number"
+        },
+        "transport_segmentation": {
+          "description": "Configuration for `sector.transport_segmentation` settings.\n\nOnly used when `sector.transport_segmentation_enable` is enabled. Holds the\nper-vehicle-segment variants of the options that are plain scalars at the\ntop level of `sector` (used when `transport_segmentation_enable` is\ndisabled). Every dictionary-valued field below must specify exactly the\nfive vehicle segments: `pc` (passenger cars), `ptw` (powered\ntwo-wheelers), `bus` (buses/coaches), `lcv` (light commercial vehicles),\n`hgv` (heavy goods vehicles).",
+          "properties": {
+            "bev_dsm_restriction_value": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM), keyed by vehicle segment. Set to 0 for no restriction on BEV DSM.",
+              "type": "object"
+            },
+            "bev_dsm_restriction_time": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Time at which SOC of BEV has to be `bev_dsm_restriction_value`, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_dsm": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "description": "Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM), keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_dsm_availability": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The share of battery electric vehicles (BEV) that are able to do demand side management (DSM), keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_energy": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The average available net battery capacity of battery electric vehicles (BEV) in MWh, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_charge_rate": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_avail_max": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The maximum share plugged-in availability for electric vehicles, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "bev_avail_mean": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The average share plugged-in availability for electric vehicles, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "v2g": {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "description": "Allows feed-in to grid from EV battery, keyed by vehicle segment. Only enabled if BEV demand-side management is enabled for that segment, with the participating share given by `bev_dsm_availability`.",
+              "type": "object"
+            },
+            "land_transport_fuel_cell_share": {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              "description": "The share of vehicles that uses fuel cells in a given year, keyed by vehicle segment, each holding its own year-indexed share.",
+              "type": "object"
+            },
+            "land_transport_electric_share": {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              "description": "The share of vehicles that uses electric vehicles (EV) in a given year, keyed by vehicle segment, each holding its own year-indexed share.",
+              "type": "object"
+            },
+            "land_transport_ice_share": {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              "description": "The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Keyed by vehicle segment, each holding its own year-indexed share.",
+              "type": "object"
+            },
+            "transport_electric_efficiency": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "The conversion efficiencies of electric vehicles in transport, keyed by vehicle segment.",
+              "type": "object"
+            },
+            "low_voltage_charging": {
+              "description": "List of vehicle segments (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) whose BEV chargers and V2G links connect to the low voltage side of the electricity distribution grid rather than the transmission grid. Only used if `electricity_distribution_grid` is enabled.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
         },
         "agriculture_machinery_electric_share": {
           "default": 0.5,

@@ -1369,18 +1369,41 @@ if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
             scripts("build_mobility_profiles.py")
 
 
+def input_transport_traffic_data(w) -> dict[str, str]:
+    """
+    Interim input file path generation for BASt traffic-count profiles used by `build_transport_demand`.
+    TODO: Delete once the archive is extended to publish all five per-segment profiles (pkw, mot, bus, lfw, lkw) in addition to the combined ("kfz") profile (Check: data/mobility_profiles_interim/README.md)
+
+    Parameters
+    ----------
+    w : snakemake.io.Wildcards
+        Snakemake wildcards object.
+
+    Returns
+    -------
+    dict[str, str]
+        Dictionary mapping traffic_data_* keys to BASt traffic-count CSV paths.
+    """
+    folder = MOBILITY_PROFILES_DATASET["folder"]
+    folder_interim = "data/mobility_profiles_interim"
+    if config_provider("sector", "transport_segmentation_enable")(w):
+        return {
+            "traffic_data_Pkw": f"{folder_interim}/pkw.csv",
+            "traffic_data_Mot": f"{folder_interim}/mot.csv",
+            "traffic_data_Bus": f"{folder_interim}/bus.csv",
+            "traffic_data_Lfw": f"{folder_interim}/lfw.csv",
+            "traffic_data_Lkw": f"{folder_interim}/lkw.csv",
+        }
+    return {"traffic_data_KFZ": f"{folder}/kfz.csv"}
+
+
 rule build_transport_demand:
     input:
         network=resources("networks/clustered.nc"),
         clustered_pop_layout=resources("pop_layout.csv"),
         pop_weighted_energy_totals=resources("pop_weighted_energy_totals.csv"),
         transport_data_raw=resources("transport_data_raw.csv"),
-        traffic_data_KFZ=f"{MOBILITY_PROFILES_DATASET['folder']}/kfz.csv",
-        traffic_data_Pkw=f"{MOBILITY_PROFILES_DATASET['folder']}/pkw.csv",
-        traffic_data_Mot=f"{MOBILITY_PROFILES_DATASET['folder']}/mot.csv",
-        traffic_data_Bus=f"{MOBILITY_PROFILES_DATASET['folder']}/bus.csv",
-        traffic_data_Lfw=f"{MOBILITY_PROFILES_DATASET['folder']}/lfw.csv",
-        traffic_data_Lkw=f"{MOBILITY_PROFILES_DATASET['folder']}/lkw.csv",
+        unpack(input_transport_traffic_data),
         temp_air_total=resources("temp_air_total.nc"),
     output:
         transport_demand=resources("transport_demand.csv"),

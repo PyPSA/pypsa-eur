@@ -10,7 +10,7 @@ See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#sector_cf
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -383,11 +383,203 @@ class _ImportsConfig(BaseModel):
     )
 
 
+class _TransportSegmentationConfig(BaseModel):
+    """
+    Configuration for `sector.transport_segmentation` settings.
+
+    Only used when `sector.transport_segmentation_enable` is enabled. Holds the
+    per-vehicle-segment variants of the options that are plain scalars at the
+    top level of `sector` (used when `transport_segmentation_enable` is
+    disabled). Every dictionary-valued field below must specify exactly the
+    five vehicle segments: `pc` (passenger cars), `ptw` (powered
+    two-wheelers), `bus` (buses/coaches), `lcv` (light commercial vehicles),
+    `hgv` (heavy goods vehicles).
+    """
+
+    bev_dsm_restriction_value: dict[str, float] = Field(
+        default_factory=lambda: {
+            "pc": 0.7,
+            "ptw": 0.7,
+            "bus": 0.9,
+            "lcv": 0.7,
+            "hgv": 0.7,
+        },
+        description="Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM), keyed by vehicle segment. Set to 0 for no restriction on BEV DSM.",
+    )
+    bev_dsm_restriction_time: dict[str, float] = Field(
+        default_factory=lambda: {"pc": 7, "ptw": 7, "bus": 5, "lcv": 6, "hgv": 4},
+        description="Time at which SOC of BEV has to be `bev_dsm_restriction_value`, keyed by vehicle segment.",
+    )
+    bev_dsm: dict[str, bool] = Field(
+        default_factory=lambda: {
+            "pc": True,
+            "ptw": False,
+            "bus": True,
+            "lcv": True,
+            "hgv": True,
+        },
+        description="Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM), keyed by vehicle segment.",
+    )
+    bev_dsm_availability: dict[str, float] = Field(
+        default_factory=lambda: {
+            "pc": 0.45,
+            "ptw": 0.45,
+            "bus": 0.42,
+            "lcv": 0.33,
+            "hgv": 0.38,
+        },
+        description="The share of battery electric vehicles (BEV) that are able to do demand side management (DSM), keyed by vehicle segment.",
+    )
+    bev_energy: dict[str, float] = Field(
+        default_factory=lambda: {
+            "pc": 0.078,
+            "ptw": 0.0133,
+            "bus": 0.9,
+            "lcv": 0.078,
+            "hgv": 0.817,
+        },
+        description="The average available net battery capacity of battery electric vehicles (BEV) in MWh, keyed by vehicle segment.",
+    )
+    bev_charge_rate: dict[str, float] = Field(
+        default_factory=lambda: {
+            "pc": 0.0266,
+            "ptw": 0.0109,
+            "bus": 0.2554,
+            "lcv": 0.0793,
+            "hgv": 0.3527,
+        },
+        description="The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Keyed by vehicle segment.",
+    )
+    bev_avail_max: dict[str, float] = Field(
+        default_factory=lambda: {
+            "pc": 0.9,
+            "ptw": 0.9,
+            "bus": 0.51,
+            "lcv": 0.9,
+            "hgv": 0.94,
+        },
+        description="The maximum share plugged-in availability for electric vehicles, keyed by vehicle segment.",
+    )
+    bev_avail_mean: dict[str, float] = Field(
+        default_factory=lambda: {
+            "pc": 0.8,
+            "ptw": 0.8,
+            "bus": 0.37,
+            "lcv": 0.7,
+            "hgv": 0.61,
+        },
+        description="The average share plugged-in availability for electric vehicles, keyed by vehicle segment.",
+    )
+    v2g: dict[str, bool] = Field(
+        default_factory=lambda: {
+            "pc": True,
+            "ptw": False,
+            "bus": True,
+            "lcv": True,
+            "hgv": True,
+        },
+        description="Allows feed-in to grid from EV battery, keyed by vehicle segment. Only enabled if BEV demand-side management is enabled for that segment, with the participating share given by `bev_dsm_availability`.",
+    )
+    land_transport_fuel_cell_share: dict[str, dict[int, float]] = Field(
+        default_factory=lambda: _segment_share_default(
+            {
+                2020: 0,
+                2025: 0,
+                2030: 0,
+                2035: 0,
+                2040: 0,
+                2045: 0,
+                2050: 0,
+            }
+        ),
+        description="The share of vehicles that uses fuel cells in a given year, keyed by vehicle segment, each holding its own year-indexed share.",
+    )
+    land_transport_electric_share: dict[str, dict[int, float]] = Field(
+        default_factory=lambda: _segment_share_default(
+            {
+                2020: 0,
+                2025: 0.05,
+                2030: 0.2,
+                2035: 0.45,
+                2040: 0.7,
+                2045: 0.85,
+                2050: 1,
+            }
+        ),
+        description="The share of vehicles that uses electric vehicles (EV) in a given year, keyed by vehicle segment, each holding its own year-indexed share.",
+    )
+    land_transport_ice_share: dict[str, dict[int, float]] = Field(
+        default_factory=lambda: _segment_share_default(
+            {
+                2020: 1,
+                2025: 0.95,
+                2030: 0.8,
+                2035: 0.55,
+                2040: 0.3,
+                2045: 0.15,
+                2050: 0,
+            }
+        ),
+        description="The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Keyed by vehicle segment, each holding its own year-indexed share.",
+    )
+    transport_electric_efficiency: dict[str, float] = Field(
+        default_factory=lambda: {
+            "pc": 80.0,  # (100km/MWh) = (1/12.5 (kWh/100km)) * 1000
+            "ptw": 172.41,  # (100km/MWh) = (1/5.8 (kWh/100km)) * 1000
+            "bus": 17.09,  # (100km/MWh) = (1/58.8 (kWh/100km)) * 1000 - overwritten by DTC efficiency
+            "lcv": 54.35,  # (100km/MWh) = (1/18.4 (kWh/100km)) * 1000
+            "hgv": 10.11,  # (100km/MWh) = (1/98.9 (kWh/100km)) * 1000 - overwritten by DTC efficiency
+        },
+        description="The conversion efficiencies of electric vehicles in transport, keyed by vehicle segment.",
+    )
+    low_voltage_charging: list[str] = Field(
+        default_factory=lambda: list(_TRANSPORT_SEGMENTS),
+        description="List of vehicle segments (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) whose BEV chargers and V2G links connect to the low voltage side of the electricity distribution grid rather than the transmission grid. Only used if `electricity_distribution_grid` is enabled.",
+    )
+
+    @model_validator(mode="after")
+    def check_segment_keys(self) -> "_TransportSegmentationConfig":
+        """Require every per-segment dict/list to use exactly the five known vehicle segments."""
+        expected = set(_TRANSPORT_SEGMENTS)
+        per_segment_fields = (
+            "bev_dsm_restriction_value",
+            "bev_dsm_restriction_time",
+            "bev_dsm",
+            "bev_dsm_availability",
+            "bev_energy",
+            "bev_charge_rate",
+            "bev_avail_max",
+            "bev_avail_mean",
+            "v2g",
+            "land_transport_fuel_cell_share",
+            "land_transport_electric_share",
+            "land_transport_ice_share",
+            "transport_electric_efficiency",
+        )
+        for name in per_segment_fields:
+            keys = set(getattr(self, name).keys())
+            if keys != expected:
+                raise ValueError(
+                    f"sector.transport_segmentation.{name} must have exactly "
+                    f"the keys {sorted(expected)}, got {sorted(keys)}."
+                )
+        if not set(self.low_voltage_charging) <= expected:
+            raise ValueError(
+                "sector.transport_segmentation.low_voltage_charging may only "
+                f"contain {sorted(expected)}, got {sorted(self.low_voltage_charging)}."
+            )
+        return self
+
+
 class SectorConfig(BaseModel):
     """Configuration for `sector` settings."""
 
     enabled: bool = Field(True, description="Master flag to enable sector coupling.")
     transport: bool = Field(True, description="Add transport sector.")
+    transport_segmentation_enable: bool = Field(
+        False,
+        description="Model land transport as five distinct motor-vehicle segments (passenger cars, powered two-wheelers, buses/coaches, light commercial vehicles, heavy goods vehicles) instead of a single lumped fleet. When enabled, the per-segment settings in `transport_segmentation` are used instead of the plain scalar settings below.",
+    )
     heating: bool = Field(True, description="Add heating sector.")
     biomass: bool = Field(True, description="Add biomass sector.")
     industry: bool = Field(True, description="Add industry sector.")
@@ -422,19 +614,13 @@ class SectorConfig(BaseModel):
     heat_demand_cutout: str = Field("default", description="Heat demand cutout.")
 
     # Transport settings
-    bev_dsm_restriction_value: float | dict[str, float] = Field(
-        default_factory=lambda: {
-            "pc": 0.7,
-            "ptw": 0.7,
-            "bus": 0.9,
-            "lcv": 0.7,
-            "hgv": 0.7,
-        },
-        description="Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values.",
+    bev_dsm_restriction_value: float = Field(
+        0.8,
+        description="Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
-    bev_dsm_restriction_time: float | dict[str, float] = Field(
-        default_factory=lambda: {"pc": 7, "ptw": 7, "bus": 5, "lcv": 6, "hgv": 4},
-        description="Time at which SOC of BEV has to be dsm_restriction_value. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values.",
+    bev_dsm_restriction_time: float = Field(
+        7,
+        description="Time at which SOC of BEV has to be dsm_restriction_value. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
     transport_heating_deadband_upper: float = Field(
         20.0,
@@ -464,141 +650,79 @@ class SectorConfig(BaseModel):
         True,
         description="Apply a rolling average smoothing to the electric vehicle (EV) power profile to correct for cyclical efficiency effects.",
     )
-    low_voltage_charging: list[str] = Field(
-        default_factory=lambda: list(_TRANSPORT_SEGMENTS),
-        description="List of vehicle segments (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) whose BEV chargers and V2G links connect to the low voltage side of the electricity distribution grid rather than the transmission grid. Only used if `electricity_distribution_grid` is enabled.",
+    bev_dsm: bool = Field(
+        True,
+        description="Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM). Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
-    bev_dsm: bool | dict[str, bool] = Field(
-        default_factory=lambda: {
-            "pc": True,
-            "ptw": False,
-            "bus": True,
-            "lcv": True,
-            "hgv": True,
-        },
-        description="Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM). Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values.",
+    bev_dsm_availability: float = Field(
+        0.5,
+        description="The share for battery electric vehicles (BEV) that are able to do demand side management (DSM). Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
-    bev_dsm_availability: float | dict[str, float] = Field(
-        default_factory=lambda: {
-            "pc": 0.45,
-            "ptw": 0.45,
-            "bus": 0.42,
-            "lcv": 0.33,
-            "hgv": 0.38,
-        },
-        description="The share for battery electric vehicles (BEV) that are able to do demand side management (DSM). Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values.",
-    )
-    bev_energy: float | dict[str, float] = Field(
-        default_factory=lambda: {
-            "pc": 0.078,
-            "ptw": 0.0133,
-            "bus": 0.9,
-            "lcv": 0.078,
-            "hgv": 0.817,
-        },
-        description="The average available net battery capacity of battery electric vehicles (BEV) in MWh. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values.",
+    bev_energy: float = Field(
+        0.05,
+        description="The average available net battery capacity of battery electric vehicles (BEV) in MWh. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
     bev_charge_efficiency: float = Field(
         0.9,
         description="Battery electric vehicles (BEV) charge and discharge efficiency.",
     )
-    bev_charge_rate: float | dict[str, float] = Field(
-        default_factory=lambda: {
-            "pc": 0.0266,
-            "ptw": 0.0109,
-            "bus": 0.2554,
-            "lcv": 0.0793,
-            "hgv": 0.3527,
-        },
-        description="The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values.",
+    bev_charge_rate: float = Field(
+        0.011,
+        description="The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
-    bev_avail_max: float | dict[str, float] = Field(
-        default_factory=lambda: {
-            "pc": 0.9,
-            "ptw": 0.9,
-            "bus": 0.51,
-            "lcv": 0.9,
-            "hgv": 0.94,
-        },
-        description="The maximum share plugged-in availability for passenger electric vehicles. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values.",
+    bev_avail_max: float = Field(
+        0.95,
+        description="The maximum share plugged-in availability for passenger electric vehicles. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
-    bev_avail_mean: float | dict[str, float] = Field(
-        default_factory=lambda: {
-            "pc": 0.8,
-            "ptw": 0.8,
-            "bus": 0.37,
-            "lcv": 0.7,
-            "hgv": 0.61,
-        },
-        description="The average share plugged-in availability for passenger electric vehicles. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment for segment-specific values.",
+    bev_avail_mean: float = Field(
+        0.8,
+        description="The average share plugged-in availability for passenger electric vehicles. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
-    v2g: bool | dict[str, bool] = Field(
-        default_factory=lambda: {
-            "pc": True,
-            "ptw": False,
-            "bus": True,
-            "lcv": True,
-            "hgv": True,
-        },
-        description="Allows feed-in to grid from EV battery. This is only enabled if BEV demand-side management is enabled, and the share of vehicles participating is V2G is given by `bev_dsm_availability`. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values.",
+    v2g: bool = Field(
+        True,
+        description="Allows feed-in to grid from EV battery. This is only enabled if BEV demand-side management is enabled, and the share of vehicles participating is V2G is given by `bev_dsm_availability`. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
 
-    land_transport_fuel_cell_share: dict[int, float] | dict[str, dict[int, float]] = (
-        Field(
-            default_factory=lambda: _segment_share_default(
-                {
-                    2020: 0,
-                    2025: 0,
-                    2030: 0,
-                    2035: 0,
-                    2040: 0,
-                    2045: 0,
-                    2050: 0,
-                }
-            ),
-            description="The share of vehicles that uses fuel cells in a given year. Can be given as a single year-indexed dictionary applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`), each holding its own year-indexed share.",
-        )
+    land_transport_fuel_cell_share: dict[int, float] = Field(
+        default_factory=lambda: {
+            2020: 0,
+            2025: 0,
+            2030: 0,
+            2035: 0,
+            2040: 0,
+            2045: 0,
+            2050: 0,
+        },
+        description="The share of vehicles that uses fuel cells in a given year. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
-    land_transport_electric_share: dict[int, float] | dict[str, dict[int, float]] = (
-        Field(
-            default_factory=lambda: _segment_share_default(
-                {
-                    2020: 0,
-                    2025: 0.05,
-                    2030: 0.2,
-                    2035: 0.45,
-                    2040: 0.7,
-                    2045: 0.85,
-                    2050: 1,
-                }
-            ),
-            description="The share of vehicles that uses electric vehicles (EV) in a given year. Can be given as a single year-indexed dictionary applied to all vehicle segments, or as a dictionary keyed by vehicle segment, each holding its own year-indexed share.",
-        )
+    land_transport_electric_share: dict[int, float] = Field(
+        default_factory=lambda: {
+            2020: 0,
+            2025: 0.05,
+            2030: 0.2,
+            2035: 0.45,
+            2040: 0.7,
+            2045: 0.85,
+            2050: 1,
+        },
+        description="The share of vehicles that uses electric vehicles (EV) in a given year. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
-    land_transport_ice_share: dict[int, float] | dict[str, dict[int, float]] = Field(
-        default_factory=lambda: _segment_share_default(
-            {
-                2020: 1,
-                2025: 0.95,
-                2030: 0.8,
-                2035: 0.55,
-                2040: 0.3,
-                2045: 0.15,
-                2050: 0,
-            }
-        ),
-        description="The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Can be given as a single year-indexed dictionary applied to all vehicle segments, or as a dictionary keyed by vehicle segment, each holding its own year-indexed share.",
+    land_transport_ice_share: dict[int, float] = Field(
+        default_factory=lambda: {
+            2020: 1,
+            2025: 0.95,
+            2030: 0.8,
+            2035: 0.55,
+            2040: 0.3,
+            2045: 0.15,
+            2050: 0,
+        },
+        description="The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
 
-    transport_electric_efficiency: float | dict[str, float] = Field(
-        default_factory=lambda: {
-            "pc": 80.0,  # (100km/MWh) = (1/12.5 (kWh/100km)) * 1000
-            "ptw": 172.41,  # (100km/MWh) = (1/5.8 (kWh/100km)) * 1000
-            "bus": 17.09,  # (100km/MWh) = (1/58.8 (kWh/100km)) * 1000 - overwritten by DTC efficiency
-            "lcv": 54.35,  # (100km/MWh) = (1/18.4 (kWh/100km)) * 1000
-            "hgv": 10.11,  # (100km/MWh) = (1/98.9 (kWh/100km)) * 1000 - overwritten by DTC efficiency
-        },
-        description="The conversion efficiencies of electric vehicles in transport. Can be given as a single value applied to all vehicle segments, or as a dictionary keyed by vehicle segment (e.g. `pc`, `ptw`, `bus`, `lcv`, `hgv`) for segment-specific values.",
+    transport_electric_efficiency: float = Field(
+        53.19,
+        description="The conversion efficiencies of electric vehicles in transport. Only used when `transport_segmentation_enable` is disabled; see `transport_segmentation` for the per-segment equivalent.",
     )
     transport_fuel_cell_efficiency: float = Field(
         30.003, description="The H2 conversion efficiencies of fuel cells in transport."
@@ -606,6 +730,10 @@ class SectorConfig(BaseModel):
     transport_ice_efficiency: float = Field(
         16.0712,
         description="The oil conversion efficiencies of internal combustion engine (ICE) in transport.",
+    )
+    transport_segmentation: _TransportSegmentationConfig = Field(
+        default_factory=_TransportSegmentationConfig,
+        description="Per-vehicle-segment transport configuration, used only when `transport_segmentation_enable` is enabled.",
     )
 
     agriculture_machinery_electric_share: float = Field(

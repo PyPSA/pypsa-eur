@@ -71,7 +71,43 @@ def get_shape(traffic_fn):
     return transport_shape
 
 
-def build_transport_demand(
+def build_transport_demand(traffic_fn_kfz, nodes, nodal_transport_data):
+    """
+    Returns transport demand per bus in unit km driven [100 km] for the
+    lumped mode: all motor-vehicle segments summed into one total, shaped with the combined BASt traffic profile.
+    """
+    transport_shape = get_shape(traffic_fn_kfz)
+
+    # non-electrified rail share
+    non_elec_rail = 1 - (
+        pop_weighted_energy_totals["electricity rail"]
+        / pop_weighted_energy_totals["total rail"]
+    )
+
+    # total demand of driven vehicle-km [mio km]
+    pc = nodal_transport_data["mio km-driven Passenger cars"]
+    ptw = nodal_transport_data["mio km-driven Powered two-wheelers"]
+    lcv = nodal_transport_data["mio km-driven Light commercial vehicles"]
+    bus = nodal_transport_data[
+        "mio km-driven Motor coaches, buses and trolley buses"
+    ] + non_elec_rail * nodal_transport_data["mio km-driven Rail passenger"] * (
+        nodal_transport_data["load factor Rail passenger"]
+        / nodal_transport_data["load factor Motor coaches, buses and trolley buses"]
+    )
+    hgv = nodal_transport_data[
+        "mio km-driven Heavy goods vehicles"
+    ] + non_elec_rail * nodal_transport_data["mio km-driven Rail freight"] * (
+        nodal_transport_data["load factor Rail freight"]
+        / nodal_transport_data["load factor Heavy goods vehicles"]
+    )
+
+    total = pc + ptw + lcv + bus + hgv
+    demand = transport_shape.multiply(total) * 1e4 * nyears
+
+    return pd.concat([demand], keys=["kfz"], axis=1)
+
+
+def build_transport_demand_segmentation(
     traffic_fn_pc,
     traffic_fn_ptw,
     traffic_fn_bus,
@@ -169,7 +205,34 @@ def transport_degree_factor(
     return dd
 
 
-def bev_availability_profile(
+def bev_availability_profile(fn_kfz, snapshots, nodes, options):
+    """
+    Derive plugged-in availability for electric vehicles (lumped mode): single combined traffic-count profile, scalar availability bounds.
+    """
+    traffic = pd.read_csv(fn_kfz, skiprows=2, usecols=["count"]).squeeze("columns")
+    avail_max = options["bev_avail_max"]
+    avail_mean = options["bev_avail_mean"]
+
+    avail = avail_max - (avail_max - avail_mean) * (traffic - traffic.min()) / (
+        traffic.mean() - traffic.min()
+    )
+
+    if not avail[avail < 0].empty:
+        logger.warning(
+            "The BEV availability weekly profile has negative values which can "
+            "lead to infeasibility."
+        )
+
+    avail_periodic = generate_periodic_profiles(
+        dt_index=snapshots,
+        nodes=nodes,
+        weekly_profile=avail.values,
+    )
+
+    return pd.concat([avail_periodic], keys=["kfz"], axis=1)
+
+
+def bev_availability_profile_segmentation(
     fn_pc, fn_ptw, fn_lcv, fn_hgv, fn_bus, snapshots, nodes, options
 ):
     """
@@ -184,9 +247,9 @@ def bev_availability_profile(
 
     def get_avail(traffic, seg):
         # maximum share plugged-in availability for respective segment
-        avail_max = options["bev_avail_max"][seg]
+        avail_max = options["transport_segmentation"]["bev_avail_max"][seg]
         # average share plugged-in availability for respective segment
-        avail_mean = options["bev_avail_mean"][seg]
+        avail_mean = options["transport_segmentation"]["bev_avail_mean"][seg]
 
         # linear scaling, highest when traffic is lowest, decreases if traffic increases
         avail = avail_max - (avail_max - avail_mean) * (traffic - traffic.min()) / (
@@ -220,6 +283,28 @@ def bev_availability_profile(
 
 
 def bev_dsm_profile(snapshots, nodes, options):
+    """
+    Derive BEV demand-side management (DSM) profile (lumped mode): synthetic weekly spike from scalar restriction
+    settings, no file input.
+    """
+    dsm_week = np.zeros((24 * 7,))
+
+    # assuming that at a certain time ("bev_dsm_restriction_time") EVs have to
+    # be charged to a minimum value (defined in bev_dsm_restriction_value)
+    dsm_week[(np.arange(0, 7, 1) * 24 + options["bev_dsm_restriction_time"])] = options[
+        "bev_dsm_restriction_value"
+    ]
+
+    dsm_periodic = generate_periodic_profiles(
+        dt_index=snapshots,
+        nodes=nodes,
+        weekly_profile=dsm_week,
+    )
+
+    return pd.concat([dsm_periodic], keys=["kfz"], axis=1)
+
+
+def bev_dsm_profile_segmentation(snapshots, nodes, options):
 
     def get_dsm(seg):
         dsm_week = np.zeros((24 * 7,))
@@ -227,8 +312,11 @@ def bev_dsm_profile(snapshots, nodes, options):
         # assuming that at a certain time ("bev_dsm_restriction_time") EVs have to
         # be charged to a minimum value (defined in bev_dsm_restriction_value)
         dsm_week[
-            (np.arange(0, 7, 1) * 24 + options["bev_dsm_restriction_time"][seg])
-        ] = options["bev_dsm_restriction_value"][seg]
+            (
+                np.arange(0, 7, 1) * 24
+                + options["transport_segmentation"]["bev_dsm_restriction_time"][seg]
+            )
+        ] = options["transport_segmentation"]["bev_dsm_restriction_value"][seg]
 
         dsm_periodic = generate_periodic_profiles(
             dt_index=snapshots,
@@ -280,29 +368,41 @@ if __name__ == "__main__":
         snakemake.input.transport_data_raw, pop_layout, energy_totals_year
     )
 
-    transport_demand = build_transport_demand(
-        snakemake.input.traffic_data_Pkw,
-        snakemake.input.traffic_data_Mot,
-        snakemake.input.traffic_data_Bus,
-        snakemake.input.traffic_data_Lfw,
-        snakemake.input.traffic_data_Lkw,
-        snakemake.input.temp_air_total,
-        nodes,
-        nodal_transport_data,
-    )
-
-    avail_profile = bev_availability_profile(
-        snakemake.input.traffic_data_Pkw,
-        snakemake.input.traffic_data_Mot,
-        snakemake.input.traffic_data_Bus,
-        snakemake.input.traffic_data_Lfw,
-        snakemake.input.traffic_data_Lkw,
-        snapshots,
-        nodes,
-        options,
-    )
-
-    dsm_profile = bev_dsm_profile(snapshots, nodes, options)
+    if options["transport_segmentation_enable"]:
+        transport_demand = build_transport_demand_segmentation(
+            snakemake.input.traffic_data_Pkw,
+            snakemake.input.traffic_data_Mot,
+            snakemake.input.traffic_data_Bus,
+            snakemake.input.traffic_data_Lfw,
+            snakemake.input.traffic_data_Lkw,
+            snakemake.input.temp_air_total,
+            nodes,
+            nodal_transport_data,
+        )
+        avail_profile = bev_availability_profile_segmentation(
+            snakemake.input.traffic_data_Pkw,
+            snakemake.input.traffic_data_Mot,
+            snakemake.input.traffic_data_Bus,
+            snakemake.input.traffic_data_Lfw,
+            snakemake.input.traffic_data_Lkw,
+            snapshots,
+            nodes,
+            options,
+        )
+        dsm_profile = bev_dsm_profile_segmentation(snapshots, nodes, options)
+    else:
+        transport_demand = build_transport_demand(
+            snakemake.input.traffic_data_KFZ,
+            nodes,
+            nodal_transport_data,
+        )
+        avail_profile = bev_availability_profile(
+            snakemake.input.traffic_data_KFZ,
+            snapshots,
+            nodes,
+            options,
+        )
+        dsm_profile = bev_dsm_profile(snapshots, nodes, options)
 
     nodal_transport_data.to_csv(snakemake.output.transport_data)
     transport_demand.to_csv(snakemake.output.transport_demand)
