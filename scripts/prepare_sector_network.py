@@ -1412,7 +1412,7 @@ def add_perennials(n, costs):
     n.add(
         "Link",
         nodes,
-        suffix=" perennials refining",
+        suffix=" co2 perennials",
         bus0="co2 atmosphere",
         bus1=nodes + " co2 perennials",
         bus2=nodes.values,
