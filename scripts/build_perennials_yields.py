@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Reproject NUTS2-level 1st-generation (1G) biofuel and perennial crop YIELDS
+Reproject NUTS2-level 1st-generation (1G) biofuel and perennial crop yields
 (from ``build_perennials_yields_eurostat_average.py``) onto the clustered network
 regions, for use by ``add_perennials()`` in ``prepare_sector_network.py``.
 
