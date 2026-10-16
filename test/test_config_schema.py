@@ -244,3 +244,8 @@ class TestLineTypes:
             validate_config(
                 {"lines": {"types": {220.0: "Al/St 240/40 2-bundle 220.0"}}}
             )
+
+
+def test_removed_pypsa_eur_section_is_rejected():
+    with pytest.raises(ValueError, match="pypsa_eur"):
+        validate_config({"pypsa_eur": {"Generator": ["onwind"]}})

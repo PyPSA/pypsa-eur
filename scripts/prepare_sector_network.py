@@ -36,12 +36,7 @@ from scripts._helpers import (
     get,
     get_temporal_resolution,
 )
-from scripts.add_electricity import (
-    attach_storageunits,
-    attach_stores,
-    calculate_annuity,
-    flatten,
-)
+from scripts.add_electricity import calculate_annuity, flatten
 from scripts.build_co2_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from scripts.build_transport_demand import transport_degree_factor
 from scripts.definitions.heat_sector import HeatSector
@@ -465,49 +460,6 @@ def add_carrier_buses(
             carrier=carrier + suffix,
             marginal_cost=costs.at[carrier, "fuel"],
         )
-
-
-# TODO: PyPSA-Eur merge issue
-def remove_elec_base_techs(n: pypsa.Network, carriers_to_keep: dict) -> None:
-    """
-    Remove conventional generators (e.g. OCGT) and storage units (e.g.
-    batteries and H2) from base electricity-only network, since they're added
-    here differently using links.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Network to remove components from
-    carriers_to_keep : dict
-        Dictionary specifying which carriers to keep for each component type
-        e.g. {'Generator': ['hydro'], 'StorageUnit': ['PHS']}
-    """
-    for c in n.components[list(carriers_to_keep.keys())]:
-        if c.static.empty:
-            continue
-        to_keep = carriers_to_keep[c.name]
-        to_remove = pd.Index(c.static.carrier.unique()).symmetric_difference(to_keep)
-        if to_remove.empty:
-            continue
-        logger.info(f"Removing {c.list_name} with carrier {list(to_remove)}")
-        names = c.static.index[c.static.carrier.isin(to_remove)]
-        n.remove(c.name, names)
-        n.carriers.drop(to_remove, inplace=True, errors="ignore")
-
-
-# TODO: PyPSA-Eur merge issue
-def remove_non_electric_buses(n):
-    """
-    Remove buses from pypsa-eur with carriers which are not AC buses.
-    """
-    if to_drop := list(n.buses.query("carrier not in ['AC', 'DC']").carrier.unique()):
-        logger.info(f"Drop buses from PyPSA-Eur with carrier: {to_drop}")
-        n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
-
-
-def patch_electricity_network(n, carriers_to_keep):
-    remove_elec_base_techs(n, carriers_to_keep)
-    remove_non_electric_buses(n)
 
 
 def add_eu_bus(n, x=-5.5, y=46):
@@ -6157,9 +6109,6 @@ def main(
     fn = inputs.gas_input_nodes_simplified
     gas_input_nodes = pd.read_csv(fn, index_col=0) if fn else None
 
-    carriers_to_keep = params.pypsa_eur
-    patch_electricity_network(n, carriers_to_keep)
-
     fn = inputs.heating_efficiencies
     year = int(params["energy_totals_year"])
     heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
@@ -6216,26 +6165,6 @@ def main(
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
-    )
-
-    # Hydrogen already implemented in add_h2_gas_infrastructure
-    extendable_carriers = params.electricity["extendable_carriers"]
-    extendable_storageunits = set(extendable_carriers["StorageUnit"]) - {"H2"}
-    extendable_stores = set(extendable_carriers["Store"]) - {"H2"}
-
-    attach_storageunits(
-        n=n,
-        costs=costs,
-        buses_i=pop_layout.index,
-        extendable_carriers=sorted(extendable_storageunits),
-        max_hours=params.electricity["max_hours"],
-    )
-
-    attach_stores(
-        n=n,
-        costs=costs,
-        buses_i=pop_layout.index,
-        extendable_carriers=sorted(extendable_stores),
     )
 
     if options["transport"]:

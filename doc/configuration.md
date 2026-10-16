@@ -459,23 +459,6 @@ Configuration for `load` settings.
 ```
 
 
-## `pypsa_eur` {#pypsa_eur_cf}
-
-Only used for sector-coupling studies.
-
-Carriers of the electricity-only network that are kept per component type when
-the sector-coupling components are added. Components with other carriers, for
-example conventional generators, are removed and re-added in their
-sector-coupled form.
-
-{{ schema_table("pypsa_eur") }}
-
-**YAML Syntax**
-
-```yaml
-{{ yaml_section("pypsa_eur") }}
-```
-
 ## `energy` {#energy_cf}
 
 Only used for sector-coupling studies.
