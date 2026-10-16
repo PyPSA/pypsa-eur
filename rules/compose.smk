@@ -235,7 +235,6 @@ rule compose_network:
         clustering=config_provider("clustering"),
         clustering_temporal=config_provider("clustering", "temporal"),
         existing_capacities=config_provider("existing_capacities"),
-        pypsa_eur=config_provider("pypsa_eur"),
         renewable=config_provider("renewable"),
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),

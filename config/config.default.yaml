@@ -535,26 +535,6 @@ load:
     gdp: 0.6
     population: 0.4
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#pypsa_eur_cf
-pypsa_eur:
-  Bus:
-  - AC
-  Link:
-  - DC
-  Generator:
-  - onwind
-  - "offwind-ac"
-  - "offwind-dc"
-  - "offwind-float"
-  - "solar-hsat"
-  - solar
-  - ror
-  - nuclear
-  StorageUnit:
-  - PHS
-  - hydro
-  Store: []
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#energy_cf
 energy:
   energy_totals_year: 2023
