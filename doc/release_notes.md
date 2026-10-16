@@ -6,7 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-* **Breaking:** Removed the `pypsa_eur` configuration section. Sector-coupled models no longer add and later remove electricity components: power plants whose fuels the sector model tracks (OCGT, CCGT, oil, coal, lignite, biomass, waste) and hydrogen storage are skipped, all others are kept (e.g. nuclear, and now also geothermal). To drop a technology, remove it from `electricity: conventional_carriers` or `electricity: renewable_carriers` instead.
+* **Breaking:** Removed the `pypsa_eur` configuration section. Sector-coupled models no longer add and later remove electricity components: power plants whose fuels the sector model tracks (OCGT, CCGT, oil, coal, lignite, biomass, waste) and hydrogen storage are skipped, all others are kept (e.g. nuclear, and now also geothermal). To drop a technology, remove it from `electricity: conventional_carriers` or `electricity: renewable_carriers` instead ([#2370](https://github.com/PyPSA/pypsa-eur/pull/2370)).
 
 * Fix: `lines: types` must now define a line type for the 380 kV level; the config validation fails early with a clear message instead of the workflow failing later ([#2166](https://github.com/PyPSA/pypsa-eur/issues/2166)).
 
