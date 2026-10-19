@@ -86,6 +86,10 @@ years. Storage sites can be resolved regionally from a geological database
 of potentials, with a choice between offshore formations only, which are
 larger and far from settlements, and onshore formations as well.
 
+Regional geological potentials are divided by `years_of_storage` to obtain
+the modeled annual potential. A fixed-capacity, negative-dispatch Generator
+enforces each region's potential and charges the sequestration cost.
+
 !!! warning "The sequestration limit shapes the result"
     The limit is a deliberate choice: it keeps sequestration for
     hard-to-abate emissions and prevents it from becoming a backstop that

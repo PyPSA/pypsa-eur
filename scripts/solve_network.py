@@ -554,7 +554,7 @@ def prepare_network(
         if limit_max_growth is not None and limit_max_growth["enable"]:
             add_max_growth(n, limit_max_growth)
 
-    if n.stores.carrier.eq("co2 sequestered").any():
+    if n.generators.carrier.eq("co2 sequestered").any():
         limit_dict = co2_sequestration_potential
         add_co2_sequestration_limit(
             n, limit_dict=limit_dict, planning_horizons=planning_horizons
