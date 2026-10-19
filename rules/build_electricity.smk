@@ -466,7 +466,7 @@ if COUNTRY_RUNOFF_DATASET["source"] == "build":
     rule build_country_runoff:
         """Computes daily runoff per country from ERA5 cutouts to fill missing EIA hydro statistics."""
         input:
-            cutouts=["cutouts/europe-1940-2024-era5.nc"],
+            cutouts=lambda w: input_cutout(w, ["europe-1940-2024-era5"]),
             country_shapes=resources("country_shapes.geojson"),
         output:
             era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
