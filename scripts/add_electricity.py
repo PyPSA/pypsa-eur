@@ -18,7 +18,9 @@ Carriers in `electricity.extendable_carriers` are added with zero initial
 capacity. Storage is either a `StorageUnit` whose energy-to-power ratio is
 fixed by `electricity.max_hours` (one investment variable) or a `Store` on an
 extra bus with separate charging and discharging links (three investment
-variables).
+variables). In sector-coupled models, conventional power plants with fuels
+tracked by the sector model and hydrogen storage are skipped, because
+[prepare_sector_network][] adds them itself.
 
 !!! note "Called from compose_network"
     This module has no Snakemake rule of its own. Its `main` function is
@@ -45,6 +47,17 @@ from scripts._helpers import (
 
 if PYPSA_V1:
     pypsa.options.params.add.return_names = True
+
+SECTOR_CARRIERS = {
+    "OCGT",
+    "CCGT",
+    "oil",
+    "coal",
+    "lignite",
+    "biomass",
+    "waste",
+    "H2",
+}
 
 STORE_LOOKUP = {
     "battery": {
@@ -1262,6 +1275,12 @@ def main(
     renewable_carriers = set(params.electricity["renewable_carriers"])
     extendable_carriers = params.electricity["extendable_carriers"]
     conventional_carriers = params.electricity["conventional_carriers"]
+    if params.sector["enabled"]:
+        conventional_carriers = sorted(set(conventional_carriers) - SECTOR_CARRIERS)
+        extendable_carriers = {
+            c: sorted(set(carriers) - SECTOR_CARRIERS)
+            for c, carriers in extendable_carriers.items()
+        }
     conventional_inputs = {
         k: v for k, v in inputs.items() if k.startswith("conventional_")
     }
