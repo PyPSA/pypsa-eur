@@ -326,10 +326,8 @@ if __name__ == "__main__":
         logger.info("Supplement missing data with synthetic data.")
         fn = snakemake.input.synthetic
         synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
-        # synthetic load data uses "KV" for Kosovo instead of "XK"
-        synthetic_load = synthetic_load.rename(columns={"KV": "XK"})
-        # UA, MD, CY, MT do not appear in synthetic load data
-        countries = list(set(countries) - set(["UA", "MD", "CY", "MT"]))
+        # UA, MD, XK, CY, MT do not appear in synthetic load data
+        countries = list(set(countries) - set(["UA", "MD", "XK", "CY", "MT"]))
         synthetic_load = synthetic_load.loc[snapshots, countries]
         load = load.combine_first(synthetic_load)
 
