@@ -2,7 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build CO2 price time series.
+Build an hourly time series of EU ETS carbon allowance prices.
+
+Historical EU ETS prices are smoothed with a centred rolling mean over the
+configured window, resampled to hourly resolution and forward-filled. The
+series provides a time-varying CO2 price for emitting generators when dynamic
+emission prices are enabled.
 """
 
 import logging

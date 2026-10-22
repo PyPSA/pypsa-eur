@@ -1,6 +1,24 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Builds the topologically connected OpenStreetMap transmission network as tables of buses, lines, links, converters and transformers.
+
+Cleaned OSM substations, lines, HVDC links and converter polygons are turned into
+an electrically consistent network. Lines are split where they pass over buses,
+merged across junctions that are not substations, and connected to stations
+formed by aggregating substations within 500 m; the station location is the pole
+of inaccessibility of the merged polygon. Voltages are floored to full kV levels,
+transformers are added between voltage levels within a station, DC buses and
+converter links are created from converter and switching stations, and assets
+under construction are kept or removed by configuration. The output feeds the
+base network and the prebuilt OSM network release.
+
+References
+----------
+- Xiong et al. (2025), [Modelling the high-voltage grid using open data for Europe and beyond](https://doi.org/10.1038/s41597-025-04550-7)
+- Garcia-Castellanos and Lombardo (2007), [Poles of inaccessibility: A calculation algorithm for the remotest places on earth](https://doi.org/10.1080/14702540801897809)
+"""
 
 import itertools
 import logging
@@ -235,6 +253,19 @@ def _split_linestring_by_point(linestring, points):
 
 
 # TODO: Last old function to improve, either vectorise or parallelise
+def _alpha_suffix(i):
+    """
+    Convert a zero-based index to a spreadsheet-style letter suffix (0 -> 'a',
+    25 -> 'z', 26 -> 'aa', ...).
+    """
+    suffix = ""
+    i += 1
+    while i > 0:
+        i, rem = divmod(i - 1, 26)
+        suffix = string.ascii_lowercase[rem] + suffix
+    return suffix
+
+
 def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
     """
     Split overpassing lines by splitting them at nodes within a given tolerance,
@@ -242,10 +273,14 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
 
     Parameters
     ----------
-        - lines (GeoDataFrame): The lines to be split.
-        - buses (GeoDataFrame): The buses representing nodes.
-        - distance_crs (str): The coordinate reference system (CRS) for distance calculations.
-        - tol (float): The tolerance distance in meters for determining if a bus is within a line.
+    lines : GeoDataFrame
+        The lines to be split.
+    buses : GeoDataFrame
+        The buses representing nodes.
+    distance_crs : str
+        The coordinate reference system (CRS) for distance calculations.
+    tol : float
+        The tolerance distance in meters for determining if a bus is within a line.
 
     Returns
     -------
@@ -317,8 +352,10 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
             voltage = parts[1] if len(parts) > 1 else ""  # e.g., "220"
 
             df_append["line_id"] = [
-                f"{base_id}:{letter}-{voltage}" if n_geoms > 1 else original_line_id
-                for letter in string.ascii_lowercase[:n_geoms]
+                f"{base_id}:{_alpha_suffix(i)}-{voltage}"
+                if n_geoms > 1
+                else original_line_id
+                for i in range(n_geoms)
             ]
 
             lines_to_add.append(df_append)

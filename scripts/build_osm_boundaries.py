@@ -1,6 +1,16 @@
 # SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
+"""
+Builds first-level administrative boundaries (ADM1) of a country from OpenStreetMap relations.
+
+Raw OSM boundary relations are assembled into polygons from their outer and inner
+member ways, labelled with ISO 3166-2 codes and English names, and clipped to
+onshore territory by removing the exclusive economic zones. Regions without an
+ISO code are numbered by OSM id; duplicate relations for disputed territories are
+dropped. The boundaries stand in for NUTS3 regions in countries not covered by
+Eurostat (BA, MD, UA, XK).
+"""
 
 import json
 import logging
@@ -12,7 +22,7 @@ from shapely import line_merge
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon
 
 from scripts._helpers import configure_logging, set_scenario_config
-from scripts.build_shapes import eez
+from scripts.build_offshore_shapes import eez
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +104,12 @@ def build_osm_boundaries(country, adm1_path, offshore_shapes):
 
     Parameters
     ----------
-        - country (str): The country code (e.g., 'DE' for Germany).
-        - adm1_path (str): The file path to the administrative level 1 OSM data in JSON format.
-        - offshore_shapes (GeoDataFrame): A GeoDataFrame containing offshore shapes to clip the boundaries.
+    country : str
+        The country code (e.g., 'DE' for Germany).
+    adm1_path : str
+        The file path to the administrative level 1 OSM data in JSON format.
+    offshore_shapes : GeoDataFrame
+        A GeoDataFrame containing offshore shapes to clip the boundaries.
 
     Returns
     -------

@@ -5,7 +5,7 @@
 """
 Countries configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#countries_cf
 """
 
 from pydantic import Field, RootModel

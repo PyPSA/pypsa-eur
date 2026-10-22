@@ -2,8 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates plots for optimised power network topologies and regional generation,
-storage and conversion capacities built.
+Plots the optimised power network with regional technology costs and grid expansion.
+
+Reads the solved network and aggregates the annualised capital cost of
+generators, storage and conversion technologies per electricity bus, grouped
+into coarse technology classes and drawn as pie charts. HVAC lines and HVDC
+links are drawn with widths proportional to the capacity added by the
+optimisation. Small technologies and branches are hidden to keep the map
+readable. The map projection helper defined here is shared by the other map
+scripts.
 """
 
 import logging
@@ -121,7 +128,8 @@ def plot_map(
         costs.drop(to_drop, level=0, inplace=True, axis=0, errors="ignore")
 
     # make sure they are removed from index
-    costs.index = pd.MultiIndex.from_tuples(costs.index.values)
+    if len(costs) > 0:
+        costs.index = pd.MultiIndex.from_tuples(costs.index.values)
 
     threshold = 100e6  # 100 mEUR/a
     carriers = costs.groupby(level=1).sum()
@@ -241,9 +249,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_power_network",
-            opts="",
-            clusters="37",
-            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)

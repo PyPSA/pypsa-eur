@@ -20,7 +20,7 @@ transmission network level that covers the full ENTSO-E area and all energy sect
 Besides the power grid, pipeline networks for gas, hydrogen, carbon dioxide, and liquid fuels are included.
 The model is suitable both for planning studies and operational studies.
 The model is built from open data using a Snakemake workflow and fully open source.
-It is designed to be imported into the open-source energy system modelling framework [PyPSA](www.pypsa.org).
+It is designed to be imported into the open-source energy system modelling framework [PyPSA](https://pypsa.org).
 
 > [!NOTE]
 > PyPSA-Eur has many contributors, with the maintenance currently led by the [Department of Digital Transformation in
@@ -61,7 +61,7 @@ them within each model region:
 # Warnings
 
 PyPSA-Eur is under active development and has several
-[limitations](https://pypsa-eur.readthedocs.io/en/latest/limitations.html) which
+[limitations](https://pypsa-eur.readthedocs.io/en/latest/limitations/) which
 you should understand before using the model. The github repository
 [issues](https://github.com/PyPSA/pypsa-eur/issues) collect known topics we are
 working on (please feel free to help or make suggestions). The
@@ -88,6 +88,6 @@ We strongly welcome anyone interested in contributing to this project. If you ha
 # Licence
 
 The code in PyPSA-Eur is released as free software under the
-[MIT License](https://opensource.org/licenses/MIT), see [`doc/licenses.rst`](doc/licenses.rst).
+[MIT License](https://opensource.org/licenses/MIT), see [`doc/licenses.md`](doc/licenses.md).
 However, different licenses and terms of use may apply to the various
-input data, see [`doc/data_sources.rst`](doc/data_sources.rst).
+input data, see [`doc/data_sources.md`](doc/data_sources.md).

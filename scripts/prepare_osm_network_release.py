@@ -1,6 +1,17 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Prepares the release files of the prebuilt OSM network: cleaned CSV tables and an interactive map.
+
+The base network is split into buses, lines, links, converters and transformers
+with a fixed column set, integer voltages, lengths in metres and rounded
+electrical parameters derived from the configured line types. Booleans are
+written as 't' and 'f'. An interactive pydeck map with layer toggles, voltage
+filters and links to OSM objects is written as compressed HTML, optionally with
+simplified station and bus polygons. These files are published as a new version
+of the prebuilt network dataset.
+"""
 
 import json
 import logging

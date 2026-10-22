@@ -5,7 +5,7 @@
 """
 Load configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#load_cf
 """
 
 from pydantic import BaseModel, Field

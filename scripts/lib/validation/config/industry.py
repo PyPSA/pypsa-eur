@@ -5,7 +5,7 @@
 """
 Industry configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#industry_cf
 """
 
 from pydantic import Field
@@ -46,7 +46,7 @@ class IndustryConfig(ConfigModel):
     )
     elec_DRI: float = Field(
         0.322,
-        description="The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
+        description="The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://web.archive.org/web/20210310021333/https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
     )
     Al_primary_fraction: dict[int, float] = Field(
         default_factory=lambda: {
@@ -139,6 +139,18 @@ class IndustryConfig(ConfigModel):
     waste_to_energy_cc: bool = Field(
         False,
         description="Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.",
+    )
+    solid_biomass_for_industry_cc: bool = Field(
+        True,
+        description="Add option for using solid biomass for industry with carbon capture, in addition to solid biomass for industry without carbon capture.",
+    )
+    gas_for_industry_cc: bool = Field(
+        True,
+        description="Add option for using gas for industry with carbon capture, in addition to gas for industry without carbon capture.",
+    )
+    process_emissions_cc: bool = Field(
+        True,
+        description="Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
     )
     sector_ratios_fraction_future: dict[int, float] = Field(
         default_factory=lambda: {

@@ -2,22 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build salt cavern potentials for hydrogen storage.
+Build hydrogen storage potentials of salt caverns per clustered region in TWh.
 
-Technical Potential of Salt Caverns for Hydrogen Storage in Europe CC-BY
-4.0
-https://doi.org/10.20944/preprints201910.0187.v1
-https://doi.org/10.1016/j.ijhydene.2019.12.161
+Potential cavern sites with their energy density from Caglayan et al. (2020)
+are overlaid with the onshore and offshore regions. Each site's potential is
+its energy density times its area, and the share of the site falling into a
+region is credited to that region. Potentials are reported separately for
+onshore sites, nearshore sites within 50 km of the coast and offshore sites.
 
-Figure 6. Distribution of potential salt cavern sites across Europe with their corresponding
-energy densities (cavern storage potential divided by the volume).
+!!! note "Data provenance"
+    The site map was digitised from Figure 6 of the paper and scaled to the
+    country totals of Figure 7, split by onshore, nearshore and offshore.
 
-Figure 7. Total cavern storage potential in European countries
-classified as onshore, offshore and within 50 km of shore.
-
-The regional distribution is taken from the map (Figure 6) and scaled to the
-capacities from the bar chart split by nearshore (<50km from sea),
-onshore (>50km from sea), offshore (Figure 7).
+References
+----------
+- Caglayan et al. (2020), [Technical potential of salt caverns for hydrogen storage in Europe](https://doi.org/10.1016/j.ijhydene.2019.12.161)
 """
 
 import logging
@@ -42,9 +41,9 @@ def load_bus_regions(onshore_path, offshore_path):
     """
     Load pypsa-eur on- and offshore regions and concat.
     """
-    bus_regions_offshore = gpd.read_file(offshore_path)
-    bus_regions_onshore = gpd.read_file(onshore_path)
-    bus_regions = concat_gdf([bus_regions_offshore, bus_regions_onshore])
+    offshore_bus_regions = gpd.read_file(offshore_path)
+    onshore_bus_regions = gpd.read_file(onshore_path)
+    bus_regions = concat_gdf([offshore_bus_regions, onshore_bus_regions])
     bus_regions = bus_regions.dissolve(by="name", aggfunc="sum")
 
     return bus_regions
@@ -77,13 +76,13 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_salt_cavern_potentials", clusters="37")
+        snakemake = mock_snakemake("build_salt_cavern_potentials")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    fn_onshore = snakemake.input.regions_onshore
-    fn_offshore = snakemake.input.regions_offshore
+    fn_onshore = snakemake.input.onshore_regions
+    fn_offshore = snakemake.input.offshore_regions
 
     regions = load_bus_regions(fn_onshore, fn_offshore)
 

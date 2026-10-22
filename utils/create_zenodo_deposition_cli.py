@@ -57,7 +57,7 @@ def get_access_token(sandbox: bool):
             f" * Option 2: Create a `.env` file in the current directory with the following content:\n"
             f"   {key_name}='<token>'\n"
             "Make sure to replace '<token>' with your actual Zenodo API token.\n"
-            "Visit (https://zenodo.org/account/settings/applications/tokens/) to generate a new token.",
+            "Visit (https://zenodo.org/account/settings/applications/tokens/new/) to generate a new token.",
             fg=typer.colors.RED,
         )
         raise typer.Exit()
@@ -428,8 +428,8 @@ def extract_zenodo_deposition_url(record_url: str) -> tuple[str, str]:
         The Zenodo deposition API URL, or None if extraction fails.
     """
     # Match both sandbox and production, with or without /files/...
-    m = re.match(
-        r"https://(?:sandbox\.)?zenodo\.org/records/(\d+)(/files/.*)?", record_url
+    m = re.fullmatch(
+        r"https://(?:sandbox\.)?zenodo\.org/records/(\d+)(/files(/.*)?)?", record_url
     )
     if not m:
         raise ValueError(f"Invalid Zenodo record URL format: {record_url}. ")

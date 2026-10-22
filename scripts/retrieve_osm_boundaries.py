@@ -16,7 +16,7 @@ import time
 
 import requests
 
-from scripts._helpers import (  # set_scenario_config,; update_config_from_wildcards,; update_config_from_wildcards,
+from scripts._helpers import (
     configure_logging,
     set_scenario_config,
 )

@@ -27,4 +27,4 @@ app:
       key: "validator-{YYYY}-{MM}"
       dirs: ["data"]
     import_networks:
-    - "results/validation/networks/base_s_50___2050.nc"
+    - "results/validation/networks/solved_2020.nc"

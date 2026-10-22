@@ -3,11 +3,6 @@
 # SPDX-License-Identifier: MIT
 """
 Combines bidding zone shape files from two sources. The `electricitymaps-contrib` data is more accurate and are used as the baseline. The Italian bidding zones from `entsoe-py` are more preferred and are used to override the baseline. Manual adjustments are made to match the TYNDP 2024 configuration. Small islands are removed and Crete is considered as independent of Greece. Southern Norwegian zones are merged.
-
-Outputs
--------
-
-- ``resources/bidding_zones.geojson``:
 """
 
 import geopandas as gpd
@@ -137,15 +132,25 @@ def extract_shape_by_bbox(
 
     Parameters
     ----------
-        - gdf (GeoDataFrame): GeoDataFrame containing country geometries.
-        - country (str): The country code or name to filter.
-        - min_lon, max_lon (float): Longitude bounds for extraction.
-        - min_lat, max_lat (float): Latitude bounds for extraction.
-        - region_id (str): String to assign an ID to the extracted region.
+    gdf : GeoDataFrame
+        GeoDataFrame containing country geometries.
+    country : str
+        The country code or name to filter.
+    min_lon : float
+        Minimum longitude bound for extraction.
+    max_lon : float
+        Maximum longitude bound for extraction.
+    min_lat : float
+        Minimum latitude bound for extraction.
+    max_lat : float
+        Maximum latitude bound for extraction.
+    region_id : str
+        String to assign an ID to the extracted region.
 
     Returns
     -------
-        - gdf_new: Updated GeoDataFrame with the extracted shape separated.
+    GeoDataFrame
+        Updated GeoDataFrame with the extracted shape separated.
     """
     country_gdf = gdf.explode().query("country == @country").reset_index(drop=True)
 

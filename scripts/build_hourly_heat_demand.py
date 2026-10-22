@@ -2,11 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build hourly heat demand time series from daily heat demand.
+Build hourly space and water heating demand profiles from daily heat demand.
 
-Water and space heating demand profiles are generated using intraday profiles from BDEW. Different profiles are used for the residential and services sectors as well as weekdays and weekend.
-
-The daily heat demand is multiplied by the intraday profile to obtain the hourly heat demand time series. The rule is executed in ``build_sector.smk``.
+The daily heat demand from [build_daily_heat_demand][] is multiplied by
+intraday profiles from BDEW, which differ between residential and services
+and between weekdays and weekends, to obtain hourly space heating demand per
+node. Water heating uses the intraday profile alone since it does not depend
+on temperature. A weekly availability profile for residential heat
+demand-side management is also written; it is zero at the configured
+`restriction_time` hours so that shifted heat demand must be served within
+each period.
 """
 
 import logging
@@ -46,7 +51,7 @@ def heat_dsm_profile(nodes, options):
         Node identifiers for which to generate profiles.
     options : dict
         Configuration dictionary containing:
-        - options['residential_heat']['dsm']['restriction_time']: list of int
+        - ``options["residential_heat"]["dsm"]["restriction_time"]``: list of int
             Hours at which storage must be empty (checkpoint hours).
 
     Returns
@@ -76,7 +81,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_hourly_heat_demand",
             scope="total",
-            clusters=5,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

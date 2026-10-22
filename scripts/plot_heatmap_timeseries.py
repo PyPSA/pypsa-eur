@@ -2,7 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot heatmap time series of marginal prices, utilisation rates, state of charge profiles.
+Plots hour-of-day by day-of-year heatmaps of time series from a solved network.
+
+Reads the solved network and reshapes each hourly time series into a grid of
+24 hours by days of the year. Heatmaps are drawn for the utilisation rate of
+built technologies, the marginal price per bus carrier and the state of charge
+per storage carrier, each for a configured selection of carriers. Coarser
+snapshots are forward-filled to hourly resolution, and the script skips
+plotting if the snapshots contain a gap longer than a month.
 """
 
 import logging
@@ -91,11 +98,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_heatmap_timeseries",
-            simpl="",
-            clusters="10",
-            opts="",
-            sector_opts="",
-            planning_horizons=2050,
+            horizon=2050,
         )
 
     configure_logging(snakemake)

@@ -2,67 +2,33 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This script calculates the space heating savings through better insulation of
-the thermal envelope of a building and corresponding costs for different
-building types in different countries.
+Build space heating savings and costs of retrofitting the thermal envelope of buildings per country, sector and retrofitting strength.
 
-Methodology
------------
+Energy savings follow the seasonal method of EN ISO 13790 as implemented in
+the TABULA calculation method. The building stock with its U-values and
+heated floor areas comes from the Hotmaps project; typical envelope surfaces,
+thermal bridges and ventilation losses per building type come from TABULA.
+Space heat demand is the transmission and ventilation heat loss over the
+heating season minus the utilised solar and internal gains:
 
-The energy savings calculations are based on the
+$$
+E_{space} = (H_{tr} + H_{ve}) F_{red} (T_{th} - T_{heat}) d_{heat} / 365 - f_{gain} (H_{solar} + H_{int})
+$$
 
-  EN ISO 13790 / seasonal method https://www.iso.org/obp/ui/#iso:std:iso:13790:ed-2:v1:en:
+with the heating season of $d_{heat}$ days below the threshold $T_{th}$ of
+15 C, their mean temperature $T_{heat}$, a reduction factor $F_{red}$ for
+non-uniform heating and a gain utilisation factor $f_{gain}$. Savings are
+computed for several insulation thicknesses. Costs per thickness are taken
+from German data and weighted by country-specific construction and tax
+indices. Savings and costs per sector are area-weighted over building types
+and construction periods, and countries without building data take the
+values of neighbouring countries.
 
-  - calculations heavily oriented on the TABULAWebTool
-  http://webtool.building-typology.eu/
-  http://www.episcope.eu/fileadmin/tabula/public/docs/report/TABULA_CommonCalculationMethod.pdf
-  which is following the EN ISO 13790 / seasonal method
-
-  - building stock data:
-      mainly: hotmaps project https://gitlab.com/hotmaps/building-stock
-      missing: EU building observatory https://ec.europa.eu/energy/en/eu-buildings-database
-
-  - building types with typical surfaces/ standard values:
-      - tabula https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
-
-
-Basic Equations
----------------
-
-The basic equations:
-
-    The Energy needed for space heating E_space [W/m²] are calculated as the
-    sum of heat losses and heat gains:
-
-        E_space = H_losses - H_gains
-
-    Heat losses constitute from the losses through heat transmission (H_tr [W/m²K])
-    (this includes heat transfer through building elements and thermal bridges)
-    and losses by ventilation (H_ve [W/m²K]):
-
-        H_losses = (H_tr + H_ve) * F_red * (T_threshold - T_averaged_d_heat) * d_heat * 1/365
-
-        F_red : reduction factor, considering non-uniform heating [°C], p.16 chapter 2.6 [-]
-        T_threshold : heating temperature threshold, assumed 15 C
-        d_heat : Length of heating season, number of days with daily averaged temperature below T_threshold
-        T_averaged_d_heat : mean daily averaged temperature of the days within heating season d_heat
-
-    Heat gains constitute from the gains by solar radiation (H_solar) and
-    internal heat gains (H_int) weighted by a gain utilisation factor nu:
-
-        H_gains = nu * (H_solar + H_int)
-
-Structure
----------
-
-The script has the following structure:
-
-    (0) fixed parameters are set
-    (1) prepare data, bring to same format
-    (2) calculate space heat demand depending on additional insulation material
-    (3) calculate costs for corresponding additional insulation material
-    (4) get cost savings per retrofitting measures for each sector by weighting
-        with heated floor area
+References
+----------
+- Loga et al. (2013), [TABULA Calculation Method - Energy Use for Heating and Domestic Hot Water](http://www.episcope.eu/fileadmin/tabula/public/docs/report/TABULA_CommonCalculationMethod.pdf)
+- Hotmaps project, [Building stock data](https://gitlab.com/hotmaps/building-stock)
+- TABULA, [Building typology calculator](https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx)
 """
 
 import logging
@@ -158,7 +124,7 @@ def prepare_building_stock_data():
     building_data = pd.read_csv(snakemake.input.building_stock, usecols=list(range(13)))
 
     # standardize data
-    building_data["type"].replace(
+    building_data["type"] = building_data["type"].replace(
         {
             "Covered area: heated  [Mm²]": "Heated area [Mm²]",
             "Windows ": "Window",
@@ -168,22 +134,19 @@ def prepare_building_stock_data():
             "Roof ": "Roof",
             "Floor ": "Floor",
         },
-        inplace=True,
     )
-    building_data["feature"].replace(
+    building_data["feature"] = building_data["feature"].replace(
         {
             "Construction features (U-value)": "Construction features (U-values)",
         },
-        inplace=True,
     )
 
     building_data.country_code = building_data.country_code.str.upper()
-    building_data["subsector"].replace(
-        {"Hotels and Restaurants": "Hotels and restaurants"}, inplace=True
+    building_data["subsector"] = building_data["subsector"].replace(
+        {"Hotels and Restaurants": "Hotels and restaurants"}
     )
-    building_data["sector"].replace(
-        {"Residential sector": "residential", "Service sector": "services"},
-        inplace=True,
+    building_data["sector"] = building_data["sector"].replace(
+        {"Residential sector": "residential", "Service sector": "services"}
     )
 
     # extract u-values
@@ -267,7 +230,9 @@ def prepare_building_stock_data():
 
     # u_values for Poland are missing -> take them from eurostat -----------
     u_values_PL = pd.read_csv(snakemake.input.u_values_PL)
-    u_values_PL.component.replace({"Walls": "Wall", "Windows": "Window"}, inplace=True)
+    u_values_PL["component"] = u_values_PL["component"].replace(
+        {"Walls": "Wall", "Windows": "Window"}
+    )
     area_PL = area.loc["Poland"].reset_index()
     data_PL = pd.DataFrame(columns=u_values.columns, index=area_PL.index)
     data_PL["country"] = "Poland"
@@ -331,11 +296,16 @@ def prepare_building_topology(u_values, same_building_topology=True):
     Reads in typical building topologies (e.g. average surface of building
     elements) and typical losses through thermal bridging and air ventilation.
     """
-    data_tabula = pd.read_csv(
-        snakemake.input.data_tabula,
-        skiprows=lambda x: x in range(1, 11),
-        low_memory=False,
-    ).iloc[:2974]
+    data_tabula = (
+        pd.read_excel(
+            snakemake.input.data_tabula,
+            sheet_name="Calc.Set.Building",
+            header=0,
+            skiprows=range(1, 11),
+        )
+        .iloc[:2974]
+        .reset_index(drop=True)
+    )
 
     parameters = [
         "Code_Country",
@@ -461,7 +431,7 @@ def prepare_building_topology(u_values, same_building_topology=True):
     missing_ct = (
         missing_ct.unstack().unstack().fillna(missing_ct.unstack().unstack().mean())
     )
-    data_tabula = missing_ct.stack(level=[-1, -2, -3], dropna=False)
+    data_tabula = missing_ct.stack(level=[-1, -2, -3])
 
     # sets for different countries same building topology which only depends on
     # build year and subsector (MFH, SFH, AB)
@@ -898,7 +868,7 @@ def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
     Calculates gain utilisation factor nu.
     """
     # time constant of the building tau [h] = c_m [Wh/(m^2K)] * 1 /(H_tr_e+H_tb*H_ve) [m^2 K /W]
-    tau = c_m / heat_transfer_perm2.groupby().sum()
+    tau = c_m / heat_transfer_perm2.T.groupby(level=1).sum().T
     alpha = alpha_H_0 + (tau / tau_H_0)
     # heat balance ratio
     gamma = (1 / Q_ht).mul(Q_gain.sum(axis=1), axis=0)
@@ -985,7 +955,8 @@ def sample_dE_costs_area(
     )
 
     # map missing countries
-    for ct in set(countries).difference(cost_dE.index.levels[0]):
+    missing = set(countries).difference(cost_dE.index.levels[0])
+    for ct in sorted(missing, key=list(map_for_missings).index):
         averaged_data = (
             cost_dE.reindex(index=map_for_missings[ct], level=0)
             .groupby(level=1)
@@ -996,13 +967,13 @@ def sample_dE_costs_area(
 
     # weights costs after construction index
     if construction_index:
-        for ct in list(map_for_missings.keys() - cost_w.index):
+        for ct in [ct for ct in map_for_missings if ct not in cost_w.index]:
             cost_w.loc[ct] = cost_w.reindex(index=map_for_missings[ct]).mean()
         cost_dE.cost = cost_dE.cost.mul(cost_w, level=0, axis=0)
 
     # weights cost depending on country taxes
     if tax_weighting:
-        for ct in list(map_for_missings.keys() - tax_w.index):
+        for ct in [ct for ct in map_for_missings if ct not in tax_w.index]:
             tax_w[ct] = tax_w.reindex(index=map_for_missings[ct]).mean()
         cost_dE.cost = cost_dE.cost.mul(tax_w, level=0, axis=0)
 
@@ -1054,11 +1025,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_retro_cost",
-            clusters=48,
-            sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
-        )
+        snakemake = mock_snakemake("build_retro_cost")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

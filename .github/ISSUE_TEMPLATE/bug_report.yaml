@@ -10,6 +10,8 @@ body:
       Thanks for taking the time to fill out this bug report!
       Please do not post usage questions here. Ask them on the [PyPSA Discord server](https://discord.gg/AnuJBk23FU).
 
+      Please write this issue description yourself. Any potentially verbose AI-generated content should be marked.
+
 - type: checkboxes
   id: checks
   attributes:

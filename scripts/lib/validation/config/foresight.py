@@ -5,7 +5,7 @@
 """
 Foresight configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#foresight_cf
 """
 
 from typing import Literal
