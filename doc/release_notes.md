@@ -6,7 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-* Feature: Add gas CCGT with carbon capture technology ([] ())
+* Feature: Add gas CCGT with carbon capture technology ([#2377] (https://github.com/PyPSA/pypsa-eur/pull/2377))
 
 * Fix: `lines: types` must now define a line type for the 380 kV level; the config validation fails early with a clear message instead of the workflow failing later ([#2166](https://github.com/PyPSA/pypsa-eur/issues/2166)).
 
