@@ -206,7 +206,7 @@ class _GasCCGTCCConfig(BaseModel):
     """Configuration for `sector.gas_ccgt_cc` settings."""
 
     enable: bool = Field(
-        True, description="Add option for gas CCGT with carbon capture."
+        False, description="Add option for gas CCGT with carbon capture."
     )
     efficiency_penalty: float = Field(
         0.075,

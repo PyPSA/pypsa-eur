@@ -5400,7 +5400,7 @@
           "description": "Configuration for `sector.gas_ccgt_cc` settings.",
           "properties": {
             "enable": {
-              "default": true,
+              "default": false,
               "description": "Add option for gas CCGT with carbon capture.",
               "type": "boolean"
             },
@@ -8100,7 +8100,7 @@
       "description": "Configuration for `sector.gas_ccgt_cc` settings.",
       "properties": {
         "enable": {
-          "default": true,
+          "default": false,
           "description": "Add option for gas CCGT with carbon capture.",
           "type": "boolean"
         },
@@ -12983,7 +12983,7 @@
           "description": "Configuration for `sector.gas_ccgt_cc` settings.",
           "properties": {
             "enable": {
-              "default": true,
+              "default": false,
               "description": "Add option for gas CCGT with carbon capture.",
               "type": "boolean"
             },

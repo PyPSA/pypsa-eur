@@ -927,7 +927,7 @@ sector:
   methanation: true
   coal_cc: false
   gas_ccgt_cc:
-    enable: true
+    enable: false
     efficiency_penalty: 0.075
     capex_uplift_factor: 1.89
   dac: true
