@@ -554,7 +554,12 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes).set_index("name")
+    # reindexing supports empty offshore shapes of countries without coast
+    offshore_shapes = (
+        gpd.read_file(snakemake.input.offshore_shapes)
+        .reindex(columns=["name", "geometry"])
+        .set_index("name")
+    )
 
     regions = create_regions(
         snakemake.params.countries,
