@@ -926,6 +926,10 @@ sector:
   solar_cf_correction: 0.788457
   methanation: true
   coal_cc: false
+  gas_ccgt_cc:
+    enable: false
+    efficiency_penalty: 0.075
+    capex_uplift_factor: 1.89
   dac: true
   co2_vent: false
   heat_vent:
