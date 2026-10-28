@@ -657,6 +657,7 @@ _TECH_COLORS: dict[str, str] = {
     "CCGT": "#a85522",
     "CCGT marginal": "#a85522",
     "allam": "#B98F76",
+    "gas CCGT CC": "#826453",
     "gas for industry co2 to atmosphere": "#692e0a",
     "gas for industry co2 to stored": "#8a3400",
     "gas for industry": "#853403",

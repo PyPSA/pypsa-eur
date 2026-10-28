@@ -202,6 +202,22 @@ class _CHPConfig(BaseModel):
     )
 
 
+class _GasCCGTCCConfig(BaseModel):
+    """Configuration for `sector.gas_ccgt_cc` settings."""
+
+    enable: bool = Field(
+        True, description="Add option for gas CCGT with carbon capture."
+    )
+    efficiency_penalty: float = Field(
+        0.075,
+        description="Absolute reduction in CCGT electrical efficiency (percentage points, not relative) due to diversion of steam and electricity to the capture unit; source: IEAGHG (2012) https://ieaghg.org/publications/co2-capture-at-gas-fired-power-plants/ (Conclusion)",
+    )
+    capex_uplift_factor: float = Field(
+        1.89,
+        description="Since we model the CC retrofit using data from the DEA's large biomass boiler, there is an increase in Capex per unit CO2 captured due to a gas CCGT's lower flue gas CO2 concentration; source: DEA (2024) https://ens.dk/en/analyses-and-statistics/technology-data-carbon-capture-transport-and-storage, Figure 12",
+    )
+
+
 class _MethanolConfig(BaseModel):
     """Configuration for `sector.methanol` settings."""
 
@@ -692,6 +708,10 @@ class SectorConfig(BaseModel):
     )
     coal_cc: bool = Field(
         False, description="Add option for coal CHPs with carbon capture."
+    )
+    gas_ccgt_cc: _GasCCGTCCConfig = Field(
+        default_factory=_GasCCGTCCConfig,
+        description="Gas CCGT with carbon capture configuration.",
     )
     dac: bool = Field(True, description="Add option for Direct Air Capture (DAC).")
     co2_vent: bool = Field(
