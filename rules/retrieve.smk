@@ -1642,14 +1642,13 @@ if (CO2_REMOVAL_DATASET := dataset_version("co2_removal_data"))["source"] in [
         output:
             eurostat_crops_nuts2=resources("eurostat_apro_cpshr_nuts2_raw.csv"),
             eurostat_crops_nuts0=resources("eurostat_apro_cpshr_nuts0_raw.csv"),
+            crop_heating_values=resources("table26_heating_values.csv"),
+            cultivation_emissions_1G=resources("cultivation_emissions_1G.csv"),
         retries: 2
         message:
             "Downloading carbon dioxide removal data"
         run:
             with ZipFile(input.zip) as z:
-                # GitHub's release archive nests everything under a single
-                # top-level "<owner>-<repo>-<commit-sha>/" folder whose name
-                # changes with every release, so resolve it at runtime.
                 top_dir = z.namelist()[0].split("/")[0]
                 for src_path, dest in [
                     (
@@ -1659,6 +1658,14 @@ if (CO2_REMOVAL_DATASET := dataset_version("co2_removal_data"))["source"] in [
                     (
                         "outputs/perennialisation/eurostat_apro_cpshr_nuts0_raw.csv",
                         output.eurostat_crops_nuts0,
+                    ),
+                    (
+                        "outputs/biomass_inputs/table26_heating_values.csv",
+                        output.crop_heating_values,
+                    ),
+                    (
+                        "outputs/biomass_inputs/cultivation_emissions_1G.csv",
+                        output.cultivation_emissions_1G,
                     ),
                 ]:
                     with (

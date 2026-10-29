@@ -422,7 +422,11 @@ renewable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#perennials
 perennials:
-  sequestration_co2: 2
+  co2_removal: 2.2
+  co2_removal_efficiency: 0.7
+  emissions_avoided: 1.1
+  emissions_avoided_efficiency: 0.9
+  biofuels_1G_land_year: 2025
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:

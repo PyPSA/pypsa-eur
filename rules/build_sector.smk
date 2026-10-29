@@ -958,7 +958,7 @@ rule build_perennials_yields_eurostat_average:
         nuts2021=rules.retrieve_eu_nuts_2021.output.shapes_level_2,
         crops_nuts2=rules.retrieve_co2_removal_data.output.eurostat_crops_nuts2,
         crops_nuts0=rules.retrieve_co2_removal_data.output.eurostat_crops_nuts0,
-        costs=resources(f"costs_{config['costs']['year']}_processed.csv"),
+        crop_heating_values=rules.retrieve_co2_removal_data.output.crop_heating_values,
     output:
         yields_all=resources("perennials_yields_1G_biofuels.csv"),
     log:
@@ -1756,6 +1756,11 @@ rule prepare_sector_network:
         ),
         perennials_yields_1G_biofuels=lambda w: (
             resources("perennials_yields_1G_biofuels_s_{clusters}.csv")
+            if config_provider("sector", "perennials")(w)
+            else []
+        ),
+        perennials_cultivation_emissions=lambda w: (
+            rules.retrieve_co2_removal_data.output.cultivation_emissions_1G
             if config_provider("sector", "perennials")(w)
             else []
         ),

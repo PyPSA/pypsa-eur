@@ -6,20 +6,61 @@ Compute biogas and solid biomass potentials for each clustered model region
 using data from JRC ENSPRESO.
 """
 
+import copy
 import logging
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from scripts._helpers import (
-    configure_logging,
-    resolve_biomass_classes,
-    set_scenario_config,
-)
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
+
+# 1G biofuel crop groups and their target biomass class names.
+# In the default config these sit in "not included".
+# When sector: perennials=True, resolve_biomass_classes() moves them automatically.
+ONE_G_BIOFUEL_CLASSES = {
+    "Bioethanol barley, wheat, grain maize, oats, other cereals and rye": "biofuels_1G_bioethanol_cereals",
+    "Sugar from sugar beet": "biofuels_1G_bioethanol_sugar",
+    "Rape seed": "biofuels_1G_biodiesel",
+    "Sunflower, soya seed ": "biofuels_1G_biodiesel",
+}
+
+
+def resolve_biomass_classes(classes, perennials_enabled):
+    """
+    Move the 1G biofuel crop groups from 'not included' into their
+    biofuels_1G_* classes when perennials are enabled.
+
+    Cases:
+      perennials=False  → return classes unchanged.
+      perennials=True, all groups in 'not included' → move them (normal case).
+      perennials=True, no groups in 'not included' → raise AssertionError.
+      perennials=True, some groups elsewhere → move available ones, warn about rest.
+    """
+    if not perennials_enabled:
+        return classes
+    classes = copy.deepcopy(classes)
+    not_incl = classes.get("not included", [])
+    in_ni = [g for g in ONE_G_BIOFUEL_CLASSES if g in not_incl]
+    elsewhere = [g for g in ONE_G_BIOFUEL_CLASSES if g not in not_incl]
+    if not in_ni:
+        raise AssertionError(
+            "sector: perennials=true but no 1G-biofuel groups are in "
+            "biomass: classes: 'not included'. If all 1G-biofuels are used "
+            "there is no land available for perennials."
+        )
+    if elsewhere:
+        logger.warning(
+            "perennials: 1G groups already allocated outside 'not included' "
+            f"— skipped (running perennials only for available groups): {elsewhere}"
+        )
+    for g in in_ni:
+        classes["not included"].remove(g)
+        classes.setdefault(ONE_G_BIOFUEL_CLASSES[g], []).append(g)
+    return classes
 
 
 def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_type):
@@ -212,22 +253,39 @@ def area(gdf):
     return gdf.to_crs(epsg=3035).area.div(1e6)
 
 
-def convert_nuts2_to_regions(bio_nuts2, regions):
+def convert_nuts2_to_regions(bio_nuts2, regions, extensive=True):
     """
-    Converts biomass potentials given in NUTS2 to PyPSA-Eur regions based on
-    the overlay of both GeoDataFrames in proportion to the area.
+    Converts values given in NUTS2 to PyPSA-Eur regions based on the overlay of
+    both GeoDataFrames.
 
     Parameters
     ----------
     bio_nuts2 : gpd.GeoDataFrame
-        JRC ENSPRESO biomass potentials indexed by NUTS2 shapes.
+        Values indexed by NUTS2 shapes, e.g. JRC ENSPRESO biomass potentials.
     regions : gpd.GeoDataFrame
         PyPSA-Eur clustered onshore regions
+    extensive : bool, default True
+        If True, the values are totals (e.g. MWh/a) and are split in proportion
+        to the share of the NUTS2 area inside each region. If False, the values
+        are rates (e.g. yields in MWh/ha/a) and each region gets the average of
+        the overlapping NUTS2 values weighted by the overlap area; NUTS2 regions
+        without a value are left out of the average.
 
     Returns
     -------
-    gpd.GeoDataFrame
+    gpd.GeoDataFrame or pd.DataFrame
     """
+    if not extensive:
+        overlay = gpd.overlay(regions, bio_nuts2, keep_geom_type=True)
+        overlap = area(overlay)
+        cols = overlay.columns.difference({"name", "geometry"})
+        values = overlay[cols].astype(float)
+        weights = values.notna().mul(overlap, axis=0)
+        weighted = values.mul(overlap, axis=0).groupby(overlay["name"]).sum(min_count=1)
+        return weighted.div(weights.groupby(overlay["name"]).sum()).reindex(
+            regions["name"].values
+        )
+
     # calculate area of nuts2 regions
     bio_nuts2["area_nuts2"] = area(bio_nuts2)
 
@@ -340,6 +398,42 @@ def add_unsustainable_potentials(df, input_eurostat):
     return df
 
 
+def enspreso_potentials_for_year(year, scenario):
+    """
+    ENSPRESO potentials for a year, interpolated linearly between the
+    available years and taken at 2050 after 2050.
+    """
+    if year > 2050:
+        logger.info("No biomass potentials for years after 2050, using 2050.")
+        return enspreso_biomass_potentials(max(AVAILABLE_BIOMASS_YEARS), scenario)
+
+    if year not in AVAILABLE_BIOMASS_YEARS:
+        before = int(np.floor(year / 10) * 10)
+        after = int(np.ceil(year / 10) * 10)
+        logger.info(
+            f"No biomass potentials for {year}, interpolating linearly between {before} and {after}."
+        )
+
+        enspreso_before = enspreso_biomass_potentials(before, scenario)
+        enspreso_after = enspreso_biomass_potentials(after, scenario)
+
+        fraction = (year - before) / (after - before)
+
+        return enspreso_before + fraction * (enspreso_after - enspreso_before)
+
+    logger.info(f"Using biomass potentials for {year}.")
+    return enspreso_biomass_potentials(year, scenario)
+
+
+def potentials_per_region(enspreso, nuts2, regions):
+    """
+    Map ENSPRESO NUTS2 potentials onto the clustered regions.
+    """
+    enspreso = disaggregate_nuts0(enspreso)
+    df_nuts2 = gpd.GeoDataFrame(nuts2.geometry).join(enspreso)
+    return convert_nuts2_to_regions(df_nuts2, regions)
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -359,49 +453,37 @@ if __name__ == "__main__":
     year = params["year"] if overnight else investment_year
     scenario = params["scenario"]
 
-    if year > 2050:
-        logger.info("No biomass potentials for years after 2050, using 2050.")
-        max_year = max(AVAILABLE_BIOMASS_YEARS)
-        enspreso = enspreso_biomass_potentials(max_year, scenario)
-
-    elif year not in AVAILABLE_BIOMASS_YEARS:
-        before = int(np.floor(year / 10) * 10)
-        after = int(np.ceil(year / 10) * 10)
-        logger.info(
-            f"No biomass potentials for {year}, interpolating linearly between {before} and {after}."
-        )
-
-        enspreso_before = enspreso_biomass_potentials(before, scenario)
-        enspreso_after = enspreso_biomass_potentials(after, scenario)
-
-        fraction = (year - before) / (after - before)
-
-        enspreso = enspreso_before + fraction * (enspreso_after - enspreso_before)
-
-    else:
-        logger.info(f"Using biomass potentials for {year}.")
-        enspreso = enspreso_biomass_potentials(year, scenario)
-
-    enspreso = disaggregate_nuts0(enspreso)
+    enspreso = enspreso_potentials_for_year(year, scenario)
 
     nuts2 = build_nuts2_shapes(snakemake.input.nuts2, snakemake.input.country_shapes)
 
-    df_nuts2 = gpd.GeoDataFrame(nuts2.geometry).join(enspreso)
-
     regions = gpd.read_file(snakemake.input.regions_onshore)
 
-    df = convert_nuts2_to_regions(df_nuts2, regions)
+    df = potentials_per_region(enspreso, nuts2, regions)
 
     df.to_csv(snakemake.output.biomass_potentials_all)
 
-    classes = resolve_biomass_classes(
-        params["classes"], snakemake.config["sector"].get("perennials", False)
-    )
+    perennials = snakemake.config["sector"].get("perennials", False)
+    classes = resolve_biomass_classes(params["classes"], perennials)
     grouper = {v: k for k, vv in classes.items() for v in vv}
     df = df.T.groupby(grouper).sum().T
 
     input_eurostat = snakemake.input.eurostat
     df = add_unsustainable_potentials(df, input_eurostat)
+
+    land_year = snakemake.config["perennials"]["biofuels_1G_land_year"]
+    if perennials and land_year is not None:
+        # the 1G biofuel cropland available for perennialisation is locked at
+        # land_year and phased in like the other sustainable potentials
+        logger.info(f"1G biofuel potentials for perennialisation from {land_year}.")
+        locked = potentials_per_region(
+            enspreso_potentials_for_year(land_year, scenario), nuts2, regions
+        )
+        locked = locked.T.groupby(grouper).sum().T.filter(like="biofuels_1G")
+        share_sus = params["share_sustainable_potential_available"][investment_year]
+        scale = pd.Series(share_sus, index=locked.index)
+        scale[locked.filter(regex=r"CH\d*", axis=0).index] = 1.0
+        df[locked.columns] = locked.mul(scale, axis=0)
 
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"

@@ -4,7 +4,7 @@
 """
 Retrieve crop harvest data from the Eurostat API (dataset ``apro_cpshr``) at
 NUTS2 and NUTS0 resolution, and compute production-weighted average yields
-(t/ha, then converted to MWh/ha for 1G biofuel crops) per NUTS2 region for
+(t/ha, then converted to MWh of crop per ha for 1G biofuel crops) per NUTS2 region for
 1st-generation biofuel feedstocks and perennial grasses.
 
 "Eurostat average" in the name refers to this production-weighted averaging
@@ -20,13 +20,12 @@ the NUTS2021 region definitions used by PyPSA-Eur.
 Outputs a single CSV with columns for each crop class (cereals, sugar beet,
 rapeseed, perennials) indexed by NUTS2 region.
 
-Biofuel conversion efficiencies (t_biofuel / t_feedstock) are read from the
-``efficiency`` parameter of the ``ethanol from wheat``, ``ethanol from sugar
-beet``, and ``biodiesel from rapeseed`` technologies in the technology-data
-cost assumptions, sourced from:
-
-    Banja et al. (2013), "Biofuels in the European Union - A general overview",
-    JRC Technical Report, doi:10.2760/69179, Tables 93, 133, 155, 159.
+The 1G yields are converted to energy with the crop heating values of the
+JRC ENSPRESO biomass report (Ruiz et al. 2015, doi:10.2790/39014, Annex 5,
+Table 26, from the CO2-removal dataset), the same basis as the ENSPRESO 1G potentials they are divided by in
+``add_perennials()``: the land area is MWh of crop / (MWh of crop per ha).
+Sugar beet's 16.6 GJ/t is per tonne of dry matter; Eurostat reports fresh beet,
+taken at 25% dry matter (JRC, Edwards et al. 2019, Table 131).
 """
 
 import logging
@@ -35,8 +34,6 @@ from pathlib import Path
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-
-from scripts._helpers import load_costs
 
 logger = logging.getLogger(__name__)
 
@@ -52,45 +49,38 @@ def harmonize_to_nuts2021(df, keep_col, nuts2021_n2):
     # NUTS2 target regions
     target = nuts2021_n2.index.sort_values()
 
-    # Split df
     df = df.copy()
 
-    # Identify NUTS2 and NUTS0 by index length
+    # NUTS2 codes have 4 characters, NUTS0 codes 2
     df["is_nuts2"] = df.index.str.len() == 4
 
-    # Split into NUTS2 and NUTS0
     df_nuts2 = df[df["is_nuts2"]]
     df_nuts0 = df[~df["is_nuts2"]]
 
-    # Prepare working layer for only NUTS2
     df_work = df_nuts2[[keep_col]].reindex(target)
 
-    # Country code extraction (first 2 chars)
     df_work["country"] = df_work.index.str[:2]
 
-    # Fallback 2 — Use NUTS-0 values
+    # fallback 1: NUTS0 values
     df_work = df_work.join(
         df_nuts0[[keep_col]].rename(columns={keep_col: "fallback"}), on="country"
     )
     df_work[keep_col] = df_work[keep_col].fillna(df_work["fallback"])
     df_work.drop(columns=["fallback"], inplace=True)
 
-    # Join geometry
     nuts_proj = nuts2021_n2.to_crs(epsg=3035)
     gdf = nuts_proj.join(df_work)[[keep_col, "country", "geometry"]]
 
-    # Fallback 3 — Spatial neighbors mean or nearest region if island
+    # fallback 2: mean of neighbouring regions, or nearest region for islands
     mask_missing = gdf[keep_col].isna() | (gdf[keep_col] <= 0)
     if mask_missing.any():
         logger.warning("Spatial fallback required for %d regions", mask_missing.sum())
 
-        # Pre-calc distance matrix only once
         valid = gdf[gdf[keep_col].notna() & (gdf[keep_col] > 0)]
 
         for idx in gdf[mask_missing].index:
             region = gdf.loc[idx, "geometry"]
 
-            # Touching neighbors
             neigh_idxs = gdf[gdf.geometry.touches(region)].index.tolist()
             neigh_vals = gdf.loc[neigh_idxs, keep_col].dropna()
             neigh_vals = neigh_vals[neigh_vals > 0]
@@ -103,7 +93,6 @@ def harmonize_to_nuts2021(df, keep_col, nuts2021_n2):
                 gdf.at[idx, keep_col] = valid.at[nearest_idx, keep_col]
                 logger.debug("Spatial fallback for %s: nearest = %s", idx, nearest_idx)
 
-    # Final output tidy
     result = gdf[[keep_col]]
     result.index.name = "NUTS2"
     result.sort_index()
@@ -111,7 +100,7 @@ def harmonize_to_nuts2021(df, keep_col, nuts2021_n2):
 
 
 def calculate_yields(
-    filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, biofuel_yields
+    filepath_nuts2, filepath_nuts0, crops_sel, crops_mapping, crop_energy
 ):
     # filter columns - keep only relevant
     df_crops_raw_nuts2 = pd.read_csv(filepath_nuts2)
@@ -139,18 +128,11 @@ def calculate_yields(
         "Time frequency",
     ]
 
-    # useful columns:
-    # Index(['freq', 'crops', 'Crops', 'strucpro', 'Structure of production', 'geo','TIME_PERIOD', 'OBS_VALUE'],
-    # freq : 'A' meaning annual
-    # 'crops' : code of the crops e.g. 'G0000', 'G1000', 'G2000', 'G2100', 'G2900'
-    # 'Crops' : name of the corp e.g. Sugar beet (excluding seed
-    # 'strucpro' : type of data ['AR', 'MA', 'PR_HU_EU'], where AR is  cultivated area, MA is  and PR_HU_EU is production at standard EU humidity
-    # 'OBS_VALUE' : numerical value
-
+    # strucpro: AR = cultivated area, PR_HU_EU = production at standard EU humidity
     df_crops = df_crops_raw.drop(columns=columns_to_drop, errors="ignore")
     df_crops["OBS_VALUE"] = df_crops["OBS_VALUE"].fillna(0)
 
-    # Step 1: Filter to relevant rows for 2023 and strucpro of interest
+    # keep area and production of the selected crops
     df_sub = df_crops[
         (df_crops["strucpro"].isin(["AR", "PR_HU_EU"]))
         & (df_crops["crops"].isin(crops_sel))
@@ -228,7 +210,7 @@ def calculate_yields(
 
     unsustainable_biofuels_yields = pd.DataFrame(weighted_yields)
 
-    # unsustainable biomass yield units from t/ha to MWh/ha
+    # 1G crop yields from t/ha to MWh of crop per ha
     unsustainable_biofuels_yields = unsustainable_biofuels_yields[
         unsustainable_biofuels_yields.index.get_level_values("mapping") != "PERENNIALS"
     ]
@@ -236,7 +218,7 @@ def calculate_yields(
     unsustainable_biofuels_yields["energy_yields_(MWh/ha)"] = (
         unsustainable_biofuels_yields["weighted_YL_(t/ha)"]
         * unsustainable_biofuels_yields.index.get_level_values("mapping").map(
-            biofuel_yields
+            crop_energy
         )
     )
 
@@ -294,22 +276,17 @@ if __name__ == "__main__":
         MINBIORPS1=["I1110", "I1120", "I1130", "I1110-1130", "I0000"],
         PERENNIALS=perennial_codes,
     )
-    costs = load_costs(snakemake.input.costs)
-
-    # conv = snakemake.params.biofuel_conversion
-    # LHV values are fixed physical constants, not parameters: JRC Technical Report doi:10.2760/69179
-    LHV_fuels = {
-        "ethanol": 7.447,
-        "biodiesel": 10.194,
-    }  # MWh/t (26.81 MJ/kg, 36.7 MJ/kg)
-
-    biofuel_yields = {
-        "MINBIOCRP11": costs.at["ethanol from wheat", "efficiency"]
-        * LHV_fuels["ethanol"],
-        "MINBIOCRP21": costs.at["ethanol from sugar beet", "efficiency"]
-        * LHV_fuels["ethanol"],
-        "MINBIORPS1": costs.at["biodiesel from rapeseed", "efficiency"]
-        * LHV_fuels["biodiesel"],
+    # crop heating values (GJ/t, ENSPRESO report Table 26) in MWh per tonne as
+    # reported by Eurostat; sugar beet's value is per tonne of dry matter, with
+    # 25% dry matter in fresh beet (JRC, Edwards et al. 2019, Table 131)
+    lhv = pd.read_csv(snakemake.input.crop_heating_values, index_col=0).squeeze(
+        "columns"
+    )
+    sugar_beet_dry_matter = 0.25
+    crop_energy = {
+        "MINBIOCRP11": lhv["Cereals"] / 3.6,
+        "MINBIOCRP21": lhv["Sugar Beet"] * sugar_beet_dry_matter / 3.6,
+        "MINBIORPS1": lhv["Rape"] / 3.6,
     }
 
     other_crops_codes = [
@@ -326,7 +303,7 @@ if __name__ == "__main__":
             filepath_nuts2=CROPS_CSV_NUTS2,
             crops_sel=crops_sel,
             crops_mapping=crops_mapping,
-            biofuel_yields=biofuel_yields,
+            crop_energy=crop_energy,
         )
     )
 
