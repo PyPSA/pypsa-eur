@@ -925,6 +925,20 @@ rule build_biomass_potentials:
     input:
         enspreso_biomass=rules.retrieve_enspreso_biomass.output["xlsx"],
         eurostat=resources("eurostat_energy_balances.csv"),
+        costs=lambda w: (
+            (
+                resources(f"costs_{config_provider('costs', 'year')(w)}_processed.csv")
+                if config_provider("foresight")(w) == "overnight"
+                else resources("costs_{planning_horizons}_processed.csv")
+            )
+            if config_provider("sector", "perennials")(w)
+            else []
+        ),
+        crop_heating_values=lambda w: (
+            rules.retrieve_co2_removal_data.output.crop_heating_values
+            if config_provider("sector", "perennials")(w)
+            else []
+        ),
         nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         nuts3_population=ancient(rules.retrieve_nuts3_population.output["gz"]),
@@ -958,7 +972,7 @@ rule build_perennials_yields_eurostat_average:
         nuts2021=rules.retrieve_eu_nuts_2021.output.shapes_level_2,
         crops_nuts2=rules.retrieve_co2_removal_data.output.eurostat_crops_nuts2,
         crops_nuts0=rules.retrieve_co2_removal_data.output.eurostat_crops_nuts0,
-        costs=resources(f"costs_{config['costs']['year']}_processed.csv"),
+        crop_heating_values=rules.retrieve_co2_removal_data.output.crop_heating_values,
     output:
         yields_all=resources("perennials_yields_1G_biofuels.csv"),
     log:

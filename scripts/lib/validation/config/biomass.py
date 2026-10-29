@@ -62,6 +62,19 @@ class _BiomassClassesConfig(ConfigModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class _UnsustainableBioliquidsConfig(ConfigModel):
+    """Configuration for `biomass.unsustainable_bioliquids` settings."""
+
+    MWh_bioethanol_per_tbioethanol: float = Field(
+        7.447,
+        description="Lower heating value of bioethanol (MWh/t), 26.8 GJ/t (JRC, Edwards et al. 2019).",
+    )
+    MWh_biodiesel_per_tbiodiesel: float = Field(
+        10.19,
+        description="Lower heating value of biodiesel (MWh/t), 36.7 GJ/t (JRC, Edwards et al. 2019).",
+    )
+
+
 class BiomassConfig(BaseModel):
     """Configuration for `biomass` settings."""
 
@@ -102,4 +115,8 @@ class BiomassConfig(BaseModel):
             2050: 1,
         },
         description="Share determines phase-in of ENSPRESO biomass potentials.",
+    )
+    unsustainable_bioliquids: _UnsustainableBioliquidsConfig = Field(
+        default_factory=_UnsustainableBioliquidsConfig,
+        description="Properties of the unsustainable bioliquids, used to derive the 1st-generation biofuel cropland freed by their phase-out for `sector: perennials`.",
     )

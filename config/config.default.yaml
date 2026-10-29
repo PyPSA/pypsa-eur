@@ -422,7 +422,8 @@ renewable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#perennials
 perennials:
-  sequestration_co2: 2
+  sequestration_co2_credited: 2
+  land_multiplier: 1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -575,6 +576,9 @@ biomass:
     2040: 1
     2045: 1
     2050: 1
+  unsustainable_bioliquids:
+    MWh_bioethanol_per_tbioethanol: 7.447
+    MWh_biodiesel_per_tbiodiesel: 10.19
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar_thermal
 solar_thermal:

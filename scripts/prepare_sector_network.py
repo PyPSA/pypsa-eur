@@ -1331,9 +1331,12 @@ def add_perennials(n, costs):
     (1G) biofuel crops (cereals, sugar beet, rapeseed) they replace. The land
     area available for conversion at each node is backed out from the biomass
     potential already allocated to 1G biofuels (``biomass_potentials``,
-    MWh/y) divided by the 1G crop yield (MWh/ha/y) at that node, giving a
-    displaced area in ha; multiplying by a fixed CO2 sequestration rate per
-    hectare (``perennials.sequestration_co2``) gives the store's CO2 potential.
+    MWh of crop/y) divided by the 1G crop yield (MWh of crop/ha/y) at that
+    node, giving a displaced area in ha; multiplying by the credited CO2
+    sequestration per hectare (``perennials.sequestration_co2_credited``)
+    gives the store's CO2 potential.
+    Grass-clover is assumed to receive the same N fertiliser as the 1G crops
+    it replaces, so the field N2O and the ammonia demand do not change.
     A single "co2 perennials" Link models the harvesting process: CO2 drawn
     from the atmosphere (bus0) is converted into biogas (bus3) and stored CO2
     (bus1), with capacity restricted to the April-October harvesting season
@@ -1345,7 +1348,7 @@ def add_perennials(n, costs):
         The PyPSA network container object
     costs : pd.DataFrame
         Costs and parameters for different technologies. Must contain a
-        'perennials gbr' entry with 'electricity-input', 'biogas-output',
+        'perennials refining' entry with 'electricity-input', 'biogas-output',
         'capital_cost', 'VOM', and 'lifetime' parameters
 
     Returns
@@ -1361,7 +1364,7 @@ def add_perennials(n, costs):
     yields aggregated to clustered network regions, see
     ``build_perennials_yields_eurostat_average.py`` and
     ``build_perennials_yields.py``), and
-    ``snakemake.config["perennials"]["sequestration_co2"]``.
+    ``snakemake.config["perennials"]["sequestration_co2_credited"]``.
     """
 
     logger.info("Adding perennials.")
@@ -1377,9 +1380,9 @@ def add_perennials(n, costs):
         biomass_potentials.filter(regex="biofuels_1G")
         / perennials_yields_1G_biofuels.filter(regex="biofuels_1G")
     ).sum(axis=1)
-    # (MWh/y) / (MWh / ha / y) = (ha) returns the area used by sum of the 3 biofuels_1G classes which can be assigned for perennials
+    # (MWh_crop/y) / (MWh_crop / ha / y) = (ha) returns the area used by sum of the 3 biofuels_1G classes which can be assigned for perennials
     perennials_potentials = (
-        perennials_area * snakemake.config["perennials"]["sequestration_co2"]
+        perennials_area * snakemake.config["perennials"]["sequestration_co2_credited"]
     )  # (tCO2seq)  =  (ha) * (tCO2 seq/ha)
 
     nodes = pop_layout.index
@@ -1397,7 +1400,7 @@ def add_perennials(n, costs):
     # calculate CO2 sequestration per tDM perennials
     perennial_CO2_seq = (
         perennials_yields_1G_biofuels["perennials"]
-        / snakemake.config["perennials"]["sequestration_co2"]
+        / snakemake.config["perennials"]["sequestration_co2_credited"]
     )  # (tDM/tCO2 seq)
 
     # calculate biogas production based on harvesting time (in month)
@@ -1418,15 +1421,17 @@ def add_perennials(n, costs):
         bus2=nodes.values,
         bus3=spatial.gas.biogas,
         efficiency=1,
-        efficiency2=-costs.at["perennials gbr", "electricity-input"]
+        efficiency2=-costs.at["perennials refining", "electricity-input"]
         * perennial_CO2_seq,
-        efficiency3=costs.at["perennials gbr", "biogas-output"] * perennial_CO2_seq,
+        efficiency3=costs.at["perennials refining", "biogas-output"]
+        * perennial_CO2_seq,
         carrier="co2 perennials",
         p_nom_extendable=True,
         p_max_pu=p_max_pu,
-        capital_cost=costs.at["perennials gbr", "capital_cost"] * perennial_CO2_seq,
-        marginal_cost=costs.at["perennials gbr", "VOM"] * perennial_CO2_seq,
-        lifetime=costs.at["perennials gbr", "lifetime"],
+        capital_cost=costs.at["perennials refining", "capital_cost"]
+        * perennial_CO2_seq,
+        marginal_cost=costs.at["perennials refining", "VOM"] * perennial_CO2_seq,
+        lifetime=costs.at["perennials refining", "lifetime"],
     )
 
     n.add(

@@ -453,6 +453,21 @@
           },
           "description": "Share determines phase-in of ENSPRESO biomass potentials.",
           "type": "object"
+        },
+        "unsustainable_bioliquids": {
+          "description": "Configuration for `biomass.unsustainable_bioliquids` settings.",
+          "properties": {
+            "MWh_bioethanol_per_tbioethanol": {
+              "default": 7.447,
+              "description": "Lower heating value of bioethanol (MWh/t), 26.8 GJ/t (JRC, Edwards et al. 2019).",
+              "type": "number"
+            },
+            "MWh_biodiesel_per_tbiodiesel": {
+              "default": 10.19,
+              "description": "Lower heating value of biodiesel (MWh/t), 36.7 GJ/t (JRC, Edwards et al. 2019).",
+              "type": "number"
+            }
+          }
         }
       }
     },
@@ -2948,9 +2963,15 @@
     "PerennialsConfig": {
       "description": "Configuration for `perennials` settings.",
       "properties": {
-        "sequestration_co2": {
+        "sequestration_co2_credited": {
           "default": 2,
-          "description": "Tonnes of CO2 equivalent sequestered per hectare per year when 1st-generation biofuel cropland is converted to perennial grasses.",
+          "description": "CO2 removal credited as carbon dioxide removal (tCO2/ha/yr) when 1st-generation biofuel cropland is converted to grass-clover. It includes the credited share of the soil carbon gain, e.g. 2.2 tCO2/ha/yr for grass-clover (0.6 tC/ha/yr, DCA report 193, Table 3.4, at any N level) minus the uncertainty deduction and the reversals at ploughing when the sward is re-sown every 4-8 years (carbon farming certification methodologies under Regulation (EU) 2024/3012). Grass-clover is fertilised like the 1st-generation crops it replaces, so the field N2O and the ammonia demand do not change.",
+          "type": "number"
+        },
+        "land_multiplier": {
+          "default": 1.0,
+          "description": "User-driven multiplier of the land available for perennials, e.g. to project it or to reach a given potential. 1: the 1st-generation biofuel cropland of ENSPRESO 2020, scaled to the fuel energy of the Eurostat unsustainable bioliquids. Above 1, perennials may also take cropland that grows food or feed (indirect land use not modelled); the crop mix and the distribution over regions do not change.",
+          "minimum": 0,
           "type": "number"
         }
       }
@@ -8202,6 +8223,21 @@
         }
       }
     },
+    "_UnsustainableBioliquidsConfig": {
+      "description": "Configuration for `biomass.unsustainable_bioliquids` settings.",
+      "properties": {
+        "MWh_bioethanol_per_tbioethanol": {
+          "default": 7.447,
+          "description": "Lower heating value of bioethanol (MWh/t), 26.8 GJ/t (JRC, Edwards et al. 2019).",
+          "type": "number"
+        },
+        "MWh_biodiesel_per_tbiodiesel": {
+          "default": 10.19,
+          "description": "Lower heating value of biodiesel (MWh/t), 36.7 GJ/t (JRC, Edwards et al. 2019).",
+          "type": "number"
+        }
+      }
+    },
     "_UserAgentConfig": {
       "description": "Configuration for `overpass_api.user_agent` settings.",
       "properties": {
@@ -10129,9 +10165,15 @@
     "perennials": {
       "description": "Configuration for `perennials` settings.",
       "properties": {
-        "sequestration_co2": {
+        "sequestration_co2_credited": {
           "default": 2,
-          "description": "Tonnes of CO2 equivalent sequestered per hectare per year when 1st-generation biofuel cropland is converted to perennial grasses.",
+          "description": "CO2 removal credited as carbon dioxide removal (tCO2/ha/yr) when 1st-generation biofuel cropland is converted to grass-clover. It includes the credited share of the soil carbon gain, e.g. 2.2 tCO2/ha/yr for grass-clover (0.6 tC/ha/yr, DCA report 193, Table 3.4, at any N level) minus the uncertainty deduction and the reversals at ploughing when the sward is re-sown every 4-8 years (carbon farming certification methodologies under Regulation (EU) 2024/3012). Grass-clover is fertilised like the 1st-generation crops it replaces, so the field N2O and the ammonia demand do not change.",
+          "type": "number"
+        },
+        "land_multiplier": {
+          "default": 1.0,
+          "description": "User-driven multiplier of the land available for perennials, e.g. to project it or to reach a given potential. 1: the 1st-generation biofuel cropland of ENSPRESO 2020, scaled to the fuel energy of the Eurostat unsustainable bioliquids. Above 1, perennials may also take cropland that grows food or feed (indirect land use not modelled); the crop mix and the distribution over regions do not change.",
+          "minimum": 0,
           "type": "number"
         }
       }
@@ -10603,6 +10645,21 @@
           },
           "description": "Share determines phase-in of ENSPRESO biomass potentials.",
           "type": "object"
+        },
+        "unsustainable_bioliquids": {
+          "description": "Configuration for `biomass.unsustainable_bioliquids` settings.",
+          "properties": {
+            "MWh_bioethanol_per_tbioethanol": {
+              "default": 7.447,
+              "description": "Lower heating value of bioethanol (MWh/t), 26.8 GJ/t (JRC, Edwards et al. 2019).",
+              "type": "number"
+            },
+            "MWh_biodiesel_per_tbiodiesel": {
+              "default": 10.19,
+              "description": "Lower heating value of biodiesel (MWh/t), 36.7 GJ/t (JRC, Edwards et al. 2019).",
+              "type": "number"
+            }
+          }
         }
       }
     },
