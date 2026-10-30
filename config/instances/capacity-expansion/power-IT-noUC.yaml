@@ -18,7 +18,7 @@ scenario:
   clusters:
   - 5
   - 20
-  - 50
+  
   opts:
   - ''
 

@@ -2,7 +2,7 @@
 
 run:
   prefix: "capacity-expansion-power-IT-UC"
-  name: all
+  name: th_24c24
   scenarios:
     enable: true
     file: config/instances/scenarios/scenarios-power.yaml
@@ -16,9 +16,7 @@ foresight: overnight
 
 scenario:
   clusters:
-  - 5
   - 20
-  - 50
   opts:
   - ''
 
@@ -51,6 +49,6 @@ solving:
     linearized_unit_commitment: false
     noisy_costs: false
   solver:
-    name: [gurobi, smspp]
-    options: [gurobi-default, smspp-unitcommitment-capacity-expansion]
+    name: [gurobi, smspp, smspp, smspp]
+    options: [gurobi-default, smspp-unitcommitment-capacity-expansion, smspp-unitcommitment-dispatch-ucblock, smspp-unitcommitment-pph]
 

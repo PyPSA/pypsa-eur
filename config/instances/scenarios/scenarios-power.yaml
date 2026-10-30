@@ -4,11 +4,6 @@ th_24c24:
     temporal:
       resolution_elec: 24c24
 
-th_48c24:
-  clustering:
-    temporal:
-      resolution_elec: 48c24
-
 th_168c24:
   clustering:
     temporal:

@@ -26,11 +26,12 @@ Threads 32    # the same core count the reference run is given
 GURO_PAR_BARDENSETHRESH 200  # how dense a column has to be to be treated
               # as such, the value PyPSA passes
 
-2  # Number of double parameters
+3  # Number of double parameters
 #dblAAccSol 1e-08
 #dblRAccSol 1e-08
 dblMaxTime 43200.0
 BarConvTol 1e-05   # the accuracy the reference run asks for
+dblRelAcc  1e-3
 
 0  # Number of string parameters
 # strOutputFile uc_lp.lp

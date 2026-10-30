@@ -1223,6 +1223,7 @@ solving:
       dual_feasibility_tolerance: 1.0e-05
       random_seed: 123
     "gurobi-default":
+      MIPGap: 0.001
       threads: 32
       method: 2
       crossover: 0

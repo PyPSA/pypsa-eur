@@ -1,0 +1,117 @@
+demand_scenario: &demand_scenario
+  name: modify_components
+  params:
+    rules:
+    - component: Load
+      attribute: p_set
+      target: timeseries
+      operation: scale
+      value:
+        distribution: normal
+        mean: 1.0
+        std: 0.1
+        min: 0.8
+        max: 1.2
+        seed: 123
+
+scenarios:
+  demand_01: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_02: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_03: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_04: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_05: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_06: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_07: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_08: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_09: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_10: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_11: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_12: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_13: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_14: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_15: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_16: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_17: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_18: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_19: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_20: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_21: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_22: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_23: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_24: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_25: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_26: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_27: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_28: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_29: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_30: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_31: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_32: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_33: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_34: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_35: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_36: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_37: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_38: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_39: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_40: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_41: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_42: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_43: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_44: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_45: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_46: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_47: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_48: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_49: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_50: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_51: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_52: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_53: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_54: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_55: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_56: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_57: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_58: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_59: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_60: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_61: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_62: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_63: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_64: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_65: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_66: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_67: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_68: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_69: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_70: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_71: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_72: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_73: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_74: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_75: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_76: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_77: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_78: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_79: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_80: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_81: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_82: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_83: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_84: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_85: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_86: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_87: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_88: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_89: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_90: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_91: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_92: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_93: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_94: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_95: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_96: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_97: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_98: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_99: {prob: 0.01, structured_scenario: *demand_scenario}
+  demand_100: {prob: 0.01, structured_scenario: *demand_scenario}
