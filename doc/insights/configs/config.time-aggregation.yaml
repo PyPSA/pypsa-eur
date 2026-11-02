@@ -9,8 +9,8 @@ run:
   shared_resources:
     policy: 'base'
     exclude:
-      - snapshot_weightings.csv
-      - time_aggregation
+    - snapshot_weightings.csv
+    - time_aggregation
   scenarios:
     enable: true
     file: config/scenarios.time-aggregation.yaml
@@ -37,7 +37,7 @@ renewable:
     resource_classes: 3
   solar:
     resource_classes: 3
-  
+
 clustering:
   cluster_network:
     n_clusters: 60
