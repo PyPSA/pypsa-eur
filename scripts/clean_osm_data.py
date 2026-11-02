@@ -273,13 +273,17 @@ def _clean_rating(column):
     - column: pandas Series, the cleaned column
     """
     logger.info("Cleaning ratings.")
-    column = _to_str(column).str.replace("MW", "")
 
-    # Remove all remaining non-numeric characters except for semicolons
-    column = column.str.replace(r"[^0-9;]", "", regex=True)
+    def _to_mw(rating):
+        # Ratings in GW are converted to MW and may have decimals, e.g. "1.4 GW"
+        if "GW" in rating.upper():
+            value = "".join(c for c in rating if c.isdigit() or c == ".")
+            return round(float(value) * 1000) if value else 0
+        value = "".join(c for c in rating if c.isdigit())
+        return int(value) if value else 0
 
     # Sum up all ratings if there are multiple entries, skipping empty ones
-    column = column.str.split(";").apply(lambda x: sum(int(i) for i in x if i))
+    column = _to_str(column).str.split(";").apply(lambda x: sum(map(_to_mw, x)))
 
     return column.astype(str)
 
