@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+run:
+  prefix: "time-aggregation"
+  name: all
+  disable_progressbar: true
+  shared_resources:
+    policy: 'base'
+    exclude:
+      - snapshot_weightings.csv
+      - time_aggregation
+  scenarios:
+    enable: true
+    file: config/scenarios.time-aggregation.yaml
+
+electricity:
+  renewable_carriers:
+  - solar
+  - onwind
+  - offwind-ac
+  - offwind-dc
+  estimate_renewable_capacities:
+    enable: false
+  conventional_carriers:
+  - nuclear
+  - OCGT
+  - CCGT
+
+renewable:
+  offwind-ac:
+    resource_classes: 2
+  offwind-dc:
+    resource_classes: 2
+  onwind:
+    resource_classes: 3
+  solar:
+    resource_classes: 3
+  
+clustering:
+  cluster_network:
+    n_clusters: 60
+
+sector:
+  heat_pump_sources:
+    urban central:
+    - air
+  solar_thermal: false
+
+solving:
+  solver_options:
+    "gurobi-default":
+      threads: 4
+  mem_mb: 175000
+  runtime: 48h
