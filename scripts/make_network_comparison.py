@@ -510,9 +510,7 @@ if __name__ == "__main__":
 
     # Compare DC links link by link
     logger.info("Comparing DC links...")
-    links_comparison = compare_links(
-        get_dc_links(n_incumbent), get_dc_links(n_release)
-    )
+    links_comparison = compare_links(get_dc_links(n_incumbent), get_dc_links(n_release))
 
     status_counts = links_comparison["status"].value_counts(sort=False)
     logger.info("DC links: " + ", ".join(f"{n} {s}" for s, n in status_counts.items()))
