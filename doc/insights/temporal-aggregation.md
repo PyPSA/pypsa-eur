@@ -7,7 +7,8 @@ Solving PyPSA-Eur at hourly resolution takes long and needs much memory, so
 the snapshots are often aggregated before optimisation. This page shows how
 much accuracy that costs and how much effort it saves. In short, segmentation
 keeps system costs and capacities close to the hourly model at a fraction of
-the effort. Averaging does so only at moderate resolutions.
+the effort, down to about 1000 snapshots. Averaging does so only at moderate
+resolutions.
 
 ## Setup
 
@@ -30,29 +31,33 @@ row: total system cost against the hours per snapshot, solving time and peak
 memory. Middle: cost composition of the hourly model. Bottom rows: differences
 in cost, power capacity and storage energy capacity by technology; dots mark
 the net difference. Power capacity counts generators and the input side of
-conversion technologies. Costs and capacities exclude oil and methanol
-stores, which the solver did not resolve precisely in the hourly model.
+conversion technologies. The bottom rows show resolutions up to 12 hours.
+Costs and capacities exclude oil and methanol stores, which the solver did
+not resolve precisely in the hourly model.
 
 ## Results
 
 **Total cost.** Aggregation lowers total system cost because it smooths out
 the peaks and ramps that the system has to balance. With segmentation, the
-cost falls slowly and steadily with coarser resolution. With averaging, it
-stays close to the hourly model up to about 4 hours per snapshot and then
-falls fast.
+cost stays close to the hourly model up to about 8 hours per snapshot (about
+1000 snapshots) and then falls faster; at 36 to 48 hours it is as far off as
+averaging at 12 hours. With averaging, the cost stays close to the hourly
+model up to about 4 hours per snapshot and then falls fast.
 
 **Solving effort.** Solving time and peak memory fall steeply with coarser
 resolution. The hourly model needs several times the time and twice the
 memory of the 2-hourly models. For the same number of snapshots, both methods
 need comparable effort, so the higher accuracy of segmentation comes at no
-extra cost.
+extra cost. Beyond 12 hours per snapshot, solving time stops falling, so
+coarser resolutions lose accuracy without saving time.
 
 **Technology mix.** The total cost hides shifts between technologies. At 10
 and 12 hours, averaging replaces wind and batteries with solar and builds less
 heat storage. Blocks of this length flatten the daily solar cycle, so solar
 looks like steady supply and short-term storage loses its purpose.
-Segmentation changes the mix only slightly; its largest effect is less heating
-capacity.
+Up to 12 hours, segmentation changes the mix only slightly; its largest
+effect is less heating capacity. Beyond 12 hours, it shifts the mix in the
+same direction as averaging: more solar, less wind and fewer batteries.
 
 ## Reproducibility
 

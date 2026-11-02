@@ -64,7 +64,8 @@ CAPACITY_GROUPS = [
     "gas-to-power/heat",
 ]
 STORAGE_GROUPS = ["battery", "hydrogen", "heating", "e-fuels"]
-EXCLUDED_CAPACITIES = r"pipeline|charger|water pits discharger|water tanks discharger"
+EXCLUDED_CAPACITIES = r"pipeline|(?<!dis)charger|water (pits|tanks) discharger"
+MAX_HOURS_BARS = 12
 
 
 def to_group(carrier: str) -> str:
@@ -250,6 +251,7 @@ def plot_baseline(ax, costs: pd.Series):
 def plot_differences(axes: list, df: pd.DataFrame, xlabel: str):
     """Diverging stacked bars of differences to the hourly model, one axis per method."""
     diff = (df - df.loc["hourly", 1]).drop("hourly", level="method")
+    diff = diff[diff.index.get_level_values("hours") <= MAX_HOURS_BARS]
     pos = diff.clip(lower=0).sum(axis=1).max()
     neg = diff.clip(upper=0).sum(axis=1).min()
     span = 1.1 * max(pos, -neg)
