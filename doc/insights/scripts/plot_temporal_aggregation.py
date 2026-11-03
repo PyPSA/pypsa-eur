@@ -18,6 +18,7 @@ import logging
 import re
 from pathlib import Path
 
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -64,7 +65,14 @@ CAPACITY_GROUPS = [
     "gas-to-power/heat",
 ]
 STORAGE_GROUPS = ["battery", "hydrogen", "heating", "e-fuels"]
-EXCLUDED_CAPACITIES = r"pipeline|(?<!dis)charger|water (pits|tanks) discharger"
+NETWORKS = {
+    "power transmission": ("#6c9459", r"^(AC|DC)$"),
+    "hydrogen pipelines": ("#f081dc", r"^H2 pipeline"),
+    "gas pipelines": ("#ebbca0", r"^gas pipeline"),
+    "CO2 pipelines": ("#f5627f", r"^CO2 pipeline"),
+}
+COLORS = {g: c for g, (c, _) in {**GROUPS, **NETWORKS}.items()}
+EXCLUDED_CAPACITIES = r"pipeline|(?<!dis)charger|water (?:pits|tanks) discharger"
 MAX_HOURS_BARS = 12
 
 
@@ -91,8 +99,11 @@ def read_scenario(path: Path) -> dict[str, pd.Series]:
     costs = pd.read_csv(path / "csvs/costs.csv", index_col=[0, 1, 2]).iloc[:, 0]
     excluded = costs.index.get_level_values("component") == "Store"
     excluded &= costs.index.get_level_values("carrier").isin(EXCLUDED_STORES)
-    costs = costs[~excluded]
-    costs = costs.groupby(costs.index.get_level_values("carrier").map(to_group)).sum()
+    costs = costs[~excluded].groupby(level="carrier").sum()
+    network = pd.Series(
+        {n: costs.filter(regex=pattern).sum() for n, (_, pattern) in NETWORKS.items()}
+    )
+    costs = costs.groupby(costs.index.map(to_group)).sum()
 
     capacities = pd.read_csv(path / "csvs/capacities.csv", index_col=[0, 1]).iloc[:, 0]
     component = capacities.index.get_level_values("component")
@@ -115,6 +126,7 @@ def read_scenario(path: Path) -> dict[str, pd.Series]:
         "costs": costs / 1e9,
         "power": power.reindex(CAPACITY_GROUPS, fill_value=0) / 1e3,
         "storage": storage.reindex(STORAGE_GROUPS, fill_value=0) / 1e6,
+        "network": network / 1e9,
         "solver": pd.Series(
             {
                 "seconds": float(solved.group(1)),
@@ -148,7 +160,7 @@ def load_results(results: Path) -> dict[str, pd.DataFrame]:
     }
     data = {
         key: pd.DataFrame({s: v[key] for s, v in scenarios.items()}).T.fillna(0)
-        for key in ["costs", "power", "storage", "solver"]
+        for key in ["costs", "power", "storage", "network", "solver"]
     }
     data["costs"] = data["costs"][[g for g in GROUPS if g in data["costs"]]]
     solver = data["solver"]
@@ -230,7 +242,7 @@ def plot_baseline(ax, costs: pd.Series):
     """Stacked bar of the reference cost composition, doubling as colour legend."""
     left = 0
     for group, value in costs.items():
-        ax.barh(0, value, left=left, color=GROUPS[group][0], label=group, height=0.6)
+        ax.barh(0, value, left=left, color=COLORS[group], label=group, height=0.6)
         left += value
     ax.set_xlim(0, left)
     ax.set_ylim(-0.5, 0.5)
@@ -242,7 +254,7 @@ def plot_baseline(ax, costs: pd.Series):
     ax.legend(
         loc="upper center",
         bbox_to_anchor=(0.5, -0.9),
-        ncols=6,
+        ncols=7,
         handlelength=1,
         columnspacing=1.2,
     )
@@ -264,7 +276,7 @@ def plot_differences(axes: list, df: pd.DataFrame, xlabel: str):
             left = part.cumsum(axis=1) - part
             for group in d.columns:
                 ax.barh(
-                    y, part[group], left=left[group], color=GROUPS[group][0], height=0.7
+                    y, part[group], left=left[group], color=COLORS[group], height=0.7
                 )
         net = d.sum(axis=1)
         ax.plot(net.clip(-span, span), y, "o", color="#20242C", ms=2.5, zorder=3)
@@ -299,14 +311,15 @@ def plot(data: dict, output: Path):
         ["costs_s"] * 3 + ["costs_a"] * 3,
         ["power_s"] * 3 + ["power_a"] * 3,
         ["storage_s"] * 3 + ["storage_a"] * 3,
+        ["network_s"] * 3 + ["network_a"] * 3,
     ]
     style = Path(__file__).with_name("insights.mplstyle")
     with plt.style.context(style):
         fig, axes = plt.subplot_mosaic(
             mosaic,
-            figsize=(7.5, 10),
+            figsize=(7.5, 11.5),
             layout="constrained",
-            height_ratios=[1.3, 0.35, 1, 1, 1],
+            height_ratios=[1.3, 0.35, 1, 1, 1, 0.8],
         )
         plot_cost_error(axes, data, ylim)
         plot_baseline(axes["base"], data["costs"].loc["hourly", 1])
@@ -314,6 +327,7 @@ def plot(data: dict, output: Path):
             ("costs", "cost difference (bn€/a)", "Cost by technology"),
             ("power", "capacity difference (GW)", "Power capacity"),
             ("storage", "capacity difference (TWh)", "Storage capacity"),
+            ("network", "cost difference (bn€/a)", "Network cost"),
         ]
         for key, xlabel, title in rows:
             row = [axes[f"{key}_{m[0]}"] for m in METHODS]
@@ -327,6 +341,8 @@ def plot(data: dict, output: Path):
                 fontweight="bold",
                 annotation_clip=False,
             )
+        handles = [mpatches.Patch(color=c, label=n) for n, (c, _) in NETWORKS.items()]
+        axes["network_s"].legend(handles=handles, loc="lower left", handlelength=1)
         fig.savefig(output)
         plt.close(fig)
     logger.info("Saved figure to %s", output)

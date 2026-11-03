@@ -29,7 +29,8 @@ methods under `clustering: temporal:` are compared (see
 **Figure.** Effect of temporal aggregation relative to the hourly model. Top
 row: total system cost against the hours per snapshot, solving time and peak
 memory. Middle: cost composition of the hourly model. Bottom rows: differences
-in cost, power capacity and storage energy capacity by technology; dots mark
+in cost, power capacity and storage energy capacity by technology, and in the
+cost of power transmission and of hydrogen, gas and CO2 pipelines; dots mark
 the net difference. Power capacity counts generators and the input side of
 conversion technologies. The bottom rows show resolutions up to 12 hours.
 Costs and capacities exclude oil and methanol stores, which the solver did
@@ -58,6 +59,13 @@ looks like steady supply and short-term storage loses its purpose.
 Up to 12 hours, segmentation changes the mix only slightly; its largest
 effect is less heating capacity. Beyond 12 hours, it shifts the mix in the
 same direction as averaging: more solar, less wind and fewer batteries.
+
+**Networks.** Up to 12 hours, segmentation changes network costs only
+slightly and builds slightly more power transmission. Averaging builds less
+power transmission and fewer hydrogen pipelines, mostly at 6 and 10 to 12
+hours, as the mix shifts from wind to solar. Gas and CO2 pipelines barely
+change with either method; the gas network is almost entirely existing
+capacity.
 
 ## Reproducibility
 
