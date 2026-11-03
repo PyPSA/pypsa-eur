@@ -1,0 +1,34 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - -  TSSBSCfg-IB-par.txt  - - - - - - - - - - - - - - - -
+#
+# The BundleSolver of InvestmentBlock/BSPar.txt on an InvestmentBlock over a
+# TSSB or an MSSB (the investment_outside form of pypsa2smspp), whose inner
+# stochastic Block is solved whole at every evaluation by BSCfg-IB.txt.
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BlockSolverConfig     # exact type of the Configuration object
+
+1  # the BlockSolverConfig is a "differential" one
+
+1  # number of (the names of) Solver in this BlockSolverConfig
+# now all the names of the Solver - - - - - - - - - - - - - - - - - - - - - -
+ParallelBundleSolver    # name of Solver: the components evaluated in
+                        # parallel by intMaxThread threads [see IBBundleCfg-par.txt]
+
+1  # number of ComputeConfig in this BlockSolverConfig
+
+# now all the ComputeConfig
+# 1st ComputeConfig - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# ComputeConfig of the BundleSolver
+
+*IBBundleCfg-par.txt  # ComputeConfig of the BundleSolver
+
+# end of 1st ComputeConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# end of BlockSolverConfig- - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - END TSSBSCfg-IB-par.txt - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -6,3 +6,5 @@
 
 logger: pypsa
 keep-going: true
+resources:
+  - solver_slots=1

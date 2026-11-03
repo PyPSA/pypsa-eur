@@ -261,7 +261,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/nlohmann_json-3.12.0-h54a6638_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/numcodecs-0.16.5-py313h08cd8bf_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/numexpr-2.14.1-py313h24ae7f9_101.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/numpy-2.4.3-py313hf6604e3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/numpy-2.3.5-py313hf6604e3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/openjpeg-2.5.4-h55fea9a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/openldap-2.6.13-hbde042b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/openpyxl-3.1.5-py313ha4be090_3.conda
@@ -634,10 +634,10 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/gurobi/linux-64/gurobi-13.0.1-py313_0.conda
       - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
-      - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
+      - pypi: git+https://github.com/SPSUnipi/pySMSpp.git?branch=main#e474d459489bee64ba8a7461b49095ee28befb09
+      - pypi: git+https://github.com/SPSUnipi/pypsa2smspp.git?branch=main#f759f8044982e4f6c4bff2f3e1675e54e9e3ae23
       - pypi: https://files.pythonhosted.org/packages/73/60/7138e98884ca105c76ef192f5b43165d6eac6f32b432853ebe9f09ee50c9/levenshtein-0.27.3-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/90/79/2fc252a63bc91d3c3b234d0a3a6ad4ebc460037a23cdcdaf9285f986e6c9/rapidfuzz-3.14.5-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fa/6e/3e955517e22cbdd565f2f8b2e73d52528b14b8bcfdb04f62466b071de847/validators-0.35.0-py3-none-any.whl
       osx-64:
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-cluster-generic-1.0.9-pyhdfd78af_0.tar.bz2
@@ -1116,7 +1116,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/nlohmann_json-3.12.0-h06076ce_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/numcodecs-0.16.5-py313h2f264a9_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/numexpr-2.14.1-py313h821d116_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.4.3-py313hb870fc3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.3.5-py313hf1665ba_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/openjpeg-2.5.4-h52bb76a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/openpyxl-3.1.5-py313hc34da29_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/openssl-3.6.2-hc881268_0.conda
@@ -1180,10 +1180,10 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zstd-1.5.7-h3eecb57_6.conda
       - conda: https://conda.anaconda.org/gurobi/osx-64/gurobi-13.0.1-py313_0.conda
       - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
+      - pypi: git+https://github.com/SPSUnipi/pySMSpp.git?branch=main#e474d459489bee64ba8a7461b49095ee28befb09
+      - pypi: git+https://github.com/SPSUnipi/pypsa2smspp.git?branch=main#f759f8044982e4f6c4bff2f3e1675e54e9e3ae23
       - pypi: https://files.pythonhosted.org/packages/11/66/252803f2010ba699618cdc048b6e1f7cc1f433c08b4a9a17579b92ab0142/rapidfuzz-3.14.5-cp313-cp313-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/3e/f2/162e9ea7490b36bbf05776c8e3a8114c75aa78546ddda8e8f36731db3da6/levenshtein-0.27.3-cp313-cp313-macosx_10_13_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fa/6e/3e955517e22cbdd565f2f8b2e73d52528b14b8bcfdb04f62466b071de847/validators-0.35.0-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-cluster-generic-1.0.9-pyhdfd78af_0.tar.bz2
@@ -1662,7 +1662,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/nlohmann_json-3.12.0-h784d473_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/numcodecs-0.16.5-py313h7d16b84_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/numexpr-2.14.1-py313h73ed539_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/numpy-2.4.3-py313he4a34aa_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/numpy-2.3.5-py313h16eae64_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openjpeg-2.5.4-hd9e9057_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openpyxl-3.1.5-py313he4f8f71_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openssl-3.6.2-hd24854e_0.conda
@@ -1726,9 +1726,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - conda: https://conda.anaconda.org/gurobi/osx-arm64/gurobi-13.0.1-py313_0.conda
       - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
+      - pypi: git+https://github.com/SPSUnipi/pySMSpp.git?branch=main#e474d459489bee64ba8a7461b49095ee28befb09
+      - pypi: git+https://github.com/SPSUnipi/pypsa2smspp.git?branch=main#f759f8044982e4f6c4bff2f3e1675e54e9e3ae23
       - pypi: https://files.pythonhosted.org/packages/01/2d/7316ba7f94e3d60e89bd120526bc71e4812866bb7162767a2a10f73f72c5/levenshtein-0.27.3-cp313-cp313-macosx_11_0_arm64.whl
-      - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ea/59/b2afd98e41af9cd54554a4c1c423d84cdd60e6b1c0a09496f033b55f60ec/rapidfuzz-3.14.5-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/fa/6e/3e955517e22cbdd565f2f8b2e73d52528b14b8bcfdb04f62466b071de847/validators-0.35.0-py3-none-any.whl
       win-64:
@@ -2188,7 +2188,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/netcdf4-1.7.3-nompi_py313hbe59507_100.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/numcodecs-0.16.5-py313hc90dcd4_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/numexpr-2.14.1-py313h7034ea3_101.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/numpy-2.4.3-py313ha8dc839_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/numpy-2.3.5-py313hce7ae62_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/onemkl-license-2025.3.1-h57928b3_12.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/openjpeg-2.5.4-h0e57b4f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/openpyxl-3.1.5-py313hc624790_3.conda
@@ -2266,9 +2266,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_6.conda
       - conda: https://conda.anaconda.org/gurobi/win-64/gurobi-13.0.1-py313_0.conda
       - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
+      - pypi: git+https://github.com/SPSUnipi/pySMSpp.git?branch=main#e474d459489bee64ba8a7461b49095ee28befb09
+      - pypi: git+https://github.com/SPSUnipi/pypsa2smspp.git?branch=main#f759f8044982e4f6c4bff2f3e1675e54e9e3ae23
       - pypi: https://files.pythonhosted.org/packages/42/1d/74f1ff589bb687d0cad2bbdceef208dc070f56d1e38a3831da8c00bf13bb/levenshtein-0.27.3-cp313-cp313-win_amd64.whl
-      - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cf/cb/0e251d731b3166378644238e8f0cf9e89858c024e19f75ca9f7e3ae83fd5/rapidfuzz-3.14.5-cp313-cp313-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/fa/6e/3e955517e22cbdd565f2f8b2e73d52528b14b8bcfdb04f62466b071de847/validators-0.35.0-py3-none-any.whl
   doc:
@@ -4008,7 +4008,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/nlohmann_json-3.12.0-h54a6638_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/numcodecs-0.16.5-py313h08cd8bf_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/numexpr-2.14.1-py313h24ae7f9_101.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/numpy-2.4.3-py313hf6604e3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/numpy-2.3.5-py313hf6604e3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/openjpeg-2.5.4-h55fea9a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/openldap-2.6.13-hbde042b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/openpyxl-3.1.5-py313ha4be090_3.conda
@@ -4381,10 +4381,10 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/gurobi/linux-64/gurobi-13.0.1-py313_0.conda
       - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
-      - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
+      - pypi: git+https://github.com/SPSUnipi/pySMSpp.git?branch=main#e474d459489bee64ba8a7461b49095ee28befb09
+      - pypi: git+https://github.com/SPSUnipi/pypsa2smspp.git?branch=main#f759f8044982e4f6c4bff2f3e1675e54e9e3ae23
       - pypi: https://files.pythonhosted.org/packages/73/60/7138e98884ca105c76ef192f5b43165d6eac6f32b432853ebe9f09ee50c9/levenshtein-0.27.3-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/90/79/2fc252a63bc91d3c3b234d0a3a6ad4ebc460037a23cdcdaf9285f986e6c9/rapidfuzz-3.14.5-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fa/6e/3e955517e22cbdd565f2f8b2e73d52528b14b8bcfdb04f62466b071de847/validators-0.35.0-py3-none-any.whl
       osx-64:
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-cluster-generic-1.0.9-pyhdfd78af_0.tar.bz2
@@ -4863,7 +4863,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/nlohmann_json-3.12.0-h06076ce_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/numcodecs-0.16.5-py313h2f264a9_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/numexpr-2.14.1-py313h821d116_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.4.3-py313hb870fc3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.3.5-py313hf1665ba_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/openjpeg-2.5.4-h52bb76a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/openpyxl-3.1.5-py313hc34da29_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/openssl-3.6.2-hc881268_0.conda
@@ -4927,10 +4927,10 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zstd-1.5.7-h3eecb57_6.conda
       - conda: https://conda.anaconda.org/gurobi/osx-64/gurobi-13.0.1-py313_0.conda
       - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
+      - pypi: git+https://github.com/SPSUnipi/pySMSpp.git?branch=main#e474d459489bee64ba8a7461b49095ee28befb09
+      - pypi: git+https://github.com/SPSUnipi/pypsa2smspp.git?branch=main#f759f8044982e4f6c4bff2f3e1675e54e9e3ae23
       - pypi: https://files.pythonhosted.org/packages/11/66/252803f2010ba699618cdc048b6e1f7cc1f433c08b4a9a17579b92ab0142/rapidfuzz-3.14.5-cp313-cp313-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/3e/f2/162e9ea7490b36bbf05776c8e3a8114c75aa78546ddda8e8f36731db3da6/levenshtein-0.27.3-cp313-cp313-macosx_10_13_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fa/6e/3e955517e22cbdd565f2f8b2e73d52528b14b8bcfdb04f62466b071de847/validators-0.35.0-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-cluster-generic-1.0.9-pyhdfd78af_0.tar.bz2
@@ -5409,7 +5409,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/nlohmann_json-3.12.0-h784d473_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/numcodecs-0.16.5-py313h7d16b84_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/numexpr-2.14.1-py313h73ed539_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/numpy-2.4.3-py313he4a34aa_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/numpy-2.3.5-py313h16eae64_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openjpeg-2.5.4-hd9e9057_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openpyxl-3.1.5-py313he4f8f71_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openssl-3.6.2-hd24854e_0.conda
@@ -5473,9 +5473,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - conda: https://conda.anaconda.org/gurobi/osx-arm64/gurobi-13.0.1-py313_0.conda
       - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
+      - pypi: git+https://github.com/SPSUnipi/pySMSpp.git?branch=main#e474d459489bee64ba8a7461b49095ee28befb09
+      - pypi: git+https://github.com/SPSUnipi/pypsa2smspp.git?branch=main#f759f8044982e4f6c4bff2f3e1675e54e9e3ae23
       - pypi: https://files.pythonhosted.org/packages/01/2d/7316ba7f94e3d60e89bd120526bc71e4812866bb7162767a2a10f73f72c5/levenshtein-0.27.3-cp313-cp313-macosx_11_0_arm64.whl
-      - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ea/59/b2afd98e41af9cd54554a4c1c423d84cdd60e6b1c0a09496f033b55f60ec/rapidfuzz-3.14.5-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/fa/6e/3e955517e22cbdd565f2f8b2e73d52528b14b8bcfdb04f62466b071de847/validators-0.35.0-py3-none-any.whl
       win-64:
@@ -5935,7 +5935,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/netcdf4-1.7.3-nompi_py313hbe59507_100.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/numcodecs-0.16.5-py313hc90dcd4_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/numexpr-2.14.1-py313h7034ea3_101.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/numpy-2.4.3-py313ha8dc839_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/numpy-2.3.5-py313hce7ae62_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/onemkl-license-2025.3.1-h57928b3_12.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/openjpeg-2.5.4-h0e57b4f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/openpyxl-3.1.5-py313hc624790_3.conda
@@ -6013,9 +6013,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_6.conda
       - conda: https://conda.anaconda.org/gurobi/win-64/gurobi-13.0.1-py313_0.conda
       - pypi: git+https://github.com/AlessandroPampado99/PyPSA.git?branch=smspp_optimize#9b47fb6dfe9fa23fb9effba1418e4607028d86a0
+      - pypi: git+https://github.com/SPSUnipi/pySMSpp.git?branch=main#e474d459489bee64ba8a7461b49095ee28befb09
+      - pypi: git+https://github.com/SPSUnipi/pypsa2smspp.git?branch=main#f759f8044982e4f6c4bff2f3e1675e54e9e3ae23
       - pypi: https://files.pythonhosted.org/packages/42/1d/74f1ff589bb687d0cad2bbdceef208dc070f56d1e38a3831da8c00bf13bb/levenshtein-0.27.3-cp313-cp313-win_amd64.whl
-      - pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cf/cb/0e251d731b3166378644238e8f0cf9e89858c024e19f75ca9f7e3ae83fd5/rapidfuzz-3.14.5-cp313-cp313-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/fa/6e/3e955517e22cbdd565f2f8b2e73d52528b14b8bcfdb04f62466b071de847/validators-0.35.0-py3-none-any.whl
 packages:
@@ -10889,13 +10889,13 @@ packages:
   license_family: BSD
   size: 7484186
   timestamp: 1707225809722
-- conda: https://conda.anaconda.org/conda-forge/linux-64/numpy-2.4.3-py313hf6604e3_0.conda
-  sha256: bcf75998ea3ae133df3580fb427d1054b006b093799430f499fd7ce8207d34c7
-  md5: c4a9d2e77eb9fee983a70cf5f047c202
+- conda: https://conda.anaconda.org/conda-forge/linux-64/numpy-2.3.5-py313hf6604e3_1.conda
+  sha256: 2f8aff2a17e4d43012e9863ef4392e6d5de3ae9da0c3e322831f8c5c3d86df71
+  md5: dce261869f78ba9b81b9091b084d328d
   depends:
   - python
-  - libstdcxx >=14
   - libgcc >=14
+  - libstdcxx >=14
   - __glibc >=2.17,<3.0.a0
   - python_abi 3.13.* *_cp313
   - libcblas >=3.9.0,<4.0a0
@@ -10907,8 +10907,11 @@ packages:
   license_family: BSD
   purls:
   - pkg:pypi/numpy?source=hash-mapping
-  size: 8857056
-  timestamp: 1773839226294
+  run_exports:
+    weak:
+    - numpy >=1.23,<3
+  size: 8919234
+  timestamp: 1766383469748
 - conda: https://conda.anaconda.org/conda-forge/linux-64/openjdk-24.0.2-h5755bd7_0.conda
   sha256: 1080419a2f5fca5a5a5b47688a9941d6e26e43c15405f93513e18154171530f1
   md5: 2cb7cefb4a66a25110b0fa8798cb4887
@@ -21774,16 +21777,16 @@ packages:
   license_family: BSD
   size: 6990646
   timestamp: 1707226178262
-- conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.4.3-py313hb870fc3_0.conda
-  sha256: 2ef07192b3e53dd783438fcc4c18cb9fcbb40ee39c5db024e9e78c0adb047e33
-  md5: a8edd94da68a8ea91e35889708959578
+- conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.3.5-py313hf1665ba_1.conda
+  sha256: 7878ba3143d53638a39b702f0d55af1d4dcbb123eda09d98ca4e3637ef6d151b
+  md5: 90fa3a86c16cfb708e35733b731ad5fd
   depends:
   - python
-  - __osx >=11.0
   - libcxx >=19
+  - __osx >=10.13
+  - libcblas >=3.9.0,<4.0a0
   - libblas >=3.9.0,<4.0a0
   - liblapack >=3.9.0,<4.0a0
-  - libcblas >=3.9.0,<4.0a0
   - python_abi 3.13.* *_cp313
   constrains:
   - numpy-base <0a0
@@ -21791,8 +21794,11 @@ packages:
   license_family: BSD
   purls:
   - pkg:pypi/numpy?source=hash-mapping
-  size: 8064515
-  timestamp: 1773839158532
+  run_exports:
+    weak:
+    - numpy >=1.23,<3
+  size: 8083480
+  timestamp: 1766383286176
 - conda: https://conda.anaconda.org/conda-forge/osx-64/openjdk-25.0.2-h48c29e7_0.conda
   sha256: 6d75a78b11aa1100d8dda8b860ebd2943c0ba137cf87c205351ee2c02434cb23
   md5: 7039d4add86c40fed1ff9371d405391f
@@ -27045,26 +27051,29 @@ packages:
   license_family: BSD
   size: 6073136
   timestamp: 1707226249608
-- conda: https://conda.anaconda.org/conda-forge/osx-arm64/numpy-2.4.3-py313he4a34aa_0.conda
-  sha256: d55c3f4b13486bf8e3cadaf731a5d9b67aa9deb51f7c30e381b948a9ada20ef0
-  md5: 03b99caf1270c27febfcceb4f1090af7
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/numpy-2.3.5-py313h16eae64_1.conda
+  sha256: d759e7fee853d8e18709a15b8fc8a6db90c96986cb9d316c4d5ccdf5a1d3f61f
+  md5: c72599556b49dc853839f4439c1eea32
   depends:
   - python
-  - python 3.13.* *_cp313
-  - __osx >=11.0
   - libcxx >=19
+  - __osx >=11.0
+  - python 3.13.* *_cp313
   - liblapack >=3.9.0,<4.0a0
-  - libblas >=3.9.0,<4.0a0
-  - libcblas >=3.9.0,<4.0a0
   - python_abi 3.13.* *_cp313
+  - libcblas >=3.9.0,<4.0a0
+  - libblas >=3.9.0,<4.0a0
   constrains:
   - numpy-base <0a0
   license: BSD-3-Clause
   license_family: BSD
   purls:
   - pkg:pypi/numpy?source=hash-mapping
-  size: 6924384
-  timestamp: 1773839167287
+  run_exports:
+    weak:
+    - numpy >=1.23,<3
+  size: 6792353
+  timestamp: 1766383288679
 - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openjdk-25.0.2-h258754b_0.conda
   sha256: f6f06243c1a35b6590f06be386bd5cefc5b1773b985a61b7917b93dab4cf18ec
   md5: a4024e03865a7411c1028eac83d1956c
@@ -32269,26 +32278,29 @@ packages:
   license_family: BSD
   size: 6495445
   timestamp: 1707226412944
-- conda: https://conda.anaconda.org/conda-forge/win-64/numpy-2.4.3-py313ha8dc839_0.conda
-  sha256: b01143d91ac22a37595c96023616dab0509ca22ee7791747dd52cc5c651f9b11
-  md5: 764b3adfdb549bbbf58a9419f237ac25
+- conda: https://conda.anaconda.org/conda-forge/win-64/numpy-2.3.5-py313hce7ae62_1.conda
+  sha256: c02d9587864174146bf0024051c76d368b2de18c94421e2f4e611fbb18576dd1
+  md5: 78749843445581c6dcc0cb80d146982d
   depends:
   - python
   - vc >=14.3,<15
   - vc14_runtime >=14.44.35208
   - ucrt >=10.0.20348.0
-  - libcblas >=3.9.0,<4.0a0
-  - libblas >=3.9.0,<4.0a0
-  - python_abi 3.13.* *_cp313
   - liblapack >=3.9.0,<4.0a0
+  - libblas >=3.9.0,<4.0a0
+  - libcblas >=3.9.0,<4.0a0
+  - python_abi 3.13.* *_cp313
   constrains:
   - numpy-base <0a0
   license: BSD-3-Clause
   license_family: BSD
   purls:
   - pkg:pypi/numpy?source=hash-mapping
-  size: 7254954
-  timestamp: 1773839147528
+  run_exports:
+    weak:
+    - numpy >=1.23,<3
+  size: 7524105
+  timestamp: 1766383318405
 - conda: https://conda.anaconda.org/conda-forge/win-64/onemkl-license-2025.3.1-h57928b3_12.conda
   sha256: 03eac4174077397a5bc480021e62412e73e80f34072d81053899f65dfe1045c7
   md5: 29ad104e60faa7ed1dc549ec029764bb
@@ -34233,6 +34245,57 @@ packages:
   - pytest ; extra == 'docs'
   - cartopy>=0.16 ; extra == 'docs'
   requires_python: '>=3.11'
+- pypi: git+https://github.com/SPSUnipi/pySMSpp.git?branch=main#e474d459489bee64ba8a7461b49095ee28befb09
+  name: pysmspp
+  version: 0.1.0
+  requires_dist:
+  - numpy<2.4
+  - pandas>=0.24
+  - netcdf4
+  - psutil
+  - matplotlib>=3.0 ; extra == 'plot'
+  - pytest ; extra == 'dev'
+  - coverage ; extra == 'dev'
+  - pre-commit ; extra == 'dev'
+  - ncompare ; extra == 'dev'
+  - mypy ; extra == 'dev'
+  - matplotlib>=3.0 ; extra == 'dev'
+  - h5py<3.15 ; extra == 'dev'
+  - mkdocs>=1.5 ; extra == 'docs'
+  - mkdocs-material>=9.0 ; extra == 'docs'
+  - mkdocstrings[python]>=0.24 ; extra == 'docs'
+  - mkdocs-jupyter>=0.24 ; extra == 'docs'
+  - mkdocs-autorefs>=0.5 ; extra == 'docs'
+  - pymdown-extensions>=10.0 ; extra == 'docs'
+  - pymdown-extensions<12 ; python_full_version < '3.11' and extra == 'docs'
+  - scikit-learn ; extra == 'docs'
+  - libsvm-official ; extra == 'docs'
+  requires_python: '>=3.10'
+- pypi: git+https://github.com/SPSUnipi/pypsa2smspp.git?branch=main#f759f8044982e4f6c4bff2f3e1675e54e9e3ae23
+  name: pypsa2smspp
+  version: 0.0.5
+  requires_dist:
+  - numpy
+  - pandas>=0.24,<3
+  - pypsa>=1
+  - xarray<2026.4
+  - openpyxl
+  - pyyaml
+  - pysmspp>=0.0.12
+  - pytest ; extra == 'dev'
+  - highspy<=1.11 ; extra == 'dev'
+  - gurobipy ; extra == 'dev'
+  - coverage ; extra == 'dev'
+  - pre-commit ; extra == 'dev'
+  - ncompare ; extra == 'dev'
+  - mypy ; extra == 'dev'
+  - mkdocs>=1.5 ; extra == 'docs'
+  - mkdocs-material>=9.0 ; extra == 'docs'
+  - mkdocstrings[python]>=0.24 ; extra == 'docs'
+  - mkdocs-jupyter>=0.24 ; extra == 'docs'
+  - mkdocs-autorefs>=0.5 ; extra == 'docs'
+  - pymdown-extensions>=10.0 ; extra == 'docs'
+  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/01/2d/7316ba7f94e3d60e89bd120526bc71e4812866bb7162767a2a10f73f72c5/levenshtein-0.27.3-cp313-cp313-macosx_11_0_arm64.whl
   name: levenshtein
   version: 0.27.3
@@ -34261,31 +34324,6 @@ packages:
   requires_dist:
   - rapidfuzz>=3.9.0,<4.0.0
   requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/4b/c7/a454056839b44ed36b88446db7eaeba762767da8b25b9e72fe233823930f/pypsa2smspp-0.0.5-py3-none-any.whl
-  name: pypsa2smspp
-  version: 0.0.5
-  sha256: 38773bd82c018b6ceeb30c8ca9dcaed03858f841191791200b92b1832e032db8
-  requires_dist:
-  - numpy
-  - pandas>=0.24,<3
-  - pypsa>=1
-  - xarray<2026.4
-  - openpyxl
-  - pysmspp>=0.0.11
-  - pytest ; extra == 'dev'
-  - highspy<=1.11 ; extra == 'dev'
-  - gurobipy ; extra == 'dev'
-  - coverage ; extra == 'dev'
-  - pre-commit ; extra == 'dev'
-  - ncompare ; extra == 'dev'
-  - mypy ; extra == 'dev'
-  - mkdocs>=1.5 ; extra == 'docs'
-  - mkdocs-material>=9.0 ; extra == 'docs'
-  - mkdocstrings[python]>=0.24 ; extra == 'docs'
-  - mkdocs-jupyter>=0.24 ; extra == 'docs'
-  - mkdocs-autorefs>=0.5 ; extra == 'docs'
-  - pymdown-extensions>=10.0 ; extra == 'docs'
-  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/73/60/7138e98884ca105c76ef192f5b43165d6eac6f32b432853ebe9f09ee50c9/levenshtein-0.27.3-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
   name: levenshtein
   version: 0.27.3
@@ -34299,30 +34337,6 @@ packages:
   sha256: 17a34330cd2a538c1ce5d400b61ba358c5b72c654b928ff87b362e88f8b864c7
   requires_dist:
   - numpy ; extra == 'all'
-  requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/9a/09/0774728844b6f244239b77909200426253cc768f2a02c6ac5097ec6c513b/pysmspp-0.0.11-py3-none-any.whl
-  name: pysmspp
-  version: 0.0.11
-  sha256: 30952f2a18cffa270b03cc08975010c1ed33d0c8e905da4b16a16157c9aa83ac
-  requires_dist:
-  - numpy
-  - pandas>=0.24
-  - netcdf4
-  - psutil
-  - matplotlib>=3.0
-  - pytest ; extra == 'dev'
-  - coverage ; extra == 'dev'
-  - pre-commit ; extra == 'dev'
-  - ncompare ; extra == 'dev'
-  - mypy ; extra == 'dev'
-  - matplotlib>=3.0 ; extra == 'dev'
-  - h5py<3.15 ; extra == 'dev'
-  - mkdocs>=1.5 ; extra == 'docs'
-  - mkdocs-material>=9.0 ; extra == 'docs'
-  - mkdocstrings[python]>=0.24 ; extra == 'docs'
-  - mkdocs-jupyter>=0.24 ; extra == 'docs'
-  - mkdocs-autorefs>=0.5 ; extra == 'docs'
-  - pymdown-extensions>=10.0 ; extra == 'docs'
   requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/cf/cb/0e251d731b3166378644238e8f0cf9e89858c024e19f75ca9f7e3ae83fd5/rapidfuzz-3.14.5-cp313-cp313-win_amd64.whl
   name: rapidfuzz

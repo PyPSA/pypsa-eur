@@ -36,6 +36,7 @@ rule solve_network:
     resources:
         mem_mb=memory,
         runtime=config_provider("solving", "runtime", default="6h"),
+        solver_slots=1,
     params:
         solving=solving_for_solver,
         smspp_benchmark=RESULTS
