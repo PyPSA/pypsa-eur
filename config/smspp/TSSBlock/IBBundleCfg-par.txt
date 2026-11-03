@@ -13,7 +13,7 @@ ComputeConfig # exact type of the ComputeConfig object
 1  # f_diff == 0 ==> all non-provided parameters are set to the default value
    # f_diff == 1 ==> all non-provided parameters are not changed
 
-18 # number of integer parameters
+17 # number of integer parameters
 
 # now all the integer parameters
 intMPStbl  0      # stabilization: 0 = proximal, 1 = level, 2 = doubly
@@ -21,8 +21,6 @@ intDoEasy  0      # do easy components for (some) LagBFunction
 intMaxIter 10000  # max number of iterations for each call
 intMaxThread 32    # MaxThread, max number of new tasks to spawn: the
                   # components of the bundle evaluated at once, up to this
-intParFrm   1     # the results of the components taken in a fixed order,
-                  # so that a run is reproducible
 intLogVerb 16      # log verbosity of main Bundle algorithm
 intWZNorm  10     # which norm to use in the norm-based stopping condition:
                   # the 2-norm, dblNZEps being relative to that of the first
