@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Docs: New section "Insights" with model setup guidance, starting with a page on the effect of temporal aggregation on costs, capacities and solving effort ([#2386](https://github.com/PyPSA/pypsa-eur/pull/2386)).
+
 * Fix: `build_swiss_energy_balances` now reads the October 2026 edition of the Swiss energy balances (data for 2000-2025), which renamed table rows. ([#2380](https://github.com/PyPSA/pypsa-eur/pull/2380)).
 
 * Fix: With `run: shared_resources: policy: base`, `compose_network` now reads processed costs and the previous perfect-foresight network from the run's own resources folder, not the shared one ([#2379](https://github.com/PyPSA/pypsa-eur/pull/2379)).
