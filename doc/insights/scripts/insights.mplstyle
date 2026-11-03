@@ -31,4 +31,5 @@ lines.markersize: 3.5
 
 figure.facecolor: white
 savefig.facecolor: white
+savefig.dpi: 250
 svg.fonttype: path

@@ -24,17 +24,21 @@ methods under `clustering: temporal:` are compared (see
   segments is chosen so that the average block length matches the averaging
   runs.
 
-![Effect of temporal aggregation on system cost, solving effort and capacities](../img/temporal-aggregation.svg)
+![Effect of temporal aggregation on system cost, solving effort and capacities](../img/temporal-aggregation.png)
 
 **Figure.** Effect of temporal aggregation relative to the hourly model. Top
 row: total system cost against the hours per snapshot, solving time and peak
-memory. Middle: cost composition of the hourly model. Bottom rows: differences
-in cost, power capacity and storage energy capacity by technology, and in the
-cost of power transmission and of hydrogen, gas and CO2 pipelines; dots mark
-the net difference. Power capacity counts generators and the input side of
-conversion technologies. The bottom rows show resolutions up to 12 hours.
-Costs and capacities exclude oil and methanol stores, which the solver did
-not resolve precisely in the hourly model.
+memory. Second row: cost composition of the hourly model. Next four rows:
+differences in cost, power capacity and storage energy capacity by technology,
+and in the cost of power transmission and of hydrogen, gas and CO2 pipelines,
+for resolutions up to 12 hours; dots mark the net difference. Power capacity
+counts generators and the input side of conversion technologies. Costs and
+capacities exclude oil and methanol stores, which the solver did not resolve
+precisely in the hourly model. Below: daily mean filling level of
+long-duration storage, scaled to the annual range of each run, and the
+electricity balance in one winter and one summer week, with supply positive
+and consumption negative; each step is one snapshot. Both use 5 hours per
+snapshot.
 
 ## Results
 
@@ -66,6 +70,20 @@ power transmission and fewer hydrogen pipelines, mostly at 6 and 10 to 12
 hours, as the mix shifts from wind to solar. Gas and CO2 pipelines barely
 change with either method; the gas network is almost entirely existing
 capacity.
+
+**Storage operation.** At 5 and 8 hours per snapshot, both methods reproduce
+the cycles of hydrogen storage over days to weeks and the seasonal cycle of
+heat pits almost exactly. At coarser resolutions (not shown), hydrogen storage
+cycles less in spring and summer, and averaging at 12 hours fills the heat
+pits later. Gas storage follows the same seasonal pattern in all runs.
+
+**Dispatch.** Segmentation places short snapshots where supply and demand
+change fast, such as around the midday solar peak, and long ones where they
+change slowly. Averaging uses blocks of equal length, which at 5 hours drift
+against the daily cycle and split or shift the solar peak from day to day.
+Over the year, the dispatch of averaging deviates about half as much again
+from the hourly model as that of segmentation. With both methods, daily peaks
+are lower than in the hourly model.
 
 ## Reproducibility
 

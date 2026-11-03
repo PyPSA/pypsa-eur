@@ -2,13 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot the effect of temporal aggregation on system costs, capacities and solver
-effort for the insights page ``doc/insights/temporal-aggregation.md``.
+Plot the effect of temporal aggregation on system costs, capacities, solver
+effort, storage operation and electricity dispatch for the insights page
+``doc/insights/temporal-aggregation.md``.
 
 Usage::
 
     pixi run python doc/insights/scripts/plot_temporal_aggregation.py \
-        --results results/time-aggregation --output doc/img/temporal-aggregation.svg
+        --results results/time-aggregation --output doc/img/temporal-aggregation.png
 
 Pass ``--csv <path>`` to also export the underlying data.
 """
@@ -18,9 +19,11 @@ import logging
 import re
 from pathlib import Path
 
+import matplotlib.dates as mdates
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import pandas as pd
+import pypsa
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +77,38 @@ NETWORKS = {
 COLORS = {g: c for g, (c, _) in {**GROUPS, **NETWORKS}.items()}
 EXCLUDED_CAPACITIES = r"pipeline|(?<!dis)charger|water (?:pits|tanks) discharger"
 MAX_HOURS_BARS = 12
+
+BALANCE_GROUPS = {
+    "nuclear": r"^nuclear$",
+    "onshore wind": r"^onwind$",
+    "offshore wind": r"^offwind",
+    "solar": r"^solar",
+    "gas-to-power/heat": r"OCGT|CCGT|CHP",
+    "battery": r"battery|V2G",
+    "hydrogen": r"^H2 (Electrolysis|turbine|Fuel Cell)$",
+    "heating": r"heat pump|resistive heater",
+    "electricity demand": (
+        r"^(electricity|industry electricity|agriculture electricity"
+        r"|agriculture machinery electric|BEV charger)$"
+    ),
+    "other": r".",
+}
+COLORS["electricity demand"] = "#110d63"
+DEMAND_ORDER = ["electricity demand", "heating", "hydrogen", "battery"]
+DISPATCH_RUNS = {
+    "full": ("hourly", "#20242C"),
+    "segmentation-5h": ("segmentation 5 h", METHODS["segmentation"][1]),
+    "averaging-5h": ("averaging 5 h", METHODS["averaging"][1]),
+}
+LONG_STORES = {
+    "hydrogen": "H2 Store",
+    "heat pits": "urban central water pits",
+    "gas": "gas",
+}
+WEEKS = {
+    "winter week": ("2013-12-02", "2013-12-09"),
+    "summer week": ("2013-07-29", "2013-08-05"),
+}
 
 
 def to_group(carrier: str) -> str:
@@ -299,7 +334,7 @@ def plot_differences(axes: list, df: pd.DataFrame, xlabel: str):
         ax.tick_params(labelleft=False)
 
 
-def plot(data: dict, output: Path):
+def plot(data: dict, dispatch: dict, output: Path):
     """Assemble the multi-panel figure."""
     total = data["costs"].sum(axis=1)
     lowest = (total - total["hourly", 1]).min()
@@ -312,14 +347,19 @@ def plot(data: dict, output: Path):
         ["power_s"] * 3 + ["power_a"] * 3,
         ["storage_s"] * 3 + ["storage_a"] * 3,
         ["network_s"] * 3 + ["network_a"] * 3,
+        ["fill_0"] * 2 + ["fill_1"] * 2 + ["fill_2"] * 2,
+        ["fill_legend"] * 6,
+        *[[f"{w}_{i}" for i in range(3) for _ in range(2)] for w in WEEKS],
+        ["balance_legend"] * 6,
     ]
     style = Path(__file__).with_name("insights.mplstyle")
     with plt.style.context(style):
         fig, axes = plt.subplot_mosaic(
             mosaic,
-            figsize=(7.5, 11.5),
+            figsize=(7.5, 16.5),
             layout="constrained",
-            height_ratios=[1.3, 0.35, 1, 1, 1, 0.8],
+            height_ratios=[1.3, 0.35, 1, 1, 1, 0.8, 0.9, 0.1, 1, 1, 0.15],
+            sharey=False,
         )
         plot_cost_error(axes, data, ylim)
         plot_baseline(axes["base"], data["costs"].loc["hourly", 1])
@@ -343,9 +383,134 @@ def plot(data: dict, output: Path):
             )
         handles = [mpatches.Patch(color=c, label=n) for n, (c, _) in NETWORKS.items()]
         axes["network_s"].legend(handles=handles, loc="lower left", handlelength=1)
+
+        fill = [axes[f"fill_{i}"] for i in range(3)]
+        plot_filling(fill, dispatch)
+        titles = {"fill_0": "Filling level of long-duration storage"}
+        for week in WEEKS:
+            row = [axes[f"{week}_{i}"] for i in range(3)]
+            plot_balance(row, dispatch, WEEKS[week])
+            ylim = max(abs(lim) for ax in row for lim in ax.get_ylim())
+            for ax in row:
+                ax.set_ylim(-ylim, ylim)
+            titles[f"{week}_0"] = f"Electricity balance in a {week}"
+        for name, title in titles.items():
+            axes[name].annotate(
+                title,
+                (0, 1),
+                xycoords="axes fraction",
+                xytext=(0, 16),
+                textcoords="offset points",
+                fontweight="bold",
+                annotation_clip=False,
+            )
+        handles, labels = fill[0].get_legend_handles_labels()
+        axes["fill_legend"].legend(handles, labels, loc="center", ncols=5)
+        handles = [mpatches.Patch(color=COLORS[g], label=g) for g in BALANCE_GROUPS]
+        axes["balance_legend"].legend(
+            handles=handles, loc="center", ncols=5, handlelength=1
+        )
+        for name in ["fill_legend", "balance_legend"]:
+            axes[name].axis("off")
         fig.savefig(output)
         plt.close(fig)
     logger.info("Saved figure to %s", output)
+
+
+def read_dispatch(path: Path) -> dict[str, pd.DataFrame | pd.Series]:
+    """
+    Read electricity balance and relative filling of long-duration stores.
+
+    The filling level is scaled to the annual range of the stored energy, which
+    equals the usual filling level for stores that cycle through their full
+    capacity and removes the effect of oversized stores in the hourly model.
+    """
+    n = pypsa.Network(path / "networks/solved_2050.nc")
+    balance = n.statistics.energy_balance(
+        aggregate_time=False,
+        bus_carrier=["AC", "low voltage"],
+        groupby="carrier",
+        nice_names=False,
+    )
+    carriers = balance.index.get_level_values("carrier")
+    groups = carriers.map(
+        lambda c: next(g for g, p in BALANCE_GROUPS.items() if re.search(p, c))
+    )
+    balance = balance.groupby(groups).sum().T / 1e3
+    imbalance = balance.sum(axis=1).abs().max()
+    if imbalance > 1:
+        raise ValueError(f"Electricity balance of {path.name} off by {imbalance} GW")
+
+    hours = pd.date_range(n.snapshots[0], periods=8760, freq="h")
+    energy = n.stores_t.e.T.groupby(n.stores.carrier).sum().T
+    energy = energy[list(LONG_STORES.values())].reindex(hours, method="ffill")
+    filling = (energy - energy.min()) / (energy.max() - energy.min())
+    filling.columns = list(LONG_STORES)
+
+    return {
+        "balance": balance,
+        "duration": n.snapshot_weightings.generators,
+        "filling": 100 * filling.resample("D").mean(),
+    }
+
+
+def plot_filling(axes: list, dispatch: dict):
+    """Daily filling level of long-duration stores, one axis per store."""
+    for ax, store in zip(axes, LONG_STORES):
+        for run, (label, color) in DISPATCH_RUNS.items():
+            lw, zorder = (1.0, 3) if run == HOURLY else (1.5, 2)
+            filling = dispatch[run]["filling"][store]
+            ax.plot(
+                filling.index, filling, color=color, lw=lw, zorder=zorder, label=label
+            )
+        ax.set_title(store, loc="right")
+        ax.set_ylim(0, 100)
+        ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
+    axes[0].set_ylabel("filling level (%)")
+    for ax in axes[1:]:
+        ax.tick_params(labelleft=False)
+
+
+def plot_balance(axes: list, dispatch: dict, week: tuple[str, str]):
+    """Stepped electricity balance for one week, one axis per run."""
+    start, end = pd.Timestamp(week[0]), pd.Timestamp(week[1])
+    for ax, (run, (label, color)) in zip(axes, DISPATCH_RUNS.items()):
+        balance = dispatch[run]["balance"]
+        duration = dispatch[run]["duration"]
+        balance = balance[(balance.index >= start) & (balance.index < end)]
+        edges = [
+            *balance.index,
+            balance.index[-1] + pd.Timedelta(hours=duration[balance.index[-1]]),
+        ]
+        for sign in [1, -1]:
+            part = (sign * balance).clip(lower=0) * sign
+            order = BALANCE_GROUPS if sign > 0 else DEMAND_ORDER
+            order = [*order, *(g for g in BALANCE_GROUPS if g not in order)]
+            part = part[[g for g in order if g in part]]
+            top = part.cumsum(axis=1)
+            for group in part:
+                if not part[group].any():
+                    continue
+                lower = (top[group] - part[group]).tolist()
+                upper = top[group].tolist()
+                ax.fill_between(
+                    edges,
+                    [*lower, lower[-1]],
+                    [*upper, upper[-1]],
+                    step="post",
+                    color=COLORS[group],
+                    lw=0,
+                )
+        ax.axhline(0, color="#20242C", lw=0.6)
+        ax.set_xlim(start, end)
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%-d %b"))
+        ax.set_title(label, loc="right", color=color)
+        ax.grid(axis="x", visible=False)
+    axes[0].set_ylabel("power (GW)")
+    for ax in axes[1:]:
+        ax.tick_params(labelleft=False)
 
 
 def export_csv(data: dict, path: Path):
@@ -362,12 +527,13 @@ if __name__ == "__main__":
         "--results", type=Path, default=Path("results/time-aggregation")
     )
     parser.add_argument(
-        "--output", type=Path, default=Path("doc/img/temporal-aggregation.svg")
+        "--output", type=Path, default=Path("doc/img/temporal-aggregation.png")
     )
     parser.add_argument("--csv", type=Path)
     args = parser.parse_args()
 
     data = load_results(args.results)
-    plot(data, args.output)
+    dispatch = {run: read_dispatch(args.results / run) for run in DISPATCH_RUNS}
+    plot(data, dispatch, args.output)
     if args.csv:
         export_csv(data, args.csv)
