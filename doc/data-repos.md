@@ -194,7 +194,7 @@ These files in `data/` are templates or registries rather than data sources.
 
 - `data/agg_p_nom_minmax.csv`: minimum and maximum capacities per country and carrier for `solving: agg_p_nom_limits`.
 - `data/custom_costs.csv`: overrides for the technology cost assumptions, applied by `process_cost_data` (`costs: custom_cost_fn`).
-- `data/custom_powerplants.csv`: additional power plants merged into the powerplant list by [build_powerplants][] (`electricity: custom_powerplants`).
+- `data/custom_powerplants.csv`: additional power plants merged into the powerplant list by [build_powerplants][] (`electricity: custom_powerplants`); a different file can be set with `electricity: custom_powerplants_file`.
 - `data/custom_extra_functionality.py`: template for custom constraints added during solving (`solving: options: custom_extra_functionality`).
 - `data/parameter_corrections.yaml`: manual corrections of line and link parameters of the `entsoegridkit` base network.
 - `data/versions.csv`: registry of dataset versions and sources, see [data versioning](data_sources.md#managing_data_versions).

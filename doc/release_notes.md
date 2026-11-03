@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Feature: New option `electricity: custom_powerplants_file` sets the path of the custom power plant CSV (default `data/custom_powerplants.csv`). `build_powerplants` now only requires this file when `electricity: custom_powerplants` is enabled ([#2388](https://github.com/PyPSA/pypsa-eur/pull/2388)).
+
 * OSM network: The network comparison now also compares DC links and exports `links.csv`. Fix: AC-tagged relations are no longer imported as DC links, GW ratings are converted to MW, and incomplete DC links no longer affect converter voltage and capacity ([#2387](https://github.com/PyPSA/pypsa-eur/pull/2387)).
 
 * Fix: `build_swiss_energy_balances` now reads the October 2026 edition of the Swiss energy balances (data for 2000-2025), which renamed table rows. ([#2380](https://github.com/PyPSA/pypsa-eur/pull/2380)).

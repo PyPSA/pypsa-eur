@@ -11,7 +11,9 @@ Plant capacities and locations come from the
 restricted to the modelled countries and filtered with the
 [pandas.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html)
 expression in `electricity.powerplants_filter`. Custom entries from a
-user-provided CSV can be added, filtered with `electricity.custom_powerplants`;
+user-provided CSV (path set in `electricity.custom_powerplants_file`, default
+`data/custom_powerplants.csv`) can be added, filtered with
+`electricity.custom_powerplants`;
 for example `powerplants_filter: Country not in ['Germany']` together with
 `custom_powerplants: Country in ['Germany']` replaces the German fleet by custom
 data. Fuel types listed in `electricity.everywhere_powerplants` are added with
@@ -212,7 +214,7 @@ if __name__ == "__main__":
     # add carriers from own powerplant files:
     custom_ppl_query = snakemake.params.custom_powerplants
     ppl = add_custom_powerplants(
-        ppl, snakemake.input.custom_powerplants, custom_ppl_query
+        ppl, snakemake.input.get("custom_powerplants"), custom_ppl_query
     )
 
     if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
