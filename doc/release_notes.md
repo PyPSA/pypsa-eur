@@ -7,6 +7,25 @@
 <!-- ================= -->
 * Candidate corridors for new hydrogen and carbon dioxide pipelines now come from a Delaunay triangulation of the regions instead of the electricity grid topology. By default, they are reduced to the Gabriel graph with at least one candidate per region, which yields shortest-path connections also between regions that the electricity grid does not link directly. The new option `sector: pipeline_topology` sets the minimum number of candidates per region (`min_degree`, 0 keeps the full Delaunay graph) and the maximum offshore length of a candidate (`max_offshore_distance`). This changes default results; existing configuration keys are unchanged ([#2153](https://github.com/PyPSA/pypsa-eur/pull/2153)).
 
+* OSM network: The network comparison now also compares DC links and exports `links.csv`. Fix: AC-tagged relations are no longer imported as DC links, GW ratings are converted to MW, and incomplete DC links no longer affect converter voltage and capacity ([#2387](https://github.com/PyPSA/pypsa-eur/pull/2387)).
+
+* Fix: `build_swiss_energy_balances` now reads the October 2026 edition of the Swiss energy balances (data for 2000-2025), which renamed table rows. ([#2380](https://github.com/PyPSA/pypsa-eur/pull/2380)).
+
+* Fix: With `run: shared_resources: policy: base`, `compose_network` now reads processed costs and the previous perfect-foresight network from the run's own resources folder, not the shared one ([#2379](https://github.com/PyPSA/pypsa-eur/pull/2379)).
+
+* Fix: `lines: types` must now define a line type for the 380 kV level; the config validation fails early with a clear message instead of the workflow failing later ([#2166](https://github.com/PyPSA/pypsa-eur/issues/2166)).
+
+* Feature: New switches `industry: solid_biomass_for_industry_cc`, `industry: gas_for_industry_cc` and `industry: process_emissions_cc` to disable the carbon capture options for solid biomass for industry, gas for industry and industrial process emissions. All default to `true`, which matches the previous behaviour ([#2357](https://github.com/PyPSA/pypsa-eur/pull/2357)).
+
+* Feature: New option `sector: electrolysis` to allow hydrogen electrolysis to be configurable ([#2358](https://github.com/PyPSA/pypsa-eur/pull/2358)).
+
+* Feature: Split logging levels between console and log file. The console now defaults to `WARNING`, while the log file of each rule still records `INFO`. Configure via `logging: console_level` and `logging: file_level`. To print info messages to the console as before, set `logging: console_level: INFO` ([#2144](https://github.com/PyPSA/pypsa-eur/pull/2144)).
+
+* Removed `exclude-newer` exception for `snakemake-executor-plugin-slurm` from `pixi.toml` ([#2352](https://github.com/PyPSA/pypsa-eur/pull/2352)).
+* Fix: correct GEBCO bathymetry CRS typo for Moldova and Ukraine (EPSG: 4236 → 4326)
+
+* Removed unused `build_transformation_output_coke()` function from `scripts/build_energy_totals.py`. `build_transformation_output_coke` is its own rule and its code lives in `scripts/build_transformation_output_coke.py` ([#2353](https://github.com/PyPSA/pypsa-eur/pull/2353)).
+
 * Renamed `sector: tes` to `sector: ttes` (tank thermal energy storage), as it now only controls water tanks. Until the next release, `sector: tes` is still accepted with a warning and sets both `sector: ttes` and `sector: district_heating: ptes: enable`, which keeps previous results. Feature: New option `sector: district_heating: ptes: enable` (default `true`) to enable or disable pit thermal energy storage (water pits). Like `sector: district_heating: ates: enable`, it is independent of `sector: ttes`. Fix: the thermal energy storage constraints on energy-to-power ratio and charger-discharger ratio are now added whenever water tanks, water pits or aquifer thermal energy storage are present; previously they were skipped for pit and aquifer storage with `sector: tes: false` ([#2330](https://github.com/PyPSA/pypsa-eur/pull/2330))
 
 * Fix: Convert FOM for EGS from %/yr to fractional value ([#2350](https://github.com/PyPSA/pypsa-eur/pull/2350)).
@@ -50,6 +69,8 @@
 * Documentation: the *Design* section is restructured into one page per carrier and sector (electricity, heating, transport, industry, hydrogen, ammonia, methane, oil, methanol, biomass, carbon management) plus pages on the model overview, model resolution and foresight. All pages use the same headings (demand, supply, conversion, storage, transport), start with badges showing in which model variants they apply, show electricity-only differences in tabs, and cite literature through `mkdocs-bibtex`. The cited references are added to `doc/publications.bib`. The former *Supply and Demand* and *Spatial Resolution* pages are replaced, and the *Foresight* page is trimmed to the planning concepts.
 
 * Documentation: removed stale wildcard-era instructions and links to the old PyPSA-Eur-Sec configuration, corrected paths and commands in the tutorials, installation, foresight and retrieve pages, and restored the rule documentation for scripts in subdirectories (`build_cop_profiles`, `build_ptes_operations`, ...). The installation page now recommends checking out a release. The `sector`, `data` and new `pypsa_eur` configuration tables are generated from the schema, all wildcards and the collection targets are documented, the retrieve page now focuses on rules needing credentials, and the data inventory is complete and checked against `data/versions.csv` by a unit test.
+
+* Fix: remove deprecated `cutouts` directory and stale references ([#2372](https://github.com/PyPSA/pypsa-eur/pull/2372))
 
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 
