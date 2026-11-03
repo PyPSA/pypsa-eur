@@ -5,7 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Candidate corridors for new hydrogen and carbon dioxide pipelines now come from a Delaunay triangulation of the regions instead of the electricity grid topology. By default, they are reduced to the Gabriel graph with at least one candidate per region, which yields shortest-path connections also between regions that the electricity grid does not link directly. The new option `sector: pipeline_topology` sets the minimum number of candidates per region (`min_degree`, 0 keeps the full Delaunay graph) and the maximum offshore length of a candidate (`max_offshore_distance`). This changes default results; existing configuration keys are unchanged ([#2153](https://github.com/PyPSA/pypsa-eur/pull/2153)).
+* Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport now come from a Delaunay triangulation of the regions instead of the electricity grid, with settings per carrier under `sector: transport_corridors`. This changes default results ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
 
 * OSM network: The network comparison now also compares DC links and exports `links.csv`. Fix: AC-tagged relations are no longer imported as DC links, GW ratings are converted to MW, and incomplete DC links no longer affect converter voltage and capacity ([#2387](https://github.com/PyPSA/pypsa-eur/pull/2387)).
 

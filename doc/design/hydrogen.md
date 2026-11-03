@@ -59,9 +59,14 @@ constraint is usually where caverns exist, not how much they can hold.
 ## Transport
 
 Hydrogen moves through pipelines. New pipelines can be built along candidate
-corridors between neighbouring regions, taken from a Delaunay triangulation of
-the regions and by default reduced to its Gabriel graph. Optionally, existing gas
-pipelines can be retrofitted [@gasforclimateEuropeanHydrogen2020], which is
+corridors between neighbouring regions and along existing gas pipelines if the
+gas network is modelled. The corridors come from a Delaunay triangulation of
+the regions, by default reduced to its Gabriel graph, which keeps a direct
+link only if no third region lies within the circle spanned by it. Regions
+left with too few corridors receive their shortest remaining links, and
+corridors can be limited in their offshore length. The same method gives the
+corridors for CO~2~ pipelines and biomass transport, each with its own
+settings. Optionally, existing gas pipelines can be retrofitted [@gasforclimateEuropeanHydrogen2020], which is
 cheaper but tied to the gas network: for every unit of gas capacity taken out
 of service, a fixed share becomes available for hydrogen on the same route.
 If the gas network is not resolved regionally, the retrofit option still

@@ -118,7 +118,7 @@ rule cluster_gas_network:
 
 
 rule build_transmission_topology:
-    """Builds candidate corridors for new H2 and CO2 pipelines from the Delaunay graph of regions."""
+    """Builds candidate corridors for H2, CO2 and biomass transport from the Delaunay graph of regions."""
     input:
         network=resources("networks/clustered.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -131,7 +131,7 @@ rule build_transmission_topology:
     resources:
         mem_mb=2000,
     params:
-        pipeline_topology=config_provider("sector", "pipeline_topology"),
+        transport_corridors=config_provider("sector", "transport_corridors"),
     script:
         scripts("build_transmission_topology.py")
 

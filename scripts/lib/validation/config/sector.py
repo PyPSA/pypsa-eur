@@ -370,18 +370,35 @@ class _SolidBiomassImportConfig(BaseModel):
     )
 
 
-class _PipelineTopologyConfig(BaseModel):
-    """Configuration for `sector.pipeline_topology` settings."""
+class _CorridorConfig(BaseModel):
+    """Configuration for the candidate corridors of one carrier."""
 
     min_degree: int = Field(
         1,
         ge=0,
-        description="Minimum number of candidate pipelines per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+        description="Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
     )
     max_offshore_distance: float = Field(
         float("inf"),
         gt=0,
-        description="Maximum offshore length of a candidate pipeline (km).",
+        description="Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+    )
+
+
+class _TransportCorridorsConfig(BaseModel):
+    """Configuration for `sector.transport_corridors` settings."""
+
+    H2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new hydrogen pipelines.",
+    )
+    CO2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new carbon dioxide pipelines.",
+    )
+    biomass: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for solid biomass and municipal solid waste transport.",
     )
 
 
@@ -892,9 +909,9 @@ class SectorConfig(BaseModel):
     )
 
     H2_network: bool = Field(True, description="Add option for new hydrogen pipelines.")
-    pipeline_topology: _PipelineTopologyConfig = Field(
-        default_factory=_PipelineTopologyConfig,
-        description="Candidate corridors for new hydrogen and carbon dioxide pipelines, derived from the Delaunay triangulation of the regions.",
+    transport_corridors: _TransportCorridorsConfig = Field(
+        default_factory=_TransportCorridorsConfig,
+        description="Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport, derived from the Delaunay triangulation of the regions.",
     )
     gas_network: bool = Field(
         True,

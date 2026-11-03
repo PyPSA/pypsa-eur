@@ -3,12 +3,13 @@
 # SPDX-License-Identifier: MIT
 
 """
-Build the candidate corridors for new H2 and CO2 pipelines between clustered buses.
+Build the candidate corridors for new H2 and CO2 pipelines and biomass transport between clustered buses.
 
 The bus coordinates are triangulated in a metric projection (EPSG:3035). Each
 edge gets its great-circle length and the fraction of its length that lies in
-offshore regions; edges with an offshore length above the maximum are removed.
-The remaining edges of the Gabriel graph form the base set: an edge belongs to
+offshore regions. The selection below runs once per carrier with its own
+settings; edges with an offshore length above the carrier's maximum are
+excluded. The remaining edges of the Gabriel graph form the base set: an edge belongs to
 it if the circle with the edge as its diameter contains no other bus [Gabriel
 and Sokal, 1969]. As both ends lie on this circle, the test only needs the
 distance from the edge midpoint to the nearest bus, found with a k-d tree
@@ -43,8 +44,16 @@ DISTANCE_CRS = "EPSG:3035"
 
 
 def delaunay_edges(coords: np.ndarray) -> np.ndarray:
-    """Return the unique Delaunay edges as sorted index pairs ``(i, j)`` with ``i < j``."""
-    triangles = Delaunay(coords).simplices
+    """
+    Return the unique Delaunay edges as sorted index pairs ``(i, j)`` with ``i < j``.
+
+    Up to three points are connected pairwise. Otherwise, the points are
+    triangulated after a tiny deterministic displacement (Qhull option ``QJ``),
+    so that collinear and coincident points are kept as vertices.
+    """
+    if len(coords) <= 3:
+        return np.column_stack(np.triu_indices(len(coords), k=1))
+    triangles = Delaunay(coords, qhull_options="QJ").simplices
     edges = np.vstack(
         [triangles[:, [0, 1]], triangles[:, [1, 2]], triangles[:, [0, 2]]]
     )
@@ -60,15 +69,15 @@ def is_gabriel(edges: np.ndarray, coords: np.ndarray) -> np.ndarray:
 
 
 def build_delaunay_graph(
-    n: pypsa.Network, offshore_shapes: gpd.GeoDataFrame
+    buses: pd.DataFrame, offshore_shapes: gpd.GeoDataFrame
 ) -> gpd.GeoDataFrame:
     """
     Build the Delaunay edges between buses.
 
     Parameters
     ----------
-    n : pypsa.Network
-        Network with bus coordinates ``x`` and ``y`` in EPSG:4326.
+    buses : pd.DataFrame
+        Buses with coordinates ``x`` and ``y`` in EPSG:4326.
     offshore_shapes : gpd.GeoDataFrame
         Offshore regions used for the offshore fraction of each edge.
 
@@ -78,7 +87,6 @@ def build_delaunay_graph(
         One row per edge with columns name, bus0, bus1 (in lexicographic order),
         length (km), gabriel_edge, underwater_fraction and geometry.
     """
-    buses = n.buses.dropna(subset=["x", "y"])
     lonlat = buses[["x", "y"]].to_numpy()
     points = gpd.GeoSeries(gpd.points_from_xy(*lonlat.T), crs="EPSG:4326")
     coords = points.to_crs(DISTANCE_CRS).get_coordinates().to_numpy()
@@ -107,58 +115,87 @@ def build_delaunay_graph(
     return graph
 
 
-def enforce_min_degree(
-    graph: gpd.GeoDataFrame, buses: pd.Index, min_degree: int
-) -> gpd.GeoDataFrame:
+def select_corridors(
+    graph: gpd.GeoDataFrame,
+    buses: pd.Index,
+    min_degree: int,
+    max_offshore_distance: float,
+) -> pd.Series:
     """
     Select the Gabriel edges and add the shortest other edges up to a minimum degree.
 
     Parameters
     ----------
     graph : gpd.GeoDataFrame
-        Delaunay edges with columns bus0, bus1, length and gabriel_edge.
+        Delaunay edges with columns bus0, bus1, length, underwater_fraction and
+        gabriel_edge.
     buses : pd.Index
         All buses, used to report buses below the minimum degree.
     min_degree : int
-        Minimum number of edges per bus. Values <= 0 return all edges.
+        Minimum number of edges per bus. Values <= 0 select all edges.
+    max_offshore_distance : float
+        Maximum offshore length of an edge (km).
 
     Returns
     -------
-    gpd.GeoDataFrame
-        Selected edges.
+    pd.Series
+        Boolean mask of the selected edges.
     """
+    allowed = graph["length"] * graph["underwater_fraction"] <= max_offshore_distance
     if min_degree <= 0:
-        return graph
+        return allowed
 
-    selected = graph["gabriel_edge"].to_numpy(copy=True)
+    selected = (graph["gabriel_edge"] & allowed).to_numpy(copy=True)
     gabriel_ends = graph.loc[selected, ["bus0", "bus1"]].stack().value_counts()
     degree = pd.Series(0, index=buses).add(gabriel_ends, fill_value=0)
 
     for i in np.argsort(graph["length"].to_numpy(), kind="stable"):
         u, v = graph["bus0"].iat[i], graph["bus1"].iat[i]
-        if not selected[i] and min(degree[u], degree[v]) < min_degree:
+        if (
+            allowed.iat[i]
+            and not selected[i]
+            and min(degree[u], degree[v]) < min_degree
+        ):
             selected[i] = True
             degree[[u, v]] += 1
 
-    if unmet := int((degree < min_degree).sum()):
+    if not (unmet := degree.index[degree < min_degree]).empty:
         logger.warning(
-            f"{unmet} of {len(degree)} buses have fewer than {min_degree} candidate corridors."
+            f"{len(unmet)} of {len(degree)} buses have fewer than {min_degree} "
+            f"candidate corridors: {', '.join(unmet)}"
         )
-    return graph[selected]
+    return pd.Series(selected, index=graph.index)
 
 
 def build_transmission_topology(
     n: pypsa.Network,
     offshore_shapes: gpd.GeoDataFrame,
-    min_degree: int,
-    max_offshore_distance: float,
+    corridors: dict[str, dict],
 ) -> gpd.GeoDataFrame:
-    """Build the candidate corridors; see the module docstring for the method."""
-    graph = build_delaunay_graph(n, offshore_shapes)
-    offshore_length = graph["length"] * graph["underwater_fraction"]
-    candidates = graph[offshore_length <= max_offshore_distance]
-    buses = n.buses.dropna(subset=["x", "y"]).index
-    return enforce_min_degree(candidates, buses, min_degree)
+    """
+    Build the candidate corridors; see the module docstring for the method.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network with bus coordinates ``x`` and ``y`` in EPSG:4326.
+    offshore_shapes : gpd.GeoDataFrame
+        Offshore regions used for the offshore fraction of each edge.
+    corridors : dict[str, dict]
+        Per carrier, the ``min_degree`` and ``max_offshore_distance``.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        Delaunay edges selected for at least one carrier, with one boolean
+        column per carrier.
+    """
+    buses = n.buses.query("carrier == 'AC'")
+    graph = build_delaunay_graph(buses, offshore_shapes)
+    for carrier, settings in corridors.items():
+        logger.info(f"Selecting candidate corridors for {carrier}.")
+        graph[carrier] = select_corridors(graph, buses.index, **settings)
+    return graph[graph[list(corridors)].any(axis=1)]
 
 
 if __name__ == "__main__":
@@ -172,9 +209,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
-    params = snakemake.params.pipeline_topology
-
     candidates = build_transmission_topology(
-        n, offshore_shapes, params["min_degree"], params["max_offshore_distance"]
+        n, offshore_shapes, snakemake.params.transport_corridors
     )
     candidates.to_file(snakemake.output.candidates)
