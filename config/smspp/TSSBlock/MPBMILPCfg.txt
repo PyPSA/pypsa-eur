@@ -26,7 +26,7 @@ intMaxThread    1 # single-threaded for deterministic master reproducibility
 #CPXPARAM_Emphasis_Numerical      1   # numerical precision emphasis
 
 # All specific GUROBI parameter (uncomment based on Solver)
-Method        1   # 0 = primal, 1 = dual simplex, 2 = barrier: the
+Method        2   # 0 = primal, 1 = dual simplex, 2 = barrier: the
                   # multipliers of the master ARE the algorithm, and an
                   # interior point has them only to about 1e-7 relative,
                   # which the stopping test of the bundle cannot survive;

@@ -20,8 +20,9 @@ Si confrontano separatamente reti a **5 nodi** e a **20 nodi** (`clusters`), man
 | `gurobi` | `gurobi-default` |
 | `smspp` | `smspp-tssb` |
 | `smspp_2` | `smspp-tssb-bds` |
+| `smspp_3` | `smspp-tssb-ip-par` |
 
-La raccolta contiene 24 righe: 4 numerosità × 2 dimensioni di rete × 3 solver.
+La raccolta aggiornata il **4 novembre 2026** contiene 32 righe: 4 numerosità × 2 dimensioni di rete × 4 identificativi di solver. Su indicazione esplicita dell’utente, `smspp_3` è identificato come `smspp-tssb-ip-par` in tutti i casi, inclusa la run fallita a 20 nodi/200 scenari. Questa assegnazione sostituisce le etichette nei metadati delle reti e nei config di ripiego.
 
 ## Rule e configurazioni per generare le esecuzioni
 
@@ -53,8 +54,8 @@ clustering:
     resolution_elec: 24c24
 solving:
   solver:
-    name: [gurobi, smspp, smspp]
-    options: [gurobi-default, smspp-tssb, smspp-tssb-bds]
+    name: [gurobi, smspp, smspp, smspp]
+    options: [gurobi-default, smspp-tssb, smspp-tssb-bds, smspp-tssb-ip-par]
 ```
 
 Questo estratto illustra i parametri necessari; non sostituisce il file completo. Nelle configurazioni salvate sono presenti anche `skip_iterations: true`, `transmission_losses: 0` e `linearized_unit_commitment: false`.
@@ -70,7 +71,7 @@ config/instances/scenarios/tssb/stochastic-demand_200.yaml
 
 Gli scenari applicano una modifica a `Load.p_set` tramite `modify_components`, con operazione `scale`, distribuzione normale, media 1, deviazione standard 0.1, estremi 0.8 e 1.2 e seed 123. Le probabilità sono uniformi (`1/N`).
 
-**Stato dei config al momento della documentazione:** il file di istanza attuale seleziona `th_120c24_demand_20` e il solo cluster 20; inoltre `scenarios-power.yaml` contiene il caso `th_24c24_demand_20`, ma non i casi `th_24c24_demand_50`, `_100` e `_200`. Non basta quindi lanciare il config attuale per riprodurre tutte e quattro le cartelle. Per ricrearle, aggiungere al file degli override i tre casi mancanti, copiando il blocco `th_24c24_demand_20`, aggiornando il nome e il percorso `stochastic-demand_N.yaml`, e mantenendo `parameters: [demand]` per entrambe le opzioni SMS++.
+**Stato dei config al 4 novembre 2026:** il file di istanza attuale seleziona `th_24c24_demand_20` e il solo cluster 20; inoltre `scenarios-power.yaml` contiene il caso `th_24c24_demand_20`, ma non i casi `th_24c24_demand_50`, `_100` e `_200`. Non basta quindi lanciare il config attuale per riprodurre tutte e quattro le cartelle. Per ricrearle, aggiungere al file degli override i tre casi mancanti, copiando il blocco `th_24c24_demand_20`, aggiornando il nome e il percorso `stochastic-demand_N.yaml`, e impostando `parameters: [demand]` per le opzioni SMS++ utilizzate.
 
 Poi selezionare nel config di istanza i quattro nomi in `run.name` e `scenario.clusters: [5, 20]`. Il comando per richiedere l'intera catena è:
 
@@ -132,6 +133,19 @@ Il collector legge l'ultima riga di ciascun benchmark TSV, aggiunge i metadati d
 
 `cpu_time`, `h:m:s`, `max_vms`, `max_uss`, `max_pss`, I/O e carico medio sono conservati nel CSV raccolto, ma non determinano le ordinate di questi grafici. `objective` e `objective_constant` vengono letti dalla rete e preparati dal codice comune, ma qui non sono rappresentati.
 
+Dopo la raccolta, applicare la correzione dell’identità di `smspp_3` confermata dall’utente, prima di generare i grafici:
+
+```bash
+python - <<'PY'
+from pathlib import Path
+import pandas as pd
+path = Path("results/capacity-expansion-tssb-power-IT-noUC/benchmarks_demand_scenario_scaling/solve_benchmarks.csv")
+data = pd.read_csv(path)
+data.loc[data["solver"].eq("smspp_3"), "solver_options"] = "smspp-tssb-ip-par"
+data.to_csv(path, index=False)
+PY
+```
+
 ## Generazione dei grafici
 
 Script: [scripts/plot_benchmark_scenarios.py](../../scripts/plot_benchmark_scenarios.py), che riusa preparazione dati, colori, linee e legenda di [scripts/plot_solve_benchmarks.py](../../scripts/plot_solve_benchmarks.py).
@@ -170,8 +184,16 @@ I CSV sotto `plots/` contengono i dati preparati e filtrati, inclusi `runtime_s`
 
 ## Lettura degli esiti e limite delle figure attuali
 
-Per 5 nodi tutte le 12 righe sono classificate dal codice come `solved`: ciò indica che non sono stati rilevati i marcatori di fallimento/time limit/infeasibilità, non certifica da solo l'ottimalità di ogni soluzione.
+Per 5 nodi tutte le 16 righe sono classificate dal codice come `solved`: ciò indica che non sono stati rilevati i marcatori di fallimento/time limit/infeasibilità, non certifica da solo l'ottimalità di ogni soluzione.
 
-Per **20 nodi e 200 scenari**, le due esecuzioni SMS++ provengono da file `.failed` e riportano `solve_status=error`, `termination_condition=exit_code_1`. I tempi misurati sono 6800.61 s (`smspp-tssb`) e 4180.72 s (`smspp-tssb-bds`), con picchi rispettivamente di circa 138.26 e 96.11 GiB. Non sono tempi di soluzione completata.
+Per **20 nodi e 200 scenari**, le tre esecuzioni SMS++ provengono da file `.failed` e riportano `solve_status=error`, `termination_condition=exit_code_1`. Le misure aggiornate sono:
 
-Il codice comune attuale assegna `outcome=time_limit` anche a ogni benchmark `.failed`, indipendentemente dalla causa. Per questo nelle figure i due punti appaiono con una X e legenda **Time limit**, senza collegamento alla curva. **L'etichetta non prova che sia stato raggiunto un limite temporale:** in questi dati l'esito è un errore `exit_code_1`. Per stabilirne la causa occorre analizzare i log della singola run. Il README documenta questo comportamento senza modificare i grafici già generati.
+| Identificativo | Etichetta raccolta | Tempo [s] | Picco RSS [GiB] |
+| --- | --- | ---: | ---: |
+| `smspp` | `smspp-tssb` | 4470.67 | 152.40 |
+| `smspp_2` | `smspp-tssb-bds` | 4557.39 | 85.99 |
+| `smspp_3` | `smspp-tssb-ip-par` (indicazione utente) | 1866.23 | 62.28 |
+
+Non sono tempi di soluzione completata.
+
+Il codice comune attuale assegna `outcome=time_limit` anche a ogni benchmark `.failed`, indipendentemente dalla causa. Per questo nelle figure i tre punti appaiono con una X e legenda **Time limit**, senza collegamento alla curva. **L'etichetta non prova che sia stato raggiunto un limite temporale:** in questi dati l'esito è un errore `exit_code_1`. Per stabilirne la causa occorre analizzare i log della singola run. I grafici e i CSV sono stati rigenerati il 4 novembre 2026 mantenendo questo comportamento del codice comune.

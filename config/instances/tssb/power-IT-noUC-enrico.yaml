@@ -16,6 +16,7 @@ foresight: overnight
 
 scenario:
   clusters:
+  - 5
   - 20
   #- 50
 
@@ -48,6 +49,6 @@ solving:
     linearized_unit_commitment: false
     noisy_costs: false
   solver:
-    name: [gurobi, smspp, smspp]
-    options: [gurobi-default, smspp-tssb, smspp-tssb-bds]
+    name: [gurobi, smspp, smspp, smspp]
+    options: [gurobi-default, smspp-tssb, smspp-tssb-bds, smspp-tssb-ib-par]
   runtime: 4h
