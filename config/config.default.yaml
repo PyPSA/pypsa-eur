@@ -1402,7 +1402,6 @@ solving:
     expected_value:
     atol: 10000
     rtol: 0.001
-  oetc:
   mem_mb: 128000
   memory_logging_frequency: 5
   runtime: 48h
