@@ -216,6 +216,16 @@ def input_custom_extra_functionality(w):
     return []
 
 
+def input_custom_costs(w) -> list[str]:
+    """Return the custom cost files as a list, empty if disabled."""
+    fns = config_provider("costs", "custom_cost_fn")(w)
+    if not fns:
+        return []
+    if isinstance(fns, str):
+        return [fns]
+    return fns
+
+
 def cost_year(w):
     """Return the year of the cost assumptions used for the requested horizon."""
     return config_provider("costs", "year")(w) or w.horizon

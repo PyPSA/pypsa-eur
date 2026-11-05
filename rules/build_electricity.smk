@@ -661,7 +661,7 @@ rule process_cost_data:
         costs=lambda w: rules.retrieve_cost_data.output["costs"].format(
             horizon=cost_year(w)
         ),
-        custom_costs=config_provider("costs", "custom_cost_fn"),
+        custom_costs=input_custom_costs,
     output:
         resources("costs_{horizon}_processed.csv"),
     log:
