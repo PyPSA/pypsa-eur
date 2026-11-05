@@ -73,6 +73,8 @@ counts as negative emissions when it is sequestered, see
 Solid biomass can be one European pool or regionally resolved. When resolved,
 transport between regions can be free or priced per distance with
 country-specific costs, which reflects road transport of bulky feedstocks.
+Priced transport follows the same candidate corridors as new
+[hydrogen pipelines](hydrogen.md#transport).
 Biogas follows the gas network if that is resolved.
 
 ## Further reading
