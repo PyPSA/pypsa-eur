@@ -6,7 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-* Fix: Landlocked countries run again with offshore technologies disabled. The fix of [#383](https://github.com/PyPSA/pypsa-eur/pull/383) got lost in [#2169](https://github.com/PyPSA/pypsa-eur/pull/2169).
+* Fix: Runs with only landlocked countries and offshore technologies disabled work again, which broke in [#2169](https://github.com/PyPSA/pypsa-eur/pull/2169). Renewable capacity estimation now skips carriers missing from `electricity: renewable_carriers` ([#2378](https://github.com/PyPSA/pypsa-eur/pull/2378)).
 
 * Fix: An empty `costs: custom_cost_fn:` or `[]` now disables custom cost overwrites correctly ([#2396](https://github.com/PyPSA/pypsa-eur/pull/2396)).
 
