@@ -32,7 +32,6 @@ import pypsa
 import xarray as xr
 import yaml
 from linopy.constants import SolverStatus, TerminationCondition
-from linopy.remote.oetc import OetcCredentials, OetcHandler, OetcSettings
 from pypsa.descriptors import get_activity_mask
 
 from scripts._benchmark import memory_logger
@@ -1392,17 +1391,6 @@ def collect_kwargs(
 
     if log_fn:
         solve_kwargs["log_fn"] = log_fn
-
-    oetc = solving.get("oetc", None)
-    if oetc:
-        oetc["credentials"] = OetcCredentials(
-            email=os.environ["OETC_EMAIL"], password=os.environ["OETC_PASSWORD"]
-        )
-        oetc["solver"] = solver_name
-        oetc["solver_options"] = solver_options
-        oetc_settings = OetcSettings(**oetc)
-        oetc_handler = OetcHandler(oetc_settings)
-        solve_kwargs["remote"] = oetc_handler
 
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").setLevel(logging.CRITICAL)
