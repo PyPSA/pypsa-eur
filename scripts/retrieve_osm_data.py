@@ -13,6 +13,7 @@ policy by fetching the needed data once, only.
 import json
 import logging
 import os
+import re
 import time
 
 import requests
@@ -97,8 +98,6 @@ def retrieve_osm_data(
         ],
     }
 
-    wait_time = 5
-
     headers = {"User-Agent": user_agent}
 
     for f in features:
@@ -110,63 +109,69 @@ def retrieve_osm_data(
                 f"Invalid feature: {f}. Supported features: {list(features_dict.keys())}"
             )
 
-        max_tries = 3
+        # Build the overpass query
+        op_area = f'area["ISO3166-1"="{country}"]'
+        op_query = f"""
+            [out:json][timeout:{timeout}];
+            {op_area}->.searchArea;
+            (
+            {" ".join(f"{i}(area.searchArea);" for i in features_dict[f])}
+            );
+            out body geom;
+        """
+
+        wait_time = 30
         for attempt in range(max_tries):
             logger.info(
                 f" - Fetching OSM data for feature '{f}' in {country} (Attempt {attempt + 1})..."
             )
-
-            # Build the overpass query
-            op_area = f'area["ISO3166-1"="{country}"]'
-            op_query = f"""
-                [out:json][timeout:{timeout}];
-                {op_area}->.searchArea;
-                (
-                {" ".join(f"{i}(area.searchArea);" for i in features_dict[f])}
-                );
-                out body geom;
-            """
+            response = None
             try:
-                # Send the request
-                response = requests.post(url, data=op_query, headers=headers)
+                # Client timeout slightly above the server-side query timeout
+                response = requests.post(
+                    url, data=op_query, headers=headers, timeout=timeout + 60
+                )
                 response.raise_for_status()  # Raise HTTPError for bad responses
-
-                filepath = output[f]
-                parentfolder = os.path.dirname(filepath)
-                if not os.path.exists(parentfolder):
-                    os.makedirs(parentfolder)
-
-                with open(filepath, mode="w") as f:
-                    json.dump(response.json(), f, indent=2)
-                logger.info(" - Done.")
-                break  # Exit the retry loop on success
-            except (json.JSONDecodeError, requests.exceptions.RequestException) as e:
-                logger.error(f"Error for feature '{f}' in country {country}: {e}")
-                logger.debug(
-                    f"Response text: {response.text if response else 'No response'}"
-                )
-                if attempt < max_tries - 1:
-                    wait_time += 15
-                    logger.info(f"Waiting {wait_time} seconds before retrying...")
-                    time.sleep(wait_time)
-                else:
-                    logger.error(
-                        f"Failed to retrieve data for feature '{f}' in country {country} after {max_tries} attempts."
-                    )
-            except Exception as e:
-                # For now, catch any other exceptions and log them. Treat this
-                # the same as a RequestException and try to run again two times.
+                # Parse before opening the file, so that an error page or a
+                # truncated response does not leave an empty output file behind
+                data = response.json()
+                # Overpass reports runtime errors during the query (e.g. timeout,
+                # out of memory) as a remark next to incomplete results
+                if "runtime error" in data.get("remark", ""):
+                    raise ValueError(data["remark"])
+            except (ValueError, requests.exceptions.RequestException) as e:
+                # Overpass returns errors before the query as an HTML page with
+                # status 200
+                text = ""
+                if response is not None and "html" in response.headers.get(
+                    "content-type", ""
+                ):
+                    text = " ".join(re.sub(r"<[^>]+>", " ", response.text).split())
                 logger.error(
-                    f"Unexpected error for feature '{f}' in country {country}: {e}"
+                    f"Error for feature '{f}' in country {country}: {e}. "
+                    f"Server response: {text[-300:]}"
                 )
-                if attempt < max_tries - 1:
-                    wait_time += 10
-                    logger.info(f"Waiting {wait_time} seconds before retrying...")
-                    time.sleep(wait_time)
-                else:
-                    logger.error(
+                if attempt == max_tries - 1:
+                    raise RuntimeError(
                         f"Failed to retrieve data for feature '{f}' in country {country} after {max_tries} attempts."
-                    )
+                    ) from e
+                # The same query is still running on the server, e.g. from an
+                # aborted run, and is only released after its timeout
+                if "duplicate_query" in text:
+                    wait = timeout
+                else:
+                    wait = wait_time
+                    wait_time *= 2
+                logger.info(f"Waiting {wait} seconds before retrying...")
+                time.sleep(wait)
+                continue
+
+            filepath = output[f]
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            with open(filepath, mode="w") as file:
+                json.dump(data, file, indent=2)
+            logger.info(" - Done.")
+            break
 
 
 if __name__ == "__main__":

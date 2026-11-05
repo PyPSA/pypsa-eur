@@ -8,6 +8,16 @@
 
 * Fix: Landlocked countries run again with offshore technologies disabled. The fix of [#383](https://github.com/PyPSA/pypsa-eur/pull/383) got lost in [#2169](https://github.com/PyPSA/pypsa-eur/pull/2169).
 
+* Fix: An empty `costs: custom_cost_fn:` or `[]` now disables custom cost overwrites correctly ([#2396](https://github.com/PyPSA/pypsa-eur/pull/2396)).
+
+* Feature: `costs: custom_cost_fn:` accepts a list of files for overwrites, applied in order ([#2396](https://github.com/PyPSA/pypsa-eur/pull/2396)).
+
+* OSM network: The network comparison now also compares DC links and exports `links.csv`. Fix: AC-tagged relations are no longer imported as DC links, GW ratings are converted to MW, and incomplete DC links no longer affect converter voltage and capacity ([#2387](https://github.com/PyPSA/pypsa-eur/pull/2387)).
+
+* Fix: `build_swiss_energy_balances` now reads the October 2026 edition of the Swiss energy balances (data for 2000-2025), which renamed table rows. ([#2380](https://github.com/PyPSA/pypsa-eur/pull/2380)).
+
+* Fix: With `run: shared_resources: policy: base`, `compose_network` now reads processed costs and the previous perfect-foresight network from the run's own resources folder, not the shared one ([#2379](https://github.com/PyPSA/pypsa-eur/pull/2379)).
+
 * Fix: `lines: types` must now define a line type for the 380 kV level; the config validation fails early with a clear message instead of the workflow failing later ([#2166](https://github.com/PyPSA/pypsa-eur/issues/2166)).
 
 * Feature: New switches `industry: solid_biomass_for_industry_cc`, `industry: gas_for_industry_cc` and `industry: process_emissions_cc` to disable the carbon capture options for solid biomass for industry, gas for industry and industrial process emissions. All default to `true`, which matches the previous behaviour ([#2357](https://github.com/PyPSA/pypsa-eur/pull/2357)).
