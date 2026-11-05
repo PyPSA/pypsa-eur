@@ -6,9 +6,9 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-* Fix: An empty `costs: custom_cost_fn:` or `[]` now disables custom cost overwrites correctly.
+* Fix: An empty `costs: custom_cost_fn:` or `[]` now disables custom cost overwrites correctly ([#2396](https://github.com/PyPSA/pypsa-eur/pull/2396)).
 
-* Feature: `costs: custom_cost_fn:` accepts a list of files for overwrites, applied in order.
+* Feature: `costs: custom_cost_fn:` accepts a list of files for overwrites, applied in order ([#2396](https://github.com/PyPSA/pypsa-eur/pull/2396)).
 
 * OSM network: The network comparison now also compares DC links and exports `links.csv`. Fix: AC-tagged relations are no longer imported as DC links, GW ratings are converted to MW, and incomplete DC links no longer affect converter voltage and capacity ([#2387](https://github.com/PyPSA/pypsa-eur/pull/2387)).
 
