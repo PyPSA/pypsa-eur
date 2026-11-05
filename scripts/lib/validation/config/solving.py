@@ -295,35 +295,6 @@ class _CheckObjectiveConfig(BaseModel):
         return v
 
 
-class _OETCConfig(BaseModel):
-    """Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support)."""
-
-    name: str = Field(
-        "pypsa-eur",
-        description="Name identifier for the OETC job.",
-    )
-    authentication_server_url: str = Field(
-        "",
-        description="URL of the OETC authentication server for job submission.",
-    )
-    orchestrator_server_url: str = Field(
-        "",
-        description="URL of the OETC orchestrator server for job management.",
-    )
-    cpu_cores: int = Field(
-        8,
-        description="Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)",
-    )
-    disk_space_gb: int = Field(
-        50,
-        description="Amount of disk space in gigabytes to request for the OETC job.",
-    )
-    delete_worker_on_error: bool = Field(
-        True,
-        description="Whether to delete the worker instance when an error occurs during job execution.",
-    )
-
-
 class SolvingConfig(BaseModel):
     """Configuration for `solving` settings."""
 
@@ -465,10 +436,6 @@ class SolvingConfig(BaseModel):
     check_objective: _CheckObjectiveConfig = Field(
         default_factory=_CheckObjectiveConfig,
         description="Objective checking configuration.",
-    )
-    oetc: _OETCConfig | None = Field(
-        None,
-        description="Configuration options for Open Energy Transition Computing (OETC) cluster support.",
     )
     mem_mb: int = Field(
         128000,
