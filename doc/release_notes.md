@@ -6,7 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-* **Breaking:** Removed the integration with the discontinued OETC platform. A non-empty `solving: oetc:` section in the config now raises an error ([#2395](https://github.com/PyPSA/pypsa-eur/issues/2395)).
+* **Breaking:** Removed the integration of the discontinued OETC service. A non-empty `solving: oetc:` section in the config will now raises an error ([#2395](https://github.com/PyPSA/pypsa-eur/issues/2395)).
 
 * OSM network: The network comparison now also compares DC links and exports `links.csv`. Fix: AC-tagged relations are no longer imported as DC links, GW ratings are converted to MW, and incomplete DC links no longer affect converter voltage and capacity ([#2387](https://github.com/PyPSA/pypsa-eur/pull/2387)).
 
