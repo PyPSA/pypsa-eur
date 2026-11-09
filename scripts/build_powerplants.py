@@ -11,9 +11,7 @@ Plant capacities and locations come from the
 restricted to the modelled countries and filtered with the
 [pandas.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html)
 expression in `electricity.powerplants_filter`. Custom entries from a
-user-provided CSV or a list of CSVs (set in `electricity.custom_powerplants_fn`,
-default `data/custom_powerplants.csv`) can be added, filtered with
-`electricity.custom_powerplants`;
+user-provided CSV or a list of CSVs (set in `electricity.custom_powerplants_fn`) can be added, filtered with `electricity.custom_powerplants`;
 for example `powerplants_filter: Country not in ['Germany']` together with
 `custom_powerplants: Country in ['Germany']` replaces the German fleet by custom
 data. Fuel types listed in `electricity.everywhere_powerplants` are added with
