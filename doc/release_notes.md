@@ -6,7 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-* Feature: New option `electricity: custom_powerplants_file` sets the path of the custom power plant CSV (default `data/custom_powerplants.csv`). `build_powerplants` now only requires this file when `electricity: custom_powerplants` is enabled ([#2388](https://github.com/PyPSA/pypsa-eur/pull/2388)).
+* Feature: New option `electricity: custom_powerplants_fn` sets the path of the custom power plant CSV (default `data/custom_powerplants.csv`). `build_powerplants` now only requires this file when `electricity: custom_powerplants` is enabled ([#2388](https://github.com/PyPSA/pypsa-eur/pull/2388)).
 
 * Feature: New solver options to solve the model with the commercial solver MOSEK.
 

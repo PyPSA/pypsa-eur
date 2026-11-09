@@ -35,7 +35,7 @@ def input_custom_powerplants(w):
     if not config_provider("electricity", "custom_powerplants")(w):
         return {}
     return {
-        "custom_powerplants": config_provider("electricity", "custom_powerplants_file")(
+        "custom_powerplants": config_provider("electricity", "custom_powerplants_fn")(
             w
         )
     }

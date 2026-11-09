@@ -11,7 +11,7 @@ Plant capacities and locations come from the
 restricted to the modelled countries and filtered with the
 [pandas.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html)
 expression in `electricity.powerplants_filter`. Custom entries from a
-user-provided CSV (path set in `electricity.custom_powerplants_file`, default
+user-provided CSV (path set in `electricity.custom_powerplants_fn`, default
 `data/custom_powerplants.csv`) can be added, filtered with
 `electricity.custom_powerplants`;
 for example `powerplants_filter: Country not in ['Germany']` together with

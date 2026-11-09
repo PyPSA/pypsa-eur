@@ -201,9 +201,9 @@ class ElectricityConfig(BaseModel):
     )
     custom_powerplants: str | bool = Field(
         False,
-        description="Whether to add power plants from the custom power plant file (see `custom_powerplants_file`). `true` adds all entries, a string is used as a pandas query to filter the entries, `false` disables it.",
+        description="Whether to add power plants from the custom power plant file (see `custom_powerplants_fn`). `true` adds all entries, a string is used as a pandas query to filter the entries, `false` disables it.",
     )
-    custom_powerplants_file: str = Field(
+    custom_powerplants_fn: str = Field(
         "data/custom_powerplants.csv",
         description="Path to the CSV file with custom power plants, used if `custom_powerplants` is enabled. The file must follow the powerplantmatching format.",
     )
