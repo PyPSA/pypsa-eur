@@ -1396,6 +1396,13 @@ solving:
       baralg: 4
       barhggpu: 1
       barhgreltol: 1.0e-05
+    "mosek-default":
+      MSK_IPAR_NUM_THREADS: 8
+      MSK_IPAR_OPTIMIZER: MSK_OPTIMIZER_INTPNT
+      MSK_IPAR_INTPNT_BASIS: MSK_BI_NEVER
+      MSK_DPAR_INTPNT_TOL_REL_GAP: 1.0e-05
+      MSK_DPAR_INTPNT_TOL_PFEAS: 1.0e-06
+      MSK_DPAR_INTPNT_TOL_DFEAS: 1.0e-06
     "cbc-default": {}
     "glpk-default": {}
   check_objective:
@@ -1403,7 +1410,6 @@ solving:
     expected_value:
     atol: 10000
     rtol: 0.001
-  oetc:
   mem_mb: 128000
   memory_logging_frequency: 5
   runtime: 48h
