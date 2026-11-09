@@ -31,24 +31,17 @@ rule build_electricity_demand:
         scripts("build_electricity_demand.py")
 
 
-def input_custom_powerplants(w):
-    if not config_provider("electricity", "custom_powerplants")(w):
-        return {}
-    return {
-        "custom_powerplants": config_provider("electricity", "custom_powerplants_fn")(
-            w
-        )
-    }
-
-
 rule build_powerplants:
     """Assigns conventional power plant capacities from powerplantmatching to clustered buses."""
     input:
-        unpack(input_custom_powerplants),
         network=resources("networks/clustered.nc"),
         regions_onshore=resources("onshore_regions.geojson"),
         regions_offshore=resources("offshore_regions.geojson"),
         powerplants=rules.retrieve_powerplants.output["powerplants"],
+        custom_powerplants=branch(
+            config_provider("electricity", "custom_powerplants"),
+            then=config_provider("electricity", "custom_powerplants_fn"),
+        ),
     output:
         resources("powerplants.csv"),
     log:
