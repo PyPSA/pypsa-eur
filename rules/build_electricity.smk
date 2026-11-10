@@ -38,7 +38,10 @@ rule build_powerplants:
         regions_onshore=resources("onshore_regions.geojson"),
         regions_offshore=resources("offshore_regions.geojson"),
         powerplants=rules.retrieve_powerplants.output["powerplants"],
-        custom_powerplants="data/custom_powerplants.csv",
+        custom_powerplants=branch(
+            config_provider("electricity", "custom_powerplants"),
+            then=config_provider("electricity", "custom_powerplants_fn"),
+        ),
     output:
         resources("powerplants.csv"),
     log:
