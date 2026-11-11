@@ -110,7 +110,6 @@ def get_compose_inputs(w):
             existing_heating_distribution=resources(
                 "existing_heating_distribution_{horizon}.csv"
             ),
-            temp_soil_total=resources("temp_soil_total.nc"),
             temp_air_total=resources("temp_air_total.nc"),
             cop_profiles=resources("cop_profiles_{horizon}.nc"),
             direct_heat_source_utilisation_profiles=resources(
