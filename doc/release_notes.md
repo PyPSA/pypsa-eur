@@ -19,10 +19,10 @@
   freed by the phase-out is assumed to grow food/feed with the same fertiliser per hectare, outside the model), and
   farm diesel is in the agriculture energy demand. This gives 0.091 (bioethanol) and 0.066 (biodiesel) tCO2eq/MWh
   of fuel, weighted by each country's Eurostat production mix of biogasoline vs. biodiesels and added to the CO2
-  balance of the `unsustainable bioliquids` link. Unsustainable solid biomass is not changed: in Eurostat it is
-  mostly fuelwood, wood residues and black liquor (about 93%), without cultivation emissions; its harvest,
-  processing and transport energy in Europe is already in the energy demand (JRC, Giuntoli et al. 2017), and forest
-  carbon stock changes belong to the LULUCF sink.
+  balance of the `unsustainable bioliquids` link. Unsustainable solid biomass is not changed: it is wood and black
+  liquor without fertiliser or field N2O, its use is exogenous and only declines from today's level, so the effect of
+  its harvest on the forest carbon stock is part of the LULUCF sink (treated separately), and the energy for harvest,
+  processing and transport is approximately covered by the sector energy demands of PyPSA-Eur.
 
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 
