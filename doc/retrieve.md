@@ -91,3 +91,27 @@ costs:
 **Outputs**
 
 - `data/costs/primary/{version}/costs_{year}.csv`
+
+
+## Rule `retrieve_co2_removal_data`
+
+This rule downloads the preprocessed input data for the carbon dioxide removal technologies and the upstream emissions of the unsustainable bioliquids from the [CO2-removal dataset on Zenodo](https://doi.org/10.5281/zenodo.23954311) (dataset `co2_removal_data` in `data/versions.csv`) and unpacks the files used here. The method is documented in the `docs/` folder of the dataset.
+
+**Relevant Settings**
+
+```yaml
+sector:
+    unsustainable_biomass_upstream_emissions:
+data:
+    co2_removal_data:
+        source:
+        version:
+```
+
+!!! seealso
+    Documentation of the configuration file `config/config.yaml` at
+    [sector_cf](configuration.md#sector_cf)
+
+**Outputs**
+
+- `resources/unsustainable_biomass_upstream.csv`: upstream (feedstock cultivation) emission factors of bioethanol and biodiesel per year, in tCO2eq/MWh of fuel
