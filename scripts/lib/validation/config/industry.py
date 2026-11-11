@@ -140,6 +140,18 @@ class IndustryConfig(ConfigModel):
         False,
         description="Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.",
     )
+    solid_biomass_for_industry_cc: bool = Field(
+        True,
+        description="Add option for using solid biomass for industry with carbon capture, in addition to solid biomass for industry without carbon capture.",
+    )
+    gas_for_industry_cc: bool = Field(
+        True,
+        description="Add option for using gas for industry with carbon capture, in addition to gas for industry without carbon capture.",
+    )
+    process_emissions_cc: bool = Field(
+        True,
+        description="Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
+    )
     sector_ratios_fraction_future: dict[int, float] = Field(
         default_factory=lambda: {
             2020: 0.0,

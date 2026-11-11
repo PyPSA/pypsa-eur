@@ -46,7 +46,15 @@ class LoggingConfig(ConfigModel):
 
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         "INFO",
-        description="Restrict console outputs to all infos, warning or errors only",
+        description="Root log level. Messages below this level are discarded before reaching any handler.",
+    )
+    console_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
+        "WARNING",
+        description="Minimum level emitted to the console (stderr). Defaults to ``WARNING`` so parallel rule output stays readable; the full log is kept in the rule's log file.",
+    )
+    file_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | None = Field(
+        None,
+        description="Minimum level written to the rule log file. Defaults to ``level`` when unset.",
     )
     format: str = Field(
         "%(levelname)s:%(name)s:%(message)s",

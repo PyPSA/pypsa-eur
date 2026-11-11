@@ -8,6 +8,30 @@
 
 * data: Update to use the power plant dataset from `powerplantmatching` v0.9.1 ([#2356](https://github.com/PyPSA/pypsa-eur/pull/2356)).
 
+* Feature: Custom powerplants can now be specified with a configurable path and multiple files are accepted by the new option `electricity: custom_powerplants_fn` ([#2388](https://github.com/PyPSA/pypsa-eur/pull/2388)).
+
+* Feature: New solver options to solve the model with the commercial solver MOSEK.
+
+* **Breaking:** Removed the integration of the discontinued OETC service. A non-empty `solving: oetc:` section in the config now raises an error ([#2398](https://github.com/PyPSA/pypsa-eur/pull/2398)).
+* Fix: Runs with only landlocked countries and offshore technologies disabled work again, which broke in [#2169](https://github.com/PyPSA/pypsa-eur/pull/2169). Renewable capacity estimation now skips carriers missing from `electricity: renewable_carriers` ([#2378](https://github.com/PyPSA/pypsa-eur/pull/2378)).
+
+* Fix: An empty `costs: custom_cost_fn:` or `[]` now disables custom cost overwrites correctly ([#2396](https://github.com/PyPSA/pypsa-eur/pull/2396)).
+
+* Feature: `costs: custom_cost_fn:` accepts a list of files for overwrites, applied in order ([#2396](https://github.com/PyPSA/pypsa-eur/pull/2396)).
+
+* OSM network: The network comparison now also compares DC links and exports `links.csv`. Fix: AC-tagged relations are no longer imported as DC links, GW ratings are converted to MW, and incomplete DC links no longer affect converter voltage and capacity ([#2387](https://github.com/PyPSA/pypsa-eur/pull/2387)).
+
+* Fix: `build_swiss_energy_balances` now reads the October 2026 edition of the Swiss energy balances (data for 2000-2025), which renamed table rows. ([#2380](https://github.com/PyPSA/pypsa-eur/pull/2380)).
+
+* Fix: With `run: shared_resources: policy: base`, `compose_network` now reads processed costs and the previous perfect-foresight network from the run's own resources folder, not the shared one ([#2379](https://github.com/PyPSA/pypsa-eur/pull/2379)).
+
+* Fix: `lines: types` must now define a line type for the 380 kV level; the config validation fails early with a clear message instead of the workflow failing later ([#2166](https://github.com/PyPSA/pypsa-eur/issues/2166)).
+
+* Feature: New switches `industry: solid_biomass_for_industry_cc`, `industry: gas_for_industry_cc` and `industry: process_emissions_cc` to disable the carbon capture options for solid biomass for industry, gas for industry and industrial process emissions. All default to `true`, which matches the previous behaviour ([#2357](https://github.com/PyPSA/pypsa-eur/pull/2357)).
+
+* Feature: New option `sector: electrolysis` to allow hydrogen electrolysis to be configurable ([#2358](https://github.com/PyPSA/pypsa-eur/pull/2358)).
+
+* Feature: Split logging levels between console and log file. The console now defaults to `WARNING`, while the log file of each rule still records `INFO`. Configure via `logging: console_level` and `logging: file_level`. To print info messages to the console as before, set `logging: console_level: INFO` ([#2144](https://github.com/PyPSA/pypsa-eur/pull/2144)).
 
 * Removed `exclude-newer` exception for `snakemake-executor-plugin-slurm` from `pixi.toml` ([#2352](https://github.com/PyPSA/pypsa-eur/pull/2352)).
 * Fix: correct GEBCO bathymetry CRS typo for Moldova and Ukraine (EPSG: 4236 → 4326)
@@ -57,6 +81,8 @@
 * Documentation: the *Design* section is restructured into one page per carrier and sector (electricity, heating, transport, industry, hydrogen, ammonia, methane, oil, methanol, biomass, carbon management) plus pages on the model overview, model resolution and foresight. All pages use the same headings (demand, supply, conversion, storage, transport), start with badges showing in which model variants they apply, show electricity-only differences in tabs, and cite literature through `mkdocs-bibtex`. The cited references are added to `doc/publications.bib`. The former *Supply and Demand* and *Spatial Resolution* pages are replaced, and the *Foresight* page is trimmed to the planning concepts.
 
 * Documentation: removed stale wildcard-era instructions and links to the old PyPSA-Eur-Sec configuration, corrected paths and commands in the tutorials, installation, foresight and retrieve pages, and restored the rule documentation for scripts in subdirectories (`build_cop_profiles`, `build_ptes_operations`, ...). The installation page now recommends checking out a release. The `sector`, `data` and new `pypsa_eur` configuration tables are generated from the schema, all wildcards and the collection targets are documented, the retrieve page now focuses on rules needing credentials, and the data inventory is complete and checked against `data/versions.csv` by a unit test.
+
+* Fix: remove deprecated `cutouts` directory and stale references ([#2372](https://github.com/PyPSA/pypsa-eur/pull/2372))
 
 ## PyPSA-Eur v2026.09.0 (25th September 2026)
 

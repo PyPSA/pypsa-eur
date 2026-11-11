@@ -1420,6 +1420,15 @@ def _map_links_to_dc_buses(links, dc_buses, distance_crs=DISTANCE_CRS):
         max_distance=max_distance,
     )["bus_id"]
 
+    # Drop incomplete links (missing buses) before deriving DC bus attributes,
+    # relevant if network is built for single (islanded) regions
+    bool_incomplete_links = links_all["bus0"].isna() | links_all["bus1"].isna()
+    if bool_incomplete_links.any():
+        logger.info(
+            f"Dropping {bool_incomplete_links.sum()} incomplete links that could not be mapped to two DC buses."
+        )
+        links_all = links_all[~bool_incomplete_links]
+
     # list of dc_buses that have been used
     mapped_dc_buses = links_all[["bus0", "bus1"]].stack().unique()
     # Drop remaining dc_buses
@@ -1811,14 +1820,6 @@ def build_network(
         dc_buses = pd.concat([dc_buses, dc_switching], ignore_index=True)
 
     links, dc_buses = _map_links_to_dc_buses(links, dc_buses)
-
-    # Drop incomplete links (missing buses), relevant if network is built for single (islanded) regions
-    bool_incomplete_links = links["bus0"].isna() | links["bus1"].isna()
-    if bool_incomplete_links.any():
-        logger.info(
-            f"Dropping {bool_incomplete_links.sum()} incomplete links that could not be mapped to two DC buses."
-        )
-        links = links[~bool_incomplete_links].reset_index(drop=True)
 
     # Concatenate AC and DC buses
     buses["dc"] = False

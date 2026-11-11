@@ -11,6 +11,8 @@ tutorial: false
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#logging_cf
 logging:
   level: INFO
+  console_level: WARNING
+  file_level:
   format: "%(levelname)s:%(name)s:%(message)s"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#remote_cf
@@ -144,6 +146,7 @@ electricity:
     Link: []
   powerplants_filter: "(DateOut > 2025 or DateOut != DateOut) and (DateIn < 2026 or DateIn != DateIn)"
   custom_powerplants: false
+  custom_powerplants_fn: data/custom_powerplants.csv
   everywhere_powerplants: []
   conventional_carriers:
   - nuclear
@@ -934,6 +937,7 @@ sector:
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: true
+  electrolysis: true
   SMR: true
   SMR_cc: true
   regional_oil_demand: true
@@ -1147,6 +1151,9 @@ industry:
   HVC_environment_sequestration_fraction: 0.0
   waste_to_energy: false
   waste_to_energy_cc: false
+  solid_biomass_for_industry_cc: true
+  gas_for_industry_cc: true
+  process_emissions_cc: true
   sector_ratios_fraction_future:
     2020: 0.0
     2025: 0.05
@@ -1389,6 +1396,13 @@ solving:
       baralg: 4
       barhggpu: 1
       barhgreltol: 1.0e-05
+    "mosek-default":
+      MSK_IPAR_NUM_THREADS: 8
+      MSK_IPAR_OPTIMIZER: MSK_OPTIMIZER_INTPNT
+      MSK_IPAR_INTPNT_BASIS: MSK_BI_NEVER
+      MSK_DPAR_INTPNT_TOL_REL_GAP: 1.0e-05
+      MSK_DPAR_INTPNT_TOL_PFEAS: 1.0e-06
+      MSK_DPAR_INTPNT_TOL_DFEAS: 1.0e-06
     "cbc-default": {}
     "glpk-default": {}
   check_objective:
@@ -1396,7 +1410,6 @@ solving:
     expected_value:
     atol: 10000
     rtol: 0.001
-  oetc:
   mem_mb: 128000
   memory_logging_frequency: 5
   runtime: 48h
