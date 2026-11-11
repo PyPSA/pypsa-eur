@@ -41,7 +41,12 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     nuts3_shapes = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
-    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes).set_index("name")
+    # reindexing supports empty offshore shapes of countries without coast
+    offshore_shapes = (
+        gpd.read_file(snakemake.input.offshore_shapes)
+        .reindex(columns=["name", "geometry"])
+        .set_index("name")
+    )
 
     country_shapes = nuts3_shapes.groupby("country")["geometry"].apply(
         lambda x: x.union_all()

@@ -65,7 +65,6 @@ nav:
   - Methane: design/methane.md
   - Methanol: design/methanol.md
   - Oil: design/oil.md
-  - OETC Integration: oetc.md
 
 - Configuration:
   - Wildcards: wildcards.md

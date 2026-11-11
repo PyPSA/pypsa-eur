@@ -38,7 +38,10 @@ rule build_powerplants:
         regions_onshore=resources("onshore_regions.geojson"),
         regions_offshore=resources("offshore_regions.geojson"),
         powerplants=rules.retrieve_powerplants.output["powerplants"],
-        custom_powerplants="data/custom_powerplants.csv",
+        custom_powerplants=branch(
+            config_provider("electricity", "custom_powerplants"),
+            then=config_provider("electricity", "custom_powerplants_fn"),
+        ),
     output:
         resources("powerplants.csv"),
     log:
@@ -661,7 +664,7 @@ rule process_cost_data:
         costs=lambda w: rules.retrieve_cost_data.output["costs"].format(
             horizon=cost_year(w)
         ),
-        custom_costs=config_provider("costs", "custom_cost_fn"),
+        custom_costs=input_custom_costs,
     output:
         resources("costs_{horizon}_processed.csv"),
     log:

@@ -7,6 +7,16 @@
 <!-- ================= -->
 
 * Updated the default prebuilt OSM network to v0.8 (https://zenodo.org/records/23896564), retrieved on 2 November 2026 ([#2389](https://github.com/PyPSA/pypsa-eur/pull/2389)).
+* Feature: Custom powerplants can now be specified with a configurable path and multiple files are accepted by the new option `electricity: custom_powerplants_fn` ([#2388](https://github.com/PyPSA/pypsa-eur/pull/2388)).
+
+* Feature: New solver options to solve the model with the commercial solver MOSEK.
+
+* **Breaking:** Removed the integration of the discontinued OETC service. A non-empty `solving: oetc:` section in the config now raises an error ([#2398](https://github.com/PyPSA/pypsa-eur/pull/2398)).
+* Fix: Runs with only landlocked countries and offshore technologies disabled work again, which broke in [#2169](https://github.com/PyPSA/pypsa-eur/pull/2169). Renewable capacity estimation now skips carriers missing from `electricity: renewable_carriers` ([#2378](https://github.com/PyPSA/pypsa-eur/pull/2378)).
+
+* Fix: An empty `costs: custom_cost_fn:` or `[]` now disables custom cost overwrites correctly ([#2396](https://github.com/PyPSA/pypsa-eur/pull/2396)).
+
+* Feature: `costs: custom_cost_fn:` accepts a list of files for overwrites, applied in order ([#2396](https://github.com/PyPSA/pypsa-eur/pull/2396)).
 
 * OSM network: The network comparison now also compares DC links and exports `links.csv`. Fix: AC-tagged relations are no longer imported as DC links, GW ratings are converted to MW, and incomplete DC links no longer affect converter voltage and capacity ([#2387](https://github.com/PyPSA/pypsa-eur/pull/2387)).
 
