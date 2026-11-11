@@ -6,6 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Updated the default prebuilt OSM network to v0.8 (https://zenodo.org/records/23896564), retrieved on 2 November 2026 ([#2389](https://github.com/PyPSA/pypsa-eur/pull/2389)).
 * Feature: Custom powerplants can now be specified with a configurable path and multiple files are accepted by the new option `electricity: custom_powerplants_fn` ([#2388](https://github.com/PyPSA/pypsa-eur/pull/2388)).
 
 * Feature: New solver options to solve the model with the commercial solver MOSEK.
