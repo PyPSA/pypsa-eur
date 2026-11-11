@@ -115,7 +115,7 @@ opsd_electricity_demand,unknown,build,latest supported,2026-02-02,multiple versi
 opsd_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,,https://data.pypsa.org/workflows/eur/opsd_electricity_demand/2026-02-02/electricity_demand_opsd_raw.csv
 osm,unknown,build,latest supported,2025-12-02,Latest dataset built using OSM data. No single URL available to access the data. See the related scripts and documentation for details.,
 osm,0.8,primary,latest supported,2026-11-02,,https://zenodo.org/records/23896564/files
-osm,0.8,archive,latest supported,2026-11-03,,https://data.pypsa.org/workflows/eur/osm/0.8
+osm,0.8,archive,latest supported,2026-11-11,,https://data.pypsa.org/workflows/eur/osm/0.8
 osm,0.7,primary,supported,2026-02-12,,https://zenodo.org/records/18619025/files
 osm,0.7,archive,supported,2026-02-12,,https://data.pypsa.org/workflows/eur/osm/0.7
 osm,0.6,primary,supported,2026-01-13,,https://zenodo.org/records/14144752/files
