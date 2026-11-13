@@ -23,6 +23,7 @@ import logging
 from itertools import product
 from types import SimpleNamespace
 
+import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -276,7 +277,12 @@ def haversine(p, n):
 
 
 def create_network_topology(
-    n, prefix, carriers=["DC"], connector=" -> ", bidirectional=True
+    n,
+    prefix,
+    carriers=["DC"],
+    connector=" -> ",
+    bidirectional=True,
+    include_lines=True,
 ):
     """
     Create a network topology from transmission lines and link carrier
@@ -291,6 +297,8 @@ def create_network_topology(
     bidirectional : bool, default True
         True: one link for each connection
         False: one link for each connection and direction (back and forth)
+    include_lines : bool, default True
+        Include the AC lines in addition to the links of the selected carriers.
 
     Returns
     -------
@@ -301,8 +309,9 @@ def create_network_topology(
     lk_attrs = ["bus0", "bus1", "length", "underwater_fraction"]
     lk_attrs = n.links.columns.intersection(lk_attrs)
 
+    lines = n.lines[ln_attrs] if include_lines else None
     candidates = pd.concat(
-        [n.lines[ln_attrs], n.links.loc[n.links.carrier.isin(carriers), lk_attrs]]
+        [lines, n.links.loc[n.links.carrier.isin(carriers), lk_attrs]]
     ).fillna(0)
 
     # base network topology purely on location not carrier
@@ -328,6 +337,33 @@ def create_network_topology(
         topo = pd.concat([topo, topo_reverse])
 
     return topo
+
+
+def read_transport_corridors(
+    fn: str, length_factor: float, carriers: list[str]
+) -> dict[str, pd.DataFrame]:
+    """
+    Read the candidate transport corridors between locations per carrier.
+
+    Parameters
+    ----------
+    fn : str
+        Path to the candidate corridors from ``build_transmission_topology``.
+    length_factor : float
+        Factor applied to the great-circle lengths of the corridors.
+    carriers : list[str]
+        Carriers with a boolean selection column in the file.
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+        Per carrier, the corridors with index ``"bus0 -> bus1"`` and columns
+        bus0, bus1, length, underwater_fraction.
+    """
+    corridors = gpd.read_file(fn).set_index("name")
+    corridors["length"] *= length_factor
+    columns = ["bus0", "bus1", "length", "underwater_fraction"]
+    return {c: pd.DataFrame(corridors.loc[corridors[c], columns]) for c in carriers}
 
 
 def add_carrier_buses(
@@ -738,7 +774,9 @@ def add_co2_tracking(
         )
 
 
-def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=False):
+def add_co2_network(
+    n, costs, pipeline_candidates, co2_network_cost_factor=1.0, co2_liquefaction=False
+):
     """
     Add CO2 transport network to the PyPSA network.
 
@@ -754,6 +792,8 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=Fals
         Cost assumptions for different technologies. Must contain entries for
         'CO2 pipeline' and 'CO2 submarine pipeline' with 'capital_cost' and 'lifetime'
         columns
+    pipeline_candidates : pd.DataFrame
+        Candidate pipeline corridors from `read_transport_corridors`
     co2_network_cost_factor : float, optional
         Factor to scale the capital costs of the CO2 network, default 1.0
     co2_liquefaction : bool, optional
@@ -768,13 +808,10 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=Fals
     -----
     The function creates bidirectional CO2 pipeline links between nodes, with costs
     depending on the underwater fraction of the pipeline. The network topology is
-    created using the create_network_topology helper function.
+    given by the candidate pipeline corridors.
     """
     logger.info("Adding CO2 network.")
-    co2_links = create_network_topology(n, "CO2 pipeline ")
-
-    if "underwater_fraction" not in co2_links.columns:
-        co2_links["underwater_fraction"] = 0.0
+    co2_links = pipeline_candidates.add_prefix("CO2 pipeline ", axis=0)
 
     cost_onshore = (
         (1 - co2_links.underwater_fraction)
@@ -1589,6 +1626,7 @@ def add_h2_gas_infrastructure(
     gas_input_nodes,
     spatial,
     options,
+    pipeline_candidates,
 ):
     """
     Add hydrogen and gas infrastructure to the network.
@@ -1627,6 +1665,9 @@ def add_h2_gas_infrastructure(
         - SMR : bool
         - min_part_load_methanation : float
         - cc_fraction : float
+    pipeline_candidates : pd.DataFrame
+        Candidate pipeline corridors from `read_transport_corridors`, extended
+        by the corridors of the existing gas pipelines
 
     Returns
     -------
@@ -1906,9 +1947,11 @@ def add_h2_gas_infrastructure(
     if options["H2_network"]:
         logger.info("Add options for new hydrogen pipelines.")
 
-        h2_pipes = create_network_topology(
-            n, "H2 pipeline ", carriers=["DC", "gas pipeline"]
+        gas_corridors = create_network_topology(
+            n, "", carriers=["gas pipeline"], include_lines=False
         )
+        h2_pipes = pipeline_candidates.combine_first(gas_corridors)
+        h2_pipes = h2_pipes.add_prefix("H2 pipeline ", axis=0)
         h2_buses_loc = n.buses.query("carrier == 'H2'").location  # noqa: F841
         h2_pipes = h2_pipes.query("bus0 in @h2_buses_loc and bus1 in @h2_buses_loc")
 
@@ -3610,6 +3653,7 @@ def add_biomass(
     pop_layout,
     biomass_potentials_file,
     biomass_transport_costs_file=None,
+    transport_corridors=None,
     nyears=1,
 ):
     """
@@ -3644,6 +3688,9 @@ def add_biomass(
     biomass_transport_costs_file : str, optional
         Path to CSV file containing biomass transport costs data.
         Required if biomass_transport or biomass_spatial options are True.
+    transport_corridors : pd.DataFrame, optional
+        Candidate corridors from `read_transport_corridors`, used in both
+        directions. Required if the biomass_transport option is True.
     nyears : float
         Number of years for which to scale the biomass potentials.
 
@@ -3951,8 +3998,10 @@ def add_biomass(
         # add biomass transport
         transport_costs = pd.read_csv(biomass_transport_costs_file, index_col=0)
         transport_costs = transport_costs.squeeze()
-        biomass_transport = create_network_topology(
-            n, "biomass transport ", bidirectional=False
+        reverse = transport_corridors.rename(columns={"bus0": "bus1", "bus1": "bus0"})
+        reverse.index = reverse.bus0 + " -> " + reverse.bus1
+        biomass_transport = pd.concat([transport_corridors, reverse]).add_prefix(
+            "biomass transport ", axis=0
         )
 
         # costs
@@ -6166,6 +6215,12 @@ def main(
 
     spatial = define_spatial(pop_layout.index, options)
 
+    corridors = read_transport_corridors(
+        inputs.transmission_candidates,
+        params.lines["length_factor"],
+        options["transport_corridors"],
+    )
+
     if foresight in ["myopic", "perfect"]:
         fuel_carriers = params.fuel_carriers
         for carrier in fuel_carriers:
@@ -6216,6 +6271,7 @@ def main(
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
+        pipeline_candidates=corridors["H2"],
     )
 
     # Hydrogen already implemented in add_h2_gas_infrastructure
@@ -6301,6 +6357,7 @@ def main(
             pop_layout=pop_layout,
             biomass_potentials_file=inputs.biomass_potentials,
             biomass_transport_costs_file=inputs.biomass_transport_costs,
+            transport_corridors=corridors["biomass"],
             nyears=nyears,
         )
 
@@ -6372,6 +6429,7 @@ def main(
         add_co2_network(
             n,
             costs,
+            corridors["CO2"],
             co2_network_cost_factor=options["co2_network_cost_factor"],
             co2_liquefaction=options["co2_network_liquefaction"],
         )

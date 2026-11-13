@@ -5740,6 +5740,62 @@
           "description": "Add option for new hydrogen pipelines.",
           "type": "boolean"
         },
+        "transport_corridors": {
+          "description": "Configuration for `sector.transport_corridors` settings.",
+          "properties": {
+            "H2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "CO2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "biomass": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
         "gas_network": {
           "default": true,
           "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
@@ -7360,6 +7416,23 @@
       "required": [
         "grid_codes"
       ]
+    },
+    "_CorridorConfig": {
+      "description": "Configuration for the candidate corridors of one carrier.",
+      "properties": {
+        "min_degree": {
+          "default": 1,
+          "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_offshore_distance": {
+          "default": null,
+          "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      }
     },
     "_CutoutConfig": {
       "description": "Configuration for a single cutout in `atlite.cutouts`.",
@@ -9762,6 +9835,62 @@
           },
           "description": "CO2 pipeline transmission efficiency.",
           "type": "object"
+        }
+      }
+    },
+    "_TransportCorridorsConfig": {
+      "description": "Configuration for `sector.transport_corridors` settings.",
+      "properties": {
+        "H2": {
+          "description": "Configuration for the candidate corridors of one carrier.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "CO2": {
+          "description": "Configuration for the candidate corridors of one carrier.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "biomass": {
+          "description": "Configuration for the candidate corridors of one carrier.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
         }
       }
     },
@@ -13218,6 +13347,62 @@
           "default": true,
           "description": "Add option for new hydrogen pipelines.",
           "type": "boolean"
+        },
+        "transport_corridors": {
+          "description": "Configuration for `sector.transport_corridors` settings.",
+          "properties": {
+            "H2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "CO2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "biomass": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            }
+          }
         },
         "gas_network": {
           "default": true,

@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport now come from a Delaunay triangulation of the regions instead of the electricity grid, with settings per carrier under `sector: transport_corridors`. This changes default results ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
 
 * Updated the default prebuilt OSM network to v0.8 (https://zenodo.org/records/23896564), retrieved on 2 November 2026 ([#2389](https://github.com/PyPSA/pypsa-eur/pull/2389)).
 * Feature: Custom powerplants can now be specified with a configurable path and multiple files are accepted by the new option `electricity: custom_powerplants_fn` ([#2388](https://github.com/PyPSA/pypsa-eur/pull/2388)).
