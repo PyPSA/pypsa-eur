@@ -54,7 +54,7 @@ if __name__ == "__main__":
     plg_tmp_fn = None
 
     nprocesses = int(snakemake.threads)
-    noprogress = not snakemake.config["atlite"].get("show_progress", True)
+    noprogress = not snakemake.params.show_progress
     config = snakemake.params["technology"]
 
     cutout = load_cutout(snakemake.input.cutout)

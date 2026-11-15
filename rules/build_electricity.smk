@@ -315,6 +315,7 @@ rule determine_availability_matrix_MD_UA:
     params:
         technology=lambda w: config_provider("renewable", w.technology)(w),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+        show_progress=config_provider("atlite", "show_progress"),
     script:
         scripts("determine_availability_matrix_MD_UA.py")
 
@@ -390,6 +391,8 @@ rule determine_availability_matrix:
     params:
         technology=lambda w: config_provider("renewable", w.technology)(w),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
+        show_progress=config_provider("atlite", "show_progress"),
     script:
         scripts("determine_availability_matrix.py")
 
@@ -423,6 +426,8 @@ rule build_renewable_profiles:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         technology=lambda w: config_provider("renewable", w.technology)(w),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
+        show_progress=config_provider("atlite", "show_progress"),
     script:
         scripts("build_renewable_profiles.py")
 
@@ -532,6 +537,8 @@ rule build_line_rating:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
+        show_progress=config_provider("atlite", "show_progress"),
     script:
         scripts("build_line_rating.py")
 
@@ -717,6 +724,7 @@ rule simplify_network:
         ),
         p_max_pu=config_provider("links", "p_max_pu", default=1.0),
         p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
+        linetype_380=config_provider("lines", "types", 380),
     script:
         scripts("simplify_network.py")
 
@@ -787,6 +795,7 @@ rule cluster_network:
         ),
         focus_weights=config_provider("clustering", "focus_weights", default=None),
         copperplate_regions=config_provider("clustering", "copperplate_regions"),
+        solver_name=config_provider("solving", "solver", "name"),
     script:
         scripts("cluster_network.py")
 
