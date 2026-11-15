@@ -10,6 +10,7 @@ import pytest
 from shapely.geometry import box
 
 from scripts.build_transmission_topology import build_transmission_topology
+from scripts.prepare_sector_network import read_transport_corridors
 
 OFFSHORE = gpd.GeoDataFrame(geometry=[box(30, 30, 31, 31)], crs="EPSG:4326")
 
@@ -96,3 +97,15 @@ def test_carrier_specific_corridors():
         ("b1", "b2"): True,
     }
     assert candidates["CO2"].all()
+
+
+@pytest.mark.parametrize("coords", [[(10, 50)], [(10, 50), (11, 50)]])
+def test_read_written_corridors(coords, tmp_path):
+    """Corridors read back per carrier, also when a single bus gives none."""
+    settings = {"min_degree": 1, "max_offshore_distance": float("inf")}
+    fn = tmp_path / "candidates.geojson"
+    build_transmission_topology(
+        network(coords), OFFSHORE, {"H2": settings, "CO2": settings}
+    ).to_file(fn)
+    corridors = read_transport_corridors(fn, 1.0, ["H2", "CO2"])
+    assert all(len(c) == len(coords) - 1 for c in corridors.values())

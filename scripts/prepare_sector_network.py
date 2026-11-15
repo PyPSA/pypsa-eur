@@ -360,9 +360,12 @@ def read_transport_corridors(
         Per carrier, the corridors with index ``"bus0 -> bus1"`` and columns
         bus0, bus1, length, underwater_fraction.
     """
-    corridors = gpd.read_file(fn).set_index("name")
-    corridors["length"] *= length_factor
     columns = ["bus0", "bus1", "length", "underwater_fraction"]
+    corridors = gpd.read_file(fn)
+    if corridors.empty:  # e.g. single bus; an empty GeoJSON has no columns
+        return {c: pd.DataFrame(columns=columns) for c in carriers}
+    corridors = corridors.set_index("name")
+    corridors["length"] *= length_factor
     return {c: pd.DataFrame(corridors.loc[corridors[c], columns]) for c in carriers}
 
 
@@ -3133,7 +3136,9 @@ def add_heat(
                 .to_pandas()
                 .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
-                else costs.loc[[costs_name_heat_pump], ["efficiency"]]
+                else pd.Series(
+                    costs.at[costs_name_heat_pump, "efficiency"], index=nodes
+                )
             )
 
             if heat_source in params.limited_heat_sources:
@@ -3142,7 +3147,11 @@ def add_heat(
                     heat_source_profile_files[heat_source],
                     index_col=0,
                     parse_dates=True,
-                ).squeeze()[nodes]
+                )
+                # static potentials are indexed by node, profiles by snapshot
+                if p_max_source.index.isin(nodes).any():
+                    p_max_source = p_max_source.iloc[:, 0]
+                p_max_source = p_max_source[nodes]
 
                 # if only dimension is nodes, convert series to dataframe with columns as nodes and index as snapshots
                 if p_max_source.ndim == 1:
@@ -3203,14 +3212,12 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_carrier}",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
-                    efficiency2=(1 - (1 / cop_heat_pump.clip(lower=0.001))).squeeze(),
+                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)),
+                    efficiency2=(1 - (1 / cop_heat_pump.clip(lower=0.001))),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_min_pu=(
-                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
-                    ).squeeze(),
+                    p_min_pu=(-cop_heat_pump / cop_heat_pump.clip(lower=0.001)),
                     p_max_pu=0,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3267,14 +3274,12 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_system} water pits",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / (cop_heat_pump - 1).clip(lower=0.001)).squeeze(),
-                    efficiency2=(1 - 1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                    efficiency=(1 / (cop_heat_pump - 1).clip(lower=0.001)),
+                    efficiency2=(1 - 1 / cop_heat_pump.clip(lower=0.001)),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_min_pu=(
-                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
-                    ).squeeze(),
+                    p_min_pu=(-cop_heat_pump / cop_heat_pump.clip(lower=0.001)),
                     p_max_pu=0,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3287,12 +3292,10 @@ def add_heat(
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
-                    p_min_pu=(
-                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
-                    ).squeeze(),
+                    p_min_pu=(-cop_heat_pump / cop_heat_pump.clip(lower=0.001)),
                     p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
