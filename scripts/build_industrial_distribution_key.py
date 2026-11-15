@@ -2,26 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build spatial distribution of industries from Hotmaps database.
+Build distribution keys that split each country's industrial activity across its bus regions.
 
-Description
--------
+Industrial sites from the [Hotmaps industrial database](https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database) are assigned to bus regions by location. Sites without coordinates are dropped or, if `industry: hotmaps_locate_missing` is enabled, geocoded from their city name. Within each country, a sector's key is the share of the sector's reported 2014 ETS or E-PRTR emissions located in each region, so the keys of one country sum to one. Missing site emissions are filled with the 20% quantile of the sector; if a country has no sites for a sector, the key falls back to the population share.
 
-This rule uses the `Hotmaps database <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`. After removing entries without valid locations, it assigns each industrial site to a bus region based on its location.
-Then, it calculates the nodal distribution key for each sector based on the emissions of the industrial sites in each region. This leads to a distribution key of 1 if there is only one bus per country and <1 if there are multiple buses per country. The sum over buses of one country is 1.
-
-The following subcategories of industry are considered:
-- Iron and steel
-- Cement
-- Refineries
-- Paper and printing
-- Chemical industry
-- Glass
-- Non-ferrous metals
-- Non-metallic mineral products
-- Other non-classified
-Furthermore, the population distribution is added
-- Population
+Dedicated keys use plant capacities instead of emissions: the steel routes (EAF, DRI + EAF, integrated steelworks) and cement from the Global Energy Monitor plant trackers, ammonia from a list of ammonia plants, and refineries from a supplementary plant list for countries not covered by Hotmaps. Countries without ammonia plants receive a zero ammonia key. The population key is written alongside for sectors without site data.
 """
 
 import logging

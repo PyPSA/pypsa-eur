@@ -54,3 +54,13 @@
 .scope .scope-off {
   text-decoration: line-through;
 }
+
+/* One-line rule summaries on the rules pages, see doc/macros.py:rules */
+.md-typeset .rule-summary {
+  border-left: 0.2rem solid var(--md-primary-fg-color);
+  padding: 0.3rem 0.8rem;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+  color: var(--md-default-fg-color);
+  background: color-mix(in srgb, var(--md-primary-fg-color) 6%, transparent);
+}

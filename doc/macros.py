@@ -4,12 +4,18 @@
 
 import json
 import re
+import sys
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from doc.rule_docs import parse_rules  # noqa: E402
+
+GITHUB = "https://github.com/PyPSA/pypsa-eur/blob/master"
 CONFIG_PATH = ROOT / "config" / "config.default.yaml"
 PLOTTING_CONFIG_PATH = ROOT / "config" / "plotting.default.yaml"
 SCHEMA_PATH = ROOT / "config" / "schema.default.json"
@@ -84,6 +90,60 @@ def _resolve(data, path):
     return node
 
 
+def _config_anchors():
+    text = (ROOT / "doc" / "configuration.md").read_text()
+    return set(re.findall(r"\{#(\w+)_cf\}", text))
+
+
+def _setting_link(key, anchors):
+    top = key.split(".")[0]
+    return f"[`{key}`][{top}_cf]" if top in anchors else f"`{key}`"
+
+
+def _item(entry):
+    if entry == "depends on configuration":
+        return "*depends on configuration*"
+    if entry.startswith("output of "):
+        return entry
+    return f"`{entry}`"
+
+
+def _rule_block(rule, anchors):
+    # rules whose script identifier differs from the rule name get the plain
+    # name as anchor so that `[rule_name][]` resolves; the others already have
+    # it registered by mkdocstrings
+    anchor = rule.name if rule.module != rule.name else f"rule-{rule.name}"
+    lines = [f"### `{rule.name}` {{ #{anchor} }}", ""]
+    if rule.summary:
+        summary = re.sub(r"\{wildcards\.(\w+)\}", r"<code>{\1}</code>", rule.summary)
+        lines += [f'<p class="rule-summary" markdown="0">{summary}</p>', ""]
+    facts = []
+    if rule.script:
+        facts.append(
+            f"**Script:** [`scripts/{rule.script}`]({GITHUB}/scripts/{rule.script})"
+        )
+    else:
+        facts.append(f"**Script:** inline code in `rules/{rule.file}`")
+    if rule.inputs:
+        facts.append("**Inputs:** " + ", ".join(_item(p) for p in rule.inputs))
+    if rule.outputs:
+        facts.append("**Outputs:** " + ", ".join(_item(p) for p in rule.outputs))
+    if rule.settings:
+        facts.append(
+            "**Settings:** "
+            + ", ".join(_setting_link(k, anchors) for k in rule.settings)
+        )
+    if rule.wildcards:
+        facts.append(
+            "**Wildcards:** " + ", ".join(f"`{{{w}}}`" for w in rule.wildcards)
+        )
+    lines.append('??? info "Script, inputs, outputs and settings"')
+    lines += ["", *[f"    - {f}" for f in facts], ""]
+    if rule.module:
+        lines += [f"::: {rule.module}", ""]
+    return "\n".join(lines)
+
+
 def define_env(env):
     _cache = {}
 
@@ -135,6 +195,16 @@ def define_env(env):
             for group, label, state in labels
         )
         return f'<div class="scope" markdown="0">{spans}</div>'
+
+    @env.macro
+    def rules(*names):
+        """Render the documentation blocks of the named Snakemake rules in order."""
+        all_rules = parse_rules()
+        anchors = _config_anchors()
+        missing = [n for n in names if n not in all_rules]
+        if missing:
+            raise ValueError(f"unknown rules: {missing}")
+        return "\n".join(_rule_block(all_rules[n], anchors) for n in names)
 
     @env.macro
     def yaml_section(*paths, source="config", with_key=True):

@@ -3,7 +3,21 @@
 # SPDX-License-Identifier: MIT
 
 """
-Compose network by combining all electricity and sector components.
+Compose the network for one planning horizon from the electricity and
+sector-coupling building blocks.
+
+Starting from the clustered base network, the script adds the electricity
+components (`add_electricity`), the sector-coupling components if enabled
+(`prepare_sector_network`), applies temporal aggregation and the final
+preparation for solving (`prepare_network`), and then handles the planning
+horizon according to the foresight mode. In the first horizon of a myopic or
+perfect foresight run, existing capacities are added (`add_existing_baseyear`).
+In later myopic horizons, the optimised capacities of the previous horizon's
+solved network are carried over as brownfield (`add_brownfield`). Under
+perfect foresight, the horizon is stacked onto the previous composed network
+to form a multi-period network (`prepare_perfect_foresight`). Finally, CO2
+budget constraints and configured adjustments to costs and potentials are
+applied and the network is exported for solving.
 """
 
 import logging

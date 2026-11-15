@@ -2,35 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Retrieve seawater temperature data from Copernicus Marine Service.
+Retrieve daily seawater temperature data from the Copernicus Marine Service.
 
-This script downloads historical seawater temperature data for use in sea water
-heat pump calculations. It retrieves potential temperature (thetao) data from
-the global ocean physics reanalysis dataset at daily resolution.
-
-The data covers European coastal areas at a spatial resolution of 0.083° and
-includes near-surface depths (5-15m) suitable for heat pump applications.
-
-Relevant Settings
------------------
-
-```yaml
-# No specific configuration required
-# Uses year wildcard from Snakemake rule
-```
-
-Inputs
-------
-- None (downloads from Copernicus Marine Service)
-
-Outputs
--------
-- `data/seawater_temperature_{year}.nc`: NetCDF file containing seawater temperature data
-
-Notes
------
-Requires Copernicus Marine Service credentials configured via copernicusmarine package.
-See https://marine.copernicus.eu/ for account setup and API access.
+Potential sea temperature (thetao) from the Global Ocean Physics Reanalysis is
+downloaded for one year over European waters (12W to 42E, 33N to 72N) at 0.083
+degree resolution and 5 to 15 m depth. The data provides the source
+temperature of seawater heat pumps in district heating. For the test cutout, a
+prepared subset is downloaded instead. The download requires Copernicus Marine
+credentials configured for the copernicusmarine package.
 """
 
 import logging

@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create land elibility analysis for Ukraine and Moldova with different datasets.
+Computes the land availability matrix for renewable generators in Ukraine and Moldova, which the default European land cover datasets do not cover.
+
+For each technology, exclusion criteria are assembled from the Copernicus Global
+Land Cover raster (emulating the CORINE classes used elsewhere), protected areas
+from the World Database on Protected Areas (with point records buffered to their
+reported area), GEBCO bathymetry for maximum water depth, distance to shore and
+shipping density. The share of each cutout grid cell available to each region is
+then computed with atlite. The result is merged into the availability matrix of
+the other countries.
 """
 
 import functools
@@ -138,7 +146,7 @@ if __name__ == "__main__":
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater, -config["max_depth"])
-        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4236, nodata=-1000)
+        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4326, nodata=-1000)
 
     if config.get("min_shore_distance"):
         buffer = config["min_shore_distance"]

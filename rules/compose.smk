@@ -28,7 +28,7 @@ def get_compose_inputs(w):
         **input_profile_tech(w),
         **input_class_regions(w),
         **input_conventional(w),
-        tech_costs=resources(f"costs_{horizon}_processed.csv"),
+        tech_costs=resources("costs_{horizon}_processed.csv"),
         powerplants=(
             resources("powerplants.csv")
             if elec["conventional_carriers"]
@@ -72,6 +72,7 @@ def get_compose_inputs(w):
 
     # Sector-specific inputs (only when sector coupling is enabled)
     if sector_enabled:
+        enable_ptes = cfg["sector"]["district_heating"]["ptes"]["enable"]
         sector_inputs = dict(
             **input_heat_source_power(w),
             clustered_gas_network=(
@@ -109,7 +110,6 @@ def get_compose_inputs(w):
             existing_heating_distribution=resources(
                 "existing_heating_distribution_{horizon}.csv"
             ),
-            temp_soil_total=resources("temp_soil_total.nc"),
             temp_air_total=resources("temp_air_total.nc"),
             cop_profiles=resources("cop_profiles_{horizon}.nc"),
             direct_heat_source_utilisation_profiles=resources(
@@ -138,12 +138,14 @@ def get_compose_inputs(w):
             ),
             ptes_e_max_pu_profiles=(
                 resources("ptes_e_max_pu_profiles_{horizon}.nc")
-                if cfg["sector"]["district_heating"]["ptes"]["dynamic_capacity"]
+                if enable_ptes
+                and cfg["sector"]["district_heating"]["ptes"]["dynamic_capacity"]
                 else []
             ),
             ptes_direct_utilisation_profiles=(
                 resources("ptes_direct_utilisation_profiles_{horizon}.nc")
-                if cfg["sector"]["district_heating"]["ptes"]["supplemental_heating"][
+                if enable_ptes
+                and cfg["sector"]["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
                 else []
@@ -190,10 +192,12 @@ def get_compose_inputs(w):
             # Myopic uses solved network from previous horizon
             inputs["network_previous"] = RESULTS + f"networks/solved_{prev_horizon}.nc"
         elif foresight == "perfect":
-            # Perfect foresight uses composed network from previous horizon
+            # Perfect foresight uses composed network from previous horizon.
+            # Format after resources() so the shared-resources policy sees the
+            # {horizon} wildcard and keeps the file run-specific.
             inputs["network_previous"] = resources(
-                f"networks/composed_{prev_horizon}.nc"
-            )
+                "networks/composed_{horizon}.nc"
+            ).replace("{horizon}", str(prev_horizon))
         else:
             raise ValueError(f"Invalid foresight type: {foresight}")
 
@@ -213,6 +217,7 @@ def get_compose_inputs(w):
 
 # Main composition rule - combines all network building steps
 rule compose_network:
+    """Assembles the full network by adding electricity and sector components to the clustered grid."""
     input:
         unpack(get_compose_inputs),
     output:
@@ -261,7 +266,7 @@ rule compose_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
-        tes=config_provider("sector", "tes"),
+        enable_ptes=config_provider("sector", "district_heating", "ptes", "enable"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
@@ -270,7 +275,5 @@ rule compose_network:
         ),
         co2_budget=config_provider("co2_budget"),
         adjustments=config_provider("adjustments"),
-    message:
-        "Composing network for horizon {wildcards.horizon}"
     script:
         scripts("compose_network.py")

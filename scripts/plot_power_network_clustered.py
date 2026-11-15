@@ -2,7 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot clustered electricity transmission network.
+Plots the clustered transmission network on a map.
+
+Reads the clustered network and the onshore regions, draws region outlines,
+scales HVAC line widths by their thermal rating and colours HVDC links by
+whether they already exist or are only planned. The figure serves as a
+visual check of the spatial resolution and grid topology used in the
+optimisation.
 """
 
 import geopandas as gpd

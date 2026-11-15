@@ -42,9 +42,16 @@ We strive to keep documentation useful and up to date for all PyPSA users. If yo
 
 1. Install [pixi](https://pixi.sh/latest/).
 2. Make your changes in the corresponding `.md` file under `pypsa-eur/doc`.
-3. Compile your changes by running `pixi run build-docs site` from the project root.
+3. Rules are documented in three places that must stay together: a one-line docstring
+   after the `rule` line in `rules/*.smk` (one sentence, starts with a verb, at most
+   100 characters; it is also printed as the job message, so rules carry no `message:` block), a module docstring in the script (one sentence on the output,
+   two to five sentences on the method, an optional `References` list; no input,
+   output or configuration listings, these are generated from the rule) and an entry
+   in one of the rules pages under `doc/rules/` through the `rules()` macro. `test/test_docs.py` checks that
+   every rule is covered.
+4. Compile your changes by running `pixi run build-docs site` from the project root.
    You can also preview live with `pixi run -e doc mkdocs serve`. HTML files to review can be found under `site/html/`.
-4. Contribute your documentation in a pull request ([here is a guide](https://help.github.com/en/articles/about-pull-requests)).
+5. Contribute your documentation in a pull request ([here is a guide](https://help.github.com/en/articles/about-pull-requests)).
 
 
 ## Release notes

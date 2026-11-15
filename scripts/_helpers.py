@@ -2,6 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Shared helper functions used across the workflow scripts.
+
+Covers Snakemake integration (logging setup, scenario configuration,
+`mock_snakemake` for running scripts outside the workflow, run-specific
+resource paths), loading of costs, cutouts and snapshot definitions, network
+utilities such as renaming components and aggregating capacities and costs,
+and small conveniences for downloading data and retrying flaky calls.
+"""
+
 import atexit
 import contextlib
 import logging
@@ -27,6 +37,7 @@ import yaml
 from dask.distributed import Client, LocalCluster
 from snakemake.utils import update_config
 
+from scripts.lib.validation.config import migrate_deprecated_keys
 from scripts.lib.validation.config.data import VersionsSchema
 
 logger = logging.getLogger(__name__)
@@ -149,6 +160,8 @@ def get_scenarios(run):
         fn = Path(scenario_config["file"])
         if fn.exists():
             scenarios = yaml.safe_load(fn.read_text())
+            for overrides in scenarios.values():
+                migrate_deprecated_keys(overrides)
             if run["name"] == "all":
                 run["name"] = list(scenarios.keys())
             return scenarios
@@ -317,7 +330,9 @@ def set_scenario_config(snakemake):
             root_dir = script_dir.parent
             with open(root_dir / scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
-        update_config(snakemake.config, scenario_config[snakemake.wildcards.run])
+        overrides = scenario_config[snakemake.wildcards.run]
+        migrate_deprecated_keys(overrides)
+        update_config(snakemake.config, overrides)
 
 
 def configure_logging(snakemake, skip_handlers=False):
@@ -343,6 +358,8 @@ def configure_logging(snakemake, skip_handlers=False):
 
     kwargs = snakemake.config.get("logging", dict()).copy()
     kwargs.setdefault("level", "INFO")
+    console_level = kwargs.pop("console_level", "WARNING")
+    file_level = kwargs.pop("file_level", None) or kwargs["level"]
 
     if skip_handlers is False:
         fallback_path = Path(__file__).parent.joinpath(
@@ -351,16 +368,11 @@ def configure_logging(snakemake, skip_handlers=False):
         logfile = snakemake.log.get(
             "python", snakemake.log[0] if snakemake.log else fallback_path
         )
-        kwargs.update(
-            {
-                "handlers": [
-                    # Prefer the 'python' log, otherwise take the first log for each
-                    # Snakemake rule
-                    logging.FileHandler(logfile),
-                    logging.StreamHandler(),
-                ]
-            }
-        )
+        file_handler = logging.FileHandler(logfile)
+        file_handler.setLevel(file_level)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(console_level)
+        kwargs["handlers"] = [file_handler, stream_handler]
     logging.basicConfig(**kwargs)
 
     # Setup a function to handle uncaught exceptions and include them with their stacktrace into logfiles

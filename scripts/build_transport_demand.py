@@ -2,9 +2,20 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build land transport demand per clustered model region including efficiency
-improvements due to drivetrain changes, time series for electric vehicle
-availability and demand-side management constraints.
+Build land transport demand and electric vehicle profiles per clustered model
+region.
+
+National energy use for road and non-electric rail transport is distributed
+to regions by population and converted into a distance-based demand (in units
+of 100 km) using the average fuel efficiency of the car fleet, so that the
+demand can later be served by drivetrains of different efficiency. The hourly
+shape follows weekly traffic counts on German roads, corrected for the extra
+fuel that combustion vehicles use for heating and cooling at low and high
+ambient temperatures. Weekly passenger car counts also give a plugged-in
+availability profile for battery electric vehicles, highest when traffic is
+lowest, and a demand-side management profile requires a minimum state of
+charge at a fixed hour each day. The regional number of cars and fuel
+efficiency are exported alongside.
 """
 
 import logging

@@ -65,7 +65,6 @@ nav:
   - Methane: design/methane.md
   - Methanol: design/methanol.md
   - Oil: design/oil.md
-  - OETC Integration: oetc.md
 
 - Configuration:
   - Wildcards: wildcards.md
@@ -78,11 +77,19 @@ nav:
   - Data Repositories: data-repos.md
 
 - Rules Overview:
-  - Retrieving Data: retrieve.md
-  - Building Electricity Networks: preparation.md
-  - Building Sector-Coupled Networks: sector.md
-  - Solving Networks: solving.md
-  - Plotting and Summaries: plotting.md
+  - rules/index.md
+  - Retrieving Data: rules/retrieve.md
+  - Regions and Weather: rules/regions.md
+  - Transmission Grid: rules/grid.md
+  - Electricity Demand and Supply: rules/electricity.md
+  - Population and Energy Balances: rules/balances.md
+  - Heating: rules/heating.md
+  - Transport: rules/transport.md
+  - Industry: rules/industry.md
+  - Costs and Prices: rules/costs.md
+  - Biomass, Gas and Carbon: rules/carriers.md
+  - Composing and Solving: rules/solving.md
+  - Plotting and Summaries: rules/plotting.md
 
 - Contributing:
   - contributing.md

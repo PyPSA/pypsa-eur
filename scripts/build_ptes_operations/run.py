@@ -2,53 +2,20 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Approximate the top temperature of the pit thermal energy storage (PTES), ensuring that the temperature does not
-exceed the operational limit.
+Build operational profiles of pit thermal energy storage (PTES) in district heating networks.
 
-Determine whether supplemental heating is needed. A binary indicator is generated:
-    - 1: The forward temperature is less than or equal to the TES maximum; direct usage is possible.
-    - 0: The forward temperature exceeds the TES maximum; supplemental heating (e.g., via a heat pump) is required.
+The district heating forward temperature is taken as the PTES top temperature
+and clipped at the configured maximum. A binary direct-utilisation profile is
+1 where the forward temperature does not exceed this maximum, so the storage
+can serve the network directly, and 0 where supplemental heating, for example
+by a heat pump, is required. The usable capacity `e_max_pu` scales linearly
+with the difference between top and return temperature, following Sorknaes
+(2018), normalised by the difference between the configured maximum top and
+minimum bottom temperatures.
 
-Calculate dynamic PTES capacity profiles based on district heating forward and return flow temperatures.
-The linear relation between temperature difference and capacity is taken from Sorknaes (2018).
-
-The capacity of thermal energy storage systems varies with the temperature difference
-between the forward and return flows in district heating networks assuming a direct
-integration of the storage. This script calculates normalized capacity factors (e_max_pu)
-for PTES systems based on these temperature differences.
-
-Relevant Settings
------------------
-```yaml
-sector
-    district_heating:
-        ptes:
-            dynamic_ptes_capacity:
-            supplemental_heating:
-                enable:
-            max_top_temperature:
-```
-
-Inputs
-------
-- `resources/<run_name>/forward_temperature.nc`
-    Forward temperature profiles for the district heating networks.
-- `resources/<run_name>/central_heating_return_temperature_profiles.nc`:
-    Return temperature profiles for the district heating networks.
-
-Outputs
--------
-- `resources/<run_name>/ptes_top_temperature_profiles.nc`
-    Clipped PTES top temperature profile (in °C).
-- `resources/<run_name>/ptes_supplemental_heating_required.nc`
-    Binary indicator for additional heating (1 = direct PTES use, 0 = supplemental heating required).
-- `resources/<run_name>/ptes_e_max_pu_profiles.nc`
-    Normalized PTES capacity profiles.
-
-Source
-------
-Sorknæs, P. 2018. "Simulation method for a pit seasonal thermal energy storage system with a heat pump in a district heating system", Energy, Volume 152, https://doi.org/10.1016/j.energy.2018.03.152.
-Approximate thermal energy storage (TES) top temperature and identify need for supplemental heating.
+References
+----------
+- Sorknaes (2018), [Simulation method for a pit seasonal thermal energy storage system with a heat pump in a district heating system](https://doi.org/10.1016/j.energy.2018.03.152)
 """
 
 import logging
