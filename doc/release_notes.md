@@ -5,6 +5,18 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* **Breaking:** `snapshots: start` and `snapshots: end` are now the first and last snapshot, both included, as in `pandas.date_range` with default arguments. The option `snapshots: inclusive` was removed ([#2101](https://github.com/PyPSA/pypsa-eur/issues/2101)). The workflow stops with an error that points to this note if `inclusive` is set, or if `end` is a date without time (formerly an exclusive end). Migration guide:
+
+    | Before | After |
+    |---|---|
+    | `start: "2013-01-01"`<br>`end: "2014-01-01"`<br>`inclusive: left` (default) | `start: "2013-01-01 00:00"`<br>`end: "2013-12-31 23:00"` |
+    | `start: "2013-03-01"`<br>`end: "2013-03-08"` | `start: "2013-03-01 00:00"`<br>`end: "2013-03-07 23:00"` |
+    | `inclusive: both` | remove `inclusive`, keep `start` and `end` |
+    | `inclusive: right` | remove `inclusive`; move `start` one hour later |
+    | `inclusive: null` (neither) | remove `inclusive`; move `start` one hour later and `end` one hour earlier |
+
+    `end` must include the hour. A date-only `start` keeps its meaning (00:00 of that day).
+
 * Refactor: Rules receive only the configuration keys and input files their scripts use, so unrelated configuration changes no longer trigger reruns ([#2354](https://github.com/PyPSA/pypsa-eur/pull/2354)).
 
 * data: Update to use the power plant dataset from `powerplantmatching` v0.9.1 ([#2356](https://github.com/PyPSA/pypsa-eur/pull/2356)).
