@@ -1,6 +1,24 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Builds the topologically connected OpenStreetMap transmission network as tables of buses, lines, links, converters and transformers.
+
+Cleaned OSM substations, lines, HVDC links and converter polygons are turned into
+an electrically consistent network. Lines are split where they pass over buses,
+merged across junctions that are not substations, and connected to stations
+formed by aggregating substations within 500 m; the station location is the pole
+of inaccessibility of the merged polygon. Voltages are floored to full kV levels,
+transformers are added between voltage levels within a station, DC buses and
+converter links are created from converter and switching stations, and assets
+under construction are kept or removed by configuration. The output feeds the
+base network and the prebuilt OSM network release.
+
+References
+----------
+- Xiong et al. (2025), [Modelling the high-voltage grid using open data for Europe and beyond](https://doi.org/10.1038/s41597-025-04550-7)
+- Garcia-Castellanos and Lombardo (2007), [Poles of inaccessibility: A calculation algorithm for the remotest places on earth](https://doi.org/10.1080/14702540801897809)
+"""
 
 import itertools
 import logging
@@ -1402,6 +1420,15 @@ def _map_links_to_dc_buses(links, dc_buses, distance_crs=DISTANCE_CRS):
         max_distance=max_distance,
     )["bus_id"]
 
+    # Drop incomplete links (missing buses) before deriving DC bus attributes,
+    # relevant if network is built for single (islanded) regions
+    bool_incomplete_links = links_all["bus0"].isna() | links_all["bus1"].isna()
+    if bool_incomplete_links.any():
+        logger.info(
+            f"Dropping {bool_incomplete_links.sum()} incomplete links that could not be mapped to two DC buses."
+        )
+        links_all = links_all[~bool_incomplete_links]
+
     # list of dc_buses that have been used
     mapped_dc_buses = links_all[["bus0", "bus1"]].stack().unique()
     # Drop remaining dc_buses
@@ -1793,14 +1820,6 @@ def build_network(
         dc_buses = pd.concat([dc_buses, dc_switching], ignore_index=True)
 
     links, dc_buses = _map_links_to_dc_buses(links, dc_buses)
-
-    # Drop incomplete links (missing buses), relevant if network is built for single (islanded) regions
-    bool_incomplete_links = links["bus0"].isna() | links["bus1"].isna()
-    if bool_incomplete_links.any():
-        logger.info(
-            f"Dropping {bool_incomplete_links.sum()} incomplete links that could not be mapped to two DC buses."
-        )
-        links = links[~bool_incomplete_links].reset_index(drop=True)
 
     # Concatenate AC and DC buses
     buses["dc"] = False

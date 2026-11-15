@@ -1,6 +1,15 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Plots bar charts of key statistics per technology carrier from a solved network.
+
+Reads the solved network and computes capacity factors, installed and optimal
+capacities, capital and operational expenditure, curtailment, supply, withdrawal
+and market values with the PyPSA statistics module. Each statistic is drawn as
+a horizontal bar chart coloured by carrier, with loads shown as a carrier of
+their own. The charts give a quick sanity check of a single scenario's results.
+"""
 
 import matplotlib.pyplot as plt
 import pypsa

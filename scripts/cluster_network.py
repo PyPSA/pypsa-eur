@@ -4,47 +4,32 @@
 
 
 """
-Creates networks clustered to configured number of zones with aggregated
-buses and transmission corridors.
+Cluster the simplified network to the configured number of zones with aggregated buses and transmission corridors.
 
-Outputs
--------
+A busmap assigns every bus to a cluster according to the clustering mode:
+k-means, hierarchical agglomerative clustering (HAC) on the weather features
+from [build_hac_features][], or greedy modularity on the network graph, with
+the number of clusters distributed across countries in proportion to load
+(adjustable via `clustering.focus_weights`); administrative regions; or a
+custom busmap or set of bus shapes. Buses, lines and links are then aggregated
+with [pypsa.clustering.spatial](https://github.com/PyPSA/PyPSA/blob/master/pypsa/clustering/spatial.py)
+using the configured aggregation strategies, the onshore and offshore regions
+are dissolved accordingly, and selected groups of regions can be merged into
+copperplates.
 
-- `resources/{run}/onshore_regions.geojson`:
-  Onshore regions for clustered network
+!!! note "Is it possible to run the model without [simplify_network][]?"
+    No, the clustering methods in `pypsa.clustering.spatial` do not work
+    reliably with multiple voltage levels and transformers.
 
-- `resources/{run}/offshore_regions.geojson`:
-  Offshore regions for clustered network
+Exemplary unsolved networks clustered to 512, 256, 128 and 37 nodes:
 
-- `resources/{run}/busmap_cluster_network.csv`: Mapping of buses from `networks/simplified.nc` to `networks/clustered.nc`;
-- `resources/{run}/linemap_cluster_network.csv`: Mapping of lines from `networks/simplified.nc` to `networks/clustered.nc`;
-- `resources/{run}/networks/clustered.nc`:
-  Clustered network with aggregated buses and corridors
+![](../img/clustered_512.png)
 
-Description
------------
+![](../img/clustered_256.png)
 
-**Note:** **Is it possible to run the model without the** `simplify_network` **rule?**
+![](../img/clustered_128.png)
 
-        No, the network clustering methods in the PyPSA module
-        [pypsa.clustering.spatial](https://github.com/PyPSA/PyPSA/blob/master/pypsa/clustering/spatial.py)
-        do not work reliably with multiple voltage levels and transformers.
-
-Exemplary unsolved network clustered to 512 nodes:
-
-![](img/clustered_512.png)
-
-Exemplary unsolved network clustered to 256 nodes:
-
-![](img/clustered_256.png)
-
-Exemplary unsolved network clustered to 128 nodes:
-
-![](img/clustered_128.png)
-
-Exemplary unsolved network clustered to 37 nodes:
-
-![](img/clustered_37.png)
+![](../img/clustered_37.png)
 """
 
 import logging

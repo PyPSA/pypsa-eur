@@ -4,17 +4,20 @@
 
 
 """
-Prepare PyPSA network for solving with various operational constraints and
-temporal adjustments.
+Prepare the composed network for solving with emission constraints, transmission limits and temporal aggregation.
 
-- adding an annual **limit** of carbon-dioxide emissions,
-- adding an exogenous **price** per tonne emissions of carbon-dioxide (or other kinds),
-- setting an **N-1 security margin** factor for transmission line capacities,
-- specifying an expansion limit on the **cost** of transmission expansion,
-- specifying an expansion limit on the **volume** of transmission expansion, and
-- reducing the **temporal** resolution by averaging over multiple hours
-  or segmenting time series into chunks of varying lengths using `tsam`.
+The functions add global CO2 emission limits or a CO2 budget across planning
+horizons, a gas consumption limit, a static or monthly varying price per tonne
+of CO2, a limit on the cost or volume of transmission expansion relative to
+today's grid, caps on line and link capacities and their extension, and an N-1
+security margin on line capacities. Temporal aggregation either uses every
+n-th snapshot as representative or averages the hourly data onto the snapshot
+weightings precomputed by [time_aggregation][]. Configured adjustments to costs
+and potentials per planning horizon are applied as well.
 
+!!! note "Called from compose_network"
+    This module has no Snakemake rule of its own. Its functions are called by
+    [compose_network][].
 """
 
 import logging

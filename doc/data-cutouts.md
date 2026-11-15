@@ -54,4 +54,4 @@ atlite:
 
 **Outputs**
 
-- `cutouts/{cutout}`: weather data from either the [ERA5](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5) reanalysis weather dataset and/or [SARAH-3](https://wui.cmsaf.eu/safira/action/viewProduktSearch) satellite-based historic weather data.
+- `data/cutout/{source}/{version}/{cutout}.nc`: weather data from either the [ERA5](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5) reanalysis weather dataset and/or [SARAH-3](https://wui.cmsaf.eu/safira/action/viewProduktSearch) satellite-based historic weather data.

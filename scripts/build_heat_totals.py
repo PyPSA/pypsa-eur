@@ -2,13 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Approximate heat demand for all weather years.
+Extend annual space heating demand per country to weather years without energy statistics.
 
-`approximate_heat_demand` approximates annual heat demand based on energy totals and heating degree days (HDD) using a regression of heat demand on HDDs.
+For residential and services space heating (total and electricity), the annual demand from [build_energy_totals][] for 2007 to 2021 is regressed linearly on the annual heating degree days per country; the range is limited because the fit assumes a constant building stock. The fitted line predicts the demand for all other years with known heating degree days, and reported and predicted values are combined into one series per country, clipped at zero.
 
-Outputs
--------
-- `resources/<run_name>/heat_totals.csv`: Approximated annual heat demand for each country.
+!!! note "Sparse data"
+    Gaps are filled forward and backward to keep more years for the fit (for example GB from 2020 and CH before 2010). If only one year is available, the origin is added as a second point so that a line can be fitted.
 """
 
 import logging

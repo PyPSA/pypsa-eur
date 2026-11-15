@@ -6,6 +6,7 @@
 
 import difflib
 import tempfile
+from functools import reduce
 from pathlib import Path
 
 import pytest
@@ -13,10 +14,12 @@ import yaml
 
 from scripts._helpers import get_snapshots
 from scripts.lib.validation.config import (
+    DEPRECATED_KEYS,
     find_invalid_entries,
     generate_config_defaults,
     generate_config_schema,
     generate_plotting_defaults,
+    migrate_deprecated_keys,
     normalize_config,
     validate_config,
     validate_scenarios,
@@ -200,6 +203,29 @@ def test_snapshots_include_first_and_last(start, end, length):
     assert len(get_snapshots(config.snapshots)) == length
 
 
+@pytest.mark.parametrize("tes", [True, False])
+def test_migrate_deprecated_keys(tes):
+    cfg = {"sector": {"tes": tes}}
+    with pytest.warns(FutureWarning, match="sector.tes"):
+        migrate_deprecated_keys(cfg)
+    assert cfg == {
+        "sector": {"ttes": tes, "district_heating": {"ptes": {"enable": tes}}}
+    }
+
+
+def test_migrate_deprecated_keys_ignores_current_keys():
+    cfg = {"sector": {"ttes": False}, "countries": ["DE"]}
+    migrate_deprecated_keys(cfg)
+    assert cfg == {"sector": {"ttes": False}, "countries": ["DE"]}
+
+
+@pytest.mark.parametrize("old", DEPRECATED_KEYS)
+def test_deprecated_keys_not_in_default_config(old, config_file):
+    *parents, key = old.split(".")
+    defaults = yaml.safe_load(config_file.read_text())
+    assert key not in reduce(dict.get, parents, defaults)
+
+
 def _load_config(path: str) -> dict:
     return yaml.safe_load(Path(path).read_text()) or {}
 
@@ -235,3 +261,24 @@ def test_config_file_is_valid(configfile):
     assert not invalid, f"Invalid config entries in {configfile}:\n" + "\n".join(
         f"  - {path}: {'; '.join(msgs)}" for path, msgs in invalid.items()
     )
+
+
+class TestLineTypes:
+    def test_default_defines_380kv(self):
+        config = validate_config({})
+        assert 380.0 in config.lines.types
+
+    def test_missing_380kv_is_rejected(self):
+        with pytest.raises(ValueError, match="380"):
+            validate_config(
+                {"lines": {"types": {220.0: "Al/St 240/40 2-bundle 220.0"}}}
+            )
+
+
+def test_removed_oetc_section_is_rejected():
+    with pytest.raises(ValueError, match="oetc"):
+        validate_config({"solving": {"oetc": {"name": "pypsa-eur"}}})
+
+
+def test_empty_oetc_section_from_former_default_is_accepted():
+    validate_config({"solving": {"oetc": None}})

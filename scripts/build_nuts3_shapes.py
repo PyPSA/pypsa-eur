@@ -2,9 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates GIS shape files of NUTS3 and OSM ADM1 areas (for BA, MD, UA, and XK),
-clipped to onshore territory and enriched with GDP and population data.
-Optionally assigns bidding zones when administrative clustering is enabled.
+Creates NUTS3 region shapes for Europe, extended with OSM ADM1 regions for countries outside the NUTS system and enriched with GDP and population.
+
+Eurostat NUTS3 polygons are combined with OSM administrative boundaries for BA,
+MD, UA and XK, clipped to onshore territory by removing the exclusive economic
+zones, and stripped of overseas territories and small remote islands. GDP and
+population come from the JRC ARDECO database for NUTS3 regions; for the non-NUTS
+countries they are taken from gridded GDP per capita and population rasters and
+rescaled to 2019 national totals. If administrative clustering is enabled, each
+region is also assigned to the bidding zone with the largest overlap. The shapes
+are the basis for country shapes and for demand distribution keys.
 """
 
 import logging
@@ -547,7 +554,12 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes).set_index("name")
+    # reindexing supports empty offshore shapes of countries without coast
+    offshore_shapes = (
+        gpd.read_file(snakemake.input.offshore_shapes)
+        .reindex(columns=["name", "geometry"])
+        .set_index("name")
+    )
 
     regions = create_regions(
         snakemake.params.countries,

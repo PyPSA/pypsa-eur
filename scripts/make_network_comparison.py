@@ -3,9 +3,16 @@
 # SPDX-License-Identifier: MIT
 
 """
-Creates plots to compare transmission line lengths between two PyPSA networks.
-Uses spatial intersection with country shapes for accurate country attribution.
+Plots transmission route and circuit lengths per country for two PyPSA networks, e.g. a new OSM-based base network against a previous release.
 
+AC lines and DC links of both networks are clipped to country shapes, including
+offshore regions, so that cross-border lines are attributed to countries by their
+actual path. Route length is the clipped geometry length; circuit length
+additionally counts parallel circuits. Bar charts with the relative change per
+country are exported and the Pearson correlation between both networks is logged.
+DC links are additionally compared link by link, matched by OSM relation ID, and
+exported as a table marking each link as added, removed, changed or unchanged.
+The comparison is a development tool to validate new OSM network releases.
 """
 
 import logging
@@ -160,6 +167,99 @@ def get_lines_by_country(
     logger.info(f"Total circuit length: {result['length_circuits'].sum():.0f} km")
 
     return result
+
+
+def get_dc_links(network: pypsa.Network) -> pd.DataFrame:
+    """
+    Extract DC links with their key attributes, indexed by OSM relation ID.
+
+    The OSM relation ID (``tags``) is stable across releases, whereas the link
+    ID contains the voltage and changes when the voltage is corrected.
+
+    Parameters
+    ----------
+    network : pypsa.Network
+        PyPSA network to extract DC links from.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns ['link_id', 'voltage', 'p_nom', 'length', 'bus0',
+        'bus1', 'country0', 'country1'] indexed by OSM relation ID.
+    """
+    links = network.links[network.links["carrier"] == "DC"]
+    df = pd.DataFrame(
+        {
+            "link_id": links.index,
+            "voltage": links["voltage"].values,
+            "p_nom": links["p_nom"].values,
+            "length": links["length"].values,
+            "bus0": links["bus0"].values,
+            "bus1": links["bus1"].values,
+            "country0": links["bus0"].map(network.buses["country"]).values,
+            "country1": links["bus1"].map(network.buses["country"]).values,
+        },
+        index=links["tags"] if "tags" in links.columns else links.index,
+    )
+
+    return df.rename_axis("relation_id")
+
+
+def compare_links(
+    links_incumbent: pd.DataFrame,
+    links_release: pd.DataFrame,
+    length_tolerance: float = 0.05,
+) -> pd.DataFrame:
+    """
+    Compare DC links of two networks link by link.
+
+    Parameters
+    ----------
+    links_incumbent : pd.DataFrame
+        DC links of the baseline network, indexed by OSM relation ID.
+    links_release : pd.DataFrame
+        DC links of the new release network, indexed by OSM relation ID.
+    length_tolerance : float, default 0.05
+        Relative length difference above which a link is marked as changed.
+
+    Returns
+    -------
+    pd.DataFrame
+        Wide-format DataFrame with incumbent and release attributes side by side
+        and a 'status' column (added, removed, changed, unchanged).
+    """
+    comparison = links_incumbent.join(
+        links_release, how="outer", lsuffix="_incumbent", rsuffix="_release"
+    )
+
+    in_incumbent = comparison["p_nom_incumbent"].notna()
+    in_release = comparison["p_nom_release"].notna()
+
+    rel_length_diff = (
+        comparison["length_release"] - comparison["length_incumbent"]
+    ).abs() / comparison["length_incumbent"]
+    changed = (
+        (comparison["p_nom_incumbent"] != comparison["p_nom_release"])
+        | (comparison["voltage_incumbent"] != comparison["voltage_release"])
+        | (comparison["bus0_incumbent"] != comparison["bus0_release"])
+        | (comparison["bus1_incumbent"] != comparison["bus1_release"])
+        | (rel_length_diff > length_tolerance)
+    )
+
+    comparison["status"] = "unchanged"
+    comparison.loc[in_incumbent & in_release & changed, "status"] = "changed"
+    comparison.loc[~in_incumbent, "status"] = "added"
+    comparison.loc[~in_release, "status"] = "removed"
+
+    status_order = ["added", "removed", "changed", "unchanged"]
+    comparison["status"] = pd.Categorical(
+        comparison["status"], categories=status_order, ordered=True
+    )
+    columns = ["status"] + [
+        f"{c}_{s}" for c in links_incumbent.columns for s in ["incumbent", "release"]
+    ]
+
+    return comparison[columns].sort_values(["status", "relation_id"])
 
 
 def prepare_comparison_data(
@@ -407,3 +507,21 @@ if __name__ == "__main__":
     logger.info(f"Exporting figure to {snakemake.output.lengths}")
     fig.savefig(snakemake.output.lengths, format="pdf", bbox_inches="tight", dpi=300)
     plt.close(fig)
+
+    # Compare DC links link by link
+    logger.info("Comparing DC links...")
+    links_comparison = compare_links(get_dc_links(n_incumbent), get_dc_links(n_release))
+
+    status_counts = links_comparison["status"].value_counts(sort=False)
+    logger.info("DC links: " + ", ".join(f"{n} {s}" for s, n in status_counts.items()))
+    links_differing = links_comparison[links_comparison["status"] != "unchanged"]
+    for relation_id, row in links_differing.iterrows():
+        logger.warning(
+            f"DC link {relation_id} {row['status']}: "
+            f"voltage {row['voltage_incumbent']} -> {row['voltage_release']} kV, "
+            f"p_nom {row['p_nom_incumbent']} -> {row['p_nom_release']} MW, "
+            f"length {row['length_incumbent']:.1f} -> {row['length_release']:.1f} km"
+        )
+
+    logger.info(f"Exporting DC link comparison to {snakemake.output.links}")
+    links_comparison.to_csv(snakemake.output.links)
