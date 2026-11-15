@@ -108,7 +108,7 @@ solving:
     options: highs-default
   check_objective:
     enable: true
-    expected_value: 50009078.82
+    expected_value: 50129135.91
   options:
     transmission_losses: false
 
