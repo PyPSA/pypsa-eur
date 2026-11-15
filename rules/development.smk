@@ -42,9 +42,10 @@ rule make_network_comparison:
         n_release=resources("networks/base.nc"),
         n_incumbent=resources("osm/comparison/incumbent/networks/base.nc"),
         country_shapes=resources("country_shapes.geojson"),
-        regions_offshore=resources("offshore_regions.geojson"),
+        regions_offshore=resources("offshore_regions_base.geojson"),
     output:
         lengths=resources("osm/comparison/lengths.pdf"),
+        links=resources("osm/comparison/links.csv"),
     log:
         logs("make_network_comparison.log"),
     benchmark:
@@ -125,3 +126,4 @@ rule osm_release:
         resources("osm/release/map.html"),
         resources("osm/comparison/map_incumbent.html"),
         resources("osm/comparison/lengths.pdf"),
+        resources("osm/comparison/links.csv"),
