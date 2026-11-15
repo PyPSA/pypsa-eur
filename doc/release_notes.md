@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Refactor: Rules receive only the configuration keys and input files their scripts use, so unrelated configuration changes no longer trigger reruns ([#2354](https://github.com/PyPSA/pypsa-eur/pull/2354)).
 
 * data: Update to use the power plant dataset from `powerplantmatching` v0.9.1 ([#2356](https://github.com/PyPSA/pypsa-eur/pull/2356)).
 * Fix: Removed the unused `temp_soil_total` input from `compose_network` ([#2406](https://github.com/PyPSA/pypsa-eur/pull/2406)).
