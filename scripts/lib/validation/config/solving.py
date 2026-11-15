@@ -411,6 +411,15 @@ class SolvingConfig(BaseModel):
                 "barhggpu": 1,
                 "barhgreltol": 1e-5,
             },
+            # Mirrors "gurobi-default" method/crossover/gap: barrier without crossover, relaxed gap.
+            "mosek-default": {
+                "MSK_IPAR_NUM_THREADS": 8,
+                "MSK_IPAR_OPTIMIZER": "MSK_OPTIMIZER_INTPNT",
+                "MSK_IPAR_INTPNT_BASIS": "MSK_BI_NEVER",
+                "MSK_DPAR_INTPNT_TOL_REL_GAP": 1e-5,
+                "MSK_DPAR_INTPNT_TOL_PFEAS": 1e-6,
+                "MSK_DPAR_INTPNT_TOL_DFEAS": 1e-6,
+            },
             "cbc-default": {},
             "glpk-default": {},
         },
