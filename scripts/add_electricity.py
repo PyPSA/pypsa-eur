@@ -1276,9 +1276,13 @@ def main(
     extendable_carriers = params.electricity["extendable_carriers"]
     conventional_carriers = params.electricity["conventional_carriers"]
     if params.sector["enabled"]:
-        conventional_carriers = sorted(set(conventional_carriers) - SECTOR_CARRIERS)
+        # with myopic or perfect foresight, add_existing_baseyear adds nuclear as links
+        sector_carriers = SECTOR_CARRIERS | (
+            {"nuclear"} if foresight != "overnight" else set()
+        )
+        conventional_carriers = sorted(set(conventional_carriers) - sector_carriers)
         extendable_carriers = {
-            c: sorted(set(carriers) - SECTOR_CARRIERS)
+            c: sorted(set(carriers) - sector_carriers)
             for c, carriers in extendable_carriers.items()
         }
     conventional_inputs = {

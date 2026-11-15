@@ -421,7 +421,7 @@ def add_carrier_buses(
     )
 
     fossils = ["coal", "gas", "oil", "lignite"]
-    if options["fossil_fuels"] and carrier in fossils:
+    if (options["fossil_fuels"] and carrier in fossils) or carrier == "uranium":
         suffix = ""
 
         if carrier == "oil" and cf_industry["oil_refining_emissions"] > 0:
