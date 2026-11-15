@@ -308,9 +308,6 @@ rule plot_base_statistics:
             for plot in STATISTICS_BARPLOTS
         },
         barplots_touch=RESULTS + "figures/.statistics_plots_{horizon}",
-    params:
-        plotting=config_provider("plotting"),
-        barplots=STATISTICS_BARPLOTS,
     script:
         scripts("plot_statistics.py")
 
