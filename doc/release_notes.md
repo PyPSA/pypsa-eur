@@ -18,8 +18,8 @@
     `end` must include the hour. A date-only `start` keeps its meaning (00:00 of that day).
 
 * Refactor: Rules receive only the configuration keys and input files their scripts use, so unrelated configuration changes no longer trigger reruns ([#2354](https://github.com/PyPSA/pypsa-eur/pull/2354)).
-* Refactor: Scripts read configuration only through rule `params`, not through `snakemake.config`. Exceptions are logging, scenario handling, network metadata and the solving scripts.
-* Fix: `build_dh_areas` failed for countries without district heating area data, and `plot_heat_source_map` failed, because their rules did not pass the required `params`.
+* Refactor: Scripts read configuration only through rule `params`, not through `snakemake.config`. Exceptions are logging, scenario handling, network metadata and the solving scripts ([#2340](https://github.com/PyPSA/pypsa-eur/pull/2340)).
+* Fix: `build_dh_areas` failed for countries without district heating area data, and `plot_heat_source_map` failed, because their rules did not pass the required `params` ([#2340](https://github.com/PyPSA/pypsa-eur/pull/2340)).
 
 * data: Update to use the power plant dataset from `powerplantmatching` v0.9.1 ([#2356](https://github.com/PyPSA/pypsa-eur/pull/2356)).
 * Fix: Removed the unused `temp_soil_total` input from `compose_network` ([#2406](https://github.com/PyPSA/pypsa-eur/pull/2406)).
