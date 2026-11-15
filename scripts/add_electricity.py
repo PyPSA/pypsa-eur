@@ -1324,6 +1324,7 @@ def main(
             )
         else:
             tech_map = estimate_renewable_caps["technology_mapping"]
+            tech_map = {k: v for k, v in tech_map.items() if v in renewable_carriers}
             expansion_limit = estimate_renewable_caps["expansion_limit"]
             year = estimate_renewable_caps["year"]
 

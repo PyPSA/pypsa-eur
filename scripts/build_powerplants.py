@@ -11,7 +11,7 @@ Plant capacities and locations come from the
 restricted to the modelled countries and filtered with the
 [pandas.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html)
 expression in `electricity.powerplants_filter`. Custom entries from a
-user-provided CSV can be added, filtered with `electricity.custom_powerplants`;
+user-provided CSV or a list of CSVs (set in `electricity.custom_powerplants_fn`) can be added, filtered with `electricity.custom_powerplants`;
 for example `powerplants_filter: Country not in ['Germany']` together with
 `custom_powerplants: Country in ['Germany']` replaces the German fleet by custom
 data. Fuel types listed in `electricity.everywhere_powerplants` are added with
@@ -44,9 +44,20 @@ logger = logging.getLogger(__name__)
 
 
 def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
+    """
+    Add power plants from one or several custom CSV files to `ppl`.
+
+    The files are combined and then filtered with `custom_ppl_query` if it is
+    a string; `True` adds all entries and `False` adds none.
+    """
     if not custom_ppl_query:
         return ppl
-    add_ppls = pd.read_csv(custom_powerplants, dtype={"bus": "str"})
+    if isinstance(custom_powerplants, str):
+        custom_powerplants = [custom_powerplants]
+    add_ppls = pd.concat(
+        [pd.read_csv(fn, dtype={"bus": "str"}) for fn in custom_powerplants],
+        ignore_index=True,
+    )
     if isinstance(custom_ppl_query, str):
         add_ppls.query(custom_ppl_query, inplace=True)
     return pd.concat(

@@ -201,7 +201,11 @@ class ElectricityConfig(BaseModel):
     )
     custom_powerplants: str | bool = Field(
         False,
-        description="Filter query for the custom powerplant database.",
+        description="Whether to add power plants from the custom power plant file(s) listed in `custom_powerplants_fn`. `true` adds all entries, `false` disables custom power plants from file. A string will add the custom entries from the file(s) after filtering them using a `pandas` query; configured filters via `powerplants_filter` are NOT applied to the custom powerplants and might need to be repeated in the query here..",
+    )
+    custom_powerplants_fn: str | list[str] = Field(
+        "data/custom_powerplants.csv",
+        description="Path or list of paths to CSV files with custom power plants, used if `custom_powerplants` is enabled. The files must follow the powerplantmatching format, see also `data/custom_powerplants.csv`. Multiple files are combined without overwriting entries. Files cannot be used to remove powerplants from the model. If a query is used for `custom_powerplants`, then the query is executed on the combined files before they are added to the model.",
     )
     everywhere_powerplants: list[str] = Field(
         default_factory=list,

@@ -244,3 +244,12 @@ class TestLineTypes:
             validate_config(
                 {"lines": {"types": {220.0: "Al/St 240/40 2-bundle 220.0"}}}
             )
+
+
+def test_removed_oetc_section_is_rejected():
+    with pytest.raises(ValueError, match="oetc"):
+        validate_config({"solving": {"oetc": {"name": "pypsa-eur"}}})
+
+
+def test_empty_oetc_section_from_former_default_is_accepted():
+    validate_config({"solving": {"oetc": None}})
