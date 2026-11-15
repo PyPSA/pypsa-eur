@@ -473,7 +473,8 @@ def cluster_regions(
 def busmap_for_admin_regions(
     n: pypsa.Network,
     admin_shapes: str,
-    params: dict,
+    countries: list[str],
+    admin_levels: dict,
 ) -> pd.Series:
     """
     Create a busmap based on administrative regions using the NUTS3 shapefile.
@@ -484,17 +485,17 @@ def busmap_for_admin_regions(
         The network to cluster.
     admin_shapes : str
         The path to the administrative regions.
-    params : dict
-        The parameters for clustering.
+    countries : list[str]
+        The countries of the network.
+    admin_levels : dict
+        The administrative clustering levels, globally and per country.
 
     Returns
     -------
         busmap (pd.Series): Busmap mapping each bus to an administrative region.
     """
-    countries = params.countries
     admin_regions = gpd.read_file(admin_shapes)
 
-    admin_levels = params.administrative
     level = admin_levels.get("level", 0)
     logger.info(f"Clustering at administrative level {level}.")
 
@@ -673,7 +674,8 @@ if __name__ == "__main__":
             busmap = busmap_for_admin_regions(
                 n,
                 snakemake.input.admin_shapes,
-                params,
+                params.countries,
+                params.administrative,
             )
             # Update x, y coordinates, ensuring that bus locations are inside the administrative region
             update_bus_coordinates(

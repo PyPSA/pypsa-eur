@@ -102,8 +102,16 @@ rule base_network:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        lines=config_provider("lines"),
-        links=config_provider("links"),
+        voltages=config_provider("electricity", "voltages"),
+        base_network=config_provider("electricity", "base_network"),
+        osm_version=config_provider("data", "osm", "version"),
+        lines=config_provider(
+            "lines",
+            subset=["types", "s_max_pu", "under_construction", "reconnect_crimea"],
+        ),
+        links=config_provider(
+            "links", subset=["p_max_pu", "p_min_pu", "under_construction"]
+        ),
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
@@ -218,8 +226,6 @@ rule build_shapes:
     threads: 1
     resources:
         mem_mb=1500,
-    params:
-        countries=config_provider("countries"),
     script:
         scripts("build_shapes.py")
 
@@ -285,7 +291,6 @@ rule determine_availability_matrix_MD_UA:
             else []
         ),
         country_shapes=resources("country_shapes.geojson"),
-        offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
             resources("onshore_regions.geojson")
             if w.technology in ("onwind", "solar", "solar-hsat")
@@ -308,7 +313,7 @@ rule determine_availability_matrix_MD_UA:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     params:
-        renewable=config_provider("renewable"),
+        technology=lambda w: config_provider("renewable", w.technology)(w),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     script:
         scripts("determine_availability_matrix_MD_UA.py")
@@ -359,7 +364,6 @@ rule determine_availability_matrix:
             else []
         ),
         country_shapes=resources("country_shapes.geojson"),
-        offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
             resources("onshore_regions.geojson")
             if w.technology in ("onwind", "solar", "solar-hsat")
@@ -384,7 +388,7 @@ rule determine_availability_matrix:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     params:
-        renewable=config_provider("renewable"),
+        technology=lambda w: config_provider("renewable", w.technology)(w),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
     script:
         scripts("determine_availability_matrix.py")
@@ -394,7 +398,6 @@ rule build_renewable_profiles:
     """Computes {wildcards.technology} capacity factors, potentials and grid distances per region."""
     input:
         availability_matrix=resources("availability_matrix_{technology}.nc"),
-        offshore_shapes=resources("offshore_shapes.geojson"),
         distance_regions=resources("onshore_regions.geojson"),
         resource_regions=lambda w: (
             resources("onshore_regions.geojson")
@@ -419,7 +422,7 @@ rule build_renewable_profiles:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        renewable=config_provider("renewable"),
+        technology=lambda w: config_provider("renewable", w.technology)(w),
     script:
         scripts("build_renewable_profiles.py")
 
@@ -751,11 +754,6 @@ rule cluster_network:
         unpack(input_custom_busmap),
         network=resources("networks/simplified.nc"),
         admin_shapes=resources("admin_shapes.geojson"),
-        bidding_zones=lambda w: (
-            resources("bidding_zones.geojson")
-            if config_provider("clustering", "mode")(w) == "administrative"
-            else []
-        ),
         onshore_regions=resources("onshore_regions_simplified.geojson"),
         offshore_regions=resources("offshore_regions_simplified.geojson"),
         hac_features=lambda w: (
@@ -788,13 +786,6 @@ rule cluster_network:
             "clustering", "aggregation_strategies", default={}
         ),
         focus_weights=config_provider("clustering", "focus_weights", default=None),
-        renewable_carriers=config_provider("electricity", "renewable_carriers"),
-        conventional_carriers=config_provider(
-            "electricity", "conventional_carriers", default=[]
-        ),
-        max_hours=config_provider("electricity", "max_hours"),
-        length_factor=config_provider("lines", "length_factor"),
-        cluster_mode=config_provider("clustering", "mode"),
         copperplate_regions=config_provider("clustering", "copperplate_regions"),
     script:
         scripts("cluster_network.py")
@@ -877,8 +868,6 @@ rule clean_osm_data:
             f"{OSM_DATASET['folder']}/{{country}}/substations_relation.json",
             country=config_provider("countries"),
         ),
-        offshore_shapes=resources("offshore_shapes.geojson"),
-        country_shapes=resources("country_shapes.geojson"),
     output:
         substations=resources(f"osm/clean/substations.geojson"),
         substations_polygon=resources(f"osm/clean/substations_polygon.geojson"),
@@ -932,7 +921,6 @@ rule build_osm_network:
     resources:
         mem_mb=4000,
     params:
-        countries=config_provider("countries"),
         voltages=config_provider("electricity", "voltages"),
         line_types=config_provider("lines", "types"),
         under_construction=config_provider("osm_network_release", "under_construction"),
