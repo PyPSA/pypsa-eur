@@ -1149,15 +1149,28 @@ def add_pipe_retrofit_constraint(n):
 def add_flexible_egs_constraint(n):
     """
     Upper bounds the charging capacity of the geothermal reservoir according to
-    the well capacity.
+    the capacity of the wells at the same surface bus.
     """
-    well_index = n.links.loc[n.links.carrier == "geothermal heat"].index
-    storage_index = n.storage_units.loc[
-        n.storage_units.carrier == "geothermal heat"
-    ].index
+    wells = n.links.query("carrier == 'geothermal heat'")
+    reservoirs = n.storage_units.query("carrier == 'geothermal heat'")
+    if reservoirs.empty:
+        return
 
-    p_nom_rhs = n.model["Link-p_nom"].loc[well_index]
-    p_nom_lhs = n.model["StorageUnit-p_nom"].loc[storage_index]
+    well_bus = wells.bus1.rename("bus")
+    reservoir_bus = reservoirs.bus
+    if not PYPSA_V1:
+        well_bus = well_bus.rename_axis("Link-ext")
+        reservoir_bus = reservoir_bus.rename_axis("StorageUnit-ext")
+
+    p_nom_rhs = (
+        n.model["Link-p_nom"].loc[wells.index].groupby(well_bus.to_xarray()).sum()
+    )
+    p_nom_lhs = (
+        n.model["StorageUnit-p_nom"]
+        .loc[reservoirs.index]
+        .groupby(reservoir_bus.to_xarray())
+        .sum()
+    )
 
     n.model.add_constraints(
         p_nom_lhs <= p_nom_rhs,
