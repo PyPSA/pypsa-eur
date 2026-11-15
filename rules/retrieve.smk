@@ -68,7 +68,7 @@ if (SWISS_ENERGY_BALANCES_DATASET := dataset_version("swiss_energy_balances"))[
         input:
             xlsx=storage(SWISS_ENERGY_BALANCES_DATASET["url"]),
         output:
-            xlsx=f"{SWISS_ENERGY_BALANCES_DATASET['folder']}/12361-VWZ_Webtabellen_2024.xlsx",
+            xlsx=f"{SWISS_ENERGY_BALANCES_DATASET['folder']}/12361-VWZ_Webtabellen_2025.xlsx",
         run:
             copy2(input["xlsx"], output["xlsx"])
 

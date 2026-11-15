@@ -838,7 +838,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"
     rule build_country_hdd:
         """Computes daily heating degree days per country from ERA5 temperatures for all weather years."""
         input:
-            cutouts=["cutouts/europe-1940-2024-era5.nc"],
+            cutouts=lambda w: input_cutout(w, ["europe-1940-2024-era5"]),
             country_shapes=resources("country_shapes.geojson"),
         output:
             era5_hdd=f"{COUNTRY_HDD_DATASET['folder']}/era5-HDD-per-country.csv",

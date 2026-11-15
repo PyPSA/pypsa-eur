@@ -48,8 +48,9 @@ from fuel cost, variable operation and maintenance cost and efficiency.
 
 Selected values can be overridden in the configuration, for example to test
 a cheaper electrolyser or a higher gas price, without editing the database.
-For using and overwriting a larger number of cost entries, a `custom_costs`
-file can be configured and used. Missing values are filled with defaults.
+For using and overwriting a larger number of cost entries, one or several
+`custom_costs` files can be used.
+Missing values are filled with defaults.
 
 ## Further reading
 
