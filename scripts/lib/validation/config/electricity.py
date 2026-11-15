@@ -223,7 +223,7 @@ class ElectricityConfig(BaseModel):
             "waste",
             "biomass",
         ],
-        description="List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
+        description="List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound. Sector-coupled models ignore OCGT, CCGT, oil, coal, lignite, biomass and waste here, because they add these technologies as links with fuel and emission tracking. With myopic or perfect foresight, they also ignore nuclear, which is added as links from uranium with its build years.",
     )
     renewable_carriers: list[str] = Field(
         default_factory=lambda: [

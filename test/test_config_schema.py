@@ -276,6 +276,11 @@ class TestLineTypes:
             )
 
 
+def test_removed_pypsa_eur_section_is_rejected():
+    with pytest.raises(ValueError, match="pypsa_eur"):
+        validate_config({"pypsa_eur": {"Generator": ["onwind"]}})
+
+
 def test_removed_oetc_section_is_rejected():
     with pytest.raises(ValueError, match="oetc"):
         validate_config({"solving": {"oetc": {"name": "pypsa-eur"}}})
