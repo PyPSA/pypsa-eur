@@ -6,6 +6,8 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+* Performance: `build_renewable_profiles` now derives the resource class masks from the availability matrix instead of rasterising all regions again. Results with the default `resource_classes: 1` are unchanged. With more classes, only eligible cells now set the class bounds and the class regions.
+
 * Updated the default prebuilt OSM network to v0.8 (https://zenodo.org/records/23896564), retrieved on 2 November 2026 ([#2389](https://github.com/PyPSA/pypsa-eur/pull/2389)).
 * Feature: Custom powerplants can now be specified with a configurable path and multiple files are accepted by the new option `electricity: custom_powerplants_fn` ([#2388](https://github.com/PyPSA/pypsa-eur/pull/2388)).
 
