@@ -32,22 +32,22 @@ class SnapshotsConfig(ConfigModel):
     )
     end: str | list[str] = Field(
         "2013-12-31 23:00",
-        description="Last snapshot (included). A date without time refers to 00:00 of that day.",
+        description="Last snapshot (included), with time, e.g. `2013-12-31 23:00`.",
     )
 
     @model_validator(mode="before")
     @classmethod
     def reject_legacy_settings(cls, data: Any) -> Any:
-        """Reject `inclusive` and a date-only `end` on 1 January (old exclusive end)."""
+        """Reject `inclusive` and a date-only `end`, which was exclusive before."""
         if not isinstance(data, dict):
             return data
         if "inclusive" in data:
             raise ValueError(MIGRATION_HINT)
         ends = data.get("end", [])
         for end in ends if isinstance(ends, list) else [ends]:
-            if re.fullmatch(r"\d{4}-01-01", str(end)):
+            if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(end)):
                 raise ValueError(
-                    f"`snapshots: end: {end}` would add a single snapshot of the next "
-                    f'year. Use `end: "{end} 00:00"` if intended. {MIGRATION_HINT}'
+                    f"`snapshots: end: {end}` needs a time, e.g. "
+                    f'`end: "{end} 00:00"`. {MIGRATION_HINT}'
                 )
         return data

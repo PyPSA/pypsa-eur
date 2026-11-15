@@ -5993,7 +5993,7 @@
             }
           ],
           "default": "2013-12-31 23:00",
-          "description": "Last snapshot (included). A date without time refers to 00:00 of that day."
+          "description": "Last snapshot (included), with time, e.g. `2013-12-31 23:00`."
         }
       }
     },
@@ -10081,7 +10081,7 @@
             }
           ],
           "default": "2013-12-31 23:00",
-          "description": "Last snapshot (included). A date without time refers to 00:00 of that day."
+          "description": "Last snapshot (included), with time, e.g. `2013-12-31 23:00`."
         }
       }
     },

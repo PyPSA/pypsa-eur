@@ -179,8 +179,9 @@ class TestValidateScenarios:
     "snapshots, match",
     [
         ({"inclusive": "left"}, "inclusive"),
-        ({"end": "2014-01-01"}, "single snapshot"),
-        ({"start": ["2013-01-01"], "end": ["2014-01-01"]}, "single snapshot"),
+        ({"end": "2014-01-01"}, "needs a time"),
+        ({"end": "2013-03-08"}, "needs a time"),
+        ({"start": ["2013-01-01"], "end": ["2014-01-01"]}, "needs a time"),
     ],
 )
 def test_snapshots_reject_legacy_settings(snapshots, match):
