@@ -5498,11 +5498,6 @@
           "description": "The cost of sequestering a ton of CO2 (currency/tCO2).",
           "type": "number"
         },
-        "co2_sequestration_lifetime": {
-          "default": 50,
-          "description": "The lifetime of a CO2 sequestration site (years).",
-          "type": "integer"
-        },
         "co2_spatial": {
           "default": true,
           "description": "Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
@@ -12942,11 +12937,6 @@
           "default": 30,
           "description": "The cost of sequestering a ton of CO2 (currency/tCO2).",
           "type": "number"
-        },
-        "co2_sequestration_lifetime": {
-          "default": 50,
-          "description": "The lifetime of a CO2 sequestration site (years).",
-          "type": "integer"
         },
         "co2_spatial": {
           "default": true,

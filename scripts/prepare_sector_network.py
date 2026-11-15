@@ -547,7 +547,6 @@ def add_co2_tracking(
             Dict with keys ``enable`` (bool), ``max_size`` (float),
             ``years_of_storage`` (float).
         - co2_sequestration_cost: float
-        - co2_sequestration_lifetime: float
         - co2_vent: bool
     spatial : SimpleNamespace
         Configuration options containing at least:
@@ -720,7 +719,7 @@ def add_co2_tracking(
         e_nom_max=e_nom_max,
         marginal_cost=-0.1,
         bus=sequestration_buses,
-        lifetime=options["co2_sequestration_lifetime"],
+        lifetime=np.inf,  # re-added each horizon, see add_brownfield
         carrier="co2 sequestered",
     )
 

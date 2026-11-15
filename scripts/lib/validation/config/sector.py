@@ -771,9 +771,6 @@ class SectorConfig(BaseModel):
     co2_sequestration_cost: float = Field(
         30, description="The cost of sequestering a ton of CO2 (currency/tCO2)."
     )
-    co2_sequestration_lifetime: int = Field(
-        50, description="The lifetime of a CO2 sequestration site (years)."
-    )
     co2_spatial: bool = Field(
         True,
         description="Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
