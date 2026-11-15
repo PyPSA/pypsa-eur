@@ -6,7 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-* Fix: Regional CO2 sequestration allowances no longer accumulate across myopic planning horizons. Sequestration Stores are replaced by fixed-capacity Generators with energy-sum limits and infinite lifetimes, preventing brownfield carry-over from duplicating regional potentials. Sequestration costs are charged on Generator dispatch instead of the connecting Links. This can change sequestration locations and CO2 pipeline expansion ([#2369](https://github.com/PyPSA/pypsa-eur/pull/2369), fixes [#2368](https://github.com/PyPSA/pypsa-eur/issues/2368)).
+* Fix: Regional CO2 sequestration potentials no longer accumulate across myopic planning horizons. Sequestration stores are now re-added each horizon instead of being carried over, so each region keeps one annual potential. The option `sector: co2_sequestration_lifetime` was removed. This can change sequestration locations and CO2 pipeline expansion in myopic runs ([#2369](https://github.com/PyPSA/pypsa-eur/pull/2369), fixes [#2368](https://github.com/PyPSA/pypsa-eur/issues/2368)).
 
 * Fix: Removed the unused `temp_soil_total` input from `compose_network` ([#2406](https://github.com/PyPSA/pypsa-eur/pull/2406)).
 

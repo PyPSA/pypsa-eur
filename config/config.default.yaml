@@ -961,7 +961,6 @@ sector:
     2045: 250
     2050: 250
   co2_sequestration_cost: 30
-  co2_sequestration_lifetime: 50
   co2_spatial: true
   co2_network: true
   co2_network_cost_factor: 1

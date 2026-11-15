@@ -87,8 +87,9 @@ of potentials, with a choice between offshore formations only, which are
 larger and far from settlements, and onshore formations as well.
 
 Regional geological potentials are divided by `years_of_storage` to obtain
-the modeled annual potential. A fixed-capacity, negative-dispatch Generator
-enforces each region's potential and charges the sequestration cost.
+an annual potential. Each planning horizon gets a fresh sequestration store
+per region bounded by this annual potential, so potentials do not accumulate
+across horizons.
 
 !!! warning "The sequestration limit shapes the result"
     The limit is a deliberate choice: it keeps sequestration for
