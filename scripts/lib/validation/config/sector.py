@@ -722,6 +722,10 @@ class SectorConfig(BaseModel):
         True,
         description="Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs.",
     )
+    electrolysis: bool = Field(
+        True,
+        description="Add option to include hydrogen electrolysis for power-to-gas conversion.",
+    )
     SMR: bool = Field(
         True,
         description="Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR).",

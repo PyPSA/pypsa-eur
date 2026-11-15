@@ -989,36 +989,6 @@ def update_residential_from_eurostat(
     )
 
 
-def build_transformation_output_coke(eurostat, fn):
-    """
-    Extracts and builds the transformation output data for coke ovens from the
-    Eurostat dataset.
-
-    This function specifically filters the Eurostat data to extract
-    transformation output related to coke ovens.
-    Since the transformation output for coke ovens
-    is not included in the final energy consumption of the iron and steel sector,
-    it needs to be processed and added separately. The filtered data is saved
-    as a CSV file.
-
-    Parameters
-    ----------
-    eurostat : pd.DataFrame
-        A pandas DataFrame containing Eurostat data with a multi-level index.
-    fn : str
-        The file path where the resulting CSV file should be saved.
-
-    Notes
-    -----
-    The resulting transformation output data for coke ovens is saved as a CSV
-    file at the path specified in fn.
-    """
-
-    eurostat.query("nrg_bal == 'TO_CO'").set_index(["country", "year", "siec"])[
-        "value"
-    ].unstack("siec").to_csv(fn)
-
-
 def build_heating_efficiencies(
     countries: list[str], idees: pd.DataFrame
 ) -> pd.DataFrame:

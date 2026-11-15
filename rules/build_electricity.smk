@@ -38,7 +38,10 @@ rule build_powerplants:
         regions_onshore=resources("onshore_regions.geojson"),
         regions_offshore=resources("offshore_regions.geojson"),
         powerplants=rules.retrieve_powerplants.output["powerplants"],
-        custom_powerplants="data/custom_powerplants.csv",
+        custom_powerplants=branch(
+            config_provider("electricity", "custom_powerplants"),
+            then=config_provider("electricity", "custom_powerplants_fn"),
+        ),
     output:
         resources("powerplants.csv"),
     log:
@@ -379,6 +382,8 @@ rule determine_availability_matrix:
         logs("determine_availability_matrix_{technology}.log"),
     benchmark:
         benchmarks("determine_availability_matrix_{technology}")
+    wildcard_constraints:
+        technology=r"(?!MD-UA_)[^/]+",
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
@@ -469,7 +474,7 @@ if COUNTRY_RUNOFF_DATASET["source"] == "build":
     rule build_country_runoff:
         """Computes daily runoff per country from ERA5 cutouts to fill missing EIA hydro statistics."""
         input:
-            cutouts=["cutouts/europe-1940-2024-era5.nc"],
+            cutouts=lambda w: input_cutout(w, ["europe-1940-2024-era5"]),
             country_shapes=resources("country_shapes.geojson"),
         output:
             era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
@@ -664,7 +669,7 @@ rule process_cost_data:
         costs=lambda w: rules.retrieve_cost_data.output["costs"].format(
             horizon=cost_year(w)
         ),
-        custom_costs=config_provider("costs", "custom_cost_fn"),
+        custom_costs=input_custom_costs,
     output:
         resources("costs_{horizon}_processed.csv"),
     log:
