@@ -4,7 +4,7 @@
 """
 Build the industrial energy demand per model region for a planning horizon in TWh/a.
 
-The specific energy consumption per subsector and country for the horizon from [build_industry_sector_ratios_intermediate][] (MWh/t) is multiplied by the regional production from [build_industrial_production_per_node][] and summed over subsectors. This gives, per region, the demand for electricity, coal, coke, solid biomass, methane, hydrogen, low-temperature heat, naphtha, methanol and ammonia (non-zero only if `industry: ammonia` is enabled), as well as process emissions and process emissions from feedstock in MtCO2/a. Today's regional electricity demand from [build_industrial_energy_demand_per_node_today][] is appended as `current electricity` so that [prepare_sector_network][] can separate the new industrial electricity load from the existing one.
+The specific energy consumption per subsector and country for the horizon from [build_industry_sector_ratios_intermediate][] (MWh/t) is multiplied by the regional production from [build_industrial_production_per_node][] and summed over subsectors. This gives, per region, the demand for electricity, coal, coke, solid biomass, methane, hydrogen, low-temperature heat, naphtha, methanol and ammonia (non-zero only if `industry: ammonia` is enabled), as well as process emissions and process emissions from feedstock in MtCO2/a. If `sector: industry_heat: enable` is set, the ratios from [build_industry_sector_ratios_endogenous][] replace the fuels of the covered subsectors by heat demand in three temperature bands above 100 °C. Today's regional electricity demand from [build_industrial_energy_demand_per_node_today][] is appended as `current electricity` so that [prepare_sector_network][] can separate the new industrial electricity load from the existing one.
 """
 
 import logging
@@ -14,14 +14,6 @@ import pandas as pd
 from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
-
-sectors_copied_from_exogenous = [
-    # also mainly has a heat demand, but can be electrified by methods unavailable in other processes.
-    # Therefore, here exogenously electrified as long as individual sectors are not disaggregated.
-    "HVC (chemical recycling)",
-    "HVC (mechanical recycling)",
-    "DRI + Electric arc",
-]
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -34,22 +26,16 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    # import exogenous ratios
+    # import ratios
     fn = snakemake.input.industry_sector_ratios
-    sector_ratios_exogenous = pd.read_csv(fn, header=[0, 1], index_col=0)
+    sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0)
 
-    # import endogenous ratios
-    fn = snakemake.input.industry_sector_ratios_endogenous
-    sector_ratios_endogenous = pd.read_csv(fn, header=[0, 1], index_col=0)
-
-    cols = sector_ratios_exogenous.columns[
-        sector_ratios_exogenous.columns.get_level_values(1).isin(
-            sectors_copied_from_exogenous
-        )
-    ]
-    sector_ratios_endogenous = pd.concat(
-        [sector_ratios_endogenous, sector_ratios_exogenous.loc[:, cols]], axis=1
-    )
+    # replace fuels of subsectors with endogenous heat supply by heat demand
+    if fn := snakemake.input.industry_sector_ratios_endogenous:
+        endogenous = pd.read_csv(fn, header=[0, 1], index_col=0)
+        carriers = sector_ratios.index.union(endogenous.index, sort=False)
+        sector_ratios = sector_ratios.reindex(carriers, fill_value=0.0)
+        sector_ratios.update(endogenous)
 
     # material demand per node and industry (Mton/a)
     fn = snakemake.input.industrial_production_per_node
@@ -59,28 +45,16 @@ if __name__ == "__main__":
     fn = snakemake.input.industrial_energy_demand_per_node_today
     nodal_today = pd.read_csv(fn, index_col=0)
 
-    nodal_sector_ratios_exogenous = pd.concat(
-        {node: sector_ratios_exogenous[node[:2]] for node in nodal_production.index},
-        axis=1,
-    )
-
-    nodal_sector_ratios_endogenous = pd.concat(
-        {node: sector_ratios_endogenous[node[:2]] for node in nodal_production.index},
-        axis=1,
+    nodal_sector_ratios = pd.concat(
+        {node: sector_ratios[node[:2]] for node in nodal_production.index}, axis=1
     )
 
     nodal_production_stacked = nodal_production.stack()
     nodal_production_stacked.index.names = [None, None]
 
     # final energy consumption per node and industry (TWh/a)
-    nodal_df_exogenous = (
-        (nodal_sector_ratios_exogenous.multiply(nodal_production_stacked))
-        .T.groupby(level=0)
-        .sum()
-    )
-
-    nodal_df_endogenous = (
-        (nodal_sector_ratios_endogenous.multiply(nodal_production_stacked))
+    nodal_df = (
+        (nodal_sector_ratios.multiply(nodal_production_stacked))
         .T.groupby(level=0)
         .sum()
     )
@@ -88,51 +62,11 @@ if __name__ == "__main__":
     rename_sectors = {
         "elec": "electricity",
         "biomass": "solid biomass",
-    }
-
-    nodal_df_exogenous.rename(columns=rename_sectors, inplace=True)
-    nodal_df_endogenous.rename(columns=rename_sectors, inplace=True)
-
-    nodal_df_exogenous.rename(
-        columns={
-            "heat": "low-temperature heat",
-        },
-        inplace=True,
-    )
-
-    grouper = {
-        "heat<100": "low-temperature heat",
         "heat": "low-temperature heat",
     }
+    nodal_df.rename(columns=rename_sectors, inplace=True)
 
-    def partial_group(df: pd.DataFrame, grouper: dict[str, str]) -> pd.DataFrame:
-        return pd.concat([df.groupby(grouper).sum(), df.drop(grouper)])
-
-    nodal_df_endogenous = partial_group(nodal_df_endogenous.T, grouper).T
-
-    # Process emissions (calcination / chemical-reaction CO2) and the naphtha and
-    # methanol feedstocks are non-energy quantities. The endogenous ratios are derived
-    # purely from fuel demand, so these carriers cannot be represented there and would
-    # vanish when `industry_t: endogen` is enabled. They are independent of how process
-    # heat is supplied, so carry them over from the exogenous block. Naphtha is copied
-    # together with the feedstock emissions so the feedstock-emission / naphtha ratio in
-    # prepare_sector_network stays self-consistent.
-    for carrier in [
-        "process emission",
-        "process emission from feedstock",
-        "naphtha",
-        "methanol",
-    ]:
-        nodal_df_endogenous[carrier] = nodal_df_exogenous[carrier]
-
-    nodal_df_exogenous["current electricity"] = nodal_today["electricity"]
-    nodal_df_endogenous["current electricity"] = nodal_today["electricity"]
-
-    nodal_df = pd.concat(
-        [nodal_df_exogenous, nodal_df_endogenous],
-        axis=1,
-        keys=["exogenous", "endogenous"],
-    )
+    nodal_df["current electricity"] = nodal_today["electricity"]
 
     nodal_df.index.name = "TWh/a (MtCO2/a)"
 

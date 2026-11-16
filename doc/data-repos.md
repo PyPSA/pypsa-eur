@@ -166,6 +166,13 @@ New data should generally not be added to the data, but externally retrieved in 
 - **License:** [custom](https://www.iaea.org/about/terms-of-use)
 - **Description:** Country-level nuclear power plant availability factors.
 
+`data/industry_heat_temperature_shares.csv`
+
+- **Source:** Fleiter et al. (2025), supplementary data, sheet `Industry_ESC_FEC`; own estimates for subsectors not covered, with sources per row
+- **Link:** https://doi.org/10.1002/ente.202300981
+- **License:** CC-BY 4.0
+- **Description:** Shares of industry process heat demand per subsector in the temperature bands below 100 °C, 100-200 °C, 200-500 °C and above 500 °C.
+
 `data/refineries-noneu.csv`
 
 - **Source:** manually collected, mostly from Energy Information Agency (EIA)

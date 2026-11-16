@@ -62,7 +62,7 @@ fuels = {
     "Solid fossil fuels": "solid",
     "Peat and peat products": "solid",
     "Oil shale and oil sands": "solid",
-    "Oil and petroleum products": "naphtha",
+    "Oil and petroleum products": "liquid",
     "Manufactured gases": "gas",
     "Natural gas": "gas",
     "Nuclear heat": "heat",

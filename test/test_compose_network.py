@@ -896,8 +896,6 @@ def test_add_brownfield_h2_retrofit_reduces_gas_pipeline():
     n_p.links["p_nom_opt"] = 30.0
     n.add("Link", "H2 pipeline retrofitted A-B-2040", build_year=2040, **kwargs)
 
-    add_brownfield(
-        n, n_p, 2040, pd.DataFrame(), h2_retrofit=True, h2_retrofit_capacity_per_ch4=0.6
-    )
+    add_brownfield(n, n_p, 2040, h2_retrofit=True, h2_retrofit_capacity_per_ch4=0.6)
 
     assert n.links.at["gas pipeline A-B", "p_nom"] == 50.0

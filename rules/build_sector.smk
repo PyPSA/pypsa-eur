@@ -1066,7 +1066,7 @@ rule build_industry_sector_ratios_endogenous:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
         ),
-        process_temperature_bands="data/ente202300981-sup-0001-suppdata-s1.xlsx",
+        temperature_shares="data/industry_heat_temperature_shares.csv",
     output:
         industry_sector_ratios_endogenous=resources(
             "industry_sector_ratios_endogenous.csv"
@@ -1079,7 +1079,8 @@ rule build_industry_sector_ratios_endogenous:
     resources:
         mem_mb=1000,
     params:
-        endogenise_sectors=config_provider("sector", "industry_t", "endogenise_sectors"),
+        exclude_sectors=config_provider("sector", "industry_heat", "exclude_sectors"),
+        gas_per_ammonia=config_provider("industry", "MWh_CH4_per_tNH3_SMR"),
     script:
         scripts("build_industry_sector_ratios_endogenous.py")
 
@@ -1231,8 +1232,10 @@ rule build_industrial_energy_demand_per_node:
     """Computes industrial energy demand per carrier and model region from production and ratios."""
     input:
         industry_sector_ratios=resources("industry_sector_ratios_{horizon}.csv"),
-        industry_sector_ratios_endogenous=resources(
-            "industry_sector_ratios_endogenous.csv"
+        industry_sector_ratios_endogenous=lambda w: (
+            resources("industry_sector_ratios_endogenous.csv")
+            if config_provider("sector", "industry_heat", "enable")(w)
+            else []
         ),
         industrial_production_per_node=resources("industrial_production_{horizon}.csv"),
         industrial_energy_demand_per_node_today=resources(

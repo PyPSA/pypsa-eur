@@ -131,7 +131,7 @@ SPDX-License-Identifier = "CC-BY-SA-4.0"
 
 [[annotations]]
 path = [
-    "data/ente202300981-sup-0001-suppdata-s1.xlsx",
+    "data/industry_heat_temperature_shares.csv",
 ]
-SPDX-FileCopyrightText = "Fleiter et al."
+SPDX-FileCopyrightText = "Fleiter et al., Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>"
 SPDX-License-Identifier = "CC-BY-4.0"

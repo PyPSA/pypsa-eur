@@ -8,7 +8,7 @@ Sector configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#sector_cf
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -424,115 +424,36 @@ class _ImportsConfig(BaseModel):
     )
 
 
-class _IndustryHeat100200Config(BaseModel):
-    """Supply technologies allowed for industry process heat at 100-200 °C."""
+class _IndustryHeatConfig(BaseModel):
+    """Configuration for `sector.industry_heat` settings."""
 
-    biomass: bool = Field(
-        True,
-        description="Allow solid biomass boilers (with and without carbon capture) to supply 100-200 °C process heat.",
-    )
-    methane: bool = Field(
-        True,
-        description="Allow gas boilers (with and without carbon capture) to supply 100-200 °C process heat.",
-    )
-    heat_pumps: bool = Field(
-        True,
-        description="Allow high-temperature industrial heat pumps to supply 100-200 °C process heat.",
-    )
-    electric_boiler: bool = Field(
-        True,
-        description="Allow electric steam boilers to supply 100-200 °C process heat.",
-    )
-
-
-class _IndustryHeat200500Config(BaseModel):
-    """Supply technologies allowed for industry process heat at 200-500 °C."""
-
-    biomass: bool = Field(
-        True,
-        description="Allow solid biomass boilers (with and without carbon capture) to supply 200-500 °C process heat.",
-    )
-    methane: bool = Field(
-        True,
-        description="Allow gas boilers (with and without carbon capture) to supply 200-500 °C process heat.",
-    )
-    hydrogen: bool = Field(
-        True,
-        description="Allow hydrogen boilers to supply 200-500 °C process heat.",
-    )
-
-
-class _IndustryHeat500Config(BaseModel):
-    """Supply technologies allowed for industry process heat above 500 °C."""
-
-    methane: bool = Field(
-        True,
-        description="Allow gas boilers (with and without carbon capture) to supply >500 °C process heat.",
-    )
-    hydrogen: bool = Field(
-        True,
-        description="Allow hydrogen boilers to supply >500 °C process heat.",
-    )
-
-
-def _default_endogenise_sectors() -> dict[str, bool]:
-    return dict.fromkeys(
-        [
-            "Aluminium - primary production",
-            "Aluminium - secondary production",
-            "Alumina production",
-            "Other non-ferrous metals",
-            "HVC",
-            "Cement",
-            "Ceramics & other NMM",
-            "Glass production",
-            "Pulp production",
-            "Paper production",
-            "Printing and media reproduction",
-            "Food, beverages and tobacco",
-            "Pharmaceutical products etc.",
-            "Transport equipment",
-            "Machinery equipment",
-            "Wood and wood products",
-            "Textiles and leather",
-            "Other industrial sectors",
-        ],
-        True,
-    )
-
-
-class _IndustryTConfig(BaseModel):
-    """Configuration for `sector.industry_t` (endogenous industry process heat)."""
-
-    endogen: bool = Field(
+    enable: bool = Field(
         False,
-        description="Endogenously optimise the industry process heat supply per temperature band (does not cover the steel sector).",
+        description="Optimise the supply of industry process heat above 100 °C per temperature band instead of using exogenous fuel shares. Does not cover the steel sector. Uses today's specific energy consumption and no existing plants, so that the first horizon of a myopic pathway can replace all of today's heat supply.",
     )
-    must_run: float = Field(
+    min_part_load: float = Field(
         0.8,
-        description="Minimum capacity factor for endogenous industry heat supply links, reflecting that industrial heat is in reality supplied on-site by discrete plants.",
+        ge=0,
+        le=1,
+        description="Minimum part load of newly built industry process heat supply.",
     )
-    endogenise_sectors: dict[str, bool] = Field(
-        default_factory=_default_endogenise_sectors,
-        description="Per-sector switch, only used when `endogen` is true. True splits the sector's process heat into temperature bands so that the supply technology is chosen endogenously; false keeps the sector exogenous (flat low-temperature heat plus gas and biomass loads). Sectors omitted here default to true. Steel, HVC recycling and DRI are handled separately and cannot be configured here.",
+    exclude_sectors: list[str] = Field(
+        default_factory=lambda: ["Pulp production"],
+        description="Industry sectors in `data/industry_heat_temperature_shares.csv` that keep exogenous fuel shares. Pulp production is excluded by default because it burns its own by-products.",
     )
-    heat100_200: _IndustryHeat100200Config = Field(
-        default_factory=_IndustryHeat100200Config,
-        alias="heat100-200",
-        description="Supply technologies allowed in the 100-200 °C temperature band.",
+    technologies: dict[
+        Literal["heat100-200", "heat200-500", "heat500+"],
+        list[
+            Literal["solid biomass", "gas", "hydrogen", "heat pump", "electric boiler"]
+        ],
+    ] = Field(
+        default_factory=lambda: {
+            "heat100-200": ["solid biomass", "gas", "heat pump", "electric boiler"],
+            "heat200-500": ["solid biomass", "gas", "hydrogen"],
+            "heat500+": ["gas", "hydrogen"],
+        },
+        description="Supply technologies per temperature band in °C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
     )
-    heat200_500: _IndustryHeat200500Config = Field(
-        default_factory=_IndustryHeat200500Config,
-        alias="heat200-500",
-        description="Supply technologies allowed in the 200-500 °C temperature band.",
-    )
-    heat_500: _IndustryHeat500Config = Field(
-        default_factory=_IndustryHeat500Config,
-        alias="heat500+",
-        description="Supply technologies allowed in the >500 °C temperature band.",
-    )
-
-    model_config = ConfigDict(populate_by_name=True)
 
 
 class SectorConfig(BaseModel):
@@ -1065,9 +986,9 @@ class SectorConfig(BaseModel):
         description="Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
     )
 
-    industry_t: _IndustryTConfig = Field(
-        default_factory=_IndustryTConfig,
-        description="Endogenous industry process heat supply settings.",
+    industry_heat: _IndustryHeatConfig = Field(
+        default_factory=_IndustryHeatConfig,
+        description="Endogenous supply of industry process heat.",
     )
 
     biomass_to_liquid: bool = Field(

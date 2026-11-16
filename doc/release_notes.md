@@ -5,7 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Feature: Endogenous industry process heat supply. Industrial process heat demand is split into temperature bands (`heat<100`, `heat100-200`, `heat200-500`, `heat>500`) in the new rule [build_industry_sector_ratios_endogenous][], based mostly on Fleiter et al. 2025. When enabled via `sector: industry_t: endogen`, the model chooses the supply technology per band (heat pumps, electric boilers, solid biomass, methane and hydrogen) endogenously instead of relying on exogenous shares. The steel sector is excluded as its heat supply is handled separately ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
+* Feature: New option `sector: industry_heat: enable` to optimise the supply of industry process heat above 100 °C in three temperature bands with boilers, direct firing, heat pumps and carbon capture, instead of using exogenous fuel shares. The steel sector is not covered ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 
 * Feature: New option `sector: waste_spatial` to model waste for waste-to-energy plants per bus region, with transport if `sector: biomass_transport` is enabled. By default, waste is now collected in one European bus ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
 
