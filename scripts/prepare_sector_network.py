@@ -4433,7 +4433,7 @@ def add_industry(
     n: pypsa.Network,
     costs: pd.DataFrame,
     industrial_demand_file: str,
-    industrial_electricity_demand_temporal_file: str,
+    industrial_electricity_profiles_file: str,
     pop_layout: pd.DataFrame,
     pop_weighted_energy_totals: pd.DataFrame,
     options: dict,
@@ -4452,7 +4452,7 @@ def add_industry(
         Costs data including carbon capture, fuel costs, etc.
     industrial_demand_file : str
         Path to CSV file containing industrial demand data
-    industrial_electricity_demand_temporal_file : str
+    industrial_electricity_profiles_file : str
         Path to CSV file containing the hourly industrial electricity demand in MW.
         Only used if `industry: temporal_electricity_industry_load` is enabled.
     pop_layout : pd.DataFrame
@@ -4971,7 +4971,7 @@ def add_industry(
 
     if cf_industry["temporal_electricity_industry_load"]:
         p_set = pd.read_csv(
-            industrial_electricity_demand_temporal_file, index_col=0, parse_dates=True
+            industrial_electricity_profiles_file, index_col=0, parse_dates=True
         )[nodes]
     else:
         p_set = industrial_demand.loc[nodes, "electricity"] / nhours
@@ -6410,7 +6410,7 @@ def main(
             n=n,
             costs=costs,
             industrial_demand_file=inputs.industrial_demand,
-            industrial_electricity_demand_temporal_file=inputs.industrial_electricity_demand_temporal,
+            industrial_electricity_profiles_file=inputs.industrial_electricity_profiles,
             pop_layout=pop_layout,
             pop_weighted_energy_totals=pop_weighted_energy_totals,
             options=options,
