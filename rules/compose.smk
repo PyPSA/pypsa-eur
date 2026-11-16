@@ -111,7 +111,6 @@ def get_compose_inputs(w):
             existing_heating_distribution=resources(
                 "existing_heating_distribution_{horizon}.csv"
             ),
-            temp_soil_total=resources("temp_soil_total.nc"),
             temp_air_total=resources("temp_air_total.nc"),
             cop_profiles=resources("cop_profiles_{horizon}.nc"),
             direct_heat_source_utilisation_profiles=resources(
@@ -238,7 +237,6 @@ rule compose_network:
         clustering=config_provider("clustering"),
         clustering_temporal=config_provider("clustering", "temporal"),
         existing_capacities=config_provider("existing_capacities"),
-        pypsa_eur=config_provider("pypsa_eur"),
         renewable=config_provider("renewable"),
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),
@@ -277,5 +275,7 @@ rule compose_network:
         ),
         co2_budget=config_provider("co2_budget"),
         adjustments=config_provider("adjustments"),
+        nice_names=config_provider("plotting", "nice_names"),
+        tech_colors=config_provider("plotting", "tech_colors"),
     script:
         scripts("compose_network.py")
