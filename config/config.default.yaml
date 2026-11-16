@@ -530,6 +530,7 @@ load:
   scaling_factor: 1.0
   fixed_year: false
   supplement_synthetic: true
+  prefer_synthetic: false
   substation_only: true
   distribution_key:
     gdp: 0.6

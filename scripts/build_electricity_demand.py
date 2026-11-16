@@ -339,14 +339,19 @@ if __name__ == "__main__":
         )
         load = load.apply(fill_large_gaps, shift=time_shift)
 
-    if snakemake.params.load["supplement_synthetic"]:
-        logger.info("Supplement missing data with synthetic data.")
+    prefer_synthetic = snakemake.params.load["prefer_synthetic"]
+    if snakemake.params.load["supplement_synthetic"] or prefer_synthetic:
         fn = snakemake.input.synthetic
         synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
-        # UA, MD, XK, CY, MT do not appear in synthetic load data
-        countries = list(set(countries) - {"UA", "MD", "XK", "CY", "MT"})
-        synthetic_load = synthetic_load.loc[snapshots, countries]
-        load = load.combine_first(synthetic_load)
+        synthetic_load = synthetic_load.rename(columns={"KV": "XK"})
+        # UA, MD, CY, MT do not appear in synthetic load data
+        synthetic_load = synthetic_load.reindex(index=snapshots, columns=countries)
+        if prefer_synthetic:
+            logger.info("Prefer synthetic data and fill gaps with historical data.")
+            load = synthetic_load.combine_first(load)
+        else:
+            logger.info("Supplement missing data with synthetic data.")
+            load = load.combine_first(synthetic_load)
 
     fixed_year = snakemake.params["load"].get("fixed_year", False)
     load = reindex_to_snapshots(load, snapshots, fixed_year)
