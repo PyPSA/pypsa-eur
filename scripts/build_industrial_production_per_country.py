@@ -132,19 +132,17 @@ ch_mapping = {
 }
 
 
-def find_physical_output(df):
+def find_physical_output(df: pd.DataFrame) -> slice:
     start = np.where(df.index.str.contains("Physical output", na=False))[0][0]
     empty_row = np.where(df.index.isnull())[0]
     end = empty_row[np.argmax(empty_row > start)]
     return slice(start, end)
 
 
-def get_energy_ratio(country, eurostat, jrc_dir, year, snakemake):
+def get_energy_ratio(country, eurostat, jrc_dir, year, ch_industrial_production):
     if country == "CH":
         # data ranges between 2014-2023
-        e_country = pd.read_csv(
-            snakemake.input.ch_industrial_production, index_col=0
-        ).dropna()
+        e_country = pd.read_csv(ch_industrial_production, index_col=0).dropna()
         e_country = e_country.rename(index=ch_mapping).groupby(level=0).sum()
         e_country = e_country[str(year)]
         e_country *= tj_to_ktoe
@@ -182,7 +180,9 @@ def get_energy_ratio(country, eurostat, jrc_dir, year, snakemake):
     return pd.Series({k: e_ratio[v] for k, v in sub2sect.items()})
 
 
-def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake):
+def industry_production_per_country(
+    country, year, eurostat, jrc_dir, ch_industrial_production
+):
     def get_sector_data(sector, country):
         jrc_country = jrc_names.get(country, country)
         root = Path(jrc_dir, jrc_country)
@@ -214,7 +214,7 @@ def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake)
             eurostat,
             jrc_dir,
             year,
-            snakemake,
+            ch_industrial_production,
         )
 
     demand.name = country
@@ -222,24 +222,29 @@ def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake)
     return demand
 
 
-def industry_production(countries, year, eurostat, jrc_dir):
-    nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
-
+def industry_production(
+    countries: list[str],
+    year: int,
+    eurostat: pd.DataFrame,
+    jrc_dir: str,
+    ch_industrial_production: str,
+    nprocesses: int,
+    disable_progress: bool,
+) -> pd.DataFrame:
     func = partial(
         industry_production_per_country,
         year=year,
         eurostat=eurostat,
         jrc_dir=jrc_dir,
-        snakemake=snakemake,
+        ch_industrial_production=ch_industrial_production,
     )
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" country",
-        total=len(countries),
-        desc="Build industry production",
-        disable=disable_progress,
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " country",
+        "total": len(countries),
+        "desc": "Build industry production",
+        "disable": disable_progress,
+    }
     with mp.Pool(processes=nprocesses) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
@@ -250,12 +255,14 @@ def industry_production(countries, year, eurostat, jrc_dir):
     return demand
 
 
-def separate_basic_chemicals(demand, year):
+def separate_basic_chemicals(
+    demand: pd.DataFrame, year: int, ammonia_production: str, params: dict
+) -> None:
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """
     # ammonia data from 2018-2022
-    ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
+    ammonia = pd.read_csv(ammonia_production, index_col=0)
 
     there = ammonia.index.intersection(demand.index)
     missing = demand.index.symmetric_difference(there)
@@ -308,9 +315,17 @@ if __name__ == "__main__":
 
     eurostat = pd.read_csv(snakemake.input.eurostat)
 
-    demand = industry_production(countries, year, eurostat, jrc_dir)
+    demand = industry_production(
+        countries,
+        year,
+        eurostat,
+        jrc_dir,
+        snakemake.input.ch_industrial_production,
+        snakemake.threads,
+        snakemake.params.disable_progressbar,
+    )
 
-    separate_basic_chemicals(demand, year)
+    separate_basic_chemicals(demand, year, snakemake.input.ammonia_production, params)
 
     demand.fillna(0.0, inplace=True)
 

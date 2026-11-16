@@ -27,8 +27,16 @@ rule base_network_incumbent:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        lines=config_provider("lines"),
-        links=config_provider("links"),
+        voltages=config_provider("electricity", "voltages"),
+        base_network=config_provider("electricity", "base_network"),
+        osm_version=config_provider("data", "osm", "version"),
+        lines=config_provider(
+            "lines",
+            subset=["types", "s_max_pu", "under_construction", "reconnect_crimea"],
+        ),
+        links=config_provider(
+            "links", subset=["p_max_pu", "p_min_pu", "under_construction"]
+        ),
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
@@ -42,9 +50,10 @@ rule make_network_comparison:
         n_release=resources("networks/base.nc"),
         n_incumbent=resources("osm/comparison/incumbent/networks/base.nc"),
         country_shapes=resources("country_shapes.geojson"),
-        regions_offshore=resources("offshore_regions.geojson"),
+        regions_offshore=resources("offshore_regions_base.geojson"),
     output:
         lengths=resources("osm/comparison/lengths.pdf"),
+        links=resources("osm/comparison/links.csv"),
     log:
         logs("make_network_comparison.log"),
     benchmark:
@@ -54,11 +63,9 @@ rule make_network_comparison:
         mem_mb=2000,
     params:
         countries=config_provider("countries"),
-        base_network=config_provider("electricity", "base_network"),
         compare_to_version=config_provider(
             "osm_network_release", "compare_to", "version"
         ),
-        voltages=config_provider("electricity", "voltages"),
     script:
         scripts("make_network_comparison.py")
 
@@ -84,7 +91,7 @@ rule prepare_osm_network_release:
     resources:
         mem_mb=1000,
     params:
-        line_types=config["lines"]["types"],
+        line_types=config_provider("lines", "types"),
         release_version=config_provider("osm_network_release", "release_version"),
         include_polygons=True,
         export=True,
@@ -106,7 +113,7 @@ rule map_incumbent:
     resources:
         mem_mb=1000,
     params:
-        line_types=config["lines"]["types"],
+        line_types=config_provider("lines", "types"),
         release_version="Incumbent",
         include_polygons=False,
         export=False,
@@ -125,3 +132,4 @@ rule osm_release:
         resources("osm/release/map.html"),
         resources("osm/comparison/map_incumbent.html"),
         resources("osm/comparison/lengths.pdf"),
+        resources("osm/comparison/links.csv"),

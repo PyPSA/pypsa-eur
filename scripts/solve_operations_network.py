@@ -112,5 +112,5 @@ if __name__ == "__main__":
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta = dict(snakemake.config, **{"wildcards": dict(snakemake.wildcards)})
     n.export_to_netcdf(snakemake.output.network)

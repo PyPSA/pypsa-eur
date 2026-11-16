@@ -192,17 +192,17 @@ cluster_network                                 1
 compose_network                                 1
 determine_availability_matrix                   6
 process_cost_data                               1
-retrieve_co2_prices                             1
+retrieve_instrat_co2_prices                             1
 retrieve_corine                                 1
-retrieve_cost_data                              1
+retrieve_costs                              1
 retrieve_cutout                                 1
 retrieve_desnz_electricity_consumption          1
 retrieve_eez                                    1
-retrieve_electricity_demand_energy_atlas        1
-retrieve_electricity_demand_entsoe              1
-retrieve_electricity_demand_neso                1
-retrieve_electricity_demand_opsd                1
-retrieve_eu_nuts_2021                           1
+retrieve_jrc_energy_atlas        1
+retrieve_entsoe_electricity_demand              1
+retrieve_neso_electricity_demand                1
+retrieve_opsd_electricity_demand                1
+retrieve_eu_nuts2021                           1
 retrieve_gdp_per_capita                         1
 retrieve_jrc_ardeco                             1
 retrieve_natura                                 1
@@ -227,7 +227,7 @@ A job (here ``build_powerplants``) will display its attributes and normally some
 
 ```console
 rule build_powerplants:
-    input: resources/test-elec/networks/clustered.nc, data/custom_powerplants.csv
+    input: resources/test-elec/networks/clustered.nc
     output: resources/test-elec/powerplants.csv
     log: logs/test-elec/build_powerplants.log
     jobid: 40

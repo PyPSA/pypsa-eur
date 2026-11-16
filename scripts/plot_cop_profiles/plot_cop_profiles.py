@@ -16,6 +16,7 @@ from _helpers import configure_logging
 from bokeh.io import output_file, save
 from bokeh.layouts import column, row
 from bokeh.models import (
+    Column,
     ColumnDataSource,
     CustomJS,
     Div,
@@ -31,7 +32,11 @@ from scripts.definitions.heat_system_type import HeatSystemType
 logger = logging.getLogger(__name__)
 
 
-def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim="name"):
+def prepare_cop_data(
+    cop_profiles: xr.Dataset | xr.DataArray,
+    heat_system_type: str,
+    region_dim: str = "name",
+) -> tuple[pd.DataFrame, pd.DataFrame, list[str], list[str]]:
     """
     Prepare COP data for plotting.
     Handles 4-dimensional data (time, name, heat_source, heat_system)
@@ -63,20 +68,10 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
         cop_profiles = cop_profiles[var_name]
 
     # Filter to the specified heat system type
-    try:
-        # Check if the specified heat system exists in the heat_system dimension
-        cop_data = cop_profiles.sel(heat_system=heat_system_type)
-        logger.info(f"Selected '{heat_system_type}' heat system")
-    except Exception as e:
-        raise RuntimeError(f"Error selecting heat system: {e}")
+    cop_data = cop_profiles.sel(heat_system=heat_system_type)
+    logger.info(f"Selected '{heat_system_type}' heat system")
 
-    # Get the name of the region dimension
-    # Capture heat source names before pivoting
-    try:
-        heat_sources = [val for val in cop_data.coords["heat_source"].values]
-        # logger.info(f"Heat sources: {heat_sources}")
-    except Exception as e:
-        raise RuntimeError(f"Error retrieving heat sources: {e}")
+    heat_sources = list(cop_data.coords["heat_source"].values)
 
     # Convert to pandas for plotting
     # We need to reshape data to have heat sources as columns
@@ -141,8 +136,12 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
 
 
 def create_interactive_cop_plot(
-    cop_df, monthly_avg_df, regions, heat_sources, region_dim: str = "name"
-):
+    cop_df: pd.DataFrame,
+    monthly_avg_df: pd.DataFrame,
+    regions: list[str],
+    heat_sources: list[str],
+    region_dim: str = "name",
+) -> Column | None:
     """
     Create an interactive Bokeh plot for COP profiles with a monthly average bar chart.
 
@@ -299,16 +298,16 @@ def create_interactive_cop_plot(
 
     # Create callback to update both plots when region is changed
     callback = CustomJS(
-        args=dict(
-            timeseries_source=timeseries_source,
-            monthly_source=monthly_source,
-            region_select=region_select,
-            p_timeseries=p_timeseries,
-            p_monthly=p_monthly,
-            all_timeseries_data=ColumnDataSource(cop_df),
-            all_monthly_data=ColumnDataSource(monthly_avg_df),
-            region_dim=region_dim,
-        ),
+        args={
+            "timeseries_source": timeseries_source,
+            "monthly_source": monthly_source,
+            "region_select": region_select,
+            "p_timeseries": p_timeseries,
+            "p_monthly": p_monthly,
+            "all_timeseries_data": ColumnDataSource(cop_df),
+            "all_monthly_data": ColumnDataSource(monthly_avg_df),
+            "region_dim": region_dim,
+        },
         code="""
         const region = region_select.value;
         const regionColumn = region_dim;  // Use the provided region dimension name

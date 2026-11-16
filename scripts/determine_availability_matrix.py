@@ -50,10 +50,10 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    noprogress = snakemake.config["run"].get("disable_progressbar", True)
-    noprogress = noprogress or not snakemake.config["atlite"]["show_progress"]
+    noprogress = snakemake.params.disable_progressbar
+    noprogress = noprogress or not snakemake.params.show_progress
     technology = snakemake.wildcards.technology
-    params = snakemake.params.renewable[technology]
+    params = snakemake.params.technology
 
     cutout = load_cutout(snakemake.input.cutout)
     regions = gpd.read_file(snakemake.input.regions)
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     logger.info(f"Calculate landuse availability for {technology}...")
     start = time.time()
 
-    kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
+    kwargs = {"nprocesses": nprocesses, "disable_progressbar": noprogress}
     availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
 
     duration = time.time() - start
@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
     # For Moldova and Ukraine: Overwrite parts not covered by Corine with
     # externally determined available areas
-    if "availability_matrix_MD_UA" in snakemake.input.keys():
+    if "availability_matrix_MD_UA" in snakemake.input.keys():  # noqa: SIM118
         availability_MDUA = xr.open_dataarray(
             snakemake.input["availability_matrix_MD_UA"]
         )

@@ -10,10 +10,10 @@ plotting:
     energy_cmap: Oranges
   map:
     boundaries:
-    - -11
-    - 30
-    - 34
-    - 71
+    - -11.0
+    - 30.0
+    - 34.0
+    - 71.0
     geomap_colors:
       ocean: white
       land: white
