@@ -976,7 +976,12 @@ class SectorConfig(BaseModel):
         description="Add option for transforming solid biomass into hydrogen with carbon capture.",
     )
     municipal_solid_waste: bool = Field(
-        False, description="Add option for municipal solid waste."
+        False,
+        description="Add municipal solid waste as carbon-neutral fuel for waste-to-energy plants. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`.",
+    )
+    waste_spatial: bool = Field(
+        False,
+        description="Model plastic and municipal solid waste for each bus region instead of one European bus. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`. Waste can be transported between regions if `biomass_transport` is enabled.",
     )
 
     limit_max_growth: _LimitMaxGrowthConfig = Field(

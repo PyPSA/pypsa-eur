@@ -5861,7 +5861,12 @@
         },
         "municipal_solid_waste": {
           "default": false,
-          "description": "Add option for municipal solid waste.",
+          "description": "Add municipal solid waste as carbon-neutral fuel for waste-to-energy plants. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`.",
+          "type": "boolean"
+        },
+        "waste_spatial": {
+          "default": false,
+          "description": "Model plastic and municipal solid waste for each bus region instead of one European bus. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`. Waste can be transported between regions if `biomass_transport` is enabled.",
           "type": "boolean"
         },
         "limit_max_growth": {
@@ -13400,7 +13405,12 @@
         },
         "municipal_solid_waste": {
           "default": false,
-          "description": "Add option for municipal solid waste.",
+          "description": "Add municipal solid waste as carbon-neutral fuel for waste-to-energy plants. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`.",
+          "type": "boolean"
+        },
+        "waste_spatial": {
+          "default": false,
+          "description": "Model plastic and municipal solid waste for each bus region instead of one European bus. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`. Waste can be transported between regions if `biomass_transport` is enabled.",
           "type": "boolean"
         },
         "limit_max_growth": {
