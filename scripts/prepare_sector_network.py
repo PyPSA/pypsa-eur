@@ -898,6 +898,41 @@ def add_biomass_to_methanol(
     )
 
 
+def capture_efficiency_loss(
+    costs: pd.DataFrame, co2_intensity: float, capture: str, c_v: float
+) -> float:
+    """
+    Electricity lost per unit of fuel for post-combustion carbon capture.
+
+    Includes electricity for capture and compression, and the electricity lost
+    by extracting steam for solvent regeneration from the turbine. The energy
+    inputs of the capture technology are given per tonne of CO2 captured.
+
+    Parameters
+    ----------
+    costs : pd.DataFrame
+        Technology cost assumptions.
+    co2_intensity : float
+        CO2 in the flue gas per unit of fuel (tCO2/MWh_fuel).
+    capture : str
+        Name of the carbon capture technology in `costs`.
+    c_v : float
+        Electricity lost per unit of heat extracted from the steam turbine
+        (MWh_el/MWh_th), the Cv value of extraction plants.
+
+    Returns
+    -------
+    float
+        Reduction of the electrical efficiency (MWh_el/MWh_fuel).
+    """
+    co2_captured = co2_intensity * costs.at[capture, "capture_rate"]
+    return co2_captured * (
+        costs.at[capture, "electricity-input"]
+        + costs.at[capture, "compression-electricity-input"]
+        + costs.at[capture, "heat-input"] * c_v
+    )
+
+
 def add_biomass_to_methanol_cc(
     n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace
 ) -> None:
@@ -999,13 +1034,11 @@ def add_methanol_to_power(
             * options["cc_capital_cost_factor"]["gas"]
             * costs.at["methanolisation", "carbondioxide-input"]
         )
-        efficiency_cc = (
-            costs.at["CCGT", "efficiency"]
-            - (
-                costs.at["cement capture", "electricity-input"]
-                + costs.at["cement capture", "compression-electricity-input"]
-            )
-            * costs.at["methanolisation", "carbondioxide-input"]
+        efficiency_cc = costs.at["CCGT", "efficiency"] - capture_efficiency_loss(
+            costs,
+            costs.at["methanolisation", "carbondioxide-input"],
+            "cement capture",
+            costs.at["CCGT", "c_v"],
         )
 
         n.add(
@@ -1642,6 +1675,7 @@ def add_h2_gas_infrastructure(
         - H2_network : bool
         - methanation : bool
         - coal_cc : bool
+        - ccgt_cc : bool
         - SMR_cc : bool
         - SMR : bool
         - min_part_load_methanation : float
@@ -1971,13 +2005,11 @@ def add_h2_gas_infrastructure(
         )
 
     if options["coal_cc"]:
-        efficiency_cc = (
-            costs.at["coal", "efficiency"]
-            - (
-                costs.at["biomass CHP capture", "electricity-input"]
-                + costs.at["biomass CHP capture", "compression-electricity-input"]
-            )
-            * costs.at["coal", "CO2 intensity"]
+        efficiency_cc = costs.at["coal", "efficiency"] - capture_efficiency_loss(
+            costs,
+            costs.at["coal", "CO2 intensity"],
+            "cement capture",
+            costs.at["central coal CHP", "c_v"],
         )
         n.add(
             "Link",
@@ -1991,16 +2023,46 @@ def add_h2_gas_infrastructure(
             * costs.at["coal", "VOM"],  # NB: VOM is per MWel
             capital_cost=costs.at["coal", "efficiency"]
             * costs.at["coal", "capital_cost"]
-            + costs.at["biomass CHP capture", "capital_cost"]
+            + costs.at["cement capture", "capital_cost"]
+            * options["cc_capital_cost_factor"]["coal"]
             * costs.at["coal", "CO2 intensity"],  # NB: fixed cost is per MWel
             p_nom_extendable=True,
-            carrier="coal",
+            carrier="coal CC",
             efficiency=efficiency_cc,
             efficiency2=costs.at["coal", "CO2 intensity"]
-            * (1 - costs.at["biomass CHP capture", "capture_rate"]),
+            * (1 - costs.at["cement capture", "capture_rate"]),
             efficiency3=costs.at["coal", "CO2 intensity"]
-            * costs.at["biomass CHP capture", "capture_rate"],
+            * costs.at["cement capture", "capture_rate"],
             lifetime=costs.at["coal", "lifetime"],
+        )
+
+    if options["ccgt_cc"]:
+        co2_intensity = costs.at["gas", "CO2 intensity"]
+        n.add(
+            "Link",
+            spatial.nodes,
+            suffix=" CCGT CC",
+            bus0=spatial.gas.df.loc[spatial.nodes, "nodes"].values,
+            bus1=spatial.nodes,
+            bus2="co2 atmosphere",
+            bus3=spatial.co2.df.loc[spatial.nodes, "nodes"].values,
+            carrier="CCGT CC",
+            p_nom_extendable=True,
+            capital_cost=costs.at["CCGT", "efficiency"]
+            * costs.at["CCGT", "capital_cost"]
+            + costs.at["cement capture", "capital_cost"]
+            * options["cc_capital_cost_factor"]["gas"]
+            * co2_intensity,  # NB: fixed cost is per MWel
+            marginal_cost=costs.at["CCGT", "efficiency"]
+            * costs.at["CCGT", "VOM"],  # NB: VOM is per MWel
+            efficiency=costs.at["CCGT", "efficiency"]
+            - capture_efficiency_loss(
+                costs, co2_intensity, "cement capture", costs.at["CCGT", "c_v"]
+            ),
+            efficiency2=co2_intensity
+            * (1 - costs.at["cement capture", "capture_rate"]),
+            efficiency3=co2_intensity * costs.at["cement capture", "capture_rate"],
+            lifetime=costs.at["CCGT", "lifetime"],
         )
 
     if options["SMR_cc"]:

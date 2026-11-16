@@ -580,6 +580,7 @@ def _default_balance_map_interactive() -> _BalanceMapInteractiveConfig:
 _NICE_NAMES: dict[str, str] = {
     "OCGT": "Open-Cycle Gas",
     "CCGT": "Combined-Cycle Gas",
+    "CCGT CC": "Combined-Cycle Gas CC",
     "offwind-ac": "Offshore Wind (AC)",
     "offwind-dc": "Offshore Wind (DC)",
     "offwind-float": "Offshore Wind (Floating)",
@@ -686,6 +687,7 @@ _TECH_COLORS: dict[str, str] = {
     # coal
     "Coal": "#545454",
     "coal": "#545454",
+    "coal CC": "#6e6e6e",
     "Coal marginal": "#545454",
     "coal for industry": "#343434",
     "solid": "#545454",
@@ -894,6 +896,7 @@ _TECH_COLORS: dict[str, str] = {
     "allam methanol": "#B98F76",
     "CCGT methanol": "#B98F76",
     "CCGT methanol CC": "#B98F76",
+    "CCGT CC": "#c9805a",
     "OCGT methanol": "#B98F76",
     "methanol": "#FF7B00",
     "methanol transport": "#FF7B00",
