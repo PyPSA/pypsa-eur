@@ -16,6 +16,7 @@ import json
 import logging
 
 import holidays
+import numpy as np
 import pandas as pd
 import pytz
 
@@ -121,26 +122,22 @@ def shift_profiles(profiles: pd.DataFrame, year: int, country: str) -> pd.DataFr
         dayofweek = [6] * len(index) if sunday else index.dayofweek
         return average_days.loc[list(zip(dayofweek, index.hour))].set_axis(index)
 
-    def is_holiday(index: pd.DatetimeIndex, country: str) -> pd.Series:
-        dates = holidays.country_holidays(country, years=index.year.unique())
-        return index.normalize().isin(pd.to_datetime(list(dates)))
+    def holiday_hours(index: pd.DatetimeIndex, country: str) -> pd.DatetimeIndex:
+        calendar = holidays.country_holidays(country)
+        return index[[hour in calendar for hour in index]]
 
-    source_holidays = df.index[is_holiday(df.index, "DE")]
+    source_holidays = holiday_hours(df.index, "DE")
     df.loc[source_holidays] = average_day(source_holidays)
 
-    day_drift = (
-        pd.Timestamp(FFE_YEAR, 1, 1).dayofweek - pd.Timestamp(year, 1, 1).dayofweek
+    hours = pd.date_range(f"{year}-01-01", f"{year}-12-31 23:00", freq="h")
+    day_drift = df.index[0].dayofweek - hours[0].dayofweek
+    df = pd.DataFrame(
+        np.roll(df, 24 * day_drift, axis=0), index=hours[: len(df)], columns=df.columns
     )
-    df = df.shift(day_drift, freq="D")
-    df.index = df.index.map(lambda t: t.replace(year=year))
-    df = df.sort_index()
+    # leap years end with an additional average day
+    df = pd.concat([df, average_day(hours[len(df) :])])
 
-    if pd.Timestamp(year, 1, 1).is_leap_year:
-        df.index = df.index.where(df.index.month < 3, df.index - pd.Timedelta(days=1))
-        last_day = pd.date_range(f"{year}-12-31", periods=24, freq="h")
-        df = pd.concat([df, average_day(last_day)])
-
-    target_holidays = df.index[is_holiday(df.index, country)]
+    target_holidays = holiday_hours(df.index, country)
     df.loc[target_holidays] = average_day(target_holidays, sunday=True)
 
     return df / df.mean()
@@ -167,17 +164,17 @@ def build_electricity_profiles(
         Electricity demand in MW per snapshot (index) and node (columns).
     """
     demand = demand.groupby(INDUSTRY_CATEGORY_TO_PROFILE.__getitem__).sum()
-    countries = demand.columns.str[:2]
+    nodes_by_country = demand.columns.groupby(demand.columns.str[:2])
 
     profiles = []
-    for country in countries.unique():
+    for country, nodes in nodes_by_country.items():
         timezone = pytz.country_timezones["RS" if country == "XK" else country][0]
         local = snapshots.tz_localize("UTC").tz_convert(timezone).tz_localize(None)
         shifted = pd.concat(
             shift_profiles(ffe_profiles, year, country) for year in local.year.unique()
         )
         shifted = shifted.loc[local, demand.index].set_axis(snapshots)
-        profiles.append(shifted @ demand.loc[:, countries == country])
+        profiles.append(shifted @ demand[nodes])
 
     return pd.concat(profiles, axis=1)[demand.columns] * 1e6 / 8760
 
@@ -200,10 +197,8 @@ if __name__ == "__main__":
     production = pd.read_csv(fn, index_col=0).T / 1e3
 
     # electricity demand per industry and node (TWh/a)
-    demand = sector_ratios[production.columns.str[:2]].set_axis(
-        production.columns, axis=1
-    )
-    demand = demand.mul(production).fillna(0.0)
+    countries = production.columns.str[:2]
+    demand = production * sector_ratios[countries].set_axis(production.columns, axis=1)
 
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day
