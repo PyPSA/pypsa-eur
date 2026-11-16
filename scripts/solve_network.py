@@ -1148,32 +1148,31 @@ def add_pipe_retrofit_constraint(n):
 
 def add_flexible_egs_constraint(n):
     """
-    Upper bounds the charging capacity of the geothermal reservoir according to
-    the capacity of the wells at the same surface bus.
+    Limit each geothermal reservoir to the capacity of the wells at its surface bus.
     """
     wells = n.links.query("carrier == 'geothermal heat'")
-    reservoirs = n.storage_units.query("carrier == 'geothermal heat'")
-    if reservoirs.empty:
-        return
-
-    well_bus = wells.bus1.rename("bus")
-    reservoir_bus = reservoirs.bus
-    if not PYPSA_V1:
-        well_bus = well_bus.rename_axis("Link-ext")
-        reservoir_bus = reservoir_bus.rename_axis("StorageUnit-ext")
-
-    p_nom_rhs = (
-        n.model["Link-p_nom"].loc[wells.index].groupby(well_bus.to_xarray()).sum()
+    new_wells = wells.query("p_nom_extendable")
+    reservoirs = n.storage_units.query(
+        "carrier == 'geothermal heat' and p_nom_extendable"
     )
-    p_nom_lhs = (
-        n.model["StorageUnit-p_nom"]
-        .loc[reservoirs.index]
-        .groupby(reservoir_bus.to_xarray())
-        .sum()
+    if not PYPSA_V1:
+        new_wells = new_wells.rename_axis("Link-ext")
+        reservoirs = reservoirs.rename_axis("StorageUnit-ext")
+
+    reservoir_p_nom = n.model["StorageUnit-p_nom"].loc[reservoirs.index]
+    well_p_nom = n.model["Link-p_nom"].loc[new_wells.index]
+    lhs = reservoir_p_nom.groupby(reservoirs.bus).sum()
+    rhs = well_p_nom.groupby(new_wells.bus1.rename("bus")).sum()
+    existing = (
+        wells.query("not p_nom_extendable")
+        .groupby("bus1")
+        .p_nom.sum()
+        .reindex(reservoirs.bus.unique(), fill_value=0.0)
+        .rename_axis("bus")
     )
 
     n.model.add_constraints(
-        p_nom_lhs <= p_nom_rhs,
+        lhs - rhs <= existing.to_xarray(),
         name="upper_bound_charging_capacity_of_geothermal_reservoir",
     )
 
@@ -1301,7 +1300,8 @@ def extra_functionality(
     else:
         add_co2_atmosphere_constraint(n, snapshots)
 
-    if config["sector"]["enhanced_geothermal"]["enable"]:
+    egs = config["sector"]["enhanced_geothermal"]
+    if egs["enable"] and egs["flexible"]:
         add_flexible_egs_constraint(n)
 
     if config["sector"]["imports"]["enable"]:

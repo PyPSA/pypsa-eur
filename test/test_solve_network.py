@@ -87,41 +87,26 @@ def test_emission_stores_selects_accumulating_stores(
 @pytest.fixture(scope="function")
 def egs_network() -> pypsa.Network:
     n = pypsa.Network()
-    n.set_snapshots(pd.date_range("2013-01-01", periods=3, freq="h"))
     n.add("Carrier", "geothermal heat")
-    n.add(
-        "Bus",
-        [
-            "EU enhanced geothermal systems",
-            "A geothermal heat surface",
-            "B geothermal heat surface",
-        ],
-        carrier="geothermal heat",
-    )
+    n.add("Bus", ["EU", "A", "B"], carrier="geothermal heat")
     n.add(
         "Link",
-        [
-            "A enhanced geothermal 0",
-            "A enhanced geothermal 1",
-            "B enhanced geothermal 0",
-        ],
-        bus0="EU enhanced geothermal systems",
-        bus1=[
-            "A geothermal heat surface",
-            "A geothermal heat surface",
-            "B geothermal heat surface",
-        ],
+        ["A well 0", "A well 1", "B well 0", "A well 0-2025"],
+        bus0="EU",
+        bus1=["A", "A", "B", "A"],
         carrier="geothermal heat",
-        p_nom_extendable=True,
-        capital_cost=1.0,
+        p_nom=[0.0, 0.0, 0.0, 100.0],
+        p_nom_extendable=[True, True, True, False],
+        p_nom_min=[10.0, 20.0, 5.0, 0.0],
+        p_nom_max=[10.0, 20.0, 5.0, 100.0],
     )
     n.add(
         "StorageUnit",
-        ["A geothermal reservoir", "B geothermal reservoir"],
-        bus=["A geothermal heat surface", "B geothermal heat surface"],
+        ["A reservoir", "B reservoir"],
+        bus=["A", "B"],
         carrier="geothermal heat",
         p_nom_extendable=True,
-        capital_cost=1.0,
+        capital_cost=-1.0,
     )
     return n
 
@@ -129,50 +114,10 @@ def egs_network() -> pypsa.Network:
 def test_add_flexible_egs_constraint_bounds_reservoir_by_wells_at_its_bus(
     egs_network: pypsa.Network,
 ) -> None:
-    egs_network.optimize.create_model()
-    add_flexible_egs_constraint(egs_network)
-
-    m = egs_network.model
-    constraint = m.constraints["upper_bound_charging_capacity_of_geothermal_reservoir"]
-    labels = pd.concat(
-        [
-            m["Link-p_nom"].labels.to_series(),
-            m["StorageUnit-p_nom"].labels.to_series(),
-        ]
+    egs_network.optimize(
+        extra_functionality=lambda n, _: add_flexible_egs_constraint(n),
+        solver_name="highs",
     )
 
-    def terms(bus: str) -> dict[str, float]:
-        row = constraint.lhs.sel(bus=bus)
-        names = pd.Series(labels.index, index=labels.values)
-        return {
-            names[v]: c for v, c in zip(row.vars.values, row.coeffs.values) if v != -1
-        }
-
-    assert list(constraint.indexes["bus"]) == [
-        "A geothermal heat surface",
-        "B geothermal heat surface",
-    ]
-    assert terms("A geothermal heat surface") == {
-        "A geothermal reservoir": 1.0,
-        "A enhanced geothermal 0": -1.0,
-        "A enhanced geothermal 1": -1.0,
-    }
-    assert terms("B geothermal heat surface") == {
-        "B geothermal reservoir": 1.0,
-        "B enhanced geothermal 0": -1.0,
-    }
-    assert (constraint.sign == "<=").all()
-    assert (constraint.rhs == 0.0).all()
-
-
-def test_add_flexible_egs_constraint_skips_without_reservoirs(
-    egs_network: pypsa.Network,
-) -> None:
-    egs_network.remove("StorageUnit", egs_network.storage_units.index)
-    egs_network.optimize.create_model()
-    add_flexible_egs_constraint(egs_network)
-
-    assert (
-        "upper_bound_charging_capacity_of_geothermal_reservoir"
-        not in egs_network.model.constraints
-    )
+    p_nom_opt = egs_network.storage_units.p_nom_opt
+    assert p_nom_opt.to_dict() == {"A reservoir": 130.0, "B reservoir": 5.0}
