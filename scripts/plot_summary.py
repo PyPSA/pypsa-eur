@@ -2,7 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates plots from summary CSV files.
+Plots stacked bar charts of system costs, energy and balances across horizons.
+
+Reads the summary tables of the solved networks, groups technologies into
+coarser classes, drops entries below configurable thresholds and orders them
+consistently before stacking. One figure shows annual system cost, one the net
+energy supply and consumption per technology, and one per bus carrier its
+energy balance. Under perfect foresight, a further figure compares the
+modelled CO2 emission path with historical emissions and EU targets.
 """
 
 import logging
@@ -463,7 +470,7 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     emissions.loc[2021] = 3.290418
     emissions.loc[2022] = 3.213025
 
-    if snakemake.config["foresight"] == "myopic":
+    if snakemake.params.foresight == "myopic":
         path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
         co2_cap = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)[
             ["cb"]

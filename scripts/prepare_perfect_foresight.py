@@ -2,7 +2,19 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Perfect foresight utility functions for multi-period optimization.
+Build a multi-period network for perfect foresight optimisation by stacking
+planning horizons.
+
+The composed network of the current horizon is converted into an investment
+period and, for all but the first horizon, concatenated with the multi-period
+network of the previous horizons: snapshots are extended by the new period,
+new components are added and attributes that change between horizons become
+period-dependent time series. Investment periods are weighted by their
+duration in years and discounted with a social discount rate. Store cycling
+is adjusted so that most stores cycle within each period while CO2, biomass
+and EV battery stores accumulate over the whole horizon. Existing gas boilers
+receive a hydrogen retrofit option and national phase-out rules cap asset
+lifetimes. Perfect foresight is experimental and not thoroughly tested.
 """
 
 import logging
@@ -121,7 +133,10 @@ def concatenate_network_with_previous(
 
             to_densify = static_only.difference(already_dynamic)
             previous_values = c.static.loc[to_densify, attr]
-            to_densify = to_densify[current_values[to_densify].ne(previous_values)]
+            both_nan = current_values[to_densify].isna() & previous_values.isna()
+            to_densify = to_densify[
+                current_values[to_densify].ne(previous_values) & ~both_nan
+            ]
             if not to_densify.empty:
                 expanded = pd.DataFrame(
                     index=n.snapshots, columns=to_densify, dtype=float

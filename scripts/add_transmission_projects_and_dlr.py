@@ -2,7 +2,19 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Add transmission projects and DLR to the network.
+Adds planned transmission projects and dynamic line rating to the base network.
+
+Transmission projects arrive as tables of new buses, lines and links and of
+adjustments to existing lines and links, which are added to or applied on the
+network. If dynamic line rating is active, the precomputed line rating time
+series is converted into a per-unit capacity `s_max_pu` for each overhead line,
+scaled by a correction factor and optionally capped by a maximum voltage angle
+difference across the line and a maximum line rating. The result is the extended
+base network used for simplification and clustering.
+
+References
+----------
+- Glaum and Hofmann (2023), [Leveraging the existing German transmission grid with dynamic line rating](https://doi.org/10.1016/j.apenergy.2023.121199)
 """
 
 import logging

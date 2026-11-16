@@ -15,7 +15,7 @@ requires processing of a few more raw data sources.
 
 The sector-coupling code can be run as an overnight / greenfield scenario or
 with multi-horizon investment with myopic or perfect foresight. See also the
-documentation on [Foresight](foresight.md).
+documentation on [Foresight](design/foresight.md).
 
 ## Overnight Scenarios
 

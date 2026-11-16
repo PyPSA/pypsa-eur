@@ -4,47 +4,32 @@
 
 
 """
-Creates networks clustered to configured number of zones with aggregated
-buses and transmission corridors.
+Cluster the simplified network to the configured number of zones with aggregated buses and transmission corridors.
 
-Outputs
--------
+A busmap assigns every bus to a cluster according to the clustering mode:
+k-means, hierarchical agglomerative clustering (HAC) on the weather features
+from [build_hac_features][], or greedy modularity on the network graph, with
+the number of clusters distributed across countries in proportion to load
+(adjustable via `clustering.focus_weights`); administrative regions; or a
+custom busmap or set of bus shapes. Buses, lines and links are then aggregated
+with [pypsa.clustering.spatial](https://github.com/PyPSA/PyPSA/blob/master/pypsa/clustering/spatial.py)
+using the configured aggregation strategies, the onshore and offshore regions
+are dissolved accordingly, and selected groups of regions can be merged into
+copperplates.
 
-- `resources/{run}/onshore_regions.geojson`:
-  Onshore regions for clustered network
+!!! note "Is it possible to run the model without [simplify_network][]?"
+    No, the clustering methods in `pypsa.clustering.spatial` do not work
+    reliably with multiple voltage levels and transformers.
 
-- `resources/{run}/offshore_regions.geojson`:
-  Offshore regions for clustered network
+Exemplary unsolved networks clustered to 512, 256, 128 and 37 nodes:
 
-- `resources/{run}/busmap_cluster_network.csv`: Mapping of buses from `networks/simplified.nc` to `networks/clustered.nc`;
-- `resources/{run}/linemap_cluster_network.csv`: Mapping of lines from `networks/simplified.nc` to `networks/clustered.nc`;
-- `resources/{run}/networks/clustered.nc`:
-  Clustered network with aggregated buses and corridors
+![](../img/clustered_512.png)
 
-Description
------------
+![](../img/clustered_256.png)
 
-**Note:** **Is it possible to run the model without the** `simplify_network` **rule?**
+![](../img/clustered_128.png)
 
-        No, the network clustering methods in the PyPSA module
-        [pypsa.clustering.spatial](https://github.com/PyPSA/PyPSA/blob/master/pypsa/clustering/spatial.py)
-        do not work reliably with multiple voltage levels and transformers.
-
-Exemplary unsolved network clustered to 512 nodes:
-
-![](img/clustered_512.png)
-
-Exemplary unsolved network clustered to 256 nodes:
-
-![](img/clustered_256.png)
-
-Exemplary unsolved network clustered to 128 nodes:
-
-![](img/clustered_128.png)
-
-Exemplary unsolved network clustered to 37 nodes:
-
-![](img/clustered_37.png)
+![](../img/clustered_37.png)
 """
 
 import logging
@@ -488,7 +473,8 @@ def cluster_regions(
 def busmap_for_admin_regions(
     n: pypsa.Network,
     admin_shapes: str,
-    params: dict,
+    countries: list[str],
+    admin_levels: dict,
 ) -> pd.Series:
     """
     Create a busmap based on administrative regions using the NUTS3 shapefile.
@@ -499,17 +485,17 @@ def busmap_for_admin_regions(
         The network to cluster.
     admin_shapes : str
         The path to the administrative regions.
-    params : dict
-        The parameters for clustering.
+    countries : list[str]
+        The countries of the network.
+    admin_levels : dict
+        The administrative clustering levels, globally and per country.
 
     Returns
     -------
         busmap (pd.Series): Busmap mapping each bus to an administrative region.
     """
-    countries = params.countries
     admin_regions = gpd.read_file(admin_shapes)
 
-    admin_levels = params.administrative
     level = admin_levels.get("level", 0)
     logger.info(f"Clustering at administrative level {level}.")
 
@@ -666,7 +652,7 @@ if __name__ == "__main__":
 
     params = snakemake.params
     mode = params.mode
-    solver_name = snakemake.config["solving"]["solver"]["name"]
+    solver_name = params.solver_name
 
     n = pypsa.Network(snakemake.input.network)
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
@@ -688,7 +674,8 @@ if __name__ == "__main__":
             busmap = busmap_for_admin_regions(
                 n,
                 snakemake.input.admin_shapes,
-                params,
+                params.countries,
+                params.administrative,
             )
             # Update x, y coordinates, ensuring that bus locations are inside the administrative region
             update_bus_coordinates(

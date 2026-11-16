@@ -2,8 +2,18 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build import locations for fossil gas from entry-points, LNG terminals and
-production sites with data from SciGRID_gas and Global Energy Monitor.
+Build locations and capacities of fossil gas supply into the modelled gas network.
+
+Four kinds of gas input are collected: LNG import terminals and gas production
+fields from the Global Energy Monitor Europe Gas Tracker, and pipeline entry
+points and storage sites from SciGRID_gas. Pipeline entries are kept only where
+they cross the model boundary, excluding those from Russia and Belarus; regions
+of eastern countries are buffered so that entry points just beyond the border
+are still matched. Production capacity is taken from reported production,
+falling back to design capacity or 3% of reserves per year. Capacities are
+converted to MW (storage volumes to GWh) and assigned to model regions by
+location, which sets the gas supply and storage options of the sector-coupled
+network.
 """
 
 import logging
@@ -130,7 +140,7 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
     lng["capacity"] = lng["CapacityInMtpa"] * mtpa_to_mw
     entry["capacity"] = entry["max_cap_from_to_M_m3_per_d"] * mcm_per_day_to_mw
     prod["capacity"] = prod["mcm_per_year"] * mcm_per_year_to_mw
-    sto["capacity"] = sto["max_cushionGas_M_m3"] * mcm_to_gwh
+    sto["capacity"] = sto["max_workingGas_M_m3"] * mcm_to_gwh
 
     lng["type"] = "lng"
     entry["type"] = "pipeline"

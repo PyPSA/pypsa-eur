@@ -2,7 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create interactive energy balance maps for the defined carriers using `n.explore()`.
+Plots an interactive HTML map of the nodal energy balance of one bus carrier.
+
+Reads the solved network and computes the annual energy balance per bus and
+technology carrier with the PyPSA statistics module. Buses are drawn as split
+pie charts of supply and consumption, branches as arrows scaled by net
+transmission flow, and regions are shaded by the time-averaged marginal price.
+The map is rendered with pydeck through `n.explore()` and written as a
+self-contained HTML file with tooltips for inspection in a browser.
 """
 
 import geopandas as gpd
@@ -97,7 +104,7 @@ if __name__ == "__main__":
 
     # Import
     n = pypsa.Network(snakemake.input.network)
-    sanitize_carriers(n, snakemake.config)
+    sanitize_carriers(n, snakemake.params.nice_names, snakemake.params.tech_colors)
     pypsa.options.params.statistics.round = 8
     pypsa.options.params.statistics.drop_zero = True
     pypsa.options.params.statistics.nice_names = False

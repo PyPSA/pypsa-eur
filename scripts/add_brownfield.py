@@ -2,7 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Prepares brownfield data from previous planning horizon.
+Carry optimised capacities from the previous planning horizon into the
+current network under myopic foresight.
+
+Transmission lines and DC links receive the previous optimum as lower bound.
+Generators, links and stores from the previous solved network are copied over
+with fixed capacities, dropping assets that reach the end of their lifetime
+before the current horizon or fall below a capacity threshold, while assets
+newly built in the current horizon are tagged with their build year.
+Renewable availability profiles are switched to the technology vintage
+closest to the current horizon, heat pump efficiencies and dynamic pit
+storage capacities of earlier vintages are updated to the current values, and
+the gas pipeline capacity still available for hydrogen retrofitting is
+reduced by what was already retrofitted. Transmission expansion is disabled
+once its global limit is reached, and renewable potentials are reduced by the
+existing capacities.
 """
 
 import logging
@@ -159,7 +173,9 @@ def add_brownfield(
             fr = "H2 pipeline retrofitted"
             to = "gas pipeline"
             CH4_per_H2 = 1 / h2_retrofit_capacity_per_ch4
-            already_retrofitted.index = already_retrofitted.index.str.replace(fr, to)
+            already_retrofitted.index = already_retrofitted.index.str.replace(
+                fr, to
+            ).str.removesuffix(f"-{year}")
             remaining_capacity = (
                 pipe_capacity
                 - CH4_per_H2
@@ -305,7 +321,7 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
 
     # get names of heat pumps in previous iteration that cannot be replaced by direct utilisation in this iteration
     heat_pump_idx_previous_iteration = n_p.links.index[
-        n_p.links.index.str.contains("heat pump")
+        n_p.links.index.str.contains("urban central.*heat pump")
         & n_p.links.index.str[:-4].isin(
             n.links_t.efficiency.columns.str.rstrip(  # sources that can be directly used are no longer represented by heat pumps in the dynamic efficiency dataframe
                 str(year)
@@ -445,7 +461,7 @@ def main(
 
     update_heat_pump_efficiency(n, n_previous, current_horizon)
 
-    if params.tes and params.dynamic_ptes_capacity:
+    if params.enable_ptes and params.dynamic_ptes_capacity:
         update_dynamic_ptes_capacity(n, n_previous, current_horizon)
 
     logger.info(

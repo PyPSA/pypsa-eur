@@ -9,6 +9,7 @@ localrules:
 
 
 rule process_costs:
+    """Collects the processed technology cost tables for all runs and planning horizons."""
     input:
         expand(
             resources("costs_{horizon}_processed.csv"),
@@ -18,6 +19,7 @@ rule process_costs:
 
 
 rule cluster_networks:
+    """Collects the clustered networks and bus maps for all runs."""
     input:
         expand(
             resources("networks/clustered.nc"),
@@ -27,33 +29,30 @@ rule cluster_networks:
             resources("busmap.csv"),
             run=config["run"]["name"],
         ),
-    message:
-        "Collecting clustered network files"
 
 
 rule compose_networks:
+    """Collects the composed networks for all runs and planning horizons."""
     input:
         expand(
             resources("networks/composed_{horizon}.nc"),
             run=config["run"]["name"],
             horizon=config["planning_horizons"],
         ),
-    message:
-        "Collecting composed network files"
 
 
 rule solve_networks:
+    """Collects the solved networks for all runs at the final planning horizon."""
     input:
         expand(
             RESULTS + "networks/solved_{horizon}.nc",
             run=config["run"]["name"],
             horizon=config["planning_horizons"][-1],
         ),
-    message:
-        "Collecting solved network files"
 
 
 rule solve_operations_networks:
+    """Collects the operational dispatch networks for all runs and planning horizons."""
     input:
         expand(
             RESULTS + "networks/operations_{horizon}.nc",
@@ -64,8 +63,6 @@ rule solve_operations_networks:
                 else config["planning_horizons"]
             ),
         ),
-    message:
-        "Collecting operational dispatch network files"
 
 
 def balance_map_paths(kind, w):
@@ -87,24 +84,26 @@ def balance_map_paths(kind, w):
 
 
 rule plot_balance_maps:
+    """Collects the static and interactive balance maps for all runs, horizons and carriers."""
     input:
         static=lambda w: balance_map_paths("static", w),
         interactive=lambda w: balance_map_paths("interactive", w),
-    message:
-        "Plotting energy balance maps"
 
 
 rule plot_balance_maps_static:
+    """Collects the static balance maps for all runs, horizons and carriers."""
     input:
         lambda w: balance_map_paths("static", w),
 
 
 rule plot_balance_maps_interactive:
+    """Collects the interactive balance maps for all runs, horizons and carriers."""
     input:
         lambda w: balance_map_paths("interactive", w),
 
 
 rule plot_power_networks:
+    """Collects the clustered power network maps for all runs."""
     input:
         (
             expand(
@@ -114,5 +113,3 @@ rule plot_power_networks:
             if config["foresight"] != "perfect"
             else []
         ),
-    message:
-        "Plotting clustered power network topology"
