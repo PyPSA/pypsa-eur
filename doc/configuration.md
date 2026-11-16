@@ -214,7 +214,7 @@ Configuration for `countries` settings.
 
 ## `snapshots` {#snapshots_cf}
 
-Specifies the temporal range to build an energy system model for as arguments to [pandas.date_range ](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html)
+Specifies the first and last snapshot of the model. Both are included, as in [pandas.date_range](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html) with default arguments. Write `end` with the hour (e.g. `"2013-12-31 23:00"`); a date-only `start` refers to 00:00 of that day.
 
 Configuration for `snapshots` settings.
 
@@ -458,23 +458,6 @@ Configuration for `load` settings.
 {{ yaml_section("load") }}
 ```
 
-
-## `pypsa_eur` {#pypsa_eur_cf}
-
-Only used for sector-coupling studies.
-
-Carriers of the electricity-only network that are kept per component type when
-the sector-coupling components are added. Components with other carriers, for
-example conventional generators, are removed and re-added in their
-sector-coupled form.
-
-{{ schema_table("pypsa_eur") }}
-
-**YAML Syntax**
-
-```yaml
-{{ yaml_section("pypsa_eur") }}
-```
 
 ## `energy` {#energy_cf}
 

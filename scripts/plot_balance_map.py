@@ -52,7 +52,11 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-    sanitize_carriers(n, snakemake.config)
+    sanitize_carriers(
+        n,
+        snakemake.params.plotting["nice_names"],
+        snakemake.params.plotting["tech_colors"],
+    )
     pypsa.set_option("params.statistics.round", 8)
     pypsa.set_option("params.statistics.drop_zero", True)
     pypsa.set_option("params.statistics.nice_names", False)
@@ -125,7 +129,9 @@ if __name__ == "__main__":
             n, bus_carrier=carrier
         ).rename({"name": "carrier"})
 
-    components = transmission_carriers.unique("component")
+    components = transmission_carriers.unique("component").intersection(
+        eb.index.unique("component")
+    )
     carriers = transmission_carriers.unique("carrier")
 
     # only carriers that are also in the energy balance
@@ -271,7 +277,7 @@ if __name__ == "__main__":
     # Determine larger total absolute value for supply and consumption for a carrier if carrier exists as both supply and consumption
     common_carriers = pos_carriers.intersection(neg_carriers)
 
-    def get_total_abs(carrier, sign):
+    def get_total_abs(carrier: str, sign: int) -> float:
         values = bus_size.loc[:, carrier]
         return values[values * sign > 0].abs().sum()
 

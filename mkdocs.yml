@@ -39,6 +39,8 @@ nav:
     - Installation: installation.md
     - "Tutorial: Electricity-Only": tutorial.md
     - "Tutorial: Sector-Coupled": tutorial_sector.md
+  - Insights:
+    - Temporal Aggregation: insights/temporal-aggregation.md
   - References:
     - Release Notes: release_notes.md
     - Migration Guide: migration.md
@@ -65,7 +67,6 @@ nav:
   - Methane: design/methane.md
   - Methanol: design/methanol.md
   - Oil: design/oil.md
-  - OETC Integration: oetc.md
 
 - Configuration:
   - Wildcards: wildcards.md

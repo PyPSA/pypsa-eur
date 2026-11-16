@@ -18,25 +18,22 @@ from scripts.prepare_sector_network import get
 logger = logging.getLogger(__name__)
 
 
-def build_industry_sector_ratios_intermediate():
+def build_industry_sector_ratios_intermediate(
+    demand_fn: str,
+    production_fn: str,
+    ratios_fn: str,
+    output_fn: str,
+    fraction_future: float,
+) -> None:
     # in TWh/a
-    demand = pd.read_csv(
-        snakemake.input.industrial_energy_demand_per_country_today,
-        header=[0, 1],
-        index_col=0,
-    )
+    demand = pd.read_csv(demand_fn, header=[0, 1], index_col=0)
 
     # in Mt/a
-    production = (
-        pd.read_csv(snakemake.input.industrial_production_per_country, index_col=0)
-        / 1e3
-    ).stack()
+    production = (pd.read_csv(production_fn, index_col=0) / 1e3).stack()
     production.index.names = [None, None]
 
     # in MWh/t
-    future_sector_ratios = pd.read_csv(
-        snakemake.input.industry_sector_ratios, index_col=0
-    )
+    future_sector_ratios = pd.read_csv(ratios_fn, index_col=0)
 
     today_sector_ratios = demand.div(production, axis=1).replace([np.inf, -np.inf], 0)
 
@@ -51,8 +48,6 @@ def build_industry_sector_ratios_intermediate():
         "liquid": "naphtha",
     }
     today_sector_ratios = today_sector_ratios.rename(rename).groupby(level=0).sum()
-
-    fraction_future = get(params["sector_ratios_fraction_future"], year)
 
     intermediate_sector_ratios = {}
     for ct, group in today_sector_ratios.T.groupby(level=0):
@@ -71,7 +66,7 @@ def build_industry_sector_ratios_intermediate():
 
     intermediate_sector_ratios = pd.concat(intermediate_sector_ratios, axis=1)
 
-    intermediate_sector_ratios.to_csv(snakemake.output.industry_sector_ratios)
+    intermediate_sector_ratios.to_csv(output_fn)
 
 
 if __name__ == "__main__":
@@ -87,6 +82,12 @@ if __name__ == "__main__":
 
     year = int(snakemake.wildcards.horizon)
 
-    params = snakemake.params.industry
+    fraction_future = get(snakemake.params.sector_ratios_fraction_future, year)
 
-    build_industry_sector_ratios_intermediate()
+    build_industry_sector_ratios_intermediate(
+        snakemake.input.industrial_energy_demand_per_country_today,
+        snakemake.input.industrial_production_per_country,
+        snakemake.input.industry_sector_ratios,
+        snakemake.output.industry_sector_ratios,
+        fraction_future,
+    )

@@ -409,9 +409,10 @@ def add_power_capacities_installed_before_baseyear(
 
             # this is for the year 2020
             if not already_build.empty:
-                n.links.loc[already_build, "p_nom_min"] = capacity.loc[
-                    already_build.str.replace(name_suffix, "")
-                ].values
+                n.links.loc[already_build, "p_nom_min"] = (
+                    capacity.loc[already_build.str.replace(name_suffix, "")].values
+                    / n.links.loc[already_build, "efficiency"]
+                )
 
             if not new_build.empty:
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
@@ -634,7 +635,7 @@ def add_heating_capacities_installed_before_baseyear(
                 # Installation is assumed to be linear for the past
                 ratios = _years / _years.sum()
 
-        for ratio, grouping_year in zip(ratios, valid_grouping_years):
+        for ratio, grouping_year in zip(ratios, valid_grouping_years, strict=True):
             # Add heat pumps
             for heat_source in heat_pump_source_types[heat_system.system_type.value]:
                 costs_name = heat_system.heat_pump_costs_name(heat_source)

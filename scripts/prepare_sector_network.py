@@ -20,9 +20,11 @@ assumptions of the planning horizon.
 """
 
 import logging
+from collections.abc import Sequence
 from itertools import product
 from types import SimpleNamespace
 
+import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -36,12 +38,7 @@ from scripts._helpers import (
     get,
     get_temporal_resolution,
 )
-from scripts.add_electricity import (
-    attach_storageunits,
-    attach_stores,
-    calculate_annuity,
-    flatten,
-)
+from scripts.add_electricity import calculate_annuity, flatten
 from scripts.build_co2_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from scripts.build_transport_demand import transport_degree_factor
 from scripts.definitions.heat_sector import HeatSector
@@ -51,7 +48,7 @@ spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
 
-def define_spatial(nodes, options):
+def define_spatial(nodes: pd.Index, options: dict) -> SimpleNamespace:
     """
     Namespace for spatial.
 
@@ -223,7 +220,7 @@ def define_spatial(nodes, options):
     return spatial
 
 
-def determine_emission_sectors(options):
+def determine_emission_sectors(options: dict) -> list[str]:
     sectors = ["electricity"]
     if options["transport"]:
         sectors += ["rail non-elec", "road non-elec"]
@@ -245,8 +242,13 @@ def determine_emission_sectors(options):
 
 
 def co2_emissions_year(
-    countries, input_eurostat, options, emissions_scope, input_co2, year
-):
+    countries: list[str],
+    input_eurostat: str,
+    options: dict,
+    emissions_scope: str,
+    input_co2: str,
+    year: int,
+) -> float:
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
     """
@@ -276,8 +278,13 @@ def haversine(p, n):
 
 
 def create_network_topology(
-    n, prefix, carriers=["DC"], connector=" -> ", bidirectional=True
-):
+    n: pypsa.Network,
+    prefix: str,
+    carriers: Sequence[str] = ("DC",),
+    connector: str = " -> ",
+    bidirectional: bool = True,
+    include_lines: bool = True,
+) -> pd.DataFrame:
     """
     Create a network topology from transmission lines and link carrier
     selection.
@@ -291,6 +298,8 @@ def create_network_topology(
     bidirectional : bool, default True
         True: one link for each connection
         False: one link for each connection and direction (back and forth)
+    include_lines : bool, default True
+        Include the AC lines in addition to the links of the selected carriers.
 
     Returns
     -------
@@ -301,8 +310,9 @@ def create_network_topology(
     lk_attrs = ["bus0", "bus1", "length", "underwater_fraction"]
     lk_attrs = n.links.columns.intersection(lk_attrs)
 
+    lines = n.lines[ln_attrs] if include_lines else None
     candidates = pd.concat(
-        [n.lines[ln_attrs], n.links.loc[n.links.carrier.isin(carriers), lk_attrs]]
+        [lines, n.links.loc[n.links.carrier.isin(carriers), lk_attrs]]
     ).fillna(0)
 
     # base network topology purely on location not carrier
@@ -315,7 +325,7 @@ def create_network_topology(
     candidates_n = candidates[~positive_order].rename(columns=swap_buses)
     candidates = pd.concat([candidates_p, candidates_n])
 
-    def make_index(c):
+    def make_index(c: pd.Series) -> str:
         return prefix + c.bus0 + connector + c.bus1
 
     topo = candidates.groupby(["bus0", "bus1"], as_index=False).mean()
@@ -328,6 +338,36 @@ def create_network_topology(
         topo = pd.concat([topo, topo_reverse])
 
     return topo
+
+
+def read_transport_corridors(
+    fn: str, length_factor: float, carriers: list[str]
+) -> dict[str, pd.DataFrame]:
+    """
+    Read the candidate transport corridors between locations per carrier.
+
+    Parameters
+    ----------
+    fn : str
+        Path to the candidate corridors from ``build_transmission_topology``.
+    length_factor : float
+        Factor applied to the great-circle lengths of the corridors.
+    carriers : list[str]
+        Carriers with a boolean selection column in the file.
+
+    Returns
+    -------
+    dict[str, pd.DataFrame]
+        Per carrier, the corridors with index ``"bus0 -> bus1"`` and columns
+        bus0, bus1, length, underwater_fraction.
+    """
+    columns = ["bus0", "bus1", "length", "underwater_fraction"]
+    corridors = gpd.read_file(fn)
+    if corridors.empty:  # e.g. single bus; an empty GeoJSON has no columns
+        return {c: pd.DataFrame(columns=columns) for c in carriers}
+    corridors = corridors.set_index("name")
+    corridors["length"] *= length_factor
+    return {c: pd.DataFrame(corridors.loc[corridors[c], columns]) for c in carriers}
 
 
 def add_carrier_buses(
@@ -426,7 +466,7 @@ def add_carrier_buses(
     )
 
     fossils = ["coal", "gas", "oil", "lignite"]
-    if options["fossil_fuels"] and carrier in fossils:
+    if (options["fossil_fuels"] and carrier in fossils) or carrier == "uranium":
         suffix = ""
 
         if carrier == "oil" and cf_industry["oil_refining_emissions"] > 0:
@@ -467,50 +507,7 @@ def add_carrier_buses(
         )
 
 
-# TODO: PyPSA-Eur merge issue
-def remove_elec_base_techs(n: pypsa.Network, carriers_to_keep: dict) -> None:
-    """
-    Remove conventional generators (e.g. OCGT) and storage units (e.g.
-    batteries and H2) from base electricity-only network, since they're added
-    here differently using links.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Network to remove components from
-    carriers_to_keep : dict
-        Dictionary specifying which carriers to keep for each component type
-        e.g. {'Generator': ['hydro'], 'StorageUnit': ['PHS']}
-    """
-    for c in n.components[list(carriers_to_keep.keys())]:
-        if c.static.empty:
-            continue
-        to_keep = carriers_to_keep[c.name]
-        to_remove = pd.Index(c.static.carrier.unique()).symmetric_difference(to_keep)
-        if to_remove.empty:
-            continue
-        logger.info(f"Removing {c.list_name} with carrier {list(to_remove)}")
-        names = c.static.index[c.static.carrier.isin(to_remove)]
-        n.remove(c.name, names)
-        n.carriers.drop(to_remove, inplace=True, errors="ignore")
-
-
-# TODO: PyPSA-Eur merge issue
-def remove_non_electric_buses(n):
-    """
-    Remove buses from pypsa-eur with carriers which are not AC buses.
-    """
-    if to_drop := list(n.buses.query("carrier not in ['AC', 'DC']").carrier.unique()):
-        logger.info(f"Drop buses from PyPSA-Eur with carrier: {to_drop}")
-        n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
-
-
-def patch_electricity_network(n, carriers_to_keep):
-    remove_elec_base_techs(n, carriers_to_keep)
-    remove_non_electric_buses(n)
-
-
-def add_eu_bus(n, x=-5.5, y=46):
+def add_eu_bus(n: pypsa.Network, x: float = -5.5, y: float = 46) -> None:
     """
     Add EU bus to the network.
 
@@ -522,14 +519,14 @@ def add_eu_bus(n, x=-5.5, y=46):
 
 
 def add_co2_tracking(
-    n,
-    costs,
-    options,
-    spatial,
-    sequestration_potential_file=None,
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    options: dict,
+    spatial: SimpleNamespace,
+    sequestration_potential_file: str | None = None,
     co2_price: float = 0.0,
-    co2_liquefaction=False,
-):
+    co2_liquefaction: bool = False,
+) -> None:
     """
     Add CO2 tracking components to the network including atmospheric CO2,
     CO2 storage, and sequestration infrastructure.
@@ -547,7 +544,6 @@ def add_co2_tracking(
             Dict with keys ``enable`` (bool), ``max_size`` (float),
             ``years_of_storage`` (float).
         - co2_sequestration_cost: float
-        - co2_sequestration_lifetime: float
         - co2_vent: bool
     spatial : SimpleNamespace
         Configuration options containing at least:
@@ -720,7 +716,7 @@ def add_co2_tracking(
         e_nom_max=e_nom_max,
         marginal_cost=-0.1,
         bus=sequestration_buses,
-        lifetime=options["co2_sequestration_lifetime"],
+        lifetime=np.inf,  # re-added each horizon, see add_brownfield
         carrier="co2 sequestered",
     )
 
@@ -738,7 +734,13 @@ def add_co2_tracking(
         )
 
 
-def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=False):
+def add_co2_network(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    pipeline_candidates: pd.DataFrame,
+    co2_network_cost_factor: float = 1.0,
+    co2_liquefaction: bool = False,
+) -> None:
     """
     Add CO2 transport network to the PyPSA network.
 
@@ -754,6 +756,8 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=Fals
         Cost assumptions for different technologies. Must contain entries for
         'CO2 pipeline' and 'CO2 submarine pipeline' with 'capital_cost' and 'lifetime'
         columns
+    pipeline_candidates : pd.DataFrame
+        Candidate pipeline corridors from `read_transport_corridors`
     co2_network_cost_factor : float, optional
         Factor to scale the capital costs of the CO2 network, default 1.0
     co2_liquefaction : bool, optional
@@ -768,13 +772,10 @@ def add_co2_network(n, costs, co2_network_cost_factor=1.0, co2_liquefaction=Fals
     -----
     The function creates bidirectional CO2 pipeline links between nodes, with costs
     depending on the underwater fraction of the pipeline. The network topology is
-    created using the create_network_topology helper function.
+    given by the candidate pipeline corridors.
     """
     logger.info("Adding CO2 network.")
-    co2_links = create_network_topology(n, "CO2 pipeline ")
-
-    if "underwater_fraction" not in co2_links.columns:
-        co2_links["underwater_fraction"] = 0.0
+    co2_links = pipeline_candidates.add_prefix("CO2 pipeline ", axis=0)
 
     cost_onshore = (
         (1 - co2_links.underwater_fraction)
@@ -874,7 +875,9 @@ def add_allam_gas(
     )
 
 
-def add_biomass_to_methanol(n, costs, spatial):
+def add_biomass_to_methanol(
+    n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace
+) -> None:
     n.add(
         "Link",
         spatial.biomass.nodes,
@@ -895,7 +898,9 @@ def add_biomass_to_methanol(n, costs, spatial):
     )
 
 
-def add_biomass_to_methanol_cc(n, costs, spatial):
+def add_biomass_to_methanol_cc(
+    n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace
+) -> None:
     n.add(
         "Link",
         spatial.biomass.nodes,
@@ -922,7 +927,14 @@ def add_biomass_to_methanol_cc(n, costs, spatial):
     )
 
 
-def add_methanol_to_power(n, costs, pop_layout, spatial, options, types=None):
+def add_methanol_to_power(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    pop_layout: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    types: dict | None = None,
+) -> None:
     if types is None:
         types = {}
 
@@ -1038,7 +1050,9 @@ def add_methanol_to_power(n, costs, pop_layout, spatial, options, types=None):
         )
 
 
-def add_methanol_reforming(n, costs, spatial):
+def add_methanol_reforming(
+    n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace
+) -> None:
     logger.info("Adding methanol steam reforming.")
 
     tech = "Methanol steam reforming"
@@ -1061,7 +1075,9 @@ def add_methanol_reforming(n, costs, spatial):
     )
 
 
-def add_methanol_reforming_cc(n, costs, spatial, options):
+def add_methanol_reforming_cc(
+    n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace, options: dict
+) -> None:
     logger.info("Adding methanol steam reforming with carbon capture.")
 
     tech = "Methanol steam reforming"
@@ -1105,7 +1121,7 @@ def add_methanol_reforming_cc(n, costs, spatial, options):
     )
 
 
-def add_dac(n, costs, spatial):
+def add_dac(n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace) -> None:
     heat_carriers = ["urban central heat", "services urban decentral heat"]
     heat_buses = n.buses.index[n.buses.carrier.isin(heat_carriers)]
     locations = n.buses.location[heat_buses]
@@ -1136,7 +1152,9 @@ def add_dac(n, costs, spatial):
     )
 
 
-def cycling_shift(df, steps=1):
+def cycling_shift(
+    df: pd.DataFrame | pd.Series, steps: int = 1
+) -> pd.DataFrame | pd.Series:
     """
     Cyclic shift on index of pd.Series|pd.DataFrame by number of steps.
     """
@@ -1566,7 +1584,7 @@ def insert_gas_distribution_costs(
     n.links.loc[mchp, "capital_cost"] += capital_cost
 
 
-def add_electricity_grid_connection(n, costs):
+def add_electricity_grid_connection(n: pypsa.Network, costs: pd.DataFrame) -> None:
     carriers = ["onwind", "solar", "solar-hsat"]
 
     gens = n.generators.index[n.generators.carrier.isin(carriers)]
@@ -1580,16 +1598,17 @@ def add_electricity_grid_connection(n, costs):
 
 
 def add_h2_gas_infrastructure(
-    n,
-    costs,
-    pop_layout,
-    h2_cavern_file,
-    cavern_types,
-    clustered_gas_network_file,
-    gas_input_nodes,
-    spatial,
-    options,
-):
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    pop_layout: pd.DataFrame,
+    h2_cavern_file: str,
+    cavern_types: list[str],
+    clustered_gas_network_file: str,
+    gas_input_nodes: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    pipeline_candidates: pd.DataFrame,
+) -> None:
     """
     Add hydrogen and gas infrastructure to the network.
 
@@ -1627,6 +1646,9 @@ def add_h2_gas_infrastructure(
         - SMR : bool
         - min_part_load_methanation : float
         - cc_fraction : float
+    pipeline_candidates : pd.DataFrame
+        Candidate pipeline corridors from `read_transport_corridors`, extended
+        by the corridors of the existing gas pipelines
 
     Returns
     -------
@@ -1906,9 +1928,11 @@ def add_h2_gas_infrastructure(
     if options["H2_network"]:
         logger.info("Add options for new hydrogen pipelines.")
 
-        h2_pipes = create_network_topology(
-            n, "H2 pipeline ", carriers=["DC", "gas pipeline"]
+        gas_corridors = create_network_topology(
+            n, "", carriers=["gas pipeline"], include_lines=False
         )
+        h2_pipes = pipeline_candidates.combine_first(gas_corridors)
+        h2_pipes = h2_pipes.add_prefix("H2 pipeline ", axis=0)
         h2_buses_loc = n.buses.query("carrier == 'H2'").location  # noqa: F841
         h2_pipes = h2_pipes.query("bus0 in @h2_buses_loc and bus1 in @h2_buses_loc")
 
@@ -2013,7 +2037,7 @@ def add_h2_gas_infrastructure(
         )
 
 
-def check_land_transport_shares(shares):
+def check_land_transport_shares(shares: pd.Series) -> None:
     # Sums up the shares, ignoring None values
     total_share = sum(filter(None, shares))
     if total_share != 1:
@@ -2024,13 +2048,13 @@ def check_land_transport_shares(shares):
 
 
 def get_temp_efficency(
-    car_efficiency,
-    temperature,
-    deadband_lw,
-    deadband_up,
-    degree_factor_lw,
-    degree_factor_up,
-):
+    car_efficiency: float,
+    temperature: pd.DataFrame | pd.Series,
+    deadband_lw: float,
+    deadband_up: float,
+    degree_factor_lw: float,
+    degree_factor_up: float,
+) -> pd.DataFrame | pd.Series:
     """
     Correct temperature depending on heating and cooling for respective car
     type.
@@ -2409,18 +2433,18 @@ def add_ice_cars(
 
 
 def add_land_transport(
-    n,
-    costs,
-    transport_demand_file,
-    transport_data_file,
-    avail_profile_file,
-    dsm_profile_file,
-    temp_air_total_file,
-    cf_industry,
-    options,
-    spatial,
-    investment_year,
-    nodes,
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    transport_demand_file: str,
+    transport_data_file: str,
+    avail_profile_file: str,
+    dsm_profile_file: str,
+    temp_air_total_file: str,
+    cf_industry: dict,
+    options: dict,
+    spatial: SimpleNamespace,
+    investment_year: int,
+    nodes: pd.Index,
 ) -> None:
     """
     Add land transport demand and infrastructure to the network.
@@ -2619,7 +2643,7 @@ def add_heat(
     spatial: object,
     options: dict,
     investment_year: int,
-):
+) -> None:
     """
     Add heat sector to the network including heat demand, heat pumps, storage, and conversion technologies.
 
@@ -3090,7 +3114,9 @@ def add_heat(
                 .to_pandas()
                 .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
-                else costs.loc[[costs_name_heat_pump], ["efficiency"]]
+                else pd.Series(
+                    costs.at[costs_name_heat_pump, "efficiency"], index=nodes
+                )
             )
 
             if heat_source in params.limited_heat_sources:
@@ -3099,7 +3125,11 @@ def add_heat(
                     heat_source_profile_files[heat_source],
                     index_col=0,
                     parse_dates=True,
-                ).squeeze()[nodes]
+                )
+                # static potentials are indexed by node, profiles by snapshot
+                if p_max_source.index.isin(nodes).any():
+                    p_max_source = p_max_source.iloc[:, 0]
+                p_max_source = p_max_source[nodes]
 
                 # if only dimension is nodes, convert series to dataframe with columns as nodes and index as snapshots
                 if p_max_source.ndim == 1:
@@ -3160,14 +3190,12 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_carrier}",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
-                    efficiency2=(1 - (1 / cop_heat_pump.clip(lower=0.001))).squeeze(),
+                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)),
+                    efficiency2=(1 - (1 / cop_heat_pump.clip(lower=0.001))),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_min_pu=(
-                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
-                    ).squeeze(),
+                    p_min_pu=(-cop_heat_pump / cop_heat_pump.clip(lower=0.001)),
                     p_max_pu=0,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3224,14 +3252,12 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_system} water pits",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / (cop_heat_pump - 1).clip(lower=0.001)).squeeze(),
-                    efficiency2=(1 - 1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                    efficiency=(1 / (cop_heat_pump - 1).clip(lower=0.001)),
+                    efficiency2=(1 - 1 / cop_heat_pump.clip(lower=0.001)),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_min_pu=(
-                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
-                    ).squeeze(),
+                    p_min_pu=(-cop_heat_pump / cop_heat_pump.clip(lower=0.001)),
                     p_max_pu=0,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3244,12 +3270,10 @@ def add_heat(
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
-                    p_min_pu=(
-                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
-                    ).squeeze(),
+                    p_min_pu=(-cop_heat_pump / cop_heat_pump.clip(lower=0.001)),
                     p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
@@ -3602,16 +3626,17 @@ def add_methanol(
 
 
 def add_biomass(
-    n,
-    costs,
-    options,
-    spatial,
-    cf_industry,
-    pop_layout,
-    biomass_potentials_file,
-    biomass_transport_costs_file=None,
-    nyears=1,
-):
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    options: dict,
+    spatial: SimpleNamespace,
+    cf_industry: dict,
+    pop_layout: pd.DataFrame,
+    biomass_potentials_file: str,
+    biomass_transport_costs_file: str | None = None,
+    transport_corridors: pd.DataFrame | None = None,
+    nyears: float = 1,
+) -> None:
     """
     Add biomass-related components to the PyPSA network.
 
@@ -3644,6 +3669,9 @@ def add_biomass(
     biomass_transport_costs_file : str, optional
         Path to CSV file containing biomass transport costs data.
         Required if biomass_transport or biomass_spatial options are True.
+    transport_corridors : pd.DataFrame, optional
+        Candidate corridors from `read_transport_corridors`, used in both
+        directions. Required if the biomass_transport option is True.
     nyears : float
         Number of years for which to scale the biomass potentials.
 
@@ -3951,8 +3979,10 @@ def add_biomass(
         # add biomass transport
         transport_costs = pd.read_csv(biomass_transport_costs_file, index_col=0)
         transport_costs = transport_costs.squeeze()
-        biomass_transport = create_network_topology(
-            n, "biomass transport ", bidirectional=False
+        reverse = transport_corridors.rename(columns={"bus0": "bus1", "bus1": "bus0"})
+        reverse.index = reverse.bus0 + " -> " + reverse.bus1
+        biomass_transport = pd.concat([transport_corridors, reverse]).add_prefix(
+            "biomass transport ", axis=0
         )
 
         # costs
@@ -4027,7 +4057,11 @@ def add_biomass(
                 marginal_cost=costs.at["fuelwood", "fuel"]
                 + bus_transport_costs.rename(
                     dict(
-                        zip(spatial.biomass.nodes, spatial.biomass.nodes_unsustainable)
+                        zip(
+                            spatial.biomass.nodes,
+                            spatial.biomass.nodes_unsustainable,
+                            strict=True,
+                        )
                     )
                 )
                 * average_distance,
@@ -4343,7 +4377,7 @@ def add_industry(
     spatial: SimpleNamespace,
     cf_industry: dict,
     investment_year: int,
-):
+) -> None:
     """
     Add industry and their corresponding carrier buses to the network.
 
@@ -5539,7 +5573,7 @@ def add_agriculture(
         )
 
 
-def decentral(n):
+def decentral(n: pypsa.Network) -> None:
     """
     Removes the electricity transmission system.
     """
@@ -5547,7 +5581,7 @@ def decentral(n):
     n.links.drop(n.links.index[n.links.carrier.isin(["DC", "B2B"])], inplace=True)
 
 
-def remove_h2_network(n):
+def remove_h2_network(n: pypsa.Network) -> None:
     n.links.drop(
         n.links.index[n.links.carrier.str.contains("H2 pipeline")], inplace=True
     )
@@ -5556,7 +5590,7 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
-def _sum_keep_na(s):
+def _sum_keep_na(s: pd.Series) -> float:
     """
     Sum keeping all-NaN groups as NaN instead of collapsing them to 0.
 
@@ -5592,14 +5626,14 @@ aggregate_dict = {
 }
 
 
-def cluster_heat_buses(n):
+def cluster_heat_buses(n: pypsa.Network) -> None:
     """
     Cluster residential and service heat buses to one representative bus.
 
     This can be done to save memory and speed up optimisation
     """
 
-    def define_clustering(attributes, aggregate_dict):
+    def define_clustering(attributes: pd.Index, aggregate_dict: dict) -> dict:
         """
         Define how attributes should be clustered.
         Input:
@@ -5650,9 +5684,9 @@ def cluster_heat_buses(n):
         # time-varying data
         pnl = c.dynamic
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
-        for k in pnl.keys():
+        for k in pnl:
 
-            def renamer(s):
+            def renamer(s: str) -> str:
                 return s.replace("residential ", "").replace("services ", "")
 
             pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k]).T
@@ -5717,8 +5751,11 @@ def set_temporal_aggregation(n, temporal, snapshot_weightings):
         return m
 
 
-def lossy_bidirectional_links(n, carrier, efficiencies={}):
+def lossy_bidirectional_links(
+    n: pypsa.Network, carrier: str, efficiencies: dict | None = None
+) -> None:
     """Split bidirectional links into two unidirectional links to include transmission losses."""
+    efficiencies = efficiencies or {}
 
     carrier_i = n.links.query("carrier == @carrier").index
 
@@ -5874,7 +5911,7 @@ def add_enhanced_geothermal(
     orc_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
     orc_capital_cost = (orc_annuity + FOM / (1 + FOM)) * orc_capex * Nyears
 
-    efficiency_orc = costs.at["organic rankine cycle", "efficiency"]
+    efficiency_orc = costs.at["organic rankine cycle", "electricity-input"]
     efficiency_dh = costs.at["geothermal", "district heat-input"]
 
     # p_nom_max conversion GW -> MW
@@ -6021,7 +6058,7 @@ def add_import_options(
     options: dict,
     spatial: SimpleNamespace,
     gas_input_nodes: pd.DataFrame,
-):
+) -> None:
     """
     Add green energy import options.
 
@@ -6157,14 +6194,17 @@ def main(
     fn = inputs.gas_input_nodes_simplified
     gas_input_nodes = pd.read_csv(fn, index_col=0) if fn else None
 
-    carriers_to_keep = params.pypsa_eur
-    patch_electricity_network(n, carriers_to_keep)
-
     fn = inputs.heating_efficiencies
     year = int(params["energy_totals_year"])
     heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
 
     spatial = define_spatial(pop_layout.index, options)
+
+    corridors = read_transport_corridors(
+        inputs.transmission_candidates,
+        params.lines["length_factor"],
+        options["transport_corridors"],
+    )
 
     if foresight in ["myopic", "perfect"]:
         fuel_carriers = params.fuel_carriers
@@ -6216,26 +6256,7 @@ def main(
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
-    )
-
-    # Hydrogen already implemented in add_h2_gas_infrastructure
-    extendable_carriers = params.electricity["extendable_carriers"]
-    extendable_storageunits = set(extendable_carriers["StorageUnit"]) - {"H2"}
-    extendable_stores = set(extendable_carriers["Store"]) - {"H2"}
-
-    attach_storageunits(
-        n=n,
-        costs=costs,
-        buses_i=pop_layout.index,
-        extendable_carriers=sorted(extendable_storageunits),
-        max_hours=params.electricity["max_hours"],
-    )
-
-    attach_stores(
-        n=n,
-        costs=costs,
-        buses_i=pop_layout.index,
-        extendable_carriers=sorted(extendable_stores),
+        pipeline_candidates=corridors["H2"],
     )
 
     if options["transport"]:
@@ -6279,7 +6300,7 @@ def main(
             heat_source_profile_files={
                 source: inputs[source]
                 for source in params.limited_heat_sources
-                if source in inputs.keys()
+                if source in inputs.keys()  # noqa: SIM118
             },
             heat_dsm_profile_file=inputs.heat_dsm_profile,
             params=params,
@@ -6301,6 +6322,7 @@ def main(
             pop_layout=pop_layout,
             biomass_potentials_file=inputs.biomass_potentials,
             biomass_transport_costs_file=inputs.biomass_transport_costs,
+            transport_corridors=corridors["biomass"],
             nyears=nyears,
         )
 
@@ -6372,6 +6394,7 @@ def main(
         add_co2_network(
             n,
             costs,
+            corridors["CO2"],
             co2_network_cost_factor=options["co2_network_cost_factor"],
             co2_liquefaction=options["co2_network_liquefaction"],
         )

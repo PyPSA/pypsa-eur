@@ -23,7 +23,7 @@ class _MapConfig(ConfigModel):
     """Configuration for `plotting.map` settings."""
 
     boundaries: list[float] | None = Field(
-        [-11, 30, 34, 71],
+        [-11.0, 30.0, 34.0, 71.0],
         description="Bounding box of static maps as ``[x_min, x_max, y_min, y_max]`` in longitude/latitude degrees. If ``null``, the boundaries are derived automatically from the plotted regions.",
     )
     geomap_colors: dict[str, str] = Field(

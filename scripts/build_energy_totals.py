@@ -390,13 +390,13 @@ def build_idees(
     """
 
     func = partial(idees_per_country, base_dir=idees_dir)
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" country",
-        total=len(countries),
-        desc="Build from IDEES database",
-        disable=disable_progress,
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " country",
+        "total": len(countries),
+        "desc": "Build from IDEES database",
+        "disable": disable_progress,
+    }
     with mute_print():
         with mp.Pool(processes=nprocesses) as pool:
             totals_list = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
@@ -871,6 +871,7 @@ def build_transport_data(
     transport_data = transport_data.reindex(index=new_index)
 
     if "CH" in countries:
+        assert swiss_transport_fn is not None, "Swiss transport data required for CH"
         fn = swiss_transport_fn
 
         # Detect delimiter automatically; BFS files often use ';'
@@ -1049,8 +1050,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    params = snakemake.params.energy
-
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
     population = nuts3["pop"].groupby(nuts3.country).sum()
 
@@ -1061,7 +1060,7 @@ if __name__ == "__main__":
     swiss = pd.read_csv(snakemake.input.swiss, index_col=[0, 1])
 
     nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.params.disable_progressbar
     idees = build_idees(
         idees_countries, snakemake.input.idees, nprocesses, disable_progress
     )

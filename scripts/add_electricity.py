@@ -18,7 +18,9 @@ Carriers in `electricity.extendable_carriers` are added with zero initial
 capacity. Storage is either a `StorageUnit` whose energy-to-power ratio is
 fixed by `electricity.max_hours` (one investment variable) or a `Store` on an
 extra bus with separate charging and discharging links (three investment
-variables).
+variables). In sector-coupled models, conventional power plants with fuels
+tracked by the sector model and hydrogen storage are skipped, because
+[prepare_sector_network][] adds them itself.
 
 !!! note "Called from compose_network"
     This module has no Snakemake rule of its own. Its `main` function is
@@ -46,7 +48,18 @@ from scripts._helpers import (
 if PYPSA_V1:
     pypsa.options.params.add.return_names = True
 
-STORE_LOOKUP = {
+SECTOR_CARRIERS = {
+    "OCGT",
+    "CCGT",
+    "oil",
+    "coal",
+    "lignite",
+    "biomass",
+    "waste",
+    "H2",
+}
+
+STORE_LOOKUP: dict[str, dict[str, str | float]] = {
     "battery": {
         "store": "battery storage",
         "bicharger": "battery inverter",
@@ -158,7 +171,7 @@ def calculate_annuity(n: float, r: float | pd.Series) -> float | pd.Series:
         return 1 / n
 
 
-def add_missing_carriers(n, carriers):
+def add_missing_carriers(n: pypsa.Network, carriers: Iterable[str]) -> None:
     """
     Function to add missing carriers to the network without raising errors.
     """
@@ -167,7 +180,7 @@ def add_missing_carriers(n, carriers):
         n.add("Carrier", missing_carriers)
 
 
-def sanitize_carriers(n, config):
+def sanitize_carriers(n: pypsa.Network, nice_names: dict, tech_colors: dict) -> None:
     """
     Sanitize the carrier information in a PyPSA Network object.
 
@@ -179,9 +192,10 @@ def sanitize_carriers(n, config):
     ----------
     n : pypsa.Network
         A PyPSA Network object that represents an electrical power system.
-    config : dict
-        A dictionary containing configuration information, specifically the
-        "plotting" key with "nice_names" and "tech_colors" keys for carriers.
+    nice_names : dict
+        Display names of carriers.
+    tech_colors : dict
+        Colors of carriers.
 
     Returns
     -------
@@ -199,16 +213,11 @@ def sanitize_carriers(n, config):
             add_missing_carriers(n, c.static.carrier)
 
     carrier_i = n.carriers.index
-    nice_names = (
-        pd.Series(config["plotting"]["nice_names"])
-        .reindex(carrier_i)
-        .fillna(carrier_i.to_series())
-    )
+    nice_names = pd.Series(nice_names).reindex(carrier_i).fillna(carrier_i.to_series())
     n.carriers["nice_name"] = n.carriers.nice_name.where(
         n.carriers.nice_name != "", nice_names
     )
 
-    tech_colors = config["plotting"]["tech_colors"]
     colors = pd.Series(tech_colors).reindex(carrier_i)
     # try to fill missing colors with tech_colors after renaming
     missing_colors_i = colors[colors.isna()].index
@@ -219,7 +228,7 @@ def sanitize_carriers(n, config):
     n.carriers["color"] = n.carriers.color.where(n.carriers.color != "", colors)
 
 
-def sanitize_locations(n):
+def sanitize_locations(n: pypsa.Network) -> None:
     if "location" in n.buses.columns:
         n.buses["x"] = n.buses.x.where(n.buses.x != 0, n.buses.location.map(n.buses.x))
         n.buses["y"] = n.buses.y.where(n.buses.y != 0, n.buses.location.map(n.buses.y))
@@ -256,7 +265,9 @@ def estimate_efficiency(df: pd.DataFrame, config: dict) -> pd.Series:
     return eta * (1 - age.clip(lower=0) * config["degradation_rate"])
 
 
-def add_co2_emissions(n, costs, carriers):
+def add_co2_emissions(
+    n: pypsa.Network, costs: pd.DataFrame, carriers: list[str]
+) -> None:
     """
     Add CO2 emissions to the network's carriers attribute.
     """
@@ -583,9 +594,9 @@ def attach_conventional_generators(
     renewable_carriers: set,
     conventional_params: dict,
     conventional_inputs: dict,
-    unit_commitment: pd.DataFrame = None,
-    fuel_price: pd.DataFrame = None,
-):
+    unit_commitment: pd.DataFrame | None = None,
+    fuel_price: pd.DataFrame | None = None,
+) -> None:
     """
     Attach conventional generators to the network.
 
@@ -745,7 +756,7 @@ def attach_hydro(
     hydro_capacities: str,
     carriers: list,
     **params,
-):
+) -> None:
     """
     Attach hydro generators and storage units to the network.
 
@@ -948,9 +959,9 @@ def estimate_renewable_capacities(
     n: pypsa.Network,
     year: int,
     tech_map: dict,
-    expansion_limit: bool,
+    expansion_limit: float | bool,
     countries: list,
-):
+) -> None:
     """
     Estimate a different between renewable capacities in the network and
     reported country totals from IRENASTAT dataset. Distribute the difference
@@ -1011,7 +1022,7 @@ def estimate_renewable_capacities(
             )
 
 
-def get_available_storage_carriers(carriers):
+def get_available_storage_carriers(carriers: list[str]) -> list[str]:
     """
     Filter and register available storage carriers from a given list.
     """
@@ -1033,10 +1044,10 @@ def get_available_storage_carriers(carriers):
 def attach_storageunits(
     n: pypsa.Network,
     costs: pd.DataFrame,
-    buses_i: list,
+    buses_i: pd.Index,
     extendable_carriers: list,
     max_hours: dict,
-):
+) -> None:
     """
     Attach storage units to the network.
 
@@ -1110,9 +1121,9 @@ def attach_storageunits(
 def attach_stores(
     n: pypsa.Network,
     costs: pd.DataFrame,
-    buses_i: list,
+    buses_i: pd.Index,
     extendable_carriers: list,
-):
+) -> None:
     """
     Attach stores to the network.
 
@@ -1229,7 +1240,7 @@ def main(
     landfall_lengths = {
         tech: settings["landfall_length"]
         for tech, settings in params.renewable.items()
-        if "landfall_length" in settings.keys()
+        if "landfall_length" in settings
     }
 
     if inputs.powerplants:
@@ -1262,6 +1273,16 @@ def main(
     renewable_carriers = set(params.electricity["renewable_carriers"])
     extendable_carriers = params.electricity["extendable_carriers"]
     conventional_carriers = params.electricity["conventional_carriers"]
+    if params.sector["enabled"]:
+        # with myopic or perfect foresight, add_existing_baseyear adds nuclear as links
+        sector_carriers = SECTOR_CARRIERS | (
+            {"nuclear"} if foresight != "overnight" else set()
+        )
+        conventional_carriers = sorted(set(conventional_carriers) - sector_carriers)
+        extendable_carriers = {
+            c: sorted(set(carriers) - sector_carriers)
+            for c, carriers in extendable_carriers.items()
+        }
     conventional_inputs = {
         k: v for k, v in inputs.items() if k.startswith("conventional_")
     }
@@ -1324,6 +1345,7 @@ def main(
             )
         else:
             tech_map = estimate_renewable_caps["technology_mapping"]
+            tech_map = {k: v for k, v in tech_map.items() if v in renewable_carriers}
             expansion_limit = estimate_renewable_caps["expansion_limit"]
             year = estimate_renewable_caps["year"]
 
