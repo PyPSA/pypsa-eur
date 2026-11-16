@@ -5,6 +5,12 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport now come from a Delaunay triangulation of the regions instead of the electricity grid, with settings per carrier under `sector: transport_corridors`. This changes default results ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
+
+* Performance: `build_renewable_profiles` now derives the resource class masks from the availability matrix instead of rasterising all regions again. Results with the default `resource_classes: 1` are unchanged. With more classes, only eligible cells now set the class bounds and the class regions ([#2411](https://github.com/PyPSA/pypsa-eur/pull/2411)).
+
+* Fix: Sector-coupled networks with a single bus work again. Heat pump COPs and limited heat source potentials no longer collapse with `.squeeze()` ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
+
 * Fix: The flexible EGS constraint in [solve_network][] limited every geothermal reservoir to zero capacity, and failed with `KeyError: 'StorageUnit-p_nom'` when the network had no extendable storage units. Each reservoir is now limited by the summed capacity of the wells at its surface bus.
 
 * **Breaking:** `snapshots: start` and `snapshots: end` are now the first and last snapshot, both included, as in `pandas.date_range` with default arguments. The option `snapshots: inclusive` was removed ([#2101](https://github.com/PyPSA/pypsa-eur/issues/2101)). The workflow stops with an error that points to this note if `inclusive` is set, or if `end` is a date without time (formerly an exclusive end). Migration guide:
