@@ -905,18 +905,20 @@ def capture_efficiency_loss(
     Electricity lost per unit of fuel for post-combustion carbon capture.
 
     Includes electricity for capture and compression, and the electricity lost
-    by extracting steam for solvent regeneration from the turbine.
+    by extracting steam for solvent regeneration from the turbine. The energy
+    inputs of the capture technology are given per tonne of CO2 captured.
 
     Parameters
     ----------
     costs : pd.DataFrame
         Technology cost assumptions.
     co2_intensity : float
-        CO2 in the flue gas per unit of fuel (tCO2/MWh).
+        CO2 in the flue gas per unit of fuel (tCO2/MWh_fuel).
     capture : str
         Name of the carbon capture technology in `costs`.
     c_v : float
-        Electricity lost per unit of heat extracted from the steam turbine.
+        Electricity lost per unit of heat extracted from the steam turbine
+        (MWh_el/MWh_th), the Cv value of extraction plants.
 
     Returns
     -------
