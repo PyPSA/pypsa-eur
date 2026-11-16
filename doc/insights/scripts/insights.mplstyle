@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+font.family: Inter
+font.size: 8
+axes.titlesize: 8
+axes.titleweight: bold
+axes.titlelocation: left
+axes.labelsize: 8
+xtick.labelsize: 7
+ytick.labelsize: 7
+legend.fontsize: 7
+legend.frameon: False
+
+axes.spines.top: False
+axes.spines.right: False
+axes.edgecolor: "#888888"
+axes.linewidth: 0.6
+axes.grid: True
+axes.axisbelow: True
+grid.color: "#e6e6e6"
+grid.linewidth: 0.5
+xtick.color: "#444444"
+ytick.color: "#444444"
+xtick.major.width: 0.6
+ytick.major.width: 0.6
+
+lines.linewidth: 1.5
+lines.markersize: 3.5
+
+figure.facecolor: white
+savefig.facecolor: white
+savefig.dpi: 250
+svg.fonttype: path

@@ -25,7 +25,7 @@ New data should generally not be added to the data, but externally retrieved in 
 
 - **Source:** Eurostat
 - **Link:** https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Comparative_price_levels_for_investment
-- **License:** [custom](https://ec.europa.eu/eurostat/about-us/policies/copyright)
+- **License:** [custom](https://web.archive.org/web/20240923005932/https://ec.europa.eu/eurostat/about-us/policies/copyright)
 - **Description:** Contains data on comparative price levels for investment in Europe.
 
 `data/retro/data_building_stock.csv`
@@ -45,7 +45,7 @@ New data should generally not be added to the data, but externally retrieved in 
 
 - **Source:** Eurostat
 - **Link:** https://ec.europa.eu/eurostat/databrowser/view/NRG_PC_204/default/table?lang=en
-- **License:** [custom](https://ec.europa.eu/eurostat/about-us/policies/copyright)
+- **License:** [custom](https://web.archive.org/web/20240923005932/https://ec.europa.eu/eurostat/about-us/policies/copyright)
 - **Description:** Electricity prices for household consumers.
 
 `data/retro/floor_area_missing.csv` and `data/retro/u_values_poland.csv`
@@ -78,7 +78,7 @@ New data should generally not be added to the data, but externally retrieved in 
 `data/transmission_projects/nep`
 
 - **Source:** German Federal Network Agency (Bundesnetzagentur, BNetzA)
-- **Link:** https://data.netzausbau.de/2037-2023/NEP/NEP_2037_2045_Bestaetigung.pdf
+- **Link:** https://web.archive.org/web/20241114091345/https://data.netzausbau.de/2037-2023/NEP/NEP_2037_2045_Bestaetigung.pdf
 - **License:** unknown
 - **Description:** Contains transmission projects in Europe from German network development plan (Netzentwicklungsplan).
 
@@ -95,13 +95,6 @@ New data should generally not be added to the data, but externally retrieved in 
 - **Link:** https://www.icis.com/explore/resources/news/2023/01/18/10846094/insight-poor-demand-high-costs-stifle-europe-industry-despite-falling-gas-prices/
 - **License:** CC-BY 4.0 (for compiled dataset)
 - **Description:** Locations and production capacities of ammonia plants in Europe.
-
-`data/cement_plants-noneu.csv`
-
-- **Source:** manually collected, mostly from USGS
-- **Link:** https://www.usgs.gov/centers/national-minerals-information-center/international-minerals-statistics-and-information
-- **License:** CC0 ([reference](https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits))
-- **Description:** Contains energy balances for Europe.
 
 `data/ch_cantons.csv`
 
@@ -120,7 +113,7 @@ New data should generally not be added to the data, but externally retrieved in 
 `data/district_heat_share.csv`
 
 - **Source:** Euroheat & Power
-- **Link:** https://www.euroheat.org/knowledge-hub/country-profiles
+- **Link:** https://web.archive.org/web/20210921235424/https://www.euroheat.org/knowledge-hub/country-profiles/
 - **License:** unknown
 - **Description:** Contains district heating shares for European countries.
 
@@ -145,7 +138,7 @@ New data should generally not be added to the data, but externally retrieved in 
 - **Source:** Energy Information Agency (EIA)
 - **Link:** https://www.eia.gov/international/data/world/electricity/electricity-generation
 - **License:** CC0 ([reference](https://www.eia.gov/about/copyrights_reuse.php))
-- **Description:** Contains country-level hydro-electric generato for Europe by year.
+- **Description:** Contains country-level hydro-electric generation for Europe by year.
 
 `data/heat_load_profile_BDEW.csv`
 
@@ -188,9 +181,20 @@ New data should generally not be added to the data, but externally retrieved in 
 - **License:** CC-BY 4.0
 - **Description:** Contains unit commitment parameters for thermal power plants.
 
-`data/biomass_transport_costs_supply_chain{1,2}.csv`
+`data/biomass_transport_costs_supplychain{1,2}.csv`
 
 - **Source:** European Commission Joint Research Centre (JRC)
 - **Link:** https://publications.jrc.ec.europa.eu/repository/handle/JRC98626
 - **License:** CC-BY 4.0 ([reference](https://commission.europa.eu/legal-notice_en#copyright-notice))
 - **Description:** Contains transport costs for different types of biomass.
+
+## User-editable files
+
+These files in `data/` are templates or registries rather than data sources.
+
+- `data/agg_p_nom_minmax.csv`: minimum and maximum capacities per country and carrier for `solving: agg_p_nom_limits`.
+- `data/custom_costs.csv`: overrides for the technology cost assumptions, applied by `process_cost_data` (`costs: custom_cost_fn`).
+- `data/custom_powerplants.csv`: additional power plants merged into the powerplant list by [build_powerplants][] (`electricity: custom_powerplants`).
+- `data/custom_extra_functionality.py`: template for custom constraints added during solving (`solving: options: custom_extra_functionality`).
+- `data/parameter_corrections.yaml`: manual corrections of line and link parameters of the `entsoegridkit` base network.
+- `data/versions.csv`: registry of dataset versions and sources, see [data versioning](data_sources.md#managing_data_versions).

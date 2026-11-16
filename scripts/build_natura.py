@@ -2,79 +2,30 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Rasters the vector data of the [Natura 2000.](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas onto all
-cutout regions.
+Rasterises the [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas onto the extent of the weather cutout.
 
-Relevant Settings
------------------
-
-```yaml
-renewable:
-    {technology}:
-        cutout:
-```
-
-!!! info "See also"
-    Documentation of the configuration file `config/config.yaml` at renewable_cf
-
-Inputs
-------
-
-- `data/bundle/natura/Natura2000_end2015.shp`: [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas.
-
-    ![](img/natura.png)
-
-Outputs
--------
-
-- `resources/natura.tiff`: Rasterized version of [Natura 2000](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas to reduce computation times.
-
-    ![](img/natura.png)
-
-Description
------------
+The Natura 2000 shapefile is unpacked, projected to the European LAEA grid
+(EPSG:3035) and burned into a binary raster with 100 m resolution covering the
+cutout extent. The raster serves as an exclusion layer in the land availability
+calculations, which is much faster than intersecting the vector data directly.
 """
 
 import logging
 import shutil
 from pathlib import Path
 
-import atlite
 import geopandas as gpd
 import rasterio as rio
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, determine_cutout_xXyY, set_scenario_config
 from rasterio.features import geometry_mask
 from rasterio.warp import transform_bounds
 
 logger = logging.getLogger(__name__)
 
 
-def determine_cutout_xXyY(cutout_name):
-    """
-    Determine the full extent of a cutout.
-
-    Since the coordinates of the cutout data are given as the
-    center of the grid cells, the extent of the cutout is
-    calculated by adding/subtracting half of the grid cell size.
-
-
-    Parameters
-    ----------
-    cutout_name : str
-        Path to the cutout.
-
-    Returns
-    -------
-    A list of extent coordinates in the order [x, X, y, Y].
-    """
-    cutout = atlite.Cutout(cutout_name)
-    assert cutout.crs.to_epsg() == 4326
-    x, X, y, Y = cutout.extent
-    dx, dy = cutout.dx, cutout.dy
-    return [x - dx / 2.0, X + dx / 2.0, y - dy / 2.0, Y + dy / 2.0]
-
-
-def get_transform_and_shape(bounds, res):
+def get_transform_and_shape(
+    bounds: tuple[float, float, float, float], res: float
+) -> tuple[rio.Affine, tuple[int, int]]:
     left, bottom = [(b // res) * res for b in bounds[:2]]
     right, top = [(b // res + 1) * res for b in bounds[2:]]
     shape = int((top - bottom) // res), int((right - left) / res)

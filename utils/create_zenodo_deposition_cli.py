@@ -57,7 +57,7 @@ def get_access_token(sandbox: bool):
             f" * Option 2: Create a `.env` file in the current directory with the following content:\n"
             f"   {key_name}='<token>'\n"
             "Make sure to replace '<token>' with your actual Zenodo API token.\n"
-            "Visit (https://zenodo.org/account/settings/applications/tokens/) to generate a new token.",
+            "Visit (https://zenodo.org/account/settings/applications/tokens/new/) to generate a new token.",
             fg=typer.colors.RED,
         )
         raise typer.Exit()
@@ -209,7 +209,7 @@ def get_potential_datasets():
     """
     # Find all dataset folders in the 'data' directory;
     # indicated by the presence of an 'archive' subfolder with contents
-    return sorted(set(f.parts[-3] for f in Path().rglob("data/*/archive/*/")))
+    return sorted({f.parts[-3] for f in Path().rglob("data/*/archive/*/")})
 
 
 def get_archive_folders(dataset):
@@ -502,7 +502,7 @@ def main(
     elif action == "create":
         dataset_names = get_potential_datasets()
         dataset_names = [
-            ds for ds in dataset_names if ds not in {l["dataset"] for l in latest}
+            ds for ds in dataset_names if ds not in {d["dataset"] for d in latest}
         ]
         if not dataset_names:
             typer.secho(

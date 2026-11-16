@@ -26,7 +26,7 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def load_access_token(apikey):
+def load_access_token(apikey: str) -> str:
     # Login using EU login at https://land.copernicus.eu/user/login and create an API key
     # Set CORINE_API_TOKEN environment variable or add to .env file
     try:
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("retrieve_corine_dataset_primary")
+        snakemake = mock_snakemake("retrieve_corine")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
