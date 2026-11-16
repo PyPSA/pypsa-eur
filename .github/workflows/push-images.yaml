@@ -6,6 +6,10 @@ on:
     - master
   workflow_dispatch:
 
+# retagging must wait for a previous build to finish pushing
+concurrency:
+  group: push-images
+
 env:
   IMAGE_NAME: pypsa/eur-dev-env
 
@@ -14,7 +18,7 @@ jobs:
     name: dev-env
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
@@ -43,7 +47,7 @@ jobs:
         fi
 
     - name: 'Add SHA tag to existing image' # when rebuild is not needed
-      if: env.hash_last_changed != github.sha
+      if: env.hash_last_changed != github.sha && github.event_name != 'workflow_dispatch'
       run: |-
         docker pull ghcr.io/${{ env.IMAGE_NAME }}:${{ env.hash_last_changed }}
         docker tag ghcr.io/${{ env.IMAGE_NAME }}:${{ env.hash_last_changed }} ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}

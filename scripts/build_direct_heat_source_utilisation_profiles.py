@@ -4,14 +4,6 @@
 """
 Build availability profiles for direct heat source utilisation (1 in regions and time steps where heat source can be utilised, 0 otherwise).
 When direct utilisation is possible, heat pump COPs are set to zero (c.f. `build_cop_profiles`).
-
-Inputs
-------
-- `resources/<run_name>/central_heating_forward_temperatures_base_s_{clusters}_{planning_horizons}.nc`: Central heating forward temperature profiles
-
-Outputs
--------
-- `resources/<run_name>/direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc`: Direct heat source utilisation profiles
 """
 
 import logging
@@ -23,7 +15,7 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def get_source_temperature(heat_source_key: str):
+def get_source_temperature(heat_source_key: str, limited_heat_sources: dict) -> float:
     """
     Get the constant temperature of a heat source.
 
@@ -31,6 +23,8 @@ def get_source_temperature(heat_source_key: str):
     ----
     heat_source_key: str
         The key (name) of the heat source.
+    limited_heat_sources: dict
+        Settings of the temperature-limited heat sources, keyed by heat source.
 
     Returns:
     -------
@@ -40,23 +34,21 @@ def get_source_temperature(heat_source_key: str):
     Raises:
     ------
     ValueError
-        If the heat source is unknown (not in `config`).
+        If the heat source is not in `limited_heat_sources`.
     """
 
-    if heat_source_key in snakemake.params.limited_heat_sources.keys():
-        return snakemake.params.limited_heat_sources[heat_source_key][
-            "constant_temperature_celsius"
-        ]
+    if heat_source_key in limited_heat_sources:
+        return limited_heat_sources[heat_source_key]["constant_temperature_celsius"]
     else:
         raise ValueError(
             f"Unknown heat source {heat_source_key}. Must be one of "
-            f"{snakemake.params.heat_sources.keys()}."
+            f"{limited_heat_sources.keys()}."
         )
 
 
 def get_profile(
     source_temperature: float | xr.DataArray, forward_temperature: xr.DataArray
-) -> xr.DataArray | float:
+) -> xr.DataArray:
     """
     Get the direct heat source utilisation profile.
 
@@ -81,8 +73,8 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_cop_profiles",
-            clusters=48,
+            "build_direct_heat_source_utilisation_profiles",
+            horizon=2030,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -98,7 +90,9 @@ if __name__ == "__main__":
     xr.concat(
         [
             get_profile(
-                source_temperature=get_source_temperature(heat_source_key),
+                source_temperature=get_source_temperature(
+                    heat_source_key, snakemake.params.limited_heat_sources
+                ),
                 forward_temperature=central_heating_forward_temperature,
             ).assign_coords(heat_source=heat_source_key)
             for heat_source_key in direct_utilisation_heat_sources

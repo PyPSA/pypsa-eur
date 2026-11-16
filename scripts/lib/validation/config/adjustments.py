@@ -5,7 +5,7 @@
 """
 Adjustments configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#adjustments_cf
 """
 
 from pydantic import BaseModel, Field

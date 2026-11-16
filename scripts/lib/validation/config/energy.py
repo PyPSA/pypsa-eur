@@ -5,7 +5,7 @@
 """
 Energy configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#energy_cf
 """
 
 from pydantic import Field
@@ -23,8 +23,4 @@ class EnergyConfig(ConfigModel):
     base_emissions_year: int = Field(
         1990,
         description="The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
-    )
-    emissions: str = Field(
-        "CO2",
-        description="Specify which sectoral emissions are taken into account. Data derived from EEA. Currently only CO2 is implemented.",
     )

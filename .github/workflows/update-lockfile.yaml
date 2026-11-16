@@ -9,21 +9,23 @@ jobs:
     if: ${{ github.ref == 'refs/heads/master' }}
     name: Update lockfiles
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     defaults:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Setup Pixi
-      uses: prefix-dev/setup-pixi@v0.9.4
-      with:
-        pixi-version: v0.59.0
+      uses: prefix-dev/setup-pixi@v0.11.3
 
     - name: Full resolve
       run: |
         rm pixi.lock
         pixi install --all
+        git checkout pixi.toml
 
     - name: Export conda environment files
       if: ${{ !vars.PYPSA_BOT_ID }}
