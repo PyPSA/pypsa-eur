@@ -969,6 +969,7 @@ _TECH_COLORS: dict[str, str] = {
     "waste CHP CC": "#e3d3ff",
     "non-sequestered HVC": "#8f79b5",
     "HVC to air": "#000000",
+    "waste transport": "#757171",
     "import H2": "#db8ccd",
     "import gas": "#f7a572",
     "import NH3": "#e2ed74",

@@ -7,6 +7,10 @@
 <!-- ================= -->
 * Feature: Endogenous industry process heat supply. Industrial process heat demand is split into temperature bands (`heat<100`, `heat100-200`, `heat200-500`, `heat>500`) in the new rule [build_industry_sector_ratios_endogenous][], based mostly on Fleiter et al. 2025. When enabled via `sector: industry_t: endogen`, the model chooses the supply technology per band (heat pumps, electric boilers, solid biomass, methane and hydrogen) endogenously instead of relying on exogenous shares. The steel sector is excluded as its heat supply is handled separately ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 
+* Feature: New option `sector: waste_spatial` to model waste for waste-to-energy plants per bus region, with transport if `sector: biomass_transport` is enabled. By default, waste is now collected in one European bus ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
+
+* Fix: `industry: waste_to_energy_cc` now works without `industry: waste_to_energy` ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
+
 * Feature: New option `sector: ccgt_cc` to add gas CCGTs with post-combustion carbon capture ([#2418](https://github.com/PyPSA/pypsa-eur/pull/2418)).
 
 * Fix: Power plants with post-combustion carbon capture (`sector: coal_cc`, `sector: ccgt_cc` and `sector: methanol: methanol_to_power: ccgt_cc`) now lose electricity for the steam that regenerates the capture solvent, and their capture energy scales with the captured instead of the total CO2. Coal with carbon capture now uses `sector: cc_capital_cost_factor: coal` and its own carrier `coal CC` ([#2418](https://github.com/PyPSA/pypsa-eur/pull/2418)).
