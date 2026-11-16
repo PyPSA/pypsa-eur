@@ -3,11 +3,6 @@
 # SPDX-License-Identifier: MIT
 """
 Combines bidding zone shape files from two sources. The `electricitymaps-contrib` data is more accurate and are used as the baseline. The Italian bidding zones from `entsoe-py` are more preferred and are used to override the baseline. Manual adjustments are made to match the TYNDP 2024 configuration. Small islands are removed and Crete is considered as independent of Greece. Southern Norwegian zones are merged.
-
-Outputs
--------
-
-- `resources/bidding_zones.geojson`:
 """
 
 import geopandas as gpd

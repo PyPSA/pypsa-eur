@@ -3,11 +3,6 @@
 # SPDX-License-Identifier: MIT
 """
 Extract transformation output for coke ovens from Eurostat energy balance data.
-
-Outputs
--------
-- ``resources/<run_name>/transformation_output_coke.csv``: Transformation output
-  of coke ovens by country and energy carrier.
 """
 
 import pandas as pd

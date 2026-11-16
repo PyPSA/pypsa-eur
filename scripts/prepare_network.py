@@ -4,17 +4,20 @@
 
 
 """
-Prepare PyPSA network for solving with various operational constraints and
-temporal adjustments.
+Prepare the composed network for solving with emission constraints, transmission limits and temporal aggregation.
 
-- adding an annual **limit** of carbon-dioxide emissions,
-- adding an exogenous **price** per tonne emissions of carbon-dioxide (or other kinds),
-- setting an **N-1 security margin** factor for transmission line capacities,
-- specifying an expansion limit on the **cost** of transmission expansion,
-- specifying an expansion limit on the **volume** of transmission expansion, and
-- reducing the **temporal** resolution by averaging over multiple hours
-  or segmenting time series into chunks of varying lengths using `tsam`.
+The functions add global CO2 emission limits or a CO2 budget across planning
+horizons, a gas consumption limit, a static or monthly varying price per tonne
+of CO2, a limit on the cost or volume of transmission expansion relative to
+today's grid, caps on line and link capacities and their extension, and an N-1
+security margin on line capacities. Temporal aggregation either uses every
+n-th snapshot as representative or averages the hourly data onto the snapshot
+weightings precomputed by [time_aggregation][]. Configured adjustments to costs
+and potentials per planning horizon are applied as well.
 
+!!! note "Called from compose_network"
+    This module has no Snakemake rule of its own. Its functions are called by
+    [compose_network][].
 """
 
 import logging
@@ -29,7 +32,6 @@ from scripts._helpers import (
     PYPSA_V1,
     get,
 )
-from scripts.add_electricity import set_transmission_costs
 from scripts.co2_budget import (
     bound_value_for_horizon,
     co2_budget_for_horizon,
@@ -321,18 +323,9 @@ def add_dynamic_emission_prices(n: pypsa.Network, fn: str) -> None:
     n.generators.loc[affected, "marginal_cost"] = 0.0
 
 
-def set_line_s_max_pu(n, s_max_pu=0.7):
-    n.lines["s_max_pu"] = s_max_pu
-    logger.info(f"N-1 security margin of lines set to {s_max_pu}")
-
-
 def set_transmission_limit(
-    n: pypsa.Network,
-    kind: str,
-    factor: str | float,
-    costs: pd.DataFrame,
-    Nyears: float = 1,
-) -> pypsa.Network:
+    n: pypsa.Network, kind: str, factor: str | float, Nyears: float = 1
+) -> None:
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
     _lines_s_nom = (
@@ -348,8 +341,6 @@ def set_transmission_limit(
         lines_s_nom @ n.lines[col]
         + n.links.loc[links_dc_b, "p_nom"] @ n.links.loc[links_dc_b, col]
     )
-
-    set_transmission_costs(n, costs)
 
     if factor == "opt" or float(factor) > 1.0:
         n.lines["s_nom_min"] = lines_s_nom
@@ -371,21 +362,6 @@ def set_transmission_limit(
         )
 
     return n
-
-
-def enforce_autarky(n, only_crossborder=False):
-    if only_crossborder:
-        lines_rm = n.lines.loc[
-            n.lines.bus0.map(n.buses.country) != n.lines.bus1.map(n.buses.country)
-        ].index
-        links_rm = n.links.loc[
-            n.links.bus0.map(n.buses.country) != n.links.bus1.map(n.buses.country)
-        ].index
-    else:
-        lines_rm = n.lines.index
-        links_rm = n.links.loc[n.links.carrier == "DC"].index
-    n.remove("Line", lines_rm)
-    n.remove("Link", links_rm)
 
 
 def cap_transmission_capacity(
@@ -482,6 +458,7 @@ def main(
     params,
     costs: pd.DataFrame,
     nyears: float,
+    current_horizon: int,
 ) -> None:
     logger.info("Preparing network for solving")
 
@@ -507,6 +484,11 @@ def main(
             add_emission_prices(n, {"co2": emission_prices["co2"]}, exclude_co2=False)
 
     transmission_limit = electricity_cfg["transmission_limit"]
+    if isinstance(transmission_limit, dict) and params.foresight == "perfect":
+        raise ValueError(
+            "Per-horizon `transmission_limit` is not supported for perfect foresight."
+        )
+    transmission_limit = get(transmission_limit, current_horizon)
     if isinstance(transmission_limit, str):
         kind = transmission_limit[0]
         factor = transmission_limit[1:] or "opt"
@@ -517,7 +499,7 @@ def main(
             "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
         )
 
-    set_transmission_limit(n, kind, factor, costs, nyears)
+    set_transmission_limit(n, kind, factor, nyears)
 
     cap_transmission_capacity(
         n,

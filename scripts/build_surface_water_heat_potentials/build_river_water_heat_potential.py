@@ -7,39 +7,11 @@ Calculate river water heat potential for district heating systems.
 This script computes the thermal potential of rivers as a heat source for district
 heating applications. It uses HERA river discharge and ambient temperature data to
 estimate available heating power and average water temperatures across regions
-intersected with district heating areas.
+intersected with district heating areas. The district heating areas are buffered by
+`dh_area_buffer` (in meters) to include nearby rivers.
 
 The approximation accounts for temporal and spatial variations in river flow and temperature,
 providing both spatial and temporal aggregates. Temporal aggregates are only used for plotting.
-
-Relevant Settings
------------------
-
-```yaml
-sector:
-    district_heating:
-        dh_area_buffer: # Buffer around DH areas in meters to include nearby rivers
-        heat_source_cooling: # Exploitable temperature delta
-snapshots:
-    start:
-    end:
-enable:
-    drop_leap_day:
-```
-
-Inputs
-------
-- `data/hera_{year}/river_discharge_{year}.nc`: River discharge data from HERA
-- `data/hera_{year}/ambient_temp_{year}.nc`: Ambient temperature data from HERA
-- `resources/{run}/onshore_regions.geojson`: Onshore regions
-- `resources/{run}/dh_areas.geojson`: District heating areas
-
-Outputs
--------
-- `resources/{run}/heat_source_power_river_water.csv`: River heating power potentials by region
-- `resources/{run}/temp_river_water.nc`: River water temperature profiles by region
-- `resources/{run}/temp_river_water_temporal_aggregate.nc`: Temporal aggregated temperature data
-- `resources/{run}/heat_source_energy_river_water_temporal_aggregate.nc`: Temporal aggregated energy data
 """
 
 import gc

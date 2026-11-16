@@ -2,67 +2,33 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This script calculates the space heating savings through better insulation of
-the thermal envelope of a building and corresponding costs for different
-building types in different countries.
+Build space heating savings and costs of retrofitting the thermal envelope of buildings per country, sector and retrofitting strength.
 
-Methodology
------------
+Energy savings follow the seasonal method of EN ISO 13790 as implemented in
+the TABULA calculation method. The building stock with its U-values and
+heated floor areas comes from the Hotmaps project; typical envelope surfaces,
+thermal bridges and ventilation losses per building type come from TABULA.
+Space heat demand is the transmission and ventilation heat loss over the
+heating season minus the utilised solar and internal gains:
 
-The energy savings calculations are based on the
+$$
+E_{space} = (H_{tr} + H_{ve}) F_{red} (T_{th} - T_{heat}) d_{heat} / 365 - f_{gain} (H_{solar} + H_{int})
+$$
 
-  EN ISO 13790 / seasonal method https://www.iso.org/obp/ui/#iso:std:iso:13790:ed-2:v1:en:
+with the heating season of $d_{heat}$ days below the threshold $T_{th}$ of
+15 C, their mean temperature $T_{heat}$, a reduction factor $F_{red}$ for
+non-uniform heating and a gain utilisation factor $f_{gain}$. Savings are
+computed for several insulation thicknesses. Costs per thickness are taken
+from German data and weighted by country-specific construction and tax
+indices. Savings and costs per sector are area-weighted over building types
+and construction periods, and countries without building data take the
+values of neighbouring countries.
 
-  - calculations heavily oriented on the TABULAWebTool
-  http://webtool.building-typology.eu/
-  http://www.episcope.eu/fileadmin/tabula/public/docs/report/TABULA_CommonCalculationMethod.pdf
-  which is following the EN ISO 13790 / seasonal method
-
-  - building stock data:
-      mainly: hotmaps project https://gitlab.com/hotmaps/building-stock
-      missing: EU building observatory https://ec.europa.eu/energy/en/eu-buildings-database
-
-  - building types with typical surfaces/ standard values:
-      - tabula https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
-
-
-Basic Equations
----------------
-
-The basic equations:
-
-    The Energy needed for space heating E_space [W/m²] are calculated as the
-    sum of heat losses and heat gains:
-
-        E_space = H_losses - H_gains
-
-    Heat losses constitute from the losses through heat transmission (H_tr [W/m²K])
-    (this includes heat transfer through building elements and thermal bridges)
-    and losses by ventilation (H_ve [W/m²K]):
-
-        H_losses = (H_tr + H_ve) * F_red * (T_threshold - T_averaged_d_heat) * d_heat * 1/365
-
-        F_red : reduction factor, considering non-uniform heating [°C], p.16 chapter 2.6 [-]
-        T_threshold : heating temperature threshold, assumed 15 C
-        d_heat : Length of heating season, number of days with daily averaged temperature below T_threshold
-        T_averaged_d_heat : mean daily averaged temperature of the days within heating season d_heat
-
-    Heat gains constitute from the gains by solar radiation (H_solar) and
-    internal heat gains (H_int) weighted by a gain utilisation factor nu:
-
-        H_gains = nu * (H_solar + H_int)
-
-Structure
----------
-
-The script has the following structure:
-
-    (0) fixed parameters are set
-    (1) prepare data, bring to same format
-    (2) calculate space heat demand depending on additional insulation material
-    (3) calculate costs for corresponding additional insulation material
-    (4) get cost savings per retrofitting measures for each sector by weighting
-        with heated floor area
+References
+----------
+- Loga et al. (2013), [TABULA Calculation Method - Energy Use for Heating and Domestic Hot Water](http://www.episcope.eu/fileadmin/tabula/public/docs/report/TABULA_CommonCalculationMethod.pdf)
+- Hotmaps project, [Building stock data](https://gitlab.com/hotmaps/building-stock)
+- TABULA, [Building typology calculator](https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx)
 """
 
 import logging
@@ -123,6 +89,18 @@ rename_sectors = {
     "Appartment blocks": "AB",
 }
 
+# mapping missing countries by neighbours
+map_for_missings = {
+    "AL": ["BG", "RO", "GR"],
+    "BA": ["HR"],
+    "RS": ["BG", "RO", "HR", "HU"],
+    "KV": ["RS"],
+    "MK": ["BG", "GR"],
+    "ME": ["BA", "AL", "RS", "HR"],
+    "CH": ["SE", "DE"],
+    "NO": ["SE"],
+}
+
 
 # additional insulation thickness, determines maximum possible savings [m]
 l_strength = ["0.07", "0.075", "0.08", "0.1", "0.15", "0.22", "0.24", "0.26"]
@@ -147,9 +125,13 @@ def get_average_temperature_during_heating_season(
     return t_average_daily.loc[t_average_daily < t_threshold].mean()
 
 
-def prepare_building_stock_data() -> tuple[
-    pd.DataFrame, dict[str, str], list[str], pd.DataFrame, pd.DataFrame
-]:
+def prepare_building_stock_data(
+    building_stock: str,
+    floor_area_missing: str,
+    clustered_pop_layout: str,
+    u_values_PL: str,
+    countries: list[str],
+) -> tuple[pd.DataFrame, dict[str, str], list[str], pd.DataFrame, pd.DataFrame]:
     """
     Reads building stock data and cleans up the format, returns
     --------
@@ -159,7 +141,7 @@ def prepare_building_stock_data() -> tuple[
                        type and period
 
     """
-    building_data = pd.read_csv(snakemake.input.building_stock, usecols=list(range(13)))
+    building_data = pd.read_csv(building_stock, usecols=list(range(13)))
 
     # standardize data
     building_data["type"] = building_data["type"].replace(
@@ -234,7 +216,7 @@ def prepare_building_stock_data() -> tuple[
 
     # add for some missing countries floor area from other data sources
     area_missing = pd.read_csv(
-        snakemake.input.floor_area_missing,
+        floor_area_missing,
         index_col=[0, 1],
         usecols=[0, 1, 2, 3],
         encoding="ISO-8859-1",
@@ -243,7 +225,7 @@ def prepare_building_stock_data() -> tuple[
     area_tot = area_tot.loc[~area_tot.index.duplicated(keep="last")]
 
     # for still missing countries calculate floor area by population size
-    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    pop_layout = pd.read_csv(clustered_pop_layout, index_col=0)
     pop_layout["ct"] = pop_layout.index.str[:2]
     ct_total = pop_layout.total.groupby(pop_layout["ct"]).sum()
 
@@ -267,7 +249,7 @@ def prepare_building_stock_data() -> tuple[
             area_tot.loc[averaged_data.index] = averaged_data
 
     # u_values for Poland are missing -> take them from eurostat -----------
-    u_values_PL = pd.read_csv(snakemake.input.u_values_PL)
+    u_values_PL = pd.read_csv(u_values_PL)
     u_values_PL["component"] = u_values_PL["component"].replace(
         {"Walls": "Wall", "Windows": "Window"}
     )
@@ -323,14 +305,13 @@ def prepare_building_stock_data() -> tuple[
     u_values.set_index(["country_code", "subsector", "bage", "type"], inplace=True)
 
     #  only take in config.yaml specified countries into account
-    countries = snakemake.params.countries
     area_tot = area_tot.loc[countries]
 
-    return u_values, country_iso_dic, countries, area_tot, area
+    return u_values, country_iso_dic, area_tot, area
 
 
 def prepare_building_topology(
-    u_values: pd.DataFrame, same_building_topology: bool = True
+    u_values: pd.DataFrame, data_tabula: str, same_building_topology: bool = True
 ) -> pd.DataFrame:
     """
     Reads in typical building topologies (e.g. average surface of building
@@ -338,7 +319,7 @@ def prepare_building_topology(
     """
     data_tabula = (
         pd.read_excel(
-            snakemake.input.data_tabula,
+            data_tabula,
             sheet_name="Calc.Set.Building",
             header=0,
             skiprows=range(1, 11),
@@ -491,17 +472,23 @@ def prepare_building_topology(
 
 def prepare_cost_retro(
     country_iso_dic: dict[str, str],
+    cost_germany: str,
+    window_assumptions: str,
+    construction_index_fn: str,
+    tax_w_fn: str,
+    annualise_cost: bool,
+    interest_rate: float,
+    construction_index: bool,
+    tax_weighting: bool,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series | None, pd.Series | None]:
     """
     Read and prepare retro costs, annualises them if annualise_cost=True.
     """
-    cost_retro = pd.read_csv(
-        snakemake.input.cost_germany, nrows=4, index_col=0, usecols=[0, 1, 2, 3]
-    )
+    cost_retro = pd.read_csv(cost_germany, nrows=4, index_col=0, usecols=[0, 1, 2, 3])
     cost_retro.rename(lambda x: x.capitalize(), inplace=True)
 
     window_assumptions = pd.read_csv(
-        snakemake.input.window_assumptions, skiprows=[1], usecols=[0, 1, 2, 3], nrows=2
+        window_assumptions, skiprows=[1], usecols=[0, 1, 2, 3], nrows=2
     )
 
     if annualise_cost:
@@ -517,9 +504,7 @@ def prepare_cost_retro(
 
     # weightings of costs ---------------------------------------------
     if construction_index:
-        cost_w = pd.read_csv(
-            snakemake.input.construction_index, skiprows=3, nrows=32, index_col=0
-        )
+        cost_w = pd.read_csv(construction_index_fn, skiprows=3, nrows=32, index_col=0)
         # since German retrofitting costs are assumed
         cost_w = (cost_w["2018"] / cost_w.loc["Germany", "2018"]).rename(
             index=country_iso_dic
@@ -528,9 +513,7 @@ def prepare_cost_retro(
         cost_w = None
 
     if tax_weighting:
-        tax_w = pd.read_csv(
-            snakemake.input.tax_w, header=12, nrows=39, index_col=0, usecols=[0, 4]
-        )
+        tax_w = pd.read_csv(tax_w_fn, header=12, nrows=39, index_col=0, usecols=[0, 4])
         tax_w.rename(index=country_iso_dic, inplace=True)
         tax_w = tax_w.apply(pd.to_numeric, errors="coerce").iloc[:, 0]
         tax_w.dropna(inplace=True)
@@ -540,7 +523,7 @@ def prepare_cost_retro(
     return cost_retro, window_assumptions, cost_w, tax_w
 
 
-def prepare_temperature_data() -> tuple[pd.Series, pd.Series]:
+def prepare_temperature_data(air_temperature: str) -> tuple[pd.Series, pd.Series]:
     """
     Returns the temperature dependent data for each country:
 
@@ -552,7 +535,7 @@ def prepare_temperature_data() -> tuple[pd.Series, pd.Series]:
 
     temperature_factor = (t_threshold - temperature_average_d_heat) * d_heat * 1/365
     """
-    temperature = xr.open_dataarray(snakemake.input.air_temperature).to_pandas()
+    temperature = xr.open_dataarray(air_temperature).to_pandas()
     d_heat = (
         temperature.T.groupby(temperature.columns.str[:2])
         .mean()
@@ -602,8 +585,12 @@ def u_retro_window(l: float, window_assumptions: pd.DataFrame) -> float:  # noqa
 
 
 def window_cost(
-    u: float, cost_retro: pd.DataFrame, window_assumptions: pd.DataFrame
-) -> float:  # noqa: E741
+    u: float,
+    cost_retro: pd.DataFrame,
+    window_assumptions: pd.DataFrame,
+    annualise_cost: bool,
+    interest_rate: float,
+) -> float:
     """
     Get costs for new windows depending on u value.
     """
@@ -628,6 +615,8 @@ def calculate_costs(
     l: str,  # noqa: E741
     cost_retro: pd.DataFrame,
     window_assumptions: pd.DataFrame,
+    annualise_cost: bool,
+    interest_rate: float,
 ) -> pd.Series:
     """
     Returns costs for a given retrofitting strength weighted by the average
@@ -648,7 +637,13 @@ def calculate_costs(
             else (
                 (
                     (
-                        window_cost(x[f"new_U_{l}"], cost_retro, window_assumptions)
+                        window_cost(
+                            x[f"new_U_{l}"],
+                            cost_retro,
+                            window_assumptions,
+                            annualise_cost,
+                            interest_rate,
+                        )
                         * x.A_element
                     )
                     / x.A_C_Ref
@@ -768,6 +763,7 @@ def calculate_heat_losses(
     data_tabula: pd.DataFrame,
     l_strength: list[str],
     temperature_factor: pd.Series,
+    window_assumptions: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Calculates total annual heat losses Q_ht for different insulation
@@ -941,6 +937,7 @@ def calculate_space_heat_savings(
     l_strength: list[str],
     temperature_factor: pd.Series,
     d_heat: pd.Series,
+    window_assumptions: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Calculates space heat savings (dE_space [per unit of unrefurbished state])
@@ -949,7 +946,7 @@ def calculate_space_heat_savings(
     """
     # heat losses Q_ht [W/m^2]
     Q_ht, heat_transfer_perm2 = calculate_heat_losses(
-        u_values, data_tabula, l_strength, temperature_factor
+        u_values, data_tabula, l_strength, temperature_factor, window_assumptions
     )
     # heat gains Q_gain [W/m^2]
     Q_gain = calculate_heat_gains(data_tabula, heat_transfer_perm2, d_heat)
@@ -966,16 +963,26 @@ def calculate_space_heat_savings(
 
 
 def calculate_retro_costs(
-    u_values: pd.DataFrame, l_strength: list[str], cost_retro: pd.DataFrame
+    u_values: pd.DataFrame,
+    l_strength: list[str],
+    cost_retro: pd.DataFrame,
+    window_assumptions: pd.DataFrame,
+    annualise_cost: bool,
+    interest_rate: float,
 ) -> pd.DataFrame:
     """
     Returns costs of different retrofitting measures.
     """
     costs = pd.concat(
         [
-            calculate_costs(u_values, strength, cost_retro, window_assumptions).rename(
-                strength
-            )
+            calculate_costs(
+                u_values,
+                strength,
+                cost_retro,
+                window_assumptions,
+                annualise_cost,
+                interest_rate,
+            ).rename(strength)
             for strength in l_strength
         ],
         axis=1,
@@ -996,6 +1003,9 @@ def sample_dE_costs_area(
     countries: list[str],
     construction_index: bool,
     tax_weighting: bool,
+    country_iso_dic: dict[str, str],
+    cost_w: pd.Series | None,
+    tax_w: pd.Series | None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Bring costs and energy savings together, fill area and costs per energy
@@ -1029,7 +1039,8 @@ def sample_dE_costs_area(
     )
 
     # map missing countries
-    for ct in set(countries).difference(cost_dE.index.levels[0]):
+    missing = set(countries).difference(cost_dE.index.levels[0])
+    for ct in sorted(missing, key=list(map_for_missings).index):
         averaged_data = (
             cost_dE.reindex(index=map_for_missings[ct], level=0)
             .groupby(level=1)
@@ -1040,13 +1051,13 @@ def sample_dE_costs_area(
 
     # weights costs after construction index
     if construction_index:
-        for ct in list(map_for_missings.keys() - cost_w.index):
+        for ct in [ct for ct in map_for_missings if ct not in cost_w.index]:
             cost_w.loc[ct] = cost_w.reindex(index=map_for_missings[ct]).mean()
         cost_dE.cost = cost_dE.cost.mul(cost_w, level=0, axis=0)
 
     # weights cost depending on country taxes
     if tax_weighting:
-        for ct in list(map_for_missings.keys() - tax_w.index):
+        for ct in [ct for ct in map_for_missings if ct not in tax_w.index]:
             tax_w[ct] = tax_w.reindex(index=map_for_missings[ct]).mean()
         cost_dE.cost = cost_dE.cost.mul(tax_w, level=0, axis=0)
 
@@ -1105,6 +1116,7 @@ if __name__ == "__main__":
     #  ********  config  *********************************************************
 
     retro_opts = snakemake.params.retrofitting
+    countries = snakemake.params.countries
     interest_rate = retro_opts["interest_rate"]
     annualise_cost = retro_opts["annualise_cost"]  # annualise the investment costs
     tax_weighting = retro_opts[
@@ -1114,41 +1126,68 @@ if __name__ == "__main__":
         "construction_index"
     ]  # weight costs depending on labour/material costs per ct
 
-    # mapping missing countries by neighbours
-    map_for_missings = {
-        "AL": ["BG", "RO", "GR"],
-        "BA": ["HR"],
-        "RS": ["BG", "RO", "HR", "HU"],
-        "KV": ["RS"],
-        "MK": ["BG", "GR"],
-        "ME": ["BA", "AL", "RS", "HR"],
-        "CH": ["SE", "DE"],
-        "NO": ["SE"],
-    }
-
     #   (1) prepare data **********************************************************
 
     # building stock data -----------------------------------------------------
     # hotmaps u_values, heated floor areas per sector
-    u_values, country_iso_dic, countries, area_tot, area = prepare_building_stock_data()
+    u_values, country_iso_dic, area_tot, area = prepare_building_stock_data(
+        snakemake.input.building_stock,
+        snakemake.input.floor_area_missing,
+        snakemake.input.clustered_pop_layout,
+        snakemake.input.u_values_PL,
+        countries,
+    )
     # building topology, thermal bridges, ventilation losses
-    data_tabula = prepare_building_topology(u_values)
+    data_tabula = prepare_building_topology(u_values, snakemake.input.data_tabula)
     # costs for retrofitting -------------------------------------------------
-    cost_retro, window_assumptions, cost_w, tax_w = prepare_cost_retro(country_iso_dic)
+    cost_retro, window_assumptions, cost_w, tax_w = prepare_cost_retro(
+        country_iso_dic,
+        snakemake.input.cost_germany,
+        snakemake.input.window_assumptions,
+        snakemake.input.construction_index,
+        snakemake.input.tax_w,
+        annualise_cost,
+        interest_rate,
+        construction_index,
+        tax_weighting,
+    )
     # temperature dependent parameters
-    d_heat, temperature_factor = prepare_temperature_data()
+    d_heat, temperature_factor = prepare_temperature_data(
+        snakemake.input.air_temperature
+    )
 
     #  (2) space heat savings ****************************************************
     dE_space = calculate_space_heat_savings(
-        u_values, data_tabula, l_strength, temperature_factor, d_heat
+        u_values,
+        data_tabula,
+        l_strength,
+        temperature_factor,
+        d_heat,
+        window_assumptions,
     )
 
     #  (3) costs *****************************************************************
-    costs = calculate_retro_costs(u_values, l_strength, cost_retro)
+    costs = calculate_retro_costs(
+        u_values,
+        l_strength,
+        cost_retro,
+        window_assumptions,
+        annualise_cost,
+        interest_rate,
+    )
 
     #  (4) cost-dE and area per sector *******************************************
     cost_dE, area_tot = sample_dE_costs_area(
-        area, area_tot, costs, dE_space, countries, construction_index, tax_weighting
+        area,
+        area_tot,
+        costs,
+        dE_space,
+        countries,
+        construction_index,
+        tax_weighting,
+        country_iso_dic,
+        cost_w,
+        tax_w,
     )
 
     #   save *********************************************************************

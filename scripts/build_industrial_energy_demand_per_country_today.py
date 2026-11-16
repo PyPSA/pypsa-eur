@@ -2,50 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build industrial energy demand per country.
+Build today's industrial final energy demand per country, subsector and carrier in TWh/a.
 
-Description
--------
+For EU27 countries, the JRC-IDEES energy balances for the configured `industry: reference_year` give the final energy consumption per subsector, which is grouped into the carriers electricity, gas, liquid, solid, heat, biomass, waste and other, plus hydrogen (zero today). Mining, construction and non-specified industry are merged into "Other industrial sectors", and non-energy feedstock is added to basic chemicals. Basic chemicals are then split into ammonia, chlorine, methanol and high-value chemicals (HVC) using the production volumes from [build_industrial_production_per_country][] and fixed specific consumptions; HVC receives the remainder, clipped at zero. If `industry: ammonia` is enabled, ammonia demand is kept as its own carrier instead of being expressed as hydrogen and electricity.
 
-This rule uses the industrial_production_per_country.csv file and the JRC-IDEES data to derive an energy demand per country and sector. If the country is not in the EU28, an average energy demand depending on the production volume is derived.
-For each country and each subcategory of
+Countries outside the EU27 receive the EU27-average energy demand per tonne of production multiplied by their own production. Finally, 75% of the energy consumed in coke ovens, taken from the Eurostat transformation output, is attributed to integrated steelworks ([doi:10.1016/j.erss.2022.102565](https://doi.org/10.1016/j.erss.2022.102565)).
 
-- Alumina production
-- Aluminium - primary production
-- Aluminium - secondary production
-- Ammonia
-- Cement
-- Ceramics & other NMM
-- Chlorine
-- Electric arc
-- Food, beverages and tobacco
-- Glass production
-- HVC
-- Integrated steelworks
-- Machinery equipment
-- Methanol
-- Other industrial sectors
-- Other chemicals
-- Other non-ferrous metals
-- Paper production
-- Pharmaceutical products etc.
-- Printing and media reproduction
-- Pulp production
-- Textiles and leather
-- Transport equipment
-- Wood and wood products
-
-the output file contains the energy demand in TWh/a for the following carriers
-
-- biomass
-- electricity
-- gas
-- heat
-- hydrogen
-- liquid
-- other
-- solid
-- waste
+The output has one row per carrier and one column per country and subsector.
 """
 
 import logging
@@ -173,7 +136,10 @@ def industrial_energy_demand_per_country(
 
 
 def separate_basic_chemicals(
-    demand: pd.DataFrame, production: pd.DataFrame
+    demand: pd.DataFrame,
+    production: pd.DataFrame,
+    params: dict,
+    endogenous_ammonia: bool,
 ) -> pd.DataFrame:
     chlorine = pd.DataFrame(
         {
@@ -202,7 +168,7 @@ def separate_basic_chemicals(
         }
     ).T
 
-    if snakemake.params.ammonia:
+    if endogenous_ammonia:
         ammonia = pd.DataFrame(
             {"ammonia": production["Ammonia"] * params["MWh_NH3_per_tNH3"]}
         ).T
@@ -237,14 +203,19 @@ def add_non_eu27_industrial_energy_demand(
     return pd.concat([demand, demand_non_eu27])
 
 
-def industrial_energy_demand(countries: pd.Index, year: int) -> pd.DataFrame:
-    nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+def industrial_energy_demand(
+    countries: pd.Index,
+    year: int,
+    jrc_dir: str,
+    endogenous_ammonia: bool,
+    nprocesses: int,
+    disable_progress: bool,
+) -> pd.DataFrame:
     func = partial(
         industrial_energy_demand_per_country,
         year=year,
-        jrc_dir=snakemake.input.jrc,
-        endogenous_ammonia=snakemake.params.ammonia,
+        jrc_dir=jrc_dir,
+        endogenous_ammonia=endogenous_ammonia,
     )
     tqdm_kwargs = {
         "ascii": False,
@@ -319,10 +290,18 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry
+    endogenous_ammonia = snakemake.params.ammonia
     year = params.get("reference_year", 2019)
     countries = pd.Index(snakemake.params.countries)
 
-    demand = industrial_energy_demand(countries.intersection(eu27), year)
+    demand = industrial_energy_demand(
+        countries.intersection(eu27),
+        year,
+        snakemake.input.jrc,
+        endogenous_ammonia,
+        snakemake.threads,
+        snakemake.params.disable_progressbar,
+    )
 
     # output in MtMaterial/a
     production = (
@@ -330,7 +309,7 @@ if __name__ == "__main__":
         / 1e3
     )
 
-    demand = separate_basic_chemicals(demand, production)
+    demand = separate_basic_chemicals(demand, production, params, endogenous_ammonia)
 
     demand = add_non_eu27_industrial_energy_demand(countries, demand, production)
 

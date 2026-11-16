@@ -21,6 +21,7 @@ from scripts._helpers import (
     script_path_provider,
 )
 from scripts.lib.validation.config import (
+    migrate_deprecated_keys,
     normalize_config,
     validate_config,
     validate_scenarios,
@@ -31,11 +32,14 @@ configfile: "config/config.default.yaml"
 configfile: "config/plotting.default.yaml"
 
 
-if Path("config/config.yaml").exists():
+if Path("config/config.yaml").exists() and yaml.safe_load(
+    Path("config/config.yaml").read_text()
+):
 
     configfile: "config/config.yaml"
 
 
+migrate_deprecated_keys(config)
 validated = validate_config(config)
 normalize_config(config, validated)
 
@@ -315,3 +319,9 @@ rule sync_dry:
         rsync -uvarh --no-g {params.cluster}/results . -n || echo "No results directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/logs . -n || echo "No logs directory, skipping rsync"
         """
+
+
+# use the one-line rule docstrings as job messages
+for r in workflow.rules:
+    if r.message is None and r.docstring:
+        r.message = r.docstring

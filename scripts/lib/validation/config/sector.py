@@ -61,12 +61,13 @@ class _DistrictHeatingConfig(ConfigModel):
     )
     ptes: dict[str, Any] = Field(
         default_factory=lambda: {
+            "enable": True,
             "dynamic_capacity": False,
             "supplemental_heating": {"enable": False, "booster_heat_pump": False},
             "max_top_temperature": 90,
             "min_bottom_temperature": 35,
         },
-        description="Pit thermal energy storage settings.",
+        description="Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating, independently of `sector: ttes`. If disabled, all other `ptes` options are ignored.",
     )
     ates: dict[str, Any] = Field(
         default_factory=lambda: {
@@ -189,7 +190,11 @@ class _CHPConfig(BaseModel):
     )
     fuel: list[str] = Field(
         default_factory=lambda: ["solid biomass", "gas"],
-        description='Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are "gas", "oil", "methanol", "lignite", "coal" as well as "solid biomass". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added.',
+        description='Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are "gas", "oil", "methanol", "lignite", "coal" as well as "solid biomass". For all fuels except solid biomass, the techno-economic data from gas CHP is used.',
+    )
+    fuel_cc: list[str] = Field(
+        default_factory=lambda: ["solid biomass", "gas"],
+        description="Fuels for which CHP plants with carbon capture (CC) are added in addition to the CHP plants without carbon capture. Only fuels that are also listed in `fuel` are considered. Set to an empty list to disable CHP with carbon capture.",
     )
     micro_chp: bool = Field(
         False,
@@ -362,6 +367,38 @@ class _SolidBiomassImportConfig(BaseModel):
     )
     upstream_emissions_factor: float = Field(
         0.1, description="Upstream emissions of solid biomass imports."
+    )
+
+
+class _CorridorConfig(BaseModel):
+    """Configuration for the candidate corridors of one carrier."""
+
+    min_degree: int = Field(
+        1,
+        ge=0,
+        description="Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+    )
+    max_offshore_distance: float = Field(
+        float("inf"),
+        gt=0,
+        description="Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+    )
+
+
+class _TransportCorridorsConfig(BaseModel):
+    """Configuration for `sector.transport_corridors` settings."""
+
+    H2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new hydrogen pipelines.",
+    )
+    CO2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new carbon dioxide pipelines.",
+    )
+    biomass: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for solid biomass and municipal solid waste transport.",
     )
 
 
@@ -642,9 +679,15 @@ class SectorConfig(BaseModel):
         default_factory=_RetrofittingConfig, description="Retrofitting configuration."
     )
 
-    tes: bool = Field(
+    ttes: bool = Field(
         True,
-        description="Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES).",
+        description="Add tank thermal energy storage (water tanks) in all heat systems. Pit and aquifer thermal energy storage are controlled separately by `district_heating: ptes: enable` and `district_heating: ates: enable`.",
+    )
+    tes: bool | None = Field(
+        None,
+        deprecated=True,
+        exclude=True,
+        description="Deprecated, use `ttes` and `district_heating: ptes: enable`.",
     )
     boilers: bool = Field(
         True, description="Add option for transforming gas into heat using gas boilers."
@@ -711,6 +754,10 @@ class SectorConfig(BaseModel):
         True,
         description="Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs.",
     )
+    electrolysis: bool = Field(
+        True,
+        description="Add option to include hydrogen electrolysis for power-to-gas conversion.",
+    )
     SMR: bool = Field(
         True,
         description="Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR).",
@@ -755,9 +802,6 @@ class SectorConfig(BaseModel):
     )
     co2_sequestration_cost: float = Field(
         30, description="The cost of sequestering a ton of CO2 (currency/tCO2)."
-    )
-    co2_sequestration_lifetime: int = Field(
-        50, description="The lifetime of a CO2 sequestration site (years)."
     )
     co2_spatial: bool = Field(
         True,
@@ -862,6 +906,10 @@ class SectorConfig(BaseModel):
     )
 
     H2_network: bool = Field(True, description="Add option for new hydrogen pipelines.")
+    transport_corridors: _TransportCorridorsConfig = Field(
+        default_factory=_TransportCorridorsConfig,
+        description="Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport, derived from the Delaunay triangulation of the regions.",
+    )
     gas_network: bool = Field(
         True,
         description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",

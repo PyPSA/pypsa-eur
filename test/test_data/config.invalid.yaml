@@ -10,7 +10,7 @@ foresight: overnight
 country: ["DE"] # reported: unknown key, should be `countries`
 
 snapshots:
-  inclusive: neither # reported: not one of "left", "right", "both" or null
+  inclusive: left # reported: removed option
 
 clustering:
   temporal:

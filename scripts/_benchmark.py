@@ -2,6 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Utilities for measuring memory consumption and run time.
+
+Provides `memory_logger`, a context manager adapted from memory_profiler that
+samples the memory use of the current process and its children from a
+separate process at fixed intervals and optionally writes it to a log file,
+plus a simple `timer` context manager. The solve rules use it to record peak
+memory.
+"""
 
 import logging
 import os

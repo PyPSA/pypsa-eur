@@ -2,7 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Retrieve electricity prices from OPSD.
+Retrieves country-level hourly electricity load time series from Open Power System Data (OPSD).
+
+Two OPSD time series releases are downloaded and stitched together, the later
+one extending the earlier. Load reported to the ENTSO-E Transparency Platform is
+preferred, with gaps filled from ENTSO-E power statistics. The result is the raw
+OPSD demand dataset from which the demand time series is built.
 """
 
 import logging

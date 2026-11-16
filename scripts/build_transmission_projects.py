@@ -7,22 +7,14 @@
 Gets the transmission projects defined in the config file, concatenates and
 deduplicates them. Projects are later included in [add_electricity][].
 
-Inputs
-------
-
-- `networks/base_network.nc`:  Base network topology for the electricity grid. This is processed in [base_network][].
-- `data/transmission_projects/"project_name"/`: Takes the transmission projects from the subfolder of data/transmission_projects. The subfolder name is the project name.
-- `offshore_shapes.geojson`: Shapefile containing the offshore regions. Used to determine if a new bus should be added for a new line or link.
-- `europe_shape.geojson`: Shapefile containing the shape of Europe. Used to determine if a project is within the considered countries.
-
-Outputs
--------
-
-- `transmission_projects/new_lines.csv`: New project lines to be added to the network. This includes new lines and upgraded lines.
-- `transmission_projects/new_links.csv`: New project links to be added to the network. This includes new links and upgraded links.
-- `transmission_projects/adjust_lines.csv`: For lines which are upgraded, the decommissioning year of the existing line is adjusted to the build year of the upgraded line.
-- `transmission_projects/adjust_links.csv`: For links which are upgraded, the decommissioning year of the existing link is adjusted to the build year of the upgraded link.
-- `transmission_projects/new_buses.csv`: For some links, we have to add new buses (e.g. North Sea Wind Power Hub).
+Each project is read from a subfolder of `data/transmission_projects/` named
+after the project. The offshore shapes are used to determine if a new bus
+should be added for a new line or link, and the shape of Europe to determine if
+a project is within the considered countries. New and upgraded lines and links
+are written to separate files. For lines and links which are upgraded, the
+decommissioning year of the existing line or link is adjusted to the build year
+of the upgraded one. For some links, new buses have to be added (e.g. North Sea
+Wind Power Hub).
 """
 
 import logging
@@ -175,7 +167,7 @@ def get_branch_coords_from_geometry(
     return start_end_coords.flatten()
 
 
-def get_branch_coords_from_buses(line: pd.Series) -> np.ndarray:
+def get_branch_coords_from_buses(line: pd.Series, buses: pd.DataFrame) -> np.ndarray:
     """
     Gets line string for branch component in an pypsa network.
 
@@ -183,13 +175,15 @@ def get_branch_coords_from_buses(line: pd.Series) -> np.ndarray:
     ----------
     line : pandas.Series
         A row from a branch component DataFrame with bus0 and bus1 attributes.
+    buses : pandas.DataFrame
+        Buses with coordinates x and y, indexed by bus name.
 
     Returns
     -------
     numpy.ndarray: Flattened array of start and end coordinates.
     """
-    start_coords = n.buses.loc[line.bus0, ["x", "y"]].values
-    end_coords = n.buses.loc[line.bus1, ["x", "y"]].values
+    start_coords = buses.loc[line.bus0, ["x", "y"]].values
+    end_coords = buses.loc[line.bus1, ["x", "y"]].values
     return np.array([start_coords, end_coords]).flatten()
 
 
@@ -216,6 +210,7 @@ def get_bus_coords_from_port(linestring: LineString, port: int = 0) -> np.ndarra
 def find_closest_lines(
     lines: pd.DataFrame,
     new_lines: pd.DataFrame,
+    buses: pd.DataFrame,
     distance_upper_bound: float = 0.1,
     type: str = "new",
 ) -> pd.Series:
@@ -226,6 +221,7 @@ def find_closest_lines(
     ----------
     lines (pandas.DataFrame): DataFrame of the existing lines.
     new_lines (pandas.DataFrame): DataFrame with column geometry containing the new lines.
+    buses (pandas.DataFrame): Buses with coordinates x and y, indexed by bus name.
     distance_upper_bound (float, optional): Maximum distance to consider a line as a match. Defaults to 0.1 which corresponds to approximately 15 km.
 
     Returns
@@ -234,7 +230,7 @@ def find_closest_lines(
     """
 
     # get coordinates of start and end points of all lines, for new lines we need to check both directions
-    treelines = lines.apply(get_branch_coords_from_buses, axis=1)
+    treelines = lines.apply(get_branch_coords_from_buses, axis=1, buses=buses)
     querylines = pd.concat(
         [
             new_lines["geometry"].apply(get_branch_coords_from_geometry),
@@ -437,7 +433,7 @@ def add_projects(
                 lines, n, new_buses_df, bus_carrier="AC"
             )
             duplicate_lines = find_closest_lines(
-                n.lines, new_lines, distance_upper_bound=0.10, type="new"
+                n.lines, new_lines, n.buses, distance_upper_bound=0.10, type="new"
             )
             new_lines = new_lines.drop(duplicate_lines.index, errors="ignore")
             new_lines_df = pd.concat([new_lines_df, new_lines])
@@ -453,7 +449,7 @@ def add_projects(
                 bus_carrier=["AC", "DC"],
             )
             duplicate_links = find_closest_lines(
-                n.links, new_links, distance_upper_bound=0.10, type="new"
+                n.links, new_links, n.buses, distance_upper_bound=0.10, type="new"
             )
             new_links = new_links.drop(duplicate_links.index, errors="ignore")
             set_underwater_fraction(new_links, offshore_shapes)
@@ -462,7 +458,7 @@ def add_projects(
             n.add("Link", new_links.index, **new_links)
         elif key == "upgraded_lines":
             line_map = find_closest_lines(
-                n.lines, lines, distance_upper_bound=0.30, type="upgraded"
+                n.lines, lines, n.buses, distance_upper_bound=0.30, type="upgraded"
             )
             upgraded_lines = lines.loc[line_map.index]
             lines_to_adjust = adjust_decommissioning(upgraded_lines, line_map)
@@ -473,6 +469,7 @@ def add_projects(
             line_map = find_closest_lines(
                 n.links.query("carrier=='DC'"),
                 lines,
+                n.buses,
                 distance_upper_bound=0.30,
                 type="upgraded",
             )

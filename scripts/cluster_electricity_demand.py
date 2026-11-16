@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Aggregate simplified electricity demand to clustered resolution.
+Aggregate the electricity demand time series of the simplified network to the buses of the clustered network.
 
-Maps the per-bus demand of ``electricity_demand_simplified.nc`` onto the
-clustered network buses using ``busmap_cluster_network.csv``, so
-``compose_network`` can attach the load directly without a clustering step.
+The per-bus demand of the simplified network is summed over the buses that the
+clustering busmap merges into each clustered bus, so that [compose_network][]
+can attach the load directly without a clustering step.
 """
 
 import logging

@@ -20,7 +20,7 @@ transmission network level that covers the full ENTSO-E area and all energy sect
 Besides the power grid, pipeline networks for gas, hydrogen, carbon dioxide, and liquid fuels are included.
 The model is suitable both for planning studies and operational studies.
 The model is built from open data using a Snakemake workflow and fully open source.
-It is designed to be imported into the open-source energy system modelling framework [PyPSA](www.pypsa.org).
+It is designed to be imported into the open-source energy system modelling framework [PyPSA](https://pypsa.org).
 
 > [!NOTE]
 > PyPSA-Eur has many contributors, with the maintenance currently led by the [Department of Digital Transformation in

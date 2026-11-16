@@ -66,7 +66,7 @@ class _MaxHoursConfig(BaseModel):
     )
     iron_air: float = Field(
         100,
-        description="Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+        description="Hours the iron-air storage sustains its full output capacity `p_nom`, i.e. hours of dispatched energy, rather than the state of charge in hours taken by the other storage technologies (cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_). The store is sized by dividing by the discharge efficiency, matching how duration and cost per kWh are quoted for iron-air.",
         alias="iron-air",
     )
     H2: float = Field(
@@ -201,7 +201,11 @@ class ElectricityConfig(BaseModel):
     )
     custom_powerplants: str | bool = Field(
         False,
-        description="Filter query for the custom powerplant database.",
+        description="Whether to add power plants from the custom power plant file(s) listed in `custom_powerplants_fn`. `true` adds all entries, `false` disables custom power plants from file. A string will add the custom entries from the file(s) after filtering them using a `pandas` query; configured filters via `powerplants_filter` are NOT applied to the custom powerplants and might need to be repeated in the query here..",
+    )
+    custom_powerplants_fn: str | list[str] = Field(
+        "data/custom_powerplants.csv",
+        description="Path or list of paths to CSV files with custom power plants, used if `custom_powerplants` is enabled. The files must follow the powerplantmatching format, see also `data/custom_powerplants.csv`. Multiple files are combined without overwriting entries. Files cannot be used to remove powerplants from the model. If a query is used for `custom_powerplants`, then the query is executed on the combined files before they are added to the model.",
     )
     everywhere_powerplants: list[str] = Field(
         default_factory=list,
@@ -219,7 +223,7 @@ class ElectricityConfig(BaseModel):
             "waste",
             "biomass",
         ],
-        description="List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
+        description="List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound. Sector-coupled models ignore OCGT, CCGT, oil, coal, lignite, biomass and waste here, because they add these technologies as links with fuel and emission tracking. With myopic or perfect foresight, they also ignore nuclear, which is added as links from uranium with its build years.",
     )
     renewable_carriers: list[str] = Field(
         default_factory=lambda: [
@@ -245,9 +249,9 @@ class ElectricityConfig(BaseModel):
         default_factory=_AutarkyConfig,
         description="Autarky configuration.",
     )
-    transmission_limit: str = Field(
+    transmission_limit: str | dict[int, str] = Field(
         "vopt",
-        description="Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",
+        description="Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system. Can be given per planning horizon, e.g. `{2030: v1.05, 2040: v1.1}`. With myopic foresight, the limit of each subsequent planning horizon is relative to the transmission capacities of the previous planning horizon. Per-horizon values are not supported for perfect foresight.",
     )
 
     model_config = ConfigDict(populate_by_name=True)

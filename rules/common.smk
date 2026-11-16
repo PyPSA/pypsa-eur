@@ -128,18 +128,31 @@ def dynamic_getter(wildcards, keys, default):
     return navigate_config(config_with_scenario, keys, default)
 
 
-def config_provider(*keys, default=None):
+def config_provider(*keys, default=None, subset=None):
     """Dynamically provide config values based on 'run' -> 'name'.
+
+    With ``subset``, only the listed keys of the returned section are passed.
+    Changes to other keys of the section then do not trigger a rerun.
 
     Usage in Snakemake rules would look something like:
     params:
         my_param=config_provider("key1", "key2", default="some_default_value")
+        my_section=config_provider("key1", subset=["key2", "key3"])
     """
     # Using functools.partial to freeze certain arguments in our getter functions.
     if config["run"].get("scenarios", {}).get("enable", False):
-        return partial(dynamic_getter, keys=keys, default=default)
+        getter = partial(dynamic_getter, keys=keys, default=default)
     else:
-        return partial(static_getter, keys=keys, default=default)
+        getter = partial(static_getter, keys=keys, default=default)
+
+    if subset is None:
+        return getter
+
+    def select(wildcards):
+        section = getter(wildcards)
+        return {key: section[key] for key in subset}
+
+    return select
 
 
 def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
@@ -211,7 +224,12 @@ def solver_threads(w):
     solver_options = config_provider("solving", "solver_options")(w)
     option_set = config_provider("solving", "solver", "options")(w)
     solver_option_set = solver_options[option_set]
-    threads = solver_option_set.get("threads") or solver_option_set.get("Threads") or 4
+    threads = (
+        solver_option_set.get("threads")
+        or solver_option_set.get("Threads")
+        or solver_option_set.get("MSK_IPAR_NUM_THREADS")
+        or 4
+    )
     return threads
 
 
@@ -222,6 +240,16 @@ def input_custom_extra_functionality(w):
     if path:
         return os.path.join(os.path.dirname(workflow.snakefile), path)
     return []
+
+
+def input_custom_costs(w) -> list[str]:
+    """Return the custom cost files as a list, empty if disabled."""
+    fns = config_provider("costs", "custom_cost_fn")(w)
+    if not fns:
+        return []
+    if isinstance(fns, str):
+        return [fns]
+    return fns
 
 
 def cost_year(w):
