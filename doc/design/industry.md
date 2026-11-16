@@ -85,11 +85,26 @@ assumed [@lechtenbohmerDecarbonisingEnergy2016]. Low- and medium-temperature
 process heat is supplied by solid biomass; high-temperature heat by methane
 or electricity where electric processes exist
 [@rehfeldtBottomupEstimation2018; @naeglerQuantificationEuropean2015].
-Hydrogen for high-temperature heat is not represented. Which of the demanded
-carriers is produced how, from fossil, biogenic or synthetic sources, is
-decided on the carrier pages: [Hydrogen](hydrogen.md),
+Hydrogen for high-temperature heat is not represented by default. Which of
+the demanded carriers is produced how, from fossil, biogenic or synthetic
+sources, is decided on the carrier pages: [Hydrogen](hydrogen.md),
 [Methane](methane.md), [Oil](oil.md), [Methanol](methanol.md) and
 [Biomass](biomass.md).
+
+Optionally, the supply of process heat above 100 °C is optimised instead of
+prescribed. The fuels that today's plants burn are then replaced by a heat
+demand in three temperature bands, 100 to 200 °C, 200 to 500 °C and above
+500 °C, with shares per subsector [@fleiterHydrogenInfrastructure2025].
+Steam up to 200 °C comes from gas, biomass or electric boilers or from heat
+pumps that use excess heat. Higher temperatures come from direct firing of
+gas, biomass or hydrogen. Gas and biomass can be combined with carbon
+capture. Feedstocks, process emissions, steel and pulp production keep their
+exogenous treatment. This option keeps today's energy intensities and counts
+heat demand as today's fuel input.
+
+!!! warning "No existing heat supply plants"
+    Existing plants are not represented. The first planning horizon of a
+    myopic pathway can therefore replace all of today's heat supply at once.
 
 Process emissions are tracked separately from energy-related emissions. They
 can be captured at a given capture rate, which turns them into a captured
@@ -110,5 +125,6 @@ per planning year, by electricity.
 - Rules: [build_industry_sector_ratios][],
   [build_industrial_production_per_country][],
   [build_industrial_production_per_country_tomorrow][],
-  [build_industrial_distribution_key][], [build_industrial_energy_demand_per_node][]
+  [build_industrial_distribution_key][], [build_industrial_energy_demand_per_node][],
+  [build_industry_sector_ratios_endogenous][]
 - Configuration: [industry](../configuration.md#industry_cf)

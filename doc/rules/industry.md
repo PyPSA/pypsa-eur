@@ -11,7 +11,7 @@ section.
 
 ## Energy intensities
 
-{{ rules("build_industry_sector_ratios", "build_industry_sector_ratios_intermediate") }}
+{{ rules("build_industry_sector_ratios", "build_industry_sector_ratios_endogenous", "build_industry_sector_ratios_intermediate") }}
 
 ## Production
 

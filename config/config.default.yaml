@@ -1035,6 +1035,24 @@ sector:
   conventional_generation:
     OCGT: gas
     CCGT: gas
+  industry_heat:
+    enable: false
+    min_part_load: 0.8
+    exclude_sectors:
+    - Pulp production
+    technologies:
+      "heat100-200":
+      - solid biomass
+      - gas
+      - heat pump
+      - electric boiler
+      "heat200-500":
+      - solid biomass
+      - gas
+      - hydrogen
+      heat500+:
+      - gas
+      - hydrogen
   biomass_to_liquid: true
   biomass_to_liquid_cc: false
   electrobiofuels: true
@@ -1042,6 +1060,7 @@ sector:
   biosng_cc: false
   bioH2: false
   municipal_solid_waste: false
+  waste_spatial: false
   limit_max_growth:
     enable: false
     factor: 1.3
