@@ -5377,6 +5377,11 @@
           "description": "Add option for coal CHPs with carbon capture.",
           "type": "boolean"
         },
+        "ccgt_cc": {
+          "default": false,
+          "description": "Add option for gas CCGTs with post-combustion carbon capture.",
+          "type": "boolean"
+        },
         "dac": {
           "default": true,
           "description": "Add option for Direct Air Capture (DAC).",
@@ -12904,6 +12909,11 @@
         "coal_cc": {
           "default": false,
           "description": "Add option for coal CHPs with carbon capture.",
+          "type": "boolean"
+        },
+        "ccgt_cc": {
+          "default": false,
+          "description": "Add option for gas CCGTs with post-combustion carbon capture.",
           "type": "boolean"
         },
         "dac": {
