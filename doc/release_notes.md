@@ -10,6 +10,9 @@
 * Performance: `build_renewable_profiles` now derives the resource class masks from the availability matrix instead of rasterising all regions again. Results with the default `resource_classes: 1` are unchanged. With more classes, only eligible cells now set the class bounds and the class regions ([#2411](https://github.com/PyPSA/pypsa-eur/pull/2411)).
 
 * Fix: Sector-coupled networks with a single bus work again. Heat pump COPs and limited heat source potentials no longer collapse with `.squeeze()` ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
+
+* Fix: Flexible enhanced geothermal reservoirs are now limited by the capacity of the wells at their surface bus instead of zero, and the constraint is skipped with `flexible: false` ([#2414](https://github.com/PyPSA/pypsa-eur/pull/2414)).
+
 * **Breaking:** `snapshots: start` and `snapshots: end` are now the first and last snapshot, both included, as in `pandas.date_range` with default arguments. The option `snapshots: inclusive` was removed ([#2101](https://github.com/PyPSA/pypsa-eur/issues/2101)). The workflow stops with an error that points to this note if `inclusive` is set, or if `end` is a date without time (formerly an exclusive end). Migration guide:
 
     | Before | After |
