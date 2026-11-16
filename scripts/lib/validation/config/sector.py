@@ -8,7 +8,7 @@ Sector configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#sector_cf
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -421,6 +421,38 @@ class _ImportsConfig(BaseModel):
             "oil": 125,
         },
         description="Price for importing renewable energy of carrier.",
+    )
+
+
+class _IndustryHeatConfig(BaseModel):
+    """Configuration for `sector.industry_heat` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Optimise the supply of industry process heat above 100 °C per temperature band instead of using exogenous fuel shares. Does not cover the steel sector. Uses today's specific energy consumption and no existing plants, so that the first horizon of a myopic pathway can replace all of today's heat supply.",
+    )
+    min_part_load: float = Field(
+        0.8,
+        ge=0,
+        le=1,
+        description="Minimum part load of newly built industry process heat supply.",
+    )
+    exclude_sectors: list[str] = Field(
+        default_factory=lambda: ["Pulp production"],
+        description="Industry sectors in `data/industry_heat_temperature_shares.csv` that keep exogenous fuel shares. Pulp production is excluded by default because it burns its own by-products.",
+    )
+    technologies: dict[
+        Literal["heat100-200", "heat200-500", "heat500+"],
+        list[
+            Literal["solid biomass", "gas", "hydrogen", "heat pump", "electric boiler"]
+        ],
+    ] = Field(
+        default_factory=lambda: {
+            "heat100-200": ["solid biomass", "gas", "heat pump", "electric boiler"],
+            "heat200-500": ["solid biomass", "gas", "hydrogen"],
+            "heat500+": ["gas", "hydrogen"],
+        },
+        description="Supply technologies per temperature band in °C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
     )
 
 
@@ -952,6 +984,11 @@ class SectorConfig(BaseModel):
     conventional_generation: dict[str, str] | list = Field(
         default_factory=lambda: {"OCGT": "gas", "CCGT": "gas"},
         description="Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
+    )
+
+    industry_heat: _IndustryHeatConfig = Field(
+        default_factory=_IndustryHeatConfig,
+        description="Endogenous supply of industry process heat.",
     )
 
     biomass_to_liquid: bool = Field(

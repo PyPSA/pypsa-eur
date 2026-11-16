@@ -1483,7 +1483,10 @@ def insert_electricity_distribution_grid(
     v2gs = n.links.index[n.links.carrier == "V2G"]
     n.links.loc[v2gs, "bus1"] += " low voltage"
 
-    hps = n.links.index[n.links.carrier.str.contains("heat pump")]
+    industry = n.links.carrier.str.contains("industry (?:heat pump|electric boiler)")
+    n.links.loc[industry, "bus0"] += " low voltage"
+
+    hps = n.links.index[n.links.carrier.str.contains("heat pump") & ~industry]
     n.links.loc[hps, "bus1"] += " low voltage"
 
     rh = n.links.index[n.links.carrier.str.contains("resistive heater")]
@@ -4373,6 +4376,116 @@ def add_biomass(
         )
 
 
+def add_industry_heat(
+    n: pypsa.Network,
+    nodes: pd.Index,
+    demand: pd.DataFrame,
+    costs: pd.DataFrame,
+    options: dict,
+    spatial: SimpleNamespace,
+) -> None:
+    """
+    Add industry process heat demand above 100 °C and its supply options.
+
+    Each temperature band has one bus per node with a constant load. Steam
+    at 100-200 °C comes from boilers or heat pumps, higher temperatures from
+    direct firing. Solid biomass and gas are also offered with carbon capture,
+    which takes its heat from the plant and its electricity from the grid.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    nodes : pd.Index
+        Nodes of the network
+    demand : pd.DataFrame
+        Heat demand (MW) with nodes as index and temperature bands as columns
+    costs : pd.DataFrame
+        Technology cost assumptions
+    options : dict
+        Sector options with `industry_heat` and `cc_capital_cost_factor`
+    spatial : SimpleNamespace
+        Spatial resolution of the carriers
+    """
+    logger.info("Add endogenous industry process heat supply")
+
+    cf = options["industry_heat"]
+    capture = "biomass CHP capture"
+    # input bus, technology for steam, technology for higher temperatures
+    supply = {
+        "solid biomass": (
+            spatial.biomass.nodes,
+            "solid biomass boiler steam",
+            "direct firing solid fuels",
+        ),
+        "gas": (spatial.gas.nodes, "gas boiler steam", "direct firing gas"),
+        "hydrogen": (nodes + " H2", "gas boiler steam", "direct firing gas"),
+        "heat pump": (nodes, "industrial heat pump high temperature", None),
+        "electric boiler": (nodes, "electric boiler steam", None),
+    }
+
+    for band, techs in cf["technologies"].items():
+        carrier = f"{band} industry"
+        bus = nodes + " " + carrier
+        p_set = demand.loc[nodes, band].values
+
+        n.add("Bus", bus, location=nodes, carrier=carrier, unit="MWh_th")
+        n.add("Load", bus, bus=bus, carrier=carrier, p_set=p_set)
+
+        for tech in techs:
+            bus0, steam, firing = supply[tech]
+            key = steam if band == "heat100-200" else firing
+            name = f"{carrier} {tech}"
+            # TODO: placeholder until costs of hydrogen firing are available
+            cost_factor = 10 if tech == "hydrogen" else 1
+            link = dict(
+                bus0=bus0,
+                bus1=bus,
+                efficiency=costs.at[key, "efficiency"],
+                capital_cost=cost_factor
+                * costs.at[key, "capital_cost"]
+                * costs.at[key, "efficiency"],
+                marginal_cost=cost_factor
+                * costs.at[key, "VOM"]
+                * costs.at[key, "efficiency"],
+                lifetime=costs.at[key, "lifetime"],
+                p_nom_extendable=True,
+                p_min_pu=cf["min_part_load"],
+            )
+            if key == "direct firing solid fuels":
+                link["marginal_cost"] += costs.at["biomass boiler", "pelletizing cost"]
+            if tech == "gas":
+                link |= dict(
+                    bus2="co2 atmosphere", efficiency2=costs.at["gas", "CO2 intensity"]
+                )
+            n.add("Link", nodes, suffix=f" {name}", carrier=name, **link)
+
+            if tech not in ["solid biomass", "gas"]:
+                continue
+
+            co2 = costs.at[tech, "CO2 intensity"]
+            captured = co2 * costs.at[capture, "capture_rate"]
+            electricity = (
+                costs.at[capture, "electricity-input"]
+                + costs.at[capture, "compression-electricity-input"]
+            )
+            link |= dict(
+                bus2="co2 atmosphere",
+                bus3=spatial.co2.nodes,
+                bus4=nodes,
+                efficiency=link["efficiency"]
+                - captured * costs.at[capture, "heat-input"],
+                efficiency2=link.get("efficiency2", 0.0) - captured,
+                efficiency3=captured,
+                efficiency4=-captured * electricity,
+                capital_cost=link["capital_cost"]
+                + costs.at[capture, "capital_cost"]
+                * co2
+                * options["cc_capital_cost_factor"][tech.removeprefix("solid ")],
+            )
+            n.add("Link", nodes, suffix=f" {name} CC", carrier=f"{name} CC", **link)
+
+
 def plastic_waste_co2_per_naphtha(
     industrial_demand: pd.DataFrame,
     costs: pd.DataFrame,
@@ -4694,6 +4807,9 @@ def add_industry(
             "Industry demand includes solid biomass, but `sector.biomass` is disabled. "
             "Enable `sector: {biomass: true}` in config."
         )
+
+    if options["industry_heat"]["enable"]:
+        add_industry_heat(n, nodes, industrial_demand / nhours, costs, options, spatial)
 
     n.add(
         "Bus",

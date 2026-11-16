@@ -5829,6 +5829,54 @@
           ],
           "description": "Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel."
         },
+        "industry_heat": {
+          "description": "Configuration for `sector.industry_heat` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Optimise the supply of industry process heat above 100 \u00b0C per temperature band instead of using exogenous fuel shares. Does not cover the steel sector. Uses today's specific energy consumption and no existing plants, so that the first horizon of a myopic pathway can replace all of today's heat supply.",
+              "type": "boolean"
+            },
+            "min_part_load": {
+              "default": 0.8,
+              "description": "Minimum part load of newly built industry process heat supply.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            "exclude_sectors": {
+              "description": "Industry sectors in `data/industry_heat_temperature_shares.csv` that keep exogenous fuel shares. Pulp production is excluded by default because it burns its own by-products.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "technologies": {
+              "additionalProperties": {
+                "items": {
+                  "enum": [
+                    "solid biomass",
+                    "gas",
+                    "hydrogen",
+                    "heat pump",
+                    "electric boiler"
+                  ],
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "description": "Supply technologies per temperature band in \u00b0C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
+              "propertyNames": {
+                "enum": [
+                  "heat100-200",
+                  "heat200-500",
+                  "heat500+"
+                ]
+              },
+              "type": "object"
+            }
+          }
+        },
         "biomass_to_liquid": {
           "default": true,
           "description": "Add option for transforming solid biomass into liquid fuel with the same properties as oil.",
@@ -8293,6 +8341,54 @@
           "default": true,
           "description": "Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file.",
           "type": "boolean"
+        }
+      }
+    },
+    "_IndustryHeatConfig": {
+      "description": "Configuration for `sector.industry_heat` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Optimise the supply of industry process heat above 100 \u00b0C per temperature band instead of using exogenous fuel shares. Does not cover the steel sector. Uses today's specific energy consumption and no existing plants, so that the first horizon of a myopic pathway can replace all of today's heat supply.",
+          "type": "boolean"
+        },
+        "min_part_load": {
+          "default": 0.8,
+          "description": "Minimum part load of newly built industry process heat supply.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "exclude_sectors": {
+          "description": "Industry sectors in `data/industry_heat_temperature_shares.csv` that keep exogenous fuel shares. Pulp production is excluded by default because it burns its own by-products.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "technologies": {
+          "additionalProperties": {
+            "items": {
+              "enum": [
+                "solid biomass",
+                "gas",
+                "hydrogen",
+                "heat pump",
+                "electric boiler"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": "Supply technologies per temperature band in \u00b0C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
+          "propertyNames": {
+            "enum": [
+              "heat100-200",
+              "heat200-500",
+              "heat500+"
+            ]
+          },
+          "type": "object"
         }
       }
     },
@@ -13372,6 +13468,54 @@
             }
           ],
           "description": "Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel."
+        },
+        "industry_heat": {
+          "description": "Configuration for `sector.industry_heat` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Optimise the supply of industry process heat above 100 \u00b0C per temperature band instead of using exogenous fuel shares. Does not cover the steel sector. Uses today's specific energy consumption and no existing plants, so that the first horizon of a myopic pathway can replace all of today's heat supply.",
+              "type": "boolean"
+            },
+            "min_part_load": {
+              "default": 0.8,
+              "description": "Minimum part load of newly built industry process heat supply.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            "exclude_sectors": {
+              "description": "Industry sectors in `data/industry_heat_temperature_shares.csv` that keep exogenous fuel shares. Pulp production is excluded by default because it burns its own by-products.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "technologies": {
+              "additionalProperties": {
+                "items": {
+                  "enum": [
+                    "solid biomass",
+                    "gas",
+                    "hydrogen",
+                    "heat pump",
+                    "electric boiler"
+                  ],
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "description": "Supply technologies per temperature band in \u00b0C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
+              "propertyNames": {
+                "enum": [
+                  "heat100-200",
+                  "heat200-500",
+                  "heat500+"
+                ]
+              },
+              "type": "object"
+            }
+          }
         },
         "biomass_to_liquid": {
           "default": true,
