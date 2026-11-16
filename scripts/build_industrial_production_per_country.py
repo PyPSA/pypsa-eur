@@ -132,7 +132,7 @@ ch_mapping = {
 }
 
 
-def find_physical_output(df):
+def find_physical_output(df: pd.DataFrame) -> slice:
     start = np.where(df.index.str.contains("Physical output", na=False))[0][0]
     empty_row = np.where(df.index.isnull())[0]
     end = empty_row[np.argmax(empty_row > start)]
@@ -238,13 +238,13 @@ def industry_production(
         jrc_dir=jrc_dir,
         ch_industrial_production=ch_industrial_production,
     )
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" country",
-        total=len(countries),
-        desc="Build industry production",
-        disable=disable_progress,
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " country",
+        "total": len(countries),
+        "desc": "Build industry production",
+        "disable": disable_progress,
+    }
     with mp.Pool(processes=nprocesses) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 

@@ -24,6 +24,7 @@ import multiprocessing as mp
 import warnings
 from functools import partial
 from itertools import chain, product
+from pathlib import Path
 
 import geopandas as gpd
 import networkx as nx
@@ -38,6 +39,7 @@ from packaging.version import Version, parse
 from scipy.sparse import csgraph
 from scipy.spatial import KDTree
 from shapely.geometry import Point
+from shapely.geometry.base import BaseGeometry
 from tqdm import tqdm
 
 from scripts._helpers import (
@@ -52,21 +54,23 @@ PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 logger = logging.getLogger(__name__)
 
 
-def _get_oid(df):
+def _get_oid(df: pd.DataFrame) -> pd.Series:
     if "tags" in df.columns:
         return df.tags.str.extract(r'"oid"=>"(\d+)"', expand=False)
     else:
         return pd.Series(np.nan, df.index)
 
 
-def _get_country(df):
+def _get_country(df: pd.DataFrame) -> pd.Series:
     if "tags" in df.columns:
         return df.tags.str.extract('"country"=>"([A-Z]{2})"', expand=False)
     else:
         return pd.Series(np.nan, df.index)
 
 
-def _find_closest_links(links, new_links, distance_upper_bound=1.5):
+def _find_closest_links(
+    links: pd.DataFrame, new_links: pd.DataFrame, distance_upper_bound: float = 1.5
+) -> pd.Series:
     treecoords = np.asarray(
         [
             np.asarray(shapely.wkt.loads(s).coords)[[0, -1]].flatten()
@@ -82,7 +86,7 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
     found_i = np.arange(len(new_links) * 2)[found_b] % len(new_links)
     return (
         pd.DataFrame(
-            dict(D=dist[found_b], i=links.index[ind[found_b] % len(links)]),
+            {"D": dist[found_b], "i": links.index[ind[found_b] % len(links)]},
             index=new_links.index[found_i],
         )
         .sort_values(by="D")[lambda ds: ~ds.index.duplicated(keep="first")]
@@ -90,17 +94,22 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
     )
 
 
-def _load_buses(buses, europe_shape, countries, voltages):
+def _load_buses(
+    buses: str | Path,
+    europe_shape: str | Path,
+    countries: list[str],
+    voltages: list[float],
+) -> pd.DataFrame:
     buses = (
         pd.read_csv(
             buses,
             quotechar="'",
             true_values=["t"],
             false_values=["f"],
-            dtype=dict(bus_id="str"),
+            dtype={"bus_id": "str"},
         )
         .set_index("bus_id")
-        .rename(columns=dict(voltage="v_nom"))
+        .rename(columns={"voltage": "v_nom"})
     )
 
     if "station_id" in buses.columns:
@@ -139,13 +148,13 @@ def _load_buses(buses, europe_shape, countries, voltages):
     )
 
 
-def _load_transformers(buses, transformers):
+def _load_transformers(buses: pd.DataFrame, transformers: str | Path) -> pd.DataFrame:
     transformers = pd.read_csv(
         transformers,
         quotechar="'",
         true_values=["t"],
         false_values=["f"],
-        dtype=dict(transformer_id="str", bus0="str", bus1="str"),
+        dtype={"transformer_id": "str", "bus0": "str", "bus1": "str"},
     ).set_index("transformer_id")
 
     transformers = _remove_dangling_branches(transformers, buses)
@@ -153,13 +162,15 @@ def _load_transformers(buses, transformers):
     return transformers
 
 
-def _load_converters_from_eg(buses, converters):
+def _load_converters_from_eg(
+    buses: pd.DataFrame, converters: str | Path
+) -> pd.DataFrame:
     converters = pd.read_csv(
         converters,
         quotechar="'",
         true_values=["t"],
         false_values=["f"],
-        dtype=dict(converter_id="str", bus0="str", bus1="str"),
+        dtype={"converter_id": "str", "bus0": "str", "bus1": "str"},
     ).set_index("converter_id")
 
     converters = _remove_dangling_branches(converters, buses)
@@ -169,13 +180,15 @@ def _load_converters_from_eg(buses, converters):
     return converters
 
 
-def _load_converters_from_raw(buses, converters):
+def _load_converters_from_raw(
+    buses: pd.DataFrame, converters: str | Path
+) -> pd.DataFrame:
     converters = pd.read_csv(
         converters,
         quotechar="'",
         true_values=["t"],
         false_values=["f"],
-        dtype=dict(converter_id="str", bus0="str", bus1="str"),
+        dtype={"converter_id": "str", "bus0": "str", "bus1": "str"},
     ).set_index("converter_id")
 
     converters = _remove_dangling_branches(converters, buses)
@@ -185,13 +198,18 @@ def _load_converters_from_raw(buses, converters):
     return converters
 
 
-def _load_links_from_eg(buses, links):
+def _load_links_from_eg(buses: pd.DataFrame, links: str | Path) -> pd.DataFrame:
     links = pd.read_csv(
         links,
         quotechar="'",
         true_values=["t"],
         false_values=["f"],
-        dtype=dict(link_id="str", bus0="str", bus1="str", under_construction="bool"),
+        dtype={
+            "link_id": "str",
+            "bus0": "str",
+            "bus1": "str",
+            "under_construction": "bool",
+        },
     ).set_index("link_id")
 
     links["length"] /= 1e3
@@ -208,19 +226,19 @@ def _load_links_from_eg(buses, links):
     return links
 
 
-def _load_links_from_raw(buses, links):
+def _load_links_from_raw(buses: pd.DataFrame, links: str | Path) -> pd.DataFrame:
     links = pd.read_csv(
         links,
         quotechar="'",
         true_values=["t"],
         false_values=["f"],
-        dtype=dict(
-            link_id="str",
-            bus0="str",
-            bus1="str",
-            voltage="int",
-            p_nom="float",
-        ),
+        dtype={
+            "link_id": "str",
+            "bus0": "str",
+            "bus1": "str",
+            "voltage": "int",
+            "p_nom": "float",
+        },
     ).set_index("link_id")
 
     links["length"] /= 1e3
@@ -233,23 +251,23 @@ def _load_links_from_raw(buses, links):
     return links
 
 
-def _load_lines(buses, lines):
+def _load_lines(buses: pd.DataFrame, lines: str | Path) -> pd.DataFrame:
     lines = (
         pd.read_csv(
             lines,
             quotechar="'",
             true_values=["t"],
             false_values=["f"],
-            dtype=dict(
-                line_id="str",
-                bus0="str",
-                bus1="str",
-                underground="bool",
-                under_construction="bool",
-            ),
+            dtype={
+                "line_id": "str",
+                "bus0": "str",
+                "bus1": "str",
+                "underground": "bool",
+                "under_construction": "bool",
+            },
         )
         .set_index("line_id")
-        .rename(columns=dict(voltage="v_nom", circuits="num_parallel"))
+        .rename(columns={"voltage": "v_nom", "circuits": "num_parallel"})
     )
 
     lines["length"] /= 1e3
@@ -260,7 +278,9 @@ def _load_lines(buses, lines):
     return lines
 
 
-def _apply_parameter_corrections(n, parameter_corrections):
+def _apply_parameter_corrections(
+    n: pypsa.Network, parameter_corrections: str | Path
+) -> None:
     with open(parameter_corrections) as f:
         corrections = yaml.safe_load(f)
 
@@ -285,7 +305,7 @@ def _apply_parameter_corrections(n, parameter_corrections):
                 df.loc[inds, attr] = r[inds].astype(df[attr].dtype)
 
 
-def _reconnect_crimea(lines):
+def _reconnect_crimea(lines: pd.DataFrame) -> pd.DataFrame:
     logger.info("Reconnecting Crimea to the Ukrainian grid.")
     lines_to_crimea = pd.DataFrame(
         {
@@ -304,7 +324,12 @@ def _reconnect_crimea(lines):
     return pd.concat([lines, lines_to_crimea])
 
 
-def _set_electrical_parameters_lines_eg(lines, voltages, line_types, s_max_pu):
+def _set_electrical_parameters_lines_eg(
+    lines: pd.DataFrame,
+    voltages: list[float],
+    line_types: dict,
+    s_max_pu: float,
+) -> pd.DataFrame:
     for v_nom in voltages:
         lines.loc[lines["v_nom"] == v_nom, "type"] = line_types[v_nom]
 
@@ -313,7 +338,12 @@ def _set_electrical_parameters_lines_eg(lines, voltages, line_types, s_max_pu):
     return lines
 
 
-def _set_electrical_parameters_lines_raw(lines, voltages, line_types, s_max_pu):
+def _set_electrical_parameters_lines_raw(
+    lines: pd.DataFrame,
+    voltages: list[float],
+    line_types: dict,
+    s_max_pu: float,
+) -> pd.DataFrame:
     if lines.empty:
         lines["type"] = []
         return lines
@@ -332,7 +362,7 @@ def _set_electrical_parameters_lines_raw(lines, voltages, line_types, s_max_pu):
     return lines
 
 
-def _set_lines_s_nom_from_linetypes(n):
+def _set_lines_s_nom_from_linetypes(n: pypsa.Network) -> None:
     n.lines["s_nom"] = (
         np.sqrt(3)
         * n.lines["type"].map(n.line_types.i_nom)
@@ -341,7 +371,12 @@ def _set_lines_s_nom_from_linetypes(n):
     )
 
 
-def _set_electrical_parameters_links_eg(links, p_max_pu, p_min_pu, links_p_nom):
+def _set_electrical_parameters_links_eg(
+    links: pd.DataFrame,
+    p_max_pu: float,
+    p_min_pu: float,
+    links_p_nom: str | Path,
+) -> pd.DataFrame:
     if links.empty:
         return links
 
@@ -372,7 +407,9 @@ def _set_electrical_parameters_links_eg(links, p_max_pu, p_min_pu, links_p_nom):
     return links
 
 
-def _set_electrical_parameters_links_raw(links, p_max_pu, p_min_pu):
+def _set_electrical_parameters_links_raw(
+    links: pd.DataFrame, p_max_pu: float, p_min_pu: float
+) -> pd.DataFrame:
     if links.empty:
         return links
 
@@ -384,7 +421,9 @@ def _set_electrical_parameters_links_raw(links, p_max_pu, p_min_pu):
     return links
 
 
-def _set_electrical_parameters_converters(converters, p_max_pu, p_min_pu):
+def _set_electrical_parameters_converters(
+    converters: pd.DataFrame, p_max_pu: float, p_min_pu: float
+) -> pd.DataFrame:
     converters["p_max_pu"] = p_max_pu
     converters["p_min_pu"] = p_min_pu
 
@@ -400,7 +439,9 @@ def _set_electrical_parameters_converters(converters, p_max_pu, p_min_pu):
     return converters
 
 
-def _set_electrical_parameters_transformers(transformers, config):
+def _set_electrical_parameters_transformers(
+    transformers: pd.DataFrame, config: dict
+) -> pd.DataFrame:
     ## Add transformer parameters
     transformers["x"] = config.get("x", 0.1)
     if "s_nom" not in transformers:
@@ -410,13 +451,17 @@ def _set_electrical_parameters_transformers(transformers, config):
     return transformers
 
 
-def _remove_dangling_branches(branches, buses):
+def _remove_dangling_branches(
+    branches: pd.DataFrame, buses: pd.DataFrame
+) -> pd.DataFrame:
     return pd.DataFrame(
         branches.loc[branches.bus0.isin(buses.index) & branches.bus1.isin(buses.index)]
     )
 
 
-def _remove_unconnected_components(network, threshold=6):
+def _remove_unconnected_components(
+    network: pypsa.Network, threshold: int = 6
+) -> pypsa.Network:
     _, labels = csgraph.connected_components(
         network.adjacency_matrix(return_dataframe=False), directed=False
     )
@@ -432,10 +477,15 @@ def _remove_unconnected_components(network, threshold=6):
     return network[component == component_sizes.index[0]]
 
 
-def _set_countries_and_substations(n, countries, country_shapes, offshore_shapes):
+def _set_countries_and_substations(
+    n: pypsa.Network,
+    countries: list[str],
+    country_shapes: str | Path,
+    offshore_shapes: str | Path,
+) -> pd.DataFrame:
     buses = n.buses
 
-    def buses_in_shape(shape):
+    def buses_in_shape(shape: BaseGeometry) -> pd.Series:
         shape = shapely.prepared.prep(shape)
         return pd.Series(
             np.fromiter(
@@ -459,7 +509,7 @@ def _set_countries_and_substations(n, countries, country_shapes, offshore_shapes
         "substation|converter station", case=False
     )
 
-    def prefer_voltage(x, which):
+    def prefer_voltage(x: pd.DataFrame, which: str) -> pd.Series:
         index = x.index
         if len(index) == 1:
             return pd.Series(index, index)
@@ -470,7 +520,7 @@ def _set_countries_and_substations(n, countries, country_shapes, offshore_shapes
         )
         return pd.Series(key, index)
 
-    compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
+    compat_kws = {"include_groups": False} if PD_GE_2_2 else {}
     gb = buses.loc[substation_b].groupby(
         ["x", "y"], as_index=False, group_keys=False, sort=False
     )
@@ -527,11 +577,11 @@ def _set_countries_and_substations(n, countries, country_shapes, offshore_shapes
         for b in n.buses.index[c_tag_nan_b]:
             df = (
                 pd.DataFrame(
-                    dict(
-                        pathlength=nx.single_source_dijkstra_path_length(
+                    {
+                        "pathlength": nx.single_source_dijkstra_path_length(
                             graph, b, cutoff=200
                         )
-                    )
+                    }
                 )
                 .join(n.buses.country)
                 .dropna()
@@ -550,7 +600,7 @@ def _set_countries_and_substations(n, countries, country_shapes, offshore_shapes
     return buses
 
 
-def _replace_b2b_converter_at_country_border_by_link(n):
+def _replace_b2b_converter_at_country_border_by_link(n: pypsa.Network) -> None:
     # Affects only the B2B converter in Lithuania at the Polish border at the moment
     buscntry = n.buses.country
     linkcntry = n.links.bus0.map(buscntry)
@@ -558,7 +608,9 @@ def _replace_b2b_converter_at_country_border_by_link(n):
         (n.links.carrier == "B2B") & (linkcntry == n.links.bus1.map(buscntry))
     ]
 
-    def findforeignbus(G, i):
+    def findforeignbus(
+        G: nx.MultiGraph, i: str
+    ) -> tuple[str, str, str] | tuple[None, None, None]:
         cntry = linkcntry.at[i]
         for busattr in ("bus0", "bus1"):
             b0 = n.links.at[i, busattr]
@@ -594,7 +646,9 @@ def _replace_b2b_converter_at_country_border_by_link(n):
             )
 
 
-def _set_links_underwater_fraction(n, offshore_shapes):
+def _set_links_underwater_fraction(
+    n: pypsa.Network, offshore_shapes: str | Path
+) -> None:
     if n.links.empty:
         return
 
@@ -608,7 +662,9 @@ def _set_links_underwater_fraction(n, offshore_shapes):
         )
 
 
-def _adjust_capacities_of_under_construction_branches(n, lines_mode, links_mode):
+def _adjust_capacities_of_under_construction_branches(
+    n: pypsa.Network, lines_mode: str, links_mode: str
+) -> pypsa.Network:
     if lines_mode == "zero":
         n.lines.loc[n.lines.under_construction, "num_parallel"] = 0.0
         n.lines.loc[n.lines.under_construction, "s_nom"] = 0.0
@@ -635,7 +691,9 @@ def _adjust_capacities_of_under_construction_branches(n, lines_mode, links_mode)
     return n
 
 
-def _set_shapes(n, country_shapes, offshore_shapes):
+def _set_shapes(
+    n: pypsa.Network, country_shapes: str | Path, offshore_shapes: str | Path
+) -> None:
     # Write the geodataframes country_shapes and offshore_shapes to the network.shapes component
     country_shapes = gpd.read_file(country_shapes).rename(columns={"name": "idx"})
     country_shapes["type"] = "country"
@@ -652,32 +710,31 @@ def _set_shapes(n, country_shapes, offshore_shapes):
 
 
 def base_network(
-    buses,
-    converters,
-    transformers,
-    lines,
-    links,
-    links_p_nom,
-    europe_shape,
-    country_shapes,
-    offshore_shapes,
-    countries,
-    parameter_corrections,
-    snapshots,
-    base_network,
-    osm_version,
-    voltages,
-    line_config,
-    link_config,
-    transformer_config,
-):
+    buses: str,
+    converters: str,
+    transformers: str,
+    lines: str,
+    links: str,
+    links_p_nom: str | None,
+    europe_shape: str,
+    country_shapes: str,
+    offshore_shapes: str,
+    countries: list[str],
+    parameter_corrections: str | None,
+    snapshots: pd.DatetimeIndex,
+    base_network: str,
+    osm_version: str,
+    voltages: list[float],
+    line_config: dict,
+    link_config: dict,
+    transformer_config: dict,
+) -> pypsa.Network:
     assert base_network in {"entsoegridkit", "osm", "tyndp"}, (
         f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
     )
     if base_network == "entsoegridkit":
-        warnings.warn(
-            "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm' instead.",
-            DeprecationWarning,
+        logger.warning(
+            "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm' instead."
         )
 
     logger_str = (
@@ -773,7 +830,9 @@ def base_network(
     return n
 
 
-def _get_linetypes_config(line_types, voltages):
+def _get_linetypes_config(
+    line_types: dict[float, str], voltages: list[float]
+) -> dict[float, str]:
     """
     Return the dictionary of linetypes for selected voltages. The dictionary is
     a subset of the dictionary line_types, whose keys match the selected
@@ -799,7 +858,7 @@ def _get_linetypes_config(line_types, voltages):
     return {k: v for k, v in line_types.items() if k in voltages}
 
 
-def _get_linetype_by_voltage(v_nom, d_linetypes):
+def _get_linetype_by_voltage(v_nom: float, d_linetypes: dict[float, str]) -> str:
     """
     Return the linetype of a specific line based on its voltage v_nom.
 
@@ -883,12 +942,12 @@ def process_offshore_regions(
 ) -> list[gpd.GeoDataFrame]:
     offshore_regions = []
 
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" regions",
-        total=len(countries),
-        desc="Building offshore regions",
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " regions",
+        "total": len(countries),
+        "desc": "Building offshore regions",
+    }
     for country in tqdm(countries, **tqdm_kwargs):
         if country not in offshore_shapes.index:
             continue
@@ -979,12 +1038,12 @@ def build_bus_shapes(
     )
 
     # Onshore regions
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" regions",
-        total=len(admin_regions),
-        desc="Building onshore regions",
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " regions",
+        "total": len(admin_regions),
+        "desc": "Building onshore regions",
+    }
     func = partial(
         process_onshore_regions,
         buses=buses,
@@ -1015,7 +1074,7 @@ def build_bus_shapes(
     return onshore_regions, offshore_regions, onshore_shapes, offshore_shapes
 
 
-def append_bus_shapes(n, shapes, type):
+def append_bus_shapes(n: pypsa.Network, shapes: gpd.GeoDataFrame, type: str) -> None:
     """
     Append shapes to the network. If shapes with the same component and type
     already exist, they will be removed.
@@ -1201,15 +1260,13 @@ def create_merged_admin_region(
     )  # if one of the regions is not empty, the merged region is not empty
     area = gdf["area"].sum()
     neighbours = sorted(
-        list(
-            set(
-                chain.from_iterable(
-                    [
-                        neighbour
-                        for neighbour in gdf["neighbours"]
-                        if isinstance(neighbour, list)
-                    ]
-                )
+        set(
+            chain.from_iterable(
+                [
+                    neighbour
+                    for neighbour in gdf["neighbours"]
+                    if isinstance(neighbour, list)
+                ]
             )
         )
     )
@@ -1289,7 +1346,7 @@ def clean_dict(
         single_df = pd.DataFrame(
             zip(
                 single_keys,
-                [set([key, value]) for key, value in zip(single_keys, single_values)],
+                [{key, value} for key, value in zip(single_keys, single_values)],
             )
         )
         # Only keep first occurrence of duplicates
@@ -1303,7 +1360,7 @@ def clean_dict(
 
     # Create list of values, that also exist as key
     double_values = list(chain.from_iterable(diction.values()))
-    double_values = [x for x in double_values if x in diction.keys()]
+    double_values = [x for x in double_values if x in diction]
 
     for key, values in diction.items():
         diction[key] = [value for value in values if value not in double_values]
@@ -1654,12 +1711,12 @@ if __name__ == "__main__":
     country_shapes = snakemake.input.country_shapes
     offshore_shapes = snakemake.input.offshore_shapes
 
-    if "links_p_nom" in snakemake.input.keys():
+    if "links_p_nom" in snakemake.input.keys():  # noqa: SIM118
         links_p_nom = snakemake.input.links_p_nom
     else:
         links_p_nom = None
 
-    if "parameter_corrections" in snakemake.input.keys():
+    if "parameter_corrections" in snakemake.input.keys():  # noqa: SIM118
         parameter_corrections = snakemake.input.parameter_corrections
     else:
         parameter_corrections = None

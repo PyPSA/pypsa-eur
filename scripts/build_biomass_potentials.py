@@ -25,13 +25,18 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import area, configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
 
 
-def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_type):
+def _calc_unsustainable_potential(
+    df: pd.DataFrame,
+    df_unsustainable: pd.DataFrame,
+    share_unsus: float,
+    resource_type: str,
+) -> pd.Series:
     """
     Calculate the unsustainable biomass potential for a given resource type or
     regex.
@@ -58,7 +63,7 @@ def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_ty
     else:
         resource_potential = df_unsustainable[resource_type]
 
-    def _calculate_resource_allocation(c):
+    def _calculate_resource_allocation(c: pd.Series) -> float:
         country = c.name[:2]
         country_total = df.loc[df.index.str[:2] == country].sum().sum()
         if country_total == 0:
@@ -75,7 +80,7 @@ def build_nuts_population_data(
     swiss_cantons: str | list,
     swiss_population: str | list,
     year: int = 2013,
-):
+) -> pd.DataFrame:
     pop = pd.read_csv(
         nuts3_population,
         sep=r"\,| \t|\t",
@@ -114,7 +119,7 @@ def build_nuts_population_data(
 
 def enspreso_biomass_potentials(
     enspreso_biomass: str, year: int = 2020, scenario: str = "ENS_Low"
-):
+) -> pd.DataFrame:
     """
     Loads the JRC ENSPRESO biomass potentials.
 
@@ -171,7 +176,7 @@ def enspreso_biomass_potentials(
     return bio
 
 
-def disaggregate_nuts0(bio: pd.DataFrame, pop: pd.DataFrame):
+def disaggregate_nuts0(bio: pd.DataFrame, pop: pd.DataFrame) -> pd.DataFrame:
     """
     Some commodities are only given on NUTS0 level. These are disaggregated
     here using the NUTS2 population as distribution key.
@@ -204,31 +209,26 @@ def disaggregate_nuts0(bio: pd.DataFrame, pop: pd.DataFrame):
     return bio
 
 
-def build_nuts2_shapes(nuts2: str, country_shapes: str):
+def build_nuts2_shapes(nuts2: str, country_shapes: str) -> gpd.GeoDataFrame:
     """
     - load NUTS2 geometries
     - add RS, AL, BA country shapes (not covered in NUTS 2013)
     - consistently name ME, MK
     """
-    nuts2 = gpd.GeoDataFrame(gpd.read_file(nuts2).set_index("NUTS_ID").geometry)
+    shapes = gpd.GeoDataFrame(gpd.read_file(nuts2).set_index("NUTS_ID").geometry)
 
     countries = gpd.read_file(country_shapes).set_index("name")
     missing_iso2 = countries.index.intersection(["AL", "RS", "XK", "BA"])
     missing = countries.loc[missing_iso2]
 
-    nuts2.rename(index={"ME00": "ME", "MK00": "MK"}, inplace=True)
+    shapes.rename(index={"ME00": "ME", "MK00": "MK"}, inplace=True)
 
-    return pd.concat([nuts2, missing])
-
-
-def area(gdf):
-    """
-    Returns area of GeoDataFrame geometries in square kilometers.
-    """
-    return gdf.to_crs(epsg=3035).area.div(1e6)
+    return pd.concat([shapes, missing])
 
 
-def convert_nuts2_to_regions(bio_nuts2, regions):
+def convert_nuts2_to_regions(
+    bio_nuts2: gpd.GeoDataFrame, regions: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
     """
     Converts biomass potentials given in NUTS2 to PyPSA-Eur regions based on
     the overlay of both GeoDataFrames in proportion to the area.
@@ -270,7 +270,7 @@ def add_unsustainable_potentials(
     countries: list[str],
     investment_year: int,
     params: dict,
-):
+) -> pd.DataFrame:
     """
     Add unsustainable biomass potentials to the given dataframe. The difference
     between the data of JRC and Eurostat is assumed to be unsustainable
@@ -327,7 +327,7 @@ def add_unsustainable_potentials(
     df_unsustainable = df_unsustainable[bio_carriers]
 
     # Phase out unsustainable biomass potentials linearly from 2020 to 2035 while phasing in sustainable potentials
-    share_unsus = params.get("share_unsustainable_use_retained").get(investment_year)
+    share_unsus = params["share_unsustainable_use_retained"][investment_year]
 
     df_wo_ch = df.drop(df.filter(regex=r"CH\d*", axis=0).index)
 
@@ -355,7 +355,7 @@ def add_unsustainable_potentials(
         resource_type="R5210|R5220|R5230|R5290",  # gasoline, diesel, kerosene, liquids
     )
 
-    share_sus = params.get("share_sustainable_potential_available").get(investment_year)
+    share_sus = params["share_sustainable_potential_available"][investment_year]
     df.loc[df_wo_ch.index] *= share_sus
 
     df = (

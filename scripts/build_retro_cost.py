@@ -109,7 +109,9 @@ l_strength = ["0.07", "0.075", "0.08", "0.1", "0.15", "0.22", "0.24", "0.26"]
 # (ii) --- FUNCTIONS ----------------------------------------------------------
 
 
-def get_average_temperature_during_heating_season(temperature, t_threshold=15):
+def get_average_temperature_during_heating_season(
+    temperature: pd.Series, t_threshold: float = 15
+) -> float:
     """
     Returns average temperature during heating season
     input:
@@ -129,7 +131,7 @@ def prepare_building_stock_data(
     clustered_pop_layout: str,
     u_values_PL: str,
     countries: list[str],
-):
+) -> tuple[pd.DataFrame, dict[str, str], list[str], pd.DataFrame, pd.DataFrame]:
     """
     Reads building stock data and cleans up the format, returns
     --------
@@ -310,7 +312,7 @@ def prepare_building_stock_data(
 
 def prepare_building_topology(
     u_values: pd.DataFrame, data_tabula: str, same_building_topology: bool = True
-):
+) -> pd.DataFrame:
     """
     Reads in typical building topologies (e.g. average surface of building
     elements) and typical losses through thermal bridging and air ventilation.
@@ -385,7 +387,7 @@ def prepare_building_topology(
     ]
 
     # map tabula building periods to hotmaps building periods
-    def map_periods(build_year1, build_year2):
+    def map_periods(build_year1: float, build_year2: float) -> str:
         periods = {
             (0, 1945): "Before 1945",
             (1945, 1969): "1945 - 1969",
@@ -478,7 +480,7 @@ def prepare_cost_retro(
     interest_rate: float,
     construction_index: bool,
     tax_weighting: bool,
-):
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series | None, pd.Series | None]:
     """
     Read and prepare retro costs, annualises them if annualise_cost=True.
     """
@@ -521,7 +523,7 @@ def prepare_cost_retro(
     return cost_retro, window_assumptions, cost_w, tax_w
 
 
-def prepare_temperature_data(air_temperature: str):
+def prepare_temperature_data(air_temperature: str) -> tuple[pd.Series, pd.Series]:
     """
     Returns the temperature dependent data for each country:
 
@@ -556,7 +558,7 @@ def prepare_temperature_data(air_temperature: str):
 
 
 # windows ---------------------------------------------------------------
-def window_limit(l, window_assumptions):  # noqa: E741
+def window_limit(l: float, window_assumptions: pd.DataFrame) -> float:  # noqa: E741
     """
     Define limit u value from which on window is retrofitted.
     """
@@ -569,7 +571,7 @@ def window_limit(l, window_assumptions):  # noqa: E741
     return m * l + a
 
 
-def u_retro_window(l, window_assumptions):  # noqa: E741
+def u_retro_window(l: float, window_assumptions: pd.DataFrame) -> float:  # noqa: E741
     """
     Define retrofitting value depending on renovation strength.
     """
@@ -583,12 +585,12 @@ def u_retro_window(l, window_assumptions):  # noqa: E741
 
 
 def window_cost(
-    u,
+    u: float,
     cost_retro: pd.DataFrame,
     window_assumptions: pd.DataFrame,
     annualise_cost: bool,
     interest_rate: float,
-):
+) -> float:
     """
     Get costs for new windows depending on u value.
     """
@@ -608,14 +610,14 @@ def window_cost(
     return window_cost
 
 
-def calculate_costs(  # noqa: E741
+def calculate_costs(
     u_values: pd.DataFrame,
-    l: str,
+    l: str,  # noqa: E741
     cost_retro: pd.DataFrame,
     window_assumptions: pd.DataFrame,
     annualise_cost: bool,
     interest_rate: float,
-):
+) -> pd.Series:
     """
     Returns costs for a given retrofitting strength weighted by the average
     surface/volume ratio of the component for each building type.
@@ -689,7 +691,9 @@ def calculate_new_u(u_values, l, l_weight, window_assumptions, k=0.035):  # noqa
     )
 
 
-def map_tabula_to_hotmaps(df_tabula, df_hotmaps, column_prefix):
+def map_tabula_to_hotmaps(
+    df_tabula: pd.Series, df_hotmaps: pd.DataFrame, column_prefix: str
+) -> pd.DataFrame:
     """
     Maps tabula data to hotmaps data with wished column name prefix.
 
@@ -717,7 +721,7 @@ def map_tabula_to_hotmaps(df_tabula, df_hotmaps, column_prefix):
     return values
 
 
-def get_solar_gains_per_year(window_area):
+def get_solar_gains_per_year(window_area: float) -> float:
     """
     Returns solar heat gains during heating season in [kWh/a] depending on the
     window area [m^2] of the building, assuming a equal distributed window
@@ -733,7 +737,7 @@ def get_solar_gains_per_year(window_area):
     )
 
 
-def map_to_lstrength(l_strength, df):
+def map_to_lstrength(l_strength: list[str], df: pd.DataFrame) -> pd.DataFrame:
     """
     Renames column names from a pandas dataframe to map tabula retrofitting
     strengths [2 = moderate, 3 = ambitious] to l_strength.
@@ -760,7 +764,7 @@ def calculate_heat_losses(
     l_strength: list[str],
     temperature_factor: pd.Series,
     window_assumptions: pd.DataFrame,
-):
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Calculates total annual heat losses Q_ht for different insulation
     thicknesses (l_strength), depending on current insulation state (u_values),
@@ -800,7 +804,7 @@ def calculate_heat_losses(
 
     # heat transfer H_tr_e [W/m^2K] through building element
     # U_e * A_e / A_C_Ref
-    columns = ["value"] + [f"new_U_{l}" for l in l_strength]
+    columns = ["value"] + [f"new_U_{strength}" for strength in l_strength]
     heat_transfer = pd.concat(
         [u_values[columns].mul(u_values.A_element, axis=0), u_values.A_element], axis=1
     )
@@ -883,7 +887,9 @@ def calculate_heat_losses(
     return Q_ht, heat_transfer_perm2
 
 
-def calculate_heat_gains(data_tabula, heat_transfer_perm2, d_heat):
+def calculate_heat_gains(
+    data_tabula: pd.DataFrame, heat_transfer_perm2: pd.DataFrame, d_heat: pd.Series
+) -> pd.DataFrame:
     """
     Calculates heat gains Q_gain [W/m^2], which consititure from gains by:
 
@@ -911,7 +917,9 @@ def calculate_heat_gains(data_tabula, heat_transfer_perm2, d_heat):
     return Q_gain
 
 
-def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
+def calculate_gain_utilisation_factor(
+    heat_transfer_perm2: pd.DataFrame, Q_ht: pd.DataFrame, Q_gain: pd.DataFrame
+) -> pd.DataFrame:
     """
     Calculates gain utilisation factor nu.
     """
@@ -930,7 +938,7 @@ def calculate_space_heat_savings(
     temperature_factor: pd.Series,
     d_heat: pd.Series,
     window_assumptions: pd.DataFrame,
-):
+) -> pd.DataFrame:
     """
     Calculates space heat savings (dE_space [per unit of unrefurbished state])
     through retrofitting of the thermal envelope by additional insulation
@@ -961,7 +969,7 @@ def calculate_retro_costs(
     window_assumptions: pd.DataFrame,
     annualise_cost: bool,
     interest_rate: float,
-):
+) -> pd.DataFrame:
     """
     Returns costs of different retrofitting measures.
     """
@@ -969,13 +977,13 @@ def calculate_retro_costs(
         [
             calculate_costs(
                 u_values,
-                l,
+                strength,
                 cost_retro,
                 window_assumptions,
                 annualise_cost,
                 interest_rate,
-            ).rename(l)
-            for l in l_strength
+            ).rename(strength)
+            for strength in l_strength
         ],
         axis=1,
     )
@@ -998,7 +1006,7 @@ def sample_dE_costs_area(
     country_iso_dic: dict[str, str],
     cost_w: pd.Series | None,
     tax_w: pd.Series | None,
-):
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Bring costs and energy savings together, fill area and costs per energy
     savings for missing countries, weight costs, determine "moderate" and

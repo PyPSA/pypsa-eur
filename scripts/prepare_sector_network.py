@@ -20,6 +20,7 @@ assumptions of the planning horizon.
 """
 
 import logging
+from collections.abc import Sequence
 from itertools import product
 from types import SimpleNamespace
 
@@ -47,7 +48,7 @@ spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
 
-def define_spatial(nodes, options):
+def define_spatial(nodes: pd.Index, options: dict) -> SimpleNamespace:
     """
     Namespace for spatial.
 
@@ -219,7 +220,7 @@ def define_spatial(nodes, options):
     return spatial
 
 
-def determine_emission_sectors(options):
+def determine_emission_sectors(options: dict) -> list[str]:
     sectors = ["electricity"]
     if options["transport"]:
         sectors += ["rail non-elec", "road non-elec"]
@@ -241,8 +242,13 @@ def determine_emission_sectors(options):
 
 
 def co2_emissions_year(
-    countries, input_eurostat, options, emissions_scope, input_co2, year
-):
+    countries: list[str],
+    input_eurostat: str,
+    options: dict,
+    emissions_scope: str,
+    input_co2: str,
+    year: int,
+) -> float:
     """
     Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
     """
@@ -272,13 +278,13 @@ def haversine(p, n):
 
 
 def create_network_topology(
-    n,
-    prefix,
-    carriers=["DC"],
-    connector=" -> ",
-    bidirectional=True,
-    include_lines=True,
-):
+    n: pypsa.Network,
+    prefix: str,
+    carriers: Sequence[str] = ("DC",),
+    connector: str = " -> ",
+    bidirectional: bool = True,
+    include_lines: bool = True,
+) -> pd.DataFrame:
     """
     Create a network topology from transmission lines and link carrier
     selection.
@@ -319,7 +325,7 @@ def create_network_topology(
     candidates_n = candidates[~positive_order].rename(columns=swap_buses)
     candidates = pd.concat([candidates_p, candidates_n])
 
-    def make_index(c):
+    def make_index(c: pd.Series) -> str:
         return prefix + c.bus0 + connector + c.bus1
 
     topo = candidates.groupby(["bus0", "bus1"], as_index=False).mean()
@@ -501,7 +507,7 @@ def add_carrier_buses(
         )
 
 
-def add_eu_bus(n, x=-5.5, y=46):
+def add_eu_bus(n: pypsa.Network, x: float = -5.5, y: float = 46) -> None:
     """
     Add EU bus to the network.
 
@@ -513,14 +519,14 @@ def add_eu_bus(n, x=-5.5, y=46):
 
 
 def add_co2_tracking(
-    n,
-    costs,
-    options,
-    spatial,
-    sequestration_potential_file=None,
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    options: dict,
+    spatial: SimpleNamespace,
+    sequestration_potential_file: str | None = None,
     co2_price: float = 0.0,
-    co2_liquefaction=False,
-):
+    co2_liquefaction: bool = False,
+) -> None:
     """
     Add CO2 tracking components to the network including atmospheric CO2,
     CO2 storage, and sequestration infrastructure.
@@ -729,8 +735,12 @@ def add_co2_tracking(
 
 
 def add_co2_network(
-    n, costs, pipeline_candidates, co2_network_cost_factor=1.0, co2_liquefaction=False
-):
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    pipeline_candidates: pd.DataFrame,
+    co2_network_cost_factor: float = 1.0,
+    co2_liquefaction: bool = False,
+) -> None:
     """
     Add CO2 transport network to the PyPSA network.
 
@@ -865,7 +875,9 @@ def add_allam_gas(
     )
 
 
-def add_biomass_to_methanol(n, costs, spatial):
+def add_biomass_to_methanol(
+    n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace
+) -> None:
     n.add(
         "Link",
         spatial.biomass.nodes,
@@ -886,7 +898,9 @@ def add_biomass_to_methanol(n, costs, spatial):
     )
 
 
-def add_biomass_to_methanol_cc(n, costs, spatial):
+def add_biomass_to_methanol_cc(
+    n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace
+) -> None:
     n.add(
         "Link",
         spatial.biomass.nodes,
@@ -913,7 +927,14 @@ def add_biomass_to_methanol_cc(n, costs, spatial):
     )
 
 
-def add_methanol_to_power(n, costs, pop_layout, spatial, options, types=None):
+def add_methanol_to_power(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    pop_layout: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    types: dict | None = None,
+) -> None:
     if types is None:
         types = {}
 
@@ -1029,7 +1050,9 @@ def add_methanol_to_power(n, costs, pop_layout, spatial, options, types=None):
         )
 
 
-def add_methanol_reforming(n, costs, spatial):
+def add_methanol_reforming(
+    n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace
+) -> None:
     logger.info("Adding methanol steam reforming.")
 
     tech = "Methanol steam reforming"
@@ -1052,7 +1075,9 @@ def add_methanol_reforming(n, costs, spatial):
     )
 
 
-def add_methanol_reforming_cc(n, costs, spatial, options):
+def add_methanol_reforming_cc(
+    n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace, options: dict
+) -> None:
     logger.info("Adding methanol steam reforming with carbon capture.")
 
     tech = "Methanol steam reforming"
@@ -1096,7 +1121,7 @@ def add_methanol_reforming_cc(n, costs, spatial, options):
     )
 
 
-def add_dac(n, costs, spatial):
+def add_dac(n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace) -> None:
     heat_carriers = ["urban central heat", "services urban decentral heat"]
     heat_buses = n.buses.index[n.buses.carrier.isin(heat_carriers)]
     locations = n.buses.location[heat_buses]
@@ -1127,7 +1152,9 @@ def add_dac(n, costs, spatial):
     )
 
 
-def cycling_shift(df, steps=1):
+def cycling_shift(
+    df: pd.DataFrame | pd.Series, steps: int = 1
+) -> pd.DataFrame | pd.Series:
     """
     Cyclic shift on index of pd.Series|pd.DataFrame by number of steps.
     """
@@ -1557,7 +1584,7 @@ def insert_gas_distribution_costs(
     n.links.loc[mchp, "capital_cost"] += capital_cost
 
 
-def add_electricity_grid_connection(n, costs):
+def add_electricity_grid_connection(n: pypsa.Network, costs: pd.DataFrame) -> None:
     carriers = ["onwind", "solar", "solar-hsat"]
 
     gens = n.generators.index[n.generators.carrier.isin(carriers)]
@@ -1571,17 +1598,17 @@ def add_electricity_grid_connection(n, costs):
 
 
 def add_h2_gas_infrastructure(
-    n,
-    costs,
-    pop_layout,
-    h2_cavern_file,
-    cavern_types,
-    clustered_gas_network_file,
-    gas_input_nodes,
-    spatial,
-    options,
-    pipeline_candidates,
-):
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    pop_layout: pd.DataFrame,
+    h2_cavern_file: str,
+    cavern_types: list[str],
+    clustered_gas_network_file: str,
+    gas_input_nodes: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    pipeline_candidates: pd.DataFrame,
+) -> None:
     """
     Add hydrogen and gas infrastructure to the network.
 
@@ -2010,7 +2037,7 @@ def add_h2_gas_infrastructure(
         )
 
 
-def check_land_transport_shares(shares):
+def check_land_transport_shares(shares: pd.Series) -> None:
     # Sums up the shares, ignoring None values
     total_share = sum(filter(None, shares))
     if total_share != 1:
@@ -2021,13 +2048,13 @@ def check_land_transport_shares(shares):
 
 
 def get_temp_efficency(
-    car_efficiency,
-    temperature,
-    deadband_lw,
-    deadband_up,
-    degree_factor_lw,
-    degree_factor_up,
-):
+    car_efficiency: float,
+    temperature: pd.DataFrame | pd.Series,
+    deadband_lw: float,
+    deadband_up: float,
+    degree_factor_lw: float,
+    degree_factor_up: float,
+) -> pd.DataFrame | pd.Series:
     """
     Correct temperature depending on heating and cooling for respective car
     type.
@@ -2406,18 +2433,18 @@ def add_ice_cars(
 
 
 def add_land_transport(
-    n,
-    costs,
-    transport_demand_file,
-    transport_data_file,
-    avail_profile_file,
-    dsm_profile_file,
-    temp_air_total_file,
-    cf_industry,
-    options,
-    spatial,
-    investment_year,
-    nodes,
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    transport_demand_file: str,
+    transport_data_file: str,
+    avail_profile_file: str,
+    dsm_profile_file: str,
+    temp_air_total_file: str,
+    cf_industry: dict,
+    options: dict,
+    spatial: SimpleNamespace,
+    investment_year: int,
+    nodes: pd.Index,
 ) -> None:
     """
     Add land transport demand and infrastructure to the network.
@@ -2616,7 +2643,7 @@ def add_heat(
     spatial: object,
     options: dict,
     investment_year: int,
-):
+) -> None:
     """
     Add heat sector to the network including heat demand, heat pumps, storage, and conversion technologies.
 
@@ -3599,17 +3626,17 @@ def add_methanol(
 
 
 def add_biomass(
-    n,
-    costs,
-    options,
-    spatial,
-    cf_industry,
-    pop_layout,
-    biomass_potentials_file,
-    biomass_transport_costs_file=None,
-    transport_corridors=None,
-    nyears=1,
-):
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    options: dict,
+    spatial: SimpleNamespace,
+    cf_industry: dict,
+    pop_layout: pd.DataFrame,
+    biomass_potentials_file: str,
+    biomass_transport_costs_file: str | None = None,
+    transport_corridors: pd.DataFrame | None = None,
+    nyears: float = 1,
+) -> None:
     """
     Add biomass-related components to the PyPSA network.
 
@@ -4030,7 +4057,11 @@ def add_biomass(
                 marginal_cost=costs.at["fuelwood", "fuel"]
                 + bus_transport_costs.rename(
                     dict(
-                        zip(spatial.biomass.nodes, spatial.biomass.nodes_unsustainable)
+                        zip(
+                            spatial.biomass.nodes,
+                            spatial.biomass.nodes_unsustainable,
+                            strict=True,
+                        )
                     )
                 )
                 * average_distance,
@@ -4346,7 +4377,7 @@ def add_industry(
     spatial: SimpleNamespace,
     cf_industry: dict,
     investment_year: int,
-):
+) -> None:
     """
     Add industry and their corresponding carrier buses to the network.
 
@@ -5542,7 +5573,7 @@ def add_agriculture(
         )
 
 
-def decentral(n):
+def decentral(n: pypsa.Network) -> None:
     """
     Removes the electricity transmission system.
     """
@@ -5550,7 +5581,7 @@ def decentral(n):
     n.links.drop(n.links.index[n.links.carrier.isin(["DC", "B2B"])], inplace=True)
 
 
-def remove_h2_network(n):
+def remove_h2_network(n: pypsa.Network) -> None:
     n.links.drop(
         n.links.index[n.links.carrier.str.contains("H2 pipeline")], inplace=True
     )
@@ -5559,7 +5590,7 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
-def _sum_keep_na(s):
+def _sum_keep_na(s: pd.Series) -> float:
     """
     Sum keeping all-NaN groups as NaN instead of collapsing them to 0.
 
@@ -5595,14 +5626,14 @@ aggregate_dict = {
 }
 
 
-def cluster_heat_buses(n):
+def cluster_heat_buses(n: pypsa.Network) -> None:
     """
     Cluster residential and service heat buses to one representative bus.
 
     This can be done to save memory and speed up optimisation
     """
 
-    def define_clustering(attributes, aggregate_dict):
+    def define_clustering(attributes: pd.Index, aggregate_dict: dict) -> dict:
         """
         Define how attributes should be clustered.
         Input:
@@ -5653,9 +5684,9 @@ def cluster_heat_buses(n):
         # time-varying data
         pnl = c.dynamic
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
-        for k in pnl.keys():
+        for k in pnl:
 
-            def renamer(s):
+            def renamer(s: str) -> str:
                 return s.replace("residential ", "").replace("services ", "")
 
             pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k]).T
@@ -5720,8 +5751,11 @@ def set_temporal_aggregation(n, temporal, snapshot_weightings):
         return m
 
 
-def lossy_bidirectional_links(n, carrier, efficiencies={}):
+def lossy_bidirectional_links(
+    n: pypsa.Network, carrier: str, efficiencies: dict | None = None
+) -> None:
     """Split bidirectional links into two unidirectional links to include transmission losses."""
+    efficiencies = efficiencies or {}
 
     carrier_i = n.links.query("carrier == @carrier").index
 
@@ -6024,7 +6058,7 @@ def add_import_options(
     options: dict,
     spatial: SimpleNamespace,
     gas_input_nodes: pd.DataFrame,
-):
+) -> None:
     """
     Add green energy import options.
 
@@ -6266,7 +6300,7 @@ def main(
             heat_source_profile_files={
                 source: inputs[source]
                 for source in params.limited_heat_sources
-                if source in inputs.keys()
+                if source in inputs.keys()  # noqa: SIM118
             },
             heat_dsm_profile_file=inputs.heat_dsm_profile,
             params=params,

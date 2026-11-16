@@ -37,7 +37,7 @@ def get_source_temperature(heat_source_key: str, limited_heat_sources: dict) -> 
         If the heat source is not in `limited_heat_sources`.
     """
 
-    if heat_source_key in limited_heat_sources.keys():
+    if heat_source_key in limited_heat_sources:
         return limited_heat_sources[heat_source_key]["constant_temperature_celsius"]
     else:
         raise ValueError(
@@ -48,7 +48,7 @@ def get_source_temperature(heat_source_key: str, limited_heat_sources: dict) -> 
 
 def get_profile(
     source_temperature: float | xr.DataArray, forward_temperature: xr.DataArray
-) -> xr.DataArray | float:
+) -> xr.DataArray:
     """
     Get the direct heat source utilisation profile.
 

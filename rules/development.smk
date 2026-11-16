@@ -91,7 +91,7 @@ rule prepare_osm_network_release:
     resources:
         mem_mb=1000,
     params:
-        line_types=config["lines"]["types"],
+        line_types=config_provider("lines", "types"),
         release_version=config_provider("osm_network_release", "release_version"),
         include_polygons=True,
         export=True,
@@ -113,7 +113,7 @@ rule map_incumbent:
     resources:
         mem_mb=1000,
     params:
-        line_types=config["lines"]["types"],
+        line_types=config_provider("lines", "types"),
         release_version="Incumbent",
         include_polygons=False,
         export=False,

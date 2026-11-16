@@ -65,7 +65,7 @@ rule build_solar_rooftop_potentials:
 rule build_gas_network:
     """Preprocesses the SciGRID_gas transmission network into cleaned pipeline segments."""
     input:
-        gas_network=rules.retrieve_gas_infrastructure_data.output["gas_network"],
+        gas_network=rules.retrieve_scigrid_gas.output["gas_network"],
     output:
         cleaned_gas_network=resources("gas_network.csv"),
     log:
@@ -82,8 +82,8 @@ rule build_gas_input_locations:
     """Builds fossil gas import locations from entry points, LNG terminals and production sites."""
     input:
         gem="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
-        entry=rules.retrieve_gas_infrastructure_data.output["entry"],
-        storage=rules.retrieve_gas_infrastructure_data.output["storage"],
+        entry=rules.retrieve_scigrid_gas.output["entry"],
+        storage=rules.retrieve_scigrid_gas.output["storage"],
         onshore_regions=resources("onshore_regions.geojson"),
         offshore_regions=resources("offshore_regions.geojson"),
     output:
@@ -337,7 +337,7 @@ rule build_geothermal_heat_potential:
 rule build_ates_potentials:
     """Computes aquifer thermal energy storage potentials per region from aquifers and heating areas."""
     input:
-        aquifer_shapes_shp=rules.retrieve_aquifer_data_bgr.output["aquifer_shapes"][0],
+        aquifer_shapes_shp=rules.retrieve_aquifer_data.output["aquifer_shapes"][0],
         dh_areas=resources("dh_areas.geojson"),
         onshore_regions=resources("onshore_regions.geojson"),
         central_heating_forward_temperature_profiles=resources(
@@ -587,7 +587,7 @@ rule build_sea_heat_potential:
         logs("build_sea_water_heat_potential.log"),
     benchmark:
         benchmarks("build_sea_water_heat_potential")
-    threads: config["atlite"].get("nprocesses", 4)
+    threads: atlite_threads
     resources:
         mem_mb=10000,
     params:
@@ -881,7 +881,7 @@ rule build_biomass_potentials:
     input:
         enspreso_biomass=rules.retrieve_enspreso_biomass.output["xlsx"],
         eurostat=resources("eurostat_energy_balances.csv"),
-        nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
+        nuts2=rules.retrieve_eu_nuts2013.output["shapes_level_2"],
         onshore_regions=resources("onshore_regions.geojson"),
         nuts3_population=ancient(rules.retrieve_nuts3_population.output["gz"]),
         swiss_cantons=lambda w: (
@@ -1158,8 +1158,8 @@ rule build_industrial_distribution_key:
         onshore_regions=resources("onshore_regions.geojson"),
         clustered_pop_layout=resources("pop_layout.csv"),
         hotmaps=rules.retrieve_hotmaps_industrial_sites.output["csv"],
-        gem_gspt=rules.retrieve_gem_steel_plant_tracker.output["xlsx"],
-        gem_gcpt=rules.retrieve_gem_cement_concrete_tracker.output["xlsx"],
+        gem_gspt=rules.retrieve_gem_gspt.output["xlsx"],
+        gem_gcpt=rules.retrieve_gem_gcct.output["xlsx"],
         ammonia="data/ammonia_plants.csv",
         refineries_supplement="data/refineries-noneu.csv",
     output:

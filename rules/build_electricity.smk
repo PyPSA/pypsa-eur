@@ -6,9 +6,9 @@
 rule build_electricity_demand:
     """Builds national hourly electricity demand time series from ENTSO-E, OPSD and NESO data."""
     input:
-        opsd=rules.retrieve_electricity_demand_opsd.output["csv"],
-        neso=rules.retrieve_electricity_demand_neso.output["csv"],
-        entsoe=rules.retrieve_electricity_demand_entsoe.output["csv"],
+        opsd=rules.retrieve_opsd_electricity_demand.output["csv"],
+        neso=rules.retrieve_neso_electricity_demand.output["csv"],
+        entsoe=rules.retrieve_entsoe_electricity_demand.output["csv"],
         synthetic=lambda w: (
             ancient(rules.retrieve_synthetic_electricity_demand.output["csv"])
             if config_provider("load", "supplement_synthetic")(w)
@@ -181,7 +181,7 @@ rule build_offshore_shapes:
 rule build_nuts3_shapes:
     """Builds NUTS3 and ADM1 region shapes enriched with GDP and population data."""
     input:
-        nuts3_2021=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
+        nuts3_2021=rules.retrieve_eu_nuts2021.output["shapes_level_3"],
         ba_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/BA_adm1.geojson",
         md_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/MD_adm1.geojson",
         ua_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/UA_adm1.geojson",
@@ -240,9 +240,9 @@ if CUTOUT_DATASET["source"] in ["build"]:
             "logs/build_cutout/{cutout}.log",
         benchmark:
             "benchmarks/build_cutout/{cutout}"
-        threads: config["atlite"].get("nprocesses", 4)
+        threads: atlite_threads
         resources:
-            mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
+            mem_mb=atlite_mem_mb(1000),
         params:
             cutouts=config_provider("atlite", "cutouts"),
         script:
@@ -269,7 +269,7 @@ rule build_ship_raster:
 rule determine_availability_matrix_MD_UA:
     """Computes land availability for renewables in Ukraine and Moldova from Copernicus land cover."""
     input:
-        copernicus=rules.download_copernicus_land_cover.output["tif"],
+        copernicus=rules.retrieve_copernicus_land_cover.output["tif"],
         wdpa=lambda w: (
             rules.retrieve_wdpa.output["gpkg"]
             if config_provider("renewable", w.technology, "natura")(w)
@@ -309,9 +309,9 @@ rule determine_availability_matrix_MD_UA:
         logs("determine_availability_matrix_MD_UA_{technology}.log"),
     benchmark:
         benchmarks("determine_availability_matrix_MD_UA_{technology}")
-    threads: config["atlite"].get("nprocesses", 4)
+    threads: atlite_threads
     resources:
-        mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+        mem_mb=atlite_mem_mb(5000),
     params:
         technology=lambda w: config_provider("renewable", w.technology)(w),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
@@ -385,9 +385,9 @@ rule determine_availability_matrix:
         benchmarks("determine_availability_matrix_{technology}")
     wildcard_constraints:
         technology=r"(?!MD-UA_)[^/]+",
-    threads: config["atlite"].get("nprocesses", 4)
+    threads: atlite_threads
     resources:
-        mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+        mem_mb=atlite_mem_mb(5000),
     params:
         technology=lambda w: config_provider("renewable", w.technology)(w),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
@@ -419,9 +419,9 @@ rule build_renewable_profiles:
         benchmarks("build_renewable_profile_{technology}")
     wildcard_constraints:
         technology="(?!hydro).*",  # Any technology other than hydro
-    threads: config["atlite"].get("nprocesses", 4)
+    threads: atlite_threads
     resources:
-        mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+        mem_mb=atlite_mem_mb(5000),
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -435,7 +435,7 @@ rule build_renewable_profiles:
 rule build_co2_prices:
     """Builds a smoothed CO2 price time series from historical daily emission allowance prices."""
     input:
-        csv=rules.retrieve_co2_prices.output["csv"],
+        csv=rules.retrieve_instrat_co2_prices.output["csv"],
     output:
         csv=resources("co2_price.csv"),
     log:
@@ -531,9 +531,9 @@ rule build_line_rating:
         logs("build_line_rating.log"),
     benchmark:
         benchmarks("build_line_rating")
-    threads: config["atlite"].get("nprocesses", 4)
+    threads: atlite_threads
     resources:
-        mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
+        mem_mb=atlite_mem_mb(1000),
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -627,7 +627,7 @@ rule build_electricity_demand_base:
     input:
         base_network=resources("networks/simplified.nc"),
         regions=resources("onshore_regions_simplified.geojson"),
-        raster=rules.retrieve_electricity_demand_energy_atlas.output["tif"],
+        raster=rules.retrieve_jrc_energy_atlas.output["tif"],
         gb_excel=rules.retrieve_desnz_electricity_consumption.output["xlsx"],
         gb_geojson=rules.retrieve_ons_lad.output["geojson"],
         nuts3=resources("nuts3_shapes.geojson"),
@@ -658,7 +658,7 @@ rule build_hac_features:
         logs("build_hac_features.log"),
     benchmark:
         benchmarks("build_hac_features")
-    threads: config["atlite"].get("nprocesses", 4)
+    threads: atlite_threads
     resources:
         mem_mb=10000,
     params:
@@ -673,7 +673,7 @@ rule process_cost_data:
     """Prepares technology cost data with unit alignment, annualised costs and custom modifications."""
     input:
         network=resources("networks/simplified.nc"),
-        costs=lambda w: rules.retrieve_cost_data.output["costs"].format(
+        costs=lambda w: rules.retrieve_costs.output["costs"].format(
             horizon=cost_year(w)
         ),
         custom_costs=input_custom_costs,

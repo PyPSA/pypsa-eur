@@ -59,7 +59,7 @@ SECTOR_CARRIERS = {
     "H2",
 }
 
-STORE_LOOKUP = {
+STORE_LOOKUP: dict[str, dict[str, str | float]] = {
     "battery": {
         "store": "battery storage",
         "bicharger": "battery inverter",
@@ -171,7 +171,7 @@ def calculate_annuity(n: float, r: float | pd.Series) -> float | pd.Series:
         return 1 / n
 
 
-def add_missing_carriers(n, carriers):
+def add_missing_carriers(n: pypsa.Network, carriers: Iterable[str]) -> None:
     """
     Function to add missing carriers to the network without raising errors.
     """
@@ -180,7 +180,7 @@ def add_missing_carriers(n, carriers):
         n.add("Carrier", missing_carriers)
 
 
-def sanitize_carriers(n, nice_names: dict, tech_colors: dict):
+def sanitize_carriers(n: pypsa.Network, nice_names: dict, tech_colors: dict) -> None:
     """
     Sanitize the carrier information in a PyPSA Network object.
 
@@ -228,7 +228,7 @@ def sanitize_carriers(n, nice_names: dict, tech_colors: dict):
     n.carriers["color"] = n.carriers.color.where(n.carriers.color != "", colors)
 
 
-def sanitize_locations(n):
+def sanitize_locations(n: pypsa.Network) -> None:
     if "location" in n.buses.columns:
         n.buses["x"] = n.buses.x.where(n.buses.x != 0, n.buses.location.map(n.buses.x))
         n.buses["y"] = n.buses.y.where(n.buses.y != 0, n.buses.location.map(n.buses.y))
@@ -265,7 +265,9 @@ def estimate_efficiency(df: pd.DataFrame, config: dict) -> pd.Series:
     return eta * (1 - age.clip(lower=0) * config["degradation_rate"])
 
 
-def add_co2_emissions(n, costs, carriers):
+def add_co2_emissions(
+    n: pypsa.Network, costs: pd.DataFrame, carriers: list[str]
+) -> None:
     """
     Add CO2 emissions to the network's carriers attribute.
     """
@@ -592,9 +594,9 @@ def attach_conventional_generators(
     renewable_carriers: set,
     conventional_params: dict,
     conventional_inputs: dict,
-    unit_commitment: pd.DataFrame = None,
-    fuel_price: pd.DataFrame = None,
-):
+    unit_commitment: pd.DataFrame | None = None,
+    fuel_price: pd.DataFrame | None = None,
+) -> None:
     """
     Attach conventional generators to the network.
 
@@ -754,7 +756,7 @@ def attach_hydro(
     hydro_capacities: str,
     carriers: list,
     **params,
-):
+) -> None:
     """
     Attach hydro generators and storage units to the network.
 
@@ -957,9 +959,9 @@ def estimate_renewable_capacities(
     n: pypsa.Network,
     year: int,
     tech_map: dict,
-    expansion_limit: bool,
+    expansion_limit: float | bool,
     countries: list,
-):
+) -> None:
     """
     Estimate a different between renewable capacities in the network and
     reported country totals from IRENASTAT dataset. Distribute the difference
@@ -1020,7 +1022,7 @@ def estimate_renewable_capacities(
             )
 
 
-def get_available_storage_carriers(carriers):
+def get_available_storage_carriers(carriers: list[str]) -> list[str]:
     """
     Filter and register available storage carriers from a given list.
     """
@@ -1042,10 +1044,10 @@ def get_available_storage_carriers(carriers):
 def attach_storageunits(
     n: pypsa.Network,
     costs: pd.DataFrame,
-    buses_i: list,
+    buses_i: pd.Index,
     extendable_carriers: list,
     max_hours: dict,
-):
+) -> None:
     """
     Attach storage units to the network.
 
@@ -1119,9 +1121,9 @@ def attach_storageunits(
 def attach_stores(
     n: pypsa.Network,
     costs: pd.DataFrame,
-    buses_i: list,
+    buses_i: pd.Index,
     extendable_carriers: list,
-):
+) -> None:
     """
     Attach stores to the network.
 
@@ -1238,7 +1240,7 @@ def main(
     landfall_lengths = {
         tech: settings["landfall_length"]
         for tech, settings in params.renewable.items()
-        if "landfall_length" in settings.keys()
+        if "landfall_length" in settings
     }
 
     if inputs.powerplants:

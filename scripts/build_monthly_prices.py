@@ -16,8 +16,6 @@ from pydeflate import imf_gdp_deflate, set_pydeflate_path
 
 from scripts._helpers import configure_logging, set_scenario_config
 
-set_pydeflate_path("../data/pydeflate/")
-
 logger = logging.getLogger(__name__)
 
 MMBTU_PER_MWH = 3.41214
@@ -34,6 +32,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+    set_pydeflate_path("data/pydeflate/")
 
     df = pd.read_excel(
         snakemake.input.fuel_price_raw,

@@ -119,6 +119,9 @@ snakemake-logger-plugin-snkmt = "==0.1.6" # For better pypsa-app integration
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"
 
+[feature.dev.tasks]
+typecheck = "pre-commit run mypy --all-files"
+
 [feature.dev.dependencies]
 pre-commit = ">=4.3.0"
 pylint = ">=4.0.2"

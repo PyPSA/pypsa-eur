@@ -176,11 +176,14 @@ rule make_summary:
     """Computes summary tables of costs, capacities, energy balances, prices and metrics."""
     input:
         networks=lambda w: (
-            [RESULTS + f"networks/solved_{config['planning_horizons'][-1]}.nc"]
-            if config["foresight"] == "perfect"
+            [
+                RESULTS
+                + f"networks/solved_{config_provider('planning_horizons')(w)[-1]}.nc"
+            ]
+            if config_provider("foresight")(w) == "perfect"
             else [
                 RESULTS + f"networks/solved_{h}.nc"
-                for h in config["planning_horizons"]
+                for h in config_provider("planning_horizons")(w)
             ]
         ),
     output:
