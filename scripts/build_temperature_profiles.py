@@ -2,15 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build time series for air and soil temperatures per clustered model region.
+Build air and soil temperature time series per clustered region.
 
-Uses ``atlite.Cutout.temperature`` and ``atlite.Cutout.soil_temperature compute temperature ambient air and soil temperature for the respective cutout. The rule is executed in ``build_sector.smk``.
-
-
-.. seealso::
-    `Atlite.Cutout.temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
-    `Atlite.Cutout.soil_temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
-
+[atlite.Cutout.temperature](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert)
+and `atlite.Cutout.soil_temperature` read ambient air and soil temperature
+from the weather cutout. Grid cells are aggregated to clustered onshore
+regions weighted by population, giving the temperature experienced by the
+average inhabitant. The profiles serve, among others, as heat source
+temperatures in [build_cop_profiles][] and as ambient temperatures in
+[build_central_heating_temperature_profiles][].
 """
 
 import logging
@@ -18,13 +18,13 @@ import logging
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from dask.distributed import Client, LocalCluster
 
 from scripts._helpers import (
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
+    setup_dask,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,23 +33,19 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_temperature_profiles",
-            clusters=48,
-        )
+        snakemake = mock_snakemake("build_temperature_profiles")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
-    client = Client(cluster, asynchronous=True)
+    dask_kwargs = setup_dask(nprocesses)
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
     cutout = load_cutout(snakemake.input.cutout, time=time)
 
     clustered_regions = (
-        gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
+        gpd.read_file(snakemake.input.onshore_regions).set_index("name").buffer(0)
     )
 
     I = cutout.indicatormatrix(clustered_regions)  # noqa: E741
@@ -66,7 +62,7 @@ if __name__ == "__main__":
     temp_air = cutout.temperature(
         matrix=M_tilde.T,
         index=clustered_regions.index,
-        dask_kwargs=dict(scheduler=client),
+        dask_kwargs=dask_kwargs,
         show_progress=False,
     )
 
@@ -75,7 +71,7 @@ if __name__ == "__main__":
     temp_soil = cutout.soil_temperature(
         matrix=M_tilde.T,
         index=clustered_regions.index,
-        dask_kwargs=dict(scheduler=client),
+        dask_kwargs=dask_kwargs,
         show_progress=False,
     )
 

@@ -2,14 +2,20 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot clustered electricity transmission network.
+Plots the clustered transmission network on a map.
+
+Reads the clustered network and the onshore regions, draws region outlines,
+scales HVAC line widths by their thermal rating and colours HVDC links by
+whether they already exist or are only planned. The figure serves as a
+visual check of the spatial resolution and grid topology used in the
+optimisation.
 """
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pypsa
 from matplotlib.lines import Line2D
-from pypsa.plot import add_legend_lines
+from pypsa.plot.maps.static import add_legend_lines
 
 from scripts._helpers import set_scenario_config
 from scripts.plot_power_network import load_projection
@@ -19,9 +25,8 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_power_network_clustered",
-            clusters=128,
-            configfiles=["../../config/config.test.yaml"],
+            "plot_clustered_network",
+            configfiles=["../../config/test/config.electricity.yaml"],
         )
     set_scenario_config(snakemake)
 
@@ -29,7 +34,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
-    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
+    regions = gpd.read_file(snakemake.input.regions).set_index("name")
 
     proj = load_projection(snakemake.params.plotting)
 
@@ -40,28 +45,28 @@ if __name__ == "__main__":
     n.plot(
         ax=ax,
         margin=0.06,
-        line_widths=n.lines.s_nom / lw_factor,
-        link_colors=n.links.p_nom.apply(
+        line_width=n.lines.s_nom / lw_factor,
+        link_color=n.links.p_nom.apply(
             lambda x: "darkseagreen" if x > 0 else "skyblue"
         ),
-        link_widths=2.0,
+        link_width=2.0,
     )
 
-    sizes = [10, 20]
+    sizes: list[float] = [10, 20]
     labels = [f"HVAC ({s} GW)" for s in sizes]
     scale = 1e3 / lw_factor
     sizes = [s * scale for s in sizes]
 
-    legend_kw = dict(
-        loc=[0.25, 0.9],
-        frameon=False,
-        labelspacing=0.5,
-        handletextpad=1,
-        fontsize=13,
-    )
+    legend_kw = {
+        "loc": [0.25, 0.9],
+        "frameon": False,
+        "labelspacing": 0.5,
+        "handletextpad": 1,
+        "fontsize": 13,
+    }
 
     add_legend_lines(
-        ax, sizes, labels, patch_kw=dict(color="rosybrown"), legend_kw=legend_kw
+        ax, sizes, labels, patch_kw={"color": "rosybrown"}, legend_kw=legend_kw
     )
 
     handles = [

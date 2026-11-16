@@ -2,16 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This rule builds heat demand time series using heating degree day (HDD)
-approximation.
+Build daily heat demand time series per clustered region from heating degree days.
 
-Snapshots are resampled to daily time resolution and ``Atlite.convert.heat_demand`` is used to convert ambient temperature from the default weather cutout to heat demand time series for the respective cutout.
-
-Heat demand is distributed by population to clustered onshore regions.
-
-.. seealso::
-    `Atlite.Cutout.heat_demand <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
-
+Ambient temperature from the weather cutout is converted to heat demand with
+[atlite.Cutout.heat_demand](https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert),
+which counts the degrees by which the daily mean temperature falls below a
+threshold. Grid cells are aggregated to clustered onshore regions weighted by
+population and the result is kept at daily resolution. The daily profile is
+disaggregated to hours in [build_hourly_heat_demand][].
 """
 
 import logging
@@ -19,13 +17,13 @@ import logging
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from dask.distributed import Client, LocalCluster
 
 from scripts._helpers import (
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
+    setup_dask,
 )
 
 logger = logging.getLogger(__name__)
@@ -35,16 +33,14 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_daily_heat_demands",
+            "build_daily_heat_demand",
             scope="total",
-            clusters=48,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    cluster = LocalCluster(n_workers=nprocesses, threads_per_worker=1)
-    client = Client(cluster, asynchronous=True)
+    dask_kwargs = setup_dask(nprocesses)
 
     cutout_name = snakemake.input.cutout
 
@@ -58,7 +54,7 @@ if __name__ == "__main__":
     cutout = load_cutout(cutout_name, time=time)
 
     clustered_regions = (
-        gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
+        gpd.read_file(snakemake.input.onshore_regions).set_index("name").buffer(0)
     )
 
     I = cutout.indicatormatrix(clustered_regions)  # noqa: E741
@@ -71,7 +67,7 @@ if __name__ == "__main__":
     heat_demand = cutout.heat_demand(
         matrix=M.T,
         index=clustered_regions.index,
-        dask_kwargs=dict(scheduler=client),
+        dask_kwargs=dask_kwargs,
         show_progress=False,
     ).sel(time=daily)
 

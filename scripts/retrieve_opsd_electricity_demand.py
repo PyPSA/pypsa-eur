@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+"""
+Retrieves country-level hourly electricity load time series from Open Power System Data (OPSD).
+
+Two OPSD time series releases are downloaded and stitched together, the later
+one extending the earlier. Load reported to the ENTSO-E Transparency Platform is
+preferred, with gaps filled from ENTSO-E power statistics. The result is the raw
+OPSD demand dataset from which the demand time series is built.
+"""
+
+import logging
+
+import pandas as pd
+
+from scripts._helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
+
+if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from scripts._helpers import mock_snakemake
+
+        snakemake = mock_snakemake("retrieve_opsd_electricity_demand")
+        rootpath = ".."
+    else:
+        rootpath = "."
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
+
+    url = "https://data.open-power-system-data.org/time_series/{version}/time_series_60min_singleindex.csv"
+
+    df1, df2 = [
+        pd.read_csv(url.format(version=version), index_col=0)
+        for version in snakemake.params.versions
+    ]
+    combined = pd.concat([df1, df2[df2.index > df1.index[-1]]])
+
+    pattern = "_load_actual_entsoe_transparency"
+    transparency = combined.filter(like=pattern).rename(
+        columns=lambda x: x.replace(pattern, "")
+    )
+    pattern = "_load_actual_entsoe_power_statistics"
+    powerstatistics = combined.filter(like=pattern).rename(
+        columns=lambda x: x.replace(pattern, "")
+    )
+
+    res = transparency.fillna(powerstatistics)
+
+    res.to_csv(snakemake.output.csv)

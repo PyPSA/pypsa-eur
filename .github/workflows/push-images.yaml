@@ -2,31 +2,33 @@ name: Push images
 
 on:
   push:
-
     branches:
     - master
   workflow_dispatch:
 
+# retagging must wait for a previous build to finish pushing
+concurrency:
+  group: push-images
+
 env:
   IMAGE_NAME: pypsa/eur-dev-env
-  BASE_ENV: envs/linux-64.lock.yaml
 
 jobs:
   push-image:
     name: dev-env
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
-    - name: 'Get relevant env'
+    - name: 'Get last commit that changed pixi env or Dockerfile'
       run: |
-        hash_last_changed=$(git log -1 --pretty=format:%H -- ${{ env.BASE_ENV }})
+        hash_last_changed=$(git log -1 --pretty=format:%H -- pixi.toml pixi.lock docker/dev-env/Dockerfile)
         echo "hash_last_changed=$hash_last_changed" >> $GITHUB_ENV
 
     - name: 'Login to GitHub Container Registry'
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
@@ -45,7 +47,7 @@ jobs:
         fi
 
     - name: 'Add SHA tag to existing image' # when rebuild is not needed
-      if: env.hash_last_changed != github.sha
+      if: env.hash_last_changed != github.sha && github.event_name != 'workflow_dispatch'
       run: |-
         docker pull ghcr.io/${{ env.IMAGE_NAME }}:${{ env.hash_last_changed }}
         docker tag ghcr.io/${{ env.IMAGE_NAME }}:${{ env.hash_last_changed }} ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}

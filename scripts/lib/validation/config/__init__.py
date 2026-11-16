@@ -1,0 +1,399 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+"""
+Config validation for PyPSA-EUR.
+
+The schema is exported to `config/config.default.yaml`, `config/plotting.default.yaml`,
+and `config/schema.default.json` (a single schema shared by both YAML files). The json
+schema is also contributed to the schemastore.org and matches `**/pypsa-eur*/config/*.yaml`
+to get IDE support without additional configuration.
+"""
+
+import copy
+import pathlib
+import re
+import warnings
+from functools import reduce
+
+from pydantic import ValidationError
+from ruamel.yaml import YAML
+from snakemake.utils import update_config
+
+from scripts.lib.validation.config._base import _registry
+from scripts.lib.validation.config._schema import ConfigSchema
+
+
+def validate_config(config: dict, extra: str | None = None) -> ConfigSchema:
+    """
+    Validate config dict against schema.
+
+    Parameters
+    ----------
+    config : dict
+        Config dict to validate.
+    extra : {"ignore", "allow", "forbid"}, optional
+        Override how unknown keys are handled in all (nested) models, e.g.
+        ``"forbid"`` to raise a validation error for each of them. If None,
+        the behaviour configured in each model is used.
+
+    Returns
+    -------
+    Validated config model, with all config updaters applied.
+    """
+    config_schema = ConfigSchema
+    name = config_schema._name.default
+    docs_url = config_schema._docs_url.default
+    for item in _registry:
+        updater_config = item(config_schema)
+        config_schema = updater_config.update()
+        if updater_config.docs_url is not None:
+            docs_url = updater_config.docs_url
+        if updater_config.name:
+            name += f".{updater_config.name}"
+    validated_config = config_schema.model_validate(config, extra=extra)
+    validated_config._name = name
+    validated_config._docs_url = docs_url
+    return validated_config
+
+
+# Sections not covered by the schema or deliberately accepting arbitrary keys,
+# for which unknown keys are not reported
+UNCHECKED_SECTIONS = {"plotting", "conventional"}
+
+
+def find_invalid_entries(config: dict) -> dict[str, list[str]]:
+    """
+    Find config entries that are unknown or have invalid values, including in nested sections.
+
+    Invalid values are those violating the type or allowed values of the schema,
+    e.g. a value outside a set of choices or a numeric range. Missing entries are
+    ignored, so partial override configs can be checked on their own.
+
+    Parameters
+    ----------
+    config : dict
+        Config dict to check.
+
+    Returns
+    -------
+    Error messages by dotted path of the invalid entries.
+    """
+    try:
+        validate_config(config, extra="forbid")
+    except ValidationError as e:
+        invalid = {}
+        for err in e.errors():
+            if err["type"] == "missing":
+                continue
+            if err["type"] == "extra_forbidden":
+                if err["loc"][0] in UNCHECKED_SECTIONS:
+                    continue
+                err["msg"] = "Unknown key, not part of the schema"
+            invalid.setdefault(_config_path(config, err["loc"]), []).append(err["msg"])
+        return invalid
+    return {}
+
+
+def _config_path(config: dict, loc: tuple) -> str:
+    """Dotted path of an error location, without pydantic's union member tags."""
+    path, data = [], config
+    for key in loc:
+        if isinstance(data, dict) and key in data:
+            data = data[key]
+        elif isinstance(data, list) and isinstance(key, int) and key < len(data):
+            data = data[key]
+        else:
+            break
+        path.append(str(key))
+    return ".".join(path) or "<root>"
+
+
+#: Deprecated config keys and the keys that take over their value. Remove an
+#: entry one release after adding it.
+DEPRECATED_KEYS: dict[str, list[str]] = {
+    "sector.tes": ["sector.ttes", "sector.district_heating.ptes.enable"],
+}
+
+
+def migrate_deprecated_keys(config: dict) -> None:
+    """
+    Move values of deprecated keys in place to the keys that replace them.
+
+    Apply it to each raw config and scenario override, since scripts read the
+    raw config and not the validated model.
+
+    Parameters
+    ----------
+    config : dict
+        Config or scenario override.
+    """
+    for old, new in DEPRECATED_KEYS.items():
+        *parents, key = old.split(".")
+        section = reduce(lambda d, k: d.get(k, {}), parents, config)
+        if key not in section:
+            continue
+        value = section.pop(key)
+        msg = f"`{old}` is deprecated and will be removed in the next release. Its value is used for `{'`, `'.join(new)}` instead."
+        warnings.warn(msg, FutureWarning)
+        for path in new:
+            *parents, key = path.split(".")
+            reduce(lambda d, k: d.setdefault(k, {}), parents, config)[key] = value
+
+
+def normalize_config(config: dict, validated: ConfigSchema) -> None:
+    """Normalize config values in place (e.g., ensure planning_horizons is a list)."""
+    config["planning_horizons"] = validated.planning_horizons
+
+
+def validate_scenarios(config: dict, scenarios: dict) -> None:
+    """Validate that each scenario override yields a valid, compatible config."""
+    for scenario_name, scenario_overrides in scenarios.items():
+        if "data" in scenario_overrides:
+            raise ValueError(
+                f"Scenario '{scenario_name}' overrides the 'data' block, but dataset "
+                "versions are resolved globally at workflow construction and cannot vary "
+                "per scenario. Move 'data' settings to the base config."
+            )
+        merged = copy.deepcopy(config)
+        update_config(merged, scenario_overrides)
+        for key in ("foresight", "planning_horizons"):
+            if merged[key] != config[key]:
+                raise ValueError(
+                    f"Scenario '{scenario_name}' changes '{key}', but collection and "
+                    "default targets are built from the base config, so it must be "
+                    "identical across scenarios. Set it at the top level and run "
+                    "differing values as separate workflows with their own run.name."
+                )
+        try:
+            validate_config(merged)
+        except Exception as e:
+            raise ValueError(
+                f"Scenario '{scenario_name}' failed config validation: {e}"
+            ) from e
+
+
+#: Top-level config keys that are written to their own defaults YAML file (via
+#: `generate_split_defaults`) instead of `config/config.{configname}.yaml`.
+SPLIT_CONFIG_FILES: dict[str, str] = {
+    "plotting": "config/plotting.{configname}.yaml",
+}
+
+
+def _convert_to_field_name(key: str) -> str:
+    """Convert dash-case to snake_case for field lookup."""
+    return key.replace("-", "_")
+
+
+def _write_defaults_yaml(path: str, config: ConfigSchema, defaults: dict) -> None:
+    """Write `defaults` (a subset of the validated config's top-level keys) to `path` as YAML."""
+    from ruamel.yaml.comments import CommentedMap
+
+    # Create YAML instance with custom settings
+    yaml_writer = YAML()
+    yaml_writer.version = (1, 1)  # Make sure to quote boolean-looking strings
+    yaml_writer.default_flow_style = False
+    yaml_writer.width = 4096  # Avoid line wrapping
+    yaml_writer.indent(mapping=2, sequence=2, offset=0)
+
+    # Custom string representer for controlling quote style
+    def str_representer(dumper, data):
+        """Use block style for multiline, quotes for special chars, plain otherwise."""
+        TAG = "tag:yaml.org,2002:str"
+        data = str(data)  # Ensure it's a plain string (not e.g. Path)
+        if "\n" in data:
+            return dumper.represent_scalar(TAG, data, style="|")
+        if data == "" or any(c in data for c in ":{}[]&*#?|-<>=!%@"):
+            return dumper.represent_scalar(TAG, data, style='"')
+        return dumper.represent_scalar(TAG, data, style="")
+
+    yaml_writer.representer.add_representer(str, str_representer)
+    yaml_writer.representer.add_multi_representer(pathlib.PurePath, str_representer)
+
+    # Create a CommentedMap to add comments
+    data = CommentedMap()
+
+    # Add yaml-language-server comment at the very top (before first key)
+    data.yaml_set_start_comment(
+        f"yaml-language-server: $schema=./schema.{config._name}.json"
+    )
+
+    for key, value in defaults.items():
+        data[key] = value
+
+        field_name = _convert_to_field_name(key)
+        docs_url = config._docs_url.format(field_name=field_name)
+        data.yaml_set_comment_before_after_key(key, before=f"\ndocs in {docs_url}")
+
+    # Write to file
+    with open(path, "w") as f:
+        yaml_writer.dump(data, f)
+
+
+def generate_config_defaults(path: str = "config/config.{configname}.yaml") -> dict:
+    """
+    Generate config defaults YAML file and return the defaults dict.
+
+    Top-level keys listed in `SPLIT_CONFIG_FILES` (e.g. `plotting`) are excluded here;
+    use `generate_split_defaults` to generate their dedicated defaults files.
+    """
+    # by_alias is needed to export dash-case instead of snake_case (which are some set aliases)
+    # the goal should be to use snake_case consistently
+    config = validate_config({})
+    defaults = config.model_dump(by_alias=True)
+    main_defaults = {
+        key: value for key, value in defaults.items() if key not in SPLIT_CONFIG_FILES
+    }
+
+    _write_defaults_yaml(path.format(configname=config._name), config, main_defaults)
+
+    return main_defaults
+
+
+def generate_split_defaults(key: str, path: str | None = None) -> dict:
+    """
+    Generate the dedicated defaults YAML file for a top-level key listed in `SPLIT_CONFIG_FILES`.
+
+    Returns the defaults dict for that single top-level key (e.g. `{"plotting": {...}}`).
+    """
+    if key not in SPLIT_CONFIG_FILES:
+        raise ValueError(
+            f"'{key}' is not a split-out config key. Known keys: "
+            f"{sorted(SPLIT_CONFIG_FILES)}"
+        )
+    if path is None:
+        path = SPLIT_CONFIG_FILES[key]
+
+    config = validate_config({})
+    defaults = config.model_dump(by_alias=True)
+    key_defaults = {key: defaults[key]}
+
+    _write_defaults_yaml(path.format(configname=config._name), config, key_defaults)
+
+    return key_defaults
+
+
+def generate_plotting_defaults(
+    path: str = "config/plotting.{configname}.yaml",
+) -> dict:
+    """Generate plotting defaults YAML file and return the plotting defaults dict."""
+    return generate_split_defaults("plotting", path)
+
+
+def generate_config_schema(path: str = "config/schema.{configname}.json") -> dict:
+    """Generate JSON schema file and return the schema dict."""
+    import json
+    import math
+
+    def resolve_refs(obj: dict, defs: dict) -> dict:
+        """Resolve nested schema references to show them nicely in the documentation."""
+        if isinstance(obj, dict):
+            if "$ref" in obj:
+                ref_path = obj["$ref"]  # "#/$defs/RunConfig
+                ref_name = ref_path.split("/")[-1]
+                if ref_name in defs:
+                    resolved = resolve_refs(defs[ref_name].copy(), defs)
+                    # Keep description from the reference
+                    if "description" in obj and "description" not in resolved:
+                        resolved["description"] = obj["description"]
+                    return resolved
+            return {k: resolve_refs(v, defs) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [resolve_refs(item, defs) for item in obj]
+        return obj
+
+    def sanitize_for_json(obj):
+        """Replace infinity values with None for valid JSON."""
+        if isinstance(obj, dict):
+            return {k: sanitize_for_json(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [sanitize_for_json(v) for v in obj]
+        elif isinstance(obj, float) and math.isinf(obj):
+            return None
+        return obj
+
+    def remove_nested_titles(obj, is_root=True):
+        """Remove nested titles (e.g. model class names)."""
+        if isinstance(obj, dict):
+            result = {}
+            for k, v in obj.items():
+                if k == "title" and not is_root:
+                    continue
+                result[k] = remove_nested_titles(v, is_root=False)
+            return result
+        elif isinstance(obj, list):
+            return [remove_nested_titles(item, is_root=False) for item in obj]
+        return obj
+
+    def remove_object_type(obj, is_root=True):
+        """Remove 'type: object' from nested objects (redundant when properties exist)."""
+        if isinstance(obj, dict):
+            result = {}
+            for k, v in obj.items():
+                if (
+                    k == "type"
+                    and v == "object"
+                    and not is_root
+                    and "properties" in obj
+                ):
+                    continue
+                result[k] = remove_object_type(v, is_root=False)
+            return result
+        elif isinstance(obj, list):
+            return [remove_object_type(item, is_root=False) for item in obj]
+        return obj
+
+    def convert_rst_to_markdown(obj):
+        """Convert RST-style links in 'description' to Markdown in 'markdownDescription'."""
+
+        def rst_to_md(text):
+            """Convert RST link format `Link Text <URL>`_ to Markdown [Link Text](URL)."""
+            # Pattern matches: `Link Text <URL>`_
+            pattern = r"`([^<>`]+)\s*<([^>]+)>`_"
+            return re.sub(pattern, r"[\1](\2)", text)
+
+        if isinstance(obj, dict):
+            result = {}
+            for k, v in obj.items():
+                if k == "description" and isinstance(v, str) and "`" in v and "<" in v:
+                    result[k] = v
+                    md_text = rst_to_md(v)
+                    if md_text != v:
+                        result["markdownDescription"] = md_text
+                else:
+                    result[k] = convert_rst_to_markdown(v)
+            return result
+        elif isinstance(obj, list):
+            return [convert_rst_to_markdown(item) for item in obj]
+        return obj
+
+    config = validate_config({})
+    schema = config.model_json_schema()
+    defs = schema.get("$defs", {})
+    schema = resolve_refs(schema, defs)
+    schema = sanitize_for_json(schema)
+    schema = remove_nested_titles(schema)
+    schema = remove_object_type(schema)
+    schema = convert_rst_to_markdown(schema)
+    with open(path.format(configname=config._name), "w") as f:
+        json.dump(schema, f, indent=2)
+        f.write("\n")
+    return schema
+
+
+__all__ = [
+    "ConfigSchema",
+    "SPLIT_CONFIG_FILES",
+    "DEPRECATED_KEYS",
+    "validate_config",
+    "migrate_deprecated_keys",
+    "find_invalid_entries",
+    "validate_scenarios",
+    "normalize_config",
+    "generate_config_defaults",
+    "generate_split_defaults",
+    "generate_plotting_defaults",
+    "generate_config_schema",
+    "ValidationError",
+]

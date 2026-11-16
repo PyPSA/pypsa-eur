@@ -2,28 +2,134 @@
 #
 # SPDX-License-Identifier: MIT
 
-if config["electricity"]["base_network"] == "osm-raw":
 
-    rule prepare_osm_network_release:
-        params:
-            line_types=config["lines"]["types"],
-        input:
-            base_network=resources("networks/base.nc"),
-            stations_polygon=resources("osm-raw/build/geojson/stations_polygon.geojson"),
-            buses_polygon=resources("osm-raw/build/geojson/buses_polygon.geojson"),
-        output:
-            buses=resources("osm-raw/release/buses.csv"),
-            converters=resources("osm-raw/release/converters.csv"),
-            lines=resources("osm-raw/release/lines.csv"),
-            links=resources("osm-raw/release/links.csv"),
-            transformers=resources("osm-raw/release/transformers.csv"),
-            map=resources("osm-raw/release/map.html"),
-        log:
-            logs("prepare_osm_network_release.log"),
-        benchmark:
-            benchmarks("prepare_osm_network_release")
-        threads: 1
-        resources:
-            mem_mb=1000,
-        script:
-            "../scripts/prepare_osm_network_release.py"
+rule base_network_incumbent:
+    """Builds the incumbent base network used as reference for the OSM network comparison."""
+    input:
+        unpack(input_base_network_incumbent),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
+        country_shapes=resources("country_shapes.geojson"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+        europe_shape=resources("europe_shape.geojson"),
+    output:
+        base_network=resources("osm/comparison/incumbent/networks/base.nc"),
+        onshore_regions=resources("osm/comparison/incumbent/regions_onshore.geojson"),
+        offshore_regions=resources("osm/comparison/incumbent/regions_offshore.geojson"),
+        admin_shapes=resources("osm/comparison/incumbent/admin_shapes.geojson"),
+    log:
+        logs("base_network_incumbent.log"),
+    benchmark:
+        benchmarks("base_network_incumbent")
+    threads: 4
+    resources:
+        mem_mb=2000,
+    params:
+        countries=config_provider("countries"),
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        voltages=config_provider("electricity", "voltages"),
+        base_network=config_provider("electricity", "base_network"),
+        osm_version=config_provider("data", "osm", "version"),
+        lines=config_provider(
+            "lines",
+            subset=["types", "s_max_pu", "under_construction", "reconnect_crimea"],
+        ),
+        links=config_provider(
+            "links", subset=["p_max_pu", "p_min_pu", "under_construction"]
+        ),
+        transformers=config_provider("transformers"),
+        clustering=config_provider("clustering", "mode"),
+        admin_levels=config_provider("clustering", "administrative"),
+    script:
+        scripts("base_network.py")
+
+
+rule make_network_comparison:
+    """Plots transmission line lengths per country for the released and incumbent networks."""
+    input:
+        n_release=resources("networks/base.nc"),
+        n_incumbent=resources("osm/comparison/incumbent/networks/base.nc"),
+        country_shapes=resources("country_shapes.geojson"),
+        regions_offshore=resources("offshore_regions_base.geojson"),
+    output:
+        lengths=resources("osm/comparison/lengths.pdf"),
+        links=resources("osm/comparison/links.csv"),
+    log:
+        logs("make_network_comparison.log"),
+    benchmark:
+        benchmarks("make_network_comparison")
+    threads: 1
+    resources:
+        mem_mb=2000,
+    params:
+        countries=config_provider("countries"),
+        compare_to_version=config_provider(
+            "osm_network_release", "compare_to", "version"
+        ),
+    script:
+        scripts("make_network_comparison.py")
+
+
+rule prepare_osm_network_release:
+    """Exports the OSM-based base network as clean CSV tables and an interactive map."""
+    input:
+        base_network=resources("networks/base.nc"),
+        stations_polygon=resources("osm/build/geojson/stations_polygon.geojson"),
+        buses_polygon=resources("osm/build/geojson/buses_polygon.geojson"),
+    output:
+        buses=resources("osm/release/buses.csv"),
+        converters=resources("osm/release/converters.csv"),
+        lines=resources("osm/release/lines.csv"),
+        links=resources("osm/release/links.csv"),
+        transformers=resources("osm/release/transformers.csv"),
+        map=resources("osm/release/map.html"),
+    log:
+        logs("prepare_osm_network_release.log"),
+    benchmark:
+        benchmarks("prepare_osm_network_release")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        line_types=config_provider("lines", "types"),
+        release_version=config_provider("osm_network_release", "release_version"),
+        include_polygons=True,
+        export=True,
+    script:
+        scripts("prepare_osm_network_release.py")
+
+
+rule map_incumbent:
+    """Renders an interactive map of the incumbent base network for comparison."""
+    input:
+        base_network=resources("osm/comparison/incumbent/networks/base.nc"),
+    output:
+        map=resources("osm/comparison/map_incumbent.html"),
+    log:
+        logs("prepare_osm_network_release.log"),
+    benchmark:
+        benchmarks("prepare_osm_network_release")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        line_types=config_provider("lines", "types"),
+        release_version="Incumbent",
+        include_polygons=False,
+        export=False,
+    script:
+        scripts("prepare_osm_network_release.py")
+
+
+rule osm_release:
+    """Collects the OSM network release tables, maps and the comparison plot."""
+    input:
+        resources("osm/release/buses.csv"),
+        resources("osm/release/converters.csv"),
+        resources("osm/release/lines.csv"),
+        resources("osm/release/links.csv"),
+        resources("osm/release/transformers.csv"),
+        resources("osm/release/map.html"),
+        resources("osm/comparison/map_incumbent.html"),
+        resources("osm/comparison/lengths.pdf"),
+        resources("osm/comparison/links.csv"),

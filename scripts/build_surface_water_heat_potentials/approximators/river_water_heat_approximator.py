@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
-import warnings
-from typing import Union
+
+import logging
 
 import geopandas as gpd
 import numpy as np
@@ -12,6 +12,8 @@ import xarray as xr
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
     SurfaceWaterHeatApproximator,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
@@ -29,7 +31,7 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         self,
         volume_flow: xr.DataArray,
         ambient_temperature: xr.DataArray,
-        region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
+        region: shapely.geometry.polygon.Polygon | gpd.GeoSeries,
         max_relative_volume_flow: float = 1.0,
         delta_t_max: float = 1,
         min_outlet_temperature: float = 1,
@@ -112,7 +114,7 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         window = time_steps_per_day * moving_average_num_days
         if window > len(ambient_temperature.time):
             window = len(ambient_temperature.time)
-            warnings.warn(
+            logger.warning(
                 f"Moving average window of {moving_average_num_days} days in river water temperature approximation exceeds the available time steps ({len(ambient_temperature.time)}). Falling back to the maximum available time steps ({window} hours)."
             )
         # Calculate the mean ambient temperature

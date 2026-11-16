@@ -7,21 +7,19 @@ from functools import partial, lru_cache
 
 import os, sys, glob
 import requests
-from tenacity import (
-    retry as tenacity_retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-)
+
+import pandas as pd
+import json
+import yaml
 
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
-from scripts._helpers import validate_checksum, update_config_from_wildcards
+from scripts._helpers import load_data_versions
 from snakemake.utils import update_config
 
 
-def get_config(config, keys, default=None):
+def navigate_config(config, keys, default=None):
     """Retrieve a nested value from a dictionary using a tuple of keys."""
     value = config
     for key in keys:
@@ -47,68 +45,192 @@ def scenario_config(scenario_name):
     return merge_configs(config, scenarios[scenario_name])
 
 
+@lru_cache(maxsize=128)
+def _get_config_cached(wildcards_tuple):
+    """
+    Get full scenario-aware config for given wildcards (internal cached version).
+
+    Parameters
+    ----------
+    wildcards_tuple : tuple
+        Wildcards as frozen tuple for caching
+
+    Returns
+    -------
+    dict
+        Fully resolved config with scenario and wildcard overrides applied
+    """
+    # Convert back to wildcards dict
+    wildcards = dict(wildcards_tuple)
+
+    # Start with base or scenario config
+    if config["run"].get("scenarios", {}).get("enable", False) and "run" in wildcards:
+        scenario_name = wildcards["run"]
+        if scenario_name not in scenarios:
+            raise ValueError(
+                f"Scenario {scenario_name} not found in {config['run']['scenarios']['file']}"
+            )
+        base = scenario_config(scenario_name)  # Already cached
+    else:
+        base = copy.deepcopy(config)
+
+    return base
+
+
+def get_config(w):
+    """
+    Get full scenario-aware config for given wildcards.
+
+    This function returns the complete config dictionary with scenario overrides
+    (if enabled) and wildcard-based overrides applied.
+
+    Parameters
+    ----------
+    w : wildcards or dict
+        Snakemake wildcards object or dict containing wildcard values
+
+    Returns
+    -------
+    dict
+        Fully resolved config dictionary
+
+    Examples
+    --------
+    In a Snakemake rule:
+        params:
+            cfg=lambda w: get_config(w)
+
+    In a helper function:
+        def my_function(w):
+            cfg = get_config(w)
+            return cfg["electricity"]["renewable_carriers"]
+    """
+    # Convert wildcards to hashable tuple for caching
+    wildcards_tuple = tuple(sorted(w.items()))
+    return _get_config_cached(wildcards_tuple)
+
+
 def static_getter(wildcards, keys, default):
     """Getter function for static config values."""
-    config_with_wildcards = update_config_from_wildcards(
-        config, wildcards, inplace=False
-    )
-    return get_config(config_with_wildcards, keys, default)
+    return navigate_config(config, keys, default)
 
 
 def dynamic_getter(wildcards, keys, default):
     """Getter function for dynamic config values based on scenario."""
     if "run" not in wildcards.keys():
-        return get_config(config, keys, default)
+        return navigate_config(config, keys, default)
     scenario_name = wildcards.run
     if scenario_name not in scenarios:
         raise ValueError(
             f"Scenario {scenario_name} not found in file {config['run']['scenarios']['file']}."
         )
     config_with_scenario = scenario_config(scenario_name)
-    config_with_wildcards = update_config_from_wildcards(
-        config_with_scenario, wildcards, inplace=False
-    )
-    return get_config(config_with_wildcards, keys, default)
+    return navigate_config(config_with_scenario, keys, default)
 
 
-def config_provider(*keys, default=None):
+def config_provider(*keys, default=None, subset=None):
     """Dynamically provide config values based on 'run' -> 'name'.
+
+    With ``subset``, only the listed keys of the returned section are passed.
+    Changes to other keys of the section then do not trigger a rerun.
 
     Usage in Snakemake rules would look something like:
     params:
         my_param=config_provider("key1", "key2", default="some_default_value")
+        my_section=config_provider("key1", subset=["key2", "key3"])
     """
     # Using functools.partial to freeze certain arguments in our getter functions.
     if config["run"].get("scenarios", {}).get("enable", False):
-        return partial(dynamic_getter, keys=keys, default=default)
+        getter = partial(dynamic_getter, keys=keys, default=default)
     else:
-        return partial(static_getter, keys=keys, default=default)
+        getter = partial(static_getter, keys=keys, default=default)
+
+    if subset is None:
+        return getter
+
+    def select(wildcards):
+        section = getter(wildcards)
+        return {key: section[key] for key in subset}
+
+    return select
+
+
+def dataset_version(name: str, **dataset_config_overrides: str) -> pd.Series:
+    """
+    Return the dataset version information and url for a given dataset name.
+
+    The dataset name is used to determine the source and version of the dataset from the configuration.
+    Then the 'data/versions.csv' file is queried to find the matching dataset entry.
+
+    Parameters
+    ----------
+    name : str
+        The name of the dataset to retrieve version information for.
+    **dataset_config_overrides : str
+        entries to override the dataset config for the given `name`.
+
+    Returns
+    -------
+    pd.Series
+        A pandas Series containing the dataset version information, including source, version, tags, and URL
+    """
+    dataset_config = {**config["data"][name], **dataset_config_overrides}
+    data_version_files = config["data"]["version_files"]
+
+    data_versions = load_data_versions(
+        *(
+            (PROJ_DIR / path if not (path := Path(file)).is_absolute() else path)
+            for file in data_version_files
+        )
+    )
+
+    dataset = data_versions.loc[
+        (data_versions["dataset"] == name)
+        & (data_versions["source"] == dataset_config["source"])
+        & (data_versions["supported"])  # Limit to supported versions only
+        & (
+            data_versions["version"] == dataset_config["version"]
+            if "latest" != dataset_config["version"]
+            else True
+        )
+        & (data_versions["latest"] if "latest" == dataset_config["version"] else True)
+    ]
+
+    if dataset.empty:
+        raise ValueError(
+            f"Dataset '{name}' with source '{dataset_config['source']}' for '{dataset_config['version']}' not found in {data_version_files}."
+        )
+
+    # Return single-row DataFrame as a Series
+    dataset = dataset.squeeze()
+
+    # Generate output folder path in the `data` directory
+    dataset["folder"] = Path(
+        "data", name, dataset["source"], dataset["version"]
+    ).as_posix()
+
+    return dataset
+
+
+def atlite_threads(w):
+    return config_provider("atlite", "nprocesses", default=4)(w)
+
+
+def atlite_mem_mb(mb_per_thread):
+    return lambda w, threads: threads * mb_per_thread
 
 
 def solver_threads(w):
     solver_options = config_provider("solving", "solver_options")(w)
     option_set = config_provider("solving", "solver", "options")(w)
     solver_option_set = solver_options[option_set]
-    threads = solver_option_set.get("threads") or solver_option_set.get("Threads") or 4
+    threads = (
+        solver_option_set.get("threads")
+        or solver_option_set.get("Threads")
+        or solver_option_set.get("MSK_IPAR_NUM_THREADS")
+        or 4
+    )
     return threads
-
-
-def memory(w):
-    factor = 3.0
-    for o in w.opts.split("-"):
-        m = re.match(r"^(\d+)h$", o, re.IGNORECASE)
-        if m is not None:
-            factor /= int(m.group(1))
-            break
-    for o in w.opts.split("-"):
-        m = re.match(r"^(\d+)seg$", o, re.IGNORECASE)
-        if m is not None:
-            factor *= int(m.group(1)) / 8760
-            break
-    if w.clusters == "all" or w.clusters == "adm":
-        return int(factor * (18000 + 180 * 4000))
-    else:
-        return int(factor * (10000 + 195 * int(w.clusters)))
 
 
 def input_custom_extra_functionality(w):
@@ -120,52 +242,37 @@ def input_custom_extra_functionality(w):
     return []
 
 
-@tenacity_retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type(
-        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
-    ),
-)
-def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -> bool:
-    """
-    Checks if internet connection is available by sending a HEAD request
-    to a reliable server like Zenodo.
+def input_custom_costs(w) -> list[str]:
+    """Return the custom cost files as a list, empty if disabled."""
+    fns = config_provider("costs", "custom_cost_fn")(w)
+    if not fns:
+        return []
+    if isinstance(fns, str):
+        return [fns]
+    return fns
 
-    Parameters:
-    - url (str): The URL to check for internet connection. Default is Zenodo.
-    - timeout (int | float): The maximum time (in seconds) the request should wait.
 
-    Returns:
-    - bool: True if the internet is available, otherwise False.
-    """
-    # Send a HEAD request to avoid fetching full response
-    response = requests.head(url, timeout=timeout, allow_redirects=True)
-    # Raise HTTPError for transient errors
-    # 429: Too Many Requests (rate limiting)
-    # 500, 502, 503, 504: Server errors
-    if response.status_code in (429, 500, 502, 503, 504):
-        response.raise_for_status()
-    return response.status_code == 200
+def cost_year(w):
+    """Return the year of the cost assumptions used for the requested horizon."""
+    return config_provider("costs", "year")(w) or w.horizon
 
 
 def solved_previous_horizon(w):
-    planning_horizons = config_provider("scenario", "planning_horizons")(w)
-    i = planning_horizons.index(int(w.planning_horizons))
-    planning_horizon_p = str(planning_horizons[i - 1])
+    horizons = config_provider("planning_horizons")(w)
+    i = horizons.index(int(w.horizon))
+    horizon_p = str(horizons[i - 1])
 
-    return (
-        RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_"
-        + planning_horizon_p
-        + ".nc"
-    )
+    return RESULTS + "networks/solved_" + horizon_p + ".nc"
 
 
 def input_cutout(wildcards, cutout_names="default"):
+
+    cutouts_path = dataset_version("cutout")["folder"]
+
     if cutout_names == "default":
         cutout_names = config_provider("atlite", "default_cutout")(wildcards)
+
     if isinstance(cutout_names, list):
-        return [CDIR.joinpath(cn + ".nc").as_posix() for cn in cutout_names]
+        return [f"{cutouts_path}/{cn}.nc" for cn in cutout_names]
     else:
-        return CDIR.joinpath(cutout_names + ".nc").as_posix()
+        return f"{cutouts_path}/{cutout_names}.nc"
