@@ -39,6 +39,8 @@ nav:
     - Installation: installation.md
     - "Tutorial: Electricity-Only": tutorial.md
     - "Tutorial: Sector-Coupled": tutorial_sector.md
+  - Insights:
+    - Temporal Aggregation: insights/temporal-aggregation.md
   - References:
     - Release Notes: release_notes.md
     - Migration Guide: migration.md
