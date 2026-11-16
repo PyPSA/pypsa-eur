@@ -6,6 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 * Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport now come from a Delaunay triangulation of the regions instead of the electricity grid, with settings per carrier under `sector: transport_corridors`. This changes default results ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
+* Fix: Use the correct organic Rankine cycle efficiency (0.12 instead of 1) for enhanced geothermal systems ([#2415](https://github.com/PyPSA/pypsa-eur/issues/2415)).
 
 * Performance: `build_renewable_profiles` now derives the resource class masks from the availability matrix instead of rasterising all regions again. Results with the default `resource_classes: 1` are unchanged. With more classes, only eligible cells now set the class bounds and the class regions ([#2411](https://github.com/PyPSA/pypsa-eur/pull/2411)).
 

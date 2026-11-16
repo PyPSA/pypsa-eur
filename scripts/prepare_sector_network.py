@@ -5877,7 +5877,7 @@ def add_enhanced_geothermal(
     orc_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
     orc_capital_cost = (orc_annuity + FOM / (1 + FOM)) * orc_capex * Nyears
 
-    efficiency_orc = costs.at["organic rankine cycle", "efficiency"]
+    efficiency_orc = costs.at["organic rankine cycle", "electricity-input"]
     efficiency_dh = costs.at["geothermal", "district heat-input"]
 
     # p_nom_max conversion GW -> MW
