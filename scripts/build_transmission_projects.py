@@ -167,6 +167,33 @@ def get_branch_coords_from_geometry(
     return start_end_coords.flatten()
 
 
+def get_branch_coords(line: pd.Series, buses: pd.DataFrame) -> np.ndarray:
+    """
+    Gets start and end coordinates of a branch component in a pypsa network.
+
+    Uses the geometry if available, otherwise the coordinates of bus0 and bus1.
+
+    Parameters
+    ----------
+    line : pandas.Series
+        A row from a branch component DataFrame with bus0 and bus1 attributes.
+    buses : pandas.DataFrame
+        Buses with coordinates x and y, indexed by bus name.
+
+    Returns
+    -------
+    numpy.ndarray: Flattened array of start and end coordinates.
+    """
+    geometry = line.get("geometry")
+    if isinstance(geometry, str) and geometry:
+        geometry = shapely.from_wkt(geometry)
+    if isinstance(geometry, LineString) and not geometry.is_empty:
+        return get_branch_coords_from_geometry(geometry)
+    start_coords = buses.loc[line.bus0, ["x", "y"]].values
+    end_coords = buses.loc[line.bus1, ["x", "y"]].values
+    return np.array([start_coords, end_coords]).flatten()
+
+
 def get_bus_coords_from_port(linestring: LineString, port: int = 0) -> np.ndarray:
     """
     Extracts the coordinates of a specified port from a given linestring.
@@ -185,25 +212,6 @@ def get_bus_coords_from_port(linestring: LineString, port: int = 0) -> np.ndarra
     coords = coords[ind]
     coords = coords[port]
     return coords
-
-
-def get_existing_branch_coords(lines: pd.DataFrame, buses: pd.DataFrame) -> np.ndarray:
-    """Extract geometry endpoints, falling back to buses for missing geometry."""
-    coords = []
-    for name, branch in lines.iterrows():
-        geometry = branch.get("geometry")
-        if isinstance(geometry, str):
-            geometry = shapely.from_wkt(geometry) if geometry.strip() else None
-        if pd.isna(geometry) or geometry.is_empty:
-            logger.warning(
-                "Missing or empty geometry for %s; using bus coordinates.", name
-            )
-            coords.append(
-                buses.loc[[branch.bus0, branch.bus1], ["x", "y"]].to_numpy().flatten()
-            )
-        else:
-            coords.append(get_branch_coords_from_geometry(geometry))
-    return np.vstack(coords)
 
 
 def find_closest_lines(
@@ -229,13 +237,14 @@ def find_closest_lines(
     """
 
     # get coordinates of start and end points of all lines, for new lines we need to check both directions
-    treelines = get_existing_branch_coords(lines, buses)
+    treelines = lines.apply(get_branch_coords, axis=1, buses=buses)
     querylines = pd.concat(
         [
             new_lines["geometry"].apply(get_branch_coords_from_geometry),
             new_lines["geometry"].apply(get_branch_coords_from_geometry, reversed=True),
         ]
     )
+    treelines = np.vstack(treelines)
     querylines = np.vstack(querylines)
     tree = spatial.KDTree(treelines)
     dist, ind = tree.query(querylines, distance_upper_bound=distance_upper_bound)
