@@ -411,6 +411,7 @@ https://conda.anaconda.org/conda-forge/noarch/parso-0.8.7-pyhcf101f3_0.conda#398
 https://conda.anaconda.org/conda-forge/noarch/jedi-0.20.0-pyhcf101f3_0.conda#c2b3d37aa1411031126036ee76a8a861
 https://conda.anaconda.org/conda-forge/noarch/ipython_pygments_lexers-1.1.1-pyhd8ed1ab_0.conda#bd80ba060603cc228d9d81c257093119
 https://conda.anaconda.org/conda-forge/noarch/ipython-9.17.1-pyhe2676ad_0.conda#5c9214b277a8d24de70ef51bbf967c63
+https://conda.anaconda.org/conda-forge/noarch/holidays-0.108-pyh5ded981_0.conda#c2b13fd1e89c8796cba1a3df2cf1659c
 https://conda.anaconda.org/gurobi/win-64/gurobi-13.0.3-py313_0.conda#5b8d390cdc018acd862ef527980a8f84
 https://conda.anaconda.org/conda-forge/win-64/pango-1.58.2-h13911b6_1.conda#7953b4cc0a7a47a0d91fa2e664269a0c
 https://conda.anaconda.org/conda-forge/win-64/xorg-libxdmcp-1.1.5-hba3369d_2.conda#0e21a45f1bb429b6e35e82631e60554a

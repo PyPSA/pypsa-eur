@@ -1185,6 +1185,7 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2023
   oil_refining_emissions: 0.013
+  temporal_electricity_industry_load: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#costs_cf
 costs:
@@ -1605,6 +1606,9 @@ data:
     source: archive
     version: latest
   bidding_zones_entsoepy:
+    source: archive
+    version: latest
+  ffe_industry_load_profiles:
     source: archive
     version: latest
 

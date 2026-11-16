@@ -1256,6 +1256,30 @@ rule build_industrial_energy_demand_per_node:
         scripts("build_industrial_energy_demand_per_node.py")
 
 
+rule build_industrial_electricity_profiles:
+    """Builds hourly industrial electricity demand profiles per region from FfE load profiles."""
+    input:
+        industry_sector_ratios=resources("industry_sector_ratios_{horizon}.csv"),
+        industrial_production_per_node=resources("industrial_production_{horizon}.csv"),
+        ffe_profiles=rules.retrieve_ffe_industry_load_profiles.output["json"],
+    output:
+        industrial_electricity_profiles=resources(
+            "industrial_electricity_profiles_{horizon}.csv"
+        ),
+    log:
+        logs("build_industrial_electricity_profiles_{horizon}.log"),
+    benchmark:
+        (benchmarks("build_industrial_electricity_profiles_{horizon}"))
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+    script:
+        scripts("build_industrial_electricity_profiles.py")
+
+
 rule build_industrial_energy_demand_per_country_today:
     """Computes today's industrial energy demand per country and sector from JRC IDEES."""
     input:
