@@ -11,8 +11,8 @@ rule build_electricity_demand:
         entsoe=rules.retrieve_entsoe_electricity_demand.output["csv"],
         synthetic=lambda w: (
             ancient(rules.retrieve_synthetic_electricity_demand.output["csv"])
-            if config_provider("load", "demand_source")(w)
-            in ["supplemented", "synthetic"]
+            if config_provider("load", "supplement_synthetic")(w)
+            or config_provider("load", "prefer_synthetic")(w)
             else []
         ),
     output:

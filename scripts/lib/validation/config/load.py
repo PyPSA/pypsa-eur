@@ -8,8 +8,6 @@ Load configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#load_cf
 """
 
-from typing import Literal
-
 from pydantic import BaseModel, Field
 
 from scripts.lib.validation.config._base import ConfigModel
@@ -64,19 +62,13 @@ class LoadConfig(BaseModel):
         False,
         description="To specify a fixed year for the load time series that deviates from the snapshots' year.",
     )
-    demand_source: Literal[
-        "historical",
-        "supplemented",
-        "synthetic",
-    ] = Field(
-        "supplemented",
-        description="Source of electricity demand data.",
+    supplement_synthetic: bool = Field(
+        True,
+        description="Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
     )
-    supplement_synthetic: bool | None = Field(
-        None,
-        deprecated=True,
-        exclude=True,
-        description="Deprecated, use `demand_source`.",
+    prefer_synthetic: bool = Field(
+        False,
+        description="Whether to prefer synthetic data over historical data, e.g. for a consistent method across weather years. Historical data is then used only where synthetic data is missing. Implies `supplement_synthetic`.",
     )
     substation_only: bool = Field(
         True,

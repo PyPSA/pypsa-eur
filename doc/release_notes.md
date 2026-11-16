@@ -5,10 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Feature: New option `load: demand_source` to select whether electricity demand data follows `historical` (ENTSO-E data only), `supplemented` (default, ENTSO-E data with gaps filled by synthetic data) or `synthetic` (synthetic data only) ([#2339](https://github.com/PyPSA/pypsa-eur/pull/2339)).
-* **Breaking**: Config option `load: supplement_synthetic` will be deprecated and replaced by the new option `load:demand_source` in the next release.
-  Previous values `true`/`false` correspond to `supplemented`/`historical` with the new option ([#2339](https://github.com/PyPSA/pypsa-eur/pull/2339)).
-
+* Feature: New option `load: prefer_synthetic` to use synthetic electricity demand wherever available and historical data only to fill its gaps, e.g. for a consistent method across weather years. Fix: Kosovo is now included in the synthetic demand data ([#2339](https://github.com/PyPSA/pypsa-eur/pull/2339)).
 * Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport now come from a Delaunay triangulation of the regions instead of the electricity grid, with settings per carrier under `sector: transport_corridors`. This changes default results ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
 * Fix: Use the correct organic Rankine cycle efficiency (0.12 instead of 1) for enhanced geothermal systems ([#2415](https://github.com/PyPSA/pypsa-eur/issues/2415)).
 
