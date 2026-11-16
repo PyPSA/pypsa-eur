@@ -105,8 +105,8 @@ def sector_network_plot_paths(w):
 rule plot_balance_maps:
     """Collects the static and interactive balance maps for all runs, horizons and carriers."""
     input:
-        static=lambda w: balance_map_paths("static", w),
-        interactive=lambda w: balance_map_paths("interactive", w),
+        static=lambda w: balance_map_paths(w, "static"),
+        interactive=lambda w: balance_map_paths(w, "interactive"),
 
 
 rule plot_balance_maps_static:
