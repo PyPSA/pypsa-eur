@@ -167,9 +167,11 @@ def get_branch_coords_from_geometry(
     return start_end_coords.flatten()
 
 
-def get_branch_coords_from_buses(line: pd.Series, buses: pd.DataFrame) -> np.ndarray:
+def get_branch_coords(line: pd.Series, buses: pd.DataFrame) -> np.ndarray:
     """
-    Gets line string for branch component in an pypsa network.
+    Gets start and end coordinates of a branch component in a pypsa network.
+
+    Uses the geometry if available, otherwise the coordinates of bus0 and bus1.
 
     Parameters
     ----------
@@ -182,6 +184,11 @@ def get_branch_coords_from_buses(line: pd.Series, buses: pd.DataFrame) -> np.nda
     -------
     numpy.ndarray: Flattened array of start and end coordinates.
     """
+    geometry = line.get("geometry")
+    if isinstance(geometry, str) and geometry:
+        geometry = shapely.from_wkt(geometry)
+    if isinstance(geometry, LineString) and not geometry.is_empty:
+        return get_branch_coords_from_geometry(geometry)
     start_coords = buses.loc[line.bus0, ["x", "y"]].values
     end_coords = buses.loc[line.bus1, ["x", "y"]].values
     return np.array([start_coords, end_coords]).flatten()
@@ -230,7 +237,7 @@ def find_closest_lines(
     """
 
     # get coordinates of start and end points of all lines, for new lines we need to check both directions
-    treelines = lines.apply(get_branch_coords_from_buses, axis=1, buses=buses)
+    treelines = lines.apply(get_branch_coords, axis=1, buses=buses)
     querylines = pd.concat(
         [
             new_lines["geometry"].apply(get_branch_coords_from_geometry),
