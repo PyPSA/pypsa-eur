@@ -18,7 +18,9 @@ Carriers in `electricity.extendable_carriers` are added with zero initial
 capacity. Storage is either a `StorageUnit` whose energy-to-power ratio is
 fixed by `electricity.max_hours` (one investment variable) or a `Store` on an
 extra bus with separate charging and discharging links (three investment
-variables).
+variables). In sector-coupled models, conventional power plants with fuels
+tracked by the sector model and hydrogen storage are skipped, because
+[prepare_sector_network][] adds them itself.
 
 !!! note "Called from compose_network"
     This module has no Snakemake rule of its own. Its `main` function is
@@ -45,6 +47,17 @@ from scripts._helpers import (
 
 if PYPSA_V1:
     pypsa.options.params.add.return_names = True
+
+SECTOR_CARRIERS = {
+    "OCGT",
+    "CCGT",
+    "oil",
+    "coal",
+    "lignite",
+    "biomass",
+    "waste",
+    "H2",
+}
 
 STORE_LOOKUP = {
     "battery": {
@@ -167,7 +180,7 @@ def add_missing_carriers(n, carriers):
         n.add("Carrier", missing_carriers)
 
 
-def sanitize_carriers(n, config):
+def sanitize_carriers(n, nice_names: dict, tech_colors: dict):
     """
     Sanitize the carrier information in a PyPSA Network object.
 
@@ -179,9 +192,10 @@ def sanitize_carriers(n, config):
     ----------
     n : pypsa.Network
         A PyPSA Network object that represents an electrical power system.
-    config : dict
-        A dictionary containing configuration information, specifically the
-        "plotting" key with "nice_names" and "tech_colors" keys for carriers.
+    nice_names : dict
+        Display names of carriers.
+    tech_colors : dict
+        Colors of carriers.
 
     Returns
     -------
@@ -199,16 +213,11 @@ def sanitize_carriers(n, config):
             add_missing_carriers(n, c.static.carrier)
 
     carrier_i = n.carriers.index
-    nice_names = (
-        pd.Series(config["plotting"]["nice_names"])
-        .reindex(carrier_i)
-        .fillna(carrier_i.to_series())
-    )
+    nice_names = pd.Series(nice_names).reindex(carrier_i).fillna(carrier_i.to_series())
     n.carriers["nice_name"] = n.carriers.nice_name.where(
         n.carriers.nice_name != "", nice_names
     )
 
-    tech_colors = config["plotting"]["tech_colors"]
     colors = pd.Series(tech_colors).reindex(carrier_i)
     # try to fill missing colors with tech_colors after renaming
     missing_colors_i = colors[colors.isna()].index
@@ -1262,6 +1271,16 @@ def main(
     renewable_carriers = set(params.electricity["renewable_carriers"])
     extendable_carriers = params.electricity["extendable_carriers"]
     conventional_carriers = params.electricity["conventional_carriers"]
+    if params.sector["enabled"]:
+        # with myopic or perfect foresight, add_existing_baseyear adds nuclear as links
+        sector_carriers = SECTOR_CARRIERS | (
+            {"nuclear"} if foresight != "overnight" else set()
+        )
+        conventional_carriers = sorted(set(conventional_carriers) - sector_carriers)
+        extendable_carriers = {
+            c: sorted(set(carriers) - sector_carriers)
+            for c, carriers in extendable_carriers.items()
+        }
     conventional_inputs = {
         k: v for k, v in inputs.items() if k.startswith("conventional_")
     }
@@ -1324,6 +1343,7 @@ def main(
             )
         else:
             tech_map = estimate_renewable_caps["technology_mapping"]
+            tech_map = {k: v for k, v in tech_map.items() if v in renewable_carriers}
             expansion_limit = estimate_renewable_caps["expansion_limit"]
             year = estimate_renewable_caps["year"]
 

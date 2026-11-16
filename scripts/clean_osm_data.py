@@ -273,13 +273,17 @@ def _clean_rating(column):
     - column: pandas Series, the cleaned column
     """
     logger.info("Cleaning ratings.")
-    column = _to_str(column).str.replace("MW", "")
 
-    # Remove all remaining non-numeric characters except for semicolons
-    column = column.str.replace(r"[^0-9;]", "", regex=True)
+    def _to_mw(rating):
+        # Ratings in GW are converted to MW and may have decimals, e.g. "1.4 GW"
+        if "GW" in rating.upper():
+            value = "".join(c for c in rating if c.isdigit() or c == ".")
+            return round(float(value) * 1000) if value else 0
+        value = "".join(c for c in rating if c.isdigit())
+        return int(value) if value else 0
 
     # Sum up all ratings if there are multiple entries, skipping empty ones
-    column = column.str.split(";").apply(lambda x: sum(int(i) for i in x if i))
+    column = _to_str(column).str.split(";").apply(lambda x: sum(map(_to_mw, x)))
 
     return column.astype(str)
 
@@ -1559,7 +1563,7 @@ def _remove_lines_within_substations(gdf_lines, gdf_substations_polygon):
     return gdf_lines
 
 
-def _merge_touching_polygons(df):
+def _merge_touching_polygons(df, crs):
     """
     Merge touching polygons in a GeoDataFrame.
 
@@ -1567,6 +1571,8 @@ def _merge_touching_polygons(df):
     ----------
     - df: pandas.DataFrame or geopandas.GeoDataFrame
         The input DataFrame containing the polygons to be merged.
+    - crs: str
+        The coordinate reference system of the polygons.
 
     Returns
     -------
@@ -1793,7 +1799,7 @@ if __name__ == "__main__":
     df_substations = _create_substations_geometry(df_substations)
 
     # Merge touching polygons
-    df_substations = _merge_touching_polygons(df_substations)
+    df_substations = _merge_touching_polygons(df_substations, crs)
     df_substations = _create_substations_poi(df_substations)
 
     # Aggregate substations if needed
@@ -2055,6 +2061,10 @@ if __name__ == "__main__":
         lambda x: str(max(map(int, x.split(";"))))
     )
     df_links["frequency"] = _clean_frequency(df_links["frequency"])
+    # Drop relations explicitly tagged as AC (keep DC and untagged)
+    bool_ac = ~df_links["frequency"].isin(["0", ""])
+    logger.info(f"Dropping {bool_ac.sum()} elements with AC frequency.")
+    df_links = df_links[~bool_ac]
     df_links["rating"] = _clean_rating(df_links["rating"])
 
     df_links["geometry"] = df_links.apply(_create_single_link, axis=1)

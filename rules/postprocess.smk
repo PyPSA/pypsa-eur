@@ -132,6 +132,8 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=8000,
         params:
+            nice_names=config_provider("plotting", "nice_names"),
+            tech_colors=config_provider("plotting", "tech_colors"),
             settings=lambda w: config_provider(
                 "plotting", "balance_map_interactive", w.carrier
             ),
@@ -164,6 +166,8 @@ if config["foresight"] != "perfect":
         threads: 1
         resources:
             mem_mb=150000,
+        params:
+            heat_source_map=config_provider("plotting", "heat_source_map"),
         script:
             scripts("plot_heat_source_map.py")
 
@@ -308,9 +312,6 @@ rule plot_base_statistics:
             for plot in STATISTICS_BARPLOTS
         },
         barplots_touch=RESULTS + "figures/.statistics_plots_{horizon}",
-    params:
-        plotting=config_provider("plotting"),
-        barplots=STATISTICS_BARPLOTS,
     script:
         scripts("plot_statistics.py")
 

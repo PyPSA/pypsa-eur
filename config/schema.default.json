@@ -916,11 +916,17 @@
               "type": "string"
             },
             {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
               "type": "null"
             }
           ],
           "default": "data/custom_costs.csv",
-          "description": "Path to the custom costs file. None if it should not be used. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results."
+          "description": "Path or list of paths to custom costs files. Files are applied in order, so later files override earlier ones per technology and parameter. Leave empty or `[]` to disable. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results."
         },
         "overwrites": {
           "additionalProperties": {
@@ -2409,7 +2415,22 @@
             }
           ],
           "default": false,
-          "description": "Filter query for the custom powerplant database."
+          "description": "Whether to add power plants from the custom power plant file(s) listed in `custom_powerplants_fn`. `true` adds all entries, `false` disables custom power plants from file. A string will add the custom entries from the file(s) after filtering them using a `pandas` query; configured filters via `powerplants_filter` are NOT applied to the custom powerplants and might need to be repeated in the query here.."
+        },
+        "custom_powerplants_fn": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": "data/custom_powerplants.csv",
+          "description": "Path or list of paths to CSV files with custom power plants, used if `custom_powerplants` is enabled. The files must follow the powerplantmatching format, see also `data/custom_powerplants.csv`. Multiple files are combined without overwriting entries. Files cannot be used to remove powerplants from the model. If a query is used for `custom_powerplants`, then the query is executed on the combined files before they are added to the model."
         },
         "everywhere_powerplants": {
           "description": "List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with `extendable_carriers` to allow for building conventional powerplants irrespective of existing locations.",
@@ -2419,7 +2440,7 @@
           "type": "array"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
+          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound. Sector-coupled models ignore OCGT, CCGT, oil, coal, lignite, biomass and waste here, because they add these technologies as links with fuel and emission tracking. With myopic or perfect foresight, they also ignore nuclear, which is added as links from uranium with its build years.",
           "items": {
             "type": "string"
           },
@@ -2585,7 +2606,7 @@
           "type": "number"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the sectoral network.",
+          "description": "Fuels for which buses are added to the sector-coupled network with myopic or perfect foresight, so that existing power plants can connect to them. Does not select which existing power plants are added.",
           "items": {
             "type": "string"
           },
@@ -3695,46 +3716,6 @@
           },
           "description": "Colors used to represent technologies and carriers consistently across all plots. Values must be hex color strings, e.g. ``#235ebc``.",
           "type": "object"
-        }
-      }
-    },
-    "PypsaEurConfig": {
-      "description": "Configuration for `pypsa_eur` settings.",
-      "properties": {
-        "Bus": {
-          "description": "Bus carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Link": {
-          "description": "Link carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Generator": {
-          "description": "Generator carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "StorageUnit": {
-          "description": "StorageUnit carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Store": {
-          "description": "Store carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         }
       }
     },
@@ -5477,11 +5458,6 @@
           "description": "The cost of sequestering a ton of CO2 (currency/tCO2).",
           "type": "number"
         },
-        "co2_sequestration_lifetime": {
-          "default": 50,
-          "description": "The lifetime of a CO2 sequestration site (years).",
-          "type": "integer"
-        },
         "co2_spatial": {
           "default": true,
           "description": "Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
@@ -5718,6 +5694,62 @@
           "default": true,
           "description": "Add option for new hydrogen pipelines.",
           "type": "boolean"
+        },
+        "transport_corridors": {
+          "description": "Configuration for `sector.transport_corridors` settings.",
+          "properties": {
+            "H2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "CO2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "biomass": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            }
+          }
         },
         "gas_network": {
           "default": true,
@@ -5956,8 +5988,8 @@
               "type": "array"
             }
           ],
-          "default": "2013-01-01",
-          "description": "Left bound of date range."
+          "default": "2013-01-01 00:00",
+          "description": "First snapshot (included)."
         },
         "end": {
           "anyOf": [
@@ -5971,25 +6003,8 @@
               "type": "array"
             }
           ],
-          "default": "2014-01-01",
-          "description": "Right bound of date range."
-        },
-        "inclusive": {
-          "anyOf": [
-            {
-              "enum": [
-                "left",
-                "right",
-                "both"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "left",
-          "description": "Make the time interval closed to the `left`, `right`, or both sides `both` or neither side `None`."
+          "default": "2013-12-31 23:00",
+          "description": "Last snapshot (included), with time, e.g. `2013-12-31 23:00`."
         }
       }
     },
@@ -6395,50 +6410,6 @@
               "type": "number"
             }
           }
-        },
-        "oetc": {
-          "anyOf": [
-            {
-              "description": "Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support).",
-              "properties": {
-                "name": {
-                  "default": "pypsa-eur",
-                  "description": "Name identifier for the OETC job.",
-                  "type": "string"
-                },
-                "authentication_server_url": {
-                  "default": "",
-                  "description": "URL of the OETC authentication server for job submission.",
-                  "type": "string"
-                },
-                "orchestrator_server_url": {
-                  "default": "",
-                  "description": "URL of the OETC orchestrator server for job management.",
-                  "type": "string"
-                },
-                "cpu_cores": {
-                  "default": 8,
-                  "description": "Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)",
-                  "type": "integer"
-                },
-                "disk_space_gb": {
-                  "default": 50,
-                  "description": "Amount of disk space in gigabytes to request for the OETC job.",
-                  "type": "integer"
-                },
-                "delete_worker_on_error": {
-                  "default": true,
-                  "description": "Whether to delete the worker instance when an error occurs during job execution.",
-                  "type": "boolean"
-                }
-              }
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Configuration options for Open Energy Transition Computing (OETC) cluster support."
         },
         "mem_mb": {
           "default": 128000,
@@ -7383,6 +7354,23 @@
       "required": [
         "grid_codes"
       ]
+    },
+    "_CorridorConfig": {
+      "description": "Configuration for the candidate corridors of one carrier.",
+      "properties": {
+        "min_degree": {
+          "default": 1,
+          "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_offshore_distance": {
+          "default": null,
+          "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      }
     },
     "_CutoutConfig": {
       "description": "Configuration for a single cutout in `atlite.cutouts`.",
@@ -8533,41 +8521,6 @@
           "default": "",
           "description": "Absolute path to the directory where linopy saves files.",
           "type": "string"
-        }
-      }
-    },
-    "_OETCConfig": {
-      "description": "Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support).",
-      "properties": {
-        "name": {
-          "default": "pypsa-eur",
-          "description": "Name identifier for the OETC job.",
-          "type": "string"
-        },
-        "authentication_server_url": {
-          "default": "",
-          "description": "URL of the OETC authentication server for job submission.",
-          "type": "string"
-        },
-        "orchestrator_server_url": {
-          "default": "",
-          "description": "URL of the OETC orchestrator server for job management.",
-          "type": "string"
-        },
-        "cpu_cores": {
-          "default": 8,
-          "description": "Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)",
-          "type": "integer"
-        },
-        "disk_space_gb": {
-          "default": 50,
-          "description": "Amount of disk space in gigabytes to request for the OETC job.",
-          "type": "integer"
-        },
-        "delete_worker_on_error": {
-          "default": true,
-          "description": "Whether to delete the worker instance when an error occurs during job execution.",
-          "type": "boolean"
         }
       }
     },
@@ -9823,6 +9776,62 @@
         }
       }
     },
+    "_TransportCorridorsConfig": {
+      "description": "Configuration for `sector.transport_corridors` settings.",
+      "properties": {
+        "H2": {
+          "description": "Configuration for the candidate corridors of one carrier.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "CO2": {
+          "description": "Configuration for the candidate corridors of one carrier.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "biomass": {
+          "description": "Configuration for the candidate corridors of one carrier.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
     "_UserAgentConfig": {
       "description": "Configuration for `overpass_api.user_agent` settings.",
       "properties": {
@@ -10140,8 +10149,8 @@
               "type": "array"
             }
           ],
-          "default": "2013-01-01",
-          "description": "Left bound of date range."
+          "default": "2013-01-01 00:00",
+          "description": "First snapshot (included)."
         },
         "end": {
           "anyOf": [
@@ -10155,25 +10164,8 @@
               "type": "array"
             }
           ],
-          "default": "2014-01-01",
-          "description": "Right bound of date range."
-        },
-        "inclusive": {
-          "anyOf": [
-            {
-              "enum": [
-                "left",
-                "right",
-                "both"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "left",
-          "description": "Make the time interval closed to the `left`, `right`, or both sides `both` or neither side `None`."
+          "default": "2013-12-31 23:00",
+          "description": "Last snapshot (included), with time, e.g. `2013-12-31 23:00`."
         }
       }
     },
@@ -10421,7 +10413,22 @@
             }
           ],
           "default": false,
-          "description": "Filter query for the custom powerplant database."
+          "description": "Whether to add power plants from the custom power plant file(s) listed in `custom_powerplants_fn`. `true` adds all entries, `false` disables custom power plants from file. A string will add the custom entries from the file(s) after filtering them using a `pandas` query; configured filters via `powerplants_filter` are NOT applied to the custom powerplants and might need to be repeated in the query here.."
+        },
+        "custom_powerplants_fn": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": "data/custom_powerplants.csv",
+          "description": "Path or list of paths to CSV files with custom power plants, used if `custom_powerplants` is enabled. The files must follow the powerplantmatching format, see also `data/custom_powerplants.csv`. Multiple files are combined without overwriting entries. Files cannot be used to remove powerplants from the model. If a query is used for `custom_powerplants`, then the query is executed on the combined files before they are added to the model."
         },
         "everywhere_powerplants": {
           "description": "List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with `extendable_carriers` to allow for building conventional powerplants irrespective of existing locations.",
@@ -10431,7 +10438,7 @@
           "type": "array"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
+          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound. Sector-coupled models ignore OCGT, CCGT, oil, coal, lignite, biomass and waste here, because they add these technologies as links with fuel and emission tracking. With myopic or perfect foresight, they also ignore nuclear, which is added as links from uranium with its build years.",
           "items": {
             "type": "string"
           },
@@ -12182,46 +12189,6 @@
         }
       }
     },
-    "pypsa_eur": {
-      "description": "Configuration for `pypsa_eur` settings.",
-      "properties": {
-        "Bus": {
-          "description": "Bus carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Link": {
-          "description": "Link carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Generator": {
-          "description": "Generator carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "StorageUnit": {
-          "description": "StorageUnit carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Store": {
-          "description": "Store carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      }
-    },
     "energy": {
       "description": "Configuration for `energy` settings.",
       "properties": {
@@ -12376,7 +12343,7 @@
           "type": "number"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the sectoral network.",
+          "description": "Fuels for which buses are added to the sector-coupled network with myopic or perfect foresight, so that existing power plants can connect to them. Does not select which existing power plants are added.",
           "items": {
             "type": "string"
           },
@@ -13020,11 +12987,6 @@
           "description": "The cost of sequestering a ton of CO2 (currency/tCO2).",
           "type": "number"
         },
-        "co2_sequestration_lifetime": {
-          "default": 50,
-          "description": "The lifetime of a CO2 sequestration site (years).",
-          "type": "integer"
-        },
         "co2_spatial": {
           "default": true,
           "description": "Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
@@ -13261,6 +13223,62 @@
           "default": true,
           "description": "Add option for new hydrogen pipelines.",
           "type": "boolean"
+        },
+        "transport_corridors": {
+          "description": "Configuration for `sector.transport_corridors` settings.",
+          "properties": {
+            "H2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "CO2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "biomass": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            }
+          }
         },
         "gas_network": {
           "default": true,
@@ -13780,11 +13798,17 @@
               "type": "string"
             },
             {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
               "type": "null"
             }
           ],
           "default": "data/custom_costs.csv",
-          "description": "Path to the custom costs file. None if it should not be used. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results."
+          "description": "Path or list of paths to custom costs files. Files are applied in order, so later files override earlier ones per technology and parameter. Leave empty or `[]` to disable. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results."
         },
         "overwrites": {
           "additionalProperties": {
@@ -14599,50 +14623,6 @@
               "type": "number"
             }
           }
-        },
-        "oetc": {
-          "anyOf": [
-            {
-              "description": "Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support).",
-              "properties": {
-                "name": {
-                  "default": "pypsa-eur",
-                  "description": "Name identifier for the OETC job.",
-                  "type": "string"
-                },
-                "authentication_server_url": {
-                  "default": "",
-                  "description": "URL of the OETC authentication server for job submission.",
-                  "type": "string"
-                },
-                "orchestrator_server_url": {
-                  "default": "",
-                  "description": "URL of the OETC orchestrator server for job management.",
-                  "type": "string"
-                },
-                "cpu_cores": {
-                  "default": 8,
-                  "description": "Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)",
-                  "type": "integer"
-                },
-                "disk_space_gb": {
-                  "default": 50,
-                  "description": "Amount of disk space in gigabytes to request for the OETC job.",
-                  "type": "integer"
-                },
-                "delete_worker_on_error": {
-                  "default": true,
-                  "description": "Whether to delete the worker instance when an error occurs during job execution.",
-                  "type": "boolean"
-                }
-              }
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Configuration options for Open Energy Transition Computing (OETC) cluster support."
         },
         "mem_mb": {
           "default": 128000,

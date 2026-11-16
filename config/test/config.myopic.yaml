@@ -20,8 +20,8 @@ planning_horizons:
 countries: ["BE"]
 
 snapshots:
-  start: "2013-03-01"
-  end: "2013-03-08"
+  start: "2013-03-01 00:00"
+  end: "2013-03-07 23:00"
 
 sector:
   enabled: true
@@ -118,8 +118,8 @@ solving:
   check_objective:
     enable: true
     expected_value:
-      2030: 578061829.69
-      2040: 413904094.45
+      2030: 592883175.14
+      2040: 439899210.12
       2050: 315638242.46
 
 plotting:

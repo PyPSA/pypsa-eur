@@ -50,10 +50,10 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    noprogress = snakemake.config["run"].get("disable_progressbar", True)
-    noprogress = noprogress or not snakemake.config["atlite"]["show_progress"]
+    noprogress = snakemake.params.disable_progressbar
+    noprogress = noprogress or not snakemake.params.show_progress
     technology = snakemake.wildcards.technology
-    params = snakemake.params.renewable[technology]
+    params = snakemake.params.technology
 
     cutout = load_cutout(snakemake.input.cutout)
     regions = gpd.read_file(snakemake.input.regions)
