@@ -3,28 +3,33 @@
 
 # Temporal aggregation
 
-Solving PyPSA-Eur at hourly resolution takes long and needs much memory, so
+Solving PyPSA-Eur at hourly resolution takes a long time and needs a lot of memory, so
 the snapshots are often aggregated before optimisation. This page shows how
 much accuracy that costs and how much effort it saves. In short, segmentation
 keeps system costs and capacities close to the hourly model at a fraction of
-the effort, down to about 1000 snapshots. Averaging does so only at moderate
+the effort, down to about 1000 snapshots (88% fewer). Averaging does so only at moderate
 resolutions.
 
 ## Setup
 
 We solved a sector-coupled model for 2050 with 60 regions and the weather year
-2013, once at hourly resolution and repeatedly with aggregated snapshots. Two
+2013, once at hourly resolution and repeatedly with aggregated snapshots. The
+spatial clustering to 60 regions also aggregates buses and power plants and
+affects the results, but this page covers only the temporal dimension. Two
 methods under `clustering: temporal:` are compared (see
 [Model resolution](../design/resolution.md#temporal-resolution)):
 
-- *Averaging* merges consecutive hours into blocks of equal length.
-- *Segmentation* merges consecutive hours into blocks of variable length, which
-  follow the changes in demand and renewable availability
-  [@kotzurImpactDifferent2018; @hoffmannReviewTime2020]. The number of
-  segments is chosen so that the average block length matches the averaging
-  runs.
+- *Averaging* replaces consecutive hours by their mean over blocks of equal
+  length.
+- *Segmentation* does the same over blocks of variable length, which follow
+  the changes in demand and renewable availability
+  [@kotzurImpactDifferent2018; @hoffmannReviewTime2020].
 
-![Effect of temporal aggregation on system cost, solving effort and capacities](../img/temporal-aggregation.png)
+We give the resolution of both methods as hours per snapshot. For
+segmentation, this is the average block length; "8 h" means 1095 segments,
+which span 2 to 19 hours, and 80% of them span 5 to 13 hours.
+
+![Effect of temporal aggregation on system cost, solving effort and capacities](../img/temporal-aggregation.svg)
 
 **Figure.** Effect of temporal aggregation relative to the hourly model. Top
 row: total system cost against the hours per snapshot, solving time and peak
@@ -44,8 +49,8 @@ snapshot.
 
 **Total cost.** Aggregation lowers total system cost because it smooths out
 the peaks and ramps that the system has to balance. With segmentation, the
-cost stays close to the hourly model up to about 8 hours per snapshot (about
-1000 snapshots) and then falls faster; at 36 to 48 hours it is as far off as
+cost stays close to the hourly model up to about 8 hours per snapshot (1095
+snapshots) and then falls faster; at 36 to 48 hours it is as far off as
 averaging at 12 hours. With averaging, the cost stays close to the hourly
 model up to about 4 hours per snapshot and then falls fast.
 
@@ -84,6 +89,16 @@ against the daily cycle and split or shift the solar peak from day to day.
 Over the year, the dispatch of averaging deviates about half as much again
 from the hourly model as that of segmentation. With both methods, daily peaks
 are lower than in the hourly model.
+
+## Further reading
+
+Kotzur et al. and Hoffmann et al. compare further aggregation methods, such as
+typical periods [@kotzurImpactDifferent2018; @hoffmannReviewTime2020].
+Pfenninger compares methods to reduce time resolution over several decades of
+weather data and discusses the planning implications of inter-annual
+variability [@pfenningerDealingMultiple2017]. Mannhardt et al. show how to
+model long-term storage accurately with few representative hours
+[@mannhardtAccuratelyModeling2025].
 
 ## Reproducibility
 

@@ -9,7 +9,7 @@ effort, storage operation and electricity dispatch for the insights page
 Usage::
 
     pixi run python doc/insights/scripts/plot_temporal_aggregation.py \
-        --results results/time-aggregation --output doc/img/temporal-aggregation.png
+        --results results/time-aggregation --output doc/img/temporal-aggregation.svg
 
 Pass ``--csv <path>`` to also export the underlying data.
 """
@@ -232,7 +232,7 @@ def plot_cost_error(axes: dict, data: dict, ylim: tuple):
     ax.set_xticks(ticks, [f"{t}" for t in ticks])
     ax.minorticks_off()
     ax.set_xlim(0.9, 1.1 * hours.max())
-    ax.set_xlabel("aggregation (hours per snapshot, log scale)")
+    ax.set_xlabel("average hours per snapshot (log scale)")
     ax.set_ylabel("cost difference (bn€/a)")
     ax.set_title("Total system cost")
     secondary = ax.secondary_yaxis(
@@ -262,6 +262,7 @@ def plot_cost_error(axes: dict, data: dict, ylim: tuple):
         )
         ax.set_ylim(ylim_pct)
         ax.set_xlabel(xlabel)
+        ax.set_ylabel("cost difference (%)")
         ax.set_title(title)
     axes["time"].set_xscale("log")
     ticks = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50]
@@ -269,8 +270,6 @@ def plot_cost_error(axes: dict, data: dict, ylim: tuple):
     axes["time"].set_xticks(ticks, [f"{t:g}" for t in ticks])
     axes["time"].minorticks_off()
     axes["memory"].set_xlim(0, None)
-    axes["time"].set_ylabel("cost difference (%)")
-    axes["memory"].tick_params(labelleft=False)
 
 
 def plot_baseline(ax, costs: pd.Series):
@@ -527,7 +526,7 @@ if __name__ == "__main__":
         "--results", type=Path, default=Path("results/time-aggregation")
     )
     parser.add_argument(
-        "--output", type=Path, default=Path("doc/img/temporal-aggregation.png")
+        "--output", type=Path, default=Path("doc/img/temporal-aggregation.svg")
     )
     parser.add_argument("--csv", type=Path)
     args = parser.parse_args()
