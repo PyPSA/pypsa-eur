@@ -2,8 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build population layouts for all clustered model regions as total as well as
-split by urban and rural population.
+Aggregate gridded population layouts to clustered model regions.
+
+The total, urban and rural population layouts on the cutout grid are summed
+over each onshore region using the cutout indicator matrix. The output table
+also holds each region's country and its share of the national population,
+which later rules use to distribute national demands and capacities to
+regions.
 """
 
 import logging
@@ -20,7 +25,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_clustered_population_layouts", clusters=48)
+        snakemake = mock_snakemake("build_clustered_population_layouts")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -28,7 +33,7 @@ if __name__ == "__main__":
     cutout = load_cutout(snakemake.input.cutout)
 
     clustered_regions = (
-        gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
+        gpd.read_file(snakemake.input.onshore_regions).set_index("name").buffer(0)
     )
 
     I = cutout.indicatormatrix(clustered_regions)  # noqa: E741

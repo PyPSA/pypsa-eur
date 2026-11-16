@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create land elibility analysis for Ukraine and Moldova with different datasets.
+Computes the land availability matrix for renewable generators in Ukraine and Moldova, which the default European land cover datasets do not cover.
+
+For each technology, exclusion criteria are assembled from the Copernicus Global
+Land Cover raster (emulating the CORINE classes used elsewhere), protected areas
+from the World Database on Protected Areas (with point records buffered to their
+reported area), GEBCO bathymetry for maximum water depth, distance to shore and
+shipping density. The share of each cutout grid cell available to each region is
+then computed with atlite. The result is merged into the availability matrix of
+the other countries.
 """
 
 import functools
@@ -14,19 +22,22 @@ from tempfile import NamedTemporaryFile
 import atlite
 import fiona
 import geopandas as gpd
+import matplotlib.pyplot as plt
 import numpy as np
+from atlite.gis import shape_availability
+from rasterio.plot import show
 
 from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 
-def get_wdpa_layer_name(wdpa_fn, layer_substring):
+def get_wdpa_layer_name(wdpa_fn: str, layer_substring: str) -> str:
     """
     Get layername from file "wdpa_fn" whose name contains "layer_substring".
     """
-    l = fiona.listlayers(wdpa_fn)
-    return [_ for _ in l if layer_substring in _][0]
+    layers = fiona.listlayers(wdpa_fn)
+    return [layer for layer in layers if layer_substring in layer][0]
 
 
 if __name__ == "__main__":
@@ -34,14 +45,17 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "determine_availability_matrix_MD_UA", clusters=100, technology="solar"
+            "determine_availability_matrix_MD_UA", technology="solar"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    pts_tmp_fn = None
+    plg_tmp_fn = None
+
     nprocesses = int(snakemake.threads)
-    noprogress = not snakemake.config["atlite"].get("show_progress", True)
-    config = snakemake.params["renewable"][snakemake.wildcards.technology]
+    noprogress = not snakemake.params.show_progress
+    config = snakemake.params["technology"]
 
     cutout = load_cutout(snakemake.input.cutout)
     regions = (
@@ -54,6 +68,8 @@ if __name__ == "__main__":
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
     corine = config.get("corine", {})
+    if not isinstance(corine, dict):
+        corine = {}
     if "grid_codes" in corine:
         # Land cover codes to emulate CORINE results
         if snakemake.wildcards.technology == "solar":
@@ -130,7 +146,7 @@ if __name__ == "__main__":
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater, -config["max_depth"])
-        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4236, nodata=-1000)
+        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4326, nodata=-1000)
 
     if config.get("min_shore_distance"):
         buffer = config["min_shore_distance"]
@@ -149,7 +165,7 @@ if __name__ == "__main__":
             snakemake.input.ship_density, codes=func, crs=4326, allow_no_overlap=True
         )
 
-    kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
+    kwargs = {"nprocesses": nprocesses, "disable_progressbar": noprogress}
     if noprogress:
         logger.info("Calculate landuse availabilities...")
         start = time.time()
@@ -160,10 +176,22 @@ if __name__ == "__main__":
         availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
 
     for fn in [pts_tmp_fn, plg_tmp_fn]:
-        if os.path.exists(fn):
+        if fn and os.path.exists(fn):
             os.remove(fn)
 
     availability = availability.sel(bus=buses)
 
+    if snakemake.params.plot_availability_matrix:
+        logger.info(
+            f"Plotting landuse availability matrix for {snakemake.wildcards.technology}."
+        )
+        band, transform = shape_availability(
+            regions.geometry.to_crs(excluder.crs), excluder
+        )
+        fig, ax = plt.subplots(figsize=(10, 10))
+        regions.to_crs(excluder.crs).plot(ax=ax, color="none")
+        show(band, transform=transform, cmap="Greens", ax=ax)
+        plt.savefig(snakemake.output["plot"], dpi=300)
+
     # Save and plot for verification
-    availability.to_netcdf(snakemake.output.availability_matrix)
+    availability.to_netcdf(snakemake.output["nc"])

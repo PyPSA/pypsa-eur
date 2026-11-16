@@ -9,3 +9,7 @@ config/test
 envs
 matplotlibrc
 Snakefile
+data
+pixi.toml
+pixi.lock
+matplotlibrc

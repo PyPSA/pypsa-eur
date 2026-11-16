@@ -6,10 +6,7 @@
 """
 Calculates dynamic line rating time series from base network.
 
-Description
------------
-
-The rule :mod:`build_line_rating` calculates the line rating for transmission lines.
+The rule [build_line_rating][] calculates the line rating for transmission lines.
 The line rating provides the maximal capacity of a transmission line considering the heat exchange with the environment.
 
 The following heat gains and losses are considered:
@@ -31,9 +28,9 @@ import re
 import atlite
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import pypsa
 import xarray as xr
-from dask.distributed import Client
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
 
@@ -42,12 +39,15 @@ from scripts._helpers import (
     get_snapshots,
     load_cutout,
     set_scenario_config,
+    setup_dask,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_resistance(T, R_ref, T_ref: float | int = 293, alpha: float = 0.00403):
+def calculate_resistance(
+    T: float, R_ref: pd.Series, T_ref: float | int = 293, alpha: float = 0.00403
+) -> pd.Series:
     """
     Calculates the resistance at other temperatures than the reference
     temperature.
@@ -73,7 +73,7 @@ def calculate_line_rating(
     n: pypsa.Network,
     cutout: atlite.Cutout,
     show_progress: bool = True,
-    dask_kwargs: dict = None,
+    dask_kwargs: dict | None = None,
 ) -> xr.DataArray:
     """
     Calculates the maximal allowed power flow in each line for each time step
@@ -127,9 +127,9 @@ def calculate_line_rating(
     line_factor = relevant_lines.eval("v_nom * n_bundle * num_parallel") / 1e3  # in mW
     return xr.DataArray(
         data=np.sqrt(3) * Imax * line_factor.values.reshape(-1, 1),
-        attrs=dict(
-            description="Maximal possible power in MW for given line considering line rating"
-        ),
+        attrs={
+            "description": "Maximal possible power in MW for given line considering line rating"
+        },
     )
 
 
@@ -142,13 +142,9 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
-    show_progress = not snakemake.config["run"].get("disable_progressbar", True)
-    show_progress = show_progress and snakemake.config["atlite"]["show_progress"]
-    if nprocesses > 1:
-        client = Client(n_workers=nprocesses, threads_per_worker=1)
-    else:
-        client = None
-    dask_kwargs = {"scheduler": client}
+    show_progress = not snakemake.params.disable_progressbar
+    show_progress = show_progress and snakemake.params.show_progress
+    dask_kwargs = setup_dask(nprocesses)
 
     n = pypsa.Network(snakemake.input.base_network)
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)

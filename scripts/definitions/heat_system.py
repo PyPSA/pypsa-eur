@@ -4,6 +4,8 @@
 
 from enum import Enum
 
+import pandas as pd
+
 from scripts.definitions.heat_sector import HeatSector
 from scripts.definitions.heat_system_type import HeatSystemType
 
@@ -41,7 +43,7 @@ class HeatSystem(Enum):
         Returns whether the heat system is for urban decentralized areas.
     urban()
         Returns whether the heat system is for urban areas.
-    heat_demand_weighting(urban_fraction=None, dist_fraction=None)
+    heat_demand_weighting(urban_fraction, dist_fraction)
         Calculates the heat demand weighting based on urban fraction and distribution fraction.
     heat_pump_costs_name(heat_source)
         Generates the name for the heat pump costs based on the heat source.
@@ -52,9 +54,6 @@ class HeatSystem(Enum):
     RESIDENTIAL_URBAN_DECENTRAL = "residential urban decentral"
     SERVICES_URBAN_DECENTRAL = "services urban decentral"
     URBAN_CENTRAL = "urban central"
-
-    def __init__(self, *args):
-        super().__init__(*args)
 
     def __str__(self) -> str:
         """
@@ -130,7 +129,7 @@ class HeatSystem(Enum):
         ):
             return HeatSector.SERVICES
         else:
-            "tot"
+            raise RuntimeError(f"Heat system {self} has no sector")
 
     @property
     def is_rural(self) -> bool:
@@ -176,22 +175,24 @@ class HeatSystem(Enum):
         """
         return not self.is_rural
 
-    def heat_demand_weighting(self, urban_fraction=None, dist_fraction=None) -> float:
+    def heat_demand_weighting(
+        self, urban_fraction: pd.Series, dist_fraction: pd.Series
+    ) -> pd.Series:
         """
         Calculates the heat demand weighting based on urban fraction and
         distribution fraction.
 
         Parameters
         ----------
-        urban_fraction : float, optional
-            The fraction of urban heat demand.
-        dist_fraction : float, optional
-            The fraction of distributed heat demand.
+        urban_fraction : pd.Series
+            The fraction of urban heat demand per node.
+        dist_fraction : pd.Series
+            The fraction of district heat demand per node.
 
         Returns
         -------
-        float
-            The heat demand weighting.
+        pd.Series
+            The heat demand weighting per node.
 
         Raises
         ------
@@ -285,3 +286,16 @@ class HeatSystem(Enum):
             The name for the oil boiler costs.
         """
         return "decentral oil boiler"
+
+    @property
+    def biomass_boiler_costs_name(self) -> str:
+        """
+        Generates the name for the biomass boiler costs based on the heat system.
+        Used to retrieve data from `technology-data <https://github.com/PyPSA/technology-data>`.
+
+        Returns
+        -------
+        str
+            The name for the biomass boiler costs.
+        """
+        return "biomass boiler"

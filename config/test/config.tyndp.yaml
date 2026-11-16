@@ -1,25 +1,22 @@
+# yaml-language-server: $schema=../schema.default.json
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
+
+planning_horizons: 2030
 
 run:
   name: "test-elec-tyndp"
   disable_progressbar: true
   shared_resources:
     policy: false
-  shared_cutouts: true
 
-scenario:
-  clusters:
-  - all
-  planning_horizons:
-  - 2030
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'CY', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
 snapshots:
-  start: "2013-03-01"
-  end: "2013-03-08"
+  start: "2013-03-01 00:00"
+  end: "2013-03-07 23:00"
 
 electricity:
   base_network: tyndp
@@ -68,11 +65,13 @@ clustering:
   mode: administrative
   administrative:
     level: bz
+  cluster_network:
+    n_clusters: all
   build_bidding_zones:
     remove_islands: true
     aggregate_to_tyndp: true
   temporal:
-    resolution_sector: 24h
+    averaging: 24h
 
 solving:
   solver:

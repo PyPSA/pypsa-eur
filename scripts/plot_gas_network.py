@@ -2,8 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates map of optimised gas network, storage and selected other
-infrastructure.
+Plots the optimised methane network and regional gas sources on a map.
+
+Reads the solved network and aggregates annual fossil gas extraction,
+methanation and biogas supply per electricity bus as circle sizes. Gas
+pipelines are drawn in three layers: capacity existing in 2020, total
+available capacity after expansion, and the maximum flow actually used.
+Pipelines below a capacity threshold are omitted. Networks without gas
+pipelines produce a placeholder figure.
 """
 
 import logging
@@ -12,9 +18,18 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
+from pypsa.plot.maps.static import (
+    add_legend_circles,
+    add_legend_lines,
+    add_legend_patches,
+)
 
-from scripts._helpers import configure_logging, retry, set_scenario_config
+from scripts._helpers import (
+    configure_logging,
+    create_placeholder_plot,
+    retry,
+    set_scenario_config,
+)
 from scripts.make_summary import assign_locations
 from scripts.plot_power_network import load_projection
 
@@ -22,9 +37,16 @@ logger = logging.getLogger(__name__)
 
 
 @retry
-def plot_ch4_map(n):
-    # if "gas pipeline" not in n.links.carrier.unique():
-    #     return
+def plot_ch4_map(n: pypsa.Network) -> None:
+    # Check if gas infrastructure exists in the network
+    if "gas pipeline" not in n.links.carrier.unique():
+        logger.warning(
+            "No gas pipeline carriers in network. Skipping gas network plot."
+        )
+        create_placeholder_plot(
+            snakemake.output[0], "No gas network\nin model", figsize=(1, 1)
+        )
+        return
 
     assign_locations(n)
 
@@ -87,25 +109,25 @@ def plot_ch4_map(n):
     # make a fake MultiIndex so that area is correct for legend
     biogas.index = pd.MultiIndex.from_product([biogas.index, ["biogas"]])
 
-    bus_sizes = pd.concat([fossil_gas, methanation, biogas])
-    non_buses = bus_sizes.index.unique(level=0).difference(n.buses.index)
+    bus_size = pd.concat([fossil_gas, methanation, biogas])
+    non_buses = bus_size.index.unique(level=0).difference(n.buses.index)
     if any(non_buses):
         logger.info(f"Dropping non-buses {non_buses.tolist()} for CH4 network plot.")
-        bus_sizes = bus_sizes.drop(non_buses)
-    bus_sizes.sort_index(inplace=True)
+        bus_size = bus_size.drop(non_buses)
+    bus_size.sort_index(inplace=True)
 
     to_remove = n.links.index[~n.links.carrier.str.contains("gas pipeline")]
     n.links.drop(to_remove, inplace=True)
 
-    link_widths_rem = n.links.p_nom_opt / linewidth_factor
-    link_widths_rem[n.links.p_nom_opt < line_lower_threshold] = 0.0
+    link_width_rem = n.links.p_nom_opt / linewidth_factor
+    link_width_rem[n.links.p_nom_opt < line_lower_threshold] = 0.0
 
-    link_widths_orig = n.links.p_nom / linewidth_factor
-    link_widths_orig[n.links.p_nom < line_lower_threshold] = 0.0
+    link_width_orig = n.links.p_nom / linewidth_factor
+    link_width_orig[n.links.p_nom < line_lower_threshold] = 0.0
 
     max_usage = n.links_t.p0[n.links.index].abs().max(axis=0)
-    link_widths_used = max_usage / linewidth_factor
-    link_widths_used[max_usage < line_lower_threshold] = 0.0
+    link_width_used = max_usage / linewidth_factor
+    link_width_used[max_usage < line_lower_threshold] = 0.0
 
     tech_colors = snakemake.params.plotting["tech_colors"]
 
@@ -121,7 +143,7 @@ def plot_ch4_map(n):
     n.links.bus0 = n.links.bus0.str.replace(" gas", "")
     n.links.bus1 = n.links.bus1.str.replace(" gas", "")
 
-    bus_colors = {
+    bus_color = {
         "fossil gas": tech_colors["fossil gas"],
         "methanation": tech_colors["methanation"],
         "biogas": "seagreen",
@@ -130,10 +152,10 @@ def plot_ch4_map(n):
     fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
 
     n.plot(
-        bus_sizes=bus_sizes,
-        bus_colors=bus_colors,
-        link_colors=pipe_colors["gas pipeline (in 2020)"],
-        link_widths=link_widths_orig,
+        bus_size=bus_size,
+        bus_color=bus_color,
+        link_color=pipe_colors["gas pipeline (in 2020)"],
+        link_width=link_width_orig,
         branch_components=["Link"],
         ax=ax,
         **map_opts,
@@ -141,43 +163,43 @@ def plot_ch4_map(n):
 
     n.plot(
         ax=ax,
-        bus_sizes=0.0,
-        link_colors=pipe_colors["gas pipeline (available)"],
-        link_widths=link_widths_rem,
+        bus_size=0.0,
+        link_color=pipe_colors["gas pipeline (available)"],
+        link_width=link_width_rem,
         branch_components=["Link"],
-        geomap_colors=False,
+        geomap_color=False,
         boundaries=map_opts["boundaries"],
     )
 
     n.plot(
         ax=ax,
-        bus_sizes=0.0,
-        link_colors=link_color_used,
-        link_widths=link_widths_used,
+        bus_size=0.0,
+        link_color=link_color_used,
+        link_width=link_width_used,
         branch_components=["Link"],
-        geomap_colors=False,
+        geomap_color=False,
         boundaries=map_opts["boundaries"],
     )
 
-    sizes = [100, 10]
+    sizes: list[float] = [100, 10]
     labels = [f"{s} TWh" for s in sizes]
     sizes = [s / bus_size_factor * 1e6 for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1.03),
-        labelspacing=0.8,
-        frameon=False,
-        handletextpad=1,
-        title="gas sources",
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1.03),
+        "labelspacing": 0.8,
+        "frameon": False,
+        "handletextpad": 1,
+        "title": "gas sources",
+    }
 
     add_legend_circles(
         ax,
         sizes,
         labels,
         srid=n.srid,
-        patch_kw=dict(facecolor="lightgrey"),
+        patch_kw={"facecolor": "lightgrey"},
         legend_kw=legend_kw,
     )
 
@@ -186,25 +208,25 @@ def plot_ch4_map(n):
     scale = 1e3 / linewidth_factor
     sizes = [s * scale for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0.25, 1.03),
-        frameon=False,
-        labelspacing=0.8,
-        handletextpad=1,
-        title="gas pipeline",
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0.25, 1.03),
+        "frameon": False,
+        "labelspacing": 0.8,
+        "handletextpad": 1,
+        "title": "gas pipeline",
+    }
 
     add_legend_lines(
         ax,
         sizes,
         labels,
-        patch_kw=dict(color="lightgrey"),
+        patch_kw={"color": "lightgrey"},
         legend_kw=legend_kw,
     )
 
-    colors = list(pipe_colors.values()) + list(bus_colors.values())
-    labels = list(pipe_colors.keys()) + list(bus_colors.keys())
+    colors = list(pipe_colors.values()) + list(bus_color.values())
+    labels = list(pipe_colors.keys()) + list(bus_color.keys())
 
     # legend on the side
     # legend_kw = dict(
@@ -212,12 +234,12 @@ def plot_ch4_map(n):
     #     frameon=False,
     # )
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1.24),
-        ncol=2,
-        frameon=False,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1.24),
+        "ncol": 2,
+        "frameon": False,
+    }
 
     add_legend_patches(
         ax,
@@ -236,9 +258,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_gas_network",
-            opts="",
-            clusters="37",
-            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)

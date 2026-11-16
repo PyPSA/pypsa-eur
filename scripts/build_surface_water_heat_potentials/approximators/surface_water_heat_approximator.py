@@ -4,7 +4,6 @@
 import logging
 from abc import ABC
 from functools import cached_property
-from typing import Union
 
 import geopandas as gpd
 import numpy as np
@@ -33,7 +32,7 @@ class SurfaceWaterHeatApproximator(ABC):
         self,
         volume_flow: xr.DataArray,
         water_temperature: xr.DataArray,
-        region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
+        region: shapely.geometry.polygon.Polygon | gpd.GeoSeries,
         max_relative_volume_flow: float = 1.0,
         delta_t_max: float = 4,
         min_outlet_temperature: float = 1,
@@ -148,20 +147,14 @@ class SurfaceWaterHeatApproximator(ABC):
 
         # Project data to target CRS if needed
         if self.water_temperature.rio.crs.to_epsg() != self.EPSG:
-            try:
-                self.water_temperature = self.water_temperature.rio.reproject(
-                    f"EPSG:{self.EPSG}"
-                )
-                logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
-            except Exception as e:
-                raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
+            self.water_temperature = self.water_temperature.rio.reproject(
+                f"EPSG:{self.EPSG}"
+            )
+            logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
 
         if self.volume_flow.rio.crs.to_epsg() != self.EPSG:
-            try:
-                self.volume_flow = self.volume_flow.rio.reproject(f"EPSG:{self.EPSG}")
-                logger.info(f"Reprojected volume_flow to EPSG:{self.EPSG}")
-            except Exception as e:
-                raise ValueError(f"Failed to reproject volume_flow: {str(e)}")
+            self.volume_flow = self.volume_flow.rio.reproject(f"EPSG:{self.EPSG}")
+            logger.info(f"Reprojected volume_flow to EPSG:{self.EPSG}")
 
         # Check that datasets have the same dimensions
         if not set(self.water_temperature.dims) == set(self.volume_flow.dims):

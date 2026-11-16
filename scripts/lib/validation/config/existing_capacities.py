@@ -1,0 +1,102 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+"""
+Existing capacities configuration.
+
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#existing_capacities_cf
+"""
+
+from pydantic import Field
+
+from scripts.lib.validation.config._base import ConfigModel
+
+
+class _PhaseOutConfig(ConfigModel):
+    """A single national policy phase-out for conventional assets."""
+
+    carriers: list[str] = Field(
+        description="Carriers (e.g. nuclear, coal, lignite) subject to the phase-out.",
+    )
+    countries: list[str] = Field(
+        description="Two-letter country codes to which the phase-out applies.",
+    )
+    year: int = Field(
+        description="Year by which the listed carriers are fully phased out.",
+    )
+
+
+class ExistingCapacitiesConfig(ConfigModel):
+    """Configuration for `existing_capacities` settings."""
+
+    grouping_years_power: list[int] = Field(
+        default_factory=lambda: [
+            1900,
+            1950,
+            1955,
+            1960,
+            1965,
+            1970,
+            1975,
+            1980,
+            1985,
+            1990,
+            1995,
+            2000,
+            2005,
+            2010,
+            2015,
+            2020,
+            2025,
+            2030,
+        ],
+        description="Intervals to group existing capacities for power.",
+    )
+    grouping_years_heat: list[int] = Field(
+        default_factory=lambda: [
+            1980,
+            1985,
+            1990,
+            1995,
+            2000,
+            2005,
+            2010,
+            2015,
+            2019,
+        ],
+        description="Intervals to group existing capacities for heat.",
+    )
+    threshold_capacity: float = Field(
+        10,
+        description="Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
+    )
+    default_heating_lifetime: int = Field(
+        20,
+        description="Default lifetime for heating technologies (years).",
+    )
+    solar_rooftop_ratio: float = Field(
+        0.5,
+        description="Ratio of existing solar capacity to assign to rooftop vs utility-scale (between 0 and 1).",
+    )
+    conventional_carriers: list[str] = Field(
+        default_factory=lambda: ["lignite", "coal", "oil", "uranium"],
+        description="Fuels for which buses are added to the sector-coupled network with myopic or perfect foresight, so that existing power plants can connect to them. Does not select which existing power plants are added.",
+    )
+    phase_outs: list[_PhaseOutConfig] = Field(
+        default_factory=lambda: [
+            _PhaseOutConfig(carriers=["nuclear"], countries=["DE"], year=2022),
+            _PhaseOutConfig(carriers=["nuclear"], countries=["BE"], year=2025),
+            _PhaseOutConfig(carriers=["nuclear"], countries=["ES"], year=2027),
+            _PhaseOutConfig(
+                carriers=["coal", "lignite"],
+                countries=["DE", "DK", "FI", "HU", "SK", "GR", "IE", "NL", "RS"],
+                year=2030,
+            ),
+            _PhaseOutConfig(carriers=["coal", "lignite"], countries=["ES"], year=2027),
+            _PhaseOutConfig(carriers=["coal", "lignite"], countries=["FR"], year=2022),
+            _PhaseOutConfig(carriers=["coal", "lignite"], countries=["GB"], year=2024),
+            _PhaseOutConfig(carriers=["coal", "lignite"], countries=["IT"], year=2025),
+        ],
+        description="National policy phase-outs capping conventional asset lifetimes by carrier and country (applied in perfect foresight).",
+    )

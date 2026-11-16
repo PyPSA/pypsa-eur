@@ -2,8 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Preprocess gas network based on data from bthe SciGRID_gas project
-(https://www.gas.scigrid.de/).
+Clean the SciGRID_gas pipeline dataset into a table of gas transmission pipelines.
+
+Pipeline attributes nested in the SciGRID_gas GeoJSON are unpacked and
+converted to model units: maximum daily flow to capacity in MW, line ends to
+point coordinates. Where SciGRID_gas inferred a diameter, 500 mm is assumed.
+Capacities that deviate strongly from the diameter-based estimate of the
+European Hydrogen Backbone report are replaced by that estimate, lengths that
+deviate strongly from the great-circle distance are replaced by 1.5 times that
+distance, and short pipelines are treated as bidirectional. A later rule
+clusters the cleaned table to model regions.
+
+References
+----------
+- Pluta et al. (2022), [SciGRID_gas: Data Model of the European Gas Transport Network](https://doi.org/10.1109/OSMSES54027.2022.9769122)
+- Gas for Climate (2020), [European Hydrogen Backbone - How a Dedicated Hydrogen Infrastructure Can Be Created](https://ehb.eu/files/downloads/2020_European-Hydrogen-Backbone_Report.pdf)
 """
 
 import json
@@ -19,17 +32,17 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def diameter_to_capacity(pipe_diameter_mm):
+def diameter_to_capacity(pipe_diameter_mm: float) -> float:
     """
     Calculate pipe capacity in MW based on diameter in mm.
 
-    20 inch (500 mm)  50 bar -> 1.5   GW CH4 pipe capacity (LHV) 24 inch
-    (600 mm)  50 bar -> 5     GW CH4 pipe capacity (LHV) 36 inch (900
-    mm)  50 bar -> 11.25 GW CH4 pipe capacity (LHV) 48 inch (1200 mm) 80
-    bar -> 21.7  GW CH4 pipe capacity (LHV)
+    20 inch (500 mm)  50 bar -> 1.5   GW CH4 pipe capacity (LHV)
+    24 inch (600 mm)  50 bar -> 5     GW CH4 pipe capacity (LHV)
+    36 inch (900 mm)  50 bar -> 11.25 GW CH4 pipe capacity (LHV)
+    48 inch (1200 mm) 80 bar -> 21.7  GW CH4 pipe capacity (LHV)
 
     Based on p.15 of
-    https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf
+    https://ehb.eu/files/downloads/2020_European-Hydrogen-Backbone_Report.pdf
     """
     m1 = (5000 - 1500) / (600 - 500)
     m2 = (11250 - 5000) / (900 - 600)
@@ -53,11 +66,16 @@ def diameter_to_capacity(pipe_diameter_mm):
         return a3 + m3 * pipe_diameter_mm
 
 
-def load_dataset(fn):
+def unnest_struct(s: pd.Series) -> pd.DataFrame:
+    if isinstance(s.iloc[0], str):
+        s = s.apply(json.loads)
+    return s.apply(pd.Series)
+
+
+def load_dataset(fn: str) -> gpd.GeoDataFrame:
     df = gpd.read_file(fn)
-    param = df.param.apply(json.loads).apply(pd.Series)
-    cols = ["diameter_mm", "max_cap_M_m3_per_d"]
-    method = df.method.apply(json.loads).apply(pd.Series)[cols]
+    param = unnest_struct(df.param)
+    method = unnest_struct(df.method)[["diameter_mm", "max_cap_M_m3_per_d"]]
     method.columns = method.columns + "_method"
     df = pd.concat([df, param, method], axis=1)
     to_drop = ["param", "uncertainty", "method", "tags"]
@@ -67,12 +85,12 @@ def load_dataset(fn):
 
 
 def prepare_dataset(
-    df,
-    length_factor=1.5,
-    correction_threshold_length=4,
-    correction_threshold_p_nom=8,
-    bidirectional_below=10,
-):
+    df: gpd.GeoDataFrame,
+    length_factor: float = 1.5,
+    correction_threshold_length: float = 4,
+    correction_threshold_p_nom: float = 8,
+    bidirectional_below: float = 10,
+) -> gpd.GeoDataFrame:
     # extract start and end from LineString
     df["point0"] = df.geometry.apply(lambda x: Point(x.coords[0]))
     df["point1"] = df.geometry.apply(lambda x: Point(x.coords[-1]))
@@ -126,8 +144,10 @@ def prepare_dataset(
     # lines which have way too discrepant line lengths
     # get assigned haversine length * length factor
     df["length_haversine"] = df.apply(
-        lambda p: length_factor
-        * haversine_pts([p.point0.x, p.point0.y], [p.point1.x, p.point1.y]),
+        lambda p: (
+            length_factor
+            * haversine_pts([p.point0.x, p.point0.y], [p.point1.x, p.point1.y])
+        ),
         axis=1,
     )
     ratio = df.eval("length / length_haversine")
