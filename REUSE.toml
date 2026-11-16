@@ -21,13 +21,14 @@ path = [
     "envs/*.pin.txt",
     "envs/environment.yaml",
     "config/config.default.yaml",
+    "config/plotting.default.yaml",
     "config/schema.default.json"
 ]
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
 SPDX-License-Identifier = "CC0-1.0"
 
 
-# Make sure to keep in sync with: https://pypsa-eur.readthedocs.io/en/latest/data-repos.html
+# Make sure to keep in sync with: https://pypsa-eur.readthedocs.io/en/latest/data-repos/
 
 [[annotations]]
 path = [

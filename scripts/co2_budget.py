@@ -2,6 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Helpers for CO2 budget constraints shared by network preparation, summaries
+and plotting.
+
+Provides the naming convention for CO2 limit global constraints and resolves
+the configured upper and lower emission bounds for a planning horizon,
+scaling relative bounds by the 1990 baseline emissions.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping

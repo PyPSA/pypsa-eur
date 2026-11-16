@@ -2,7 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot heatmap time series of marginal prices, utilisation rates, state of charge profiles.
+Plots hour-of-day by day-of-year heatmaps of time series from a solved network.
+
+Reads the solved network and reshapes each hourly time series into a grid of
+24 hours by days of the year. Heatmaps are drawn for the utilisation rate of
+built technologies, the marginal price per bus carrier and the state of charge
+per storage carrier, each for a configured selection of carriers. Coarser
+snapshots are forward-filled to hourly resolution, and the script skips
+plotting if the snapshots contain a gap longer than a month.
 """
 
 import logging
@@ -38,11 +45,11 @@ def plot_heatmap(
     cmap: str = "Greens",
     label: str = "",
     title: str = "",
-    cbar_kws: dict = {},
+    cbar_kws: dict | None = None,
     fn: str | None = None,
-):
-    _cbar_kws = dict(label=label, aspect=17, pad=0.015)
-    _cbar_kws.update(cbar_kws)
+) -> None:
+    _cbar_kws = {"label": label, "aspect": 17, "pad": 0.015}
+    _cbar_kws.update(cbar_kws or {})
     fig, ax = plt.subplots(figsize=(8.5, 4), constrained_layout=True)
     sns.heatmap(
         df,

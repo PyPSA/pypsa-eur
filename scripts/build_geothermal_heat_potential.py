@@ -2,39 +2,18 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build heat source potentials for a given heat source.
+Build geothermal heat source power potentials per onshore region.
 
-This script maps and aggregates geothermal heat source potentials `onshore_regions`. Input data is provided on LAU-level and is aggregated to the onshore regions.
-It scales the heat source utilisation potentials to technical potentials by dividing the utilisation potentials by the full load hours of the heat source, also taking into account the energy unit set for the respective source in the config.
+Hydrothermal utilisation potentials from Manz et al. (2024) are given per
+local administrative unit (LAU) for a 65C or 85C supply temperature scenario.
+They are matched to onshore regions by spatial join and summed. Dividing the
+annual utilisation potential by assumed full load hours (4000 h) yields a
+constant available heat source power in MW. Regions outside the EU-27 without
+data can be filled with zeros if configured; otherwise an error is raised.
 
-
-Relevant Settings
------------------
-```yaml
-sector:
-    district_heating:
-        limited_heat_sources:
-            geothermal:
-                constant_temperature_celsius
-```
-
-Inputs
-------
-- `resources/{run}/onshore_regions.geojson`
-- `resources/{run}/lau_regions.geojson`
-- `resources/{run}/isi_heat_potentials.xlsx`
-
-Outputs
--------
-- `resources/{run}/heat_source_technical_potential_{heat_source}.csv`
-
-Raises
-------
-- ValueError if some LAU regions in ISI heat potentials are missing from the LAU Regions data.
-
-Source
+References
 ----------
-- Manz et al. 2024: "Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe", Renewable Energy, vol. 224, no. 120111, https://doi.org/10.1016/j.renene.2024.120111
+- Manz et al. (2024), [Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe](https://doi.org/10.1016/j.renene.2024.120111)
 """
 
 import logging
@@ -63,7 +42,7 @@ GEOTHERMAL_SOURCE = (
 def get_unit_conversion_factor(
     input_unit: str,
     output_unit: str,
-    unit_scaling: dict = {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12},
+    unit_scaling: dict | None = None,
 ) -> float:
     """
     Get the unit conversion factor between two units.
@@ -77,12 +56,14 @@ def get_unit_conversion_factor(
     unit_scaling : dict, optional
         Dictionary of unit scaling factors. Default: {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12}.
     """
+    if unit_scaling is None:
+        unit_scaling = {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12}
 
-    if input_unit not in unit_scaling.keys():
+    if input_unit not in unit_scaling:
         raise ValueError(
             f"Input unit {input_unit} not allowed. Must be one of {unit_scaling.keys()}"
         )
-    elif output_unit not in unit_scaling.keys():
+    elif output_unit not in unit_scaling:
         raise ValueError(
             f"Output unit {output_unit} not allowed. Must be one of {
                 unit_scaling.keys()
@@ -116,6 +97,7 @@ def identify_non_covered_regions(
 def get_heat_source_power(
     onshore_regions: gpd.GeoDataFrame,
     supply_potentials: gpd.GeoDataFrame,
+    lau_regions: gpd.GeoDataFrame,
     full_load_hours: float,
     input_unit: str,
     output_unit: str = "MWh",
@@ -134,6 +116,8 @@ def get_heat_source_power(
         GeoDataFrame of the onshore regions.
     supply_potentials : gpd.GeoDataFrame
         GeoDataFrame of the heat source supply potentials.
+    lau_regions : gpd.GeoDataFrame
+        GeoDataFrame of the LAU regions indexed by GISCO_ID.
     full_load_hours : float
         Full load hours assumed in the supply potential computation. Used to scale the supply potentials to technical potentials.
     input_unit : str
@@ -260,6 +244,7 @@ if __name__ == "__main__":
     heat_source_power = get_heat_source_power(
         onshore_regions=onshore_regions,
         supply_potentials=geothermal_supply_potentials,
+        lau_regions=lau_regions,
         full_load_hours=FULL_LOAD_HOURS,
         input_unit=input_unit,
         ignore_missing_regions=snakemake.params.ignore_missing_regions,

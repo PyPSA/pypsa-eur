@@ -46,7 +46,7 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
         sink_outlet_temperature_celsius: xr.DataArray | np.ndarray,
         source_inlet_temperature_celsius: xr.DataArray | np.ndarray,
         source_type: str,
-    ):
+    ) -> None:
         """
         Initialize the DecentralHeatingCopApproximator object.
 
@@ -80,8 +80,7 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
         """
         if self.source_type == "air":
             return self._approximate_cop_air_source()
-        elif self.source_type == "ground":
-            return self._approximate_cop_ground_source()
+        return self._approximate_cop_ground_source()
 
     def _approximate_cop_air_source(self) -> xr.DataArray | np.ndarray:
         """

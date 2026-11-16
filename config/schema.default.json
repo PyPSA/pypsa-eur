@@ -488,7 +488,7 @@
               "additionalProperties": {
                 "type": "integer"
               },
-              "description": "Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`.",
+              "description": "Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. Keys can also be NUTS codes of subregions, which take precedence over the level of their country, e.g. `{'DE': 1, 'DEA': 3}`. Use `GB` instead of `UK` for NUTS codes of the United Kingdom. Only applies when mode is set to `administrative`.",
               "type": "object"
             }
           }
@@ -536,6 +536,11 @@
         "simplify_network": {
           "description": "Configuration for `clustering.simplify_network` settings.",
           "properties": {
+            "to_380": {
+              "default": true,
+              "description": "Map all buses and lines to 380 kV and remove transformers. If false, original voltage levels and transformers are kept. This is only recommended without spatial clustering (`cluster_network: n_clusters: all`), because clustering merges buses of different voltage levels.",
+              "type": "boolean"
+            },
             "to_substations": {
               "default": false,
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
@@ -747,6 +752,62 @@
       "additionalProperties": true,
       "description": "Configuration for `conventional` settings.",
       "properties": {
+        "estimate_efficiencies": {
+          "description": "Configuration for `conventional.estimate_efficiencies` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic. The build year is the year of the last retrofit or, if unknown, of commissioning. Plants without build year or carriers without parameters fall back to the technology cost data.",
+              "type": "boolean"
+            },
+            "reference_year": {
+              "default": 2025,
+              "description": "Year in which the age of power plants is evaluated for degradation.",
+              "type": "integer"
+            },
+            "degradation_start": {
+              "default": 10,
+              "description": "Age in years after which efficiency degradation starts.",
+              "type": "integer"
+            },
+            "degradation_rate": {
+              "default": 0.001,
+              "description": "Relative efficiency loss per year of age after `degradation_start`.",
+              "type": "number"
+            },
+            "parameters": {
+              "additionalProperties": {
+                "description": "Parameters of the linear efficiency heuristic for one carrier.",
+                "properties": {
+                  "efficiency": {
+                    "description": "Efficiency of a plant built in `year`.",
+                    "type": "number"
+                  },
+                  "slope": {
+                    "description": "Efficiency gain per later build year.",
+                    "type": "number"
+                  },
+                  "year": {
+                    "description": "Reference build year of `efficiency`.",
+                    "type": "integer"
+                  },
+                  "max": {
+                    "description": "Upper bound of the estimated efficiency.",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "efficiency",
+                  "slope",
+                  "year",
+                  "max"
+                ]
+              },
+              "description": "Per carrier: efficiency `efficiency` of a plant built in `year`, rising by `slope` per later build year up to `max`.",
+              "type": "object"
+            }
+          }
+        },
         "unit_commitment": {
           "default": false,
           "description": "Allow the overwrite of ramp_limit_up, ramp_limit_start_up, ramp_limit_shut_down, p_min_pu, min_up_time, min_down_time, and start_up_cost of conventional generators. Refer to the CSV file 'unit_commitment.csv'.",
@@ -855,11 +916,17 @@
               "type": "string"
             },
             {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
               "type": "null"
             }
           ],
           "default": "data/custom_costs.csv",
-          "description": "Path to the custom costs file. None if it should not be used. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results."
+          "description": "Path or list of paths to custom costs files. Files are applied in order, so later files override earlier ones per technology and parameter. Leave empty or `[]` to disable. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results."
         },
         "overwrites": {
           "additionalProperties": {
@@ -2245,50 +2312,50 @@
           "properties": {
             "battery": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "li-ion": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "lfp": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "vanadium": {
               "default": 10,
-              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "lair": {
               "default": 12,
-              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "pair": {
               "default": 24,
-              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "iron-air": {
               "default": 100,
-              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Hours the iron-air storage sustains its full output capacity `p_nom`, i.e. hours of dispatched energy, rather than the state of charge in hours taken by the other storage technologies (cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_). The store is sized by dividing by the discharge efficiency, matching how duration and cost per kWh are quoted for iron-air.",
+              "markdownDescription": "Hours the iron-air storage sustains its full output capacity `p_nom`, i.e. hours of dispatched energy, rather than the state of charge in hours taken by the other storage technologies (cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)). The store is sized by dividing by the discharge efficiency, matching how duration and cost per kWh are quoted for iron-air.",
               "type": "number"
             },
             "H2": {
               "default": 168,
-              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             }
           }
@@ -2348,7 +2415,22 @@
             }
           ],
           "default": false,
-          "description": "Filter query for the custom powerplant database."
+          "description": "Whether to add power plants from the custom power plant file(s) listed in `custom_powerplants_fn`. `true` adds all entries, `false` disables custom power plants from file. A string will add the custom entries from the file(s) after filtering them using a `pandas` query; configured filters via `powerplants_filter` are NOT applied to the custom powerplants and might need to be repeated in the query here.."
+        },
+        "custom_powerplants_fn": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": "data/custom_powerplants.csv",
+          "description": "Path or list of paths to CSV files with custom power plants, used if `custom_powerplants` is enabled. The files must follow the powerplantmatching format, see also `data/custom_powerplants.csv`. Multiple files are combined without overwriting entries. Files cannot be used to remove powerplants from the model. If a query is used for `custom_powerplants`, then the query is executed on the combined files before they are added to the model."
         },
         "everywhere_powerplants": {
           "description": "List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with `extendable_carriers` to allow for building conventional powerplants irrespective of existing locations.",
@@ -2358,7 +2440,7 @@
           "type": "array"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
+          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound. Sector-coupled models ignore OCGT, CCGT, oil, coal, lignite, biomass and waste here, because they add these technologies as links with fuel and emission tracking. With myopic or perfect foresight, they also ignore nuclear, which is added as links from uranium with its build years.",
           "items": {
             "type": "string"
           },
@@ -2449,9 +2531,19 @@
           }
         },
         "transmission_limit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
           "default": "vopt",
-          "description": "Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",
-          "type": "string"
+          "description": "Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system. Can be given per planning horizon, e.g. `{2030: v1.05, 2040: v1.1}`. With myopic foresight, the limit of each subsequent planning horizon is relative to the transmission capacities of the previous planning horizon. Per-horizon values are not supported for perfect foresight."
         }
       }
     },
@@ -2514,7 +2606,7 @@
           "type": "number"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the sectoral network.",
+          "description": "Fuels for which buses are added to the sector-coupled network with myopic or perfect foresight, so that existing power plants can connect to them. Does not select which existing power plants are added.",
           "items": {
             "type": "string"
           },
@@ -2589,8 +2681,8 @@
         },
         "elec_DRI": {
           "default": 0.322,
-          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
-          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
+          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://web.archive.org/web/20210310021333/https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
+          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://web.archive.org/web/20210310021333/https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
           "type": "number"
         },
         "Al_primary_fraction": {
@@ -2677,6 +2769,21 @@
         "waste_to_energy_cc": {
           "default": false,
           "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.",
+          "type": "boolean"
+        },
+        "solid_biomass_for_industry_cc": {
+          "default": true,
+          "description": "Add option for using solid biomass for industry with carbon capture, in addition to solid biomass for industry without carbon capture.",
+          "type": "boolean"
+        },
+        "gas_for_industry_cc": {
+          "default": true,
+          "description": "Add option for using gas for industry with carbon capture, in addition to gas for industry without carbon capture.",
+          "type": "boolean"
+        },
+        "process_emissions_cc": {
+          "default": true,
+          "description": "Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
           "type": "boolean"
         },
         "sector_ratios_fraction_future": {
@@ -2963,6 +3070,11 @@
           "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
           "type": "boolean"
         },
+        "prefer_synthetic": {
+          "default": false,
+          "description": "Whether to prefer synthetic data over historical data, e.g. for a consistent method across weather years. Historical data is then used only where synthetic data is missing. Implies `supplement_synthetic`.",
+          "type": "boolean"
+        },
         "substation_only": {
           "default": true,
           "description": "Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data.",
@@ -2990,7 +3102,7 @@
       "properties": {
         "level": {
           "default": "INFO",
-          "description": "Restrict console outputs to all infos, warning or errors only",
+          "description": "Root log level. Messages below this level are discarded before reaching any handler.",
           "enum": [
             "DEBUG",
             "INFO",
@@ -2999,6 +3111,37 @@
             "CRITICAL"
           ],
           "type": "string"
+        },
+        "console_level": {
+          "default": "WARNING",
+          "description": "Minimum level emitted to the console (stderr). Defaults to ``WARNING`` so parallel rule output stays readable; the full log is kept in the rule's log file.",
+          "enum": [
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL"
+          ],
+          "type": "string"
+        },
+        "file_level": {
+          "anyOf": [
+            {
+              "enum": [
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "CRITICAL"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum level written to the rule log file. Defaults to ``level`` when unset."
         },
         "format": {
           "default": "%(levelname)s:%(name)s:%(message)s",
@@ -3049,43 +3192,535 @@
         }
       }
     },
-    "PypsaEurConfig": {
-      "description": "Configuration for `pypsa_eur` settings.",
+    "PlottingConfig": {
+      "description": "Configuration for top level `plotting` settings.",
       "properties": {
-        "Bus": {
-          "description": "Bus carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "enable_heat_source_maps": {
+          "default": false,
+          "description": "Enable generation of heat source temperature and energy potential maps (see `plot_heat_source_map`).",
+          "type": "boolean"
         },
-        "Link": {
-          "description": "Link carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "heat_source_map": {
+          "description": "Configuration for `plotting.heat_source_map` settings.",
+          "properties": {
+            "temperature_cmap": {
+              "default": "Reds",
+              "description": "Matplotlib colormap for the heat source temperature map.",
+              "type": "string"
+            },
+            "energy_cmap": {
+              "default": "Oranges",
+              "description": "Matplotlib colormap for the heat source energy potential map.",
+              "type": "string"
+            }
+          }
         },
-        "Generator": {
-          "description": "Generator carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "map": {
+          "description": "Configuration for `plotting.map` settings.",
+          "properties": {
+            "boundaries": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": [
+                -11.0,
+                30.0,
+                34.0,
+                71.0
+              ],
+              "description": "Bounding box of static maps as ``[x_min, x_max, y_min, y_max]`` in longitude/latitude degrees. If ``null``, the boundaries are derived automatically from the plotted regions."
+            },
+            "geomap_colors": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Colors used for cartopy geographic map features, e.g. ``ocean``, ``land``, ``border`` or ``coastline``.",
+              "type": "object"
+            }
+          }
         },
-        "StorageUnit": {
-          "description": "StorageUnit carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "projection": {
+          "additionalProperties": true,
+          "description": "Configuration for `plotting.projection` settings.",
+          "properties": {
+            "name": {
+              "default": "EqualEarth",
+              "description": "Name of the `cartopy <https://cartopy.readthedocs.io/stable/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "markdownDescription": "Name of the [cartopy ](https://cartopy.readthedocs.io/stable/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "type": "string"
+            }
+          }
         },
-        "Store": {
-          "description": "Store carriers to keep from PyPSA-Eur.",
-          "items": {
+        "eu_node_location": {
+          "description": "Configuration for `plotting.eu_node_location` settings.",
+          "properties": {
+            "x": {
+              "default": -5.5,
+              "description": "Longitude of the auxiliary EU-wide node used for continent-level summaries.",
+              "type": "number"
+            },
+            "y": {
+              "default": 46.0,
+              "description": "Latitude of the auxiliary EU-wide node used for continent-level summaries.",
+              "type": "number"
+            }
+          }
+        },
+        "costs_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 1000.0,
+          "description": "Upper limit (in billion EUR/a) for the y-axis of cost bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "costs_threshold": {
+          "default": 1,
+          "description": "Minimum cost (in billion EUR/a) for a cost component to be included in cost plots.",
+          "type": "number"
+        },
+        "energy_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 20000.0,
+          "description": "Upper limit (in TWh) for the y-axis of energy balance bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "energy_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": -20000.0,
+          "description": "Lower limit (in TWh) for the y-axis of energy balance bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "energy_threshold": {
+          "default": 50.0,
+          "description": "Minimum energy (in TWh) for an energy balance component to be included in energy plots.",
+          "type": "number"
+        },
+        "balance_timeseries": {
+          "description": "Configuration for `plotting.balance_timeseries` settings.",
+          "properties": {
+            "max_threshold": {
+              "default": 5,
+              "description": "Maximum absolute value (in GW) used to determine the y-axis limits of balance timeseries plots.",
+              "type": "number"
+            },
+            "mean_threshold": {
+              "default": 1,
+              "description": "Mean absolute value (in GW) below which a carrier is excluded from balance timeseries plots.",
+              "type": "number"
+            },
+            "monthly": {
+              "default": true,
+              "description": "Enable generation of monthly balance timeseries plots.",
+              "type": "boolean"
+            },
+            "monthly_resolution": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Resampling resolution (pandas offset alias) for monthly balance timeseries plots. ``null`` uses the native snapshot resolution."
+            },
+            "annual": {
+              "default": true,
+              "description": "Enable generation of annual balance timeseries plots.",
+              "type": "boolean"
+            },
+            "annual_resolution": {
+              "default": "D",
+              "description": "Resampling resolution (pandas offset alias, e.g. ``D`` for daily) for annual balance timeseries plots.",
+              "type": "string"
+            },
+            "carriers": {
+              "default": [
+                "H2",
+                "NH3",
+                "gas",
+                "methanol",
+                "oil",
+                "solid biomass",
+                "biogas",
+                "co2 stored",
+                "co2"
+              ],
+              "description": "Bus carriers for which balance timeseries plots are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "carrier_groups": {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "description": "Named groups of bus carriers that are aggregated into a single balance timeseries plot.",
+              "type": "object"
+            }
+          }
+        },
+        "interactive_bus_balance": {
+          "description": "Configuration for `plotting.interactive_bus_balance` settings.",
+          "properties": {
+            "bus_name_pattern": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "None",
+              "description": "Shell-style glob pattern (see Python's ``fnmatch``) used to select buses for the interactive bus balance plot, e.g. ``DE*`` for German buses. The default value matches no bus name literally, so no plots are generated unless overridden. Set to ``NONE_BY_DEFAULT`` to explicitly disable, or ``null``/empty to include all buses."
+            }
+          }
+        },
+        "heatmap_timeseries": {
+          "description": "Configuration for `plotting.heatmap_timeseries` settings.",
+          "properties": {
+            "marginal_price": {
+              "default": [
+                "AC",
+                "H2",
+                "NH3",
+                "gas",
+                "methanol",
+                "oil",
+                "co2 stored",
+                "urban central heat"
+              ],
+              "description": "Bus carriers for which marginal price heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "utilisation_rate": {
+              "default": [
+                "solar",
+                "solar rooftop",
+                "solar-hsat",
+                "onwind",
+                "offwind-dc",
+                "offwind-ac",
+                "offwind-float",
+                "ror",
+                "hydro",
+                "PHS",
+                "battery charger",
+                "battery discharger",
+                "H2 Electrolysis",
+                "Fischer-Tropsch",
+                "methanolisation",
+                "Sabatier",
+                "OCGT",
+                "H2 Fuel Cell",
+                "urban central CHP",
+                "urban central CHP CC",
+                "urban central solid biomass CHP",
+                "urban central solid biomass CHP CC",
+                "rural gas boiler",
+                "urban central air heat pump",
+                "DAC"
+              ],
+              "description": "Generator/storage carriers for which utilisation-rate heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "soc": {
+              "default": [
+                "battery",
+                "H2 Store",
+                "co2 stored",
+                "gas",
+                "methanol",
+                "oil",
+                "urban central water tanks"
+              ],
+              "description": "Storage carriers for which state-of-charge heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "balance_map": {
+          "additionalProperties": {
+            "description": "Style settings for a single carrier of `plotting.balance_map`.",
+            "properties": {
+              "cmap": {
+                "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+                "type": "string"
+              },
+              "vmin": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "vmax": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "region_unit": {
+                "description": "Unit label shown in the region color bar legend.",
+                "type": "string"
+              },
+              "branch_color": {
+                "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+                "type": "string"
+              },
+              "unit": {
+                "description": "Unit label shown in the bus/branch size legend.",
+                "type": "string"
+              },
+              "unit_conversion": {
+                "description": "Factor used to convert the carrier's native unit (MWh) into ``unit``.",
+                "type": "number"
+              },
+              "bus_factor": {
+                "description": "Scaling factor applied to bus pie/marker sizes.",
+                "type": "number"
+              },
+              "branch_factor": {
+                "description": "Scaling factor applied to branch line widths.",
+                "type": "number"
+              },
+              "flow_factor": {
+                "description": "Scaling factor applied to flow arrow sizes.",
+                "type": "number"
+              },
+              "bus_sizes": {
+                "description": "Reference values (in ``unit``) shown in the bus size legend.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "branch_sizes": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Reference values (in ``unit``) shown in the branch size legend. ``null`` omits the branch size legend."
+              }
+            },
+            "required": [
+              "cmap",
+              "region_unit",
+              "branch_color",
+              "unit",
+              "unit_conversion",
+              "bus_factor",
+              "branch_factor",
+              "flow_factor",
+              "bus_sizes"
+            ]
+          },
+          "description": "Configuration for `plotting.balance_map` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the static balance map style for that carrier (see\n:class:`_BalanceMapCarrierConfig`). They are looked up dynamically by carrier name.",
+          "properties": {
+            "bus_carriers": {
+              "default": [
+                "AC",
+                "co2_stored",
+                "gas",
+                "H2",
+                "methanol",
+                "oil",
+                "urban_central_heat"
+              ],
+              "description": "Bus carriers for which a static balance map is generated (see `plot_balance_map`).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "balance_map_interactive": {
+          "additionalProperties": {
+            "description": "Style settings for a single carrier of `plotting.balance_map_interactive`.",
+            "properties": {
+              "cmap": {
+                "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+                "type": "string"
+              },
+              "region_unit": {
+                "description": "Unit label shown in the region color bar legend.",
+                "type": "string"
+              },
+              "vmin": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "vmax": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "region_alpha": {
+                "description": "Opacity of the region choropleth layer.",
+                "type": "number"
+              },
+              "unit_conversion": {
+                "description": "Factor used to convert the carrier's native unit (MWh) into the legend unit.",
+                "type": "number"
+              },
+              "branch_color": {
+                "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+                "type": "string"
+              },
+              "branch_width_max": {
+                "description": "Maximum branch line width in pixels.",
+                "type": "number"
+              },
+              "bus_size_max": {
+                "description": "Maximum bus marker size in pixels.",
+                "type": "number"
+              },
+              "arrow_size_factor": {
+                "description": "Scaling factor applied to flow arrow sizes.",
+                "type": "number"
+              },
+              "map_style": {
+                "description": "Base map tile style passed to the plotting backend, e.g. ``road`` or ``satellite``.",
+                "type": "string"
+              },
+              "tooltip": {
+                "description": "Enable hover tooltips showing bus/branch values.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "cmap",
+              "region_unit",
+              "region_alpha",
+              "unit_conversion",
+              "branch_color",
+              "branch_width_max",
+              "bus_size_max",
+              "arrow_size_factor",
+              "map_style",
+              "tooltip"
+            ]
+          },
+          "description": "Configuration for `plotting.balance_map_interactive` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the interactive balance map style for that carrier (see\n:class:`_BalanceMapInteractiveCarrierConfig`). They are looked up dynamically by carrier\nname.",
+          "properties": {
+            "bus_carriers": {
+              "default": [
+                "AC",
+                "co2_stored",
+                "gas",
+                "H2",
+                "methanol",
+                "oil",
+                "urban_central_heat"
+              ],
+              "description": "Bus carriers for which an interactive balance map is generated (see `plot_balance_map_interactive`).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "nice_names": {
+          "additionalProperties": {
             "type": "string"
           },
-          "type": "array"
+          "description": "Human-readable display names used to relabel technology/carrier identifiers in plots and summaries.",
+          "type": "object"
+        },
+        "tech_colors": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Colors used to represent technologies and carriers consistently across all plots. Values must be hex color strings, e.g. ``#235ebc``.",
+          "type": "object"
         }
       }
     },
@@ -4067,8 +4702,8 @@
             },
             "PHS_max_hours": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "hydro_max_hours": {
@@ -4081,8 +4716,8 @@
                 }
               ],
               "default": "energy_capacity_totals_by_country",
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)."
             },
             "flatten_dispatch": {
               "default": false,
@@ -4309,7 +4944,7 @@
             },
             "ptes": {
               "additionalProperties": true,
-              "description": "Pit thermal energy storage settings.",
+              "description": "Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating, independently of `sector: ttes`. If disabled, all other `ptes` options are ignored.",
               "type": "object"
             },
             "ates": {
@@ -4576,8 +5211,8 @@
         },
         "shipping_methanol_efficiency": {
           "default": 0.46,
-          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
-          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
+          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
           "type": "number"
         },
         "shipping_oil_efficiency": {
@@ -4653,10 +5288,23 @@
             }
           }
         },
-        "tes": {
+        "ttes": {
           "default": true,
-          "description": "Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES).",
+          "description": "Add tank thermal energy storage (water tanks) in all heat systems. Pit and aquifer thermal energy storage are controlled separately by `district_heating: ptes: enable` and `district_heating: ates: enable`.",
           "type": "boolean"
+        },
+        "tes": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "deprecated": true,
+          "description": "Deprecated, use `ttes` and `district_heating: ptes: enable`."
         },
         "boilers": {
           "default": true,
@@ -4694,7 +5342,14 @@
               "type": "boolean"
             },
             "fuel": {
-              "description": "Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are \"gas\", \"oil\", \"methanol\", \"lignite\", \"coal\" as well as \"solid biomass\". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added.",
+              "description": "Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are \"gas\", \"oil\", \"methanol\", \"lignite\", \"coal\" as well as \"solid biomass\". For all fuels except solid biomass, the techno-economic data from gas CHP is used.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "fuel_cc": {
+              "description": "Fuels for which CHP plants with carbon capture (CC) are added in addition to the CHP plants without carbon capture. Only fuels that are also listed in `fuel` are considered. Set to an empty list to disable CHP with carbon capture.",
               "items": {
                 "type": "string"
               },
@@ -4725,6 +5380,11 @@
         "coal_cc": {
           "default": false,
           "description": "Add option for coal CHPs with carbon capture.",
+          "type": "boolean"
+        },
+        "ccgt_cc": {
+          "default": false,
+          "description": "Add option for gas CCGTs with post-combustion carbon capture.",
           "type": "boolean"
         },
         "dac": {
@@ -4765,6 +5425,11 @@
           "description": "Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs.",
           "type": "boolean"
         },
+        "electrolysis": {
+          "default": true,
+          "description": "Add option to include hydrogen electrolysis for power-to-gas conversion.",
+          "type": "boolean"
+        },
         "SMR": {
           "default": true,
           "description": "Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR).",
@@ -4802,11 +5467,6 @@
           "default": 30,
           "description": "The cost of sequestering a ton of CO2 (currency/tCO2).",
           "type": "number"
-        },
-        "co2_sequestration_lifetime": {
-          "default": 50,
-          "description": "The lifetime of a CO2 sequestration site (years).",
-          "type": "integer"
         },
         "co2_spatial": {
           "default": true,
@@ -4974,11 +5634,6 @@
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
         },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
-        },
         "electricity_grid_connection": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
@@ -5022,11 +5677,25 @@
               "description": "Gas pipeline transmission efficiency.",
               "type": "object"
             },
+            "gas pipeline new": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Gas pipeline new transmission efficiency.",
+              "type": "object"
+            },
             "electricity distribution grid": {
               "additionalProperties": {
                 "type": "number"
               },
               "description": "Electricity distribution grid efficiency.",
+              "type": "object"
+            },
+            "CO2 pipeline": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "CO2 pipeline transmission efficiency.",
               "type": "object"
             }
           }
@@ -5035,6 +5704,62 @@
           "default": true,
           "description": "Add option for new hydrogen pipelines.",
           "type": "boolean"
+        },
+        "transport_corridors": {
+          "description": "Configuration for `sector.transport_corridors` settings.",
+          "properties": {
+            "H2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "CO2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "biomass": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            }
+          }
         },
         "gas_network": {
           "default": true,
@@ -5049,8 +5774,8 @@
         },
         "H2_retrofit_capacity_per_CH4": {
           "default": 0.6,
-          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
           "type": "number"
         },
         "gas_network_connectivity_upgrade": {
@@ -5280,8 +6005,8 @@
             },
             "sustainability_factor": {
               "default": 0.0025,
-              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
-              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py>`_).",
+              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py)).",
               "type": "number"
             }
           }
@@ -5355,8 +6080,8 @@
               "type": "array"
             }
           ],
-          "default": "2013-01-01",
-          "description": "Left bound of date range."
+          "default": "2013-01-01 00:00",
+          "description": "First snapshot (included)."
         },
         "end": {
           "anyOf": [
@@ -5370,25 +6095,8 @@
               "type": "array"
             }
           ],
-          "default": "2014-01-01",
-          "description": "Right bound of date range."
-        },
-        "inclusive": {
-          "anyOf": [
-            {
-              "enum": [
-                "left",
-                "right",
-                "both"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "left",
-          "description": "Make the time interval closed to the `left`, `right`, or both sides `both` or neither side `None`."
+          "default": "2013-12-31 23:00",
+          "description": "Last snapshot (included), with time, e.g. `2013-12-31 23:00`."
         }
       }
     },
@@ -5562,9 +6270,24 @@
               "type": "integer"
             },
             "transmission_losses": {
-              "default": 2,
-              "description": "Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              ],
+              "default": {
+                "mode": "secants",
+                "atol": 15,
+                "rtol": 0.5
+              },
+              "description": "Piecewise linear approximation of losses in AC lines. `false` disables losses, `true` uses the PyPSA default secant-based approximation (`atol=1` MW, `rtol=0.1`). A dict sets the approximation, e.g. `{\"mode\": \"tangents\", \"segments\": 2}` for the former tangent-based method. An integer is deprecated and sets the number of tangents. The default `atol` and `rtol` keep the number of extra constraints close to that of the former tangent-based method."
             },
             "linearized_unit_commitment": {
               "default": true,
@@ -5780,50 +6503,6 @@
             }
           }
         },
-        "oetc": {
-          "anyOf": [
-            {
-              "description": "Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support).",
-              "properties": {
-                "name": {
-                  "default": "pypsa-eur",
-                  "description": "Name identifier for the OETC job.",
-                  "type": "string"
-                },
-                "authentication_server_url": {
-                  "default": "",
-                  "description": "URL of the OETC authentication server for job submission.",
-                  "type": "string"
-                },
-                "orchestrator_server_url": {
-                  "default": "",
-                  "description": "URL of the OETC orchestrator server for job management.",
-                  "type": "string"
-                },
-                "cpu_cores": {
-                  "default": 8,
-                  "description": "Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)",
-                  "type": "integer"
-                },
-                "disk_space_gb": {
-                  "default": 50,
-                  "description": "Amount of disk space in gigabytes to request for the OETC job.",
-                  "type": "integer"
-                },
-                "delete_worker_on_error": {
-                  "default": true,
-                  "description": "Whether to delete the worker instance when an error occurs during job execution.",
-                  "type": "boolean"
-                }
-              }
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Configuration options for Open Energy Transition Computing (OETC) cluster support."
-        },
         "mem_mb": {
           "default": 128000,
           "description": "Estimated maximum memory requirement for solving networks (MB).",
@@ -6012,7 +6691,7 @@
           "additionalProperties": {
             "type": "integer"
           },
-          "description": "Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`.",
+          "description": "Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. Keys can also be NUTS codes of subregions, which take precedence over the level of their country, e.g. `{'DE': 1, 'DEA': 3}`. Use `GB` instead of `UK` for NUTS codes of the United Kingdom. Only applies when mode is set to `administrative`.",
           "type": "object"
         }
       }
@@ -6076,6 +6755,468 @@
         }
       }
     },
+    "_BalanceMapCarrierConfig": {
+      "description": "Style settings for a single carrier of `plotting.balance_map`.",
+      "properties": {
+        "cmap": {
+          "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+          "type": "string"
+        },
+        "vmin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+        },
+        "vmax": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+        },
+        "region_unit": {
+          "description": "Unit label shown in the region color bar legend.",
+          "type": "string"
+        },
+        "branch_color": {
+          "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+          "type": "string"
+        },
+        "unit": {
+          "description": "Unit label shown in the bus/branch size legend.",
+          "type": "string"
+        },
+        "unit_conversion": {
+          "description": "Factor used to convert the carrier's native unit (MWh) into ``unit``.",
+          "type": "number"
+        },
+        "bus_factor": {
+          "description": "Scaling factor applied to bus pie/marker sizes.",
+          "type": "number"
+        },
+        "branch_factor": {
+          "description": "Scaling factor applied to branch line widths.",
+          "type": "number"
+        },
+        "flow_factor": {
+          "description": "Scaling factor applied to flow arrow sizes.",
+          "type": "number"
+        },
+        "bus_sizes": {
+          "description": "Reference values (in ``unit``) shown in the bus size legend.",
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "branch_sizes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reference values (in ``unit``) shown in the branch size legend. ``null`` omits the branch size legend."
+        }
+      },
+      "required": [
+        "cmap",
+        "region_unit",
+        "branch_color",
+        "unit",
+        "unit_conversion",
+        "bus_factor",
+        "branch_factor",
+        "flow_factor",
+        "bus_sizes"
+      ]
+    },
+    "_BalanceMapConfig": {
+      "additionalProperties": {
+        "description": "Style settings for a single carrier of `plotting.balance_map`.",
+        "properties": {
+          "cmap": {
+            "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+            "type": "string"
+          },
+          "vmin": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+          },
+          "vmax": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+          },
+          "region_unit": {
+            "description": "Unit label shown in the region color bar legend.",
+            "type": "string"
+          },
+          "branch_color": {
+            "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+            "type": "string"
+          },
+          "unit": {
+            "description": "Unit label shown in the bus/branch size legend.",
+            "type": "string"
+          },
+          "unit_conversion": {
+            "description": "Factor used to convert the carrier's native unit (MWh) into ``unit``.",
+            "type": "number"
+          },
+          "bus_factor": {
+            "description": "Scaling factor applied to bus pie/marker sizes.",
+            "type": "number"
+          },
+          "branch_factor": {
+            "description": "Scaling factor applied to branch line widths.",
+            "type": "number"
+          },
+          "flow_factor": {
+            "description": "Scaling factor applied to flow arrow sizes.",
+            "type": "number"
+          },
+          "bus_sizes": {
+            "description": "Reference values (in ``unit``) shown in the bus size legend.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "branch_sizes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Reference values (in ``unit``) shown in the branch size legend. ``null`` omits the branch size legend."
+          }
+        },
+        "required": [
+          "cmap",
+          "region_unit",
+          "branch_color",
+          "unit",
+          "unit_conversion",
+          "bus_factor",
+          "branch_factor",
+          "flow_factor",
+          "bus_sizes"
+        ]
+      },
+      "description": "Configuration for `plotting.balance_map` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the static balance map style for that carrier (see\n:class:`_BalanceMapCarrierConfig`). They are looked up dynamically by carrier name.",
+      "properties": {
+        "bus_carriers": {
+          "default": [
+            "AC",
+            "co2_stored",
+            "gas",
+            "H2",
+            "methanol",
+            "oil",
+            "urban_central_heat"
+          ],
+          "description": "Bus carriers for which a static balance map is generated (see `plot_balance_map`).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
+    "_BalanceMapInteractiveCarrierConfig": {
+      "description": "Style settings for a single carrier of `plotting.balance_map_interactive`.",
+      "properties": {
+        "cmap": {
+          "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+          "type": "string"
+        },
+        "region_unit": {
+          "description": "Unit label shown in the region color bar legend.",
+          "type": "string"
+        },
+        "vmin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+        },
+        "vmax": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+        },
+        "region_alpha": {
+          "description": "Opacity of the region choropleth layer.",
+          "type": "number"
+        },
+        "unit_conversion": {
+          "description": "Factor used to convert the carrier's native unit (MWh) into the legend unit.",
+          "type": "number"
+        },
+        "branch_color": {
+          "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+          "type": "string"
+        },
+        "branch_width_max": {
+          "description": "Maximum branch line width in pixels.",
+          "type": "number"
+        },
+        "bus_size_max": {
+          "description": "Maximum bus marker size in pixels.",
+          "type": "number"
+        },
+        "arrow_size_factor": {
+          "description": "Scaling factor applied to flow arrow sizes.",
+          "type": "number"
+        },
+        "map_style": {
+          "description": "Base map tile style passed to the plotting backend, e.g. ``road`` or ``satellite``.",
+          "type": "string"
+        },
+        "tooltip": {
+          "description": "Enable hover tooltips showing bus/branch values.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "cmap",
+        "region_unit",
+        "region_alpha",
+        "unit_conversion",
+        "branch_color",
+        "branch_width_max",
+        "bus_size_max",
+        "arrow_size_factor",
+        "map_style",
+        "tooltip"
+      ]
+    },
+    "_BalanceMapInteractiveConfig": {
+      "additionalProperties": {
+        "description": "Style settings for a single carrier of `plotting.balance_map_interactive`.",
+        "properties": {
+          "cmap": {
+            "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+            "type": "string"
+          },
+          "region_unit": {
+            "description": "Unit label shown in the region color bar legend.",
+            "type": "string"
+          },
+          "vmin": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+          },
+          "vmax": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+          },
+          "region_alpha": {
+            "description": "Opacity of the region choropleth layer.",
+            "type": "number"
+          },
+          "unit_conversion": {
+            "description": "Factor used to convert the carrier's native unit (MWh) into the legend unit.",
+            "type": "number"
+          },
+          "branch_color": {
+            "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+            "type": "string"
+          },
+          "branch_width_max": {
+            "description": "Maximum branch line width in pixels.",
+            "type": "number"
+          },
+          "bus_size_max": {
+            "description": "Maximum bus marker size in pixels.",
+            "type": "number"
+          },
+          "arrow_size_factor": {
+            "description": "Scaling factor applied to flow arrow sizes.",
+            "type": "number"
+          },
+          "map_style": {
+            "description": "Base map tile style passed to the plotting backend, e.g. ``road`` or ``satellite``.",
+            "type": "string"
+          },
+          "tooltip": {
+            "description": "Enable hover tooltips showing bus/branch values.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cmap",
+          "region_unit",
+          "region_alpha",
+          "unit_conversion",
+          "branch_color",
+          "branch_width_max",
+          "bus_size_max",
+          "arrow_size_factor",
+          "map_style",
+          "tooltip"
+        ]
+      },
+      "description": "Configuration for `plotting.balance_map_interactive` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the interactive balance map style for that carrier (see\n:class:`_BalanceMapInteractiveCarrierConfig`). They are looked up dynamically by carrier\nname.",
+      "properties": {
+        "bus_carriers": {
+          "default": [
+            "AC",
+            "co2_stored",
+            "gas",
+            "H2",
+            "methanol",
+            "oil",
+            "urban_central_heat"
+          ],
+          "description": "Bus carriers for which an interactive balance map is generated (see `plot_balance_map_interactive`).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
+    "_BalanceTimeseriesConfig": {
+      "description": "Configuration for `plotting.balance_timeseries` settings.",
+      "properties": {
+        "max_threshold": {
+          "default": 5,
+          "description": "Maximum absolute value (in GW) used to determine the y-axis limits of balance timeseries plots.",
+          "type": "number"
+        },
+        "mean_threshold": {
+          "default": 1,
+          "description": "Mean absolute value (in GW) below which a carrier is excluded from balance timeseries plots.",
+          "type": "number"
+        },
+        "monthly": {
+          "default": true,
+          "description": "Enable generation of monthly balance timeseries plots.",
+          "type": "boolean"
+        },
+        "monthly_resolution": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Resampling resolution (pandas offset alias) for monthly balance timeseries plots. ``null`` uses the native snapshot resolution."
+        },
+        "annual": {
+          "default": true,
+          "description": "Enable generation of annual balance timeseries plots.",
+          "type": "boolean"
+        },
+        "annual_resolution": {
+          "default": "D",
+          "description": "Resampling resolution (pandas offset alias, e.g. ``D`` for daily) for annual balance timeseries plots.",
+          "type": "string"
+        },
+        "carriers": {
+          "default": [
+            "H2",
+            "NH3",
+            "gas",
+            "methanol",
+            "oil",
+            "solid biomass",
+            "biogas",
+            "co2 stored",
+            "co2"
+          ],
+          "description": "Bus carriers for which balance timeseries plots are generated.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "carrier_groups": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": "Named groups of bus carriers that are aggregated into a single balance timeseries plot.",
+          "type": "object"
+        }
+      }
+    },
     "_BiomassClassesConfig": {
       "description": "Configuration for `biomass.classes` settings.",
       "properties": {
@@ -6133,7 +7274,14 @@
           "type": "boolean"
         },
         "fuel": {
-          "description": "Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are \"gas\", \"oil\", \"methanol\", \"lignite\", \"coal\" as well as \"solid biomass\". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added.",
+          "description": "Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are \"gas\", \"oil\", \"methanol\", \"lignite\", \"coal\" as well as \"solid biomass\". For all fuels except solid biomass, the techno-economic data from gas CHP is used.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "fuel_cc": {
+          "description": "Fuels for which CHP plants with carbon capture (CC) are added in addition to the CHP plants without carbon capture. Only fuels that are also listed in `fuel` are considered. Set to an empty list to disable CHP with carbon capture.",
           "items": {
             "type": "string"
           },
@@ -6298,6 +7446,23 @@
       "required": [
         "grid_codes"
       ]
+    },
+    "_CorridorConfig": {
+      "description": "Configuration for the candidate corridors of one carrier.",
+      "properties": {
+        "min_degree": {
+          "default": 1,
+          "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_offshore_distance": {
+          "default": null,
+          "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      }
     },
     "_CutoutConfig": {
       "description": "Configuration for a single cutout in `atlite.cutouts`.",
@@ -6561,7 +7726,7 @@
         },
         "ptes": {
           "additionalProperties": true,
-          "description": "Pit thermal energy storage settings.",
+          "description": "Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating, independently of `sector: ttes`. If disabled, all other `ptes` options are ignored.",
           "type": "object"
         },
         "ates": {
@@ -6662,6 +7827,33 @@
         }
       }
     },
+    "_EfficiencyParameters": {
+      "description": "Parameters of the linear efficiency heuristic for one carrier.",
+      "properties": {
+        "efficiency": {
+          "description": "Efficiency of a plant built in `year`.",
+          "type": "number"
+        },
+        "slope": {
+          "description": "Efficiency gain per later build year.",
+          "type": "number"
+        },
+        "year": {
+          "description": "Reference build year of `efficiency`.",
+          "type": "integer"
+        },
+        "max": {
+          "description": "Upper bound of the estimated efficiency.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "efficiency",
+        "slope",
+        "year",
+        "max"
+      ]
+    },
     "_EmissionPricesConfig": {
       "description": "Configuration for `costs.emission_prices` settings.",
       "properties": {
@@ -6727,9 +7919,65 @@
         },
         "sustainability_factor": {
           "default": 0.0025,
-          "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
-          "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+          "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py>`_).",
+          "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py)).",
           "type": "number"
+        }
+      }
+    },
+    "_EstimateEfficienciesConfig": {
+      "description": "Configuration for `conventional.estimate_efficiencies` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic. The build year is the year of the last retrofit or, if unknown, of commissioning. Plants without build year or carriers without parameters fall back to the technology cost data.",
+          "type": "boolean"
+        },
+        "reference_year": {
+          "default": 2025,
+          "description": "Year in which the age of power plants is evaluated for degradation.",
+          "type": "integer"
+        },
+        "degradation_start": {
+          "default": 10,
+          "description": "Age in years after which efficiency degradation starts.",
+          "type": "integer"
+        },
+        "degradation_rate": {
+          "default": 0.001,
+          "description": "Relative efficiency loss per year of age after `degradation_start`.",
+          "type": "number"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "description": "Parameters of the linear efficiency heuristic for one carrier.",
+            "properties": {
+              "efficiency": {
+                "description": "Efficiency of a plant built in `year`.",
+                "type": "number"
+              },
+              "slope": {
+                "description": "Efficiency gain per later build year.",
+                "type": "number"
+              },
+              "year": {
+                "description": "Reference build year of `efficiency`.",
+                "type": "integer"
+              },
+              "max": {
+                "description": "Upper bound of the estimated efficiency.",
+                "type": "number"
+              }
+            },
+            "required": [
+              "efficiency",
+              "slope",
+              "year",
+              "max"
+            ]
+          },
+          "description": "Per carrier: efficiency `efficiency` of a plant built in `year`, rising by `slope` per later build year up to `max`.",
+          "type": "object"
         }
       }
     },
@@ -6787,6 +8035,21 @@
               "type": "string"
             }
           }
+        }
+      }
+    },
+    "_EuNodeLocationConfig": {
+      "description": "Configuration for `plotting.eu_node_location` settings.",
+      "properties": {
+        "x": {
+          "default": -5.5,
+          "description": "Longitude of the auxiliary EU-wide node used for continent-level summaries.",
+          "type": "number"
+        },
+        "y": {
+          "default": 46.0,
+          "description": "Latitude of the auxiliary EU-wide node used for continent-level summaries.",
+          "type": "number"
         }
       }
     },
@@ -6893,6 +8156,93 @@
         }
       }
     },
+    "_HeatSourceMapConfig": {
+      "description": "Configuration for `plotting.heat_source_map` settings.",
+      "properties": {
+        "temperature_cmap": {
+          "default": "Reds",
+          "description": "Matplotlib colormap for the heat source temperature map.",
+          "type": "string"
+        },
+        "energy_cmap": {
+          "default": "Oranges",
+          "description": "Matplotlib colormap for the heat source energy potential map.",
+          "type": "string"
+        }
+      }
+    },
+    "_HeatmapTimeseriesConfig": {
+      "description": "Configuration for `plotting.heatmap_timeseries` settings.",
+      "properties": {
+        "marginal_price": {
+          "default": [
+            "AC",
+            "H2",
+            "NH3",
+            "gas",
+            "methanol",
+            "oil",
+            "co2 stored",
+            "urban central heat"
+          ],
+          "description": "Bus carriers for which marginal price heatmaps are generated.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "utilisation_rate": {
+          "default": [
+            "solar",
+            "solar rooftop",
+            "solar-hsat",
+            "onwind",
+            "offwind-dc",
+            "offwind-ac",
+            "offwind-float",
+            "ror",
+            "hydro",
+            "PHS",
+            "battery charger",
+            "battery discharger",
+            "H2 Electrolysis",
+            "Fischer-Tropsch",
+            "methanolisation",
+            "Sabatier",
+            "OCGT",
+            "H2 Fuel Cell",
+            "urban central CHP",
+            "urban central CHP CC",
+            "urban central solid biomass CHP",
+            "urban central solid biomass CHP CC",
+            "rural gas boiler",
+            "urban central air heat pump",
+            "DAC"
+          ],
+          "description": "Generator/storage carriers for which utilisation-rate heatmaps are generated.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "soc": {
+          "default": [
+            "battery",
+            "H2 Store",
+            "co2 stored",
+            "gas",
+            "methanol",
+            "oil",
+            "urban central water tanks"
+          ],
+          "description": "Storage carriers for which state-of-charge heatmaps are generated.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
     "_HydroConfig": {
       "description": "Configuration for hydropower.",
       "properties": {
@@ -6920,8 +8270,8 @@
         },
         "PHS_max_hours": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "hydro_max_hours": {
@@ -6934,8 +8284,8 @@
             }
           ],
           "default": "energy_capacity_totals_by_country",
-          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
+          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)."
         },
         "flatten_dispatch": {
           "default": false,
@@ -7165,6 +8515,23 @@
         }
       }
     },
+    "_InteractiveBusBalanceConfig": {
+      "description": "Configuration for `plotting.interactive_bus_balance` settings.",
+      "properties": {
+        "bus_name_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "None",
+          "description": "Shell-style glob pattern (see Python's ``fnmatch``) used to select buses for the interactive bus balance plot, e.g. ``DE*`` for German buses. The default value matches no bus name literally, so no plots are generated unless overridden. Set to ``NONE_BY_DEFAULT`` to explicitly disable, or ``null``/empty to include all buses."
+        }
+      }
+    },
     "_LimitMaxGrowthConfig": {
       "description": "Configuration for `sector.limit_max_growth` settings.",
       "properties": {
@@ -7254,55 +8621,87 @@
         }
       }
     },
+    "_MapConfig": {
+      "description": "Configuration for `plotting.map` settings.",
+      "properties": {
+        "boundaries": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [
+            -11.0,
+            30.0,
+            34.0,
+            71.0
+          ],
+          "description": "Bounding box of static maps as ``[x_min, x_max, y_min, y_max]`` in longitude/latitude degrees. If ``null``, the boundaries are derived automatically from the plotted regions."
+        },
+        "geomap_colors": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Colors used for cartopy geographic map features, e.g. ``ocean``, ``land``, ``border`` or ``coastline``.",
+          "type": "object"
+        }
+      }
+    },
     "_MaxHoursConfig": {
       "description": "Configuration for `electricity.max_hours` settings.",
       "properties": {
         "battery": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "li-ion": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "lfp": {
           "default": 6,
-          "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "vanadium": {
           "default": 10,
-          "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "lair": {
           "default": 12,
-          "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "pair": {
           "default": 24,
-          "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         },
         "iron-air": {
           "default": 100,
-          "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Hours the iron-air storage sustains its full output capacity `p_nom`, i.e. hours of dispatched energy, rather than the state of charge in hours taken by the other storage technologies (cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_). The store is sized by dividing by the discharge efficiency, matching how duration and cost per kWh are quoted for iron-air.",
+          "markdownDescription": "Hours the iron-air storage sustains its full output capacity `p_nom`, i.e. hours of dispatched energy, rather than the state of charge in hours taken by the other storage technologies (cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)). The store is sized by dividing by the discharge efficiency, matching how duration and cost per kWh are quoted for iron-air.",
           "type": "number"
         },
         "H2": {
           "default": 168,
-          "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+          "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+          "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
           "type": "number"
         }
       }
@@ -7356,41 +8755,6 @@
           "default": "",
           "description": "Absolute path to the directory where linopy saves files.",
           "type": "string"
-        }
-      }
-    },
-    "_OETCConfig": {
-      "description": "Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support).",
-      "properties": {
-        "name": {
-          "default": "pypsa-eur",
-          "description": "Name identifier for the OETC job.",
-          "type": "string"
-        },
-        "authentication_server_url": {
-          "default": "",
-          "description": "URL of the OETC authentication server for job submission.",
-          "type": "string"
-        },
-        "orchestrator_server_url": {
-          "default": "",
-          "description": "URL of the OETC orchestrator server for job management.",
-          "type": "string"
-        },
-        "cpu_cores": {
-          "default": 8,
-          "description": "Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)",
-          "type": "integer"
-        },
-        "disk_space_gb": {
-          "default": 50,
-          "description": "Amount of disk space in gigabytes to request for the OETC job.",
-          "type": "integer"
-        },
-        "delete_worker_on_error": {
-          "default": true,
-          "description": "Whether to delete the worker instance when an error occurs during job execution.",
-          "type": "boolean"
         }
       }
     },
@@ -7900,6 +9264,18 @@
         }
       }
     },
+    "_ProjectionConfig": {
+      "additionalProperties": true,
+      "description": "Configuration for `plotting.projection` settings.",
+      "properties": {
+        "name": {
+          "default": "EqualEarth",
+          "description": "Name of the `cartopy <https://cartopy.readthedocs.io/stable/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+          "markdownDescription": "Name of the [cartopy ](https://cartopy.readthedocs.io/stable/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+          "type": "string"
+        }
+      }
+    },
     "_ResidentialHeatConfig": {
       "description": "Configuration for `sector.residential_heat` settings.",
       "properties": {
@@ -8051,6 +9427,11 @@
     "_SimplifyNetworkConfig": {
       "description": "Configuration for `clustering.simplify_network` settings.",
       "properties": {
+        "to_380": {
+          "default": true,
+          "description": "Map all buses and lines to 380 kV and remove transformers. If false, original voltage levels and transformers are kept. This is only recommended without spatial clustering (`cluster_network: n_clusters: all`), because clustering merges buses of different voltage levels.",
+          "type": "boolean"
+        },
         "to_substations": {
           "default": false,
           "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
@@ -8409,9 +9790,24 @@
           "type": "integer"
         },
         "transmission_losses": {
-          "default": 2,
-          "description": "Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
-          "type": "integer"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "additionalProperties": true,
+              "type": "object"
+            }
+          ],
+          "default": {
+            "mode": "secants",
+            "atol": 15,
+            "rtol": 0.5
+          },
+          "description": "Piecewise linear approximation of losses in AC lines. `false` disables losses, `true` uses the PyPSA default secant-based approximation (`atol=1` MW, `rtol=0.1`). A dict sets the approximation, e.g. `{\"mode\": \"tangents\", \"segments\": 2}` for the former tangent-based method. An integer is deprecated and sets the number of tangents. The default `atol` and `rtol` keep the number of extra constraints close to that of the former tangent-based method."
         },
         "linearized_unit_commitment": {
           "default": true,
@@ -8591,12 +9987,82 @@
           "description": "Gas pipeline transmission efficiency.",
           "type": "object"
         },
+        "gas pipeline new": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Gas pipeline new transmission efficiency.",
+          "type": "object"
+        },
         "electricity distribution grid": {
           "additionalProperties": {
             "type": "number"
           },
           "description": "Electricity distribution grid efficiency.",
           "type": "object"
+        },
+        "CO2 pipeline": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "CO2 pipeline transmission efficiency.",
+          "type": "object"
+        }
+      }
+    },
+    "_TransportCorridorsConfig": {
+      "description": "Configuration for `sector.transport_corridors` settings.",
+      "properties": {
+        "H2": {
+          "description": "Configuration for the candidate corridors of one carrier.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "CO2": {
+          "description": "Configuration for the candidate corridors of one carrier.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "biomass": {
+          "description": "Configuration for the candidate corridors of one carrier.",
+          "properties": {
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "max_offshore_distance": {
+              "default": null,
+              "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
         }
       }
     },
@@ -8662,7 +10128,7 @@
   "description": "Combined configuration schema for PyPSA-EUR.",
   "properties": {
     "version": {
-      "default": "v2026.08.0",
+      "default": "v2026.09.0",
       "description": "Version of PyPSA-Eur. Descriptive only.",
       "type": "string"
     },
@@ -8676,7 +10142,7 @@
       "properties": {
         "level": {
           "default": "INFO",
-          "description": "Restrict console outputs to all infos, warning or errors only",
+          "description": "Root log level. Messages below this level are discarded before reaching any handler.",
           "enum": [
             "DEBUG",
             "INFO",
@@ -8685,6 +10151,37 @@
             "CRITICAL"
           ],
           "type": "string"
+        },
+        "console_level": {
+          "default": "WARNING",
+          "description": "Minimum level emitted to the console (stderr). Defaults to ``WARNING`` so parallel rule output stays readable; the full log is kept in the rule's log file.",
+          "enum": [
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL"
+          ],
+          "type": "string"
+        },
+        "file_level": {
+          "anyOf": [
+            {
+              "enum": [
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "CRITICAL"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum level written to the rule log file. Defaults to ``level`` when unset."
         },
         "format": {
           "default": "%(levelname)s:%(name)s:%(message)s",
@@ -8886,8 +10383,8 @@
               "type": "array"
             }
           ],
-          "default": "2013-01-01",
-          "description": "Left bound of date range."
+          "default": "2013-01-01 00:00",
+          "description": "First snapshot (included)."
         },
         "end": {
           "anyOf": [
@@ -8901,25 +10398,8 @@
               "type": "array"
             }
           ],
-          "default": "2014-01-01",
-          "description": "Right bound of date range."
-        },
-        "inclusive": {
-          "anyOf": [
-            {
-              "enum": [
-                "left",
-                "right",
-                "both"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "left",
-          "description": "Make the time interval closed to the `left`, `right`, or both sides `both` or neither side `None`."
+          "default": "2013-12-31 23:00",
+          "description": "Last snapshot (included), with time, e.g. `2013-12-31 23:00`."
         }
       }
     },
@@ -9064,50 +10544,50 @@
           "properties": {
             "battery": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the battery in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "li-ion": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "lfp": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the lithium-ion-LFP storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "vanadium": {
               "default": 10,
-              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the vanadium-redox-flow storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "lair": {
               "default": 12,
-              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the liquid-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "pair": {
               "default": 24,
-              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the compressed-air-adiabatic storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "iron-air": {
               "default": 100,
-              "description": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the iron-air storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Hours the iron-air storage sustains its full output capacity `p_nom`, i.e. hours of dispatched energy, rather than the state of charge in hours taken by the other storage technologies (cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_). The store is sized by dividing by the discharge efficiency, matching how duration and cost per kWh are quoted for iron-air.",
+              "markdownDescription": "Hours the iron-air storage sustains its full output capacity `p_nom`, i.e. hours of dispatched energy, rather than the state of charge in hours taken by the other storage technologies (cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)). The store is sized by dividing by the discharge efficiency, matching how duration and cost per kWh are quoted for iron-air.",
               "type": "number"
             },
             "H2": {
               "default": 168,
-              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             }
           }
@@ -9167,7 +10647,22 @@
             }
           ],
           "default": false,
-          "description": "Filter query for the custom powerplant database."
+          "description": "Whether to add power plants from the custom power plant file(s) listed in `custom_powerplants_fn`. `true` adds all entries, `false` disables custom power plants from file. A string will add the custom entries from the file(s) after filtering them using a `pandas` query; configured filters via `powerplants_filter` are NOT applied to the custom powerplants and might need to be repeated in the query here.."
+        },
+        "custom_powerplants_fn": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": "data/custom_powerplants.csv",
+          "description": "Path or list of paths to CSV files with custom power plants, used if `custom_powerplants` is enabled. The files must follow the powerplantmatching format, see also `data/custom_powerplants.csv`. Multiple files are combined without overwriting entries. Files cannot be used to remove powerplants from the model. If a query is used for `custom_powerplants`, then the query is executed on the combined files before they are added to the model."
         },
         "everywhere_powerplants": {
           "description": "List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with `extendable_carriers` to allow for building conventional powerplants irrespective of existing locations.",
@@ -9177,7 +10672,7 @@
           "type": "array"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound.",
+          "description": "List of conventional power plants to include in the model from `resources/powerplants.csv`. If an included carrier is also listed in `extendable_carriers`, the capacity is taken as a lower bound. Sector-coupled models ignore OCGT, CCGT, oil, coal, lignite, biomass and waste here, because they add these technologies as links with fuel and emission tracking. With myopic or perfect foresight, they also ignore nuclear, which is added as links from uranium with its build years.",
           "items": {
             "type": "string"
           },
@@ -9268,9 +10763,19 @@
           }
         },
         "transmission_limit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
           "default": "vopt",
-          "description": "Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",
-          "type": "string"
+          "description": "Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system. Can be given per planning horizon, e.g. `{2030: v1.05, 2040: v1.1}`. With myopic foresight, the limit of each subsequent planning horizon is relative to the transmission capacities of the previous planning horizon. Per-horizon values are not supported for perfect foresight."
         }
       }
     },
@@ -10466,8 +11971,8 @@
             },
             "PHS_max_hours": {
               "default": 6,
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit).",
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/).",
               "type": "number"
             },
             "hydro_max_hours": {
@@ -10480,8 +11985,8 @@
                 }
               ],
               "default": "energy_capacity_totals_by_country",
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://pypsa.readthedocs.io/en/latest/components.html#storage-unit)."
+              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)."
             },
             "flatten_dispatch": {
               "default": false,
@@ -10528,6 +12033,62 @@
       "additionalProperties": true,
       "description": "Configuration for `conventional` settings.",
       "properties": {
+        "estimate_efficiencies": {
+          "description": "Configuration for `conventional.estimate_efficiencies` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Estimate missing plant-level efficiencies from a carrier- and age-dependent linear heuristic. The build year is the year of the last retrofit or, if unknown, of commissioning. Plants without build year or carriers without parameters fall back to the technology cost data.",
+              "type": "boolean"
+            },
+            "reference_year": {
+              "default": 2025,
+              "description": "Year in which the age of power plants is evaluated for degradation.",
+              "type": "integer"
+            },
+            "degradation_start": {
+              "default": 10,
+              "description": "Age in years after which efficiency degradation starts.",
+              "type": "integer"
+            },
+            "degradation_rate": {
+              "default": 0.001,
+              "description": "Relative efficiency loss per year of age after `degradation_start`.",
+              "type": "number"
+            },
+            "parameters": {
+              "additionalProperties": {
+                "description": "Parameters of the linear efficiency heuristic for one carrier.",
+                "properties": {
+                  "efficiency": {
+                    "description": "Efficiency of a plant built in `year`.",
+                    "type": "number"
+                  },
+                  "slope": {
+                    "description": "Efficiency gain per later build year.",
+                    "type": "number"
+                  },
+                  "year": {
+                    "description": "Reference build year of `efficiency`.",
+                    "type": "integer"
+                  },
+                  "max": {
+                    "description": "Upper bound of the estimated efficiency.",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "efficiency",
+                  "slope",
+                  "year",
+                  "max"
+                ]
+              },
+              "description": "Per carrier: efficiency `efficiency` of a plant built in `year`, rising by `slope` per later build year up to `max`.",
+              "type": "object"
+            }
+          }
+        },
         "unit_commitment": {
           "default": false,
           "description": "Allow the overwrite of ramp_limit_up, ramp_limit_start_up, ramp_limit_shut_down, p_min_pu, min_up_time, min_down_time, and start_up_cost of conventional generators. Refer to the CSV file 'unit_commitment.csv'.",
@@ -10840,6 +12401,11 @@
           "markdownDescription": "Whether to supplement missing data for selected time period should be supplemented by synthetic data from [Zenodo ](https://zenodo.org/records/10820928).",
           "type": "boolean"
         },
+        "prefer_synthetic": {
+          "default": false,
+          "description": "Whether to prefer synthetic data over historical data, e.g. for a consistent method across weather years. Historical data is then used only where synthetic data is missing. Implies `supplement_synthetic`.",
+          "type": "boolean"
+        },
         "substation_only": {
           "default": true,
           "description": "Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data.",
@@ -10859,46 +12425,6 @@
               "type": "number"
             }
           }
-        }
-      }
-    },
-    "pypsa_eur": {
-      "description": "Configuration for `pypsa_eur` settings.",
-      "properties": {
-        "Bus": {
-          "description": "Bus carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Link": {
-          "description": "Link carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Generator": {
-          "description": "Generator carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "StorageUnit": {
-          "description": "StorageUnit carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Store": {
-          "description": "Store carriers to keep from PyPSA-Eur.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         }
       }
     },
@@ -11056,7 +12582,7 @@
           "type": "number"
         },
         "conventional_carriers": {
-          "description": "List of conventional power plants to include in the sectoral network.",
+          "description": "Fuels for which buses are added to the sector-coupled network with myopic or perfect foresight, so that existing power plants can connect to them. Does not select which existing power plants are added.",
           "items": {
             "type": "string"
           },
@@ -11181,7 +12707,7 @@
             },
             "ptes": {
               "additionalProperties": true,
-              "description": "Pit thermal energy storage settings.",
+              "description": "Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating, independently of `sector: ttes`. If disabled, all other `ptes` options are ignored.",
               "type": "object"
             },
             "ates": {
@@ -11448,8 +12974,8 @@
         },
         "shipping_methanol_efficiency": {
           "default": 0.46,
-          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
-          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
+          "description": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+          "markdownDescription": "The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the [IEA ](https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf).",
           "type": "number"
         },
         "shipping_oil_efficiency": {
@@ -11525,10 +13051,23 @@
             }
           }
         },
-        "tes": {
+        "ttes": {
           "default": true,
-          "description": "Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES).",
+          "description": "Add tank thermal energy storage (water tanks) in all heat systems. Pit and aquifer thermal energy storage are controlled separately by `district_heating: ptes: enable` and `district_heating: ates: enable`.",
           "type": "boolean"
+        },
+        "tes": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "deprecated": true,
+          "description": "Deprecated, use `ttes` and `district_heating: ptes: enable`."
         },
         "boilers": {
           "default": true,
@@ -11566,7 +13105,14 @@
               "type": "boolean"
             },
             "fuel": {
-              "description": "Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are \"gas\", \"oil\", \"methanol\", \"lignite\", \"coal\" as well as \"solid biomass\". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added.",
+              "description": "Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are \"gas\", \"oil\", \"methanol\", \"lignite\", \"coal\" as well as \"solid biomass\". For all fuels except solid biomass, the techno-economic data from gas CHP is used.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "fuel_cc": {
+              "description": "Fuels for which CHP plants with carbon capture (CC) are added in addition to the CHP plants without carbon capture. Only fuels that are also listed in `fuel` are considered. Set to an empty list to disable CHP with carbon capture.",
               "items": {
                 "type": "string"
               },
@@ -11597,6 +13143,11 @@
         "coal_cc": {
           "default": false,
           "description": "Add option for coal CHPs with carbon capture.",
+          "type": "boolean"
+        },
+        "ccgt_cc": {
+          "default": false,
+          "description": "Add option for gas CCGTs with post-combustion carbon capture.",
           "type": "boolean"
         },
         "dac": {
@@ -11637,6 +13188,11 @@
           "description": "Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs.",
           "type": "boolean"
         },
+        "electrolysis": {
+          "default": true,
+          "description": "Add option to include hydrogen electrolysis for power-to-gas conversion.",
+          "type": "boolean"
+        },
         "SMR": {
           "default": true,
           "description": "Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR).",
@@ -11674,11 +13230,6 @@
           "default": 30,
           "description": "The cost of sequestering a ton of CO2 (currency/tCO2).",
           "type": "number"
-        },
-        "co2_sequestration_lifetime": {
-          "default": 50,
-          "description": "The lifetime of a CO2 sequestration site (years).",
-          "type": "integer"
         },
         "co2_spatial": {
           "default": true,
@@ -11846,11 +13397,6 @@
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
         },
-        "electricity_distribution_grid_cost_factor": {
-          "default": 1.0,
-          "description": "Multiplies the investment cost of the electricity distribution grid.",
-          "type": "number"
-        },
         "electricity_grid_connection": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
@@ -11894,11 +13440,25 @@
               "description": "Gas pipeline transmission efficiency.",
               "type": "object"
             },
+            "gas pipeline new": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "Gas pipeline new transmission efficiency.",
+              "type": "object"
+            },
             "electricity distribution grid": {
               "additionalProperties": {
                 "type": "number"
               },
               "description": "Electricity distribution grid efficiency.",
+              "type": "object"
+            },
+            "CO2 pipeline": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "description": "CO2 pipeline transmission efficiency.",
               "type": "object"
             }
           }
@@ -11907,6 +13467,62 @@
           "default": true,
           "description": "Add option for new hydrogen pipelines.",
           "type": "boolean"
+        },
+        "transport_corridors": {
+          "description": "Configuration for `sector.transport_corridors` settings.",
+          "properties": {
+            "H2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "CO2": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            },
+            "biomass": {
+              "description": "Configuration for the candidate corridors of one carrier.",
+              "properties": {
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max_offshore_distance": {
+                  "default": null,
+                  "description": "Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                }
+              }
+            }
+          }
         },
         "gas_network": {
           "default": true,
@@ -11921,8 +13537,8 @@
         },
         "H2_retrofit_capacity_per_CH4": {
           "default": 0.6,
-          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
-          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "description": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+          "markdownDescription": "The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The [European Hydrogen Backbone (April, 2020) p.15 ](https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf) 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
           "type": "number"
         },
         "gas_network_connectivity_upgrade": {
@@ -12152,8 +13768,8 @@
             },
             "sustainability_factor": {
               "default": 0.0025,
-              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
-              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py)).",
+              "description": "Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py>`_).",
+              "markdownDescription": "Share of sourced heat that is replenished by the earth's core (see details in [build_egs_potentials.py ](https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py)).",
               "type": "number"
             }
           }
@@ -12237,8 +13853,8 @@
         },
         "elec_DRI": {
           "default": 0.322,
-          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
-          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
+          "description": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From `HYBRIT brochure <https://web.archive.org/web/20210310021333/https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf>`_.",
+          "markdownDescription": "The electricity consumed in Direct Reduced Iron (DRI) shaft. From [HYBRIT brochure ](https://web.archive.org/web/20210310021333/https://ssabwebsitecdn.azureedge.net/-/media/hybrit/files/hybrit_brochure.pdf).",
           "type": "number"
         },
         "Al_primary_fraction": {
@@ -12325,6 +13941,21 @@
         "waste_to_energy_cc": {
           "default": false,
           "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.",
+          "type": "boolean"
+        },
+        "solid_biomass_for_industry_cc": {
+          "default": true,
+          "description": "Add option for using solid biomass for industry with carbon capture, in addition to solid biomass for industry without carbon capture.",
+          "type": "boolean"
+        },
+        "gas_for_industry_cc": {
+          "default": true,
+          "description": "Add option for using gas for industry with carbon capture, in addition to gas for industry without carbon capture.",
+          "type": "boolean"
+        },
+        "process_emissions_cc": {
+          "default": true,
+          "description": "Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
           "type": "boolean"
         },
         "sector_ratios_fraction_future": {
@@ -12493,11 +14124,17 @@
               "type": "string"
             },
             {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
               "type": "null"
             }
           ],
           "default": "data/custom_costs.csv",
-          "description": "Path to the custom costs file. None if it should not be used. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results."
+          "description": "Path or list of paths to custom costs files. Files are applied in order, so later files override earlier ones per technology and parameter. Leave empty or `[]` to disable. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results."
         },
         "overwrites": {
           "additionalProperties": {
@@ -12592,7 +14229,7 @@
               "additionalProperties": {
                 "type": "integer"
               },
-              "description": "Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`.",
+              "description": "Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. Keys can also be NUTS codes of subregions, which take precedence over the level of their country, e.g. `{'DE': 1, 'DEA': 3}`. Use `GB` instead of `UK` for NUTS codes of the United Kingdom. Only applies when mode is set to `administrative`.",
               "type": "object"
             }
           }
@@ -12640,6 +14277,11 @@
         "simplify_network": {
           "description": "Configuration for `clustering.simplify_network` settings.",
           "properties": {
+            "to_380": {
+              "default": true,
+              "description": "Map all buses and lines to 380 kV and remove transformers. If false, original voltage levels and transformers are kept. This is only recommended without spatial clustering (`cluster_network: n_clusters: all`), because clustering merges buses of different voltage levels.",
+              "type": "boolean"
+            },
             "to_substations": {
               "default": false,
               "description": "Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones.",
@@ -13075,9 +14717,24 @@
               "type": "integer"
             },
             "transmission_losses": {
-              "default": 2,
-              "description": "Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              ],
+              "default": {
+                "mode": "secants",
+                "atol": 15,
+                "rtol": 0.5
+              },
+              "description": "Piecewise linear approximation of losses in AC lines. `false` disables losses, `true` uses the PyPSA default secant-based approximation (`atol=1` MW, `rtol=0.1`). A dict sets the approximation, e.g. `{\"mode\": \"tangents\", \"segments\": 2}` for the former tangent-based method. An integer is deprecated and sets the number of tangents. The default `atol` and `rtol` keep the number of extra constraints close to that of the former tangent-based method."
             },
             "linearized_unit_commitment": {
               "default": true,
@@ -13292,50 +14949,6 @@
               "type": "number"
             }
           }
-        },
-        "oetc": {
-          "anyOf": [
-            {
-              "description": "Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support).",
-              "properties": {
-                "name": {
-                  "default": "pypsa-eur",
-                  "description": "Name identifier for the OETC job.",
-                  "type": "string"
-                },
-                "authentication_server_url": {
-                  "default": "",
-                  "description": "URL of the OETC authentication server for job submission.",
-                  "type": "string"
-                },
-                "orchestrator_server_url": {
-                  "default": "",
-                  "description": "URL of the OETC orchestrator server for job management.",
-                  "type": "string"
-                },
-                "cpu_cores": {
-                  "default": 8,
-                  "description": "Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)",
-                  "type": "integer"
-                },
-                "disk_space_gb": {
-                  "default": 50,
-                  "description": "Amount of disk space in gigabytes to request for the OETC job.",
-                  "type": "integer"
-                },
-                "delete_worker_on_error": {
-                  "default": true,
-                  "description": "Whether to delete the worker instance when an error occurs during job execution.",
-                  "type": "boolean"
-                }
-              }
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Configuration options for Open Energy Transition Computing (OETC) cluster support."
         },
         "mem_mb": {
           "default": 128000,
@@ -14605,6 +16218,538 @@
               "type": "string"
             }
           }
+        }
+      }
+    },
+    "plotting": {
+      "description": "Configuration for top level `plotting` settings.",
+      "properties": {
+        "enable_heat_source_maps": {
+          "default": false,
+          "description": "Enable generation of heat source temperature and energy potential maps (see `plot_heat_source_map`).",
+          "type": "boolean"
+        },
+        "heat_source_map": {
+          "description": "Configuration for `plotting.heat_source_map` settings.",
+          "properties": {
+            "temperature_cmap": {
+              "default": "Reds",
+              "description": "Matplotlib colormap for the heat source temperature map.",
+              "type": "string"
+            },
+            "energy_cmap": {
+              "default": "Oranges",
+              "description": "Matplotlib colormap for the heat source energy potential map.",
+              "type": "string"
+            }
+          }
+        },
+        "map": {
+          "description": "Configuration for `plotting.map` settings.",
+          "properties": {
+            "boundaries": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": [
+                -11.0,
+                30.0,
+                34.0,
+                71.0
+              ],
+              "description": "Bounding box of static maps as ``[x_min, x_max, y_min, y_max]`` in longitude/latitude degrees. If ``null``, the boundaries are derived automatically from the plotted regions."
+            },
+            "geomap_colors": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Colors used for cartopy geographic map features, e.g. ``ocean``, ``land``, ``border`` or ``coastline``.",
+              "type": "object"
+            }
+          }
+        },
+        "projection": {
+          "additionalProperties": true,
+          "description": "Configuration for `plotting.projection` settings.",
+          "properties": {
+            "name": {
+              "default": "EqualEarth",
+              "description": "Name of the `cartopy <https://cartopy.readthedocs.io/stable/reference/projections.html>`_ CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "markdownDescription": "Name of the [cartopy ](https://cartopy.readthedocs.io/stable/reference/projections.html) CRS class used for the map projection, e.g. ``EqualEarth`` or ``LambertConformal``. Additional keys are passed on as keyword arguments to the projection class, e.g. ``central_longitude``, ``central_latitude`` or ``standard_parallels`` for ``LambertConformal``.",
+              "type": "string"
+            }
+          }
+        },
+        "eu_node_location": {
+          "description": "Configuration for `plotting.eu_node_location` settings.",
+          "properties": {
+            "x": {
+              "default": -5.5,
+              "description": "Longitude of the auxiliary EU-wide node used for continent-level summaries.",
+              "type": "number"
+            },
+            "y": {
+              "default": 46.0,
+              "description": "Latitude of the auxiliary EU-wide node used for continent-level summaries.",
+              "type": "number"
+            }
+          }
+        },
+        "costs_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 1000.0,
+          "description": "Upper limit (in billion EUR/a) for the y-axis of cost bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "costs_threshold": {
+          "default": 1,
+          "description": "Minimum cost (in billion EUR/a) for a cost component to be included in cost plots.",
+          "type": "number"
+        },
+        "energy_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 20000.0,
+          "description": "Upper limit (in TWh) for the y-axis of energy balance bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "energy_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": -20000.0,
+          "description": "Lower limit (in TWh) for the y-axis of energy balance bar plots. Set to ``auto`` to scale automatically to the data, or ``null`` for the plotting library default."
+        },
+        "energy_threshold": {
+          "default": 50.0,
+          "description": "Minimum energy (in TWh) for an energy balance component to be included in energy plots.",
+          "type": "number"
+        },
+        "balance_timeseries": {
+          "description": "Configuration for `plotting.balance_timeseries` settings.",
+          "properties": {
+            "max_threshold": {
+              "default": 5,
+              "description": "Maximum absolute value (in GW) used to determine the y-axis limits of balance timeseries plots.",
+              "type": "number"
+            },
+            "mean_threshold": {
+              "default": 1,
+              "description": "Mean absolute value (in GW) below which a carrier is excluded from balance timeseries plots.",
+              "type": "number"
+            },
+            "monthly": {
+              "default": true,
+              "description": "Enable generation of monthly balance timeseries plots.",
+              "type": "boolean"
+            },
+            "monthly_resolution": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Resampling resolution (pandas offset alias) for monthly balance timeseries plots. ``null`` uses the native snapshot resolution."
+            },
+            "annual": {
+              "default": true,
+              "description": "Enable generation of annual balance timeseries plots.",
+              "type": "boolean"
+            },
+            "annual_resolution": {
+              "default": "D",
+              "description": "Resampling resolution (pandas offset alias, e.g. ``D`` for daily) for annual balance timeseries plots.",
+              "type": "string"
+            },
+            "carriers": {
+              "default": [
+                "H2",
+                "NH3",
+                "gas",
+                "methanol",
+                "oil",
+                "solid biomass",
+                "biogas",
+                "co2 stored",
+                "co2"
+              ],
+              "description": "Bus carriers for which balance timeseries plots are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "carrier_groups": {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "description": "Named groups of bus carriers that are aggregated into a single balance timeseries plot.",
+              "type": "object"
+            }
+          }
+        },
+        "interactive_bus_balance": {
+          "description": "Configuration for `plotting.interactive_bus_balance` settings.",
+          "properties": {
+            "bus_name_pattern": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "None",
+              "description": "Shell-style glob pattern (see Python's ``fnmatch``) used to select buses for the interactive bus balance plot, e.g. ``DE*`` for German buses. The default value matches no bus name literally, so no plots are generated unless overridden. Set to ``NONE_BY_DEFAULT`` to explicitly disable, or ``null``/empty to include all buses."
+            }
+          }
+        },
+        "heatmap_timeseries": {
+          "description": "Configuration for `plotting.heatmap_timeseries` settings.",
+          "properties": {
+            "marginal_price": {
+              "default": [
+                "AC",
+                "H2",
+                "NH3",
+                "gas",
+                "methanol",
+                "oil",
+                "co2 stored",
+                "urban central heat"
+              ],
+              "description": "Bus carriers for which marginal price heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "utilisation_rate": {
+              "default": [
+                "solar",
+                "solar rooftop",
+                "solar-hsat",
+                "onwind",
+                "offwind-dc",
+                "offwind-ac",
+                "offwind-float",
+                "ror",
+                "hydro",
+                "PHS",
+                "battery charger",
+                "battery discharger",
+                "H2 Electrolysis",
+                "Fischer-Tropsch",
+                "methanolisation",
+                "Sabatier",
+                "OCGT",
+                "H2 Fuel Cell",
+                "urban central CHP",
+                "urban central CHP CC",
+                "urban central solid biomass CHP",
+                "urban central solid biomass CHP CC",
+                "rural gas boiler",
+                "urban central air heat pump",
+                "DAC"
+              ],
+              "description": "Generator/storage carriers for which utilisation-rate heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "soc": {
+              "default": [
+                "battery",
+                "H2 Store",
+                "co2 stored",
+                "gas",
+                "methanol",
+                "oil",
+                "urban central water tanks"
+              ],
+              "description": "Storage carriers for which state-of-charge heatmaps are generated.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "balance_map": {
+          "additionalProperties": {
+            "description": "Style settings for a single carrier of `plotting.balance_map`.",
+            "properties": {
+              "cmap": {
+                "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+                "type": "string"
+              },
+              "vmin": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "vmax": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "region_unit": {
+                "description": "Unit label shown in the region color bar legend.",
+                "type": "string"
+              },
+              "branch_color": {
+                "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+                "type": "string"
+              },
+              "unit": {
+                "description": "Unit label shown in the bus/branch size legend.",
+                "type": "string"
+              },
+              "unit_conversion": {
+                "description": "Factor used to convert the carrier's native unit (MWh) into ``unit``.",
+                "type": "number"
+              },
+              "bus_factor": {
+                "description": "Scaling factor applied to bus pie/marker sizes.",
+                "type": "number"
+              },
+              "branch_factor": {
+                "description": "Scaling factor applied to branch line widths.",
+                "type": "number"
+              },
+              "flow_factor": {
+                "description": "Scaling factor applied to flow arrow sizes.",
+                "type": "number"
+              },
+              "bus_sizes": {
+                "description": "Reference values (in ``unit``) shown in the bus size legend.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "branch_sizes": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Reference values (in ``unit``) shown in the branch size legend. ``null`` omits the branch size legend."
+              }
+            },
+            "required": [
+              "cmap",
+              "region_unit",
+              "branch_color",
+              "unit",
+              "unit_conversion",
+              "bus_factor",
+              "branch_factor",
+              "flow_factor",
+              "bus_sizes"
+            ]
+          },
+          "description": "Configuration for `plotting.balance_map` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the static balance map style for that carrier (see\n:class:`_BalanceMapCarrierConfig`). They are looked up dynamically by carrier name.",
+          "properties": {
+            "bus_carriers": {
+              "default": [
+                "AC",
+                "co2_stored",
+                "gas",
+                "H2",
+                "methanol",
+                "oil",
+                "urban_central_heat"
+              ],
+              "description": "Bus carriers for which a static balance map is generated (see `plot_balance_map`).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "balance_map_interactive": {
+          "additionalProperties": {
+            "description": "Style settings for a single carrier of `plotting.balance_map_interactive`.",
+            "properties": {
+              "cmap": {
+                "description": "Matplotlib colormap used to color regions by nodal price/marginal value.",
+                "type": "string"
+              },
+              "region_unit": {
+                "description": "Unit label shown in the region color bar legend.",
+                "type": "string"
+              },
+              "vmin": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Lower bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "vmax": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Upper bound of the region color scale. ``null`` scales automatically to the data."
+              },
+              "region_alpha": {
+                "description": "Opacity of the region choropleth layer.",
+                "type": "number"
+              },
+              "unit_conversion": {
+                "description": "Factor used to convert the carrier's native unit (MWh) into the legend unit.",
+                "type": "number"
+              },
+              "branch_color": {
+                "description": "Color used for transmission branches (lines/links) carrying this carrier.",
+                "type": "string"
+              },
+              "branch_width_max": {
+                "description": "Maximum branch line width in pixels.",
+                "type": "number"
+              },
+              "bus_size_max": {
+                "description": "Maximum bus marker size in pixels.",
+                "type": "number"
+              },
+              "arrow_size_factor": {
+                "description": "Scaling factor applied to flow arrow sizes.",
+                "type": "number"
+              },
+              "map_style": {
+                "description": "Base map tile style passed to the plotting backend, e.g. ``road`` or ``satellite``.",
+                "type": "string"
+              },
+              "tooltip": {
+                "description": "Enable hover tooltips showing bus/branch values.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "cmap",
+              "region_unit",
+              "region_alpha",
+              "unit_conversion",
+              "branch_color",
+              "branch_width_max",
+              "bus_size_max",
+              "arrow_size_factor",
+              "map_style",
+              "tooltip"
+            ]
+          },
+          "description": "Configuration for `plotting.balance_map_interactive` settings.\n\nBesides ``bus_carriers``, arbitrary additional keys are allowed, one per bus carrier,\neach configuring the interactive balance map style for that carrier (see\n:class:`_BalanceMapInteractiveCarrierConfig`). They are looked up dynamically by carrier\nname.",
+          "properties": {
+            "bus_carriers": {
+              "default": [
+                "AC",
+                "co2_stored",
+                "gas",
+                "H2",
+                "methanol",
+                "oil",
+                "urban_central_heat"
+              ],
+              "description": "Bus carriers for which an interactive balance map is generated (see `plot_balance_map_interactive`).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "nice_names": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Human-readable display names used to relabel technology/carrier identifiers in plots and summaries.",
+          "type": "object"
+        },
+        "tech_colors": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Colors used to represent technologies and carriers consistently across all plots. Values must be hex color strings, e.g. ``#235ebc``.",
+          "type": "object"
         }
       }
     }

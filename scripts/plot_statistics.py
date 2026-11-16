@@ -1,10 +1,21 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Plots bar charts of key statistics per technology carrier from a solved network.
+
+Reads the solved network and computes capacity factors, installed and optimal
+capacities, capital and operational expenditure, curtailment, supply, withdrawal
+and market values with the PyPSA statistics module. Each statistic is drawn as
+a horizontal bar chart coloured by carrier, with loads shown as a carrier of
+their own. The charts give a quick sanity check of a single scenario's results.
+"""
 
 import matplotlib.pyplot as plt
+import pandas as pd
 import pypsa
 import seaborn as sns
+from matplotlib.axes import Axes
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -27,14 +38,16 @@ if __name__ == "__main__":
         lambda s: s != "", "lightgrey"
     )
 
-    def rename_index(ds):
+    def rename_index(ds: pd.Series) -> pd.Series:
         specific = ds.index.map(lambda x: f"{x[1]}\n({x[0]})")
         generic = ds.index.get_level_values("carrier")
         duplicated = generic.duplicated(keep=False)
         index = specific.where(duplicated, generic)
         return ds.set_axis(index)
 
-    def plot_static_per_carrier(ds, ax, drop_zero=True):
+    def plot_static_per_carrier(
+        ds: pd.Series, ax: Axes, drop_zero: bool = True
+    ) -> None:
         if drop_zero:
             ds = ds[ds != 0]
         ds = ds.dropna()

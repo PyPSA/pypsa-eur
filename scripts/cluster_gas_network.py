@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Cluster gas transmission network to clustered model regions.
+Cluster the cleaned gas transmission pipelines to the model regions.
+
+Each pipeline end point is assigned to the onshore or offshore region it lies
+in, and the length is replaced by the great-circle distance between region
+centroids times a detour factor. Pipelines with an end outside all regions or
+with both ends in the same region are dropped. Parallel pipelines between the
+same pair of regions are merged, summing their capacities; unidirectional
+pipelines get a lower flow limit of zero. The result becomes the gas pipeline
+links of the sector-coupled network.
 """
 
 import logging
@@ -12,32 +20,14 @@ import pandas as pd
 from pypsa.geo import haversine_pts
 from shapely import wkt
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, load_bus_regions, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 
-def concat_gdf(gdf_list, crs="EPSG:4326"):
-    """
-    Concatenate multiple geopandas dataframes with common coordinate reference
-    system (crs).
-    """
-    return gpd.GeoDataFrame(pd.concat(gdf_list), crs=crs)
-
-
-def load_bus_regions(onshore_path, offshore_path):
-    """
-    Load pypsa-eur on- and offshore regions and concat.
-    """
-    offshore_bus_regions = gpd.read_file(offshore_path)
-    onshore_bus_regions = gpd.read_file(onshore_path)
-    bus_regions = concat_gdf([offshore_bus_regions, onshore_bus_regions])
-    bus_regions = bus_regions.dissolve(by="name", aggfunc="sum")
-
-    return bus_regions
-
-
-def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
+def build_clustered_gas_network(
+    df: pd.DataFrame, bus_regions: gpd.GeoDataFrame, length_factor: float = 1.25
+) -> pd.DataFrame:
     for i in [0, 1]:
         gdf = gpd.GeoDataFrame(geometry=df[f"point{i}"], crs="EPSG:4326")
 
@@ -77,8 +67,8 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
     return df
 
 
-def reindex_pipes(df, prefix="gas pipeline"):
-    def make_index(x):
+def reindex_pipes(df: pd.DataFrame, prefix: str = "gas pipeline") -> None:
+    def make_index(x: pd.Series) -> str:
         connector = " <-> " if x.bidirectional else " -> "
         return prefix + " " + x.bus0 + connector + x.bus1
 
@@ -90,7 +80,7 @@ def reindex_pipes(df, prefix="gas pipeline"):
     df.sort_index(axis=1, inplace=True)
 
 
-def aggregate_parallel_pipes(df):
+def aggregate_parallel_pipes(df: pd.DataFrame) -> pd.DataFrame:
     strategies = {
         "bus0": "first",
         "bus1": "first",

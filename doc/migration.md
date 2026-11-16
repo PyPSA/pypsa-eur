@@ -38,7 +38,7 @@ loop over the horizons:
 - `perfect` composes every horizon in sequence, each one reading the previous
   horizon's *composed* network, and then solves them all together.
 
-See [foresight](foresight.md) for the details.
+See [foresight](design/foresight.md) for the details.
 
 ## How to use this guide
 
@@ -204,7 +204,7 @@ have no effect at all.
 | `noH2network` | `sector.H2_network: false` |
 | `nowasteheat` | the `sector.use_*_waste_heat` flags, set to `0` |
 | `nodistrict` | `sector.district_heating.progress: {<year>: 0, …}` |
-| `dist<f>` | `sector.electricity_distribution_grid: true` + `sector.electricity_distribution_grid_cost_factor` |
+| `dist<f>` | `sector.electricity_distribution_grid: true` + `adjustments.sector.factor.Link.electricity distribution grid.capital_cost: <f>` |
 | `biomasstransport` | `sector.biomass_transport: true` |
 | `linemaxext<n>` | `lines.s_nom_max_extension` and `links.p_nom_max_extension` |
 | `sdr<x>` | `costs.social_discountrate` |
@@ -277,7 +277,7 @@ Set the years you do not want to `null`.
 A mapping and a scalar mean two different things. A mapping constrains each listed
 year on its own. A scalar is a single budget across all periods; under perfect
 foresight it becomes one cumulative constraint attached to the final horizon
-instead of a per-period cap. See [foresight](foresight.md) for the exact semantics
+instead of a per-period cap. See [foresight](design/foresight.md) for the exact semantics
 in each mode.
 
 !!! warning "List every horizon you optimise"

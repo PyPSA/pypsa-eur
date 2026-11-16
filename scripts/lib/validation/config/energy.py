@@ -5,7 +5,7 @@
 """
 Energy configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#energy_cf
 """
 
 from pydantic import Field

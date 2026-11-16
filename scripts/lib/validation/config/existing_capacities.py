@@ -5,7 +5,7 @@
 """
 Existing capacities configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#existing_capacities_cf
 """
 
 from pydantic import Field
@@ -81,7 +81,7 @@ class ExistingCapacitiesConfig(ConfigModel):
     )
     conventional_carriers: list[str] = Field(
         default_factory=lambda: ["lignite", "coal", "oil", "uranium"],
-        description="List of conventional power plants to include in the sectoral network.",
+        description="Fuels for which buses are added to the sector-coupled network with myopic or perfect foresight, so that existing power plants can connect to them. Does not select which existing power plants are added.",
     )
     phase_outs: list[_PhaseOutConfig] = Field(
         default_factory=lambda: [

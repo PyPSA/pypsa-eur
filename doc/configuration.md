@@ -67,7 +67,7 @@ implementations, and custom extensions all observe the same precedence rules.
 Version of PyPSA-Eur. Descriptive only.
 
 - **Type:** string
-- **Default:** `v2026.08.0`
+- **Default:** `v2026.09.0`
 
 **YAML Syntax**
 
@@ -141,7 +141,7 @@ Configuration for top level `run` settings.
 
 ## `foresight` {#foresight_cf}
 
-[planning_horizons](#planning-horizons) has to be set.
+[planning_horizons](#planning_horizons_cf) has to be set.
 
 Configuration for `foresight` settings.
 
@@ -156,7 +156,7 @@ Configuration for `foresight` settings.
 
 !!! note
     If you use myopic or perfect foresight, define at least two values in the
-    top-level [planning_horizons](#planning-horizons) list.
+    top-level [planning_horizons](#planning_horizons_cf) list.
 
 !!! note
     The `foresight` setting cannot vary across scenarios defined in
@@ -165,7 +165,7 @@ Configuration for `foresight` settings.
     foresight modes, run them as separate workflows with distinct `run.name`.
 
 
-## `planning_horizons` {#planning-horizons}
+## `planning_horizons` {#planning_horizons_cf}
 
 Configure planning horizons at the top level rather than through wildcards.
 Provide either a single year (for overnight studies) or a list of investment
@@ -198,7 +198,7 @@ Configuration for top level `planning_horizons` settings.
     [migration](migration.md) for detailed conversion steps.
 
 
-## `countries` {#countries}
+## `countries` {#countries_cf}
 
 Configuration for `countries` settings.
 
@@ -214,7 +214,7 @@ Configuration for `countries` settings.
 
 ## `snapshots` {#snapshots_cf}
 
-Specifies the temporal range to build an energy system model for as arguments to [pandas.date_range ](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html)
+Specifies the first and last snapshot of the model. Both are included, as in [pandas.date_range](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html) with default arguments. Write `end` with the hour (e.g. `"2013-12-31 23:00"`); a date-only `start` refers to 00:00 of that day.
 
 Configuration for `snapshots` settings.
 
@@ -242,13 +242,13 @@ Configuration for `enable` settings.
 ```
 
 
-## `co2 budget` {#CO2_budget_cf}
+## `co2_budget` {#co2_budget_cf}
 
 Carbon budgets share one schema for all foresight modes. The `relative` flag
 selects whether yearly entries inside `upper`/`lower` are interpreted as
 fractions of the 1990 baseline (`true`) or absolute GtCO₂/year
 (`false`). Enable `upper` and/or `lower` to enforce those caps only for
-the explicitly listed years or a total budget across all [planning_horizons](#planning-horizons).
+the explicitly listed years or a total budget across all [planning_horizons](#planning_horizons_cf).
 
 Configuration for `co2_budget` settings.
 
@@ -559,9 +559,12 @@ Configuration for `existing_capacities` settings.
 
 Only used for sector-coupling studies.
 
-Configuration for `sector` settings.
+??? note "Details"
 
-{{ schema_table("sector") }}
+    Configuration for `sector` settings.
+
+    {{ schema_table("sector") | indent(4) }}
+
 
 **YAML Syntax**
 
@@ -666,185 +669,7 @@ See the [data versioning documentation](data_sources.md#managing_data_versions) 
 
 ??? note "Configuration for `data` settings."
 
-    | Property | Type | Default | Description |
-    |----------|------|---------|-------------|
-    | `hotmaps_industrial_sites` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `enspreso_biomass` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `osm` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `worldbank_urban_population` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `worldbank_commodity_prices` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `gem_europe_gas_tracker` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `gem_gcct` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `instrat_co2_prices` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `co2stop` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `nitrogen_statistics` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `eu_nuts2013` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `eu_nuts2021` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `eurostat_balances` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `eurostat_household_balances` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `wdpa` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `wdpa_marine` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `luisa_land_cover` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `jrc_idees` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `scigrid_gas` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `seawater_temperature` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `swiss_energy_balances` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `synthetic_electricity_demand` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `opsd_electricity_demand` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `entsoe_electricity_demand` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `neso_electricity_demand` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `copernicus_land_cover` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `ship_raster` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `eez` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `nuts3_population` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `gdp_per_capita` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `population_count` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `ghg_emissions` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `gebco` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `attributed_ports` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `corine` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `emobility` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `h2_salt_caverns` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `lau_regions` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `aquifer_data` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `osm_boundaries` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `gem_gspt` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `tyndp` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `powerplants` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `costs` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `country_runoff` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `country_hdd` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `natura` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `bfs_road_vehicle_stock` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `bfs_gdp_and_population` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `mobility_profiles` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `cutout` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `dh_areas` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `geothermal_heat_utilisation_potentials` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `jrc_ardeco` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `jrc_energy_atlas` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `desnz_electricity_consumption` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `ons_lad` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `bidding_zones_electricitymaps` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
-    | `bidding_zones_entsoepy` | any |  | Configuration for a single data source. |
-    |   `source` | enum (`archive`, `primary`, `build`) | `archive` | Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source. |
-    |   `version` | string | `latest` | Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source. |
+    {{ schema_table("data") | indent(4) }}
 
 
 **YAML Syntax**
@@ -869,6 +694,13 @@ Configuration for `overpass_api` settings.
 
 
 ## `plotting` {#plotting_cf}
+
+Configuration for `plotting` settings, used to style post-processing summaries, static
+and interactive maps, and timeseries plots.
+
+{{ schema_table("plotting") }}
+
+**YAML Syntax**
 
 ```yaml
 {{ yaml_section("plotting", source="plotting") }}

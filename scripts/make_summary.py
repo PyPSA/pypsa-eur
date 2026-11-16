@@ -2,11 +2,20 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create summary CSV files for all scenario runs including costs, capacities,
-capacity factors, curtailment, energy balances, prices and other metrics.
+Computes summary tables of costs, capacities, energy balances, prices and metrics.
+
+Reads the solved networks of all planning horizons and evaluates them with the
+PyPSA statistics module, both system-wide and per region using the location
+of each component. The tables cover capital and marginal costs, optimal
+capacities, capacity factors, curtailment, energy balances, time-averaged and
+load-weighted prices, market values and system metrics such as grid volume
+and CO2 shadow prices. For pathways with several horizons, cumulative costs
+are also integrated over time for a range of social discount rates. The
+tables are the basis for the summary plots.
 """
 
 import logging
+from collections.abc import Callable
 from functools import wraps
 from typing import TypeAlias
 
@@ -29,7 +38,9 @@ logger = logging.getLogger(__name__)
 NetworkLike: TypeAlias = pypsa.Network | NetworkCollection
 
 
-def _loop_over_collection(func):
+def _loop_over_collection(
+    func: Callable[[pypsa.Network], pd.Series | pd.DataFrame],
+) -> Callable[[NetworkLike], pd.Series | pd.DataFrame]:
     """Decorator to handle NetworkCollection by looping over individual networks."""
 
     @wraps(func)
@@ -37,7 +48,7 @@ def _loop_over_collection(func):
         if not isinstance(obj, NetworkCollection):
             return func(obj)
         results = []
-        for horizon, n in zip(obj.index, obj.networks):
+        for horizon, n in zip(obj.index, obj.networks, strict=True):
             result = func(n)
             if isinstance(result, pd.DataFrame):
                 result = result.iloc[:, 0]
@@ -392,8 +403,8 @@ if __name__ == "__main__":
     pypsa.options.params.statistics.nice_names = False
     pypsa.options.params.statistics.drop_zero = False
 
-    foresight = snakemake.config["foresight"]
-    planning_horizons = pd.Index(snakemake.config["planning_horizons"])
+    foresight = snakemake.params.foresight
+    planning_horizons = pd.Index(snakemake.params.planning_horizons)
     network_files = snakemake.input.networks
 
     logger.debug(f"Processing {foresight} mode with {len(network_files)} network(s)")

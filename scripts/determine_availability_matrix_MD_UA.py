@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create land elibility analysis for Ukraine and Moldova with different datasets.
+Computes the land availability matrix for renewable generators in Ukraine and Moldova, which the default European land cover datasets do not cover.
+
+For each technology, exclusion criteria are assembled from the Copernicus Global
+Land Cover raster (emulating the CORINE classes used elsewhere), protected areas
+from the World Database on Protected Areas (with point records buffered to their
+reported area), GEBCO bathymetry for maximum water depth, distance to shore and
+shipping density. The share of each cutout grid cell available to each region is
+then computed with atlite. The result is merged into the availability matrix of
+the other countries.
 """
 
 import functools
@@ -24,12 +32,12 @@ from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def get_wdpa_layer_name(wdpa_fn, layer_substring):
+def get_wdpa_layer_name(wdpa_fn: str, layer_substring: str) -> str:
     """
     Get layername from file "wdpa_fn" whose name contains "layer_substring".
     """
-    l = fiona.listlayers(wdpa_fn)
-    return [_ for _ in l if layer_substring in _][0]
+    layers = fiona.listlayers(wdpa_fn)
+    return [layer for layer in layers if layer_substring in layer][0]
 
 
 if __name__ == "__main__":
@@ -46,8 +54,8 @@ if __name__ == "__main__":
     plg_tmp_fn = None
 
     nprocesses = int(snakemake.threads)
-    noprogress = not snakemake.config["atlite"].get("show_progress", True)
-    config = snakemake.params["renewable"][snakemake.wildcards.technology]
+    noprogress = not snakemake.params.show_progress
+    config = snakemake.params["technology"]
 
     cutout = load_cutout(snakemake.input.cutout)
     regions = (
@@ -138,7 +146,7 @@ if __name__ == "__main__":
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater, -config["max_depth"])
-        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4236, nodata=-1000)
+        excluder.add_raster(snakemake.input.gebco, codes=func, crs=4326, nodata=-1000)
 
     if config.get("min_shore_distance"):
         buffer = config["min_shore_distance"]
@@ -157,7 +165,7 @@ if __name__ == "__main__":
             snakemake.input.ship_density, codes=func, crs=4326, allow_no_overlap=True
         )
 
-    kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
+    kwargs = {"nprocesses": nprocesses, "disable_progressbar": noprogress}
     if noprogress:
         logger.info("Calculate landuse availabilities...")
         start = time.time()

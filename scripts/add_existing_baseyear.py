@@ -2,8 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Adds existing power and heat generation capacities for initial planning
-horizon.
+Add existing power and heating capacities to the network for the first
+planning horizon.
+
+Conventional power plants from the powerplantmatching database and historic
+renewable capacities from IRENA statistics are binned into installation-year
+groups and added as non-extendable assets with build year and remaining
+lifetime, so that they retire over the planning horizons. Renewable
+capacities per country are distributed across generators in proportion to
+their technical potential, and a share of solar capacity can be assigned to
+rooftop PV. For heating, the existing capacities of heat pumps, resistive
+heaters and gas, oil and biomass boilers per region are spread over the
+grouping years assuming a constant installation rate in the past and added
+as links with the efficiencies of the respective heat system. Capacities
+below a threshold are dropped and new assets receive the base year as build
+year. Used under myopic and perfect foresight.
 """
 
 import logging
@@ -396,9 +409,10 @@ def add_power_capacities_installed_before_baseyear(
 
             # this is for the year 2020
             if not already_build.empty:
-                n.links.loc[already_build, "p_nom_min"] = capacity.loc[
-                    already_build.str.replace(name_suffix, "")
-                ].values
+                n.links.loc[already_build, "p_nom_min"] = (
+                    capacity.loc[already_build.str.replace(name_suffix, "")].values
+                    / n.links.loc[already_build, "efficiency"]
+                )
 
             if not new_build.empty:
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
@@ -621,7 +635,7 @@ def add_heating_capacities_installed_before_baseyear(
                 # Installation is assumed to be linear for the past
                 ratios = _years / _years.sum()
 
-        for ratio, grouping_year in zip(ratios, valid_grouping_years):
+        for ratio, grouping_year in zip(ratios, valid_grouping_years, strict=True):
             # Add heat pumps
             for heat_source in heat_pump_source_types[heat_system.system_type.value]:
                 costs_name = heat_system.heat_pump_costs_name(heat_source)

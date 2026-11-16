@@ -5,7 +5,7 @@
 """
 Costs configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#costs_cf
 """
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -73,9 +73,9 @@ class CostsConfig(BaseModel):
         default_factory=_FillValuesConfig,
         description="Default values if not specified for a technology in `resources/costs.csv`.",
     )
-    custom_cost_fn: str | None = Field(
+    custom_cost_fn: str | list[str] | None = Field(
         "data/custom_costs.csv",
-        description="Path to the custom costs file. None if it should not be used. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results.",
+        description="Path or list of paths to custom costs files. Files are applied in order, so later files override earlier ones per technology and parameter. Leave empty or `[]` to disable. Default `data/custom_costs.csv` contains minor adjustments for stabilising the optimisation results.",
     )
     overwrites: dict[str, dict[str, float]] = Field(
         default_factory=dict,

@@ -2,38 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build and validate district heating areas for energy system modeling.
-District heating areas are used for computing heat source and storage potentials.
+Build district heating areas covering all modelled countries.
 
-This script processes district heating (DH) areas data from external sources and
-ensures all modeled countries have consistent representation. It handles missing
-countries that exist in the onshore regions but lack district heating data according
-to configurable strategies.
-
-The script supports three strategies for handling missing countries:
-- 'ignore': Countries without DH data are assumed to have no district heating
-- 'fill': Countries are assigned their full onshore region as potential DH area
-- 'raise': Missing countries cause an error to ensure explicit handling
-
-Relevant Settings
------------------
-
-```yaml
-countries: ['DE', 'FR', 'ES', ...]  # List of modeled countries
-sector:
-    district_heating:
-        dh_areas:
-            handle_missing_countries: 'ignore'  # or 'fill' or 'raise'
-```
-
-Inputs
-------
-- `data/dh_areas.gpkg`: District heating areas data (GeoPackage format)
-- `resources/{run}/onshore_regions.geojson`: Onshore regions for reference
-
-Outputs
--------
-- `resources/{run}/dh_areas.geojson`: Processed district heating areas with missing countries handled
+District heating area shapes from Fraunhofer ISI are checked against the
+countries of the onshore regions. Countries without data are handled by the
+configured strategy: ignored (assumed to have no district heating), filled
+with the country's full onshore area as potential district heating area, or
+reported as an error. The areas restrict where heat source and thermal storage
+potentials are computed; they do not affect heat demand.
 """
 
 import logging
@@ -47,7 +23,12 @@ from scripts._helpers import set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def handle_missing_countries(dh_areas, onshore_regions, missing_countries, handle_mode):
+def handle_missing_countries(
+    dh_areas: gpd.GeoDataFrame,
+    onshore_regions: gpd.GeoDataFrame,
+    missing_countries: pd.Index,
+    handle_mode: str,
+) -> gpd.GeoDataFrame:
     """
     Handle countries that exist in onshore regions but lack district heating data.
 
@@ -164,7 +145,7 @@ if __name__ == "__main__":
 
     # Identify discrepancies between modeled countries and available DH data
     # Extract country codes from region names (assumes format like 'DE 1', 'FR 2', etc.)
-    region_countries = set([name.split()[0][:2] for name in onshore_regions["name"]])
+    region_countries = {name.split()[0][:2] for name in onshore_regions["name"]}
 
     # Get countries that already have DH area data
     dh_countries = set(dh_areas["country"].unique())

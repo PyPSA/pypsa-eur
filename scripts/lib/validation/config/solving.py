@@ -5,7 +5,7 @@
 """
 Solving configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#solving_cf
 """
 
 from typing import Any
@@ -167,9 +167,9 @@ class _SolvingOptionsConfig(BaseModel):
         3,
         description="Maximum number of solving iterations in between which resistance and reactence (`x/r`) are updated for branches according to `s_nom_opt` of the previous run.",
     )
-    transmission_losses: int = Field(
-        2,
-        description="Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
+    transmission_losses: bool | int | dict[str, Any] = Field(
+        {"mode": "secants", "atol": 15, "rtol": 0.5},
+        description='Piecewise linear approximation of losses in AC lines. `false` disables losses, `true` uses the PyPSA default secant-based approximation (`atol=1` MW, `rtol=0.1`). A dict sets the approximation, e.g. `{"mode": "tangents", "segments": 2}` for the former tangent-based method. An integer is deprecated and sets the number of tangents. The default `atol` and `rtol` keep the number of extra constraints close to that of the former tangent-based method.',
     )
     linearized_unit_commitment: bool = Field(
         True,
@@ -295,35 +295,6 @@ class _CheckObjectiveConfig(BaseModel):
         return v
 
 
-class _OETCConfig(BaseModel):
-    """Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support)."""
-
-    name: str = Field(
-        "pypsa-eur",
-        description="Name identifier for the OETC job.",
-    )
-    authentication_server_url: str = Field(
-        "",
-        description="URL of the OETC authentication server for job submission.",
-    )
-    orchestrator_server_url: str = Field(
-        "",
-        description="URL of the OETC orchestrator server for job management.",
-    )
-    cpu_cores: int = Field(
-        8,
-        description="Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)",
-    )
-    disk_space_gb: int = Field(
-        50,
-        description="Amount of disk space in gigabytes to request for the OETC job.",
-    )
-    delete_worker_on_error: bool = Field(
-        True,
-        description="Whether to delete the worker instance when an error occurs during job execution.",
-    )
-
-
 class SolvingConfig(BaseModel):
     """Configuration for `solving` settings."""
 
@@ -440,6 +411,15 @@ class SolvingConfig(BaseModel):
                 "barhggpu": 1,
                 "barhgreltol": 1e-5,
             },
+            # Mirrors "gurobi-default" method/crossover/gap: barrier without crossover, relaxed gap.
+            "mosek-default": {
+                "MSK_IPAR_NUM_THREADS": 8,
+                "MSK_IPAR_OPTIMIZER": "MSK_OPTIMIZER_INTPNT",
+                "MSK_IPAR_INTPNT_BASIS": "MSK_BI_NEVER",
+                "MSK_DPAR_INTPNT_TOL_REL_GAP": 1e-5,
+                "MSK_DPAR_INTPNT_TOL_PFEAS": 1e-6,
+                "MSK_DPAR_INTPNT_TOL_DFEAS": 1e-6,
+            },
             "cbc-default": {},
             "glpk-default": {},
         },
@@ -462,13 +442,21 @@ class SolvingConfig(BaseModel):
                     )
         return v
 
+    @model_validator(mode="before")
+    @classmethod
+    def check_no_oetc_section(cls, data: Any) -> Any:
+        """Reject the removed `oetc` section instead of silently solving locally."""
+        # A null `oetc:` was the former default and never enabled remote solving.
+        if isinstance(data, dict) and data.get("oetc") is not None:
+            raise ValueError(
+                "The 'solving: oetc:' section is no longer supported, as the OETC "
+                "service has been discontinued. Remove it from your config."
+            )
+        return data
+
     check_objective: _CheckObjectiveConfig = Field(
         default_factory=_CheckObjectiveConfig,
         description="Objective checking configuration.",
-    )
-    oetc: _OETCConfig | None = Field(
-        None,
-        description="Configuration options for Open Energy Transition Computing (OETC) cluster support.",
     )
     mem_mb: int = Field(
         128000,
