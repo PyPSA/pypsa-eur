@@ -1563,7 +1563,7 @@ def _remove_lines_within_substations(gdf_lines, gdf_substations_polygon):
     return gdf_lines
 
 
-def _merge_touching_polygons(df):
+def _merge_touching_polygons(df, crs):
     """
     Merge touching polygons in a GeoDataFrame.
 
@@ -1571,6 +1571,8 @@ def _merge_touching_polygons(df):
     ----------
     - df: pandas.DataFrame or geopandas.GeoDataFrame
         The input DataFrame containing the polygons to be merged.
+    - crs: str
+        The coordinate reference system of the polygons.
 
     Returns
     -------
@@ -1797,7 +1799,7 @@ if __name__ == "__main__":
     df_substations = _create_substations_geometry(df_substations)
 
     # Merge touching polygons
-    df_substations = _merge_touching_polygons(df_substations)
+    df_substations = _merge_touching_polygons(df_substations, crs)
     df_substations = _create_substations_poi(df_substations)
 
     # Aggregate substations if needed

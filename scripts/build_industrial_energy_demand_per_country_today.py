@@ -133,7 +133,12 @@ def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammo
     return df
 
 
-def separate_basic_chemicals(demand, production, params, endogenous_ammonia):
+def separate_basic_chemicals(
+    demand: pd.DataFrame,
+    production: pd.DataFrame,
+    params: dict,
+    endogenous_ammonia: bool,
+) -> pd.DataFrame:
     chlorine = pd.DataFrame(
         {
             "hydrogen": production["Chlorine"] * params["MWh_H2_per_tCl"],
@@ -194,13 +199,18 @@ def add_non_eu27_industrial_energy_demand(countries, demand, production):
     return pd.concat([demand, demand_non_eu27])
 
 
-def industrial_energy_demand(countries, year, endogenous_ammonia):
-    nprocesses = snakemake.threads
-    disable_progress = snakemake.params.disable_progressbar
+def industrial_energy_demand(
+    countries: pd.Index,
+    year: int,
+    jrc_dir: str,
+    endogenous_ammonia: bool,
+    nprocesses: int,
+    disable_progress: bool,
+) -> pd.DataFrame:
     func = partial(
         industrial_energy_demand_per_country,
         year=year,
-        jrc_dir=snakemake.input.jrc,
+        jrc_dir=jrc_dir,
         endogenous_ammonia=endogenous_ammonia,
     )
     tqdm_kwargs = dict(
@@ -279,7 +289,12 @@ if __name__ == "__main__":
     countries = pd.Index(snakemake.params.countries)
 
     demand = industrial_energy_demand(
-        countries.intersection(eu27), year, endogenous_ammonia
+        countries.intersection(eu27),
+        year,
+        snakemake.input.jrc,
+        endogenous_ammonia,
+        snakemake.threads,
+        snakemake.params.disable_progressbar,
     )
 
     # output in MtMaterial/a
