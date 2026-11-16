@@ -130,7 +130,6 @@ def get_compose_inputs(w):
                 resources("biomass_transport_costs.csv")
                 if cfg["sector"]["biomass_transport"]
                 or cfg["sector"]["biomass_spatial"]
-                or cfg["waste"]["transport"]
                 else []
             ),
             sequestration_potential=(
@@ -247,7 +246,6 @@ rule compose_network:
         links=config_provider("links"),
         transmission_losses=config_provider("solving", "options", "transmission_losses"),
         industry=config_provider("industry"),
-        waste=config_provider("waste"),
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
         ),

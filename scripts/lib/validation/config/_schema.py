@@ -38,7 +38,6 @@ from scripts.lib.validation.config.transformers import TransformersConfig
 from scripts.lib.validation.config.transmission_projects import (
     TransmissionProjectsConfig,
 )
-from scripts.lib.validation.config.waste import WasteConfig
 
 
 class LoggingConfig(ConfigModel):
@@ -187,10 +186,6 @@ class ConfigSchema(BaseModel):
     biomass: BiomassConfig = Field(
         default_factory=BiomassConfig,
         description="Biomass configuration.",
-    )
-    waste: WasteConfig = Field(
-        default_factory=WasteConfig,
-        description="Waste configuration.",
     )
     solar_thermal: SolarThermalConfig = Field(
         default_factory=SolarThermalConfig,

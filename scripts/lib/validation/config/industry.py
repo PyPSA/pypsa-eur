@@ -132,6 +132,14 @@ class IndustryConfig(ConfigModel):
         0.0,
         description="The fraction of high value chemicals (HVC) put into landfill resulting in additional carbon sequestration. The default value is 0.",
     )
+    waste_to_energy: bool = Field(
+        False,
+        description="Switch to enable expansion of waste to energy CHPs for conversion of plastics. Default is false.",
+    )
+    waste_to_energy_cc: bool = Field(
+        False,
+        description="Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.",
+    )
     solid_biomass_for_industry_cc: bool = Field(
         True,
         description="Add option for using solid biomass for industry with carbon capture, in addition to solid biomass for industry without carbon capture.",

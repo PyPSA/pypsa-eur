@@ -514,21 +514,6 @@ Configuration for `biomass` settings.
     - Agricultural waste
 
 
-## `waste` {#waste_cf}
-
-Configuration for `waste` settings.
-
-{{ schema_table("waste") }}
-
-**YAML Syntax**
-
-```yaml
-{{ yaml_section("waste") }}
-```
-
-!!! note
-    Only used for sector-coupling studies with `sector: waste`.
-
 ## `solar_thermal` {#solar_thermal_cf}
 
 Only used for sector-coupling studies.

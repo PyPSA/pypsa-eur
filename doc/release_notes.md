@@ -5,7 +5,10 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* **Breaking:** Waste streams are decoupled from industry and biomass and form their own sector, enabled with `sector: waste` and configured under `waste`. The options `industry: waste_to_energy`, `industry: waste_to_energy_cc` and `sector: municipal_solid_waste` were removed. Non-sequestered HVC (plastic waste) is burned either without energetic use or in waste CHPs ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
+* Feature: New option `sector: waste_spatial` to model plastic and municipal solid waste per bus region. Waste can then be transported between regions if `sector: biomass_transport` is enabled. Without it, waste for `industry: waste_to_energy` and `industry: waste_to_energy_cc` is now collected in one European bus, and no longer follows `sector: regional_oil_demand`. Waste-to-energy plants no longer require `sector: industry`, and `sector: municipal_solid_waste` no longer requires `sector: biomass` ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
+
+* Fix: `industry: waste_to_energy_cc` without `industry: waste_to_energy` no longer raises an error ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
+
 * Feature: New option `sector: ccgt_cc` to add gas CCGTs with post-combustion carbon capture ([#2418](https://github.com/PyPSA/pypsa-eur/pull/2418)).
 
 * Fix: Power plants with post-combustion carbon capture (`sector: coal_cc`, `sector: ccgt_cc` and `sector: methanol: methanol_to_power: ccgt_cc`) now lose electricity for the steam that regenerates the capture solvent, and their capture energy scales with the captured instead of the total CO2. Coal with carbon capture now uses `sector: cc_capital_cost_factor: coal` and its own carrier `coal CC` ([#2418](https://github.com/PyPSA/pypsa-eur/pull/2418)).

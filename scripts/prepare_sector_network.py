@@ -62,42 +62,35 @@ def define_spatial(nodes: pd.Index, options: dict) -> SimpleNamespace:
     # biomass
 
     spatial.biomass = SimpleNamespace()
-    spatial.msw = SimpleNamespace()
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         spatial.biomass.nodes = nodes + " solid biomass"
         spatial.biomass.nodes_unsustainable = nodes + " unsustainable solid biomass"
         spatial.biomass.bioliquids = nodes + " unsustainable bioliquids"
         spatial.biomass.locations = nodes
-        spatial.msw.nodes = nodes + " municipal solid waste"
-        spatial.msw.locations = nodes
     else:
         spatial.biomass.nodes = ["EU solid biomass"]
         spatial.biomass.nodes_unsustainable = ["EU unsustainable solid biomass"]
         spatial.biomass.bioliquids = ["EU unsustainable bioliquids"]
         spatial.biomass.locations = ["EU"]
-        spatial.msw.nodes = ["EU municipal solid waste"]
-        spatial.msw.locations = ["EU"]
     spatial.biomass.industry = nodes + " solid biomass for industry"
     spatial.biomass.industry_cc = nodes + " solid biomass for industry CC"
     spatial.biomass.industry.locations = nodes
 
     spatial.biomass.df = pd.DataFrame(vars(spatial.biomass), index=nodes)
-    spatial.msw.df = pd.DataFrame(vars(spatial.msw), index=nodes)
+
+    # waste
 
     spatial.waste = SimpleNamespace()
+
     if options["waste_spatial"]:
+        spatial.waste.nodes = nodes + " non-sequestered HVC"
         spatial.waste.msw = nodes + " municipal solid waste"
-        spatial.waste.non_sequestered_hvc = nodes + " non-sequestered HVC"
-        spatial.waste.buses = nodes + " waste"
         spatial.waste.locations = nodes
     else:
+        spatial.waste.nodes = ["EU non-sequestered HVC"]
         spatial.waste.msw = ["EU municipal solid waste"]
-        spatial.waste.non_sequestered_hvc = ["EU non-sequestered HVC"]
-        spatial.waste.buses = ["EU waste"]
         spatial.waste.locations = ["EU"]
-
-    spatial.waste.df = pd.DataFrame(vars(spatial.waste), index=nodes)
 
     # co2
 
@@ -3699,6 +3692,54 @@ def add_methanol(
         add_methanol_reforming_cc(n=n, costs=costs, spatial=spatial, options=options)
 
 
+def add_biomass_transport(
+    n: pypsa.Network,
+    transport_corridors: pd.DataFrame,
+    transport_costs_file: str,
+    bus_suffix: str = " solid biomass",
+    carrier: str = "solid biomass transport",
+    prefix: str = "biomass transport ",
+) -> None:
+    """
+    Add links for the road transport of solid biomass or waste between regions.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    transport_corridors : pd.DataFrame
+        Candidate corridors from `read_transport_corridors`.
+    transport_costs_file : str
+        Path to CSV file containing biomass transport costs per country.
+    bus_suffix : str
+        Suffix of the buses to connect.
+    carrier : str
+        Carrier of the transport links.
+    prefix : str
+        Prefix of the transport link names.
+    """
+    transport_costs = pd.read_csv(transport_costs_file, index_col=0).squeeze()
+    reverse = transport_corridors.rename(columns={"bus0": "bus1", "bus1": "bus0"})
+    reverse.index = reverse.bus0 + " -> " + reverse.bus1
+    transport = pd.concat([transport_corridors, reverse]).add_prefix(prefix, axis=0)
+
+    bus0_costs = transport.bus0.apply(lambda x: transport_costs[x[:2]])
+    bus1_costs = transport.bus1.apply(lambda x: transport_costs[x[:2]])
+    costs_per_km = pd.concat([bus0_costs, bus1_costs], axis=1).mean(axis=1)
+
+    n.add(
+        "Link",
+        transport.index,
+        bus0=transport.bus0 + bus_suffix,
+        bus1=transport.bus1 + bus_suffix,
+        p_nom_extendable=False,
+        p_nom=5e4,
+        length=transport.length.values,
+        marginal_cost=costs_per_km * transport.length.values,
+        carrier=carrier,
+    )
+
+
 def add_biomass(
     n: pypsa.Network,
     costs: pd.DataFrame,
@@ -4009,33 +4050,7 @@ def add_biomass(
         )
 
     if options["biomass_transport"]:
-        # add biomass transport
-        transport_costs = pd.read_csv(biomass_transport_costs_file, index_col=0)
-        transport_costs = transport_costs.squeeze()
-        reverse = transport_corridors.rename(columns={"bus0": "bus1", "bus1": "bus0"})
-        reverse.index = reverse.bus0 + " -> " + reverse.bus1
-        biomass_transport = pd.concat([transport_corridors, reverse]).add_prefix(
-            "biomass transport ", axis=0
-        )
-
-        # costs
-        bus0_costs = biomass_transport.bus0.apply(lambda x: transport_costs[x[:2]])
-        bus1_costs = biomass_transport.bus1.apply(lambda x: transport_costs[x[:2]])
-        biomass_transport["costs"] = pd.concat([bus0_costs, bus1_costs], axis=1).mean(
-            axis=1
-        )
-
-        n.add(
-            "Link",
-            biomass_transport.index,
-            bus0=biomass_transport.bus0 + " solid biomass",
-            bus1=biomass_transport.bus1 + " solid biomass",
-            p_nom_extendable=False,
-            p_nom=5e4,
-            length=biomass_transport.length.values,
-            marginal_cost=biomass_transport.costs * biomass_transport.length.values,
-            carrier="solid biomass transport",
-        )
+        add_biomass_transport(n, transport_corridors, biomass_transport_costs_file)
 
     elif options["biomass_spatial"]:
         # add artificial biomass generators at nodes which include transport costs
@@ -4358,30 +4373,53 @@ def add_biomass(
         )
 
 
-def add_waste(
-    n,
-    costs,
-    options,
-    sector_options,
-    spatial,
-    pop_layout,
-    cf_industry,
-    investment_year,
-    biomass_potential_file,
-    transport_costs_file,
-    industrial_demand_file,
-    transport_corridors=None,
-    nyears=1,
-):
+def plastic_waste_co2_per_naphtha(
+    industrial_demand: pd.DataFrame,
+    costs: pd.DataFrame,
+    cf_industry: dict,
+    investment_year: int,
+) -> float:
     """
-    Add waste components to the PyPSA network.
+    Return the CO2 from plastic waste per naphtha for industry in tCO2/MWh.
 
-    This function adds municipal solid waste and HVC as
-    waste that either have to be burned with or without
-    energetic use.
-    HVC (translates to plastics) is distributed as a potential
-    following the population. Municipal solid waste is taken
-    from the biomass potential and treated as carbon neutral.
+    Carbon in naphtha that is neither a process emission of the steam cracker
+    nor sequestered is released when the plastic waste is incinerated.
+    """
+    process_co2_per_naphtha = (
+        industrial_demand["process emission from feedstock"].sum()
+        / industrial_demand["naphtha"].sum()
+    )
+    non_sequestered = 1 - get(
+        cf_industry["HVC_environment_sequestration_fraction"],
+        investment_year,
+    )
+    return non_sequestered * (
+        costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
+    )
+
+
+def add_waste(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    options: dict,
+    cf_industry: dict,
+    spatial: SimpleNamespace,
+    pop_layout: pd.DataFrame,
+    investment_year: int,
+    industrial_demand_file: str,
+    biomass_potentials_file: str,
+    biomass_transport_costs_file: str | None = None,
+    transport_corridors: pd.DataFrame | None = None,
+    nyears: float = 1,
+) -> None:
+    """
+    Add plastic waste, municipal solid waste and waste-to-energy plants.
+
+    Plastic waste is the share of the high-value chemicals (HVC) produced in
+    the year that is not sequestered. It is distributed by population and must
+    be incinerated, in waste CHP plants or without energy recovery. Municipal
+    solid waste is biogenic. It enters the same bus with a CO2 credit that
+    cancels its emissions when it is incinerated.
 
     Parameters
     ----------
@@ -4390,257 +4428,169 @@ def add_waste(
     costs : pd.DataFrame
         DataFrame containing technology cost assumptions
     options : dict
-        Dictionary of waste configuration options with the following keys:
-        - transport
-        - waste_to_energy
-        - waste_to_energy_cc
-    sector_options : dict
-        Dictionary of sector configuration options with the relevant keys:
-        - waste_spatial
-        - HVC_demand_factor
-        - cc_fraction
-    spatial : object
-        Object containing spatial information about different carriers (msw, etc.)
+        Dictionary of sector configuration options including the keys
+        `waste_spatial`, `municipal_solid_waste`, `biomass_transport`,
+        `HVC_demand_factor` and `cc_fraction`.
+    cf_industry : dict
+        Dictionary of industry configuration options including the keys
+        `waste_to_energy`, `waste_to_energy_cc` and
+        `HVC_environment_sequestration_fraction`.
+    spatial : SimpleNamespace
+        Object containing spatial information about different carriers
     pop_layout : pd.DataFrame
         DataFrame containing population layout information
-    cf_industry : dict
-        Dictionary of industry configuration options
     investment_year : int
         Planning horizon
+    industrial_demand_file : str
+        Path to CSV file containing the industrial demand per node
     biomass_potentials_file : str
-        Path to CSV file containing biomass potentials data
-        Here only the msw part is important
-    transport_costs_file: str
+        Path to CSV file containing the municipal solid waste potentials
+    biomass_transport_costs_file : str, optional
         Path to CSV file containing biomass transport costs data.
-        Required if waste_spatial and waste:transport options are True.
-    industrial_demand_file: str
-        Path to CSV file containing the production volume of HVC
+        Required if the `waste_spatial` and `biomass_transport` options are True.
     transport_corridors : pd.DataFrame, optional
         Candidate corridors from `read_transport_corridors`.
-        Required if waste_spatial and waste:transport options are True.
+        Required if the `waste_spatial` and `biomass_transport` options are True.
     nyears : float
-        Number of years for which to scale the biomass potentials.
-
-    Returns
-    -------
-    None
-        The function modifies the network object in-place by adding
-        waste-related components.
-
-    Notes
-    -----
-    The function adds waste-related components depending
-    on the options provided, including:
-    - Municipal solid waste and HVC potentials to the buses waste
-    - Non-energetic incineration of HVC with accounting carbon emissions
-    - Waste CHP
-    - Waste CHP CC
-    - Transport network for waste
+        Number of years for which to scale the potentials.
     """
-
-    logger.info("Add waste")
-    # general information
     nodes = pop_layout.index
-    nhours = n.snapshot_weightings.generators.sum()
+    co2_intensity = costs.at["oil", "CO2 intensity"]
 
-    # collect msw potential from biomass files
-    biomass_potential = pd.read_csv(biomass_potential_file, index_col=0) * nyears
-    # collect hvc potential from production
-    # 1e6 to convert TWh to MWh
-    industrial_demand = pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
-    process_co2_per_naphtha = (
-        industrial_demand.loc[nodes, "process emission from feedstock"].sum()
-        / industrial_demand.loc[nodes, "naphtha"].sum()
+    # industrial demand in TWh/a and MtCO2/a
+    industrial_demand = pd.read_csv(industrial_demand_file, index_col=0).loc[nodes]
+    naphtha = options["HVC_demand_factor"] * industrial_demand["naphtha"].sum()
+    co2_per_naphtha = plastic_waste_co2_per_naphtha(
+        industrial_demand, costs, cf_industry, investment_year
     )
 
-    non_sequestered = 1 - get(
-        cf_industry["HVC_environment_sequestration_fraction"],
-        investment_year,
+    # potentials in MWh
+    potentials = pd.DataFrame(index=nodes)
+    potentials["HVC"] = (naphtha * 1e6 * nyears * co2_per_naphtha / co2_intensity) * (
+        pop_layout.total / pop_layout.total.sum()
     )
-    demand_factor = sector_options["HVC_demand_factor"]
+    biomass_potentials = pd.read_csv(biomass_potentials_file, index_col=0) * nyears
+    potentials["MSW"] = biomass_potentials["municipal solid waste"]
+    if not options["waste_spatial"]:
+        potentials = potentials.sum().to_frame("EU").T
 
-    p_set_naphtha = (
-        demand_factor
-        * industrial_demand.loc[nodes, "naphtha"].rename(
-            lambda x: x + " naphtha for industry"
-        )
-        / nhours
-    )
-    # energetic efficiency from naphtha to HVC
-    HVC_per_naphtha = (
-        costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
-    ) / costs.at["oil", "CO2 intensity"]
-
-    # check if msw potential is per bus region or for Europe
-    # distribute hvc across population
-    if sector_options["waste_spatial"]:
-        msw_potential = biomass_potential["municipal solid waste"].rename(
-            index=lambda x: x + " municipal solid waste"
-        )
-        HVC_potential_sum = (
-            p_set_naphtha.sum() * nhours * non_sequestered * HVC_per_naphtha
-        )
-        shares = pop_layout.total / pop_layout.total.sum()
-        HVC_potential = shares.mul(HVC_potential_sum)
-        HVC_potential.index = HVC_potential.index + " non-sequestered HVC"
-    else:
-        msw_potential = biomass_potential["municipal solid waste"].sum()
-        HVC_potential = p_set_naphtha.sum() * nhours * non_sequestered * HVC_per_naphtha
-
-    # set up carriers, buses, links and generators
     n.add("Carrier", "non-sequestered HVC")
-    n.add("Carrier", "waste")
-    n.add("Carrier", "waste to air")
 
     n.add(
         "Bus",
-        spatial.waste.buses,
+        spatial.waste.nodes,
         location=spatial.waste.locations,
-        carrier="waste",
+        carrier="non-sequestered HVC",
         unit="MWh_LHV",
     )
-    # add generator that provides waste
+
     n.add(
         "Generator",
-        spatial.waste.non_sequestered_hvc,
-        bus=spatial.waste.buses,
+        spatial.waste.nodes,
+        bus=spatial.waste.nodes,
         carrier="non-sequestered HVC",
-        p_nom=HVC_potential,
-        marginal_cost=0,
-        e_sum_min=HVC_potential,
-        e_sum_max=HVC_potential,
+        p_nom=potentials["HVC"].values,
+        e_sum_min=potentials["HVC"].values,
+        e_sum_max=potentials["HVC"].values,
     )
-    logger.info(HVC_potential)
 
     n.add(
         "Link",
         spatial.waste.locations,
-        suffix=" waste to air",
-        bus0=spatial.waste.buses,
+        suffix=" HVC to air",
+        bus0=spatial.waste.nodes,
         bus1="co2 atmosphere",
-        carrier="waste to air",
+        carrier="HVC to air",
         p_nom_extendable=True,
-        efficiency=costs.at["oil", "CO2 intensity"],
+        efficiency=co2_intensity,
     )
-    if options["waste_to_energy"] or options["waste_to_energy_cc"]:
-        # add municipal solid waste once it can be utilized
+
+    if options["municipal_solid_waste"]:
         n.add("Carrier", "municipal solid waste")
+
         n.add(
             "Bus",
             spatial.waste.msw,
             location=spatial.waste.locations,
             carrier="municipal solid waste",
         )
+
         n.add(
             "Generator",
             spatial.waste.msw,
             bus=spatial.waste.msw,
             carrier="municipal solid waste",
-            p_nom=msw_potential,
-            marginal_cost=0,
-            e_sum_min=msw_potential,
-            e_sum_max=msw_potential,
+            p_nom=potentials["MSW"].values,
+            e_sum_min=potentials["MSW"].values,
+            e_sum_max=potentials["MSW"].values,
         )
-        logger.info(msw_potential)
 
-        # add msw as carbon neutral fuel to hvc potential
+        # municipal solid waste is CO2 neutral: the credit cancels the
+        # emissions of its incineration together with the plastic waste
         n.add(
             "Link",
-            spatial.waste.locations,
-            suffix=" msw waste",
+            spatial.waste.msw,
             bus0=spatial.waste.msw,
-            bus1=spatial.waste.buses,
+            bus1=spatial.waste.nodes,
             bus2="co2 atmosphere",
             carrier="municipal solid waste",
             p_nom_extendable=True,
             efficiency=1.0,
-            efficiency2=-costs.at["oil", "CO2 intensity"],
+            efficiency2=-co2_intensity,
         )
 
-        if options["waste_to_energy"]:
-            urban_central = spatial.nodes + " urban central heat"
-            existing_urban_central = n.buses.index[
-                n.buses.carrier == "urban central heat"
-            ]
-            urban_central_nodes = urban_central.map(
-                lambda x: x if x in existing_urban_central else ""
-            )
-            n.add(
-                "Link",
-                spatial.nodes + " waste CHP",
-                bus0=spatial.waste.buses,
-                bus1=spatial.nodes,
-                bus2=urban_central_nodes,
-                bus3="co2 atmosphere",
-                carrier="waste CHP",
-                p_nom_extendable=True,
-                capital_cost=costs.at["waste CHP", "capital_cost"]
-                * costs.at["waste CHP", "efficiency"],
-                marginal_cost=costs.at["waste CHP", "VOM"],
-                efficiency=costs.at["waste CHP", "efficiency"],
-                efficiency2=costs.at["waste CHP", "efficiency-heat"],
-                efficiency3=costs.at["oil", "CO2 intensity"],
-                lifetime=costs.at["waste CHP", "lifetime"],
-            )
+    urban_central = spatial.nodes + " urban central heat"
+    urban_central = urban_central.where(urban_central.isin(n.buses.index), "")
 
-        if options["waste_to_energy_cc"]:
-            n.add(
-                "Link",
-                spatial.nodes + " waste CHP CC",
-                bus0=spatial.waste.buses,
-                bus1=spatial.nodes,
-                bus2=urban_central_nodes,
-                bus3="co2 atmosphere",
-                bus4=spatial.co2.nodes,
-                carrier="waste CHP CC",
-                p_nom_extendable=True,
-                capital_cost=costs.at["waste CHP CC", "capital_cost"]
-                * costs.at["waste CHP CC", "efficiency"]
-                + costs.at["biomass CHP capture", "capital_cost"]
-                * costs.at["oil", "CO2 intensity"],
-                marginal_cost=costs.at["waste CHP CC", "VOM"],
-                efficiency=costs.at["waste CHP CC", "efficiency"],
-                efficiency2=costs.at["waste CHP CC", "efficiency-heat"],
-                efficiency3=costs.at["oil", "CO2 intensity"]
-                * (1 - sector_options["cc_fraction"]),
-                efficiency4=costs.at["oil", "CO2 intensity"]
-                * sector_options["cc_fraction"],
-                lifetime=costs.at["waste CHP CC", "lifetime"],
-            )
-    if options["transport"] and not sector_options["waste_spatial"]:
-        logger.warning(
-            "Waste is not regionally resolved (config['sector']['waste_spatial']) but transport of waste is enabled (config['waste']['trasnport']). Transport costs of waste not included."
-        )
-        return
-
-    if options["transport"]:
-        # add waste transport
-        transport_costs = pd.read_csv(transport_costs_file, index_col=0)
-        transport_costs = transport_costs.squeeze()
-        reverse = transport_corridors.rename(columns={"bus0": "bus1", "bus1": "bus0"})
-        reverse.index = reverse.bus0 + " -> " + reverse.bus1
-        waste_transport = pd.concat([transport_corridors, reverse]).add_prefix(
-            "waste transport ", axis=0
-        )
-
-        # costs
-        bus0_costs = waste_transport.bus0.apply(lambda x: transport_costs[x[:2]])
-        bus1_costs = waste_transport.bus1.apply(lambda x: transport_costs[x[:2]])
-        waste_transport["costs"] = pd.concat([bus0_costs, bus1_costs], axis=1).mean(
-            axis=1
-        )
-        n.add("Carrier", "waste transport")
-
+    if cf_industry["waste_to_energy"]:
         n.add(
             "Link",
-            waste_transport.index,
-            bus0=waste_transport.bus0 + " waste",
-            bus1=waste_transport.bus1 + " waste",
-            p_nom_extendable=False,
-            p_nom=5e4,
-            length=waste_transport.length.values,
-            marginal_cost=waste_transport.costs * waste_transport.length.values,
+            spatial.nodes + " waste CHP",
+            bus0=spatial.waste.nodes,
+            bus1=spatial.nodes,
+            bus2=urban_central,
+            bus3="co2 atmosphere",
+            carrier="waste CHP",
+            p_nom_extendable=True,
+            capital_cost=costs.at["waste CHP", "capital_cost"]
+            * costs.at["waste CHP", "efficiency"],
+            marginal_cost=costs.at["waste CHP", "VOM"],
+            efficiency=costs.at["waste CHP", "efficiency"],
+            efficiency2=costs.at["waste CHP", "efficiency-heat"],
+            efficiency3=co2_intensity,
+            lifetime=costs.at["waste CHP", "lifetime"],
+        )
+
+    if cf_industry["waste_to_energy_cc"]:
+        n.add(
+            "Link",
+            spatial.nodes + " waste CHP CC",
+            bus0=spatial.waste.nodes,
+            bus1=spatial.nodes,
+            bus2=urban_central,
+            bus3="co2 atmosphere",
+            bus4=spatial.co2.nodes,
+            carrier="waste CHP CC",
+            p_nom_extendable=True,
+            capital_cost=costs.at["waste CHP CC", "capital_cost"]
+            * costs.at["waste CHP CC", "efficiency"]
+            + costs.at["biomass CHP capture", "capital_cost"] * co2_intensity,
+            marginal_cost=costs.at["waste CHP CC", "VOM"],
+            efficiency=costs.at["waste CHP CC", "efficiency"],
+            efficiency2=costs.at["waste CHP CC", "efficiency-heat"],
+            efficiency3=co2_intensity * (1 - options["cc_fraction"]),
+            efficiency4=co2_intensity * options["cc_fraction"],
+            lifetime=costs.at["waste CHP CC", "lifetime"],
+        )
+
+    if options["waste_spatial"] and options["biomass_transport"]:
+        add_biomass_transport(
+            n,
+            transport_corridors,
+            biomass_transport_costs_file,
+            bus_suffix=" non-sequestered HVC",
             carrier="waste transport",
+            prefix="waste transport ",
         )
 
 
@@ -5012,37 +4962,28 @@ def add_industry(
         industrial_demand.loc[nodes, "process emission from feedstock"].sum()
         / industrial_demand.loc[nodes, "naphtha"].sum()
     )
+    # without waste-to-energy, plastic waste is incinerated without energy recovery
+    waste_emissions = {}
+    if not (cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]):
+        waste_emissions = {
+            "bus3": "co2 atmosphere",
+            "efficiency3": plastic_waste_co2_per_naphtha(
+                industrial_demand.loc[nodes], costs, cf_industry, investment_year
+            ),
+        }
+
     # link to supply the naphtha for industry load
-    if options["waste"]:
-        n.add(
-            "Link",
-            spatial.oil.naphtha,
-            bus0=spatial.oil.nodes,
-            bus1=spatial.oil.naphtha,
-            bus2=spatial.co2.process_emissions,
-            carrier="naphtha for industry",
-            p_nom_extendable=True,
-            efficiency2=process_co2_per_naphtha,
-        )
-    else:
-        emitted_co2_per_naphtha = (
-            costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
-        )
-        non_sequestered = 1 - get(
-            cf_industry["HVC_environment_sequestration_fraction"], investment_year
-        )
-        n.add(
-            "Link",
-            spatial.oil.naphtha,
-            bus0=spatial.oil.nodes,
-            bus1=spatial.oil.naphtha,
-            bus2="co2 atmosphere",
-            bus3=spatial.co2.process_emissions,
-            carrier="naphtha for industry",
-            p_nom_extendable=True,
-            efficiency2=emitted_co2_per_naphtha * non_sequestered,
-            efficiency3=process_co2_per_naphtha,
-        )
+    n.add(
+        "Link",
+        spatial.oil.naphtha,
+        bus0=spatial.oil.nodes,
+        bus1=spatial.oil.naphtha,
+        bus2=spatial.co2.process_emissions,
+        carrier="naphtha for industry",
+        p_nom_extendable=True,
+        efficiency2=process_co2_per_naphtha,
+        **waste_emissions,
+    )
 
     # TODO simplify bus expression
     n.add(
@@ -6500,19 +6441,18 @@ def main(
             nyears=nyears,
         )
 
-    if options["waste"]:
+    if cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]:
         add_waste(
             n=n,
             costs=costs,
-            options=params.waste,
-            sector_options=options,
+            options=options,
+            cf_industry=cf_industry,
             spatial=spatial,
             pop_layout=pop_layout,
-            cf_industry=cf_industry,
             investment_year=current_horizon,
-            biomass_potential_file=inputs.biomass_potentials,
-            transport_costs_file=inputs.biomass_transport_costs,
             industrial_demand_file=inputs.industrial_demand,
+            biomass_potentials_file=inputs.biomass_potentials,
+            biomass_transport_costs_file=inputs.biomass_transport_costs,
             transport_corridors=corridors["biomass"],
             nyears=nyears,
         )

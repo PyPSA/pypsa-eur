@@ -2761,6 +2761,16 @@
           "description": "The fraction of high value chemicals (HVC) put into landfill resulting in additional carbon sequestration. The default value is 0.",
           "type": "number"
         },
+        "waste_to_energy": {
+          "default": false,
+          "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics. Default is false.",
+          "type": "boolean"
+        },
+        "waste_to_energy_cc": {
+          "default": false,
+          "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.",
+          "type": "boolean"
+        },
         "solid_biomass_for_industry_cc": {
           "default": true,
           "description": "Add option for using solid biomass for industry with carbon capture, in addition to solid biomass for industry without carbon capture.",
@@ -4872,11 +4882,6 @@
           "description": "Add biomass sector.",
           "type": "boolean"
         },
-        "waste": {
-          "default": false,
-          "description": "Add waste sector.",
-          "type": "boolean"
-        },
         "industry": {
           "default": true,
           "description": "Add industry sector.",
@@ -5854,9 +5859,14 @@
           "description": "Add option for transforming solid biomass into hydrogen with carbon capture.",
           "type": "boolean"
         },
+        "municipal_solid_waste": {
+          "default": false,
+          "description": "Add municipal solid waste as carbon-neutral fuel for waste-to-energy plants. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`.",
+          "type": "boolean"
+        },
         "waste_spatial": {
           "default": false,
-          "description": "Model waste potential for each bus region.",
+          "description": "Model plastic and municipal solid waste for each bus region instead of one European bus. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`. Waste can be transported between regions if `biomass_transport` is enabled.",
           "type": "boolean"
         },
         "limit_max_growth": {
@@ -6516,26 +6526,6 @@
             "keep"
           ],
           "type": "string"
-        }
-      }
-    },
-    "WasteConfig": {
-      "description": "Configuration for `waste` settings.",
-      "properties": {
-        "transport": {
-          "default": false,
-          "description": "Switch to enable the transport of waste between bus regions. Only works if `sector: waste_spatial` is activated.",
-          "type": "boolean"
-        },
-        "waste_to_energy": {
-          "default": false,
-          "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics.",
-          "type": "boolean"
-        },
-        "waste_to_energy_cc": {
-          "default": false,
-          "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture.",
-          "type": "boolean"
         }
       }
     },
@@ -12306,26 +12296,6 @@
         }
       }
     },
-    "waste": {
-      "description": "Configuration for `waste` settings.",
-      "properties": {
-        "transport": {
-          "default": false,
-          "description": "Switch to enable the transport of waste between bus regions. Only works if `sector: waste_spatial` is activated.",
-          "type": "boolean"
-        },
-        "waste_to_energy": {
-          "default": false,
-          "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics.",
-          "type": "boolean"
-        },
-        "waste_to_energy_cc": {
-          "default": false,
-          "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture.",
-          "type": "boolean"
-        }
-      }
-    },
     "solar_thermal": {
       "description": "Configuration for `solar_thermal` settings.",
       "properties": {
@@ -12454,11 +12424,6 @@
         "biomass": {
           "default": true,
           "description": "Add biomass sector.",
-          "type": "boolean"
-        },
-        "waste": {
-          "default": false,
-          "description": "Add waste sector.",
           "type": "boolean"
         },
         "industry": {
@@ -13438,9 +13403,14 @@
           "description": "Add option for transforming solid biomass into hydrogen with carbon capture.",
           "type": "boolean"
         },
+        "municipal_solid_waste": {
+          "default": false,
+          "description": "Add municipal solid waste as carbon-neutral fuel for waste-to-energy plants. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`.",
+          "type": "boolean"
+        },
         "waste_spatial": {
           "default": false,
-          "description": "Model waste potential for each bus region.",
+          "description": "Model plastic and municipal solid waste for each bus region instead of one European bus. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`. Waste can be transported between regions if `biomass_transport` is enabled.",
           "type": "boolean"
         },
         "limit_max_growth": {
@@ -13666,6 +13636,16 @@
           "default": 0.0,
           "description": "The fraction of high value chemicals (HVC) put into landfill resulting in additional carbon sequestration. The default value is 0.",
           "type": "number"
+        },
+        "waste_to_energy": {
+          "default": false,
+          "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics. Default is false.",
+          "type": "boolean"
+        },
+        "waste_to_energy_cc": {
+          "default": false,
+          "description": "Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.",
+          "type": "boolean"
         },
         "solid_biomass_for_industry_cc": {
           "default": true,

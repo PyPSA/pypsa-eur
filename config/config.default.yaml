@@ -584,12 +584,6 @@ biomass:
     2045: 1
     2050: 1
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#waste_cf
-waste:
-  transport: false
-  waste_to_energy: false
-  waste_to_energy_cc: false
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#solar_thermal_cf
 solar_thermal:
   clearsky_model: simple
@@ -698,7 +692,6 @@ sector:
   transport: true
   heating: true
   biomass: true
-  waste: false
   industry: true
   shipping: true
   aviation: true
@@ -1048,6 +1041,7 @@ sector:
   biosng: false
   biosng_cc: false
   bioH2: false
+  municipal_solid_waste: false
   waste_spatial: false
   limit_max_growth:
     enable: false
@@ -1146,6 +1140,8 @@ industry:
     2045: 0.16
     2050: 0.2
   HVC_environment_sequestration_fraction: 0.0
+  waste_to_energy: false
+  waste_to_energy_cc: false
   solid_biomass_for_industry_cc: true
   gas_for_industry_cc: true
   process_emissions_cc: true
