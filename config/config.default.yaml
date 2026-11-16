@@ -1590,7 +1590,7 @@ data:
     source: archive
     version: latest
   ffe_industry_load_profiles:
-    source: primary
+    source: archive
     version: latest
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#overpass_api_cf

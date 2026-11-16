@@ -222,5 +222,5 @@ class IndustryConfig(ConfigModel):
     )
     temporal_electricity_industry_load: bool = Field(
         True,
-        description="Switch to enable the use of temporally resolved electricity industry load profiles from `FfE (Forschungsstelle für Energiewirtschaft) 2021 <https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/>`_. Data is for Germany which is projected to the rest of Europe for the same industries.",
+        description="Use hourly load profiles per industry branch for the industrial electricity demand instead of a flat profile. The profiles from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) are for Germany and are applied to all countries.",
     )

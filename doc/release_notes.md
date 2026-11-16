@@ -5,7 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Feature: Industrial electricity demand now follows hourly load profiles per industry branch from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) instead of a flat profile. This changes default results and can be disabled with `industry: temporal_electricity_industry_load: false` ([#1875](https://github.com/PyPSA/pypsa-eur/pull/1875)).
+* Feature: Industrial electricity demand follows hourly load profiles per industry branch from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) instead of a flat profile. Enabled by default; disable with `industry: temporal_electricity_industry_load: false` ([#1875](https://github.com/PyPSA/pypsa-eur/pull/1875)).
 
 * Feature: New option `sector: ccgt_cc` to add gas CCGTs with post-combustion carbon capture ([#2418](https://github.com/PyPSA/pypsa-eur/pull/2418)).
 

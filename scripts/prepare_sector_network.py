@@ -4453,7 +4453,8 @@ def add_industry(
     industrial_demand_file : str
         Path to CSV file containing industrial demand data
     industrial_electricity_demand_temporal_file : str
-        Path to CSV file containing hourly industrial electricity demand in MW
+        Path to CSV file containing the hourly industrial electricity demand in MW.
+        Only used if `industry: temporal_electricity_industry_load` is enabled.
     pop_layout : pd.DataFrame
         Population layout data with index of nodes
     pop_weighted_energy_totals : pd.DataFrame
@@ -4969,38 +4970,20 @@ def add_industry(
         n.loads_t.p_set[loads_i] *= factor
 
     if cf_industry["temporal_electricity_industry_load"]:
-        logger.info("Using temporal industrial electricity demand profiles")
-
-        # Load hourly profiles (MW)
-        industrial_elec_profiles = pd.read_csv(
-            industrial_electricity_demand_temporal_file,
-            index_col=0,
-            parse_dates=True,
-        )
-
-        industrial_loads = industrial_elec_profiles.rename(
-            columns=lambda x: f"{x} industry electricity"
-        )
-        industrial_loads = industrial_loads.reindex(columns=industrial_loads.columns)
-
-        n.add(
-            "Load",
-            industrial_loads.columns,
-            bus=industrial_loads.columns.str.replace(" industry electricity", ""),
-            carrier="industry electricity",
-            p_set=industrial_loads,
-        )
-
+        p_set = pd.read_csv(
+            industrial_electricity_demand_temporal_file, index_col=0, parse_dates=True
+        )[nodes]
     else:
-        logger.info("Using constant industrial electricity demand")
-        n.add(
-            "Load",
-            nodes,
-            suffix=" industry electricity",
-            bus=nodes,
-            carrier="industry electricity",
-            p_set=industrial_demand.loc[nodes, "electricity"] / nhours,
-        )
+        p_set = industrial_demand.loc[nodes, "electricity"] / nhours
+
+    n.add(
+        "Load",
+        nodes,
+        suffix=" industry electricity",
+        bus=nodes,
+        carrier="industry electricity",
+        p_set=p_set,
+    )
 
     n.add(
         "Bus",

@@ -2,17 +2,24 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build the industrial energy demand per model region for a planning horizon in TWh/a.
+Build the industrial energy demand per model region for a planning horizon in TWh/a, and its hourly electricity profile in MW.
 
 The specific energy consumption per subsector and country for the horizon from [build_industry_sector_ratios_intermediate][] (MWh/t) is multiplied by the regional production from [build_industrial_production_per_node][] and summed over subsectors. This gives, per region, the demand for electricity, coal, coke, solid biomass, methane, hydrogen, low-temperature heat, naphtha, methanol and ammonia (non-zero only if `industry: ammonia` is enabled), as well as process emissions and process emissions from feedstock in MtCO2/a. Today's regional electricity demand from [build_industrial_energy_demand_per_node_today][] is appended as `current electricity` so that [prepare_sector_network][] can separate the new industrial electricity load from the existing one.
+
+The hourly electricity profile of a region is the sum of normalised profiles per industry branch, weighted by the region's electricity demand per subsector. The profiles are synthetic profiles for Germany in 2017 from FfE and are applied to all countries. They are rotated to match the weekdays of the modelled year, follow the public holidays and the local time of each country, and keep the annual mean load of a flat profile. FfE provides no profiles for chemicals and non-ferrous metals. These subsectors use the almost flat profiles of paper and steel, because their processes mostly run continuously at full load.
+
+References
+----------
+- Ganz et al. (2021), [Wie können europäische Branchen-Lastgänge die Energiewende im Industriesektor unterstützen?](https://www.ffe.de/wp-content/uploads/2021/11/Wie-koennen-europaeische-Branchen-Lastgaenge-die-Energiewende-im-Industriesektor-unterstuetzen.pdf)
+- FfE (2021), [Normalized industrial electrical load profiles (Germany)](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/)
 """
 
 import json
 import logging
 
 import holidays
-import numpy as np
 import pandas as pd
+import pytz
 
 from scripts._helpers import (
     configure_logging,
@@ -22,35 +29,29 @@ from scripts._helpers import (
 
 logger = logging.getLogger(__name__)
 
-# Industry category to FfE profile mapping dictionary
-#
-# Note: FfE profiles missing "Industry (total)" (#0), "Chemical Industry" (#2) and "Non-ferrous Metals" (#3)
-#
-# CHEMICAL SECTORS → "Paper, Pulp and Print"
-# Based on Ganz et al. (2021): Both paper and chemical industries show relatively constant weekly
-# consumption due to continuous full-load operation of most processes.
-# Applies to: Ammonia (Haber-Bosch), Chlorine (chlor-alkali), Methanol (catalytic synthesis)
-#
-# NON-FERROUS METALS → "Iron & steel industry"
-# Due to missing "Non-ferrous Metals" profile, all non-ferrous metal production mapped to
-# "Iron & steel industry" based on shared continuous/semi-continuous metal production characteristics.
-# Includes: Aluminium (primary/secondary), Alumina, and other non-ferrous metals (Cu, Zn, Pb, etc.)
-#
-# PHARMACEUTICALS → "Food and Tobacco"
-# Mapped due to similar batch production, quality control requirements, climate-controlled
-# environments, and reduced weekend production (not continuous 24/7 like paper/chemicals/metals).
-#
-# Reference: Ganz, K., Guminski, A., Kolb, M., & von Roon, S. (2021). Wie können europäische
-# Branchen-Lastgänge die Energiewende im Industriesektor unterstützen? ew - Magazin für die
-# Energiewirtschaft, 120(11), 42-45.
+FFE_YEAR = 2017
+
+FFE_PROFILES = {
+    1: "Iron & steel industry",
+    4: "Non-metallic Minerals",
+    5: "Transport Equipment",
+    6: "Machinery",
+    7: "Mining and Quarrying",
+    8: "Food and Tobacco",
+    9: "Paper, Pulp and Print",
+    10: "Wood and Wood Products",
+    11: "Construction",
+    12: "Textile and Leather",
+    13: "Non-specified (Industry)",
+}
 
 INDUSTRY_CATEGORY_TO_PROFILE = {
     "Electric arc": "Iron & steel industry",
     "DRI + Electric arc": "Iron & steel industry",
     "Integrated steelworks": "Iron & steel industry",
-    "HVC": "Non-metallic Minerals",
-    "HVC (mechanical recycling)": "Non-metallic Minerals",
-    "HVC (chemical recycling)": "Non-metallic Minerals",
+    "HVC": "Paper, Pulp and Print",
+    "HVC (mechanical recycling)": "Paper, Pulp and Print",
+    "HVC (chemical recycling)": "Paper, Pulp and Print",
     "Ammonia": "Paper, Pulp and Print",
     "Chlorine": "Paper, Pulp and Print",
     "Methanol": "Paper, Pulp and Print",
@@ -66,7 +67,7 @@ INDUSTRY_CATEGORY_TO_PROFILE = {
     "Alumina production": "Iron & steel industry",
     "Aluminium - primary production": "Iron & steel industry",
     "Aluminium - secondary production": "Iron & steel industry",
-    "Other non-ferrous metals": "Non-metallic Minerals",
+    "Other non-ferrous metals": "Iron & steel industry",
     "Transport equipment": "Transport Equipment",
     "Machinery equipment": "Machinery",
     "Textiles and leather": "Textile and Leather",
@@ -76,227 +77,111 @@ INDUSTRY_CATEGORY_TO_PROFILE = {
 
 
 def load_ffe_load_profiles(json_file: str) -> pd.DataFrame:
-    """Load normalized industry load profiles from FfE JSON file."""
-
-    # Load pre-downloaded JSON data
-    with open(json_file) as f:
-        data = json.load(f)
-
-    logger.info(f"Loaded FfE data: {data['title']}")
-
-    # Map internal_id to profile names
-    id_to_profile = {
-        # 0: "Industry (total)", # missing
-        1: "Iron & steel industry",
-        # 2: "Chemical Industry", # missing
-        # 3: "Non-ferrous Metals", # missing
-        4: "Non-metallic Minerals",
-        5: "Transport Equipment",
-        6: "Machinery",
-        7: "Mining and Quarrying",
-        8: "Food and Tobacco",
-        9: "Paper, Pulp and Print",
-        10: "Wood and Wood Products",
-        11: "Construction",
-        12: "Textile and Leather",
-        13: "Non-specified (Industry)",
-    }
-
-    # Create hourly timestamps for 2017
-    timestamps = pd.date_range("2017-01-01", "2017-12-31 23:00:00", freq="h")
-
-    # Parse the data into a DataFrame
-    df = pd.json_normalize(data["data"])
-    df = df.set_index(df["internal_id"].map(lambda x: x[0]))["values"]
-    profiles_df = (
-        pd.DataFrame(np.vstack(df), index=df.index, columns=timestamps)
-        .rename(index=id_to_profile)
-        .T
-    )
-    logger.info(f"Loaded profiles: {list(profiles_df.columns)}")
-
-    return profiles_df
-
-
-def create_nodal_electricity_profiles(
-    nodal_df: pd.DataFrame,
-    nodal_sector_df: pd.DataFrame,
-    snapshots: pd.DatetimeIndex,
-    ffe_profiles: pd.DataFrame,
-) -> pd.DataFrame:
-    """Create hourly electricity demand profiles for each node."""
-
-    # Initialize result DataFrame
-    nodal_profiles = pd.DataFrame(index=snapshots, columns=nodal_df.index, dtype=float)
-
-    # For each node, create weighted profile
-    for node in nodal_df.index:
-        # Get electricity demand by sector for this node (TWh/a)
-        sector_demands = nodal_sector_df.loc["elec", node]
-
-        # check if sum of sector demands matches total demand
-        assert np.isclose(
-            sector_demands.sum(), nodal_df.loc[node, "electricity"], rtol=1e-5
-        ), f"Sum of sector demands does not match total demand for node {node}.\n"
-
-        # Create weighted profile (8760 hours from reference year)
-        node_profile = pd.Series(0.0, index=ffe_profiles.index)
-
-        for sector, demand in sector_demands.items():
-            profile_name = INDUSTRY_CATEGORY_TO_PROFILE[sector]
-            if profile_name not in ffe_profiles.columns:
-                raise ValueError(
-                    f"Profile '{profile_name}' for sector '{sector}' not in FfE data"
-                )
-            node_profile += ffe_profiles[profile_name] * demand
-
-        # Map profile to snapshots with correct day-of-week alignment
-        hourly_profile = map_profile_to_snapshots(
-            node_profile, snapshots, node_country=node[:2], tol=0.03
-        )  # Tolerance increased to 3% to account for holiday replacement and leap year
-        # Save in MW
-        nodal_profiles[node] = hourly_profile * 1e6
-
-    # Check that hourly profiles match annual demand
-    assert np.allclose(
-        nodal_profiles.sum() / 1e6, nodal_df["electricity"], rtol=1e-5
-    ), (
-        f"Hourly profiles do not match annual demand.\nMax difference: {(nodal_profiles.sum() / 1e6 - nodal_df['electricity']).abs().max():.6f} TWh"
-    )
-    logger.info("Hourly profiles verified to match annual demand")
-
-    return nodal_profiles
-
-
-def map_profile_to_snapshots(
-    reference_profile: pd.Series,
-    snapshots: pd.DatetimeIndex,
-    node_country: str = "DE",
-    tol: float = 0.03,
-) -> pd.Series:
     """
-    Map 2017 reference profile to target snapshots by weekday rotation.
-
-    Process:
-    1. Compute average day profiles (by dayofweek and hour)
-    2. Replace German holidays in 2017 reference with weekday-hour averages
-    3. Shift by day drift and remap to target year
-    4. Handle leap year if needed
-    5. Replace target country holidays with Sunday profile
-    6. Optionally drop leap day if not in snapshots
-    7. Scale to preserve energy
-
-    Parameters
-    ----------
-    reference_profile : pd.Series
-        Normalized load profile from 2017 with DatetimeIndex
-    snapshots : pd.DatetimeIndex
-        Target snapshots to map to
-    node_country : str
-        Two-letter country code for holiday replacement (default: 'DE')
-    tol : float
-        Tolerance for energy deviation (default: 0.03 = 3%)
+    Load the normalised FfE load profiles per industry branch.
 
     Returns
     -------
-    pd.Series
-        Mapped profile with snapshots as index, scaled to preserve total energy
+    pd.DataFrame
+        Hourly profiles in German local time with one column per branch.
     """
+    with open(json_file) as f:
+        data = json.load(f)["data"]
 
-    original_energy = reference_profile.sum()
-    target_year = snapshots[0].year
-    source_year = 2017
+    index = pd.date_range(f"{FFE_YEAR}-01-01", f"{FFE_YEAR}-12-31 23:00", freq="h")
+    profiles = {FFE_PROFILES[d["internal_id"][0]]: d["values"] for d in data}
 
-    s = reference_profile.copy()
+    return pd.DataFrame(profiles, index=index)
 
-    # STEP 1: Compute average day profiles (dayofweek, hour)
-    average_days = s.groupby([s.index.dayofweek, s.index.hour]).mean()
 
-    # STEP 2: Normalize German holidays in source data
-    de_holidays = holidays.country_holidays("DE", years=source_year)
-    holiday_dates_de = pd.to_datetime(list(de_holidays.keys()))
-    is_holiday_source = s.index.normalize().isin(holiday_dates_de)
+def shift_profiles(profiles: pd.DataFrame, year: int, country: str) -> pd.DataFrame:
+    """
+    Shift the FfE profiles to the weekdays and holidays of another year and country.
 
-    if is_holiday_source.any():
-        s.loc[is_holiday_source] = (
-            s.loc[is_holiday_source]
-            .index.map(lambda i: average_days.loc[(i.dayofweek, i.hour)])
-            .to_numpy()
-        )
+    German holidays in the profiles are replaced by the average day of the same
+    weekday. The profiles are then rotated to align the weekdays, and the
+    holidays of the country are replaced by the average Sunday.
 
-    # STEP 3: Add day drift
+    Parameters
+    ----------
+    profiles : pd.DataFrame
+        Hourly profiles for Germany in the year of the FfE data.
+    year : int
+        Year to shift the profiles to.
+    country : str
+        Two-letter country code.
+
+    Returns
+    -------
+    pd.DataFrame
+        Hourly profiles in local time for the whole year, relative to their mean.
+    """
+    df = profiles.copy()
+    average_days = df.groupby([df.index.dayofweek, df.index.hour]).mean()
+
+    def average_day(index: pd.DatetimeIndex, sunday: bool = False) -> pd.DataFrame:
+        dayofweek = [6] * len(index) if sunday else index.dayofweek
+        return average_days.loc[list(zip(dayofweek, index.hour))].set_axis(index)
+
+    def is_holiday(index: pd.DatetimeIndex, country: str) -> pd.Series:
+        dates = holidays.country_holidays(country, years=index.year.unique())
+        return index.normalize().isin(pd.to_datetime(list(dates)))
+
+    source_holidays = df.index[is_holiday(df.index, "DE")]
+    df.loc[source_holidays] = average_day(source_holidays)
+
     day_drift = (
-        pd.Timestamp(source_year, 1, 1).dayofweek
-        - pd.Timestamp(target_year, 1, 1).dayofweek
+        pd.Timestamp(FFE_YEAR, 1, 1).dayofweek - pd.Timestamp(year, 1, 1).dayofweek
     )
+    df = df.shift(day_drift, freq="D")
+    df.index = df.index.map(lambda t: t.replace(year=year))
+    df = df.sort_index()
 
-    ts = s.shift(day_drift, freq="D")
-    ts.index = ts.index.map(lambda t: t.replace(year=target_year))
-    ts = ts.sort_index()
+    if pd.Timestamp(year, 1, 1).is_leap_year:
+        df.index = df.index.where(df.index.month < 3, df.index - pd.Timedelta(days=1))
+        last_day = pd.date_range(f"{year}-12-31", periods=24, freq="h")
+        df = pd.concat([df, average_day(last_day)])
 
-    # STEP 4: Handle leap year
-    is_target_leap = (target_year % 4 == 0 and target_year % 100 != 0) or (
-        target_year % 400 == 0
-    )
+    target_holidays = df.index[is_holiday(df.index, country)]
+    df.loc[target_holidays] = average_day(target_holidays, sunday=True)
 
-    if is_target_leap:
-        # Shift dates after March back by 1 day
-        ts.index = ts.index.where(ts.index.month < 3, ts.index - pd.Timedelta(days=1))
+    return df / df.mean()
 
-        # Add extra day at end of year using appropriate weekday profile
-        extra_day_i = pd.date_range(f"{target_year}-12-31", periods=24, freq="h")
-        extra_day_dow = extra_day_i[0].dayofweek
 
-        extra_day = pd.Series(
-            [average_days.loc[(extra_day_dow, h)] for h in range(24)], index=extra_day_i
+def build_electricity_profiles(
+    demand: pd.DataFrame, ffe_profiles: pd.DataFrame, snapshots: pd.DatetimeIndex
+) -> pd.DataFrame:
+    """
+    Build hourly industrial electricity demand profiles per node.
+
+    Parameters
+    ----------
+    demand : pd.DataFrame
+        Annual electricity demand in TWh/a per subsector (index) and node (columns).
+    ffe_profiles : pd.DataFrame
+        Hourly profiles per industry branch from `load_ffe_load_profiles`.
+    snapshots : pd.DatetimeIndex
+        Snapshots in UTC.
+
+    Returns
+    -------
+    pd.DataFrame
+        Electricity demand in MW per snapshot (index) and node (columns).
+    """
+    demand = demand.groupby(INDUSTRY_CATEGORY_TO_PROFILE.__getitem__).sum()
+    countries = demand.columns.str[:2]
+
+    profiles = []
+    for country in countries.unique():
+        timezone = pytz.country_timezones["RS" if country == "XK" else country][0]
+        local = snapshots.tz_localize("UTC").tz_convert(timezone).tz_localize(None)
+        shifted = pd.concat(
+            shift_profiles(ffe_profiles, year, country) for year in local.year.unique()
         )
-        ts = pd.concat([ts, extra_day]).sort_index()
+        shifted = shifted.loc[local, demand.index].set_axis(snapshots)
+        profiles.append(shifted @ demand.loc[:, countries == country])
 
-    # STEP 5: Impose target country holidays (replace with Sunday profile)
-    try:
-        target_holidays = holidays.country_holidays(node_country, years=target_year)
-        holiday_dates_target = pd.to_datetime(list(target_holidays.keys()))
-        is_holiday_target = ts.index.normalize().isin(holiday_dates_target)
-
-        if is_holiday_target.any():
-            ts.loc[is_holiday_target] = (
-                ts.loc[is_holiday_target]
-                .index.map(lambda i: average_days.loc[(6, i.hour)])  # 6 = Sunday
-                .to_numpy()
-            )
-    except NotImplementedError:
-        logger.warning(
-            f"Country '{node_country}' not available in holidays library - skipping holiday replacement"
-        )
-
-    # STEP 6: Drop leap day if not in snapshots
-    feb29_in_snapshots = any((snapshots.month == 2) & (snapshots.day == 29))
-
-    if not feb29_in_snapshots and is_target_leap:
-        ts = ts[~((ts.index.month == 2) & (ts.index.day == 29))]
-
-    # STEP 7: Align with provided snapshots (in case of partial year or different resolution)
-    # Reindex to match exact snapshots
-    ts = ts.reindex(snapshots, method=None)
-
-    # Handle any remaining NaNs (shouldn't happen with full year data)
-    if ts.isna().any():
-        missing_mask = ts.isna()
-        ts.loc[missing_mask] = (
-            snapshots[missing_mask]
-            .map(lambda i: average_days.loc[(i.dayofweek, i.hour)])
-            .to_numpy()
-        )
-
-    # STEP 8: Scale to preserve original energy
-    scaling_factor = original_energy / ts.sum()
-
-    assert abs(scaling_factor - 1.0) < tol, (
-        f"Energy deviation after mapping: {(scaling_factor - 1.0) * 100:.2f}% "
-        f"(tolerance: {tol * 100:.1f}%)"
-    )
-
-    return ts * scaling_factor
+    return pd.concat(profiles, axis=1)[demand.columns] * 1e6 / 8760
 
 
 if __name__ == "__main__":
@@ -310,7 +195,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    # load industry sector ratios
+    # import ratios
     fn = snakemake.input.industry_sector_ratios
     sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0)
 
@@ -347,27 +232,22 @@ if __name__ == "__main__":
 
     nodal_df.index.name = "TWh/a (MtCO2/a)"
 
-    # Export annual demand
     fn = snakemake.output.industrial_energy_demand_per_node
-    nodal_df.to_csv(fn)
+    nodal_df.to_csv(fn, float_format="%.2f")
 
-    # Generate hourly electricity profiles
-    # final energy consumption per node and industry and industry sector (profiles) (TWh/a)
-    nodal_sector_df = nodal_sector_ratios.multiply(nodal_production_stacked)
+    # electricity consumption per industry and node (TWh/a)
+    nodal_electricity = (
+        nodal_sector_ratios.multiply(nodal_production_stacked).loc["elec"].unstack(0)
+    )
 
-    logger.info("Creating hourly industry electricity demand profiles...")
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day
     )
-
-    logger.info("Loading FfE industry load profiles...")
     ffe_profiles = load_ffe_load_profiles(snakemake.input.ffe_profiles)
 
-    nodal_electricity_profiles = create_nodal_electricity_profiles(
-        nodal_df, nodal_sector_df, snapshots, ffe_profiles
+    nodal_electricity_profiles = build_electricity_profiles(
+        nodal_electricity, ffe_profiles, snapshots
     )
 
-    # Export hourly profiles
-    fn_profiles = snakemake.output.industrial_electricity_demand_per_node_temporal
-    nodal_electricity_profiles.to_csv(fn_profiles)
-    logger.info(f"Hourly electricity profiles saved to {fn_profiles}")
+    fn = snakemake.output.industrial_electricity_demand_per_node_temporal
+    nodal_electricity_profiles.to_csv(fn)

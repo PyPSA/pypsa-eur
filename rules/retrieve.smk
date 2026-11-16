@@ -1593,10 +1593,10 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
 
 if (
     FFE_INDUSTRY_LOAD_PROFILES_DATASET := dataset_version("ffe_industry_load_profiles")
-)["source"] in ["primary"]:
+)["source"] in ["primary", "archive"]:
 
     rule retrieve_ffe_industry_load_profiles:
-        """Downloads normalised industrial electricity load profiles for Germany from the FfE open data API."""
+        """Downloads normalised industrial electricity load profiles for Germany from FfE."""
         output:
             json=f"{FFE_INDUSTRY_LOAD_PROFILES_DATASET['folder']}/ffe_industry_load_profiles.json",
         log:
@@ -1605,8 +1605,7 @@ if (
         resources:
             mem_mb=1000,
         run:
-            import json
-
-            data = requests.get(FFE_INDUSTRY_LOAD_PROFILES_DATASET["url"]).json()
-            with open(output["json"], "w") as f:
-                json.dump(data, f)
+            response = requests.get(FFE_INDUSTRY_LOAD_PROFILES_DATASET["url"])
+            response.raise_for_status()
+            with open(output["json"], "wb") as f:
+                f.write(response.content)
