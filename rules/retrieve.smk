@@ -552,7 +552,7 @@ if (ENTSOE_DEMAND_DATA := dataset_version("entsoe_electricity_demand"))["source"
             csv=f"{ENTSOE_DEMAND_DATA['folder']}"
             + "/electricity_demand_entsoe_raw_{country}.csv",
         log:
-            "logs/retrieve_electricity_demand_entsoe_{country}.log",
+            "logs/retrieve_entsoe_electricity_demand_{country}.log",
         retries: 2
         resources:
             mem_mb=2000,
