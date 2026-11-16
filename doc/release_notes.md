@@ -5,9 +5,9 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Feature: New option `sector: waste_spatial` to model plastic and municipal solid waste per bus region. Waste can then be transported between regions if `sector: biomass_transport` is enabled. Without it, waste for `industry: waste_to_energy` and `industry: waste_to_energy_cc` is now collected in one European bus, and no longer follows `sector: regional_oil_demand`. Waste-to-energy plants no longer require `sector: industry`, and `sector: municipal_solid_waste` no longer requires `sector: biomass` ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
+* Feature: New option `sector: waste_spatial` to model waste for waste-to-energy plants per bus region, with transport if `sector: biomass_transport` is enabled. By default, waste is now collected in one European bus ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
 
-* Fix: `industry: waste_to_energy_cc` without `industry: waste_to_energy` no longer raises an error ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
+* Fix: `industry: waste_to_energy_cc` now works without `industry: waste_to_energy` ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
 
 * Feature: New option `sector: ccgt_cc` to add gas CCGTs with post-combustion carbon capture ([#2418](https://github.com/PyPSA/pypsa-eur/pull/2418)).
 
