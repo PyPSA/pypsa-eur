@@ -1630,7 +1630,9 @@ if __name__ == "__main__":
     if status == SolverStatus.warning:
         raise RuntimeError("Solving status 'warning'. Discarding solution.")
 
-    n.meta = dict(snakemake.config, **{"wildcards": dict(snakemake.wildcards)})
+    n.meta["snakemake_config"] = dict(
+        snakemake.config, wildcards=dict(snakemake.wildcards)
+    )
     n.export_to_netcdf(snakemake.output.network)
 
     if snakemake.output.get("model"):
@@ -1640,7 +1642,7 @@ if __name__ == "__main__":
     if config_output:
         with open(config_output, "w") as file:
             yaml.dump(
-                n.meta,
+                n.meta["snakemake_config"],
                 file,
                 default_flow_style=False,
                 allow_unicode=True,
