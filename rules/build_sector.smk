@@ -1057,6 +1057,34 @@ rule build_industry_sector_ratios:
         scripts("build_industry_sector_ratios.py")
 
 
+rule build_industry_sector_ratios_endogenous:
+    """Builds industry energy demand ratios with process heat split into temperature bands."""
+    input:
+        industrial_energy_demand_per_country_today=resources(
+            "industrial_energy_demand_per_country_today.csv"
+        ),
+        industrial_production_per_country=resources(
+            "industrial_production_per_country.csv"
+        ),
+        temperature_shares="data/industry_heat_temperature_shares.csv",
+    output:
+        industry_sector_ratios_endogenous=resources(
+            "industry_sector_ratios_endogenous.csv"
+        ),
+    log:
+        logs("build_industry_sector_ratios_endogenous.log"),
+    benchmark:
+        benchmarks("build_industry_sector_ratios_endogenous")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        exclude_sectors=config_provider("sector", "industry_heat", "exclude_sectors"),
+        gas_per_ammonia=config_provider("industry", "MWh_CH4_per_tNH3_SMR"),
+    script:
+        scripts("build_industry_sector_ratios_endogenous.py")
+
+
 rule build_industry_sector_ratios_intermediate:
     """Interpolates specific industrial energy consumption between today and best-in-class."""
     input:
@@ -1204,6 +1232,11 @@ rule build_industrial_energy_demand_per_node:
     """Computes industrial energy demand per carrier and model region from production and ratios."""
     input:
         industry_sector_ratios=resources("industry_sector_ratios_{horizon}.csv"),
+        industry_sector_ratios_endogenous=lambda w: (
+            resources("industry_sector_ratios_endogenous.csv")
+            if config_provider("sector", "industry_heat", "enable")(w)
+            else []
+        ),
         industrial_production_per_node=resources("industrial_production_{horizon}.csv"),
         industrial_energy_demand_per_node_today=resources(
             "industrial_energy_demand_today.csv"

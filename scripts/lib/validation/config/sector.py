@@ -456,6 +456,38 @@ class _SteelBOFConfig(BaseModel):
 AllowedEndogenousSectors = Literal["steel", "cement"]
 
 
+class _IndustryHeatConfig(BaseModel):
+    """Configuration for `sector.industry_heat` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Optimise the supply of industry process heat above 100 °C per temperature band instead of using exogenous fuel shares. Does not cover the steel sector. Uses today's specific energy consumption and no existing plants, so that the first horizon of a myopic pathway can replace all of today's heat supply.",
+    )
+    min_part_load: float = Field(
+        0.8,
+        ge=0,
+        le=1,
+        description="Minimum part load of newly built industry process heat supply.",
+    )
+    exclude_sectors: list[str] = Field(
+        default_factory=lambda: ["Pulp production"],
+        description="Industry sectors in `data/industry_heat_temperature_shares.csv` that keep exogenous fuel shares. Pulp production is excluded by default because it burns its own by-products.",
+    )
+    technologies: dict[
+        Literal["heat100-200", "heat200-500", "heat500+"],
+        list[
+            Literal["solid biomass", "gas", "hydrogen", "heat pump", "electric boiler"]
+        ],
+    ] = Field(
+        default_factory=lambda: {
+            "heat100-200": ["solid biomass", "gas", "heat pump", "electric boiler"],
+            "heat200-500": ["solid biomass", "gas", "hydrogen"],
+            "heat500+": ["gas", "hydrogen"],
+        },
+        description="Supply technologies per temperature band in °C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
+    )
+
+
 class SectorConfig(BaseModel):
     """Configuration for `sector` settings."""
 
@@ -986,6 +1018,11 @@ class SectorConfig(BaseModel):
         description="Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
     )
 
+    industry_heat: _IndustryHeatConfig = Field(
+        default_factory=_IndustryHeatConfig,
+        description="Endogenous supply of industry process heat.",
+    )
+
     biomass_to_liquid: bool = Field(
         True,
         description="Add option for transforming solid biomass into liquid fuel with the same properties as oil.",
@@ -1008,7 +1045,12 @@ class SectorConfig(BaseModel):
         description="Add option for transforming solid biomass into hydrogen with carbon capture.",
     )
     municipal_solid_waste: bool = Field(
-        False, description="Add option for municipal solid waste."
+        False,
+        description="Add municipal solid waste as carbon-neutral fuel for waste-to-energy plants. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`.",
+    )
+    waste_spatial: bool = Field(
+        False,
+        description="Model plastic and municipal solid waste for each bus region instead of one European bus. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`. Waste can be transported between regions if `biomass_transport` is enabled.",
     )
 
     limit_max_growth: _LimitMaxGrowthConfig = Field(

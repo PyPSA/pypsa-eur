@@ -127,6 +127,12 @@ def add_brownfield(
         c.static[f"{attr}_nom"] = c.static[f"{attr}_nom_opt"]
         c.static[f"{attr}_nom_extendable"] = False
 
+        # existing industry heat supply may idle, otherwise its minimum part
+        # load is infeasible with falling demand or emission limits
+        if c.name == "Link":
+            industry_heat = c.static.carrier.str.fullmatch("heat.+ industry .+")
+            c.static.loc[industry_heat, "p_min_pu"] = 0.0
+
         n.add(c.name, c.static.index, **c.static)
 
         # copy time-dependent
