@@ -15,6 +15,7 @@ requires-pixi = ">=0.71.0"
 linopy = "0d"
 pypsa = "0d"
 atlite = "0d"
+powerplantmatching = "0d"
 
 [tasks]
 

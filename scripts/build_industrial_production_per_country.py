@@ -224,7 +224,7 @@ def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake)
 
 def industry_production(countries, year, eurostat, jrc_dir):
     nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    disable_progress = snakemake.params.disable_progressbar
 
     func = partial(
         industry_production_per_country,
@@ -250,7 +250,7 @@ def industry_production(countries, year, eurostat, jrc_dir):
     return demand
 
 
-def separate_basic_chemicals(demand, year):
+def separate_basic_chemicals(demand, year, params):
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """
@@ -310,7 +310,7 @@ if __name__ == "__main__":
 
     demand = industry_production(countries, year, eurostat, jrc_dir)
 
-    separate_basic_chemicals(demand, year)
+    separate_basic_chemicals(demand, year, params)
 
     demand.fillna(0.0, inplace=True)
 

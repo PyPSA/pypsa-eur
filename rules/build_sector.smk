@@ -117,6 +117,25 @@ rule cluster_gas_network:
         scripts("cluster_gas_network.py")
 
 
+rule build_transmission_topology:
+    """Builds candidate corridors for H2, CO2 and biomass transport from the Delaunay graph of regions."""
+    input:
+        network=resources("networks/clustered.nc"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+    output:
+        candidates=resources("transmission_candidates.geojson"),
+    log:
+        logs("build_transmission_topology.log"),
+    benchmark:
+        benchmarks("build_transmission_topology")
+    resources:
+        mem_mb=2000,
+    params:
+        transport_corridors=config_provider("sector", "transport_corridors"),
+    script:
+        scripts("build_transmission_topology.py")
+
+
 rule build_daily_heat_demand:
     """Builds daily heat demand time series per region from cutout temperatures and population."""
     input:
@@ -159,7 +178,9 @@ rule build_hourly_heat_demand:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        sector=config_provider("sector"),
+        dsm_restriction_time=config_provider(
+            "sector", "residential_heat", "dsm", "restriction_time"
+        ),
     script:
         scripts("build_hourly_heat_demand.py")
 
@@ -270,6 +291,10 @@ rule build_dh_areas:
         benchmarks("build_dh_areas")
     resources:
         mem_mb=2000,
+    params:
+        handle_missing_countries=config_provider(
+            "sector", "district_heating", "dh_areas", "handle_missing_countries"
+        ),
     script:
         scripts("build_dh_areas.py")
 
@@ -291,8 +316,6 @@ rule build_geothermal_heat_potential:
     resources:
         mem_mb=2000,
     params:
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        countries=config_provider("countries"),
         constant_temperature_celsius=config_provider(
             "sector",
             "district_heating",
@@ -332,18 +355,6 @@ rule build_ates_potentials:
     resources:
         mem_mb=2000,
     params:
-        max_top_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ates",
-            "max_top_temperature",
-        ),
-        min_bottom_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ates",
-            "min_bottom_temperature",
-        ),
         suitable_aquifer_types=config_provider(
             "sector",
             "district_heating",
@@ -625,7 +636,6 @@ rule build_cop_profiles:
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
         ),
-        snapshots=config_provider("snapshots"),
     script:
         scripts("build_cop_profiles/run.py")
 
@@ -667,7 +677,6 @@ rule build_ptes_operations:
             "ptes",
             "min_bottom_temperature",
         ),
-        snapshots=config_provider("snapshots"),
     script:
         scripts("build_ptes_operations/run.py")
 
@@ -695,7 +704,6 @@ rule build_direct_heat_source_utilisation_profiles:
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
         ),
-        snapshots=config_provider("snapshots"),
     script:
         scripts("build_direct_heat_source_utilisation_profiles.py")
 
@@ -824,7 +832,7 @@ rule build_energy_totals:
         mem_mb=10000,
     params:
         countries=config_provider("countries"),
-        energy=config_provider("energy"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
     script:
         scripts("build_energy_totals.py")
 
@@ -899,6 +907,8 @@ rule build_biomass_potentials:
         mem_mb=2000,
     params:
         biomass=config_provider("biomass"),
+        countries=config_provider("countries"),
+        foresight=config_provider("foresight"),
     script:
         scripts("build_biomass_potentials.py")
 
@@ -1017,7 +1027,31 @@ rule build_industry_sector_ratios:
     resources:
         mem_mb=1000,
     params:
-        industry=config_provider("industry"),
+        industry=config_provider(
+            "industry",
+            subset=[
+                "reference_year",
+                "H2_DRI",
+                "elec_DRI",
+                "MWh_NH3_per_tNH3",
+                "MWh_CH4_per_tNH3_SMR",
+                "MWh_elec_per_tNH3_SMR",
+                "MWh_H2_per_tNH3_electrolysis",
+                "MWh_elec_per_tNH3_electrolysis",
+                "NH3_process_emissions",
+                "petrochemical_process_emissions",
+                "HVC_production_today",
+                "MWh_elec_per_tHVC_mechanical_recycling",
+                "MWh_elec_per_tHVC_chemical_recycling",
+                "chlorine_production_today",
+                "MWh_elec_per_tCl",
+                "MWh_H2_per_tCl",
+                "methanol_production_today",
+                "MWh_elec_per_tMeOH",
+                "MWh_CH4_per_tMeOH",
+                "MWh_MeOH_per_tMeOH",
+            ],
+        ),
         ammonia=config_provider("sector", "ammonia", default=False),
     script:
         scripts("build_industry_sector_ratios.py")
@@ -1043,7 +1077,9 @@ rule build_industry_sector_ratios_intermediate:
     resources:
         mem_mb=1000,
     params:
-        industry=config_provider("industry"),
+        sector_ratios_fraction_future=config_provider(
+            "industry", "sector_ratios_fraction_future"
+        ),
     script:
         scripts("build_industry_sector_ratios_intermediate.py")
 
@@ -1067,8 +1103,18 @@ rule build_industrial_production_per_country:
     resources:
         mem_mb=2000,
     params:
-        industry=config_provider("industry"),
+        industry=config_provider(
+            "industry",
+            subset=[
+                "reference_year",
+                "HVC_production_today",
+                "basic_chemicals_without_NH3_production_today",
+                "chlorine_production_today",
+                "methanol_production_today",
+            ],
+        ),
         countries=config_provider("countries"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
     script:
         scripts("build_industrial_production_per_country.py")
 
@@ -1091,7 +1137,17 @@ rule build_industrial_production_per_country_tomorrow:
     resources:
         mem_mb=1000,
     params:
-        industry=config_provider("industry"),
+        industry=config_provider(
+            "industry",
+            subset=[
+                "St_primary_fraction",
+                "DRI_fraction",
+                "Al_primary_fraction",
+                "HVC_primary_fraction",
+                "HVC_mechanical_recycling_fraction",
+                "HVC_chemical_recycling_fraction",
+            ],
+        ),
     script:
         scripts("build_industrial_production_per_country_tomorrow.py")
 
@@ -1188,8 +1244,21 @@ rule build_industrial_energy_demand_per_country_today:
         mem_mb=2000,
     params:
         countries=config_provider("countries"),
-        industry=config_provider("industry"),
+        industry=config_provider(
+            "industry",
+            subset=[
+                "reference_year",
+                "MWh_NH3_per_tNH3",
+                "MWh_H2_per_tNH3_electrolysis",
+                "MWh_elec_per_tNH3_electrolysis",
+                "MWh_elec_per_tCl",
+                "MWh_H2_per_tCl",
+                "MWh_elec_per_tMeOH",
+                "MWh_CH4_per_tMeOH",
+            ],
+        ),
         ammonia=config_provider("sector", "ammonia", default=False),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
     script:
         scripts("build_industrial_energy_demand_per_country_today.py")
 
@@ -1262,6 +1331,7 @@ rule build_population_weighted_energy_totals:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     script:
         scripts("build_population_weighted_energy_totals.py")
 
@@ -1340,7 +1410,19 @@ rule build_transport_demand:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        sector=config_provider("sector"),
+        sector=config_provider(
+            "sector",
+            subset=[
+                "transport_heating_deadband_lower",
+                "transport_heating_deadband_upper",
+                "ICE_lower_degree_factor",
+                "ICE_upper_degree_factor",
+                "bev_avail_max",
+                "bev_avail_mean",
+                "bev_dsm_restriction_time",
+                "bev_dsm_restriction_value",
+            ],
+        ),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     script:
         scripts("build_transport_demand.py")
@@ -1361,7 +1443,12 @@ rule build_district_heat_share:
     resources:
         mem_mb=1000,
     params:
-        sector=config_provider("sector"),
+        district_heating_potential=config_provider(
+            "sector", "district_heating", "potential"
+        ),
+        district_heating_progress=config_provider(
+            "sector", "district_heating", "progress"
+        ),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     script:
         scripts("build_district_heat_share.py")
@@ -1386,9 +1473,7 @@ rule build_existing_heating_distribution:
     resources:
         mem_mb=2000,
     params:
-        baseyear=config_provider("planning_horizons", default=0),
-        sector=config_provider("sector"),
-        existing_capacities=config_provider("existing_capacities"),
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
     script:
         scripts("build_existing_heating_distribution.py")
 

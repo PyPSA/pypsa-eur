@@ -5,9 +5,33 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport now come from a Delaunay triangulation of the regions instead of the electricity grid, with settings per carrier under `sector: transport_corridors`. This changes default results ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
 
 * Performance: `build_renewable_profiles` now derives the resource class masks from the availability matrix instead of rasterising all regions again. Results with the default `resource_classes: 1` are unchanged. With more classes, only eligible cells now set the class bounds and the class regions ([#2411](https://github.com/PyPSA/pypsa-eur/pull/2411)).
 
+* Fix: Sector-coupled networks with a single bus work again. Heat pump COPs and limited heat source potentials no longer collapse with `.squeeze()` ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
+* **Breaking:** `snapshots: start` and `snapshots: end` are now the first and last snapshot, both included, as in `pandas.date_range` with default arguments. The option `snapshots: inclusive` was removed ([#2101](https://github.com/PyPSA/pypsa-eur/issues/2101)). The workflow stops with an error that points to this note if `inclusive` is set, or if `end` is a date without time (formerly an exclusive end). Migration guide:
+
+    | Before | After |
+    |---|---|
+    | `start: "2013-01-01"`<br>`end: "2014-01-01"`<br>`inclusive: left` (default) | `start: "2013-01-01 00:00"`<br>`end: "2013-12-31 23:00"` |
+    | `start: "2013-03-01"`<br>`end: "2013-03-08"` | `start: "2013-03-01 00:00"`<br>`end: "2013-03-07 23:00"` |
+    | `inclusive: both` | remove `inclusive`, keep `start` and `end` |
+    | `inclusive: right` | remove `inclusive`; move `start` one hour later |
+    | `inclusive: null` (neither) | remove `inclusive`; move `start` one hour later and `end` one hour earlier |
+
+    `end` must include the hour. A date-only `start` keeps its meaning (00:00 of that day).
+
+* Refactor: Rules receive only the configuration keys and input files their scripts use, so unrelated configuration changes no longer trigger reruns ([#2354](https://github.com/PyPSA/pypsa-eur/pull/2354)).
+* Refactor: Scripts read configuration only through rule `params`, not through `snakemake.config`. Exceptions are logging, scenario handling, network metadata and the solving scripts ([#2340](https://github.com/PyPSA/pypsa-eur/pull/2340)).
+* Fix: `build_dh_areas` failed for countries without district heating area data, and `plot_heat_source_map` failed, because their rules did not pass the required `params` ([#2340](https://github.com/PyPSA/pypsa-eur/pull/2340)).
+
+* Fix: Regional CO2 sequestration potentials no longer accumulate across myopic planning horizons. Sequestration stores are now re-added each horizon instead of being carried over, so each region keeps one annual potential. The option `sector: co2_sequestration_lifetime` was removed. This can change sequestration locations and CO2 pipeline expansion in myopic runs ([#2369](https://github.com/PyPSA/pypsa-eur/pull/2369), fixes [#2368](https://github.com/PyPSA/pypsa-eur/issues/2368)).
+
+* data: Update to use the power plant dataset from `powerplantmatching` v0.9.1 ([#2356](https://github.com/PyPSA/pypsa-eur/pull/2356)).
+* Fix: Removed the unused `temp_soil_total` input from `compose_network` ([#2406](https://github.com/PyPSA/pypsa-eur/pull/2406)).
+
+* Fix: Ambiguous wildcard between general and MD-UA specific `determine_availability_matrix` rules resolved ([#2361](https://github.com/PyPSA/pypsa-eur/pull/2361)).
 * Updated the default prebuilt OSM network to v0.8 (https://zenodo.org/records/23896564), retrieved on 2 November 2026 ([#2389](https://github.com/PyPSA/pypsa-eur/pull/2389)).
 * Feature: Custom powerplants can now be specified with a configurable path and multiple files are accepted by the new option `electricity: custom_powerplants_fn` ([#2388](https://github.com/PyPSA/pypsa-eur/pull/2388)).
 
@@ -26,7 +50,11 @@
 
 * Fix: With `run: shared_resources: policy: base`, `compose_network` now reads processed costs and the previous perfect-foresight network from the run's own resources folder, not the shared one ([#2379](https://github.com/PyPSA/pypsa-eur/pull/2379)).
 
+* **Breaking:** Removed the `pypsa_eur` configuration section. Sector-coupled models no longer add and later remove electricity components: power plants whose fuels the sector model tracks (OCGT, CCGT, oil, coal, lignite, biomass, waste) and hydrogen storage are skipped, all others are kept (e.g. nuclear with overnight foresight, and now also geothermal and, with `electricity: estimate_battery_capacities`, existing batteries). To drop a technology, remove it from `electricity: conventional_carriers` or `electricity: renewable_carriers` instead ([#2370](https://github.com/PyPSA/pypsa-eur/pull/2370)).
+* Fix: Sector-coupled models with myopic or perfect foresight model existing nuclear power plants only as links from uranium with their build years and retirement dates, not also as generators that never retire. The uranium bus now has a supply generator, so these links can operate ([#2370](https://github.com/PyPSA/pypsa-eur/pull/2370)).
+
 * Fix: `lines: types` must now define a line type for the 380 kV level; the config validation fails early with a clear message instead of the workflow failing later ([#2166](https://github.com/PyPSA/pypsa-eur/issues/2166)).
+
 
 * Feature: New switches `industry: solid_biomass_for_industry_cc`, `industry: gas_for_industry_cc` and `industry: process_emissions_cc` to disable the carbon capture options for solid biomass for industry, gas for industry and industrial process emissions. All default to `true`, which matches the previous behaviour ([#2357](https://github.com/PyPSA/pypsa-eur/pull/2357)).
 
@@ -45,6 +73,17 @@
 
 * Refactor: perfect foresight: avoid unnecessary densification of unset attributes between horizons (memory optimization).
 * **Breaking:** New option `sector: chp: fuel_cc` to select the fuels for which urban central CHP plants with carbon capture are added in addition to the CHP plants without carbon capture. Previously, they were added for all fuels in `sector: chp: fuel`. The default (`solid biomass`, `gas`) keeps default results unchanged; configurations with other CHP fuels must add them to `fuel_cc` to keep their CC variants. An empty list disables CHP with carbon capture ([#2325](https://github.com/PyPSA/pypsa-eur/pull/2325)).
+
+* Fix: The capital costs of lines and DC links now include `lines: length_factor` and `links: length_factor` again. Since [#1511](https://github.com/PyPSA/pypsa-eur/pull/1511), `prepare_network` overwrote them without the length factors, which made transmission about 20% too cheap. This increases transmission costs in all runs ([#1809](https://github.com/PyPSA/pypsa-eur/issues/1809)).
+* Fix: With myopic foresight and `sector: H2_retrofit: true`, gas pipeline capacity is now reduced by the capacity already retrofitted to hydrogen in previous planning horizons. Before, retrofitted pipes could be used for gas and hydrogen at the same time ([#2326](https://github.com/PyPSA/pypsa-eur/issues/2326)).
+* Fix: Existing gas storage capacities now use the working gas volume instead of the cushion gas volume of SciGRID_gas ([#2336](https://github.com/PyPSA/pypsa-eur/issues/2336)).
+* Fix: For existing power plants built in the base year, the minimum capacity of the extendable link is now converted from electrical output to fuel input with the link efficiency ([#1713](https://github.com/PyPSA/pypsa-eur/issues/1713)).
+* Fix: Monthly gas and oil prices (`conventional: dynamic_fuel_price: true`) are now converted from gross to net calorific value (factors 0.9 and 0.95) to match the net efficiencies of the power plants. Coal prices are already on a net basis ([#2306](https://github.com/PyPSA/pypsa-eur/issues/2306)).
+* Fix: Balance maps no longer fail when some sectors are disabled ([#1756](https://github.com/PyPSA/pypsa-eur/issues/1756)).
+* Fix: With myopic foresight, only district heating heat pumps of previous planning horizons get the COPs of the current horizon. Before, decentral heat pumps were updated too ([#1451](https://github.com/PyPSA/pypsa-eur/issues/1451)).
+* Fix: The equity constraint (`EQ` option) no longer fails with pandas 3, and it now scales hydro inflow and spillage by the dispatch efficiency ([#1467](https://github.com/PyPSA/pypsa-eur/issues/1467)).
+* Fix: An empty `config/config.yaml` is now ignored instead of causing an error ([#1806](https://github.com/PyPSA/pypsa-eur/issues/1806)).
+* Fix: Small robustness fixes: OSM network versions no longer need to be numbers ([#2090](https://github.com/PyPSA/pypsa-eur/issues/2090)); WDPA retrieval reads all shapefile parts in the archive instead of exactly three ([#1681](https://github.com/PyPSA/pypsa-eur/issues/1681)); population count data from the primary source can be cropped on Windows ([#1931](https://github.com/PyPSA/pypsa-eur/issues/1931)); the rolling window for central heating forward temperatures is clipped to the number of snapshots with a warning, instead of giving NaN values ([#1288](https://github.com/PyPSA/pypsa-eur/issues/1288)); a warning is shown if the operational reserve margin is used in sector-coupled networks ([#643](https://github.com/PyPSA/pypsa-eur/issues/643)).
 * Fix: Retrofitting costs of countries without own data (e.g. Montenegro) no longer change between runs. Missing countries are now filled in a fixed order, so countries estimated from neighbours that are themselves estimated get reproducible values.
 * Fix: `load: fixed_year` no longer yields all-NaN load when it differs from the snapshot year ([#2209](https://github.com/PyPSA/pypsa-eur/pull/2209)).
 * Fix: Per-country levels in `clustering: administrative: countries` are no longer ignored. Country keys directly under `clustering: administrative` remain supported ([#2210](https://github.com/PyPSA/pypsa-eur/pull/2210)).
