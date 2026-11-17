@@ -450,7 +450,8 @@ def adjust_renewable_capacity_limits(
         ]
 
     n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
-    n.links["p_nom_max"] = n.links["p_nom_max"].clip(lower=0)
+    limited = n.links.carrier.isin(renewable_carriers)
+    n.links.loc[limited, "p_nom_max"] = n.links.loc[limited, "p_nom_max"].clip(lower=0)
 
 
 def main(

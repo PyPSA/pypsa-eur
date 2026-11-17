@@ -6826,11 +6826,17 @@ def main(
 
     if options["rock_weathering"]["enable"]:
         add_rock_weathering(
-            n, costs, spatial, options, inputs.available_land_rock_weathering
+            n,
+            costs,
+            spatial,
+            options,
+            inputs.carbon_dioxide_removal_land_rock_weathering,
         )
 
     if options["biochar"]["enable"]:
-        add_biochar(n, costs, spatial, options, inputs.available_land_biochar)
+        add_biochar(
+            n, costs, spatial, options, inputs.carbon_dioxide_removal_land_biochar
+        )
 
     if options["afforestation"]["enable"]:
         add_afforestation(

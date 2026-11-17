@@ -950,7 +950,7 @@ rule determine_carbon_dioxide_removal_availability_matrix:
         scripts("determine_availability_matrix.py")
 
 
-rule build_available_land:
+rule build_carbon_dioxide_removal_land:
     """Builds the land area usable for a land-based carbon dioxide removal option per region."""
     input:
         availability_matrix=resources(
@@ -958,11 +958,11 @@ rule build_available_land:
         ),
         cutout=lambda w: input_cutout(w),
     output:
-        resources("available_land_{technology}.csv"),
+        resources("carbon_dioxide_removal_land_{technology}.csv"),
     log:
-        logs("build_available_land_{technology}.log"),
+        logs("build_carbon_dioxide_removal_land_{technology}.log"),
     benchmark:
-        benchmarks("build_available_land_{technology}")
+        benchmarks("build_carbon_dioxide_removal_land_{technology}")
     wildcard_constraints:
         technology="rock_weathering|biochar|afforestation",
     resources:
@@ -970,13 +970,13 @@ rule build_available_land:
     params:
         technology=lambda w: config_provider("sector", w.technology)(w),
     script:
-        scripts("build_available_land.py")
+        scripts("build_carbon_dioxide_removal_land.py")
 
 
 rule build_afforestation_potentials:
     """Builds the afforestation potential, sequestration rate and rotation age per region."""
     input:
-        land=resources("available_land_afforestation.csv"),
+        land=resources("carbon_dioxide_removal_land_afforestation.csv"),
         rates=rules.retrieve_co2_removal_data.output.afforestation_rates,
         nuts2=rules.retrieve_eu_nuts2013.output["shapes_level_2"],
         regions=resources("onshore_regions.geojson"),

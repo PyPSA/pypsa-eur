@@ -176,13 +176,13 @@ def get_compose_inputs(w):
                 if cfg["sector"]["enhanced_geothermal"]["enable"]
                 else []
             ),
-            available_land_rock_weathering=(
-                resources("available_land_rock_weathering.csv")
+            carbon_dioxide_removal_land_rock_weathering=(
+                resources("carbon_dioxide_removal_land_rock_weathering.csv")
                 if cfg["sector"]["rock_weathering"]["enable"]
                 else []
             ),
-            available_land_biochar=(
-                resources("available_land_biochar.csv")
+            carbon_dioxide_removal_land_biochar=(
+                resources("carbon_dioxide_removal_land_biochar.csv")
                 if cfg["sector"]["biochar"]["enable"]
                 else []
             ),

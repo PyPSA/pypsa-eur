@@ -131,7 +131,7 @@ captured CO~2~ back to the atmosphere can be allowed as an escape valve.
 
 - Rules: [build_co2_sequestration_potentials][],
   [build_clustered_co2_sequestration_potentials][], [build_co2_totals][],
-  [build_available_land][], [build_afforestation_potentials][]
+  [build_carbon_dioxide_removal_land][], [build_afforestation_potentials][]
 - Configuration: [co2_budget](../configuration.md#co2_budget_cf) and the
   `co2_*`, `dac`, `cc_fraction`, `rock_weathering`, `biochar` and
   `afforestation` settings under [sector](../configuration.md#sector_cf)
