@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Hydro reservoirs now dispatch with an efficiency of 1 instead of the hydro efficiency from technology-data (0.9). Their inflow is scaled to EIA generation, which is already net of turbine losses, so reservoir generation was about 10 % below EIA ([#2391](https://github.com/PyPSA/pypsa-eur/issues/2391)).
 * Feature: Industrial electricity demand follows hourly load profiles per industry branch from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) instead of a flat profile. Enabled by default; disable with `industry: temporal_electricity_industry_load: false` ([#1875](https://github.com/PyPSA/pypsa-eur/pull/1875)).
 * Feature: New option `sector: industry_heat: enable` to optimise the supply of industry process heat above 100 °C in three temperature bands with boilers, direct firing, heat pumps and carbon capture, instead of using exogenous fuel shares. The steel sector is not covered ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 

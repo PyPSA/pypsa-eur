@@ -909,7 +909,8 @@ def attach_hydro(
             marginal_cost=costs.at["hydro", "marginal_cost"],
             p_max_pu=p_max_pu,  # dispatch
             p_min_pu=0.0,  # store
-            efficiency_dispatch=costs.at["hydro", "efficiency"],
+            # inflow is scaled to EIA generation, which is net of turbine losses
+            efficiency_dispatch=1.0,
             efficiency_store=0.0,
             cyclic_state_of_charge=True,
             inflow=inflow_t.loc[:, hydro.index],
