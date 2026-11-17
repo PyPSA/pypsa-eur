@@ -311,6 +311,7 @@ for file name mappings and configuration changes in detail.
   ([#2275](https://github.com/PyPSA/pypsa-eur/pull/2275)).
 
 * **Breaking:** `electricity: max_hours: iron-air` now counts hours at rated output rather than hours of stored energy, matching how duration and cost per kWh are quoted for iron-air. The store is therefore sized by `max_hours / efficiency_dispatch`, and the store cost of iron-air added as `Store` is converted to cost per MWh stored. Cost per MW is unchanged, so iron-air becomes more capable per euro and results including it will change ([#2298](https://github.com/PyPSA/pypsa-eur/pull/2298)).
+* feat: Add biochar as a carbon dioxide removal (CDR) technology, via biomass pyrolysis and stable-carbon soil storage, with node-level potential derived from CORINE land cover ([#2141](https://github.com/PyPSA/pypsa-eur/issues/2141)).
 
 * Added afforestation as a carbon dioxide removal technology (`sector: afforestation`, settings under
   `afforestation:`). The land available per node is transitional woodland-shrub in CORINE
