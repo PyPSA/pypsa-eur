@@ -846,7 +846,7 @@ def attach_hydro(
         )
 
     if "hydro" in carriers and not hydro.empty:
-        hydro_max_hours = params.get("hydro_max_hours")
+        method = params.get("hydro_max_hours")
 
         assert hydro_capacities is not None, "No path for hydro capacities given."
 
@@ -854,30 +854,38 @@ def attach_hydro(
             hydro_capacities, comment="#", na_values="-", index_col=0
         )
         e_target = hydro_stats["E_store[TWh]"].clip(lower=0.2) * 1e6
-        e_installed = hydro.eval("p_nom * max_hours").groupby(hydro.country).sum()
-        e_missing = e_target - e_installed
-        missing_mh_i = hydro.query("max_hours.isnull() or max_hours == 0").index
-        # some countries may have missing storage capacity but only one plant
-        # which needs to be scaled to the target storage capacity
-        missing_mh_single_i = hydro.index[
-            ~hydro.country.duplicated() & hydro.country.isin(e_missing.dropna().index)
-        ]
-        missing_mh_i = missing_mh_i.union(missing_mh_single_i)
+        listed_max_hours = hydro.max_hours.fillna(0)
 
-        if hydro_max_hours == "energy_capacity_totals_by_country":
+        if method == "energy_capacity_totals_by_country":
+            # Plants are aggregated per bus, so a unit can combine plants with and
+            # without listed storage. The storage missing from the plant data (target
+            # minus listed storage) is therefore spread over all units of a country
+            # in proportion to p_nom, on top of each unit's listed storage. Nothing is
+            # added if the listed storage already meets the target. In countries
+            # without a target, units keep their listed storage.
             # watch out some p_nom values like IE's are totally underrepresented
-            max_hours_country = (
-                e_missing / hydro.loc[missing_mh_i].groupby("country").p_nom.sum()
-            )
+            e_listed = (hydro.p_nom * listed_max_hours).groupby(hydro.country).sum()
+            e_missing = (e_target - e_listed).clip(lower=0)
+            max_hours_country = e_missing / hydro.groupby("country").p_nom.sum()
+            hydro_max_hours = (
+                listed_max_hours + hydro.country.map(max_hours_country)
+            ).fillna(listed_max_hours.where(listed_max_hours > 0))
 
-        elif hydro_max_hours == "estimate_by_large_installations":
+        elif method == "estimate_by_large_installations":
             max_hours_country = (
                 hydro_stats["E_store[TWh]"] * 1e3 / hydro_stats["p_nom_discharge[GW]"]
+            ).clip(lower=0)
+            # units without listed storage get the country estimate, and so does the
+            # first unit of each country, which may combine several plants
+            first_unit = ~hydro.country.duplicated() & hydro.country.isin(
+                e_target.dropna().index
+            )
+            hydro_max_hours = listed_max_hours.where(
+                (listed_max_hours > 0) & ~first_unit,
+                hydro.country.map(max_hours_country),
             )
         else:
-            raise ValueError(f"Unknown hydro_max_hours method: {hydro_max_hours}")
-
-        max_hours_country.clip(0, inplace=True)
+            raise ValueError(f"Unknown hydro_max_hours method: {method}")
 
         missing_countries = pd.Index(hydro["country"].unique()).difference(
             max_hours_country.dropna().index
@@ -886,10 +894,7 @@ def attach_hydro(
             logger.warning(
                 f"Assuming max_hours=6 for hydro reservoirs in the countries: {', '.join(missing_countries)}"
             )
-        hydro_max_hours = hydro.max_hours.where(
-            (hydro.max_hours > 0) & ~hydro.index.isin(missing_mh_single_i),
-            hydro.country.map(max_hours_country),
-        ).fillna(6)
+        hydro_max_hours = hydro_max_hours.fillna(6)
 
         if params.get("flatten_dispatch", False):
             buffer = params.get("flatten_dispatch_buffer", 0.2)
