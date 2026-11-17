@@ -11,8 +11,8 @@ country. The potential is the rate times the usable land of the region.
 
 References
 ----------
-- [Pilli et al. (2024)](https://doi.org/10.5194/essd-16-3601-2024), forest
-  growth data behind the sequestration rates.
+- [Pilli et al. (2024)](https://publications.jrc.ec.europa.eu/repository/handle/JRC135639),
+  forest growth data behind the sequestration rates.
 """
 
 import logging
