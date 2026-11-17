@@ -99,14 +99,14 @@ if __name__ == "__main__":
 
     fn = snakemake.input.resource_regions
     resource_regions = gpd.read_file(fn).set_index("name").rename_axis("bus").geometry
-    
+
     regions = gpd.read_file(snakemake.input.distance_regions)
     # do not pull up, set_index does not work if geo dataframe is empty
     regions = regions.set_index("name").rename_axis("bus")
     if snakemake.wildcards.technology.startswith("offwind"):
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
-        
+
         missing_buses = offshore_regions[~np.isin(offshore_regions, regions.index)]
         resource_regions_crs = resource_regions.geometry.crs
         regions_crs = regions.crs
@@ -120,7 +120,9 @@ if __name__ == "__main__":
             # Extract the country prefix from the offshore bus ID
             country = bus[:2]
             # Restrict candidate onshore regions to the same country
-            country_regions = regions[regions.index.to_series().str[:2].eq(country).to_numpy()]
+            country_regions = regions[
+                regions.index.to_series().str[:2].eq(country).to_numpy()
+            ]
 
             if country_regions.empty:
                 print(f"Warning: no onshore regions found for {bus} ({country})")
@@ -133,8 +135,7 @@ if __name__ == "__main__":
             nearest_geometries[bus] = country_regions.loc[nearest_bus]
 
             print(
-                f"{bus} -> {nearest_bus} "
-                f"({distances.loc[nearest_bus] / 1000:.2f} km)"
+                f"{bus} -> {nearest_bus} ({distances.loc[nearest_bus] / 1000:.2f} km)"
             )
 
         missing_regions = gpd.GeoSeries(
@@ -152,7 +153,7 @@ if __name__ == "__main__":
 
         resource_regions = resource_regions.geometry.to_crs(resource_regions_crs)
         regions = regions.geometry.to_crs(regions_crs)
-        
+
         regions = regions.loc[offshore_regions]
         regions = regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
             regions.crs
