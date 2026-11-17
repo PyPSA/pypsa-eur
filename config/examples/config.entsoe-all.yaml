@@ -9,27 +9,25 @@ run:
   shared_resources:
     policy: false
 
-scenario:
-  ll:
-  - vopt
-  clusters:
-  - 41
-  - 128
-  - 256
-  opts:
-  - ''
-  sector_opts:
-  - ''
-  planning_horizons:
-  - ''
+planning_horizons: 2030
+
+sector:
+  enabled: false
+
+clustering:
+  cluster_network:
+    n_clusters: 128
 
 # TODO add Turkey (TR)
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MD', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA', 'XK']
 
 electricity:
   custom_powerplants: true
-  co2limit: 9.59e+7
-  co2base: 1.918e+9
+  transmission_limit: vopt
+
+co2_budget:
+  relative: false
+  upper: 0.0959
 
 lines:
   reconnect_crimea: true

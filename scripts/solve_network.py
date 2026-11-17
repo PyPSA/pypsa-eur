@@ -8,20 +8,13 @@ iteratively optimize while updating line reactances.
 This script is used for optimizing the electrical network as well as the
 sector coupled network.
 
-Description
------------
-
 Total annual system costs are minimised with PyPSA. The full formulation of the
-linear optimal power flow (plus investment planning
+linear optimal power flow (plus investment planning)
 is provided in the
-[documentation of PyPSA](https://pypsa.readthedocs.io/en/latest/optimal_power_flow.html#linear-optimal-power-flow).
+[documentation of PyPSA](https://docs.pypsa.org/latest/user-guide/network-optimization/).
 
 The optimization is based on the `network.optimize` function.
 Additionally, some extra constraints specified in [solve_network][] are added.
-
-**Note:** The rules `solve_elec_networks` and `solve_sector_networks` run
-    the workflow for all scenarios in the configuration file (`scenario:`)
-    based on the rule [solve_network][].
 """
 
 import importlib
@@ -39,7 +32,6 @@ import pypsa
 import xarray as xr
 import yaml
 from linopy.constants import SolverStatus, TerminationCondition
-from linopy.remote.oetc import OetcCredentials, OetcHandler, OetcSettings
 from pypsa.descriptors import get_activity_mask
 
 from scripts._benchmark import memory_logger
@@ -48,7 +40,6 @@ from scripts._helpers import (
     configure_logging,
     get,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 
 logger = logging.getLogger(__name__)
@@ -64,7 +55,8 @@ class ObjectiveValueError(Exception):
     pass
 
 
-def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
+# TODO: move to compose_network
+def add_land_use_constraint(n: pypsa.Network) -> None:
     """
     Add global constraints for tech capacity limit.
 
@@ -80,22 +72,7 @@ def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
     """
     logger.info("Add land-use constraint for perfect foresight")
 
-    def compress_series(s):
-        def process_group(group):
-            if group.nunique() == 1:
-                return pd.Series(group.iloc[0], index=[None])
-            else:
-                return group
-
-        return s.groupby(level=[0, 1]).apply(process_group)
-
-    def new_index_name(t):
-        # Convert all elements to string and filter out None values
-        parts = [str(x) for x in t if x is not None]
-        # Join with space, but use a dash for the last item if not None
-        return " ".join(parts[:2]) + (f"-{parts[-1]}" if len(parts) > 2 else "")
-
-    def check_p_min_p_max(p_nom_max):
+    def check_p_min_p_max(p_nom_max: pd.Series) -> None:
         p_nom_min = n.generators[ext_i].groupby(grouper).sum().p_nom_min
         p_nom_min = p_nom_min.reindex(p_nom_max.index)
         check = (
@@ -113,14 +90,11 @@ def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
     p_nom_max = n.generators[ext_i].groupby(grouper).min().p_nom_max
     # drop carriers without tech limit
     p_nom_max = p_nom_max[~p_nom_max.isin([np.inf, np.nan])]
-    # carrier
     carriers = p_nom_max.index.get_level_values(0).unique()
     gen_i = n.generators[(n.generators.carrier.isin(carriers)) & (ext_i)].index
     n.generators.loc[gen_i, "p_nom_min"] = 0
     # check minimum capacities
     check_p_min_p_max(p_nom_max)
-    # drop multi entries in case p_nom_max stays constant in different periods
-    # p_nom_max = compress_series(p_nom_max)
     # adjust name to fit syntax of nominal constraint per bus
     df = p_nom_max.reset_index()
     df["name"] = df.apply(
@@ -135,57 +109,6 @@ def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
         df_carrier = df[df.name == name]
         bus = df_carrier.bus
         n.buses.loc[bus, name] = df_carrier.p_nom_max.values
-
-
-def add_land_use_constraint(n: pypsa.Network, planning_horizons: str) -> None:
-    """
-    Add land use constraints for renewable energy potential.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        The PyPSA network instance
-    planning_horizons : str
-        The planning horizon year as string
-
-    Returns
-    -------
-    pypsa.Network
-        Modified PyPSA network with constraints added
-    """
-    # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
-
-    for carrier in [
-        "solar",
-        "solar rooftop",
-        "solar-hsat",
-        "onwind",
-        "offwind-ac",
-        "offwind-dc",
-        "offwind-float",
-    ]:
-        ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
-        grouper = n.generators.loc[ext_i].index.str.replace(
-            f" {carrier}.*$", "", regex=True
-        )
-        existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
-        existing.index += f" {carrier}-{planning_horizons}"
-        n.generators.loc[existing.index, "p_nom_max"] -= existing
-
-    # check if existing capacities are larger than technical potential
-    existing_large = n.generators[
-        n.generators["p_nom_min"] > n.generators["p_nom_max"]
-    ].index
-    if len(existing_large):
-        logger.warning(
-            f"Existing capacities larger than technical potential for {existing_large},\
-                        adjust technical potential to existing capacities"
-        )
-        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
-            existing_large, "p_nom_min"
-        ]
-
-    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
 
 def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> None:
@@ -289,6 +212,34 @@ def add_co2_sequestration_limit(
     )
 
 
+VALID_GLC_SENSES = {"<=", ">=", "=="}
+
+
+def get_glc_sense(glc: pd.Series) -> str:
+    """Return the validated sense of a global constraint."""
+    sense = glc.loc["sense"]
+    if sense not in VALID_GLC_SENSES:
+        raise ValueError(
+            f"Unsupported sense {sense!r} for global constraint {glc.name!r}. "
+            f"Expected one of {sorted(VALID_GLC_SENSES)}."
+        )
+    return sense
+
+
+def emission_stores(n: pypsa.Network, emissions: pd.Index) -> pd.DataFrame:
+    """Return the non-cyclic stores that accumulate emissions on their bus."""
+    bus_carrier = n.stores.bus.map(n.buses.carrier)
+    stores = n.stores[bus_carrier.isin(emissions) & ~n.stores.e_cyclic]
+    seeded = stores.index[stores.e_initial.ne(0) | stores.e_initial_per_period]
+    if not seeded.empty:
+        raise ValueError(
+            f"Emission stores {list(seeded)} start from a non-zero level "
+            "(e_initial or e_initial_per_period). The CO2 constraints read the "
+            "store level as cumulative emissions, which only holds from zero."
+        )
+    return stores
+
+
 def add_carbon_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None:
     glcs = n.global_constraints.query('type == "co2_atmosphere"')
     if glcs.empty:
@@ -300,9 +251,7 @@ def add_carbon_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None
         if emissions.empty:
             continue
 
-        # stores
-        bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
+        stores = emission_stores(n, emissions.index)
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -312,7 +261,9 @@ def add_carbon_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None
             lhs = final_e.loc[time_i, :] - final_e.shift(snapshot=1).loc[time_i, :]
 
             rhs = glc.constant
-            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+            n.model.add_constraints(
+                lhs, get_glc_sense(glc), rhs, name=f"GlobalConstraint-{name}"
+            )
 
 
 def add_carbon_budget_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) -> None:
@@ -326,9 +277,7 @@ def add_carbon_budget_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) 
         if emissions.empty:
             continue
 
-        # stores
-        bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
+        stores = emission_stores(n, emissions.index)
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -339,7 +288,9 @@ def add_carbon_budget_constraint(n: pypsa.Network, snapshots: pd.DatetimeIndex) 
             lhs = final_e.loc[time_i, :] * weighting
 
             rhs = glc.constant
-            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+            n.model.add_constraints(
+                lhs, get_glc_sense(glc), rhs, name=f"GlobalConstraint-{name}"
+            )
 
 
 def add_max_growth(n: pypsa.Network, opts: dict) -> None:
@@ -349,14 +300,14 @@ def add_max_growth(n: pypsa.Network, opts: dict) -> None:
 
     # take maximum yearly difference between investment periods since historic growth is per year
     factor = n.investment_period_weightings.years.max() * opts["factor"]
-    for carrier in opts["max_growth"].keys():
+    for carrier in opts["max_growth"]:
         max_per_period = opts["max_growth"][carrier] * factor
         logger.info(
             f"set maximum growth rate per investment period of {carrier} to {max_per_period} GW."
         )
         n.carriers.loc[carrier, "max_growth"] = max_per_period * 1e3
 
-    for carrier in opts["max_relative_growth"].keys():
+    for carrier in opts["max_relative_growth"]:
         max_r_per_period = opts["max_relative_growth"][carrier]
         logger.info(
             f"set maximum relative growth per investment period of {carrier} to {max_r_per_period}."
@@ -377,12 +328,16 @@ def add_retrofit_gas_boiler_constraint(
         The snapshots of the network
     """
     c = "Link"
-    logger.info("Add constraint for retrofitting gas boilers to H2 boilers.")
     # existing gas boilers
     mask = n.links.carrier.str.contains("gas boiler") & ~n.links.p_nom_extendable
     gas_i = n.links[mask].index
     mask = n.links.carrier.str.contains("retrofitted H2 boiler")
     h2_i = n.links[mask].index
+
+    if gas_i.empty or h2_i.empty:
+        return
+
+    logger.info("Add constraint for retrofitting gas boilers to H2 boilers.")
 
     n.links.loc[gas_i, "p_nom_extendable"] = True
     p_nom = n.links.loc[gas_i, "p_nom"]
@@ -420,7 +375,38 @@ def add_retrofit_gas_boiler_constraint(
     n.model.add_constraints(lhs == rhs, name="gas_retrofit")
 
 
-def add_load_balance_components(n, config, sign=1):
+def enforce_autarky(n: pypsa.Network, only_crossborder: bool = False) -> None:
+    """
+    Remove transmission lines to enforce autarky.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    only_crossborder : bool
+        If True, only remove cross-border connections. If False, remove all lines.
+    """
+    if only_crossborder:
+        lines_rm = n.lines.loc[
+            n.lines.bus0.map(n.buses.country) != n.lines.bus1.map(n.buses.country)
+        ].index
+        links_rm = n.links.loc[
+            n.links.bus0.map(n.buses.country) != n.links.bus1.map(n.buses.country)
+        ].index
+    else:
+        lines_rm = n.lines.index
+        links_rm = n.links.loc[n.links.carrier == "DC"].index
+
+    logger.info(
+        f"Enforcing autarky: removing {len(lines_rm)} lines and {len(links_rm)} links"
+    )
+    n.remove("Line", lines_rm)
+    n.remove("Link", links_rm)
+
+
+def add_load_balance_components(
+    n: pypsa.Network, config: dict, sign: float = 1
+) -> None:
     """
     Add load shedding or load sinks to the network with carrier 'load'.
 
@@ -478,6 +464,7 @@ def add_load_balance_components(n, config, sign=1):
 
 def prepare_network(
     n: pypsa.Network,
+    config: dict,
     solve_opts: dict,
     foresight: str,
     planning_horizons: str | None,
@@ -492,6 +479,8 @@ def prepare_network(
     ----------
     n : pypsa.Network
         The PyPSA network instance
+    config : dict
+        Configuration dictionary
     solve_opts : Dict
         Dictionary of solving options containing clip_p_max_pu, load_shedding etc.
     foresight : str
@@ -561,11 +550,8 @@ def prepare_network(
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760.0 / nhours
 
-    if foresight == "myopic" and planning_horizons:
-        add_land_use_constraint(n, planning_horizons)
-
     if foresight == "perfect":
-        add_land_use_constraint_perfect(n)
+        add_land_use_constraint(n)
         if limit_max_growth is not None and limit_max_growth["enable"]:
             add_max_growth(n, limit_max_growth)
 
@@ -574,6 +560,12 @@ def prepare_network(
         add_co2_sequestration_limit(
             n, limit_dict=limit_dict, planning_horizons=planning_horizons
         )
+
+    # Apply autarky constraint if configured
+    autarky_cfg = config["electricity"]["autarky"]
+    if autarky_cfg["enable"]:
+        only_crossborder = autarky_cfg["by_country"]
+        enforce_autarky(n, only_crossborder=only_crossborder)
 
     # rolling horizon disables cyclic storage
     if rolling_horizon:
@@ -695,7 +687,7 @@ def add_CCL_constraints(
         )
 
 
-def add_EQ_constraints(n, o, scaling=1e-1):
+def add_EQ_constraints(n: pypsa.Network, o: str, scaling: float = 1e-1) -> None:
     """
     Add equity constraints to the network.
 
@@ -730,12 +722,13 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         lgrouper = n.loads.bus
         sgrouper = n.storage_units.bus
     load = (
-        n.snapshot_weightings.generators
-        @ n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
+        n.snapshot_weightings.generators @ n.loads_t.p_set.T.groupby(lgrouper).sum().T
     )
+    eff = n.storage_units.efficiency_dispatch
+    inflow = n.storage_units_t.inflow
     inflow = (
         n.snapshot_weightings.stores
-        @ n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum()
+        @ (inflow * eff[inflow.columns]).T.groupby(sgrouper).sum().T
     )
     inflow = inflow.reindex(load.index).fillna(0.0)
     rhs = scaling * (level * load - inflow)
@@ -750,7 +743,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     if not n.storage_units_t.inflow.empty:
         spillage = n.model["StorageUnit-spill"]
         lhs_spill = (
-            (spillage * (-n.snapshot_weightings.stores * scaling))
+            (spillage * (-n.snapshot_weightings.stores * scaling) * eff.to_xarray())
             .groupby(sgrouper.to_xarray())
             .sum()
             .sum("snapshot")
@@ -784,7 +777,7 @@ def add_BAU_constraints(n: pypsa.Network, config: dict) -> None:
 
 
 # TODO: think about removing or make per country
-def add_SAFE_constraints(n, config):
+def add_SAFE_constraints(n: pypsa.Network, config: dict) -> None:
     """
     Add a capacity reserve margin of a certain fraction above the peak demand.
     Renewable generators and storage do not contribute. Ignores network.
@@ -822,7 +815,9 @@ def add_SAFE_constraints(n, config):
     n.model.add_constraints(lhs >= rhs, name="safe_mintotalcap")
 
 
-def add_operational_reserve_margin(n, sns, config):
+def add_operational_reserve_margin(
+    n: pypsa.Network, sns: pd.DatetimeIndex, config: dict
+) -> None:
     """
     Build reserve margin constraints based on the formulation given in
     https://genxproject.github.io/GenX.jl/stable/Model_Reference/core/#Operational-Reserves.
@@ -938,7 +933,7 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
     ]
 
     if indices_charger_p_nom_extendable.empty or indices_stores_e_nom_extendable.empty:
-        logger.warning(
+        logger.debug(
             "No valid extendable charger links or stores found for TES energy-to-power constraints.Not enforcing TES energy-to-power ratio constraints!"
         )
         return
@@ -952,6 +947,7 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
         indices_charger_p_nom_extendable,
         indices_stores_e_nom_extendable,
         energy_to_power_ratio_values,
+        strict=True,
     ):
         charger_var = n.model["Link-p_nom"].loc[charger]
         if not tes == charger.replace(" charger", ""):
@@ -1009,13 +1005,15 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
         indices_charger_p_nom_extendable.empty
         or indices_discharger_p_nom_extendable.empty
     ):
-        logger.warning(
+        logger.debug(
             "No valid extendable TES discharger or charger links found for TES charger ratio constraints. Not enforcing TES charger_ratio constraints."
         )
         return
 
     for charger, discharger in zip(
-        indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
+        indices_charger_p_nom_extendable,
+        indices_discharger_p_nom_extendable,
+        strict=True,
     ):
         if not charger.replace(" charger", " ") == discharger.replace(
             " discharger", " "
@@ -1036,7 +1034,7 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
 
 
-def add_battery_constraints(n):
+def add_battery_constraints(n: pypsa.Network) -> None:
     """
     Add constraint ensuring that charger = discharger, i.e.
     1 * charger_size - efficiency * discharger_size = 0
@@ -1059,7 +1057,7 @@ def add_battery_constraints(n):
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
 
-def add_lossy_bidirectional_link_constraints(n):
+def add_lossy_bidirectional_link_constraints(n: pypsa.Network) -> None:
     if not n.links.p_nom_extendable.any() or not any(n.links.get("reversed", [])):
         return
 
@@ -1073,7 +1071,7 @@ def add_lossy_bidirectional_link_constraints(n):
     n.model.add_constraints(lhs == rhs, name="Link-bidirectional_sync")
 
 
-def add_chp_constraints(n):
+def add_chp_constraints(n: pypsa.Network) -> None:
     electric = (
         n.links.index.str.contains("urban central")
         & n.links.index.str.contains("CHP")
@@ -1127,7 +1125,7 @@ def add_chp_constraints(n):
         n.model.add_constraints(lhs <= rhs, name="chplink-backpressure")
 
 
-def add_pipe_retrofit_constraint(n):
+def add_pipe_retrofit_constraint(n: pypsa.Network) -> None:
     """
     Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.
     """
@@ -1145,7 +1143,8 @@ def add_pipe_retrofit_constraint(n):
 
     p_nom = n.model["Link-p_nom"]
 
-    CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
+    config = n.config
+    CH4_per_H2 = 1 / config["sector"]["H2_retrofit_capacity_per_CH4"]
     lhs = p_nom.loc[gas_pipes_i] + CH4_per_H2 * p_nom.loc[h2_retrofitted_i]
     rhs = n.links.p_nom[gas_pipes_i]
     if not PYPSA_V1:
@@ -1154,26 +1153,38 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
-def add_flexible_egs_constraint(n):
+def add_flexible_egs_constraint(n: pypsa.Network) -> None:
     """
-    Upper bounds the charging capacity of the geothermal reservoir according to
-    the well capacity.
+    Limit each geothermal reservoir to the capacity of the wells at its surface bus.
     """
-    well_index = n.links.loc[n.links.carrier == "geothermal heat"].index
-    storage_index = n.storage_units.loc[
-        n.storage_units.carrier == "geothermal heat"
-    ].index
+    wells = n.links.query("carrier == 'geothermal heat'")
+    new_wells = wells.query("p_nom_extendable")
+    reservoirs = n.storage_units.query(
+        "carrier == 'geothermal heat' and p_nom_extendable"
+    )
+    if not PYPSA_V1:
+        new_wells = new_wells.rename_axis("Link-ext")
+        reservoirs = reservoirs.rename_axis("StorageUnit-ext")
 
-    p_nom_rhs = n.model["Link-p_nom"].loc[well_index]
-    p_nom_lhs = n.model["StorageUnit-p_nom"].loc[storage_index]
+    reservoir_p_nom = n.model["StorageUnit-p_nom"].loc[reservoirs.index]
+    well_p_nom = n.model["Link-p_nom"].loc[new_wells.index]
+    lhs = reservoir_p_nom.groupby(reservoirs.bus).sum()
+    rhs = well_p_nom.groupby(new_wells.bus1.rename("bus")).sum()
+    existing = (
+        wells.query("not p_nom_extendable")
+        .groupby("bus1")
+        .p_nom.sum()
+        .reindex(reservoirs.bus.unique(), fill_value=0.0)
+        .rename_axis("bus")
+    )
 
     n.model.add_constraints(
-        p_nom_lhs <= p_nom_rhs,
+        lhs - rhs <= existing.to_xarray(),
         name="upper_bound_charging_capacity_of_geothermal_reservoir",
     )
 
 
-def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
+def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex) -> None:
     """
     Add constraint for limiting green energy imports (synthetic and biomass).
     Does not include fossil fuel imports.
@@ -1184,8 +1195,9 @@ def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
     import_links = n.links.loc[n.links.carrier.str.contains("import")].index
     import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
 
-    limit = n.config["sector"]["imports"]["limit"]
-    limit_sense = n.config["sector"]["imports"]["limit_sense"]
+    config = n.config
+    limit = config["sector"]["imports"]["limit"]
+    limit_sense = config["sector"]["imports"]["limit_sense"]
 
     if (import_links.empty and import_gens.empty) or not np.isfinite(limit):
         return
@@ -1205,7 +1217,9 @@ def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
     n.model.add_constraints(lhs, limit_sense, rhs, name="import_limit")
 
 
-def add_co2_atmosphere_constraint(n, snapshots):
+def add_co2_atmosphere_constraint(
+    n: pypsa.Network, snapshots: pd.DatetimeIndex
+) -> None:
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 
     if glcs.empty:
@@ -1217,19 +1231,22 @@ def add_co2_atmosphere_constraint(n, snapshots):
         if emissions.empty:
             continue
 
-        # stores
-        bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
+        stores = emission_stores(n, emissions.index)
         if not stores.empty:
             last_i = snapshots[-1]
             lhs = n.model["Store-e"].loc[last_i, stores.index]
             rhs = glc.constant
 
-            n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
+            n.model.add_constraints(
+                lhs, get_glc_sense(glc), rhs, name=f"GlobalConstraint-{name}"
+            )
 
 
 def extra_functionality(
-    n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
+    n: pypsa.Network,
+    snapshots: pd.DatetimeIndex,
+    planning_horizons: str | None = None,
+    snakemake=None,
 ) -> None:
     """
     Add custom constraints and functionality.
@@ -1263,6 +1280,11 @@ def extra_functionality(
 
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
+        if config["sector"]["enabled"]:
+            logger.warning(
+                "Operational reserve margin only considers electricity generators "
+                "and ignores sector-coupling components."
+            )
         add_operational_reserve_margin(n, snapshots, config)
 
     if EQ_o := constraints["EQ"]:
@@ -1275,15 +1297,8 @@ def extra_functionality(
     ):
         add_solar_potential_constraints(n, config)
 
-    if n.config.get("sector", {}).get("tes", False):
-        if n.buses.index.str.contains(
-            r"urban central heat|urban decentral heat|rural heat",
-            case=False,
-            na=False,
-        ).any():
-            add_TES_energy_to_power_ratio_constraints(n)
-            add_TES_charger_ratio_constraints(n)
-
+    add_TES_energy_to_power_ratio_constraints(n)
+    add_TES_charger_ratio_constraints(n)
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
@@ -1294,7 +1309,8 @@ def extra_functionality(
     else:
         add_co2_atmosphere_constraint(n, snapshots)
 
-    if config["sector"]["enhanced_geothermal"]["enable"]:
+    egs = config["sector"]["enhanced_geothermal"]
+    if egs["enable"] and egs["flexible"]:
         add_flexible_egs_constraint(n)
 
     if config["sector"]["imports"]["enable"]:
@@ -1307,10 +1323,10 @@ def extra_functionality(
         module_name = os.path.splitext(os.path.basename(source_path))[0]
         module = importlib.import_module(module_name)
         custom_extra_functionality = getattr(module, module_name)
-        custom_extra_functionality(n, snapshots, snakemake)  # pylint: disable=E0601
+        custom_extra_functionality(n, snapshots, snakemake)
 
 
-def check_objective_value(n: pypsa.Network, solving: dict) -> None:
+def check_objective_value(n: pypsa.Network, solving: dict, horizon: str) -> None:
     """
     Check if objective value matches expected value within tolerance.
 
@@ -1320,6 +1336,9 @@ def check_objective_value(n: pypsa.Network, solving: dict) -> None:
         Network with solved objective
     solving : Dict
         Dictionary containing objective checking parameters
+    horizon : str
+        Planning horizon of the current solve, used to select the expected
+        value for myopic foresight (per-horizon mapping)
 
     Raises
     ------
@@ -1327,15 +1346,18 @@ def check_objective_value(n: pypsa.Network, solving: dict) -> None:
         If objective value differs from expected value beyond tolerance
     """
     check_objective = solving["check_objective"]
-    if check_objective["enable"]:
-        atol = check_objective["atol"]
-        rtol = check_objective["rtol"]
-        expected_value = check_objective["expected_value"]
-        if not np.isclose(n.objective, expected_value, atol=atol, rtol=rtol):
-            raise ObjectiveValueError(
-                f"Objective value {n.objective} differs from expected value "
-                f"{expected_value} by more than {atol}."
-            )
+    if not check_objective["enable"]:
+        return
+    atol = check_objective["atol"]
+    rtol = check_objective["rtol"]
+    expected_value = check_objective["expected_value"]
+    if isinstance(expected_value, dict):
+        expected_value = expected_value[int(horizon)]
+    if not np.isclose(n.objective, expected_value, atol=atol, rtol=rtol):
+        raise ObjectiveValueError(
+            f"Objective value {n.objective} differs from expected value "
+            f"{expected_value} by more than {atol}."
+        )
 
 
 def collect_kwargs(
@@ -1344,6 +1366,8 @@ def collect_kwargs(
     planning_horizons: str | None = None,
     log_fn: str | None = None,
     mode: str = "single",
+    horizon: int | None = None,
+    overlap: int | None = None,
 ) -> tuple[dict, dict]:
     """
     Prepare keyword arguments separated for model creation and model solving.
@@ -1396,25 +1420,18 @@ def collect_kwargs(
     if log_fn:
         solve_kwargs["log_fn"] = log_fn
 
-    oetc = solving.get("oetc", None)
-    if oetc:
-        oetc["credentials"] = OetcCredentials(
-            email=os.environ["OETC_EMAIL"], password=os.environ["OETC_PASSWORD"]
-        )
-        oetc["solver"] = solver_name
-        oetc["solver_options"] = solver_options
-        oetc_settings = OetcSettings(**oetc)
-        oetc_handler = OetcHandler(oetc_settings)
-        solve_kwargs["remote"] = oetc_handler
-
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").setLevel(logging.CRITICAL)
 
     # Handle special modes
     if mode == "rolling_horizon":
         all_kwargs = {**model_kwargs, **solve_kwargs}
-        all_kwargs["horizon"] = cf_solving.get("horizon", 365)
-        all_kwargs["overlap"] = cf_solving.get("overlap", 0)
+        all_kwargs["horizon"] = (
+            horizon if horizon is not None else cf_solving["horizon"]
+        )
+        all_kwargs["overlap"] = (
+            overlap if overlap is not None else cf_solving["overlap"]
+        )
         return all_kwargs, {}
 
     elif mode == "iterative":
@@ -1440,6 +1457,7 @@ def create_optimization_model(
     model_kwargs: dict,
     solve_kwargs: dict,
     planning_horizons: str | None = None,
+    snakemake=None,
 ) -> None:
     """
     Prepare optimization problem by creating model and adding extra functionality.
@@ -1474,7 +1492,7 @@ def create_optimization_model(
 
     # Add extra functionality (custom constraints)
     logger.info("Adding extra functionality (custom constraints)...")
-    extra_functionality(n, n.snapshots, planning_horizons)
+    extra_functionality(n, n.snapshots, planning_horizons, snakemake=snakemake)
 
 
 if __name__ == "__main__":
@@ -1482,16 +1500,12 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            opts="",
-            clusters="5",
+            "solve_network",
             configfiles="config/test/config.overnight.yaml",
-            sector_opts="",
-            planning_horizons="2030",
+            horizon=2030,
         )
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     solve_opts = snakemake.params.solving["options"]
     cf_solving = snakemake.params.solving["options"]
@@ -1500,21 +1514,22 @@ if __name__ == "__main__":
 
     # Load network
     n = pypsa.Network(snakemake.input.network)
-    planning_horizons = snakemake.wildcards.get("planning_horizons", None)
+    planning_horizons = snakemake.wildcards.horizon
 
     # Prepare network (settings before solving)
     prepare_network(
         n,
+        config=snakemake.config,
         solve_opts=snakemake.params.solving["options"],
         foresight=snakemake.params.foresight,
         planning_horizons=planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
-        limit_max_growth=snakemake.params.get("sector", {}).get("limit_max_growth"),
+        limit_max_growth=snakemake.params["sector"]["limit_max_growth"],
         rolling_horizon=cf_solving["rolling_horizon"],
     )
 
     # Determine solve mode
-    rolling_horizon = cf_solving.get("rolling_horizon", False)
+    rolling_horizon = cf_solving["rolling_horizon"]
     skip_iterations = cf_solving.get("skip_iterations", False)
 
     if not n.lines.s_nom_extendable.any():
@@ -1542,7 +1557,9 @@ if __name__ == "__main__":
             n.config = snakemake.config
             n.params = snakemake.params
             all_kwargs["extra_functionality"] = partial(
-                extra_functionality, planning_horizons=planning_horizons
+                extra_functionality,
+                planning_horizons=planning_horizons,
+                snakemake=snakemake,
             )
             n.optimize.optimize_with_rolling_horizon(**all_kwargs)
             status, condition = "", ""
@@ -1563,6 +1580,7 @@ if __name__ == "__main__":
                 model_kwargs=model_kwargs,
                 solve_kwargs=solve_kwargs,
                 planning_horizons=planning_horizons,
+                snakemake=snakemake,
             )
 
             logger.info("Solving model...")
@@ -1582,7 +1600,9 @@ if __name__ == "__main__":
             n.config = snakemake.config
             n.params = snakemake.params
             all_kwargs["extra_functionality"] = partial(
-                extra_functionality, planning_horizons=planning_horizons
+                extra_functionality,
+                planning_horizons=planning_horizons,
+                snakemake=snakemake,
             )
             status, condition = n.optimize.optimize_transmission_expansion_iteratively(
                 **all_kwargs
@@ -1596,7 +1616,7 @@ if __name__ == "__main__":
             logger.warning(
                 f"Solving status '{status}' with termination condition '{condition}'"
             )
-        check_objective_value(n, snakemake.params.solving)
+        check_objective_value(n, snakemake.params.solving, snakemake.wildcards.horizon)
 
     if condition in [
         TerminationCondition.infeasible,
@@ -1610,17 +1630,21 @@ if __name__ == "__main__":
     if status == SolverStatus.warning:
         raise RuntimeError("Solving status 'warning'. Discarding solution.")
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta["snakemake_config"] = dict(
+        snakemake.config, wildcards=dict(snakemake.wildcards)
+    )
     n.export_to_netcdf(snakemake.output.network)
 
     if snakemake.output.get("model"):
         n.model.to_netcdf(snakemake.output.model)
 
-    with open(snakemake.output.config, "w") as file:
-        yaml.dump(
-            n.meta,
-            file,
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
-        )
+    config_output = getattr(snakemake.output, "config", None)
+    if config_output:
+        with open(config_output, "w") as file:
+            yaml.dump(
+                n.meta["snakemake_config"],
+                file,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )

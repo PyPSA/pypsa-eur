@@ -5,12 +5,12 @@
 """
 Lines configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#lines_cf
 """
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -69,8 +69,8 @@ class LinesConfig(BaseModel):
         float("inf"),
         description="Global upper limit for the maximum capacity of each extendable line (MW).",
     )
-    max_extension: float = Field(
-        20000,
+    s_nom_max_extension: float = Field(
+        20_000,
         description="Upper limit for the extended capacity of each extendable line (MW).",
     )
     length_factor: float = Field(
@@ -89,3 +89,12 @@ class LinesConfig(BaseModel):
         default_factory=_DynamicLineRatingConfig,
         description="Configuration for dynamic line rating.",
     )
+
+    @field_validator("types")
+    @classmethod
+    def check_380_defined(cls, value: dict[float, str]) -> dict[float, str]:
+        if 380.0 not in value:
+            raise ValueError(
+                "`lines: types` must define a line type for the 380 kV voltage level."
+            )
+        return value

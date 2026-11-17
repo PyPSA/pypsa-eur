@@ -1,0 +1,19 @@
+sector,heat<100,heat100-200,heat200-500,heat500+,source
+Aluminium - primary production,0.02,0.09,0.03,0.86,"Fleiter et al. (2025): Aluminium, primary"
+Aluminium - secondary production,0.28,0.0,0.3,0.42,"Fleiter et al. (2025): Aluminium, secondary"
+Alumina production,0.0,0.0,0.0,1.0,JRC-IDEES
+Other non-ferrous metals,0.02,0.0,0.392,0.588,"Fleiter et al. (2025): mean of copper (primary, secondary, further treatment) and zinc (primary, secondary)"
+HVC,0.2,0.309,0.069,0.422,"Fleiter et al. (2025): mean of adipic acid, calcium carbide, carbon black, nitric acid, soda ash, TDI, titanium dioxide"
+Cement,0.02,0.0,0.1,0.88,"Fleiter et al. (2025): clinker calcination"
+Ceramics & other NMM,0.227,0.09,0.073,0.61,"Fleiter et al. (2025): mean of ceramics"
+Glass production,0.02,0.19,0.243,0.547,"Fleiter et al. (2025): mean of glass"
+Pulp production,0.01,0.99,0.0,0.0,"Fleiter et al. (2025): chemical pulp; Rehfeldt et al. (2018): mechanical pulp"
+Paper production,0.06,0.87,0.05,0.02,"Fleiter et al. (2025): paper"
+Printing and media reproduction,0.01,0.99,0.0,0.0,as pulp production
+"Food, beverages and tobacco",0.527,0.345,0.078,0.05,"Fleiter et al. (2025): mean of sugar, dairy, brewing, meat processing, bread and bakery, starch"
+Pharmaceutical products etc.,0.3,0.6,0.1,0.0,JRC-IDEES
+Transport equipment,0.25,0.6,0.15,0.0,https://energyinnovation.org/data-explorer/overcoming-all-barriers-to-industrial-electrification
+Machinery equipment,0.25,0.6,0.15,0.0,https://energyinnovation.org/data-explorer/overcoming-all-barriers-to-industrial-electrification
+Wood and wood products,0.65,0.35,0.0,0.0,https://www.fpl.fs.usda.gov/documents/fplgtr/fplgtr118.pdf
+Textiles and leather,0.7,0.2,0.1,0.0,https://www.ifc.org/content/dam/ifc/doc/2000/2007-textiles-manufacturing-ehs-guidelines-en.pdf
+Other industrial sectors,0.1,0.65,0.25,0.0,https://energyinnovation.org/data-explorer/overcoming-all-barriers-to-industrial-electrification

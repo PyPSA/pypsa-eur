@@ -73,7 +73,7 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
     For reference, PyPSA-Eur typically solves efficiently with 128 spatial clusters and 4-hour temporal resolution, assuming no custom constraints are added. If you increase either the temporal or spatial resolution, you may need to decrease the other to keep solution times manageable.
 
 ??? note "What can I do if my dispatch model reports 'infeasible or unbounded'?"
-    This message typically indicates that the model cannot satisfy demand in all timesteps or that some generators have lower bounds exceeding the available load. If not already enabled, activate `load_shedding` and curtailment mode in the [solving](solving.md) configuration. These options introduce a high-cost load-shedding generator and a curtailment generator, allowing the optimisation to remain feasible.
+    This message typically indicates that the model cannot satisfy demand in all timesteps or that some generators have lower bounds exceeding the available load. If not already enabled, activate `load_shedding` and curtailment mode in the [solving](rules/solving.md) configuration. These options introduce a high-cost load-shedding generator and a curtailment generator, allowing the optimisation to remain feasible.
 
     If enabling these options resolves the issue, examine the resulting dispatch to determine the bus regions and snapshots where the system was unable to meet demand. A simple way to quantify the total load shedding is:
 
@@ -95,7 +95,7 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
 ??? note "How can I change the spatial resolution of my model?"
     Several configuration options control the spatial resolution in PyPSA-Eur. Available mechanisms:
 
-    - Adjust the number of regions via the `clusters` wildcard.
+    - Adjust the number of regions via `clustering: cluster_network: n_clusters`.
     - Restrict the geographical scope using the `countries` configuration.
       Note that the number of clusters must exceed the number of countries.
     - Configure how regions are created through the `clustering` section,
@@ -103,7 +103,7 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
       (`focus_weights`).
     - Provide a fully custom spatial clustering by setting `mode: custom_busshapes` and
       placing your geometry file at
-      `data/busshapes/base_s_{w.clusters}_{base_network}.geojson`.
+      `data/busshapes/simplified_{n_clusters}_{base_network}.geojson`.
 
 ??? note "Why do some countries (e.g. GB or DK) have at least two nodes even when I specify only one cluster per country?"
     Some countries span multiple synchronous zones. Examples include Denmark (DK1 and DK2) and Great Britain versus Northern Ireland. To represent these electrical boundaries correctly, PyPSA-Eur assigns one bus region per synchronous zone, even if the configuration requests only a single cluster for the whole country.
@@ -143,8 +143,8 @@ This section contains answers to Frequently Asked Questions (FAQ) and common tro
     Other useful entry points include:
 
     ```python
-    n.statistics.capex()      # investment costs
-    n.statistics.opex()       # operational costs
+    n.statistics.capex()  # investment costs
+    n.statistics.opex()  # operational costs
     ```
 
     These tools help you go beyond the default outputs and systematically explore the solved system.

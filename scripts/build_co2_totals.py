@@ -2,11 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Calculate historical CO2 emissions per country using EEA and Eurostat data.
-
-Outputs
--------
-- ``resources/<run_name>/co2_totals.csv``: CO2 emissions per country and sector.
+Calculate historical CO2 emissions per country and sector using EEA and Eurostat data.
 """
 
 import logging
@@ -84,7 +80,7 @@ def build_eea_co2(
     """
     df = pd.read_csv(input_co2, encoding="latin-1", low_memory=False)
 
-    df.replace(dict(Year="1985-1987"), 1986, inplace=True)
+    df.replace({"Year": "1985-1987"}, 1986, inplace=True)
     df.Year = df.Year.astype(int)
     index_col = ["Country_code", "Pollutant_name", "Year", "Sector_name"]
     df = df.set_index(index_col).sort_index()
@@ -240,7 +236,7 @@ if __name__ == "__main__":
     params = snakemake.params.energy
     countries = snakemake.params.countries
     base_year_emissions = params["base_emissions_year"]
-    emissions_scope = params["emissions"]
+    emissions_scope = snakemake.params.emissions_scope
 
     eurostat = pd.read_csv(snakemake.input.eurostat)
     eea_co2 = build_eea_co2(snakemake.input.co2, base_year_emissions, emissions_scope)

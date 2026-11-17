@@ -5,10 +5,10 @@
 """
 Sector configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#sector_cf
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -61,12 +61,13 @@ class _DistrictHeatingConfig(ConfigModel):
     )
     ptes: dict[str, Any] = Field(
         default_factory=lambda: {
+            "enable": True,
             "dynamic_capacity": False,
             "supplemental_heating": {"enable": False, "booster_heat_pump": False},
             "max_top_temperature": 90,
             "min_bottom_temperature": 35,
         },
-        description="Pit thermal energy storage settings.",
+        description="Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating, independently of `sector: ttes`. If disabled, all other `ptes` options are ignored.",
     )
     ates: dict[str, Any] = Field(
         default_factory=lambda: {
@@ -153,7 +154,7 @@ class _ResidentialHeatConfig(BaseModel):
 
     dsm: _ResidentialHeatDsmConfig = Field(
         default_factory=_ResidentialHeatDsmConfig,
-        description="Configuration options for residential heat demand-side management (DSM). See `smartEn DSM study <https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf>`_ (Appendix A) for methodology.",
+        description="Configuration options for residential heat demand-side management (DSM). See `smartEn DSM study <https://smarten.eu/wp-content/uploads/2022/10/SmartEN-DSF-benefits-2030-Report_DIGITAL-1.pdf>`_ (Appendix A) for methodology.",
     )
 
 
@@ -189,7 +190,11 @@ class _CHPConfig(BaseModel):
     )
     fuel: list[str] = Field(
         default_factory=lambda: ["solid biomass", "gas"],
-        description='Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are "gas", "oil", "methanol", "lignite", "coal" as well as "solid biomass". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added.',
+        description='Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are "gas", "oil", "methanol", "lignite", "coal" as well as "solid biomass". For all fuels except solid biomass, the techno-economic data from gas CHP is used.',
+    )
+    fuel_cc: list[str] = Field(
+        default_factory=lambda: ["solid biomass", "gas"],
+        description="Fuels for which CHP plants with carbon capture (CC) are added in addition to the CHP plants without carbon capture. Only fuels that are also listed in `fuel` are considered. Set to an empty list to disable CHP with carbon capture.",
     )
     micro_chp: bool = Field(
         False,
@@ -233,7 +238,9 @@ class _TransmissionEfficiencyConfig(BaseModel):
             "H2 pipeline",
             "H2 pipeline retrofitted",
             "gas pipeline",
+            "gas pipeline new",
             "electricity distribution grid",
+            "CO2 pipeline",
         ],
         description="Switch to select the carriers for which transmission efficiency is to be added. Carriers not listed assume lossless transmission.",
     )
@@ -268,10 +275,23 @@ class _TransmissionEfficiencyConfig(BaseModel):
         alias="gas pipeline",
         description="Gas pipeline transmission efficiency.",
     )
+    gas_pipeline_new: dict[str, float] = Field(
+        default_factory=lambda: {
+            "efficiency_per_1000km": 1,
+            "compression_per_1000km": 0.01,
+        },
+        alias="gas pipeline new",
+        description="Gas pipeline new transmission efficiency.",
+    )
     electricity_distribution_grid: dict[str, float] = Field(
         default_factory=lambda: {"efficiency_static": 0.97},
         alias="electricity distribution grid",
         description="Electricity distribution grid efficiency.",
+    )
+    CO2_pipeline: dict[str, float] = Field(
+        default_factory=lambda: {"efficiency_per_1000km": 1},
+        alias="CO2 pipeline",
+        description="CO2 pipeline transmission efficiency.",
     )
 
     model_config = ConfigDict(populate_by_name=True)
@@ -329,7 +349,7 @@ class _EnhancedGeothermalConfig(BaseModel):
     )
     sustainability_factor: float = Field(
         0.0025,
-        description="Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_).",
+        description="Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur/blob/master/scripts/build_egs_potentials.py>`_).",
     )
 
 
@@ -347,6 +367,38 @@ class _SolidBiomassImportConfig(BaseModel):
     )
     upstream_emissions_factor: float = Field(
         0.1, description="Upstream emissions of solid biomass imports."
+    )
+
+
+class _CorridorConfig(BaseModel):
+    """Configuration for the candidate corridors of one carrier."""
+
+    min_degree: int = Field(
+        1,
+        ge=0,
+        description="Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+    )
+    max_offshore_distance: float = Field(
+        float("inf"),
+        gt=0,
+        description="Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+    )
+
+
+class _TransportCorridorsConfig(BaseModel):
+    """Configuration for `sector.transport_corridors` settings."""
+
+    H2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new hydrogen pipelines.",
+    )
+    CO2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new carbon dioxide pipelines.",
+    )
+    biomass: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for solid biomass and municipal solid waste transport.",
     )
 
 
@@ -372,19 +424,50 @@ class _ImportsConfig(BaseModel):
     )
 
 
+class _IndustryHeatConfig(BaseModel):
+    """Configuration for `sector.industry_heat` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Optimise the supply of industry process heat above 100 °C per temperature band instead of using exogenous fuel shares. Does not cover the steel sector. Uses today's specific energy consumption and no existing plants, so that the first horizon of a myopic pathway can replace all of today's heat supply.",
+    )
+    min_part_load: float = Field(
+        0.8,
+        ge=0,
+        le=1,
+        description="Minimum part load of newly built industry process heat supply.",
+    )
+    exclude_sectors: list[str] = Field(
+        default_factory=lambda: ["Pulp production"],
+        description="Industry sectors in `data/industry_heat_temperature_shares.csv` that keep exogenous fuel shares. Pulp production is excluded by default because it burns its own by-products.",
+    )
+    technologies: dict[
+        Literal["heat100-200", "heat200-500", "heat500+"],
+        list[
+            Literal["solid biomass", "gas", "hydrogen", "heat pump", "electric boiler"]
+        ],
+    ] = Field(
+        default_factory=lambda: {
+            "heat100-200": ["solid biomass", "gas", "heat pump", "electric boiler"],
+            "heat200-500": ["solid biomass", "gas", "hydrogen"],
+            "heat500+": ["gas", "hydrogen"],
+        },
+        description="Supply technologies per temperature band in °C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
+    )
+
+
 class SectorConfig(BaseModel):
     """Configuration for `sector` settings."""
 
-    transport: bool = Field(True, description="Flag to include transport sector.")
-    heating: bool = Field(True, description="Flag to include heating sector.")
-    biomass: bool = Field(True, description="Flag to include biomass sector.")
-    industry: bool = Field(True, description="Flag to include industry sector.")
-    shipping: bool = Field(True, description="Flag to include shipping sector.")
-    aviation: bool = Field(True, description="Flag to include aviation sector.")
-    agriculture: bool = Field(True, description="Flag to include agriculture sector.")
-    fossil_fuels: bool = Field(
-        True, description="Flag to include imports of fossil fuels."
-    )
+    enabled: bool = Field(True, description="Master flag to enable sector coupling.")
+    transport: bool = Field(True, description="Add transport sector.")
+    heating: bool = Field(True, description="Add heating sector.")
+    biomass: bool = Field(True, description="Add biomass sector.")
+    industry: bool = Field(True, description="Add industry sector.")
+    shipping: bool = Field(True, description="Add shipping sector.")
+    aviation: bool = Field(True, description="Add aviation sector.")
+    agriculture: bool = Field(True, description="Add agriculture sector.")
+    fossil_fuels: bool = Field(True, description="Allow imports of fossil fuels.")
 
     district_heating: _DistrictHeatingConfig = Field(
         default_factory=_DistrictHeatingConfig,
@@ -582,7 +665,7 @@ class SectorConfig(BaseModel):
     )
     shipping_methanol_efficiency: float = Field(
         0.46,
-        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
     )
     shipping_oil_efficiency: float = Field(
         0.40,
@@ -628,9 +711,15 @@ class SectorConfig(BaseModel):
         default_factory=_RetrofittingConfig, description="Retrofitting configuration."
     )
 
-    tes: bool = Field(
+    ttes: bool = Field(
         True,
-        description="Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES).",
+        description="Add tank thermal energy storage (water tanks) in all heat systems. Pit and aquifer thermal energy storage are controlled separately by `district_heating: ptes: enable` and `district_heating: ates: enable`.",
+    )
+    tes: bool | None = Field(
+        None,
+        deprecated=True,
+        exclude=True,
+        description="Deprecated, use `ttes` and `district_heating: ptes: enable`.",
     )
     boilers: bool = Field(
         True, description="Add option for transforming gas into heat using gas boilers."
@@ -668,6 +757,10 @@ class SectorConfig(BaseModel):
     coal_cc: bool = Field(
         False, description="Add option for coal CHPs with carbon capture."
     )
+    ccgt_cc: bool = Field(
+        False,
+        description="Add option for gas CCGTs with post-combustion carbon capture.",
+    )
     dac: bool = Field(True, description="Add option for Direct Air Capture (DAC).")
     co2_vent: bool = Field(
         False,
@@ -696,6 +789,10 @@ class SectorConfig(BaseModel):
     hydrogen_turbine: bool = Field(
         True,
         description="Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs.",
+    )
+    electrolysis: bool = Field(
+        True,
+        description="Add option to include hydrogen electrolysis for power-to-gas conversion.",
     )
     SMR: bool = Field(
         True,
@@ -742,9 +839,6 @@ class SectorConfig(BaseModel):
     co2_sequestration_cost: float = Field(
         30, description="The cost of sequestering a ton of CO2 (currency/tCO2)."
     )
-    co2_sequestration_lifetime: int = Field(
-        50, description="The lifetime of a CO2 sequestration site (years)."
-    )
     co2_spatial: bool = Field(
         True,
         description="Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
@@ -784,7 +878,7 @@ class SectorConfig(BaseModel):
         description="The location where hydrogen underground storage can be located. Onshore, nearshore, offshore means it must be located more than 50 km away from the sea, within 50 km of the sea, or within the sea itself respectively.",
     )
 
-    methanol: _MethanolConfig = Field(
+    methanol: _MethanolConfig | bool = Field(
         default_factory=_MethanolConfig, description="Methanol configuration."
     )
 
@@ -837,10 +931,6 @@ class SectorConfig(BaseModel):
         True,
         description="Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
     )
-    electricity_distribution_grid_cost_factor: float = Field(
-        1.0,
-        description="Multiplies the investment cost of the electricity distribution grid.",
-    )
     electricity_grid_connection: bool = Field(
         True,
         description="Add the cost of electricity grid connection for onshore wind and solar.",
@@ -852,6 +942,10 @@ class SectorConfig(BaseModel):
     )
 
     H2_network: bool = Field(True, description="Add option for new hydrogen pipelines.")
+    transport_corridors: _TransportCorridorsConfig = Field(
+        default_factory=_TransportCorridorsConfig,
+        description="Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport, derived from the Delaunay triangulation of the regions.",
+    )
     gas_network: bool = Field(
         True,
         description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
@@ -862,7 +956,7 @@ class SectorConfig(BaseModel):
     )
     H2_retrofit_capacity_per_CH4: float = Field(
         0.6,
-        description="The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+        description="The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://web.archive.org/web/20230413224820/https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
     )
     gas_network_connectivity_upgrade: float = Field(
         1,
@@ -891,9 +985,14 @@ class SectorConfig(BaseModel):
         False, description="Add option to capture CO2 from biomass upgrading."
     )
 
-    conventional_generation: dict[str, str] = Field(
+    conventional_generation: dict[str, str] | list = Field(
         default_factory=lambda: {"OCGT": "gas", "CCGT": "gas"},
         description="Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
+    )
+
+    industry_heat: _IndustryHeatConfig = Field(
+        default_factory=_IndustryHeatConfig,
+        description="Endogenous supply of industry process heat.",
     )
 
     biomass_to_liquid: bool = Field(
@@ -918,7 +1017,12 @@ class SectorConfig(BaseModel):
         description="Add option for transforming solid biomass into hydrogen with carbon capture.",
     )
     municipal_solid_waste: bool = Field(
-        False, description="Add option for municipal solid waste."
+        False,
+        description="Add municipal solid waste as carbon-neutral fuel for waste-to-energy plants. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`.",
+    )
+    waste_spatial: bool = Field(
+        False,
+        description="Model plastic and municipal solid waste for each bus region instead of one European bus. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`. Waste can be transported between regions if `biomass_transport` is enabled.",
     )
 
     limit_max_growth: _LimitMaxGrowthConfig = Field(
