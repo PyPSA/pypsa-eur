@@ -1836,6 +1836,30 @@ def add_h2_gas_infrastructure(
 
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
+        # Include all nodes required by the clustered gas network
+        pipeline_nodes = pd.Index(
+            pd.concat([gas_pipes.bus0, gas_pipes.bus1]).unique()
+        )
+
+        missing_gas_nodes = pipeline_nodes.difference(
+            n.buses.loc[n.buses.carrier == "gas", "location"]
+        )
+
+        if len(missing_gas_nodes):
+            logger.info(
+                "Adding %d additional gas buses for pipeline connectivity: %s",
+                len(missing_gas_nodes),
+                missing_gas_nodes.tolist(),
+            )
+
+            n.add(
+                "Bus",
+                missing_gas_nodes + " gas",
+                location=missing_gas_nodes,
+                carrier="gas",
+                unit="MWh_LHV",
+            )
+
         if options["H2_retrofit"]:
             gas_pipes["p_nom_max"] = gas_pipes.p_nom
             gas_pipes["p_nom_min"] = 0.0
@@ -1950,6 +1974,31 @@ def add_h2_gas_infrastructure(
         fr = "gas pipeline"
         to = "H2 pipeline retrofitted"
         h2_pipes = gas_pipes.rename(index=lambda x: x.replace(fr, to))
+
+        # Include all nodes required by the clustered h2 network
+        h2_pipes_nodes = pd.Index(
+            pd.concat([h2_pipes.bus0, h2_pipes.bus1]).unique()
+        )
+
+        existing_h2_nodes = n.buses.loc[
+            n.buses.carrier == "H2", "location"
+        ]
+
+        missing_h2_nodes = h2_pipes_nodes.difference(existing_h2_nodes)
+
+        if len(missing_h2_nodes):
+            logger.info(
+                "Adding %d additional H2 buses for pipeline connectivity.",
+                len(missing_h2_nodes),
+            )
+
+            n.add(
+                "Bus",
+                missing_h2_nodes + " H2",
+                location=missing_h2_nodes,
+                carrier="H2",
+                unit="MWh_LHV",
+            )
 
         n.add(
             "Link",
