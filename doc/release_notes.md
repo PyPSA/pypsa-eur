@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* data: Upgrade techno-economic assumptions to `technology-data` v0.16.0. This changes default results. Affected are nuclear fuel cost, `central solid biomass CHP CC` cost and efficiency, `waste CHP CC` (`industry: waste_to_energy_cc`) and `biogas to gas CC` ([#XXXX](https://github.com/PyPSA/pypsa-eur/pull/XXXX)).
+
 * Feature: Industrial electricity demand follows hourly load profiles per industry branch from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) instead of a flat profile. Enabled by default; disable with `industry: temporal_electricity_industry_load: false` ([#1875](https://github.com/PyPSA/pypsa-eur/pull/1875)).
 * Feature: New option `sector: industry_heat: enable` to optimise the supply of industry process heat above 100 °C in three temperature bands with boilers, direct firing, heat pumps and carbon capture, instead of using exogenous fuel shares. The steel sector is not covered ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 
