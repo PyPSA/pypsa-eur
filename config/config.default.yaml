@@ -930,7 +930,7 @@ sector:
     excluder_resolution: 250
     max_land_usage: 0.2
     application_per_sqkm: 1500
-    number_years: 25
+    application_years: 25
     use_waste_heat: 0.25
   afforestation:
     enable: false
@@ -939,7 +939,7 @@ sector:
     natura: false
     excluder_resolution: 250
     max_land_usage: 1.0
-    crcf_efficiency: 0.8
+    credited_share: 0.8
   co2_vent: false
   heat_vent:
     urban central: true

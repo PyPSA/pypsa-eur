@@ -474,7 +474,7 @@ class _BiocharConfig(_LandEligibilityConfig):
         1500,
         description="Biochar that a square kilometre of land can take up in total (t/km2).",
     )
-    number_years: float = Field(
+    application_years: float = Field(
         25,
         description="Years over which the total biochar application is spread.",
     )
@@ -493,7 +493,7 @@ class _AfforestationConfig(_LandEligibilityConfig):
         default_factory=lambda: [29],
         description="CORINE Land Cover codes of the eligible land (transitional woodland-shrub).",
     )
-    crcf_efficiency: float = Field(
+    credited_share: float = Field(
         0.8,
         ge=0,
         le=1,

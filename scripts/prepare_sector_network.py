@@ -1279,7 +1279,9 @@ def add_biochar(
     co2_per_tonne_biochar = 1 / (
         costs.at[tech, "biomass-input"] * costs.at[tech, "biochar-output"]
     )
-    biochar_per_year = land * config["application_per_sqkm"] / config["number_years"]
+    biochar_per_year = (
+        land * config["application_per_sqkm"] / config["application_years"]
+    )
     potential = biochar_per_year * co2_per_tonne_biochar
 
     urban_central = spatial.nodes + " urban central heat"
@@ -1331,7 +1333,7 @@ def add_afforestation(
     n : pypsa.Network
         The PyPSA network container object
     costs : pd.DataFrame
-        Costs and parameters with an "Afforestation" entry (investment per hectare)
+        Costs and parameters with an "afforestation restorative" entry (investment per hectare)
     spatial : SimpleNamespace
         Spatial configuration containing the nodes
     options : dict
@@ -1345,9 +1347,9 @@ def add_afforestation(
     logger.info("Adding afforestation.")
 
     df = pd.read_csv(potentials_file, index_col=0).reindex(spatial.nodes)
-    credited = options["afforestation"]["crcf_efficiency"]
+    credited = options["afforestation"]["credited_share"]
 
-    tech = "Afforestation"
+    tech = "afforestation restorative"
     annuity = calculate_annuity(df["rotation_age"], costs.at[tech, "discount rate"])
     cost_per_hectare = (
         costs.at[tech, "investment"] * (annuity + costs.at[tech, "FOM"] / 100) * nyears

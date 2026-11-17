@@ -5518,7 +5518,7 @@
               "description": "Biochar that a square kilometre of land can take up in total (t/km2).",
               "type": "number"
             },
-            "number_years": {
+            "application_years": {
               "default": 25,
               "description": "Years over which the total biochar application is spread.",
               "type": "number"
@@ -5564,7 +5564,7 @@
               "minimum": 0,
               "type": "number"
             },
-            "crcf_efficiency": {
+            "credited_share": {
               "default": 0.8,
               "description": "Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012), after the uncertainty deduction and the buffer-pool contribution.",
               "maximum": 1,
@@ -6880,7 +6880,7 @@
           "minimum": 0,
           "type": "number"
         },
-        "crcf_efficiency": {
+        "credited_share": {
           "default": 0.8,
           "description": "Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012), after the uncertainty deduction and the buffer-pool contribution.",
           "maximum": 1,
@@ -7447,7 +7447,7 @@
           "description": "Biochar that a square kilometre of land can take up in total (t/km2).",
           "type": "number"
         },
-        "number_years": {
+        "application_years": {
           "default": 25,
           "description": "Years over which the total biochar application is spread.",
           "type": "number"
@@ -13430,7 +13430,7 @@
               "description": "Biochar that a square kilometre of land can take up in total (t/km2).",
               "type": "number"
             },
-            "number_years": {
+            "application_years": {
               "default": 25,
               "description": "Years over which the total biochar application is spread.",
               "type": "number"
@@ -13476,7 +13476,7 @@
               "minimum": 0,
               "type": "number"
             },
-            "crcf_efficiency": {
+            "credited_share": {
               "default": 0.8,
               "description": "Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012), after the uncertainty deduction and the buffer-pool contribution.",
               "maximum": 1,
