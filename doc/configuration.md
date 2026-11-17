@@ -317,6 +317,12 @@ Configuration for hydropower.
 
 {{ schema_table("renewable.hydro") }}
 
+Land-eligibility settings for enhanced rock weathering, reusing the same land-eligibility
+analysis machinery as `onwind`/`offwind`/`solar` above (see [determine_rock_weathering_availability_matrix][]).
+Intended to be shared by future land-based CDR technologies (e.g. biochar, afforestation) too.
+
+{{ schema_table("renewable.rock_weathering") }}
+
 **YAML Syntax**
 
 ```yaml

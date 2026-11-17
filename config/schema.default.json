@@ -9394,6 +9394,49 @@
         }
       }
     },
+    "_RockWeatheringEligibilityConfig": {
+      "description": "Configuration for enhanced rock weathering land-eligibility settings.",
+      "properties": {
+        "corine": {
+          "description": "Specifies areas according to CORINE Land Cover codes which are generally eligible for enhanced rock weathering (non-irrigated arable land, permanent crops, rice fields).",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "natura": {
+          "default": false,
+          "description": "Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if `true`.",
+          "markdownDescription": "Switch to exclude [Natura 2000 ](https://en.wikipedia.org/wiki/Natura_2000) natural protection areas. Area is excluded if `true`.",
+          "type": "boolean"
+        },
+        "cutout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": "default",
+          "description": "Specifies the weather data cutout file(s) to use."
+        },
+        "excluder_resolution": {
+          "default": 250,
+          "description": "Resolution in meters on which to perform geographical eligibility analysis.",
+          "type": "number"
+        },
+        "min_mean_temp": {
+          "default": 10,
+          "description": "Exclude grid cells with annual mean air temperature below this value in degrees Celsius, since rock weathering kinetics slow down in cold climates.",
+          "type": "number"
+        }
+      }
+    },
     "_ScenariosConfig": {
       "description": "Configuration for `run.scenarios` level.",
       "properties": {

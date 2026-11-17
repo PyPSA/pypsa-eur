@@ -191,6 +191,11 @@ def get_compose_inputs(w):
                 if cfg["sector"]["district_heating"]["ates"]["enable"]
                 else []
             ),
+            rock_weathering_potentials=(
+                resources("rock_weathering_available_land.csv")
+                if cfg["sector"]["rock_weathering"]
+                else []
+            ),
         )
         inputs.update(sector_inputs)
 

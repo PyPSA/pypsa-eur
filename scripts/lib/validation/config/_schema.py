@@ -30,6 +30,7 @@ from scripts.lib.validation.config.load import LoadConfig
 from scripts.lib.validation.config.overpass_api import OverpassApiConfig
 from scripts.lib.validation.config.plotting import PlottingConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
+from scripts.lib.validation.config.rock_weathering import RockWeatheringConfig
 from scripts.lib.validation.config.run import RunConfig
 from scripts.lib.validation.config.sector import SectorConfig
 from scripts.lib.validation.config.snapshots import SnapshotsConfig
