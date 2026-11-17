@@ -104,6 +104,11 @@ def get_compose_inputs(w):
             ),
             clustered_pop_layout=resources("pop_layout.csv"),
             industrial_demand=resources("industrial_energy_demand_{horizon}.csv"),
+            industrial_electricity_profiles=(
+                resources("industrial_electricity_profiles_{horizon}.csv")
+                if cfg["industry"]["temporal_electricity_industry_load"]
+                else []
+            ),
             hourly_heat_demand_total=resources("hourly_heat_demand_total.nc"),
             industrial_production=resources("industrial_production_{horizon}.csv"),
             industry_sector_ratios=(

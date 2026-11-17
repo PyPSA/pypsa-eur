@@ -473,6 +473,7 @@ https://conda.anaconda.org/conda-forge/noarch/parso-0.8.7-pyhcf101f3_0.conda#398
 https://conda.anaconda.org/conda-forge/noarch/jedi-0.20.0-pyhcf101f3_0.conda#c2b3d37aa1411031126036ee76a8a861
 https://conda.anaconda.org/conda-forge/noarch/ipython_pygments_lexers-1.1.1-pyhd8ed1ab_0.conda#bd80ba060603cc228d9d81c257093119
 https://conda.anaconda.org/conda-forge/noarch/ipython-9.17.1-pyh53cf698_0.conda#0e28933e51c1d05c179bfd595ead8aee
+https://conda.anaconda.org/conda-forge/noarch/holidays-0.108-pyh5ded981_0.conda#c2b13fd1e89c8796cba1a3df2cf1659c
 https://conda.anaconda.org/gurobi/linux-64/gurobi-13.0.3-py313_0.conda#7988aca38eb3d41c2d13b2e63bc0781d
 https://conda.anaconda.org/conda-forge/linux-64/pango-1.58.2-h7bb47b9_1.conda#0b889b1c6b472d215d6332c6b195589c
 https://conda.anaconda.org/conda-forge/linux-64/libharfbuzz-devel-14.4.0-h23af247_1.conda#148cd995f5ba8af22412a4258abc2f94

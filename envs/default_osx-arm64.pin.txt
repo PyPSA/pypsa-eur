@@ -473,6 +473,7 @@ https://conda.anaconda.org/conda-forge/osx-arm64/libgdal-hdf5-3.12.2-h48d8a21_1.
 https://conda.anaconda.org/conda-forge/osx-arm64/libgdal-hdf4-3.12.2-h44e20f9_1.conda#47e896a67e8246c6ef98f9dc13181ef1
 https://conda.anaconda.org/conda-forge/osx-arm64/libgdal-netcdf-3.12.2-h4eb6350_1.conda#655acd448c73740abdb3716407a3a650
 https://conda.anaconda.org/conda-forge/osx-arm64/jpype1-1.7.1-py313h5ddff85_1.conda#379f56b2765056257b79dd4fdaf8df68
+https://conda.anaconda.org/conda-forge/noarch/holidays-0.108-pyh5ded981_0.conda#c2b13fd1e89c8796cba1a3df2cf1659c
 https://conda.anaconda.org/gurobi/osx-arm64/gurobi-13.0.3-py313_0.conda#b5fe45601547aa211c365d0bf0b64095
 https://conda.anaconda.org/conda-forge/osx-arm64/pango-1.58.2-hf9b25ef_1.conda#4a71e68873ce37dc6da671a899d09a46
 https://conda.anaconda.org/conda-forge/osx-arm64/libharfbuzz-devel-14.4.0-hcda0f7c_1.conda#8f48ae71e941c7e6201f80863c6757c0

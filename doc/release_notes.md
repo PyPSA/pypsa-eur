@@ -17,6 +17,8 @@
 
 * Fix: Ammonia production of countries without listed ammonia plants is no longer dropped. These countries now use the distribution key of the chemical industry ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
 
+* Feature: Industrial electricity demand follows hourly load profiles per industry branch from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) instead of a flat profile. Enabled by default; disable with `industry: temporal_electricity_industry_load: false` ([#1875](https://github.com/PyPSA/pypsa-eur/pull/1875)).
+
 * Feature: New option `sector: industry_heat: enable` to optimise the supply of industry process heat above 100 °C in three temperature bands with boilers, direct firing, heat pumps and carbon capture, instead of using exogenous fuel shares. The steel sector is not covered ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 
 * Feature: New option `sector: waste_spatial` to model waste for waste-to-energy plants per bus region, with transport if `sector: biomass_transport` is enabled. By default, waste is now collected in one European bus ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).
