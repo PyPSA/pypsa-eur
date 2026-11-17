@@ -1837,9 +1837,7 @@ def add_h2_gas_infrastructure(
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
         # Include all nodes required by the clustered gas network
-        pipeline_nodes = pd.Index(
-            pd.concat([gas_pipes.bus0, gas_pipes.bus1]).unique()
-        )
+        pipeline_nodes = pd.Index(pd.concat([gas_pipes.bus0, gas_pipes.bus1]).unique())
 
         missing_gas_nodes = pipeline_nodes.difference(
             n.buses.loc[n.buses.carrier == "gas", "location"]
@@ -1976,13 +1974,9 @@ def add_h2_gas_infrastructure(
         h2_pipes = gas_pipes.rename(index=lambda x: x.replace(fr, to))
 
         # Include all nodes required by the clustered h2 network
-        h2_pipes_nodes = pd.Index(
-            pd.concat([h2_pipes.bus0, h2_pipes.bus1]).unique()
-        )
+        h2_pipes_nodes = pd.Index(pd.concat([h2_pipes.bus0, h2_pipes.bus1]).unique())
 
-        existing_h2_nodes = n.buses.loc[
-            n.buses.carrier == "H2", "location"
-        ]
+        existing_h2_nodes = n.buses.loc[n.buses.carrier == "H2", "location"]
 
         missing_h2_nodes = h2_pipes_nodes.difference(existing_h2_nodes)
 
