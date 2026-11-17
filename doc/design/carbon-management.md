@@ -99,18 +99,18 @@ across horizons.
 
 ## Land-based removal
 
-Three optional technologies remove CO~2~ from the atmosphere permanently
+Four optional technologies remove CO~2~ from the atmosphere permanently
 without geological storage [@fernandesExploringCarbon2026], so they do not
-count towards the sequestration limit. Their potential per region follows from the eligible land cover, of
-which a configurable share is used. They remove CO~2~ at a constant rate over
-the year.
+count towards the sequestration limit. Their potential per region follows
+from the land that is eligible, and they remove CO~2~ at a constant rate while
+they operate.
 
 - **Enhanced rock weathering** [@streflerPotentialCosts2018] spreads ground
-  basalt on cropland in regions that are warm enough. It consumes electricity
-  for grinding.
-- **Biochar** from the pyrolysis of solid biomass is applied to cropland. Only
-  the carbon that stays in the biochar counts as removal. The process consumes
-  electricity and can feed heat into district heating.
+  basalt on a share of the cropland in regions that are warm enough. It
+  consumes electricity for grinding.
+- **Biochar** from the pyrolysis of solid biomass is applied to a share of the
+  cropland. Only the carbon that stays in the biochar counts as removal. The
+  process consumes electricity and can feed heat into district heating.
 - **Afforestation** of transitional woodland and shrubland removes CO~2~ at the
   mean growth rate of a new forest over its rotation [@pilliJRCForest2024]. Only
   a credited share counts as removal. The investment per hectare is annualised
