@@ -52,7 +52,7 @@ from scripts.prepare_sector_network import (
 
 logger = logging.getLogger(__name__)
 
-SECTOR_RENEWABLE_CARRIERS = {"solar rooftop", "perennials"}
+SECTOR_RENEWABLE_CARRIERS = {"solar rooftop", "afforestation", "biochar", "perennials"}
 
 
 if __name__ == "__main__":

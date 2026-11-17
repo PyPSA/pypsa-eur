@@ -1203,6 +1203,26 @@
             }
           }
         },
+        "co2_removal_data": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "co2stop": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -5417,26 +5437,162 @@
           "description": "Add option for Direct Air Capture (DAC).",
           "type": "boolean"
         },
+        "rock_weathering": {
+          "description": "Configuration for `sector.rock_weathering` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add this carbon dioxide removal option.",
+              "type": "boolean"
+            },
+            "corine": {
+              "description": "CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Exclude Natura 2000 protection areas.",
+              "type": "boolean"
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters of the land eligibility analysis.",
+              "type": "number"
+            },
+            "max_land_usage": {
+              "default": 0.2,
+              "description": "Maximum share of the eligible land that is used.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            "min_mean_temp": {
+              "default": 10,
+              "description": "Annual mean air temperature in degrees Celsius below which land is excluded, because weathering slows down in cold climates.",
+              "type": "number"
+            },
+            "co2_removal_per_sqkm": {
+              "default": 309,
+              "description": "CO2 removed per square kilometre of land and year (t/km2/a).",
+              "type": "number"
+            }
+          }
+        },
+        "biochar": {
+          "description": "Configuration for `sector.biochar` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add this carbon dioxide removal option.",
+              "type": "boolean"
+            },
+            "corine": {
+              "description": "CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Exclude Natura 2000 protection areas.",
+              "type": "boolean"
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters of the land eligibility analysis.",
+              "type": "number"
+            },
+            "max_land_usage": {
+              "default": 0.2,
+              "description": "Maximum share of the eligible land that is used.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            "application_per_sqkm": {
+              "default": 1500,
+              "description": "Biochar that a square kilometre of land can take up in total (t/km2).",
+              "type": "number"
+            },
+            "application_years": {
+              "default": 25,
+              "description": "Years over which the total biochar application is spread.",
+              "type": "number"
+            },
+            "use_waste_heat": {
+              "default": 0.25,
+              "description": "Share of the pyrolysis heat output that is fed into district heating networks.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "afforestation": {
+          "description": "Configuration for `sector.afforestation` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add this carbon dioxide removal option.",
+              "type": "boolean"
+            },
+            "corine": {
+              "description": "CORINE Land Cover codes of the eligible land (transitional woodland-shrub).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Exclude Natura 2000 protection areas.",
+              "type": "boolean"
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters of the land eligibility analysis.",
+              "type": "number"
+            },
+            "max_land_usage": {
+              "default": 1.0,
+              "description": "Maximum share of the eligible land that is used.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            "credited_share": {
+              "default": 0.8,
+              "description": "Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012), after the uncertainty deduction and the buffer-pool contribution.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          }
+        },
         "perennials": {
           "description": "Configuration for `sector.perennials` settings.",
           "properties": {
             "enable": {
               "default": false,
-              "description": "Add the conversion of cropland freed by the phase-out of unsustainable bioliquids to perennial grass as carbon dioxide removal option.",
+              "description": "Add this carbon dioxide removal option.",
               "type": "boolean"
             },
-            "cropland_per_bioliquids": {
+            "hectares_per_mwh": {
               "default": 0.06,
               "description": "Cropland freed per unit of unsustainable bioliquids phased out (ha/MWh/a).",
               "minimum": 0,
               "type": "number"
             },
-            "sequestration": {
+            "co2_removal_per_hectare": {
               "default": 2,
-              "description": "CO2 removal credited for the soil carbon gain under perennial grass (tCO2/ha/a).",
+              "description": "CO2 removal credited for the soil carbon gain under perennial grass (t/ha/a).",
               "type": "number"
             },
-            "grass_yield": {
+            "yield_per_hectare": {
               "default": 7.5,
               "description": "Dry matter yield of the perennial grass that is refined to biogas (t/ha/a).",
               "type": "number"
@@ -6725,6 +6881,47 @@
         }
       }
     },
+    "_AfforestationConfig": {
+      "description": "Configuration for `sector.afforestation` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Add this carbon dioxide removal option.",
+          "type": "boolean"
+        },
+        "corine": {
+          "description": "CORINE Land Cover codes of the eligible land (transitional woodland-shrub).",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "natura": {
+          "default": false,
+          "description": "Exclude Natura 2000 protection areas.",
+          "type": "boolean"
+        },
+        "excluder_resolution": {
+          "default": 250,
+          "description": "Resolution in meters of the land eligibility analysis.",
+          "type": "number"
+        },
+        "max_land_usage": {
+          "default": 1.0,
+          "description": "Maximum share of the eligible land that is used.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "credited_share": {
+          "default": 0.8,
+          "description": "Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012), after the uncertainty deduction and the buffer-pool contribution.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        }
+      }
+    },
     "_AggPNomLimitsConfig": {
       "description": "Configuration for `solving.agg_p_nom_limits` settings.",
       "properties": {
@@ -7243,6 +7440,57 @@
           },
           "description": "Named groups of bus carriers that are aggregated into a single balance timeseries plot.",
           "type": "object"
+        }
+      }
+    },
+    "_BiocharConfig": {
+      "description": "Configuration for `sector.biochar` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Add this carbon dioxide removal option.",
+          "type": "boolean"
+        },
+        "corine": {
+          "description": "CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "natura": {
+          "default": false,
+          "description": "Exclude Natura 2000 protection areas.",
+          "type": "boolean"
+        },
+        "excluder_resolution": {
+          "default": 250,
+          "description": "Resolution in meters of the land eligibility analysis.",
+          "type": "number"
+        },
+        "max_land_usage": {
+          "default": 0.2,
+          "description": "Maximum share of the eligible land that is used.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "application_per_sqkm": {
+          "default": 1500,
+          "description": "Biochar that a square kilometre of land can take up in total (t/km2).",
+          "type": "number"
+        },
+        "application_years": {
+          "default": 25,
+          "description": "Years over which the total biochar application is spread.",
+          "type": "number"
+        },
+        "use_waste_heat": {
+          "default": 0.25,
+          "description": "Share of the pyrolysis heat output that is fed into district heating networks.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
         }
       }
     },
@@ -9077,21 +9325,21 @@
       "properties": {
         "enable": {
           "default": false,
-          "description": "Add the conversion of cropland freed by the phase-out of unsustainable bioliquids to perennial grass as carbon dioxide removal option.",
+          "description": "Add this carbon dioxide removal option.",
           "type": "boolean"
         },
-        "cropland_per_bioliquids": {
+        "hectares_per_mwh": {
           "default": 0.06,
           "description": "Cropland freed per unit of unsustainable bioliquids phased out (ha/MWh/a).",
           "minimum": 0,
           "type": "number"
         },
-        "sequestration": {
+        "co2_removal_per_hectare": {
           "default": 2,
-          "description": "CO2 removal credited for the soil carbon gain under perennial grass (tCO2/ha/a).",
+          "description": "CO2 removal credited for the soil carbon gain under perennial grass (t/ha/a).",
           "type": "number"
         },
-        "grass_yield": {
+        "yield_per_hectare": {
           "default": 7.5,
           "description": "Dry matter yield of the perennial grass that is refined to biogas (t/ha/a).",
           "type": "number"
@@ -9343,6 +9591,50 @@
           "default": true,
           "description": "Weight the costs of retrofitting depending on labour/material costs per country.",
           "type": "boolean"
+        }
+      }
+    },
+    "_RockWeatheringConfig": {
+      "description": "Configuration for `sector.rock_weathering` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Add this carbon dioxide removal option.",
+          "type": "boolean"
+        },
+        "corine": {
+          "description": "CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "natura": {
+          "default": false,
+          "description": "Exclude Natura 2000 protection areas.",
+          "type": "boolean"
+        },
+        "excluder_resolution": {
+          "default": 250,
+          "description": "Resolution in meters of the land eligibility analysis.",
+          "type": "number"
+        },
+        "max_land_usage": {
+          "default": 0.2,
+          "description": "Maximum share of the eligible land that is used.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "min_mean_temp": {
+          "default": 10,
+          "description": "Annual mean air temperature in degrees Celsius below which land is excluded, because weathering slows down in cold climates.",
+          "type": "number"
+        },
+        "co2_removal_per_sqkm": {
+          "default": 309,
+          "description": "CO2 removed per square kilometre of land and year (t/km2/a).",
+          "type": "number"
         }
       }
     },
@@ -13123,26 +13415,162 @@
           "description": "Add option for Direct Air Capture (DAC).",
           "type": "boolean"
         },
+        "rock_weathering": {
+          "description": "Configuration for `sector.rock_weathering` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add this carbon dioxide removal option.",
+              "type": "boolean"
+            },
+            "corine": {
+              "description": "CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Exclude Natura 2000 protection areas.",
+              "type": "boolean"
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters of the land eligibility analysis.",
+              "type": "number"
+            },
+            "max_land_usage": {
+              "default": 0.2,
+              "description": "Maximum share of the eligible land that is used.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            "min_mean_temp": {
+              "default": 10,
+              "description": "Annual mean air temperature in degrees Celsius below which land is excluded, because weathering slows down in cold climates.",
+              "type": "number"
+            },
+            "co2_removal_per_sqkm": {
+              "default": 309,
+              "description": "CO2 removed per square kilometre of land and year (t/km2/a).",
+              "type": "number"
+            }
+          }
+        },
+        "biochar": {
+          "description": "Configuration for `sector.biochar` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add this carbon dioxide removal option.",
+              "type": "boolean"
+            },
+            "corine": {
+              "description": "CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Exclude Natura 2000 protection areas.",
+              "type": "boolean"
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters of the land eligibility analysis.",
+              "type": "number"
+            },
+            "max_land_usage": {
+              "default": 0.2,
+              "description": "Maximum share of the eligible land that is used.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            "application_per_sqkm": {
+              "default": 1500,
+              "description": "Biochar that a square kilometre of land can take up in total (t/km2).",
+              "type": "number"
+            },
+            "application_years": {
+              "default": 25,
+              "description": "Years over which the total biochar application is spread.",
+              "type": "number"
+            },
+            "use_waste_heat": {
+              "default": 0.25,
+              "description": "Share of the pyrolysis heat output that is fed into district heating networks.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "afforestation": {
+          "description": "Configuration for `sector.afforestation` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add this carbon dioxide removal option.",
+              "type": "boolean"
+            },
+            "corine": {
+              "description": "CORINE Land Cover codes of the eligible land (transitional woodland-shrub).",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "natura": {
+              "default": false,
+              "description": "Exclude Natura 2000 protection areas.",
+              "type": "boolean"
+            },
+            "excluder_resolution": {
+              "default": 250,
+              "description": "Resolution in meters of the land eligibility analysis.",
+              "type": "number"
+            },
+            "max_land_usage": {
+              "default": 1.0,
+              "description": "Maximum share of the eligible land that is used.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            "credited_share": {
+              "default": 0.8,
+              "description": "Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012), after the uncertainty deduction and the buffer-pool contribution.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          }
+        },
         "perennials": {
           "description": "Configuration for `sector.perennials` settings.",
           "properties": {
             "enable": {
               "default": false,
-              "description": "Add the conversion of cropland freed by the phase-out of unsustainable bioliquids to perennial grass as carbon dioxide removal option.",
+              "description": "Add this carbon dioxide removal option.",
               "type": "boolean"
             },
-            "cropland_per_bioliquids": {
+            "hectares_per_mwh": {
               "default": 0.06,
               "description": "Cropland freed per unit of unsustainable bioliquids phased out (ha/MWh/a).",
               "minimum": 0,
               "type": "number"
             },
-            "sequestration": {
+            "co2_removal_per_hectare": {
               "default": 2,
-              "description": "CO2 removal credited for the soil carbon gain under perennial grass (tCO2/ha/a).",
+              "description": "CO2 removal credited for the soil carbon gain under perennial grass (t/ha/a).",
               "type": "number"
             },
-            "grass_yield": {
+            "yield_per_hectare": {
               "default": 7.5,
               "description": "Dry matter yield of the perennial grass that is refined to biogas (t/ha/a).",
               "type": "number"
@@ -15096,6 +15524,26 @@
           }
         },
         "instrat_co2_prices": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "co2_removal_data": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

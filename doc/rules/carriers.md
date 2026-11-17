@@ -25,3 +25,7 @@ management](../design/carbon-management.md) in the design section.
 ## Carbon sequestration
 
 {{ rules("build_co2_sequestration_potentials", "build_clustered_co2_sequestration_potentials") }}
+
+## Carbon dioxide removal
+
+{{ rules("determine_carbon_dioxide_removal_availability_matrix", "build_carbon_dioxide_removal_land", "build_afforestation_potentials") }}

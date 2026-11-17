@@ -97,6 +97,29 @@ across horizons.
     offsets fossil fuel use which could be avoided. Results depend strongly
     on it.
 
+## Land-based removal
+
+Three optional technologies remove CO~2~ from the atmosphere permanently
+without geological storage [@fernandesExploringCarbon2026], so they do not
+count towards the sequestration limit. Their potential per region follows from the eligible land cover, of
+which a configurable share is used. They remove CO~2~ at a constant rate over
+the year.
+
+- **Enhanced rock weathering** [@streflerPotentialCosts2018] spreads ground
+  basalt on cropland in regions that are warm enough. It consumes electricity
+  for grinding.
+- **Biochar** from the pyrolysis of solid biomass is applied to cropland. Only
+  the carbon that stays in the biochar counts as removal. The process consumes
+  electricity and can feed heat into district heating.
+- **Afforestation** of transitional woodland and shrubland removes CO~2~ at the
+  mean growth rate of a new forest over its rotation [@pilliJRCForest2024]. Only
+  a credited share counts as removal. The investment per hectare is annualised
+  over the rotation.
+- **Perennial grass** on the cropland that the phase-out of unsustainable
+  bioliquids frees raises the soil carbon, which is credited as removal. The
+  grass is refined in the harvest months, which consumes electricity and
+  yields biogas.
+
 ## Transport
 
 CO~2~ can be transported in a pipeline network between regions, onshore and
@@ -111,7 +134,8 @@ captured CO~2~ back to the atmosphere can be allowed as an escape valve.
 ## Further reading
 
 - Rules: [build_co2_sequestration_potentials][],
-  [build_clustered_co2_sequestration_potentials][], [build_co2_totals][]
+  [build_clustered_co2_sequestration_potentials][], [build_co2_totals][],
+  [build_carbon_dioxide_removal_land][], [build_afforestation_potentials][]
 - Configuration: [co2_budget](../configuration.md#co2_budget_cf) and the
-  `co2_*`, `dac` and `cc_fraction` settings under
-  [sector](../configuration.md#sector_cf)
+  `co2_*`, `dac`, `cc_fraction`, `rock_weathering`, `biochar`,
+  `afforestation` and `perennials` settings under [sector](../configuration.md#sector_cf)
