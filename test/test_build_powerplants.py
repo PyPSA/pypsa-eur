@@ -33,8 +33,8 @@ def test_add_custom_powerplants(config, query_value, expected):
     Verify what returned by add_custom_powerplants.
     """
     config["electricity"]["custom_powerplants"] = query_value
-    custom_powerplants_path = pathlib.Path(
-        path_cwd, "test", "test_data", "custom_powerplants_DE.csv"
+    custom_powerplants_path = str(
+        pathlib.Path(path_cwd, "test", "test_data", "custom_powerplants_DE.csv")
     )
     ppl_path = pathlib.Path(path_cwd, "test", "test_data", "powerplants_DE.csv")
     ppl_df = pd.read_csv(ppl_path)

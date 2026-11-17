@@ -35,9 +35,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_available_land", clusters="39", technology="biochar"
-        )
+        snakemake = mock_snakemake("build_available_land", technology="biochar")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

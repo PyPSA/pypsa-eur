@@ -11,7 +11,7 @@ This system provides type checking, default values, and documentation in a singl
 The configuration validation system consists of:
 
 - **Pydantic models** in `scripts/lib/validation/config/` that define all options and validates the snakemake config.
-- **Auto-generated files**: `config/config.default.yaml` and `config/schema.default.json`.
+- **Auto-generated files**: `config/config.default.yaml`, `config/plotting.default.yaml`, and `config/schema.default.json`. The top-level key `plotting` is written to its own `config/plotting.default.yaml` instead of `config/config.default.yaml`, but validated against the same `config/schema.default.json` schema.
 
 ### Adding a New Config Option
 
@@ -24,6 +24,7 @@ For example, the `logging` section in `scripts/lib/validation/config/__init__.py
 from typing import Literal
 from pydantic import Field
 from scripts.lib.validation.config._base import ConfigModel
+
 
 class LoggingConfig(ConfigModel):
     """Configuration for top level `logging` settings."""
@@ -81,15 +82,16 @@ keys usee underscore prefix (e.g., `_LoggingFileConfig`) by convention.
 
 ### Regenerating Config Files
 
-Snakemake will only read from the `config/config.default.yaml`, which needs to be generated
-after making changes to the Pydantic model. To regenerate the default config and JSON
-schema:
+Snakemake will only read from `config/config.default.yaml` and `config/plotting.default.yaml`,
+which need to be regenerated after making changes to the Pydantic model. To regenerate the
+default config files and JSON schema:
 
 ```console
 $ pixi run generate-config
 ```
 
-This updates `config/config.default.yaml` and `config/schema.default.json`.
+This updates `config/config.default.yaml`, `config/plotting.default.yaml`, and
+`config/schema.default.json`.
 For example, the two examples above would now generate:
 
 ```yaml
@@ -105,6 +107,21 @@ logging:
 
 Always commit these regenerated files alongside your model changes.
 
+### Checking Config Files Against the Schema
+
+The automatic validation is not `strict` and accepts config keys that are not part of the schema.
+This let's typos and outdated options pass silently and is intentional to make quick adaptations in soft-forks easier.
+(We might change this in the future and make the validation fail on unknown keys).
+You can check your configuration files against the schema, run:
+
+```console
+$ pixi run validate-config <path to your one or more config files>
+```
+
+Each file is checked against the schema on its own.
+The check reports any unknown keys, invalid values and thereby helps to identify typos or undefined config entries.
+The check does *not* report on missing keys, problems in the `plotting` section (no schema defined yet) or in the `conventional` section (as it allows for any extra keyword it is skipped completely).
+
 ### Custom Validators
 
 For validation logic beyond simple type checks and constraints, Pydantic provides
@@ -116,6 +133,7 @@ is uppercase:
 ```python
 from pydantic import Field, field_validator
 from scripts.lib.validation.config._base import ConfigModel
+
 
 class LoggingConfig(ConfigModel):
     """Configuration for top level `logging` settings."""
@@ -136,6 +154,7 @@ ensuring the file path is set when file logging is enabled:
 ```python
 from pydantic import Field, model_validator
 from scripts.lib.validation.config._base import ConfigModel
+
 
 class LoggingConfig(ConfigModel):
     """Configuration for top level `logging` settings."""
@@ -182,7 +201,7 @@ from scripts.lib.validation.config._schema import ConfigSchema
 
 class ClusteringConfigUpdater(ConfigUpdater):
     name: str = "update_clustering"
-    docs_url: str | None = None # no attempt will be made at updating the URL.
+    docs_url: str | None = None  # no attempt will be made at updating the URL.
 
     def update(self) -> type[ConfigSchema]:
         # To update and existing config item, we need it's most recent state, as defined in `self.base_config`
@@ -210,7 +229,9 @@ class MyNewConfigSection(BaseModel):
 
 class NewConfigItem(ConfigUpdater):
     name: str = "new_section"
-    docs_url: str | None = "https://my-own-docs.readthedocs.org/config.html#{field_name}"
+    docs_url: str | None = (
+        "https://my-own-docs.readthedocs.org/config.html#{field_name}"
+    )
 
     def update(self) -> type[ConfigSchema]:
         new_schema = self._apply_updates(
