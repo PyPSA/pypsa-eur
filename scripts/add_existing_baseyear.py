@@ -32,7 +32,11 @@ import xarray as xr
 
 from scripts.build_energy_totals import cartesian
 from scripts.definitions.heat_system import HeatSystem
-from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
+from scripts.prepare_sector_network import (
+    cement_kiln_parameters,
+    cluster_heat_buses,
+    define_spatial,
+)
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -805,11 +809,50 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+def assign_industry_grouping_years(
+    plants: pd.DataFrame,
+    grouping_years: list[int],
+    lifetimes: dict[str, float],
+    baseyear: int,
+) -> pd.DataFrame:
+    """
+    Assign existing industry plants to grouping years.
+
+    Plants older than their technical lifetime still operate. They are assumed
+    to be reinvested at the end of each lifetime. Plants of unknown age are
+    assumed to be at half of their lifetime.
+
+    Parameters
+    ----------
+    plants : pd.DataFrame
+        Existing plants with columns carrier and build_year
+    grouping_years : list[int]
+        Intervals to group capacities
+    lifetimes : dict[str, float]
+        Technical lifetime per carrier
+    baseyear : int
+        Base year for analysis
+
+    Returns
+    -------
+    pd.DataFrame
+        Plants with column grouping_year
+    """
+    plants = plants[~(plants.build_year >= baseyear)]
+    lifetime = plants.carrier.map(lifetimes)
+    age = ((baseyear - plants.build_year) % lifetime).fillna(lifetime / 2)
+
+    years = np.array([year for year in grouping_years if year < baseyear])
+    i = np.searchsorted(years, baseyear - age, side="right")
+    return plants.assign(grouping_year=years[i.clip(max=len(years) - 1)])
+
+
 def add_existing_industry(
     n: pypsa.Network,
     options: dict,
     cf_industry: dict,
     plant_fn: str,
+    sector_ratios_fn: str,
     grouping_years: list,
     baseyear: int,
     costs: pd.DataFrame,
@@ -827,6 +870,8 @@ def add_existing_industry(
         Industry config
     plant_fn: str
         Path to file for existing industry plants
+    sector_ratios_fn: str
+        Path to file with industry sector ratios, for endogenous cement
     grouping_years_industry: list
         Intervals to group capacities
     baseyear : int
@@ -837,35 +882,27 @@ def add_existing_industry(
     logger.info("Add existing industry plants.")
 
     plant_data = pd.read_csv(plant_fn)
-
-    # fill missing build_year with average
-    mean_nonzero = plant_data.groupby("carrier")["build_year"].transform("mean").round()
-    plant_data["build_year"] = plant_data["build_year"].fillna(mean_nonzero)
-    plant_data["grouping_year"] = 0
     plant_data["Out"] = plant_data["Out"].fillna(0)
-    valid_mask = plant_data["build_year"] < baseyear
-    valid_mask = valid_mask & plant_data["build_year"].notna()
-    valid_years = plant_data.loc[valid_mask, "build_year"]
-    indices = np.searchsorted(grouping_years, valid_years, side="right")
-    plant_data.loc[valid_years.index, "grouping_year"] = np.array(grouping_years)[
-        indices
-    ]
+    lifetimes = {
+        "cement": costs.at["cement dry clinker", "lifetime"],
+        "Haber-Bosch": costs.at["Haber-Bosch", "lifetime"],
+        "grey methanol": costs.at["SMR", "lifetime"],
+        "gas DRI": costs.at["hydrogen direct iron reduction furnace", "lifetime"],
+        "BOF": costs.at["blast furnace-basic oxygen furnace", "lifetime"],
+    }
+    plant_data = assign_industry_grouping_years(
+        plant_data, grouping_years, lifetimes, baseyear
+    )
 
     plant_data = plant_data.groupby(
         ["bus", "country", "carrier", "grouping_year", "Out"], as_index=False
     )["p_set"].sum()
 
-    if (
-        options["endogenous_sectors"]["enable"]
-        and "cement" in options["endogenous_sectors"]["subsectors"]
-    ):
+    if "cement" in options["endogenous_sectors"]:
         # add cement
         cement = plant_data[plant_data.carrier == "cement"]
         cement.index = (
             cement["bus"] + " cement kiln-" + cement["grouping_year"].astype(str)
-        )
-        cement["clinker"] = (
-            cement["bus"] + " cement production-" + cement["grouping_year"].astype(str)
         )
         # get rid of capacities without demand
         cement_buses = n.loads[n.loads.carrier == "cement"].bus.to_list()
@@ -874,63 +911,21 @@ def add_existing_industry(
 
         logger.info(f"Adding {len(cement)} existing cement links.")
 
-        # clinker production
-        gas_input = costs.at["cement dry clinker", "gas-input"]
-        heat_input = costs.at["cement dry clinker", "heat-input"]
-        electricity_input = costs.at["cement dry clinker", "electricity-input"]
-        # process emission from calcination + gas emissions
-        # https://www.ipcc-nggip.iges.or.jp/efdb/ef_detail.php
-        co2_emission = (
-            0.5071 / heat_input
-            + costs.at["gas", "CO2 intensity"] * gas_input / heat_input
-        )
+        # cement production with the specific demands of the exogenous case
+        kiln = cement_kiln_parameters(costs, sector_ratios_fn, pd.Index(cement.bus))
 
         n.add(
             "Link",
             cement.index,
             bus0=[bus + " cement heat" for bus in cement.bus],
-            bus1=[bus + " clinker" for bus in cement.bus],
-            bus2=[bus + " gas" for bus in cement.bus]
-            if options["gas_network"]
-            else "EU gas",
-            bus3=cement.bus,
-            bus4=[bus + " cement emission" for bus in cement.bus],
+            bus1=[bus + " cement" for bus in cement.bus],
+            bus2=cement.bus,
+            bus3=[bus + " cement emission" for bus in cement.bus],
             carrier="cement kiln",
             p_nom_extendable=False,
-            p_nom=cement["p_set"]
-            .mul(heat_input)
-            .mul(costs.at["cement finishing", "clinker-input"])
-            .div(8760)
-            .values,
-            capital_cost=costs.at["cement dry clinker", "capital_cost"] / heat_input,
-            efficiency=1 / heat_input,
-            efficiency2=-gas_input / heat_input,
-            efficiency3=-electricity_input / heat_input,
-            efficiency4=co2_emission,
+            p_nom=cement["p_set"] / 8760 / kiln["efficiency"],
             build_year=cement.grouping_year,
-            lifetime=costs.at["cement dry clinker", "lifetime"],
-        )
-
-        # cement finishing
-        electricity_input = (
-            costs.at["cement finishing", "electricity-input"]
-            / costs.at["cement finishing", "clinker-input"]
-        )
-        clinker_input = costs.at["cement finishing", "clinker-input"]
-        n.add(
-            "Link",
-            cement.clinker.to_list(),
-            bus0=[bus + " clinker" for bus in cement.bus],
-            bus1=[bus + " cement" for bus in cement.bus],
-            bus2=cement.bus.to_list(),
-            carrier="cement finishing",
-            p_nom_extendable=False,
-            p_nom=cement["p_set"].mul(clinker_input).div(8760).values,
-            capital_cost=costs.at["cement finishing", "capital_cost"] / clinker_input,
-            efficiency=1 / clinker_input,
-            efficiency2=-electricity_input,
-            build_year=cement.grouping_year.to_list(),
-            lifetime=costs.at["cement finishing", "lifetime"],
+            **kiln,
         )
 
     if options["ammonia"]:
@@ -952,9 +947,8 @@ def add_existing_industry(
             bus2=[bus + " H2" for bus in ammonia.bus],
             p_nom=ammonia["p_set"]
             .mul(cf_industry["MWh_NH3_per_tNH3"])
-            .div(costs.at["Haber-Bosch", "electricity-input"])
-            .div(8760)
-            .values,
+            .mul(costs.at["Haber-Bosch", "electricity-input"])
+            .div(8760),
             p_nom_extendable=False,
             carrier="Haber-Bosch",
             efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
@@ -1006,10 +1000,7 @@ def add_existing_industry(
         lifetime=costs.at["SMR", "lifetime"],
     )
 
-    if (
-        options["endogenous_sectors"]["enable"]
-        and "steel" in options["endogenous_sectors"]["subsectors"]
-    ):
+    if "steel" in options["endogenous_sectors"]:
         # natural gas DRI
         ng_dri = plant_data[plant_data.carrier == "gas DRI"]
         logger.info(f"Adding {len(ng_dri)} existing gas DRI links.")
@@ -1035,7 +1026,7 @@ def add_existing_industry(
             if not options["hbi_relocation"]
             else "EU hbi",
             bus2=[bus + " DRI reduction" for bus in ng_dri.bus],
-            p_nom=ng_dri["p_set"].mul(electricity_input).div(8760).values,
+            p_nom=ng_dri["p_set"].mul(electricity_input).div(8760),
             p_nom_extendable=False,
             carrier="DRI",
             efficiency=1 / electricity_input,
@@ -1085,7 +1076,7 @@ def add_existing_industry(
             bus0="EU coal",
             bus1=[bus + " steel" for bus in bof.bus],
             bus2=[bus + " BOF emission" for bus in bof.bus],
-            p_nom=bof["p_set"].mul(coal_input).div(8760).values,
+            p_nom=bof["p_set"].mul(coal_input).div(8760),
             p_nom_extendable=False,
             carrier="BOF",
             efficiency=1 / coal_input,
@@ -1157,12 +1148,13 @@ def main(
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
 
-    if options["industry"]:
+    if params.existing_capacities["industry_plants"]:
         add_existing_industry(
             n=n,
             options=options,
             cf_industry=params.industry,
             plant_fn=inputs.industry_plants,
+            sector_ratios_fn=inputs.industry_sector_ratios,
             grouping_years=params.existing_capacities["grouping_years_industry"],
             baseyear=baseyear,
             costs=costs,

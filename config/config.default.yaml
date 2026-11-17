@@ -623,6 +623,7 @@ existing_capacities:
   - 2010
   - 2015
   - 2019
+  industry_plants: false
   grouping_years_industry:
   - 1995
   - 2000
@@ -1105,11 +1106,7 @@ sector:
       methanol: 121
       gas: 122
       oil: 125
-  endogenous_sectors:
-    enable: false
-    subsectors:
-    - steel
-    - cement
+  endogenous_sectors: []
   hbi_relocation: false
   steel_bof:
     pledge: true
@@ -1199,6 +1196,7 @@ industry:
   methanol_production_today: 1.5
   MWh_elec_per_tMeOH: 0.167
   MWh_CH4_per_tMeOH: 10.25
+  MWh_naphtha_per_tHVC: 12.622
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
   reference_year: 2023
@@ -1464,6 +1462,12 @@ data:
     source: archive
     version: latest
   gem_gcct:
+    source: archive
+    version: latest
+  gem_gist_iron_units:
+    source: archive
+    version: latest
+  gem_gct:
     source: archive
     version: latest
   instrat_co2_prices:

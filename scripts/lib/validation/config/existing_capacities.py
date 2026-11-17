@@ -67,6 +67,10 @@ class ExistingCapacitiesConfig(ConfigModel):
         ],
         description="Intervals to group existing capacities for heat.",
     )
+    industry_plants: bool = Field(
+        False,
+        description="Add existing ammonia and methanol plants, and existing steel and cement plants for `sector: endogenous_sectors`, in the first horizon of myopic and perfect foresight runs.",
+    )
     grouping_years_industry: list[int] = Field(
         default_factory=lambda: [
             1995,
@@ -77,7 +81,7 @@ class ExistingCapacitiesConfig(ConfigModel):
             2020,
             2025,
         ],
-        description="Intervals to group existing capacities for industry.",
+        description="Intervals to group existing capacities for industry plants.",
     )
     threshold_capacity: float = Field(
         10,

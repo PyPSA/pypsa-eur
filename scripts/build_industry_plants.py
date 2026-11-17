@@ -2,14 +2,20 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Adds existing power and heat generation capacities for initial planning
-horizon.
+Build the capacities of existing cement, steel, ammonia and methanol plants per model region in t/a.
+
+Operating cement plants come from the Global Cement and Concrete Tracker. Operating blast furnaces and direct reduction furnaces come from the Global Iron and Steel Tracker, with the most recent relining as build year and the announced retirement as phase-out year. Operating ammonia plants and methanol plants with fossil feedstock come from the Global Chemicals Tracker, with the start of the plant as build year. Neuwirth et al. (2024) provide a comparable site database for the EU27, Norway and the United Kingdom. Each plant is assigned to the nearest model region.
+
+References
+----------
+- [Neuwirth et al. (2024): Modelling the market diffusion of hydrogen-based steel and basic chemical production in Europe. Energy Conversion and Management](https://doi.org/10.1016/j.enconman.2024.119117)
+- [Global Energy Monitor: Global Iron and Steel Tracker](https://globalenergymonitor.org/projects/global-iron-and-steel-tracker/)
+- [Global Energy Monitor: Global Chemicals Tracker](https://globalenergymonitor.org/projects/global-chemicals-tracker/)
+- [Global Energy Monitor: Global Cement and Concrete Tracker](https://globalenergymonitor.org/projects/global-cement-and-concrete-tracker/)
 """
 
 import logging
-from types import SimpleNamespace
 
-import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -21,9 +27,6 @@ from scripts._helpers import (
 )
 
 logger = logging.getLogger(__name__)
-cc = coco.CountryConverter()
-idx = pd.IndexSlice
-spatial = SimpleNamespace()
 
 
 def country_to_code(name):
@@ -39,18 +42,18 @@ def prepare_gem_database(regions):
     """
     df = pd.read_excel(
         snakemake.input.gem_gcct,
-        sheet_name="Plant Data",
+        sheet_name="Final data",
         na_values=["N/A", "unknown", ">0"],
     )
 
-    df["country_code"] = df["Country/Area"].apply(country_to_code)
+    df["country_code"] = df["Country/area"].apply(country_to_code)
     # XK not in pycountry
-    df.loc[df["Country/Area"] == "Kosovo", "country_code"] = "XK"
+    df.loc[df["Country/area"] == "Kosovo", "country_code"] = "XK"
 
     df = df[df.country_code.isin(snakemake.params.countries)]
 
     df["Start date"] = pd.to_numeric(
-        df["Start date"].str.split("-").str[0], errors="coerce"
+        df["Start date"].astype(str).str[:4], errors="coerce"
     )
 
     latlon = (
@@ -72,7 +75,7 @@ def prepare_gem_database(regions):
 
     gdf.rename(
         columns={
-            "Cement Capacity (millions metric tonnes per annum)": "p_set",
+            "Cement capacity (million metric tonnes per annum)": "p_set",
             "Start date": "build_year",
         },
         inplace=True,
@@ -86,100 +89,108 @@ def prepare_gem_database(regions):
     return cement
 
 
-def prepare_plant_data(
-    regions: gpd,
-    isi_database: str,
-) -> tuple[pd.DataFrame, gpd.GeoDataFrame]:
-    """
-    Reads in the Fraunhofer ISI database with high resolution plant data and maps them to the bus regions.
-    Returns the database as df.
-
-    Parameters
-    ----------
-    regions : gpd
-        onshore regions on which the industry sites are mapped to
-    isi_database: str
-        path to the fraunhofer isi database
-    """
-
-    isi_data = pd.read_excel(isi_database, sheet_name="Database", index_col=1)
-    # assign bus region to each plant
-    geometry = gpd.points_from_xy(isi_data["Longitude"], isi_data["Latitude"])
-    plant_data = gpd.GeoDataFrame(isi_data, geometry=geometry, crs="EPSG:4326")
-    plant_data = gpd.sjoin_nearest(plant_data, regions.to_crs("EPSG:4326"), how="left")
-    plant_data.rename(columns={"name": "bus"}, inplace=True)
-    # filter for countries in model scope
-    plant_data = plant_data[plant_data.Country.isin(snakemake.params.countries)]
-    # replace UK with GB in Country column
-    plant_data["country"] = plant_data["Country"].replace("UK", "GB")
-    # add carrier column
-    carrier_dict = {
-        "Blast furnace": "BOF",
-        "Direct reduction NG": "gas DRI",
-        "Ammonia SMR": "Haber-Bosch",
-        "Methanol SMR": "grey methanol",
-    }
-    plant_data["carrier"] = plant_data["Process status qup"].replace(carrier_dict)
-    # get build_year
-    plant_data["build_year"] = (
-        plant_data["Year of last modernisation"]
-        .replace("x", np.nan)
-        .fillna(plant_data["Last Relining"])
-    )
-    plant_data.rename(
-        columns={"Production in tons (calibrated)": "p_set"}, inplace=True
-    )
-    plant_data = plant_data[["bus", "country", "carrier", "p_set", "build_year", "Out"]]
-
-    return plant_data
-
-
-def prepare_ammonia_data(
+def prepare_gem_iron_units(
     regions: gpd.GeoDataFrame,
-    plant_data: pd.DataFrame,
+    iron_units: str,
+    steel_plants: str,
 ) -> pd.DataFrame:
     """
-    Adds ammonia production sites from the data folder and adds them for all countries that are not included in the Fraunhofer ISI database.
+    Load GEM database of blast furnaces and direct reduction furnaces and map onto bus regions.
+
+    The build year is the most recent relining or, if unknown, the start of
+    the unit. The phase-out year is the announced retirement.
 
     Parameters
     ----------
-    regions : gpd
-        onshore regions on which the industry sites are mapped to
-    plant_data: pd.DataFrame
-        DataFrame with plant data from the Fraunhofer ISI database
+    regions : gpd.GeoDataFrame
+        onshore regions on which the units are mapped to
+    iron_units : str
+        path to the iron unit data of the GEM Global Iron and Steel Tracker
+    steel_plants : str
+        path to the plant-level data of the tracker with the coordinates
     """
-    df = pd.read_csv(snakemake.input.ammonia, index_col=0)
+    kwargs = dict(na_values=["N/A", "unknown", ">0"])
+    sheets = {"BOF": "Blast furnaces", "gas DRI": "Direct reduced iron furnaces"}
+    df = pd.concat(
+        {
+            carrier: pd.read_excel(iron_units, sheet_name=sheet, **kwargs)
+            for carrier, sheet in sheets.items()
+        },
+        names=["carrier"],
+    ).reset_index("carrier")
+    df = df[df["Unit status"].isin(["operating", "operating pre-retirement"])]
 
-    geometry = gpd.points_from_xy(df.Longitude, df.Latitude)
+    df["country"] = df["Country/area"].apply(country_to_code)
+    # XK not in pycountry
+    df.loc[df["Country/area"] == "Kosovo", "country"] = "XK"
+    df = df[df.country.isin(snakemake.params.countries)]
+
+    coordinates = pd.read_excel(steel_plants, sheet_name="Plant data", index_col=0)
+    latlon = (
+        coordinates.loc[df["GEM plant ID"], "Coordinates"]
+        .str.split(", ", expand=True)
+        .astype(float)
+    )
+    geometry = gpd.points_from_xy(latlon[1], latlon[0])
     gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
-
-    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
-
+    gdf = gpd.sjoin_nearest(gdf, regions.to_crs("EPSG:4326"), how="left")
     gdf.rename(columns={"name": "bus"}, inplace=True)
-    gdf["country"] = gdf.bus.str[:2]
-    # filter for countries that are missing
-    gdf = gdf[
-        (~gdf.country.isin(plant_data.country.unique()))
-        & (gdf.country.isin(snakemake.params.countries))
-    ]
-    # following approach from build_industrial_distribution_key.py
-    min_prod_per_country = gdf.groupby("country")["Ammonia [kt/a]"].transform("min")
-    gdf["Ammonia [kt/a]"] = gdf["Ammonia [kt/a]"].fillna(0.5 * min_prod_per_country)
 
-    # missing data
-    gdf.drop(gdf[gdf["Ammonia [kt/a]"].isna()].index, inplace=True)
+    def year(dates: pd.Series) -> pd.Series:
+        return pd.to_numeric(dates.astype(str).str[:4], errors="coerce")
 
-    # get average plant age:
-    avg_age = plant_data[plant_data.carrier == "Haber-Bosch"]["build_year"].mean()
-    # restructure to fit other data sources
-    gdf["build_year"] = avg_age
-    gdf["Out"] = 0
-    gdf["carrier"] = "Haber-Bosch"
-    gdf["Ammonia [kt/a]"] *= 1e3
-    gdf.rename(columns={"Ammonia [kt/a]": "p_set"}, inplace=True)
-    gdf = gdf[["bus", "country", "carrier", "p_set", "build_year", "Out"]]
+    gdf["build_year"] = year(gdf["Most recent relining"]).fillna(
+        year(gdf["Start date"])
+    )
+    gdf["Out"] = year(gdf["Retired date"])
+    # kt/a to t/a
+    gdf["p_set"] = gdf["Current capacity (ttpa)"] * 1e3
 
-    return gdf
+    return gdf[["bus", "country", "carrier", "p_set", "build_year", "Out"]]
+
+
+def prepare_gem_chemicals(regions: gpd.GeoDataFrame, chemicals: str) -> pd.DataFrame:
+    """
+    Load GEM database of ammonia and fossil methanol plants and map onto bus regions.
+
+    Parameters
+    ----------
+    regions : gpd.GeoDataFrame
+        onshore regions on which the plants are mapped to
+    chemicals : str
+        path to the GEM Global Chemicals Tracker
+    """
+    plants = pd.read_excel(
+        chemicals, sheet_name="Plant Data", index_col=0, na_values=["not found"]
+    )
+    df = pd.read_excel(
+        chemicals, sheet_name="Chemical Capacities", na_values=["not found"]
+    ).join(plants, on="GEM Plant ID")
+    df = df[df["Capacity Status"].isin(["operating", "operating pre-retirement"])]
+
+    # methanol plants without fossil feedstock are not grey methanol plants
+    fossil = df["Feedstock"].str.contains("natural gas|crude oil|naphtha|coal")
+    carriers = {"ammonia": "Haber-Bosch", "methanol": "grey methanol"}
+    df["carrier"] = df["Product"].map(carriers)
+    df = df[df.carrier.notna() & (fossil | (df.Product == "ammonia"))]
+
+    df["country"] = df["Country/Area"].apply(country_to_code)
+    # XK not in pycountry
+    df.loc[df["Country/Area"] == "Kosovo", "country"] = "XK"
+    df = df[df.country.isin(snakemake.params.countries)]
+
+    latlon = df["Coordinates"].str.split(", ", expand=True).astype(float)
+    geometry = gpd.points_from_xy(latlon[1], latlon[0])
+    gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+    gdf = gpd.sjoin_nearest(gdf, regions.to_crs("EPSG:4326"), how="left")
+    gdf.rename(columns={"name": "bus"}, inplace=True)
+
+    gdf["build_year"] = gdf["Start Date | Year"]
+    gdf["Out"] = np.nan
+    # kt/a to t/a
+    gdf["p_set"] = gdf["Capacity (ttpa)"] * 1e3
+
+    return gdf[["bus", "country", "carrier", "p_set", "build_year", "Out"]]
 
 
 if __name__ == "__main__":
@@ -195,11 +206,13 @@ if __name__ == "__main__":
 
     # get cement plant data
     cement = prepare_gem_database(regions)
-    # get data from fraunhofer database
-    fh_data = prepare_plant_data(regions, snakemake.input.isi_database)
-    # ammonia plants non-EU27
-    ammonia = prepare_ammonia_data(regions, fh_data)
+    # steel plants
+    steel = prepare_gem_iron_units(
+        regions, snakemake.input.gem_iron_units, snakemake.input.gem_gspt
+    )
+    # ammonia and methanol plants
+    chemicals = prepare_gem_chemicals(regions, snakemake.input.gem_gct)
 
-    industry_plants = pd.concat([cement, fh_data, ammonia], ignore_index=True)
+    industry_plants = pd.concat([cement, steel, chemicals], ignore_index=True)
 
     industry_plants.to_csv(snakemake.output.industry_plants)

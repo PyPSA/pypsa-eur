@@ -981,6 +981,36 @@ if (GEM_GCCT_DATASET := dataset_version("gem_gcct"))["source"] in [
             copy2(input["xlsx"], output["xlsx"])
 
 
+if (GEM_GIST_IRON_UNITS_DATASET := dataset_version("gem_gist_iron_units"))[
+    "source"
+] in [
+    "archive",
+]:
+
+    rule retrieve_gem_gist_iron_units:
+        """Retrieves the iron unit data of the Global Energy Monitor Global Iron and Steel Tracker."""
+        input:
+            xlsx=storage(GEM_GIST_IRON_UNITS_DATASET["url"]),
+        output:
+            xlsx=f"{GEM_GIST_IRON_UNITS_DATASET['folder']}/Global-Iron-and-Steel-Tracker-iron-units.xlsx",
+        run:
+            copy2(input["xlsx"], output["xlsx"])
+
+
+if (GEM_GCT_DATASET := dataset_version("gem_gct"))["source"] in [
+    "archive",
+]:
+
+    rule retrieve_gem_gct:
+        """Retrieves the Global Energy Monitor Global Chemicals Tracker."""
+        input:
+            xlsx=storage(GEM_GCT_DATASET["url"]),
+        output:
+            xlsx=f"{GEM_GCT_DATASET['folder']}/Global-Chemicals-Tracker.xlsx",
+        run:
+            copy2(input["xlsx"], output["xlsx"])
+
+
 if (BFS_ROAD_VEHICLE_STOCK_DATASET := dataset_version("bfs_road_vehicle_stock"))[
     "source"
 ] in [

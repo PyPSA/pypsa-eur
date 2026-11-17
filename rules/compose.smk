@@ -108,12 +108,12 @@ def get_compose_inputs(w):
             industrial_production=resources("industrial_production_{horizon}.csv"),
             industry_sector_ratios=(
                 resources("industry_sector_ratios_{horizon}.csv")
-                if sector["endogenous_sectors"]["enable"]
+                if "cement" in sector["endogenous_sectors"]
                 else []
             ),
             industry_plants=(
                 resources("industry_plants.csv")
-                if sector["industry"]
+                if cfg["existing_capacities"]["industry_plants"]
                 and foresight != "overnight"
                 and horizon == horizons[0]
                 else []

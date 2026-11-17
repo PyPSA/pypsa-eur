@@ -1188,7 +1188,7 @@ rule build_industrial_distribution_key:
         hotmaps=rules.retrieve_hotmaps_industrial_sites.output["csv"],
         gem_gspt=rules.retrieve_gem_gspt.output["xlsx"],
         gem_gcpt=rules.retrieve_gem_gcct.output["xlsx"],
-        ammonia="data/ammonia_plants.csv",
+        gem_gct=rules.retrieve_gem_gct.output["xlsx"],
         refineries_supplement="data/refineries-noneu.csv",
     output:
         industrial_distribution_key=resources("industrial_distribution_key.csv"),
@@ -1252,6 +1252,8 @@ rule build_industrial_energy_demand_per_node:
     threads: 1
     resources:
         mem_mb=1000,
+    params:
+        endogenous_sectors=config_provider("sector", "endogenous_sectors"),
     script:
         scripts("build_industrial_energy_demand_per_node.py")
 
@@ -1612,8 +1614,9 @@ rule build_industry_plants:
     """Builds existing cement, steel, ammonia and methanol plant capacities per model region."""
     input:
         regions_onshore=resources("onshore_regions.geojson"),
-        ammonia="data/ammonia_plants.csv",
-        isi_database="data/1-s2.0-S0196890424010586-mmc2.xlsx",
+        gem_gct=rules.retrieve_gem_gct.output["xlsx"],
+        gem_gspt=rules.retrieve_gem_gspt.output["xlsx"],
+        gem_iron_units=rules.retrieve_gem_gist_iron_units.output["xlsx"],
         gem_gcct=rules.retrieve_gem_gcct.output["xlsx"],
     output:
         industry_plants=resources("industry_plants.csv"),

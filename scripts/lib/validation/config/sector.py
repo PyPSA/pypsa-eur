@@ -428,19 +428,6 @@ class _ImportsConfig(BaseModel):
     )
 
 
-class _EndogenousSectorsConfig(BaseModel):
-    """Configuration for `sector.endogenous_sectors` settings."""
-
-    enable: bool = Field(
-        False,
-        description="Enabling to specify industry subsectors to be modelled endogenously.",
-    )
-    subsectors: list = Field(
-        default_factory=lambda: ["steel", "cement"],
-        description="Energy-intensive industry subsectors that are modelled endogenously.",
-    )
-
-
 class _SteelBOFConfig(BaseModel):
     """Configuration for `sector.steel_bof` settings."""
 
@@ -451,9 +438,6 @@ class _SteelBOFConfig(BaseModel):
     pledge_delay: int = Field(
         0, description="Delays the decommission year by number of years."
     )
-
-
-AllowedEndogenousSectors = Literal["steel", "cement"]
 
 
 class _IndustryHeatConfig(BaseModel):
@@ -1069,10 +1053,9 @@ class SectorConfig(BaseModel):
         default_factory=_ImportsConfig, description="Imports configuration."
     )
 
-    # Endogenous sectors
-    endogenous_sectors: _EndogenousSectorsConfig = Field(
-        default_factory=_EndogenousSectorsConfig,
-        description="Sectors modelled endogenously.",
+    endogenous_sectors: list[Literal["steel", "cement"]] = Field(
+        default_factory=list,
+        description="Energy-intensive industry subsectors that are modelled endogenously. Steel covers primary steel only. Cement is then not part of `industry_heat`.",
     )
     hbi_relocation: bool = Field(
         False,

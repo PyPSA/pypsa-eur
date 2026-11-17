@@ -5,6 +5,18 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Feature: New option `sector: endogenous_sectors` to optimise primary steel and cement production instead of using exogenous energy demand. Steel comes from blast furnaces or from direct reduction with electric arc furnaces, cement from kilns. Both can be retrofitted with carbon capture ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Feature: New option `existing_capacities: industry_plants` to add existing steel, cement, ammonia and methanol plants in myopic and perfect foresight runs ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Feature: New option `sector: methanol: meoh_to_oa` to add methanol-to-olefins/aromatics as an alternative to naphtha for high-value chemicals ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Data: Update the Global Energy Monitor steel and cement trackers to the releases of September and July 2026, and add the iron unit data of the steel tracker and the Global Chemicals Tracker. The trackers are now only available from the archive ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Data: Ammonia, methanol and high-value chemicals production is now distributed by plant capacities from the Global Chemicals Tracker, which replaces `data/ammonia_plants.csv`. This changes the regional distribution of industrial production ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Fix: Ammonia production of countries without listed ammonia plants is no longer dropped. These countries now use the distribution key of the chemical industry ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
 * Feature: New option `sector: industry_heat: enable` to optimise the supply of industry process heat above 100 °C in three temperature bands with boilers, direct firing, heat pumps and carbon capture, instead of using exogenous fuel shares. The steel sector is not covered ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 
 * Feature: New option `sector: waste_spatial` to model waste for waste-to-energy plants per bus region, with transport if `sector: biomass_transport` is enabled. By default, waste is now collected in one European bus ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).

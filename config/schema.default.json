@@ -1183,6 +1183,46 @@
             }
           }
         },
+        "gem_gist_iron_units": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "gem_gct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "instrat_co2_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -2590,8 +2630,13 @@
           },
           "type": "array"
         },
+        "industry_plants": {
+          "default": false,
+          "description": "Add existing ammonia and methanol plants, and existing steel and cement plants for `sector: endogenous_sectors`, in the first horizon of myopic and perfect foresight runs.",
+          "type": "boolean"
+        },
         "grouping_years_industry": {
-          "description": "Intervals to group existing capacities for industry.",
+          "description": "Intervals to group existing capacities for industry plants.",
           "items": {
             "type": "integer"
           },
@@ -2857,6 +2902,11 @@
           "default": 10.25,
           "description": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
           "markdownDescription": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "type": "number"
+        },
+        "MWh_naphtha_per_tHVC": {
+          "default": 12.622,
+          "description": "The energy amount of naphtha that a ton of high-value chemicals from methanol-to-olefins/aromatics replaces. Only used with `sector: methanol: meoh_to_oa`.",
           "type": "number"
         },
         "MWh_MeOH_per_tMeOH": {
@@ -6047,19 +6097,15 @@
           }
         },
         "endogenous_sectors": {
-          "description": "Configuration for `sector.endogenous_sectors` settings.",
-          "properties": {
-            "enable": {
-              "default": false,
-              "description": "Enabling to specify industry subsectors to be modelled endogenously.",
-              "type": "boolean"
-            },
-            "subsectors": {
-              "description": "Energy-intensive industry subsectors that are modelled endogenously.",
-              "items": {},
-              "type": "array"
-            }
-          }
+          "description": "Energy-intensive industry subsectors that are modelled endogenously. Steel covers primary steel only. Cement is then not part of `industry_heat`.",
+          "items": {
+            "enum": [
+              "steel",
+              "cement"
+            ],
+            "type": "string"
+          },
+          "type": "array"
         },
         "hbi_relocation": {
           "default": false,
@@ -7904,21 +7950,6 @@
           "default": 90,
           "description": "Rolling window (in days) for smoothing the historical CO2 prices when `dynamic` is set to True.",
           "type": "integer"
-        }
-      }
-    },
-    "_EndogenousSectorsConfig": {
-      "description": "Configuration for `sector.endogenous_sectors` settings.",
-      "properties": {
-        "enable": {
-          "default": false,
-          "description": "Enabling to specify industry subsectors to be modelled endogenously.",
-          "type": "boolean"
-        },
-        "subsectors": {
-          "description": "Energy-intensive industry subsectors that are modelled endogenously.",
-          "items": {},
-          "type": "array"
         }
       }
     },
@@ -12525,8 +12556,13 @@
           },
           "type": "array"
         },
+        "industry_plants": {
+          "default": false,
+          "description": "Add existing ammonia and methanol plants, and existing steel and cement plants for `sector: endogenous_sectors`, in the first horizon of myopic and perfect foresight runs.",
+          "type": "boolean"
+        },
         "grouping_years_industry": {
-          "description": "Intervals to group existing capacities for industry.",
+          "description": "Intervals to group existing capacities for industry plants.",
           "items": {
             "type": "integer"
           },
@@ -13769,19 +13805,15 @@
           }
         },
         "endogenous_sectors": {
-          "description": "Configuration for `sector.endogenous_sectors` settings.",
-          "properties": {
-            "enable": {
-              "default": false,
-              "description": "Enabling to specify industry subsectors to be modelled endogenously.",
-              "type": "boolean"
-            },
-            "subsectors": {
-              "description": "Energy-intensive industry subsectors that are modelled endogenously.",
-              "items": {},
-              "type": "array"
-            }
-          }
+          "description": "Energy-intensive industry subsectors that are modelled endogenously. Steel covers primary steel only. Cement is then not part of `industry_heat`.",
+          "items": {
+            "enum": [
+              "steel",
+              "cement"
+            ],
+            "type": "string"
+          },
+          "type": "array"
         },
         "hbi_relocation": {
           "default": false,
@@ -13999,6 +14031,11 @@
           "default": 10.25,
           "description": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
           "markdownDescription": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "type": "number"
+        },
+        "MWh_naphtha_per_tHVC": {
+          "default": 12.622,
+          "description": "The energy amount of naphtha that a ton of high-value chemicals from methanol-to-olefins/aromatics replaces. Only used with `sector: methanol: meoh_to_oa`.",
           "type": "number"
         },
         "MWh_MeOH_per_tMeOH": {
@@ -15076,6 +15113,46 @@
           }
         },
         "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "gem_gist_iron_units": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "gem_gct": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

@@ -239,9 +239,6 @@ def define_spatial(nodes: pd.Index, options: dict) -> SimpleNamespace:
     spatial.cement.nodes = nodes + " cement"
     spatial.cement.heat = nodes + " cement heat"
     spatial.cement.location = nodes
-    spatial.clinker = SimpleNamespace()
-    spatial.clinker.nodes = nodes + " clinker"
-    spatial.clinker.location = nodes
 
     return spatial
 
@@ -1180,14 +1177,18 @@ def add_methanol_reforming_cc(
     )
 
 
-def add_meoh_to_oa(n, costs, spatial):
+def add_meoh_to_oa(n, costs, spatial, cf_industry):
     logger.info("Adding MeOH-to-Olefins/Aromatics for High Value Chemicals.")
     tech = "methanol-to-olefins/aromatics"
 
-    naphtha_per_t_hvc = 12.622  # MWh per tonne of HVC (taken from sector ratios)
+    naphtha_per_t_hvc = cf_industry["MWh_naphtha_per_tHVC"]
 
+    # carbon of the methanol that does not end up in the naphtha equivalent
     process_emissions = (
-        costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"]
+        costs.at["methanol", "CO2 intensity"]
+        - naphtha_per_t_hvc
+        / costs.at[tech, "methanol-input"]
+        * costs.at["oil", "CO2 intensity"]
     )
     n.add("Carrier", "methanol-to-olefins/aromatics")
 
@@ -1201,12 +1202,15 @@ def add_meoh_to_oa(n, costs, spatial):
         bus3=spatial.co2.process_emissions,
         efficiency=1
         / costs.at[tech, "methanol-input"]
-        * naphtha_per_t_hvc,  # because MtO produces t HVC not MWh no MWh HVC
+        * naphtha_per_t_hvc,  # MtO costs are per t HVC, naphtha is in MWh
         efficiency2=-costs.at[tech, "electricity-input"]
         / costs.at[tech, "methanol-input"],
         efficiency3=process_emissions,
         carrier=tech,
         p_nom_extendable=True,
+        capital_cost=costs.at[tech, "capital_cost"] / costs.at[tech, "methanol-input"],
+        marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
+        lifetime=costs.at[tech, "lifetime"],
     )
 
 
@@ -3668,6 +3672,7 @@ def add_methanol(
     options: dict,
     spatial: SimpleNamespace,
     pop_layout: pd.DataFrame,
+    cf_industry: dict,
 ) -> None:
     """
     Add methanol-related components to the network.
@@ -3692,6 +3697,8 @@ def add_methanol(
         Spatial resolution and location-specific parameters for component placement
     pop_layout : pd.DataFrame
         Population data per node used for methanol power plant placement
+    cf_industry : dict
+        Industry configuration, used for methanol-to-olefins/aromatics
 
     Returns
     -------
@@ -3746,7 +3753,7 @@ def add_methanol(
         add_methanol_reforming_cc(n=n, costs=costs, spatial=spatial, options=options)
 
     if methanol_options["meoh_to_oa"]:
-        add_meoh_to_oa(n=n, costs=costs, spatial=spatial)
+        add_meoh_to_oa(n=n, costs=costs, spatial=spatial, cf_industry=cf_industry)
 
 
 def add_biomass_transport(
@@ -4430,69 +4437,6 @@ def add_biomass(
         )
 
 
-def adjust_industry_demand(
-    nodes: pd.Index,
-    options: dict,
-    sector_ratios_file: str,
-    industrial_production_file: str,
-):
-    # import ratios [MWh/t_Material]
-    sector_ratios = pd.read_csv(sector_ratios_file, header=[0, 1], index_col=0)
-
-    # material demand per node and industry [kt/a]
-    nodal_production = (
-        pd.read_csv(industrial_production_file, index_col=0) / 1e3
-    )  # kt/a -> Mt/a
-
-    nodal_sector_ratios = pd.concat(
-        {node: sector_ratios[node[:2]] for node in nodal_production.index}, axis=1
-    )
-
-    nodal_production_stacked = nodal_production.stack()
-    nodal_production_stacked.index.names = [None, None]
-
-    # final energy consumption per node and industry (TWh/a)
-    nodal_df = (nodal_sector_ratios.multiply(nodal_production_stacked)).T
-    # rename the columns to correct unit
-    nodal_df.columns.name = "TWh/a"
-
-    # add up all industry sectors except the ones endogenously modelled
-    endogenous_sector = options["endogenous_sectors"]["subsectors"]
-
-    sector_dict = {
-        "steel": ["Integrated steelworks", "DRI + Electric arc"],
-        "cement": "Cement",
-    }
-    keys = [sector_dict[k] for k in endogenous_sector if k in sector_dict]
-    keys = [x for item in keys for x in (item if isinstance(item, list) else [item])]
-
-    remaining_sectors = ~nodal_df.index.get_level_values(1).isin(keys)
-
-    remaining_demand = (
-        nodal_df.loc[(nodes, remaining_sectors), :].groupby(level=0).sum()
-    ).mul(1e6)
-    remaining_demand.columns.name = "MWh/a"
-    remaining_demand.rename(
-        columns={
-            "elec": "electricity",
-            "biomass": "solid biomass",
-            "heat": "low-temperature heat",
-        },
-        inplace=True,
-    )
-    # adjust initial demand
-
-    # get the demand of steel and cement
-    steel = nodal_production[["Integrated steelworks", "DRI + Electric arc"]].sum(
-        axis=1
-    )
-    steel.name = "Mt/a"
-    cement = nodal_production["Cement"]
-    cement.name = "Mt/a"
-
-    return remaining_demand, steel, cement
-
-
 def add_industry_heat(
     n: pypsa.Network,
     nodes: pd.Index,
@@ -4824,6 +4768,55 @@ def add_waste(
         )
 
 
+def cement_kiln_parameters(
+    costs: pd.DataFrame, sector_ratios_file: str, nodes: pd.Index
+) -> dict:
+    """
+    Return the link parameters of cement kilns per node.
+
+    Fuel, electricity and process emissions per tonne of cement are taken from
+    the exogenous sector ratios, so that endogenous cement production is
+    consistent with the exogenous demand. The costs cover the kiln and the
+    grinding of clinker to cement.
+
+    Parameters
+    ----------
+    costs : pd.DataFrame
+        Technology cost assumptions
+    sector_ratios_file : str
+        Path to CSV file with industry sector ratios per country
+    nodes : pd.Index
+        Nodes for which to return the parameters
+
+    Returns
+    -------
+    dict
+        Parameters of links from heat (bus0) to cement (bus1) that consume
+        electricity (bus2) and release process emissions (bus3)
+    """
+    ratios = pd.read_csv(sector_ratios_file, header=[0, 1], index_col=0)
+    ratios = ratios.xs("Cement", level=1, axis=1)[nodes.str[:2]].T
+    fuels = ["coal", "coke", "biomass", "methane", "hydrogen", "naphtha"]
+    heat_input = ratios[fuels].sum(axis=1).values
+
+    kiln, finishing = "cement dry clinker", "cement finishing"
+    clinker_input = costs.at[finishing, "clinker-input"]
+    capital_cost = (
+        costs.at[kiln, "capital_cost"] * clinker_input
+        + costs.at[finishing, "capital_cost"]
+    )
+    marginal_cost = costs.at[kiln, "VOM"] * clinker_input + costs.at[finishing, "VOM"]
+
+    return dict(
+        capital_cost=capital_cost / heat_input,
+        marginal_cost=marginal_cost / heat_input,
+        efficiency=1 / heat_input,
+        efficiency2=-ratios["elec"].values / heat_input,
+        efficiency3=ratios["process emission"].values / heat_input,
+        lifetime=costs.at[kiln, "lifetime"],
+    )
+
+
 def add_industry(
     n: pypsa.Network,
     costs: pd.DataFrame,
@@ -4869,7 +4862,7 @@ def add_industry(
     investment_year : int
         Year for which investment costs should be considered
     sector_ratios_file : str, optional
-        Path to CSV file with industry sector ratios, for endogenous sectors
+        Path to CSV file with industry sector ratios, for endogenous cement
     industrial_production_file : str, optional
         Path to CSV file with industrial production per node, for endogenous sectors
 
@@ -4923,20 +4916,15 @@ def add_industry(
     nyears = nhours / 8760
 
     # 1e6 to convert TWh to MWh
-    industrial_demand_raw = (
-        pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
-    )
-    if options["endogenous_sectors"]["enable"]:
-        # adjust the industrial energy demand excluding endogenously modelled carriers
-        adjusted_demand, steel, cement = adjust_industry_demand(
-            nodes, options, sector_ratios_file, industrial_production_file
+    industrial_demand = pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
+
+    if options["endogenous_sectors"]:
+        # material demand per node [Mt/a]
+        nodal_production = pd.read_csv(industrial_production_file, index_col=0) / 1e3
+        steel = nodal_production[["Integrated steelworks", "DRI + Electric arc"]].sum(
+            axis=1
         )
-        adjusted_demand["current electricity"] = industrial_demand_raw[
-            "current electricity"
-        ]
-        industrial_demand = adjusted_demand.copy()
-    else:
-        industrial_demand = industrial_demand_raw.copy()
+        cement = nodal_production["Cement"]
 
     if not options["biomass"]:
         raise ValueError(
@@ -5214,9 +5202,14 @@ def add_industry(
         industrial_demand.loc[nodes, "process emission from feedstock"].sum()
         / industrial_demand.loc[nodes, "naphtha"].sum()
     )
-    # without waste-to-energy, plastic waste is incinerated without energy recovery
+    # without waste-to-energy or cement kilns, plastic waste is incinerated
+    # without energy recovery
     waste_emissions = {}
-    if not (cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]):
+    if not (
+        cf_industry["waste_to_energy"]
+        or cf_industry["waste_to_energy_cc"]
+        or "cement" in options["endogenous_sectors"]
+    ):
         waste_emissions = {
             "bus3": "co2 atmosphere",
             "efficiency3": plastic_waste_co2_per_naphtha(
@@ -5412,10 +5405,7 @@ def add_industry(
             efficiency2=costs.at["coal", "CO2 intensity"],
         )
 
-    if (
-        options["endogenous_sectors"]["enable"]
-        and "steel" in options["endogenous_sectors"]["subsectors"]
-    ):
+    if "steel" in options["endogenous_sectors"]:
         # add steel load
         logger.info("Adding steel production technologies.")
         n.add("Carrier", "steel")
@@ -5439,7 +5429,7 @@ def add_industry(
             unit="t",
         )
 
-        p_set = steel * 1e6 / nhours
+        p_set = steel * 1e6 * nyears / nhours
         n.add(
             "Load",
             spatial.steel.nodes,
@@ -5585,7 +5575,7 @@ def add_industry(
             efficiency2=costs.at["coal", "CO2 intensity"],
             lifetime=costs.at["blast furnace-basic oxygen furnace", "lifetime"],
         )
-        # either capture or emitt co2
+        # either capture or emit co2
         n.add(
             "Link",
             spatial.nodes,
@@ -5650,14 +5640,10 @@ def add_industry(
             lifetime=costs.at["steel carbon capture retrofit", "lifetime"],
         )
 
-    if (
-        options["endogenous_sectors"]["enable"]
-        and "cement" in options["endogenous_sectors"]["subsectors"]
-    ):
+    if "cement" in options["endogenous_sectors"]:
         # add cement processes
         logger.info("Adding cement production capacities.")
         n.add("Carrier", "cement")
-        n.add("Carrier", "clinker")
         n.add("Carrier", "cement emission")
         n.add("Carrier", "cement heat")
 
@@ -5678,13 +5664,6 @@ def add_industry(
             carrier="cement",
             unit="t",
         )
-        n.add(
-            "Bus",
-            spatial.clinker.nodes,
-            location=spatial.clinker.location,
-            carrier="clinker",
-            unit="t",
-        )
 
         n.add(
             "Bus",
@@ -5695,7 +5674,7 @@ def add_industry(
             unit="t",
         )
 
-        p_set = cement * 1e6 / nhours
+        p_set = cement * 1e6 * nyears / nhours
         n.add(
             "Load",
             cement.index,
@@ -5717,8 +5696,8 @@ def add_industry(
             bus2=spatial.cement.nodes + " emission",
             bus3="co2 atmosphere",
             carrier="cement heat biomass",
-            p_nom=1e6,
-            efficiency=0.9,
+            p_nom_extendable=True,
+            efficiency=1,
             efficiency2=costs.at["solid biomass", "CO2 intensity"],
             efficiency3=-costs.at["solid biomass", "CO2 intensity"],
         )
@@ -5730,8 +5709,8 @@ def add_industry(
             bus1=spatial.cement.heat,
             bus2=spatial.cement.nodes + " emission",
             carrier="cement heat waste",
-            p_nom=1e6,
-            efficiency=0.9,
+            p_nom_extendable=True,
+            efficiency=1,
             efficiency2=costs.at["oil", "CO2 intensity"],
         )
         n.add(
@@ -5742,59 +5721,24 @@ def add_industry(
             bus1=spatial.cement.heat,
             bus2=spatial.cement.nodes + " emission",
             carrier="cement heat gas",
-            p_nom=1e6,
+            p_nom_extendable=True,
             efficiency=1,
             efficiency2=costs.at["gas", "CO2 intensity"],
         )
 
-        # clinker production
-        gas_input = costs.at["cement dry clinker", "gas-input"]
-        heat_input = costs.at["cement dry clinker", "heat-input"]
-        electricity_input = costs.at["cement dry clinker", "electricity-input"]
-        # process emission from calcination + gas emissions
-        # https://www.ipcc-nggip.iges.or.jp/efdb/ef_detail.php
-        co2_emission = 0.5071 + costs.at["gas", "CO2 intensity"] * gas_input
+        # cement production with the specific demands of the exogenous case
         n.add("Carrier", "cement kiln")
         n.add(
             "Link",
-            spatial.clinker.nodes,
+            spatial.cement.nodes,
             suffix=" kiln",
             bus0=spatial.cement.heat,
-            bus1=spatial.clinker.nodes,
-            bus2=spatial.gas.nodes,
-            bus3=spatial.nodes,
-            bus4=spatial.cement.nodes + " emission",
-            carrier="cement kiln",
-            p_nom_extendable=True,
-            capital_cost=costs.at["cement dry clinker", "capital_cost"] / heat_input,
-            efficiency=1 / heat_input,
-            efficiency2=-gas_input / heat_input,
-            efficiency3=-electricity_input / heat_input,
-            efficiency4=co2_emission / heat_input,
-            lifetime=costs.at["cement dry clinker", "lifetime"],
-        )
-
-        # cement finishing
-        electricity_input = (
-            costs.at["cement finishing", "electricity-input"]
-            / costs.at["cement finishing", "clinker-input"]
-        )
-        clinker_input = costs.at["cement finishing", "clinker-input"]
-
-        n.add("Carrier", "cement finishing")
-        n.add(
-            "Link",
-            spatial.cement.nodes,
-            suffix=" production",
-            bus0=spatial.clinker.nodes,
             bus1=spatial.cement.nodes,
             bus2=spatial.nodes,
-            carrier="cement finishing",
+            bus3=spatial.cement.nodes + " emission",
+            carrier="cement kiln",
             p_nom_extendable=True,
-            capital_cost=costs.at["cement finishing", "capital_cost"] / clinker_input,
-            efficiency=1 / clinker_input,
-            efficiency2=-electricity_input,
-            lifetime=costs.at["cement finishing", "lifetime"],
+            **cement_kiln_parameters(costs, sector_ratios_file, nodes),
         )
 
         capture_rate = costs.at["cement carbon capture retrofit", "capture_rate"]
@@ -7113,7 +7057,11 @@ def main(
             nyears=nyears,
         )
 
-    if cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]:
+    if (
+        cf_industry["waste_to_energy"]
+        or cf_industry["waste_to_energy_cc"]
+        or "cement" in options["endogenous_sectors"]
+    ):
         add_waste(
             n=n,
             costs=costs,
@@ -7133,7 +7081,14 @@ def main(
         add_ammonia(n, costs, pop_layout, spatial, cf_industry)
 
     if options["methanol"]:
-        add_methanol(n, costs, options=options, spatial=spatial, pop_layout=pop_layout)
+        add_methanol(
+            n,
+            costs,
+            options=options,
+            spatial=spatial,
+            pop_layout=pop_layout,
+            cf_industry=cf_industry,
+        )
 
     if options["industry"]:
         add_industry(
