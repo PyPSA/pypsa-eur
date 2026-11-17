@@ -5,17 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Added perennialisation (`sector: perennials`) as a carbon dioxide removal (CDR) technology: land of the
-  1st-generation (1G) biofuel crops, freed as the unsustainable bioliquids are phased out, can be converted to
-  grass-clover for biorefining (protein and biogas). The cropland is the JRC ENSPRESO 1G potential of 2020 (NUTS2,
-  crop and fuel mix), scaled with one factor to the fuel energy of the Eurostat unsustainable bioliquids (crop to fuel
-  with the technology-data crop-to-fuel efficiencies and `biomass: unsustainable_bioliquids` fuel heating values),
-  freed by the phase-out and divided by NUTS2-resolved Eurostat crop yields; `perennials: land_multiplier`
-  (default 1) is a user-driven correction of the land available. Per hectare, the credited CO2 removal is
-  `perennials: sequestration_co2_credited` (default 2 tCO2/ha/yr: the credited share of the 2.2 tCO2/ha/yr soil
-  carbon gain of grass-clover, DCA report 193). Grass-clover is fertilised like the 1G crops it replaces, so the field
-  N2O and the ammonia demand do not change ([#2143](https://github.com/PyPSA/pypsa-eur/issues/2143)).
-
+* Feature: Add perennial grass on cropland freed by the phase-out of unsustainable bioliquids as carbon dioxide removal option (`sector: perennials`). ([#2274](https://github.com/PyPSA/pypsa-eur/pull/2274))
 * Feature: Industrial electricity demand follows hourly load profiles per industry branch from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) instead of a flat profile. Enabled by default; disable with `industry: temporal_electricity_industry_load: false` ([#1875](https://github.com/PyPSA/pypsa-eur/pull/1875)).
 * Feature: New option `sector: industry_heat: enable` to optimise the supply of industry process heat above 100 °C in three temperature bands with boilers, direct firing, heat pumps and carbon capture, instead of using exogenous fuel shares. The steel sector is not covered ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 

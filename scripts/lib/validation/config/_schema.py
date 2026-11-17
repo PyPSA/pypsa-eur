@@ -27,7 +27,6 @@ from scripts.lib.validation.config.lines import LinesConfig
 from scripts.lib.validation.config.links import LinksConfig
 from scripts.lib.validation.config.load import LoadConfig
 from scripts.lib.validation.config.overpass_api import OverpassApiConfig
-from scripts.lib.validation.config.perennials import PerennialsConfig
 from scripts.lib.validation.config.plotting import PlottingConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
 from scripts.lib.validation.config.run import RunConfig
@@ -155,10 +154,6 @@ class ConfigSchema(BaseModel):
     renewable: RenewableConfig = Field(
         default_factory=RenewableConfig,
         description="Renewable energy technologies configuration.",
-    )
-    perennials: PerennialsConfig = Field(
-        default_factory=PerennialsConfig,
-        description="Perennialisation (carbon dioxide removal) configuration.",
     )
     conventional: ConventionalConfig = Field(
         default_factory=ConventionalConfig,

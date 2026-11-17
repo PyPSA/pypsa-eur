@@ -881,16 +881,6 @@ rule build_biomass_potentials:
     input:
         enspreso_biomass=rules.retrieve_enspreso_biomass.output["xlsx"],
         eurostat=resources("eurostat_energy_balances.csv"),
-        costs=lambda w: (
-            resources("costs_{horizon}_processed.csv")
-            if config_provider("sector", "perennials")(w)
-            else []
-        ),
-        crop_heating_values=lambda w: (
-            rules.retrieve_co2_removal_data.output.crop_heating_values
-            if config_provider("sector", "perennials")(w)
-            else []
-        ),
         nuts2=rules.retrieve_eu_nuts2013.output["shapes_level_2"],
         onshore_regions=resources("onshore_regions.geojson"),
         nuts3_population=ancient(rules.retrieve_nuts3_population.output["gz"]),
@@ -921,40 +911,6 @@ rule build_biomass_potentials:
         foresight=config_provider("foresight"),
     script:
         scripts("build_biomass_potentials.py")
-
-
-rule build_perennials_yields_eurostat_average:
-    """Builds 1G biofuel crop and grass-clover yields per NUTS2 region from Eurostat crop statistics."""
-    input:
-        nuts2021=rules.retrieve_eu_nuts2021.output.shapes_level_2,
-        crops_nuts2=rules.retrieve_co2_removal_data.output.eurostat_crops_nuts2,
-        crops_nuts0=rules.retrieve_co2_removal_data.output.eurostat_crops_nuts0,
-        crop_heating_values=rules.retrieve_co2_removal_data.output.crop_heating_values,
-    output:
-        yields_all=resources("perennials_yields_1G_biofuels.csv"),
-    log:
-        logs("build_perennials_yields_eurostat_average.log"),
-    script:
-        scripts("build_perennials_yields_eurostat_average.py")
-
-
-rule build_perennials_yields:
-    """Aggregates 1G biofuel crop and grass-clover yields from NUTS2 to clustered regions."""
-    input:
-        nuts2=rules.retrieve_eu_nuts2021.output.shapes_level_2,
-        country_shapes=resources("country_shapes.geojson"),
-        perennials_yields_1G_biofuels=resources("perennials_yields_1G_biofuels.csv"),
-        onshore_regions=resources("onshore_regions.geojson"),
-    output:
-        csv_file=resources("perennials_yields_1G_biofuels_clustered.csv"),
-    log:
-        logs("build_perennials_yields.log"),
-    resources:
-        mem_mb=8000,
-    params:
-        biomass=config_provider("biomass"),
-    script:
-        scripts("build_perennials_yields.py")
 
 
 rule build_biomass_transport_costs:

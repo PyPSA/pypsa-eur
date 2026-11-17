@@ -416,11 +416,6 @@ renewable:
     eia_correct_by_capacity: false
     eia_approximate_missing: false
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#perennials_cf
-perennials:
-  sequestration_co2_credited: 2
-  land_multiplier: 1.0
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#conventional_cf
 conventional:
   estimate_efficiencies:
@@ -588,9 +583,6 @@ biomass:
     2040: 1
     2045: 1
     2050: 1
-  unsustainable_bioliquids:
-    MWh_bioethanol_per_tbioethanol: 7.447
-    MWh_biodiesel_per_tbiodiesel: 10.19
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#solar_thermal_cf
 solar_thermal:
@@ -917,7 +909,19 @@ sector:
   coal_cc: false
   ccgt_cc: false
   dac: true
-  perennials: false
+  perennials:
+    enable: false
+    cropland_per_bioliquids: 0.06
+    sequestration: 2
+    grass_yield: 7.5
+    harvest_months:
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
   co2_vent: false
   heat_vent:
     urban central: true
@@ -1459,9 +1463,6 @@ data:
     source: archive
     version: latest
   instrat_co2_prices:
-    source: primary
-    version: latest
-  co2_removal_data:
     source: primary
     version: latest
   co2stop:

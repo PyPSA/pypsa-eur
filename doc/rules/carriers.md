@@ -12,7 +12,7 @@ management](../design/carbon-management.md) in the design section.
 
 ## Biomass
 
-{{ rules("build_biomass_potentials", "build_biomass_transport_costs", "build_perennials_yields_eurostat_average", "build_perennials_yields") }}
+{{ rules("build_biomass_potentials", "build_biomass_transport_costs") }}
 
 ## Gas network and hydrogen storage
 

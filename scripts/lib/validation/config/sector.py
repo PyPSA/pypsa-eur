@@ -456,6 +456,32 @@ class _IndustryHeatConfig(BaseModel):
     )
 
 
+class _PerennialsConfig(BaseModel):
+    """Configuration for `sector.perennials` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Add the conversion of cropland freed by the phase-out of unsustainable bioliquids to perennial grass as carbon dioxide removal option.",
+    )
+    cropland_per_bioliquids: float = Field(
+        0.06,
+        ge=0,
+        description="Cropland freed per unit of unsustainable bioliquids phased out (ha/MWh/a).",
+    )
+    sequestration: float = Field(
+        2,
+        description="CO2 removal credited for the soil carbon gain under perennial grass (tCO2/ha/a).",
+    )
+    grass_yield: float = Field(
+        7.5,
+        description="Dry matter yield of the perennial grass that is refined to biogas (t/ha/a).",
+    )
+    harvest_months: list[int] = Field(
+        default_factory=lambda: [4, 5, 6, 7, 8, 9, 10],
+        description="Months in which the grass is harvested and refined.",
+    )
+
+
 class SectorConfig(BaseModel):
     """Configuration for `sector` settings."""
 
@@ -762,9 +788,9 @@ class SectorConfig(BaseModel):
         description="Add option for gas CCGTs with post-combustion carbon capture.",
     )
     dac: bool = Field(True, description="Add option for Direct Air Capture (DAC).")
-    perennials: bool = Field(
-        False,
-        description="Add option for perennialisation (converting 1st-generation biofuel cropland to perennial grasses) as a carbon dioxide removal (CDR) technology.",
+    perennials: _PerennialsConfig = Field(
+        default_factory=_PerennialsConfig,
+        description="Perennial grass on freed cropland as carbon dioxide removal option.",
     )
     co2_vent: bool = Field(
         False,

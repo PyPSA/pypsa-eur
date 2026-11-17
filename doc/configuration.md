@@ -372,19 +372,6 @@ Configuration for hydropower.
        for discussion refer to this https://github.com/PyPSA/pypsa-eur/issues/285
 
 
-## `perennials` {#perennials_cf}
-
-Configuration for `perennials` settings, used with `sector: perennials`.
-
-{{ schema_table("perennials") }}
-
-**YAML Syntax**
-
-```yaml
-{{ yaml_section("perennials") }}
-```
-
-
 ## `conventional` {#conventional_cf}
 
 Define additional generator attribute for conventional carrier types. If a

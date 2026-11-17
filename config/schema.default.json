@@ -453,21 +453,6 @@
           },
           "description": "Share determines phase-in of ENSPRESO biomass potentials.",
           "type": "object"
-        },
-        "unsustainable_bioliquids": {
-          "description": "Configuration for `biomass.unsustainable_bioliquids` settings.",
-          "properties": {
-            "MWh_bioethanol_per_tbioethanol": {
-              "default": 7.447,
-              "description": "Lower heating value of bioethanol (MWh/t), 26.8 GJ/t (JRC, Edwards et al. 2019).",
-              "type": "number"
-            },
-            "MWh_biodiesel_per_tbiodiesel": {
-              "default": 10.19,
-              "description": "Lower heating value of biodiesel (MWh/t), 36.7 GJ/t (JRC, Edwards et al. 2019).",
-              "type": "number"
-            }
-          }
         }
       }
     },
@@ -1199,26 +1184,6 @@
           }
         },
         "instrat_co2_prices": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
-        "co2_removal_data": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
@@ -3249,22 +3214,6 @@
               "type": "string"
             }
           }
-        }
-      }
-    },
-    "PerennialsConfig": {
-      "description": "Configuration for `perennials` settings.",
-      "properties": {
-        "sequestration_co2_credited": {
-          "default": 2,
-          "description": "CO2 removal credited as carbon dioxide removal (tCO2/ha/yr) when 1st-generation biofuel cropland is converted to grass-clover. It includes the credited share of the soil carbon gain, e.g. 2.2 tCO2/ha/yr for grass-clover (0.6 tC/ha/yr, DCA report 193, Table 3.4, at any N level) minus the uncertainty deduction and the reversals at ploughing when the sward is re-sown every 4-8 years (carbon farming certification methodologies under Regulation (EU) 2024/3012). Grass-clover is fertilised like the 1st-generation crops it replaces, so the field N2O and the ammonia demand do not change.",
-          "type": "number"
-        },
-        "land_multiplier": {
-          "default": 1.0,
-          "description": "User-driven multiplier of the land available for perennials, e.g. to project it or to reach a given potential. 1: the 1st-generation biofuel cropland of ENSPRESO 2020, scaled to the fuel energy of the Eurostat unsustainable bioliquids. Above 1, perennials may also take cropland that grows food or feed (indirect land use not modelled); the crop mix and the distribution over regions do not change.",
-          "minimum": 0,
-          "type": "number"
         }
       }
     },
@@ -5469,9 +5418,37 @@
           "type": "boolean"
         },
         "perennials": {
-          "default": false,
-          "description": "Add option for perennialisation (converting 1st-generation biofuel cropland to perennial grasses) as a carbon dioxide removal (CDR) technology.",
-          "type": "boolean"
+          "description": "Configuration for `sector.perennials` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add the conversion of cropland freed by the phase-out of unsustainable bioliquids to perennial grass as carbon dioxide removal option.",
+              "type": "boolean"
+            },
+            "cropland_per_bioliquids": {
+              "default": 0.06,
+              "description": "Cropland freed per unit of unsustainable bioliquids phased out (ha/MWh/a).",
+              "minimum": 0,
+              "type": "number"
+            },
+            "sequestration": {
+              "default": 2,
+              "description": "CO2 removal credited for the soil carbon gain under perennial grass (tCO2/ha/a).",
+              "type": "number"
+            },
+            "grass_yield": {
+              "default": 7.5,
+              "description": "Dry matter yield of the perennial grass that is refined to biogas (t/ha/a).",
+              "type": "number"
+            },
+            "harvest_months": {
+              "description": "Months in which the grass is harvested and refined.",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          }
         },
         "co2_vent": {
           "default": false,
@@ -9095,6 +9072,39 @@
         }
       }
     },
+    "_PerennialsConfig": {
+      "description": "Configuration for `sector.perennials` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Add the conversion of cropland freed by the phase-out of unsustainable bioliquids to perennial grass as carbon dioxide removal option.",
+          "type": "boolean"
+        },
+        "cropland_per_bioliquids": {
+          "default": 0.06,
+          "description": "Cropland freed per unit of unsustainable bioliquids phased out (ha/MWh/a).",
+          "minimum": 0,
+          "type": "number"
+        },
+        "sequestration": {
+          "default": 2,
+          "description": "CO2 removal credited for the soil carbon gain under perennial grass (tCO2/ha/a).",
+          "type": "number"
+        },
+        "grass_yield": {
+          "default": 7.5,
+          "description": "Dry matter yield of the perennial grass that is refined to biogas (t/ha/a).",
+          "type": "number"
+        },
+        "harvest_months": {
+          "description": "Months in which the grass is harvested and refined.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      }
+    },
     "_PhaseOutConfig": {
       "description": "A single national policy phase-out for conventional assets.",
       "properties": {
@@ -10021,21 +10031,6 @@
               "type": "number"
             }
           }
-        }
-      }
-    },
-    "_UnsustainableBioliquidsConfig": {
-      "description": "Configuration for `biomass.unsustainable_bioliquids` settings.",
-      "properties": {
-        "MWh_bioethanol_per_tbioethanol": {
-          "default": 7.447,
-          "description": "Lower heating value of bioethanol (MWh/t), 26.8 GJ/t (JRC, Edwards et al. 2019).",
-          "type": "number"
-        },
-        "MWh_biodiesel_per_tbiodiesel": {
-          "default": 10.19,
-          "description": "Lower heating value of biodiesel (MWh/t), 36.7 GJ/t (JRC, Edwards et al. 2019).",
-          "type": "number"
         }
       }
     },
@@ -12002,22 +11997,6 @@
         }
       }
     },
-    "perennials": {
-      "description": "Configuration for `perennials` settings.",
-      "properties": {
-        "sequestration_co2_credited": {
-          "default": 2,
-          "description": "CO2 removal credited as carbon dioxide removal (tCO2/ha/yr) when 1st-generation biofuel cropland is converted to grass-clover. It includes the credited share of the soil carbon gain, e.g. 2.2 tCO2/ha/yr for grass-clover (0.6 tC/ha/yr, DCA report 193, Table 3.4, at any N level) minus the uncertainty deduction and the reversals at ploughing when the sward is re-sown every 4-8 years (carbon farming certification methodologies under Regulation (EU) 2024/3012). Grass-clover is fertilised like the 1st-generation crops it replaces, so the field N2O and the ammonia demand do not change.",
-          "type": "number"
-        },
-        "land_multiplier": {
-          "default": 1.0,
-          "description": "User-driven multiplier of the land available for perennials, e.g. to project it or to reach a given potential. 1: the 1st-generation biofuel cropland of ENSPRESO 2020, scaled to the fuel energy of the Eurostat unsustainable bioliquids. Above 1, perennials may also take cropland that grows food or feed (indirect land use not modelled); the crop mix and the distribution over regions do not change.",
-          "minimum": 0,
-          "type": "number"
-        }
-      }
-    },
     "conventional": {
       "additionalProperties": true,
       "description": "Configuration for `conventional` settings.",
@@ -12501,21 +12480,6 @@
           },
           "description": "Share determines phase-in of ENSPRESO biomass potentials.",
           "type": "object"
-        },
-        "unsustainable_bioliquids": {
-          "description": "Configuration for `biomass.unsustainable_bioliquids` settings.",
-          "properties": {
-            "MWh_bioethanol_per_tbioethanol": {
-              "default": 7.447,
-              "description": "Lower heating value of bioethanol (MWh/t), 26.8 GJ/t (JRC, Edwards et al. 2019).",
-              "type": "number"
-            },
-            "MWh_biodiesel_per_tbiodiesel": {
-              "default": 10.19,
-              "description": "Lower heating value of biodiesel (MWh/t), 36.7 GJ/t (JRC, Edwards et al. 2019).",
-              "type": "number"
-            }
-          }
         }
       }
     },
@@ -13160,9 +13124,37 @@
           "type": "boolean"
         },
         "perennials": {
-          "default": false,
-          "description": "Add option for perennialisation (converting 1st-generation biofuel cropland to perennial grasses) as a carbon dioxide removal (CDR) technology.",
-          "type": "boolean"
+          "description": "Configuration for `sector.perennials` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Add the conversion of cropland freed by the phase-out of unsustainable bioliquids to perennial grass as carbon dioxide removal option.",
+              "type": "boolean"
+            },
+            "cropland_per_bioliquids": {
+              "default": 0.06,
+              "description": "Cropland freed per unit of unsustainable bioliquids phased out (ha/MWh/a).",
+              "minimum": 0,
+              "type": "number"
+            },
+            "sequestration": {
+              "default": 2,
+              "description": "CO2 removal credited for the soil carbon gain under perennial grass (tCO2/ha/a).",
+              "type": "number"
+            },
+            "grass_yield": {
+              "default": 7.5,
+              "description": "Dry matter yield of the perennial grass that is refined to biogas (t/ha/a).",
+              "type": "number"
+            },
+            "harvest_months": {
+              "description": "Months in which the grass is harvested and refined.",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          }
         },
         "co2_vent": {
           "default": false,
@@ -15104,26 +15096,6 @@
           }
         },
         "instrat_co2_prices": {
-          "description": "Configuration for a single data source.",
-          "properties": {
-            "source": {
-              "default": "archive",
-              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
-              "enum": [
-                "archive",
-                "primary",
-                "build"
-              ],
-              "type": "string"
-            },
-            "version": {
-              "default": "latest",
-              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
-              "type": "string"
-            }
-          }
-        },
-        "co2_removal_data": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

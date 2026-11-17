@@ -419,8 +419,8 @@ def adjust_renewable_capacity_limits(
     horizon : str
         The current planning horizon year as string
     renewable_carriers : list[str]
-        Renewable carriers of the composed network (electricity-layer carriers
-        plus sector-layer carriers such as rooftop PV)
+        Carriers with a potential in the composed network (electricity-layer
+        carriers plus sector-layer carriers such as rooftop PV or biochar)
 
     Notes
     -----
@@ -429,13 +429,12 @@ def adjust_renewable_capacity_limits(
     Clips p_nom_max to non-negative values.
     """
     for carrier in renewable_carriers:
-        ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
-        grouper = n.generators.loc[ext_i].index.str.replace(
-            f" {carrier}.*$", "", regex=True
-        )
-        existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
+        static = n.links if carrier in n.links.carrier.values else n.generators
+        ext_i = (static.carrier == carrier) & ~static.p_nom_extendable
+        grouper = static.loc[ext_i].index.str.replace(f" {carrier}.*$", "", regex=True)
+        existing = static.loc[ext_i, "p_nom"].groupby(grouper).sum()
         existing.index += f" {carrier}-{horizon}"
-        n.generators.loc[existing.index, "p_nom_max"] -= existing
+        static.loc[existing.index, "p_nom_max"] -= existing
 
     # Check if existing capacities are larger than technical potential
     existing_large = n.generators[
@@ -451,6 +450,7 @@ def adjust_renewable_capacity_limits(
         ]
 
     n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
+    n.links["p_nom_max"] = n.links["p_nom_max"].clip(lower=0)
 
 
 def main(

@@ -181,11 +181,6 @@ def get_compose_inputs(w):
                 if cfg["sector"]["district_heating"]["ates"]["enable"]
                 else []
             ),
-            perennials_yields_1G_biofuels=(
-                resources("perennials_yields_1G_biofuels_clustered.csv")
-                if cfg["sector"]["perennials"]
-                else []
-            ),
         )
         inputs.update(sector_inputs)
 
@@ -283,7 +278,6 @@ rule compose_network:
             "sector", "district_heating", "direct_utilisation_heat_sources"
         ),
         co2_budget=config_provider("co2_budget"),
-        perennials=config_provider("perennials"),
         adjustments=config_provider("adjustments"),
         nice_names=config_provider("plotting", "nice_names"),
         tech_colors=config_provider("plotting", "tech_colors"),
