@@ -19,7 +19,7 @@ two differences:
 Output
 ------
 
-- ``resources/availability_matrix_carbon_dioxide_removal_{clusters}_rock_weathering.nc``:
+- ``resources/carbon_dioxide_removal_availability_matrix_rock_weathering.nc``:
   same format as ``determine_availability_matrix.py``'s output, consumed by
   ``build_available_land.py``.
 """
@@ -79,9 +79,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "determine_rock_weathering_availability_matrix", clusters="adm"
-        )
+        snakemake = mock_snakemake("determine_rock_weathering_availability_matrix")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

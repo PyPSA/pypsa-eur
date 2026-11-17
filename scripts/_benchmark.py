@@ -2,12 +2,22 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Utilities for measuring memory consumption and run time.
+
+Provides `memory_logger`, a context manager adapted from memory_profiler that
+samples the memory use of the current process and its children from a
+separate process at fixed intervals and optionally writes it to a log file,
+plus a simple `timer` context manager. The solve rules use it to record peak
+memory.
+"""
 
 import logging
 import os
 import signal
 import sys
 import time
+from types import TracebackType
 
 from memory_profiler import _get_memory, choose_backend
 
@@ -42,7 +52,7 @@ class MemTimer(Process):
 
         super().__init__(*args, **kw)
 
-    def run(self):
+    def run(self) -> None:
         # ignore the interrupt signal in the child process
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
@@ -140,12 +150,12 @@ class memory_logger:
 
     def __init__(
         self,
-        filename=None,
-        interval=1.0,
-        max_usage=True,
-        timestamps=True,
-        include_children=True,
-    ):
+        filename: str | None = None,
+        interval: float = 1.0,
+        max_usage: bool = True,
+        timestamps: bool = True,
+        include_children: bool = True,
+    ) -> None:
         if filename is not None:
             timestamps = True
 
@@ -155,7 +165,7 @@ class memory_logger:
         self.timestamps = timestamps
         self.include_children = include_children
 
-    def __enter__(self):
+    def __enter__(self) -> "memory_logger":
         backend = choose_backend()
 
         self.child_conn, self.parent_conn = Pipe()  # this will store MemTimer's results
@@ -174,7 +184,12 @@ class memory_logger:
 
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
         if exc_type is None:
             self.parent_conn.send(0)  # finish timing
 
@@ -190,11 +205,11 @@ class timer:
     level = 0
     opened = False
 
-    def __init__(self, name="", verbose=True):
+    def __init__(self, name: str = "", verbose: bool = True) -> None:
         self.name = name
         self.verbose = verbose
 
-    def __enter__(self):
+    def __enter__(self) -> "timer":
         if self.verbose:
             if self.opened:
                 sys.stdout.write("\n")
@@ -210,7 +225,7 @@ class timer:
         self.start = time.time()
         return self
 
-    def print_usec(self, usec):
+    def print_usec(self, usec: float) -> None:
         if usec < 1000:
             print(f"{usec:.1f} usec")
         else:
@@ -221,7 +236,12 @@ class timer:
                 sec = msec / 1000
                 print(f"{sec:.1f} sec")
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
         if not self.opened and self.verbose:
             sys.stdout.write(".. " * self.level)
 
