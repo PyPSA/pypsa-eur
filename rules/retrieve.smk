@@ -1621,26 +1621,14 @@ if (CO2_REMOVAL_DATASET := dataset_version("co2_removal_data"))["source"] in [
         input:
             zip=storage(CO2_REMOVAL_DATASET["url"]),
         output:
-            unsustainable_biomass_upstream=resources(
-                "unsustainable_biomass_upstream.csv"
-            ),
+            f"{CO2_REMOVAL_DATASET['folder']}/unsustainable_biomass_upstream.csv",
         log:
             "logs/retrieve_co2_removal_data.log",
         retries: 2
         run:
             with ZipFile(input.zip) as z:
-                # GitHub's release archive nests everything under a single
-                # top-level "<owner>-<repo>-<commit-sha>/" folder whose name
-                # changes with every release, so resolve it at runtime.
+                # the archive nests everything under one folder named after the commit
                 top_dir = z.namelist()[0].split("/")[0]
-                for src_path, dest in [
-                    (
-                        "outputs/biomass_inputs/unsustainable_biomass_upstream.csv",
-                        output.unsustainable_biomass_upstream,
-                    ),
-                ]:
-                    with (
-                        z.open(f"{top_dir}/{src_path}") as src,
-                        open(dest, "wb") as dst,
-                    ):
-                        dst.write(src.read())
+                member = f"{top_dir}/outputs/biomass_inputs/{Path(output[0]).name}"
+                with z.open(member) as src, open(output[0], "wb") as dst:
+                    dst.write(src.read())

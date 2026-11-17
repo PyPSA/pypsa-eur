@@ -97,11 +97,6 @@ def get_compose_inputs(w):
             dsm_profile=resources("dsm_profile.csv"),
             heat_dsm_profile=resources("residential_heat_dsm_profile.csv"),
             biomass_potentials=resources("biomass_potentials_{horizon}.csv"),
-            unsustainable_biomass_upstream=(
-                resources("unsustainable_biomass_upstream_{horizon}.csv")
-                if sector["unsustainable_biomass_upstream_emissions"]
-                else []
-            ),
             h2_cavern=(
                 resources("salt_cavern_potentials.csv")
                 if sector["hydrogen_underground_storage"]

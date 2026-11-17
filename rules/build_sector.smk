@@ -895,17 +895,14 @@ rule build_biomass_potentials:
             else []
         ),
         country_shapes=resources("country_shapes.geojson"),
-        unsustainable_biomass_upstream_data=lambda w: (
-            rules.retrieve_co2_removal_data.output["unsustainable_biomass_upstream"]
+        unsustainable_biomass_upstream=lambda w: (
+            rules.retrieve_co2_removal_data.output[0]
             if config_provider("sector", "unsustainable_biomass_upstream_emissions")(w)
             else []
         ),
     output:
         biomass_potentials_all=resources("biomass_potentials_all_{horizon}.csv"),
         biomass_potentials=resources("biomass_potentials_{horizon}.csv"),
-        unsustainable_biomass_upstream=resources(
-            "unsustainable_biomass_upstream_{horizon}.csv"
-        ),
     log:
         logs("build_biomass_potentials_{horizon}.log"),
     benchmark:
