@@ -317,12 +317,6 @@ Configuration for hydropower.
 
 {{ schema_table("renewable.hydro") }}
 
-Land-eligibility settings for enhanced rock weathering, reusing the same land-eligibility
-analysis machinery as `onwind`/`offwind`/`solar` above (see [determine_rock_weathering_availability_matrix][]).
-Intended to be shared by future land-based CDR technologies (e.g. biochar, afforestation) too.
-
-{{ schema_table("renewable.rock_weathering") }}
-
 **YAML Syntax**
 
 ```yaml
@@ -599,22 +593,6 @@ Configuration for `industry` settings.
 
 !!! note
     Only used for sector-coupling studies.
-
-
-## `afforestation` {#afforestation_cf}
-
-Only used for sector-coupling studies with `sector: afforestation: true`. The eligible land is set
-under `renewable: afforestation`.
-
-Configuration for `afforestation` settings.
-
-{{ schema_table("afforestation") }}
-
-**YAML Syntax**
-
-```yaml
-{{ yaml_section("afforestation") }}
-```
 
 
 ## `costs` {#costs_cf}

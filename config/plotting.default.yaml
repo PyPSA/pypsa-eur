@@ -746,4 +746,6 @@ plotting:
     import NH3: "#e2ed74"
     import oil: "#93eda2"
     import methanol: "#87d0e6"
-    co2 afforestation: "#22cc22"
+    afforestation: "#22cc22"
+    biochar: "#005000"
+    rock weathering: "#ab6ae9"

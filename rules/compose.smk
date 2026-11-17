@@ -176,24 +176,24 @@ def get_compose_inputs(w):
                 if cfg["sector"]["enhanced_geothermal"]["enable"]
                 else []
             ),
-            afforestation_potentials=(
-                resources("afforestation_potentials.csv")
-                if cfg["sector"]["afforestation"]
+            available_land_rock_weathering=(
+                resources("available_land_rock_weathering.csv")
+                if cfg["sector"]["rock_weathering"]["enable"]
                 else []
             ),
-            afforestation_seasonal_profile=(
-                resources("afforestation_seasonal_profile.csv")
-                if cfg["sector"]["afforestation"]
+            available_land_biochar=(
+                resources("available_land_biochar.csv")
+                if cfg["sector"]["biochar"]["enable"]
+                else []
+            ),
+            afforestation_potentials=(
+                resources("afforestation_potentials.csv")
+                if cfg["sector"]["afforestation"]["enable"]
                 else []
             ),
             ates_potentials=(
                 resources("ates_potentials_{horizon}.csv")
                 if cfg["sector"]["district_heating"]["ates"]["enable"]
-                else []
-            ),
-            rock_weathering_potentials=(
-                resources("rock_weathering_available_land.csv")
-                if cfg["sector"]["rock_weathering"]
                 else []
             ),
         )
@@ -266,7 +266,6 @@ rule compose_network:
         links=config_provider("links"),
         transmission_losses=config_provider("solving", "options", "transmission_losses"),
         industry=config_provider("industry"),
-        afforestation=config_provider("afforestation"),
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
         ),

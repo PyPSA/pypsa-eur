@@ -415,12 +415,6 @@ renewable:
     eia_norm_year: false
     eia_correct_by_capacity: false
     eia_approximate_missing: false
-  afforestation:
-    corine:
-    - 29
-    natura: false
-    cutout: default
-    excluder_resolution: 250
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#conventional_cf
 conventional:
@@ -915,7 +909,37 @@ sector:
   coal_cc: false
   ccgt_cc: false
   dac: true
-  afforestation: false
+  rock_weathering:
+    enable: false
+    corine:
+    - 12
+    - 13
+    - 14
+    natura: false
+    excluder_resolution: 250
+    max_land_usage: 0.2
+    min_mean_temp: 10
+    co2_removal_per_sqkm: 309
+  biochar:
+    enable: false
+    corine:
+    - 12
+    - 13
+    - 14
+    natura: false
+    excluder_resolution: 250
+    max_land_usage: 0.2
+    application_per_sqkm: 1500
+    number_years: 25
+    use_waste_heat: 0.25
+  afforestation:
+    enable: false
+    corine:
+    - 29
+    natura: false
+    excluder_resolution: 250
+    max_land_usage: 1.0
+    crcf_efficiency: 0.8
   co2_vent: false
   heat_vent:
     urban central: true
@@ -1193,11 +1217,6 @@ industry:
   reference_year: 2023
   oil_refining_emissions: 0.013
   temporal_electricity_industry_load: true
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#afforestation_cf
-afforestation:
-  use_discount_rate: false
-  crcf_efficiency: 0.8
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#costs_cf
 costs:

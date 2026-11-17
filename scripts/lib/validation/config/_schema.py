@@ -9,7 +9,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from scripts.lib.validation.config._base import ConfigModel
 from scripts.lib.validation.config.adjustments import AdjustmentsConfig
-from scripts.lib.validation.config.afforestation import AfforestationConfig
 from scripts.lib.validation.config.atlite import AtliteConfig
 from scripts.lib.validation.config.biomass import BiomassConfig
 from scripts.lib.validation.config.clustering import ClusteringConfig
@@ -30,7 +29,6 @@ from scripts.lib.validation.config.load import LoadConfig
 from scripts.lib.validation.config.overpass_api import OverpassApiConfig
 from scripts.lib.validation.config.plotting import PlottingConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
-from scripts.lib.validation.config.rock_weathering import RockWeatheringConfig
 from scripts.lib.validation.config.run import RunConfig
 from scripts.lib.validation.config.sector import SectorConfig
 from scripts.lib.validation.config.snapshots import SnapshotsConfig
@@ -204,10 +202,6 @@ class ConfigSchema(BaseModel):
     industry: IndustryConfig = Field(
         default_factory=IndustryConfig,
         description="Industry sector configuration.",
-    )
-    afforestation: AfforestationConfig = Field(
-        default_factory=AfforestationConfig,
-        description="Afforestation configuration.",
     )
     costs: CostsConfig = Field(
         default_factory=CostsConfig,

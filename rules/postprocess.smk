@@ -253,11 +253,6 @@ rule plot_balance_timeseries:
     input:
         network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
-        afforestation_seasonal_profile=lambda w: (
-            resources("afforestation_seasonal_profile.csv")
-            if config_provider("sector", "afforestation")(w)
-            else []
-        ),
     output:
         directory(RESULTS + "graphs/balance_timeseries_{horizon}"),
     log:
@@ -280,11 +275,6 @@ rule plot_heatmap_timeseries:
     input:
         network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
-        afforestation_seasonal_profile=lambda w: (
-            resources("afforestation_seasonal_profile.csv")
-            if config_provider("sector", "afforestation")(w)
-            else []
-        ),
     output:
         directory(RESULTS + "graphs/heatmap_timeseries_{horizon}"),
     log:

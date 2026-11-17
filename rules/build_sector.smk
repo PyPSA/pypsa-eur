@@ -914,13 +914,16 @@ rule build_biomass_potentials:
 
 
 rule determine_carbon_dioxide_removal_availability_matrix:
-    """Computes the share of each cutout grid cell available to a carbon dioxide removal technology."""
+    """Computes the share of each cutout grid cell available to a land-based carbon dioxide removal option."""
     input:
         corine=ancient(rules.retrieve_corine.output["tif_file"]),
-        regions=resources("onshore_regions.geojson"),
-        cutout=lambda w: input_cutout(
-            w, config_provider("renewable", w.technology, "cutout")(w)
+        natura=lambda w: (
+            f"{NATURA_DATASET['folder']}/natura.tiff"
+            if config_provider("sector", w.technology, "natura")(w)
+            else []
         ),
+        regions=resources("onshore_regions.geojson"),
+        cutout=lambda w: input_cutout(w),
     output:
         nc=resources("carbon_dioxide_removal_availability_matrix_{technology}.nc"),
         plot=branch(
@@ -931,13 +934,15 @@ rule determine_carbon_dioxide_removal_availability_matrix:
         ),
     log:
         logs("determine_carbon_dioxide_removal_availability_matrix_{technology}.log"),
+    benchmark:
+        benchmarks("determine_carbon_dioxide_removal_availability_matrix_{technology}")
     wildcard_constraints:
-        technology="afforestation",
+        technology="rock_weathering|biochar|afforestation",
     threads: atlite_threads
     resources:
         mem_mb=atlite_mem_mb(5000),
     params:
-        technology=lambda w: config_provider("renewable", w.technology)(w),
+        technology=lambda w: config_provider("sector", w.technology)(w),
         plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
         disable_progressbar=config_provider("run", "disable_progressbar"),
         show_progress=config_provider("atlite", "show_progress"),
@@ -946,50 +951,45 @@ rule determine_carbon_dioxide_removal_availability_matrix:
 
 
 rule build_available_land:
-    """Aggregates the land available to a carbon dioxide removal technology per region."""
+    """Builds the land area eligible for a land-based carbon dioxide removal option per region."""
     input:
         availability_matrix=resources(
             "carbon_dioxide_removal_availability_matrix_{technology}.nc"
         ),
-        regions=resources("onshore_regions.geojson"),
-        cutout=lambda w: input_cutout(
-            w, config_provider("renewable", w.technology, "cutout")(w)
-        ),
+        cutout=lambda w: input_cutout(w),
     output:
-        csv_file=resources("{technology}_available_land.csv"),
+        resources("available_land_{technology}.csv"),
     log:
         logs("build_available_land_{technology}.log"),
+    benchmark:
+        benchmarks("build_available_land_{technology}")
     wildcard_constraints:
-        technology="afforestation",
+        technology="rock_weathering|biochar|afforestation",
     resources:
         mem_mb=8000,
     params:
-        renewable=config_provider("renewable"),
+        min_mean_temp=lambda w: config_provider("sector", w.technology)(w).get(
+            "min_mean_temp"
+        ),
     script:
         scripts("build_available_land.py")
 
 
 rule build_afforestation_potentials:
-    """Builds afforestation potentials and seasonal sequestration profiles per region."""
+    """Builds the afforestation potential, sequestration rate and rotation age per region."""
     input:
-        afforestation_corine_potentials_csv_file=resources(
-            "afforestation_available_land.csv"
-        ),
-        afforestation_nuts_file=rules.retrieve_co2_removal_data.output.afforestation_nuts2_afforestation_rates,
-        afforestation_monthly_weights_file=rules.retrieve_co2_removal_data.output.afforestation_nuts2_monthly_weights,
+        land=resources("available_land_afforestation.csv"),
+        rates=rules.retrieve_co2_removal_data.output.afforestation_rates,
+        nuts2=rules.retrieve_eu_nuts2013.output["shapes_level_2"],
+        regions=resources("onshore_regions.geojson"),
     output:
-        csv_file=resources("afforestation_potentials.csv"),
-        monthly_weights_csv_file=resources("afforestation_monthly_weights.csv"),
-        seasonal_profile_csv_file=resources("afforestation_seasonal_profile.csv"),
-        png_file=resources("afforestation_potentials.png"),
+        resources("afforestation_potentials.csv"),
     log:
         logs("build_afforestation_potentials.log"),
+    benchmark:
+        benchmarks("build_afforestation_potentials")
     resources:
         mem_mb=5000,
-    params:
-        network_geojson=resources("onshore_regions.geojson"),
-        nuts2_geojson=rules.retrieve_eu_nuts2013.output["shapes_level_2"],
-        snapshots=config["snapshots"],
     script:
         scripts("build_afforestation_potentials.py")
 

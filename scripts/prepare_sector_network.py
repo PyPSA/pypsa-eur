@@ -1190,175 +1190,186 @@ def add_dac(n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace) -> 
     )
 
 
-def add_afforestation(
+def add_rock_weathering(
     n: pypsa.Network,
     costs: pd.DataFrame,
     spatial: SimpleNamespace,
-    afforestation_potentials_file: str,
-    afforestation_seasonal_profile_file: str,
-    afforestation_config: dict,
-    costs_config: dict,
+    options: dict,
+    land_file: str,
 ) -> None:
     """
-    Add afforestation (CDR via new forest growth) to the network as Bus,
-    Store, and Link components, all sharing a single "co2 afforestation"
-    carrier.
+    Add enhanced rock weathering as carbon dioxide removal option.
 
-    A single Link per node draws CO2 from the atmosphere (bus0) into a
-    growing-stock Store (bus1); the link is mass-conserving (efficiency=1),
-    so only the net amount actually credited under the EU CRCF is treated
-    as removed from the shared "co2 atmosphere" bus.
-
-    Potential and capital cost are derived from the NUTS-2 rotation-averaged
-    Mean Annual Increment (MAI) and rotation age (Pilli et al. forest-growth
-    tables), with dispatch following a precomputed monthly seasonal profile
-    (FluxCom GPP-derived). The gross potential is discounted by the EU CRCF
-    net/gross credit fraction (``crcf_efficiency``) before being used as the
-    store's ``e_nom_max`` and the link's peak-rate cap;
-    ``capital_cost``'s denominator is scaled by the same factor so the
-    annualized per-hectare cost is spread over net (not gross) creditable
-    tonnes. The lifetime of the store and the link is the node's optimal
-    rotation age, the same period as the annuity; in myopic runs a mature
-    forest keeps its land (see ``add_brownfield``).
-
-    The link's ``p_nom`` is fixed to the peak physical rate and dispatch is
-    left free (``p_min_pu=0``) instead of following the seasonal profile
-    exactly; ``redistribute_afforestation_seasonal()``
-    (``afforestation_postprocess.py``) must then be called before any
-    temporal plotting to remap the free dispatch back onto the biological
-    seasonal profile.
+    One link per node removes CO2 from the atmosphere and consumes the
+    electricity for grinding and spreading the rock. The removal is permanent,
+    so no storage is tracked. The annual potential of the eligible cropland
+    limits the capacity of the link at a constant removal rate.
 
     Parameters
     ----------
     n : pypsa.Network
         The PyPSA network container object
     costs : pd.DataFrame
-        Costs and parameters for different technologies. Must contain an
-        'Afforestation' entry with 'investment', 'FOM', and 'lifetime'
-        parameters
+        Costs and parameters with an "Enhanced Weathering" entry
     spatial : SimpleNamespace
         Spatial configuration containing the nodes
-    afforestation_potentials_file : str
-        Path to the afforestation potentials per node (from
-        ``build_afforestation_potentials.py``)
-    afforestation_seasonal_profile_file : str
-        Path to the hourly seasonal profile per node (from
-        ``build_afforestation_potentials.py``)
-    afforestation_config : dict
-        Afforestation settings with the keys ``crcf_efficiency`` and
-        ``use_discount_rate``
-    costs_config : dict
-        Cost settings containing the discount rate in ``fill_values``
+    options : dict
+        Sector options with the ``rock_weathering`` settings
+    land_file : str
+        Path to the eligible land per node (km2)
+    """
+    logger.info("Adding enhanced rock weathering.")
 
-    Returns
-    -------
-    None
-        Modifies the network object in-place by adding the afforestation
-        Bus, Store, and Link
+    config = options["rock_weathering"]
+    land = pd.read_csv(land_file, index_col=0)["area"].reindex(spatial.nodes)
+    potential = land * config["co2_removal_per_sqkm"] * config["max_land_usage"]
+
+    n.add("Carrier", "rock weathering")
+
+    n.add(
+        "Link",
+        spatial.nodes,
+        suffix=" rock weathering",
+        bus0="co2 atmosphere",
+        bus1=spatial.nodes,
+        carrier="rock weathering",
+        efficiency=-costs.at["Enhanced Weathering", "electricity-input"],
+        marginal_cost=costs.at["Enhanced Weathering", "VOM"],
+        p_nom_extendable=True,
+        p_nom_max=potential / 8760,
+    )
+
+
+def add_biochar(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    land_file: str,
+) -> None:
+    """
+    Add biochar from the pyrolysis of solid biomass as carbon dioxide removal option.
+
+    One link per node removes CO2 from the atmosphere, consumes solid biomass
+    and electricity, and can feed heat into district heating. Only the carbon
+    that stays in the biochar counts as removal, the rest of the biomass
+    carbon returns to the atmosphere. The removal is permanent, so no storage
+    is tracked. The biochar that the eligible cropland can take up per year
+    limits the capacity of the link at a constant removal rate.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Costs and parameters with a "biochar pyrolysis" entry
+    spatial : SimpleNamespace
+        Spatial configuration containing the nodes and the biomass buses
+    options : dict
+        Sector options with the ``biochar`` settings
+    land_file : str
+        Path to the eligible land per node (km2)
+    """
+    logger.info("Adding biochar.")
+
+    config = options["biochar"]
+    land = pd.read_csv(land_file, index_col=0)["area"].reindex(spatial.nodes)
+
+    tech = "biochar pyrolysis"
+    co2_per_tonne_biochar = 1 / (
+        costs.at[tech, "biomass-input"] * costs.at[tech, "biochar-output"]
+    )
+    potential = (
+        land
+        * config["max_land_usage"]
+        * config["application_per_sqkm"]
+        / config["number_years"]
+        * co2_per_tonne_biochar
+    )
+
+    urban_central = spatial.nodes + " urban central heat"
+    urban_central = urban_central.where(urban_central.isin(n.buses.index), "")
+
+    n.add("Carrier", "biochar")
+
+    n.add(
+        "Link",
+        spatial.nodes,
+        suffix=" biochar",
+        bus0="co2 atmosphere",
+        bus1=spatial.biomass.df.loc[spatial.nodes, "nodes"].values,
+        bus2=spatial.nodes,
+        bus3=urban_central,
+        carrier="biochar",
+        efficiency=-costs.at[tech, "biomass-input"],
+        efficiency2=-costs.at[tech, "electricity-input"],
+        efficiency3=costs.at[tech, "heat-output"] * config["use_waste_heat"],
+        capital_cost=costs.at[tech, "capital_cost"],
+        marginal_cost=costs.at[tech, "VOM"],
+        p_nom_extendable=True,
+        p_nom_max=potential / 8760,
+        lifetime=costs.at[tech, "lifetime"],
+    )
+
+
+def add_afforestation(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    potentials_file: str,
+    nyears: float = 1,
+) -> None:
+    """
+    Add afforestation as carbon dioxide removal option.
+
+    One generator per node removes CO2 from the atmosphere at the mean
+    sequestration rate of a new forest over its rotation. Only the share
+    credited under the EU Carbon Removals and Carbon Farming regulation counts
+    as removal. The investment per hectare is annualised over the rotation age,
+    which is also the lifetime. The seasonal cycle of the growth is ignored,
+    because only the annual sum enters the carbon budget.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Costs and parameters with an "Afforestation" entry (investment per hectare)
+    spatial : SimpleNamespace
+        Spatial configuration containing the nodes
+    options : dict
+        Sector options with the ``afforestation`` settings
+    potentials_file : str
+        Path to the potential (tCO2/a), sequestration rate (tCO2/ha/a) and
+        rotation age (a) per node
+    nyears : float
+        Number of years modelled, to scale the annualised investment
     """
     logger.info("Adding afforestation.")
 
-    afforestation_potentials = pd.read_csv(afforestation_potentials_file).set_index(
-        "node"
+    df = pd.read_csv(potentials_file, index_col=0).reindex(spatial.nodes)
+    credited = options["afforestation"]["crcf_efficiency"]
+
+    tech = "Afforestation"
+    annuity = calculate_annuity(df["rotation_age"], costs.at[tech, "discount rate"])
+    cost_per_hectare = (
+        costs.at[tech, "investment"] * (annuity + costs.at[tech, "FOM"] / 100) * nyears
     )
 
-    crcf_efficiency = afforestation_config["crcf_efficiency"]
-    # The link's p_nom is fixed to the peak physical rate and dispatch is left free
-    # (p_min_pu=0). Spikes are bounded: the flow can never exceed the seasonal peak rate.
-    # Call redistribute_afforestation_seasonal() from afforestation_postprocess.py
-    # before any temporal plotting.
-
-    # Pilli gross MAI-based potential, discounted by the EU CRCF net/gross credit
-    # fraction here (rather than on the link) so e_nom_max directly represents the
-    # max creditable removal — only this net amount is treated as drawn from the
-    # atmosphere for the model's overall CO2 accounting.
-    potentials = afforestation_potentials["potential [tCO2/y]"].values * crcf_efficiency
-    growth_rate = (
-        afforestation_potentials["CO2 seq rate tCO2/(ha y)"].values * crcf_efficiency
-    )
-
-    # capital cost from annuity formula: I*(annuity(T*, r) + FOM) / (MAI * crcf_efficiency) [EUR/tCO2_net]
-    use_discount_rate = afforestation_config.get("use_discount_rate", True)
-    investment_cost = costs.at["Afforestation", "investment"]
-    fom = costs.at["Afforestation", "FOM"] / 100
-    rotation_age = afforestation_potentials["rotation_age_years"].values
-    discount_rate = (
-        costs_config["fill_values"]["discount rate"] if use_discount_rate else 0.0
-    )
-    forest_annuity = calculate_annuity(rotation_age, discount_rate)
-    capital_cost = (
-        investment_cost * (forest_annuity + fom) / (growth_rate)
-    )  # [EUR/tCO2_net]
-
-    # Load pre-computed hourly seasonal profile (snapshots × nodes)
-    profile_full = pd.read_csv(
-        afforestation_seasonal_profile_file,
-        index_col="snapshot",
-        parse_dates=True,
-    )
-    dates = pd.DatetimeIndex(
-        n.snapshots.get_level_values(1)
-        if isinstance(n.snapshots, pd.MultiIndex)
-        else n.snapshots
-    )
-    profile_full.columns = spatial.nodes + " afforestation"
-    monthly_rate = profile_full.reindex(dates).set_axis(n.snapshots)
-
-    # cap: peak seasonal rate at full deployment
-    # w_sum/w_max gives minimum hours needed to fill annual potential at peak rate,
-    # bounding how concentrated the solver can make the dispatch.
-    w_sum = (
-        monthly_rate.sum()
-    )  # total weight per node (indexed by "{node} afforestation")
-    w_max = monthly_rate.max()  # peak weight per node
-    # align with spatial.nodes order
-    node_cols = spatial.nodes + " afforestation"
-    p_nom_cap = potentials * (w_max / w_sum).reindex(node_cols).values
-
-    n.add("Carrier", "co2 afforestation")
+    n.add("Carrier", "afforestation")
 
     n.add(
-        "Bus",
-        spatial.nodes + " co2 afforestation",
-        location=spatial.nodes,
-        carrier="co2 afforestation",
-        unit="t_co2",
-    )
-
-    n.add(
-        "Store",
-        spatial.nodes + " co2 afforestation",
-        bus=spatial.nodes + " co2 afforestation",
-        carrier="co2 afforestation",
-        capital_cost=capital_cost,
-        e_nom_extendable=True,
-        e_nom_max=potentials,
-        lifetime=rotation_age,
-    )
-
-    # CRCF discount is applied to the potential (see above), not the link:
-    # the link stays mass-conserving so only the net creditable amount is treated as
-    # removed from the shared "co2 atmosphere" bus.
-    link_efficiency = 1.0
-
-    # Fixed p_nom = peak physical rate; optimizer dispatches freely within [0, p_nom].
-    # No capital cost on the link since investment is captured by the store.
-    n.add(
-        "Link",
-        spatial.nodes + " afforestation",
-        bus0="co2 atmosphere",
-        bus1=spatial.nodes + " co2 afforestation",
-        carrier="co2 afforestation",
-        efficiency=link_efficiency,
-        p_nom=p_nom_cap,
-        p_nom_extendable=False,
-        p_min_pu=0.0,
-        p_max_pu=1.0,
-        lifetime=rotation_age,
-    )
-    logger.info(
-        "Afforestation: p_nom fixed to peak rate, dispatch free. "
-        "Call redistribute_afforestation_seasonal() before temporal plotting."
+        "Generator",
+        spatial.nodes,
+        suffix=" afforestation",
+        bus="co2 atmosphere",
+        carrier="afforestation",
+        sign=-1,
+        p_nom_extendable=True,
+        p_nom_max=df["potential"] * credited / 8760,
+        capital_cost=cost_per_hectare / (df["rate"] * credited) * 8760,
+        lifetime=df["rotation_age"],
     )
 
 
@@ -6815,15 +6826,17 @@ def main(
     if options["dac"]:
         add_dac(n, costs, spatial)
 
-    if options.get("afforestation"):
+    if options["rock_weathering"]["enable"]:
+        add_rock_weathering(
+            n, costs, spatial, options, inputs.available_land_rock_weathering
+        )
+
+    if options["biochar"]["enable"]:
+        add_biochar(n, costs, spatial, options, inputs.available_land_biochar)
+
+    if options["afforestation"]["enable"]:
         add_afforestation(
-            n,
-            costs,
-            spatial,
-            afforestation_potentials_file=inputs.afforestation_potentials,
-            afforestation_seasonal_profile_file=inputs.afforestation_seasonal_profile,
-            afforestation_config=params.afforestation,
-            costs_config=params.costs,
+            n, costs, spatial, options, inputs.afforestation_potentials, nyears
         )
 
     if not options["electricity_transmission_grid"]:

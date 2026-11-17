@@ -1621,29 +1621,14 @@ if (CO2_REMOVAL_DATASET := dataset_version("co2_removal_data"))["source"] in [
         input:
             zip=storage(CO2_REMOVAL_DATASET["url"]),
         output:
-            afforestation_nuts2_afforestation_rates=f"{CO2_REMOVAL_DATASET['folder']}/afforestation_rates_nuts2_full.csv",
-            afforestation_nuts2_monthly_weights=f"{CO2_REMOVAL_DATASET['folder']}/afforestation_nuts2_monthly_weights.csv",
+            afforestation_rates=f"{CO2_REMOVAL_DATASET['folder']}/afforestation_rates_nuts2_full.csv",
         log:
             "logs/retrieve_co2_removal_data.log",
         retries: 2
         run:
             with ZipFile(input.zip) as z:
-                # GitHub's release archive nests everything under a single
-                # top-level "<owner>-<repo>-<commit-sha>/" folder whose name
-                # changes with every release, so resolve it at runtime.
+                # the archive nests everything under one folder named after the commit
                 top_dir = z.namelist()[0].split("/")[0]
-                for src_path, dest in [
-                    (
-                        "outputs/afforestation/afforestation_rates_nuts2_full.csv",
-                        output.afforestation_nuts2_afforestation_rates,
-                    ),
-                    (
-                        "outputs/afforestation/afforestation_nuts2_monthly_weights.csv",
-                        output.afforestation_nuts2_monthly_weights,
-                    ),
-                ]:
-                    with (
-                        z.open(f"{top_dir}/{src_path}") as src,
-                        open(dest, "wb") as dst,
-                    ):
-                        dst.write(src.read())
+                member = f"{top_dir}/outputs/afforestation/{Path(output[0]).name}"
+                with z.open(member) as src, open(output[0], "wb") as dst:
+                    dst.write(src.read())

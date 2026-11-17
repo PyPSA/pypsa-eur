@@ -5,7 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* feat: Add enhanced rock weathering as a carbon dioxide removal (CDR) technology, with node-level potential derived from CORINE land cover and filtered by mean annual minimum temperature ([#2142](https://github.com/PyPSA/pypsa-eur/issues/2142)).
+* Feature: Add enhanced rock weathering, biochar and afforestation as land-based carbon dioxide removal options (`sector: rock_weathering`, `sector: biochar`, `sector: afforestation`). Their potentials derive from CORINE land cover. ([#2405](https://github.com/PyPSA/pypsa-eur/pull/2405))
 * Feature: Industrial electricity demand follows hourly load profiles per industry branch from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) instead of a flat profile. Enabled by default; disable with `industry: temporal_electricity_industry_load: false` ([#1875](https://github.com/PyPSA/pypsa-eur/pull/1875)).
 * Feature: New option `sector: industry_heat: enable` to optimise the supply of industry process heat above 100 °C in three temperature bands with boilers, direct firing, heat pumps and carbon capture, instead of using exogenous fuel shares. The steel sector is not covered ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 
@@ -311,18 +311,6 @@ for file name mappings and configuration changes in detail.
   ([#2275](https://github.com/PyPSA/pypsa-eur/pull/2275)).
 
 * **Breaking:** `electricity: max_hours: iron-air` now counts hours at rated output rather than hours of stored energy, matching how duration and cost per kWh are quoted for iron-air. The store is therefore sized by `max_hours / efficiency_dispatch`, and the store cost of iron-air added as `Store` is converted to cost per MWh stored. Cost per MW is unchanged, so iron-air becomes more capable per euro and results including it will change ([#2298](https://github.com/PyPSA/pypsa-eur/pull/2298)).
-* feat: Add biochar as a carbon dioxide removal (CDR) technology, via biomass pyrolysis and stable-carbon soil storage, with node-level potential derived from CORINE land cover ([#2141](https://github.com/PyPSA/pypsa-eur/issues/2141)).
-
-* Added afforestation as a carbon dioxide removal technology (`sector: afforestation`, settings under
-  `afforestation:`). The land available per node is transitional woodland-shrub in CORINE
-  (`renewable: afforestation`). The potential uses rotation-averaged CO2 sequestration rates per NUTS-2
-  region from the JRC forest yield tables (Pilli et al., 2024), with monthly profiles from FluxCom gross
-  primary production. The credited removal is the gross sequestration times `afforestation: crcf_efficiency`
-  (0.8, EU CRCF uncertainty and buffer deductions). The investment is annualised over the node's optimal
-  rotation age, which is also the lifetime of the forest. In myopic runs, forests planted in earlier horizons
-  reduce the remaining potential; a forest that reaches its rotation age is no longer credited but keeps its
-  land. The input data come from the new dataset `co2_removal_data` (CO2-removal v1.0.4 on Zenodo,
-  https://doi.org/10.5281/zenodo.23954311), method documented in its `docs/afforestation_method.pdf`.
 
 ## PyPSA-Eur v2026.08.0 (19th August 2026)
 

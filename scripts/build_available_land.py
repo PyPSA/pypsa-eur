@@ -2,34 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Aggregate a per-bus land-eligibility availability matrix (as produced by
-``determine_availability_matrix.py`` / ``determine_rock_weathering_availability_matrix.py``)
-into eligible land area per network node, in km².
+Build the land area eligible for a land-based carbon dioxide removal option per region.
 
-Shared by biochar, afforestation and rock weathering: the per-bus fractional
-eligibility (0-1 per cutout grid cell) is multiplied by the cutout grid cell
-area and summed per bus, recovering the same eligible-area-in-km² number the
-previous per-technology scripts (``build_corine_potentials.py``,
-``build_EW_potentials.py``) each computed independently via
-``atlite.gis.shape_availability``.
-
-Output: CSV with columns ``area [sqkm]`` (total node area) and
-``potential [sqkm]`` (eligible area after exclusions), indexed by node name.
-The downstream consumers (``add_biochar``, ``build_afforestation_potentials``,
-``add_rock_weathering``) apply their own technology-specific rate (t/km²,
-growth rate, etc.) to the ``potential [sqkm]`` column.
+The availability matrix gives the eligible share of each cutout grid cell per
+region. It is multiplied with the grid cell area and summed per region.
+Optionally, grid cells with an annual mean air temperature below a threshold
+are excluded.
 """
 
 import logging
 
-import geopandas as gpd
-import pandas as pd
 import xarray as xr
 
 from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
 logger = logging.getLogger(__name__)
-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -39,31 +26,21 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    technology = snakemake.wildcards.technology
-
     availability = xr.open_dataarray(snakemake.input.availability_matrix)
     cutout = load_cutout(snakemake.input.cutout)
-    regions = (
-        gpd.read_file(snakemake.input.regions).set_index("name").rename_axis("bus")
-    )
 
-    cell_area = cutout.grid.to_crs(3035).area / 1e6
+    min_mean_temp = snakemake.params.min_mean_temp
+    if min_mean_temp is not None:
+        mean_temp = cutout.data["temperature"].mean("time") - 273.15
+        availability = availability.where(mean_temp >= min_mean_temp, 0)
+
     cell_area = xr.DataArray(
-        cell_area.values.reshape(cutout.shape),
+        (cutout.grid.to_crs(3035).area / 1e6).values.reshape(cutout.shape),
         [cutout.coords["y"], cutout.coords["x"]],
     )
-
-    potential = (availability * cell_area).sum(dim=["x", "y"]).to_pandas()
-    area = regions.geometry.to_crs(3035).area / 1e6
-
-    df = pd.DataFrame({"area [sqkm]": area, "potential [sqkm]": potential})
-    df.index.name = "node"
+    land = (availability * cell_area).sum(["x", "y"]).to_pandas()
 
     logger.info(
-        "Total %s potential: %.0f sqkm (of %.0f sqkm total node area)",
-        technology,
-        df["potential [sqkm]"].sum(),
-        df["area [sqkm]"].sum(),
+        f"Eligible land for {snakemake.wildcards.technology}: {land.sum():.0f} sqkm"
     )
-
-    df.to_csv(snakemake.output.csv_file)
+    land.rename_axis("name").rename("area").to_csv(snakemake.output[0])
