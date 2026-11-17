@@ -1622,13 +1622,15 @@ if (CO2_REMOVAL_DATASET := dataset_version("co2_removal_data"))["source"] in [
             zip=storage(CO2_REMOVAL_DATASET["url"]),
         output:
             afforestation_rates=f"{CO2_REMOVAL_DATASET['folder']}/afforestation_rates_nuts2_full.csv",
+            unsustainable_biomass_upstream=f"{CO2_REMOVAL_DATASET['folder']}/unsustainable_biomass_upstream.csv",
         log:
             "logs/retrieve_co2_removal_data.log",
         retries: 2
         run:
             with ZipFile(input.zip) as z:
-                # the archive nests everything under one folder named after the commit
-                top_dir = z.namelist()[0].split("/")[0]
-                member = f"{top_dir}/outputs/afforestation/{Path(output[0]).name}"
-                with z.open(member) as src, open(output[0], "wb") as dst:
-                    dst.write(src.read())
+                for path in output:
+                    member = next(
+                        m for m in z.namelist() if Path(m).name == Path(path).name
+                    )
+                    with z.open(member) as src, open(path, "wb") as dst:
+                        dst.write(src.read())

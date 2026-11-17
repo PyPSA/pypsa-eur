@@ -7,6 +7,7 @@
 <!-- ================= -->
 * Update technology-data to v0.16.0. ([#2405](https://github.com/PyPSA/pypsa-eur/pull/2405))
 * Feature: Add enhanced rock weathering, biochar, afforestation and perennial grass as land-based carbon dioxide removal options (`sector: rock_weathering`, `sector: biochar`, `sector: afforestation`, `sector: perennials`). Their potentials derive from CORINE land cover or, for perennial grass, from the cropland freed by the phase-out of unsustainable bioliquids. ([#2405](https://github.com/PyPSA/pypsa-eur/pull/2405)) We acknowledge funding to Alberto Alamia from [CORC](https://corc.au.dk/).
+* Feature: Add option `sector: unsustainable_biomass_upstream_emissions` to count the cultivation emissions of unsustainable bioliquids, including N2O in CO2 equivalents. ([#2405](https://github.com/PyPSA/pypsa-eur/pull/2405))
 * Feature: Industrial electricity demand follows hourly load profiles per industry branch from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) instead of a flat profile. Enabled by default; disable with `industry: temporal_electricity_industry_load: false` ([#1875](https://github.com/PyPSA/pypsa-eur/pull/1875)).
 * Feature: New option `sector: industry_heat: enable` to optimise the supply of industry process heat above 100 °C in three temperature bands with boilers, direct firing, heat pumps and carbon capture, instead of using exogenous fuel shares. The steel sector is not covered ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 

@@ -1092,6 +1092,10 @@ class SectorConfig(BaseModel):
     biomass_transport: bool = Field(
         False, description="Add option for transporting solid biomass between nodes."
     )
+    unsustainable_biomass_upstream_emissions: bool = Field(
+        False,
+        description="Add the cultivation emissions of the unsustainable bioliquids to their use: field N2O and soil acidification, and the production of imported nitrogen fertiliser. The factors are in CO2 equivalents, although the emission limit otherwise counts CO2 only.",
+    )
     biogas_upgrading: bool = Field(True, description="Biogas upgrading.")
     biogas_upgrading_cc: bool = Field(
         False, description="Add option to capture CO2 from biomass upgrading."

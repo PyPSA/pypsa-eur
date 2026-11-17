@@ -264,12 +264,27 @@ def convert_nuts2_to_regions(
     return bio_regions
 
 
+def upstream_emission_factors(fn: str, year: int) -> pd.DataFrame:
+    """
+    Upstream emission factors of bioethanol and biodiesel per country
+    (tCO2eq/MWh), linearly interpolated to the given year.
+    """
+    table = pd.read_csv(fn, index_col=0)
+    factors = {}
+    for fuel in ["bioethanol", "biodiesel"]:
+        df = table.filter(regex=rf"^{fuel}_\d{{4}}$")
+        years = df.columns.str[-4:].astype(int)
+        factors[fuel] = df.apply(lambda row: np.interp(year, years, row), axis=1)
+    return pd.DataFrame(factors)
+
+
 def add_unsustainable_potentials(
     df: pd.DataFrame,
     input_eurostat: str,
     countries: list[str],
     investment_year: int,
     params: dict,
+    upstream_emissions: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """
     Add unsustainable biomass potentials to the given dataframe. The difference
@@ -362,6 +377,20 @@ def add_unsustainable_potentials(
         resource_type="R5210|R5220|R5230|R5290",
     )
 
+    if upstream_emissions is not None:
+        # weight the factors with the country's shares of biogasoline and other bioliquids
+        bioliquids = df_unsustainable.filter(regex="R5210|R5220|R5230|R5290")
+        share_bioethanol = (
+            bioliquids.filter(regex="R5210").sum(axis=1).div(bioliquids.sum(axis=1))
+        )
+        factor = upstream_emissions["biodiesel"] + share_bioethanol.fillna(0) * (
+            upstream_emissions["bioethanol"] - upstream_emissions["biodiesel"]
+        )
+        df_wo_ch["unsustainable bioliquids upstream emissions"] = (
+            df_wo_ch["unsustainable bioliquids"]
+            * factor.reindex(df_wo_ch.index.str[:2]).values
+        )
+
     share_sus = params["share_sustainable_potential_available"][investment_year]
     df.loc[df_wo_ch.index] *= share_sus
 
@@ -437,8 +466,19 @@ if __name__ == "__main__":
     df = df.T.groupby(grouper).sum().T
 
     input_eurostat = snakemake.input.eurostat
+    upstream_emissions = None
+    if snakemake.input.unsustainable_biomass_upstream:
+        upstream_emissions = upstream_emission_factors(
+            snakemake.input.unsustainable_biomass_upstream, investment_year
+        )
+
     df = add_unsustainable_potentials(
-        df, input_eurostat, snakemake.params.countries, investment_year, params
+        df,
+        input_eurostat,
+        snakemake.params.countries,
+        investment_year,
+        params,
+        upstream_emissions,
     )
 
     df *= 1e6  # TWh/a to MWh/a

@@ -6018,6 +6018,11 @@
           "description": "Add option for transporting solid biomass between nodes.",
           "type": "boolean"
         },
+        "unsustainable_biomass_upstream_emissions": {
+          "default": false,
+          "description": "Add the cultivation emissions of the unsustainable bioliquids to their use: field N2O and soil acidification, and the production of imported nitrogen fertiliser. The factors are in CO2 equivalents, although the emission limit otherwise counts CO2 only.",
+          "type": "boolean"
+        },
         "biogas_upgrading": {
           "default": true,
           "description": "Biogas upgrading.",
@@ -13994,6 +13999,11 @@
         "biomass_transport": {
           "default": false,
           "description": "Add option for transporting solid biomass between nodes.",
+          "type": "boolean"
+        },
+        "unsustainable_biomass_upstream_emissions": {
+          "default": false,
+          "description": "Add the cultivation emissions of the unsustainable bioliquids to their use: field N2O and soil acidification, and the production of imported nitrogen fertiliser. The factors are in CO2 equivalents, although the emission limit otherwise counts CO2 only.",
           "type": "boolean"
         },
         "biogas_upgrading": {

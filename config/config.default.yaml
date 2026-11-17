@@ -1074,6 +1074,7 @@ sector:
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: true
   biomass_transport: false
+  unsustainable_biomass_upstream_emissions: false
   biogas_upgrading: true
   biogas_upgrading_cc: false
   conventional_generation:

@@ -4239,6 +4239,23 @@ def add_biomass(
             cf_industry=cf_industry,
         )
 
+        upstream_emissions = 0.0
+        if options["unsustainable_biomass_upstream_emissions"]:
+            emissions = biomass_potentials[
+                "unsustainable bioliquids upstream emissions"
+            ]
+            if options.get("biomass_spatial", options["biomass_transport"]):
+                emissions = emissions.rename(
+                    index=lambda x: x + " unsustainable bioliquids"
+                )
+            else:
+                emissions = emissions.sum()
+            upstream_emissions = (
+                emissions / unsustainable_liquid_biofuel_potentials_spatial
+            )
+            if isinstance(upstream_emissions, pd.Series):
+                upstream_emissions = upstream_emissions.fillna(0)
+
         n.add(
             "Link",
             spatial.biomass.bioliquids,
@@ -4247,7 +4264,7 @@ def add_biomass(
             bus2="co2 atmosphere",
             carrier="unsustainable bioliquids",
             efficiency=1,
-            efficiency2=-costs.at["oil", "CO2 intensity"],
+            efficiency2=-costs.at["oil", "CO2 intensity"] + upstream_emissions,
             p_nom=unsustainable_liquid_biofuel_potentials_spatial,
             marginal_cost=costs.at["BtL", "VOM"],
         )
