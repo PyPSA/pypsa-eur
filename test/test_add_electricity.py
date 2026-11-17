@@ -10,6 +10,7 @@ import pypsa
 import xarray as xr
 
 from scripts.add_electricity import (
+    attach_hydro,
     attach_load,
     attach_storageunits,
     attach_stores,
@@ -122,3 +123,79 @@ def test_estimate_efficiency():
         np.nan,
     ]
     np.testing.assert_allclose(eta, expected)
+
+
+def test_attach_hydro_energy_capacity_totals_by_country(tmp_path):
+    """
+    Reservoir storage adds up to the country target.
+
+    The storage missing from the plant data is spread over all units of a country
+    by p_nom. Nothing is added if the listed storage already meets the target.
+    """
+    # AA: a single unit (one node per country). BB: two units of different size.
+    # CC: listed storage above the target, plus a unit without listed storage.
+    # DD: neither a target nor listed storage.
+    targets = pd.Series({"AA": 10.0, "BB": 10.0, "CC": 1.0}, name="E_store[TWh]")
+    ppl = pd.DataFrame(
+        {
+            "carrier": "hydro",
+            "bus": ["AA0", "BB0", "BB1", "CC0", "CC1", "DD0"],
+            "country": ["AA", "BB", "BB", "CC", "CC", "DD"],
+            "p_nom": [1000.0, 1000.0, 4000.0, 1000.0, 1000.0, 1000.0],  # MW
+            # listed storage: 4, 2, 3, 2, 0 and 0 TWh
+            "max_hours": [4000.0, 2000.0, 750.0, 2000.0, np.nan, np.nan],
+        },
+        index=[
+            "AA0 hydro",
+            "BB0 hydro",
+            "BB1 hydro",
+            "CC0 hydro",
+            "CC1 hydro",
+            "DD0 hydro",
+        ],
+    )
+    costs = pd.DataFrame(
+        {
+            "CO2 intensity": 0.0,
+            "capital_cost": 0.0,
+            "marginal_cost": 0.0,
+            "efficiency": 1.0,
+        },
+        index=["hydro"],
+    )
+
+    times = pd.date_range("2013-01-01", periods=2, freq="h")
+    countries = ["AA", "BB", "CC", "DD"]
+    inflow_path = tmp_path / "profile_hydro.nc"
+    xr.DataArray(
+        np.zeros((len(times), len(countries))),
+        coords={"time": times, "countries": countries},
+        dims=["time", "countries"],
+    ).to_netcdf(inflow_path)
+    capacities_path = tmp_path / "hydro_capacities.csv"
+    targets.to_csv(capacities_path)
+
+    n = pypsa.Network()
+    n.set_snapshots(times)
+    n.add("Bus", ppl.bus.values, country=ppl.country.values)
+
+    attach_hydro(
+        n,
+        costs,
+        ppl,
+        inflow_path.as_posix(),
+        capacities_path.as_posix(),
+        ["hydro"],
+        hydro_max_hours="energy_capacity_totals_by_country",
+    )
+
+    # AA0 keeps its 4 TWh and gets the 6 TWh residual. BB's 5 TWh residual is split
+    # 1:4 by p_nom (BB0 2 + 1 TWh, BB1 3 + 4 TWh). CC keeps its listed storage and
+    # gets nothing more, so CC1 has none. DD falls back to 6 hours.
+    max_hours = n.storage_units.max_hours
+    np.testing.assert_allclose(
+        max_hours[ppl.index], [10000.0, 3000.0, 1750.0, 2000.0, 0.0, 6.0]
+    )
+    # AA and BB reach their targets, CC keeps its listed 2 TWh
+    e_store = (n.storage_units.p_nom * max_hours).groupby(ppl.country).sum() / 1e6
+    np.testing.assert_allclose(e_store[["AA", "BB", "CC"]], [10.0, 10.0, 2.0])
