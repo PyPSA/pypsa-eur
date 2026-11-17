@@ -1328,7 +1328,8 @@ def add_afforestation(
     credited under the EU Carbon Removals and Carbon Farming regulation counts
     as removal. The investment per hectare is annualised over the rotation age,
     which is also the lifetime. The seasonal cycle of the growth is ignored,
-    because only the annual sum enters the carbon budget.
+    because only the annual sum enters the carbon budget. With myopic
+    foresight, a forest that reaches its rotation age frees its land again.
 
     Parameters
     ----------
