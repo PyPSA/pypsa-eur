@@ -2,7 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create static energy balance maps for the defined carriers using`n.plot()`.
+Plots a static map of the nodal energy balance of one bus carrier.
+
+Reads the solved network and computes the annual energy balance per bus and
+technology carrier with the PyPSA statistics module, split into supply and
+consumption. Bus sizes show the balance as split circles, branch widths and
+arrows show net transmission flows, and regions are shaded by the
+time-averaged marginal price of the carrier. Transmission losses are removed
+from the balance. For stored CO2, dense-phase buses are merged into the
+balance and the CO2 emission shadow price is subtracted from the regional
+price. Carriers absent from the network produce a placeholder figure.
 """
 
 import geopandas as gpd
@@ -10,16 +19,21 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 from packaging.version import Version, parse
-from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
+from pypsa.plot.maps.static import (
+    add_legend_lines,
+    add_legend_patches,
+    add_legend_semicircles,
+)
 from pypsa.statistics import get_transmission_carriers
 
 from scripts._helpers import (
     PYPSA_V1,
     configure_logging,
+    create_placeholder_plot,
     set_scenario_config,
-    update_config_from_wildcards,
 )
 from scripts.add_electricity import sanitize_carriers
+from scripts.co2_budget import co2_limit_name
 from scripts.plot_power_network import load_projection
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
@@ -30,19 +44,19 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_balance_map",
-            clusters="50",
-            opts="",
-            sector_opts="",
-            planning_horizons="2050",
+            horizon=2050,
             carrier="H2",
         )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     n = pypsa.Network(snakemake.input.network)
-    sanitize_carriers(n, snakemake.config)
+    sanitize_carriers(
+        n,
+        snakemake.params.plotting["nice_names"],
+        snakemake.params.plotting["tech_colors"],
+    )
     pypsa.set_option("params.statistics.round", 8)
     pypsa.set_option("params.statistics.drop_zero", True)
     pypsa.set_option("params.statistics.nice_names", False)
@@ -69,9 +83,18 @@ if __name__ == "__main__":
     branch_color = settings.get("branch_color") or "darkseagreen"
 
     if carrier not in n.buses.carrier.unique():
-        raise ValueError(
-            f"Carrier {carrier} is not in the network. Remove from configuration `plotting: balance_map: bus_carriers`."
+        import logging
+        import sys
+
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"Carrier {carrier} is not in the network. Skipping balance map plot. "
+            f"Consider removing from configuration `plotting: balance_map: bus_carriers` for this scenario."
         )
+        create_placeholder_plot(
+            snakemake.output[0], f"No {carrier} carrier\nin network", figsize=(1, 1)
+        )
+        sys.exit(0)
 
     # for plotting change bus to location
     n.buses["location"] = n.buses["location"].replace("", "EU").fillna("EU")
@@ -106,7 +129,9 @@ if __name__ == "__main__":
             n, bus_carrier=carrier
         ).rename({"name": "carrier"})
 
-    components = transmission_carriers.unique("component")
+    components = transmission_carriers.unique("component").intersection(
+        eb.index.unique("component")
+    )
     carriers = transmission_carriers.unique("carrier")
 
     # only carriers that are also in the energy balance
@@ -157,8 +182,9 @@ if __name__ == "__main__":
     level = "name" if PYPSA_V1 else "Bus"
     price = prices.rename(n.buses.location).groupby(level=level).mean()
 
-    if carrier == "co2 stored" and "CO2Limit" in n.global_constraints.index:
-        co2_price = n.global_constraints.loc["CO2Limit", "mu"]
+    co2_limit = co2_limit_name("upper")
+    if carrier == "co2 stored" and co2_limit in n.global_constraints.index:
+        co2_price = n.global_constraints.loc[co2_limit, "mu"]
         price = price - co2_price
 
     # if only one price is available, use this price for all regions
@@ -251,7 +277,7 @@ if __name__ == "__main__":
     # Determine larger total absolute value for supply and consumption for a carrier if carrier exists as both supply and consumption
     common_carriers = pos_carriers.intersection(neg_carriers)
 
-    def get_total_abs(carrier, sign):
+    def get_total_abs(carrier: str, sign: int) -> float:
         values = bus_size.loc[:, carrier]
         return values[values * sign > 0].abs().sum()
 

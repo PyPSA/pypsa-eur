@@ -38,11 +38,11 @@ class ConfigModel(BaseModel):
 
     def values(self) -> Iterator[Any]:
         """Enable: config.values()."""
-        return (getattr(self, k) for k in self.model_fields.keys())
+        return (getattr(self, k) for k in self.model_fields)
 
     def items(self) -> Iterator[tuple[str, Any]]:
         """Enable: config.items()."""
-        return ((k, getattr(self, k)) for k in self.model_fields.keys())
+        return ((k, getattr(self, k)) for k in self.model_fields)
 
 
 class ConfigUpdater(ABC):
@@ -75,7 +75,7 @@ class ConfigUpdater(ABC):
 
         You can use `{field_name}` as a formatting placeholder in the URL, which will be replaced with the actual field name for each key, e.g.:
 
-        `https://pypsa-eur.readthedocs.io/en/latest/configuration.html#{field_name}`
+        `https://pypsa-eur.readthedocs.io/en/latest/configuration/#{field_name}_cf`
         """
 
     @abstractmethod

@@ -82,16 +82,12 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_perennials_yields",
-            clusters="39",
-            planning_horizons=2050,
-        )
+        snakemake = mock_snakemake("build_perennials_yields")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    regions = gpd.read_file(snakemake.input.regions_onshore)
+    regions = gpd.read_file(snakemake.input.onshore_regions)
     nuts2 = build_nuts2_shapes(snakemake.input.nuts2, snakemake.input.country_shapes)
 
     yields = pd.read_csv(snakemake.input.perennials_yields_1G_biofuels, index_col=0)

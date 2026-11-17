@@ -1,0 +1,110 @@
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+full:
+  clustering:
+    temporal:
+      averaging: false
+      segmentation: false
+
+averaging-2h:
+  clustering:
+    temporal:
+      averaging: 2h
+
+averaging-3h:
+  clustering:
+    temporal:
+      averaging: 3h
+
+averaging-4h:
+  clustering:
+    temporal:
+      averaging: 4h
+
+averaging-5h:
+  clustering:
+    temporal:
+      averaging: 5h
+
+averaging-6h:
+  clustering:
+    temporal:
+      averaging: 6h
+
+averaging-8h:
+  clustering:
+    temporal:
+      averaging: 8h
+
+averaging-10h:
+  clustering:
+    temporal:
+      averaging: 10h
+
+averaging-12h:
+  clustering:
+    temporal:
+      averaging: 12h
+
+segmentation-2h:
+  clustering:
+    temporal:
+      segmentation: 4380
+
+segmentation-3h:
+  clustering:
+    temporal:
+      segmentation: 2920
+
+segmentation-4h:
+  clustering:
+    temporal:
+      segmentation: 2190
+
+segmentation-5h:
+  clustering:
+    temporal:
+      segmentation: 1752
+
+segmentation-6h:
+  clustering:
+    temporal:
+      segmentation: 1460
+
+segmentation-8h:
+  clustering:
+    temporal:
+      segmentation: 1095
+
+segmentation-10h:
+  clustering:
+    temporal:
+      segmentation: 876
+
+segmentation-12h:
+  clustering:
+    temporal:
+      segmentation: 730
+
+segmentation-18h:
+  clustering:
+    temporal:
+      segmentation: 486
+
+segmentation-24h:
+  clustering:
+    temporal:
+      segmentation: 365
+
+segmentation-36h:
+  clustering:
+    temporal:
+      segmentation: 243
+
+segmentation-48h:
+  clustering:
+    temporal:
+      segmentation: 182

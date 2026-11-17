@@ -5,7 +5,7 @@
 """
 Perennialisation configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#perennials
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#perennials_cf
 """
 
 from pydantic import Field

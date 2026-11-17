@@ -2,20 +2,25 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build hydroelectric inflow time-series for each country.
+Build hydroelectric inflow time series per country.
 
-Outputs
--------
-
-- `resources/profile_hydro.nc`:
+Runoff from the weather cutout is aggregated over each country shape with
+[atlite](https://atlite.readthedocs.io/en/latest/), smoothed and normalised so
+that the annual inflow matches the annual hydro generation reported by the
+U.S. Energy Information Administration (EIA). Optionally, the EIA statistics
+are corrected for capacity changes relative to 2019, missing years are
+approximated by a linear regression of generation on annual runoff, and all
+years can be normalised to a single reference year. Years without EIA data
+default to the median year. Inflows below a configurable threshold are clipped
+to zero.
 
 | Field | Dimensions | Description |
 | --- | --- | --- |
-| inflow | countries, time | Inflow to the state of charge (in MW), e.g. due to river inflow in hydro reservoir. |
+| inflow | countries, time | Inflow to the state of charge in MW, e.g. river inflow to hydro reservoirs |
 
-![](img/inflow-ts.png)
+![](../img/inflow-ts.png)
 
-![](img/inflow-box.png)
+![](../img/inflow-box.png)
 """
 
 import logging
@@ -43,15 +48,19 @@ def get_eia_annual_hydro_generation(
     df.index = df.index.str.strip()
     df.columns = df.columns.astype(int)
 
-    former_countries = {
-        "Former Czechoslovakia": dict(
-            countries=["Czechia", "Slovakia"], start=1980, end=1992
-        ),
-        "Former Serbia and Montenegro": dict(
-            countries=["Serbia", "Montenegro", "Kosovo"], start=1992, end=2005
-        ),
-        "Former Yugoslavia": dict(
-            countries=[
+    former_countries: dict[str, dict] = {
+        "Former Czechoslovakia": {
+            "countries": ["Czechia", "Slovakia"],
+            "start": 1980,
+            "end": 1992,
+        },
+        "Former Serbia and Montenegro": {
+            "countries": ["Serbia", "Montenegro", "Kosovo"],
+            "start": 1992,
+            "end": 2005,
+        },
+        "Former Yugoslavia": {
+            "countries": [
                 "Slovenia",
                 "Croatia",
                 "Bosnia and Herzegovina",
@@ -60,13 +69,13 @@ def get_eia_annual_hydro_generation(
                 "Montenegro",
                 "North Macedonia",
             ],
-            start=1980,
-            end=1991,
-        ),
+            "start": 1980,
+            "end": 1991,
+        },
     }
 
     for k, v in former_countries.items():
-        period = [i for i in range(v["start"], v["end"] + 1)]
+        period = list(range(v["start"], v["end"] + 1))
         ratio = df.loc[v["countries"]].T.dropna().sum()
         ratio /= ratio.sum()
         for country in v["countries"]:
@@ -178,17 +187,15 @@ if __name__ == "__main__":
     fn = snakemake.input.eia_hydro_generation
     eia_stats = get_eia_annual_hydro_generation(fn, countries)
 
-    config_hydro = snakemake.config["renewable"]["hydro"]
-
-    if config_hydro.get("eia_correct_by_capacity"):
+    if params_hydro.get("eia_correct_by_capacity"):
         fn = snakemake.input.eia_hydro_capacity
         correct_eia_stats_by_capacity(eia_stats, fn, countries)
 
-    if config_hydro.get("eia_approximate_missing"):
+    if params_hydro.get("eia_approximate_missing"):
         fn = snakemake.input.era5_runoff
         eia_stats = approximate_missing_eia_stats(eia_stats, fn, countries)
 
-    norm_year = config_hydro.get("eia_norm_year")
+    norm_year = params_hydro.get("eia_norm_year")
     missing_years = years_in_time.difference(eia_stats.index)
     if norm_year:
         eia_stats.loc[years_in_time] = eia_stats.loc[norm_year]
