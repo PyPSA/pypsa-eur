@@ -70,12 +70,12 @@ An equivalent YAML format example would be:
 # One list entry per equivalent CSV row
 # Keys = CSV column names
 - dataset: aquifer_data
-    version: v1.2
-    source: archive
-    tags: latest supported
-    added: 2025-12-02
-    note: my custom note
-    url: https://data.pypsa.org/workflows/eur/aquifer_data/v1.2/IHME1500_v12.zip
+  version: v1.2
+  source: archive
+  tags: latest supported
+  added: 2025-12-02
+  note: my custom note
+  url: https://data.pypsa.org/workflows/eur/aquifer_data/v1.2/IHME1500_v12.zip
 ```
 
 Priority is given to the definition of a dataset given later in the list.

@@ -223,7 +223,7 @@ def build_afforestation_potentials(
             "density_contrib": "sum",
             "rotage_contrib": "sum",
             "share": "sum",
-            **{c: "sum" for c in w_cols},
+            **dict.fromkeys(w_cols, "sum"),
         }
     )
 
@@ -316,7 +316,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_afforestation_potentials", clusters="39")
+        snakemake = mock_snakemake("build_afforestation_potentials")
 
     configure_logging(snakemake)
 

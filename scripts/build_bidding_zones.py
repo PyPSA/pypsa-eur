@@ -3,16 +3,12 @@
 # SPDX-License-Identifier: MIT
 """
 Combines bidding zone shape files from two sources. The `electricitymaps-contrib` data is more accurate and are used as the baseline. The Italian bidding zones from `entsoe-py` are more preferred and are used to override the baseline. Manual adjustments are made to match the TYNDP 2024 configuration. Small islands are removed and Crete is considered as independent of Greece. Southern Norwegian zones are merged.
-
-Outputs
--------
-
-- `resources/bidding_zones.geojson`:
 """
 
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import MultiPolygon, Polygon
+from shapely.geometry.base import BaseGeometry
 
 
 def parse_zone_names(zone_names: pd.Series) -> tuple[set[str], pd.Series]:
@@ -48,8 +44,8 @@ def replace_country(
     reference: gpd.GeoDataFrame,
     country: str,
     default_tolerance: float = 0.05,
-    tolerance_dict: dict[str, dict[str, float]] = None,
-):
+    tolerance_dict: dict[str, dict[str, float]] | None = None,
+) -> gpd.GeoDataFrame:
     """
     Replace the shape of a specified country in the source shapes file with the corresponding shape from a reference shapes file.
 
@@ -99,7 +95,7 @@ def replace_country(
         for n in neighbors.zone_name:
             zi = bidding_zones.query("zone_name == @z")
             ni = bidding_zones.query("zone_name == @n")
-            tol = tolerance_dict.get(z, default_tolerance).get(n, default_tolerance)
+            tol = (tolerance_dict or {}).get(z, {}).get(n, default_tolerance)
             ni.loc[:, "geometry"] = (
                 ni.snap(zi, tolerance=tol, align=False)
                 .buffer(0)
@@ -131,7 +127,7 @@ def extract_shape_by_bbox(
     min_lat: float,
     max_lat: float,
     region_id: str,
-):
+) -> gpd.GeoDataFrame:
     """
     Extracts a shape from a country's GeoDataFrame based on latitude and longitude bounds.
 
@@ -176,7 +172,7 @@ def extract_shape_by_bbox(
     ).reset_index(drop=True)
 
 
-def remove_holes(geom):
+def remove_holes(geom: BaseGeometry) -> BaseGeometry:
     if geom.geom_type == "Polygon":
         return Polygon(geom.exterior)
     elif geom.geom_type == "MultiPolygon":
@@ -185,7 +181,7 @@ def remove_holes(geom):
         return geom
 
 
-def format_names(s: str):
+def format_names(s: str) -> str:
     s = (
         s.replace("DK-DK1", "DKW1")
         .replace("DK-DK2", "DKE1")

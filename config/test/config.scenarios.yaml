@@ -14,17 +14,14 @@ run:
     file: "config/test/scenarios.yaml"
   disable_progressbar: true
 
-scenario:
-  clusters:
-  - 5
-  opts:
-  - ''
+planning_horizons:
+- 2030
 
-countries: ['BE']
+countries: ["BE"]
 
 snapshots:
-  start: "2013-03-01"
-  end: "2013-03-08"
+  start: "2013-03-01 00:00"
+  end: "2013-03-07 23:00"
 
 electricity:
   extendable_carriers:
