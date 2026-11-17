@@ -100,8 +100,8 @@ across horizons.
 ## Land-based removal
 
 Three optional technologies remove CO~2~ from the atmosphere permanently
-without geological storage, so they do not count towards the sequestration
-limit. Their potential per region follows from the eligible land cover, of
+without geological storage [@fernandesExploringCarbon2026], so they do not
+count towards the sequestration limit. Their potential per region follows from the eligible land cover, of
 which a configurable share is used. They remove CO~2~ at a constant rate over
 the year.
 
