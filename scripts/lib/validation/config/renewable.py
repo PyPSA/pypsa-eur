@@ -274,7 +274,7 @@ class _HydroConfig(BaseModel):
     )
     hydro_max_hours: str | float = Field(
         "energy_capacity_totals_by_country",
-        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
+        description="Method to set the maximum state of charge capacity of hydro reservoirs in terms of hours at full output capacity `p_nom`, based on the country totals in `data/hydro_capacities.csv`. With `energy_capacity_totals_by_country`, the storage missing from the power plant data (country total `E_store` minus listed storage) is spread over all reservoir units of a country in proportion to `p_nom`, on top of their listed storage. With `estimate_by_large_installations`, units without listed storage and the first unit of each country get `E_store / p_nom_discharge` of their country. Units without listed storage in countries missing from the file get 6 hours. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
     )
     flatten_dispatch: bool = Field(
         False,
