@@ -951,7 +951,7 @@ rule determine_carbon_dioxide_removal_availability_matrix:
 
 
 rule build_available_land:
-    """Builds the land area eligible for a land-based carbon dioxide removal option per region."""
+    """Builds the land area usable for a land-based carbon dioxide removal option per region."""
     input:
         availability_matrix=resources(
             "carbon_dioxide_removal_availability_matrix_{technology}.nc"
@@ -968,9 +968,7 @@ rule build_available_land:
     resources:
         mem_mb=8000,
     params:
-        min_mean_temp=lambda w: config_provider("sector", w.technology)(w).get(
-            "min_mean_temp"
-        ),
+        technology=lambda w: config_provider("sector", w.technology)(w),
     script:
         scripts("build_available_land.py")
 

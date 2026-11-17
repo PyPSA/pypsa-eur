@@ -7,7 +7,7 @@ Build the afforestation potential, sequestration rate and rotation age per regio
 The NUTS2 sequestration rates and rotation ages are averaged per region,
 weighted by the overlap area. The rates are means over the rotation, derived
 from forest yield tables. Regions without NUTS2 data take the mean of their
-country. The potential is the rate times the eligible land of the region.
+country. The potential is the rate times the usable land of the region.
 
 References
 ----------
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         country_mean.reindex(names.str[:2]).set_axis(names),
     )
 
-    # eligible land in ha times rate in tCO2/ha/a
+    # usable land in ha times rate in tCO2/ha/a
     df["potential"] = land * 100 * df["rate"]
 
     logger.info(f"Afforestation potential: {df['potential'].sum() / 1e6:.1f} MtCO2/a")

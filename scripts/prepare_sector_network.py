@@ -1216,13 +1216,13 @@ def add_rock_weathering(
     options : dict
         Sector options with the ``rock_weathering`` settings
     land_file : str
-        Path to the eligible land per node (km2)
+        Path to the usable land per node (km2)
     """
     logger.info("Adding enhanced rock weathering.")
 
     config = options["rock_weathering"]
     land = pd.read_csv(land_file, index_col=0)["area"].reindex(spatial.nodes)
-    potential = land * config["co2_removal_per_sqkm"] * config["max_land_usage"]
+    potential = land * config["co2_removal_per_sqkm"]
 
     n.add("Carrier", "rock weathering")
 
@@ -1268,7 +1268,7 @@ def add_biochar(
     options : dict
         Sector options with the ``biochar`` settings
     land_file : str
-        Path to the eligible land per node (km2)
+        Path to the usable land per node (km2)
     """
     logger.info("Adding biochar.")
 
@@ -1279,13 +1279,8 @@ def add_biochar(
     co2_per_tonne_biochar = 1 / (
         costs.at[tech, "biomass-input"] * costs.at[tech, "biochar-output"]
     )
-    potential = (
-        land
-        * config["max_land_usage"]
-        * config["application_per_sqkm"]
-        / config["number_years"]
-        * co2_per_tonne_biochar
-    )
+    biochar_per_year = land * config["application_per_sqkm"] / config["number_years"]
+    potential = biochar_per_year * co2_per_tonne_biochar
 
     urban_central = spatial.nodes + " urban central heat"
     urban_central = urban_central.where(urban_central.isin(n.buses.index), "")
