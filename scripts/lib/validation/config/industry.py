@@ -220,3 +220,7 @@ class IndustryConfig(ConfigModel):
         0.013,
         description="The emissions from oil fuel processing (e.g. oil in petrochemical refinieries). The default value of 0.013 tCO2/MWh is based on DE statistics for 2019; the EU value is very similar.",
     )
+    temporal_electricity_industry_load: bool = Field(
+        True,
+        description="Use hourly load profiles per industry branch for the industrial electricity demand instead of a flat profile. The profiles from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) are for Germany and are applied to all countries.",
+    )

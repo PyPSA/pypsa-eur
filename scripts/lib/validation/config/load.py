@@ -66,6 +66,10 @@ class LoadConfig(BaseModel):
         True,
         description="Whether to supplement missing data for selected time period should be supplemented by synthetic data from `Zenodo <https://zenodo.org/records/10820928>`_.",
     )
+    prefer_synthetic: bool = Field(
+        False,
+        description="Whether to prefer synthetic data over historical data, e.g. for a consistent method across weather years. Historical data is then used only where synthetic data is missing. Implies `supplement_synthetic`.",
+    )
     substation_only: bool = Field(
         True,
         description="Whether to only consider substations for the spatial disaggregation of the per-country electricity demand data.",

@@ -23,7 +23,7 @@ class _MapConfig(ConfigModel):
     """Configuration for `plotting.map` settings."""
 
     boundaries: list[float] | None = Field(
-        [-11, 30, 34, 71],
+        [-11.0, 30.0, 34.0, 71.0],
         description="Bounding box of static maps as ``[x_min, x_max, y_min, y_max]`` in longitude/latitude degrees. If ``null``, the boundaries are derived automatically from the plotted regions.",
     )
     geomap_colors: dict[str, str] = Field(
@@ -580,6 +580,7 @@ def _default_balance_map_interactive() -> _BalanceMapInteractiveConfig:
 _NICE_NAMES: dict[str, str] = {
     "OCGT": "Open-Cycle Gas",
     "CCGT": "Combined-Cycle Gas",
+    "CCGT CC": "Combined-Cycle Gas CC",
     "offwind-ac": "Offshore Wind (AC)",
     "offwind-dc": "Offshore Wind (DC)",
     "offwind-float": "Offshore Wind (Floating)",
@@ -686,6 +687,7 @@ _TECH_COLORS: dict[str, str] = {
     # coal
     "Coal": "#545454",
     "coal": "#545454",
+    "coal CC": "#6e6e6e",
     "Coal marginal": "#545454",
     "coal for industry": "#343434",
     "solid": "#545454",
@@ -810,6 +812,30 @@ _TECH_COLORS: dict[str, str] = {
     "residential urban decentral heat dsm": "#a33c3c",
     "services urban decentral heat": "#cc1f1f",
     "low-temperature heat for industry": "#8f2727",
+    "heat100-200 industry": "#8f2828",
+    "heat200-500 industry": "#c72020",
+    "heat500+ industry": "#ff0000",
+    "heat100-200 industry solid biomass": "#7a6d26",
+    "heat200-500 industry solid biomass": "#7a6d26",
+    "heat500+ industry solid biomass": "#7a6d26",
+    "heat100-200 industry solid biomass CC": "#47411c",
+    "heat200-500 industry solid biomass CC": "#47411c",
+    "heat500+ industry solid biomass CC": "#47411c",
+    "heat100-200 industry gas": "#853403",
+    "heat200-500 industry gas": "#853403",
+    "heat500+ industry gas": "#853403",
+    "heat100-200 industry gas CC": "#692e0a",
+    "heat200-500 industry gas CC": "#692e0a",
+    "heat500+ industry gas CC": "#692e0a",
+    "heat100-200 industry hydrogen": "#991f83",
+    "heat200-500 industry hydrogen": "#991f83",
+    "heat500+ industry hydrogen": "#991f83",
+    "heat100-200 industry heat pump": "#2fb537",
+    "heat200-500 industry heat pump": "#2fb537",
+    "heat500+ industry heat pump": "#2fb537",
+    "heat100-200 industry electric boiler": "#2d2a66",
+    "heat200-500 industry electric boiler": "#2d2a66",
+    "heat500+ industry electric boiler": "#2d2a66",
     "process heat": "#ff0000",
     "agriculture heat": "#d9a5a5",
     # heat supply
@@ -894,6 +920,7 @@ _TECH_COLORS: dict[str, str] = {
     "allam methanol": "#B98F76",
     "CCGT methanol": "#B98F76",
     "CCGT methanol CC": "#B98F76",
+    "CCGT CC": "#c9805a",
     "OCGT methanol": "#B98F76",
     "methanol": "#FF7B00",
     "methanol transport": "#FF7B00",
@@ -948,6 +975,7 @@ _TECH_COLORS: dict[str, str] = {
     "waste CHP CC": "#e3d3ff",
     "non-sequestered HVC": "#8f79b5",
     "HVC to air": "#000000",
+    "waste transport": "#757171",
     "import H2": "#db8ccd",
     "import gas": "#f7a572",
     "import NH3": "#e2ed74",

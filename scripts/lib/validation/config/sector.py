@@ -8,7 +8,7 @@ Sector configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#sector_cf
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -370,6 +370,38 @@ class _SolidBiomassImportConfig(BaseModel):
     )
 
 
+class _CorridorConfig(BaseModel):
+    """Configuration for the candidate corridors of one carrier."""
+
+    min_degree: int = Field(
+        1,
+        ge=0,
+        description="Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+    )
+    max_offshore_distance: float = Field(
+        float("inf"),
+        gt=0,
+        description="Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+    )
+
+
+class _TransportCorridorsConfig(BaseModel):
+    """Configuration for `sector.transport_corridors` settings."""
+
+    H2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new hydrogen pipelines.",
+    )
+    CO2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new carbon dioxide pipelines.",
+    )
+    biomass: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for solid biomass and municipal solid waste transport.",
+    )
+
+
 class _ImportsConfig(BaseModel):
     """Configuration for `sector.imports` settings."""
 
@@ -389,6 +421,38 @@ class _ImportsConfig(BaseModel):
             "oil": 125,
         },
         description="Price for importing renewable energy of carrier.",
+    )
+
+
+class _IndustryHeatConfig(BaseModel):
+    """Configuration for `sector.industry_heat` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Optimise the supply of industry process heat above 100 °C per temperature band instead of using exogenous fuel shares. Does not cover the steel sector. Uses today's specific energy consumption and no existing plants, so that the first horizon of a myopic pathway can replace all of today's heat supply.",
+    )
+    min_part_load: float = Field(
+        0.8,
+        ge=0,
+        le=1,
+        description="Minimum part load of newly built industry process heat supply.",
+    )
+    exclude_sectors: list[str] = Field(
+        default_factory=lambda: ["Pulp production"],
+        description="Industry sectors in `data/industry_heat_temperature_shares.csv` that keep exogenous fuel shares. Pulp production is excluded by default because it burns its own by-products.",
+    )
+    technologies: dict[
+        Literal["heat100-200", "heat200-500", "heat500+"],
+        list[
+            Literal["solid biomass", "gas", "hydrogen", "heat pump", "electric boiler"]
+        ],
+    ] = Field(
+        default_factory=lambda: {
+            "heat100-200": ["solid biomass", "gas", "heat pump", "electric boiler"],
+            "heat200-500": ["solid biomass", "gas", "hydrogen"],
+            "heat500+": ["gas", "hydrogen"],
+        },
+        description="Supply technologies per temperature band in °C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
     )
 
 
@@ -693,6 +757,10 @@ class SectorConfig(BaseModel):
     coal_cc: bool = Field(
         False, description="Add option for coal CHPs with carbon capture."
     )
+    ccgt_cc: bool = Field(
+        False,
+        description="Add option for gas CCGTs with post-combustion carbon capture.",
+    )
     dac: bool = Field(True, description="Add option for Direct Air Capture (DAC).")
     co2_vent: bool = Field(
         False,
@@ -770,9 +838,6 @@ class SectorConfig(BaseModel):
     )
     co2_sequestration_cost: float = Field(
         30, description="The cost of sequestering a ton of CO2 (currency/tCO2)."
-    )
-    co2_sequestration_lifetime: int = Field(
-        50, description="The lifetime of a CO2 sequestration site (years)."
     )
     co2_spatial: bool = Field(
         True,
@@ -877,6 +942,10 @@ class SectorConfig(BaseModel):
     )
 
     H2_network: bool = Field(True, description="Add option for new hydrogen pipelines.")
+    transport_corridors: _TransportCorridorsConfig = Field(
+        default_factory=_TransportCorridorsConfig,
+        description="Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport, derived from the Delaunay triangulation of the regions.",
+    )
     gas_network: bool = Field(
         True,
         description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
@@ -917,6 +986,11 @@ class SectorConfig(BaseModel):
         description="Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
     )
 
+    industry_heat: _IndustryHeatConfig = Field(
+        default_factory=_IndustryHeatConfig,
+        description="Endogenous supply of industry process heat.",
+    )
+
     biomass_to_liquid: bool = Field(
         True,
         description="Add option for transforming solid biomass into liquid fuel with the same properties as oil.",
@@ -939,7 +1013,12 @@ class SectorConfig(BaseModel):
         description="Add option for transforming solid biomass into hydrogen with carbon capture.",
     )
     municipal_solid_waste: bool = Field(
-        False, description="Add option for municipal solid waste."
+        False,
+        description="Add municipal solid waste as carbon-neutral fuel for waste-to-energy plants. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`.",
+    )
+    waste_spatial: bool = Field(
+        False,
+        description="Model plastic and municipal solid waste for each bus region instead of one European bus. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`. Waste can be transported between regions if `biomass_transport` is enabled.",
     )
 
     limit_max_growth: _LimitMaxGrowthConfig = Field(

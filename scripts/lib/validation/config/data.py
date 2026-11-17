@@ -409,3 +409,7 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="Entsoepy bidding zones data source configuration.",
     )
+    ffe_industry_load_profiles: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="FfE industrial electricity load profiles data source configuration.",
+    )

@@ -11,7 +11,7 @@ section.
 
 ## Energy intensities
 
-{{ rules("build_industry_sector_ratios", "build_industry_sector_ratios_intermediate") }}
+{{ rules("build_industry_sector_ratios", "build_industry_sector_ratios_endogenous", "build_industry_sector_ratios_intermediate") }}
 
 ## Production
 
@@ -19,4 +19,4 @@ section.
 
 ## Regional demand
 
-{{ rules("build_industrial_distribution_key", "build_industrial_production_per_node", "build_industrial_energy_demand_per_country_today", "build_industrial_energy_demand_per_node_today", "build_industrial_energy_demand_per_node") }}
+{{ rules("build_industrial_distribution_key", "build_industrial_production_per_node", "build_industrial_energy_demand_per_country_today", "build_industrial_energy_demand_per_node_today", "build_industrial_energy_demand_per_node", "build_industrial_electricity_profiles") }}

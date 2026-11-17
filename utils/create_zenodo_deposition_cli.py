@@ -209,7 +209,7 @@ def get_potential_datasets():
     """
     # Find all dataset folders in the 'data' directory;
     # indicated by the presence of an 'archive' subfolder with contents
-    return sorted(set(f.parts[-3] for f in Path().rglob("data/*/archive/*/")))
+    return sorted({f.parts[-3] for f in Path().rglob("data/*/archive/*/")})
 
 
 def get_archive_folders(dataset):
@@ -502,7 +502,7 @@ def main(
     elif action == "create":
         dataset_names = get_potential_datasets()
         dataset_names = [
-            ds for ds in dataset_names if ds not in {l["dataset"] for l in latest}
+            ds for ds in dataset_names if ds not in {d["dataset"] for d in latest}
         ]
         if not dataset_names:
             typer.secho(

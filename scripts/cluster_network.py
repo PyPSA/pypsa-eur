@@ -35,6 +35,7 @@ Exemplary unsolved networks clustered to 512, 256, 128 and 37 nodes:
 import logging
 import warnings
 from functools import reduce
+from typing import Any
 
 import geopandas as gpd
 import linopy
@@ -57,8 +58,6 @@ from shapely.geometry import MultiPolygon, Polygon
 from scripts._helpers import configure_logging, sanitize_busmap, set_scenario_config
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
-
-warnings.filterwarnings(action="ignore", category=UserWarning)
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
@@ -67,7 +66,7 @@ DISTANCE_CRS = "EPSG:3035"
 BUS_TOL = 500  # meters
 
 
-def normed(x):
+def normed(x: pd.Series) -> pd.Series:
     return (x / x.sum()).fillna(0.0)
 
 
@@ -159,7 +158,7 @@ def busmap_from_shapes(
     return sanitize_busmap(busmap)
 
 
-def copperplate_buses(n: pypsa.Network, copperplate_regions: list[list[str]]):
+def copperplate_buses(n: pypsa.Network, copperplate_regions: list[list[str]]) -> None:
     """
     Copperplate buses that belong to the same group.
 
@@ -285,7 +284,7 @@ def distribute_n_clusters_to_countries(
             L[country] = weight / len(L[country])
 
         remainder = [
-            c not in focus_weights.keys() for c in L.index.get_level_values("country")
+            c not in focus_weights for c in L.index.get_level_values("country")
         ]
         L[remainder] = L.loc[remainder].pipe(normed) * (1 - total_focus)
         L.index.name = "cluster"
@@ -319,7 +318,7 @@ def busmap_for_n_clusters(
     cluster_weights: pd.Series,
     algorithm: str = "kmeans",
     features: pd.DataFrame | None = None,
-    **algorithm_kwds,
+    **algorithm_kwds: Any,
 ) -> pd.Series:
     if algorithm == "hac" and features is None:
         raise ValueError("For HAC clustering, features must be provided.")
@@ -330,7 +329,7 @@ def busmap_for_n_clusters(
         algorithm_kwds.setdefault("tol", 1e-6)
         algorithm_kwds.setdefault("random_state", 0)
 
-    def busmap_for_country(x):
+    def busmap_for_country(x: pd.DataFrame) -> pd.Series:
         prefix = x.name[0] + x.name[1] + " "
         logger.debug(
             f"Determining busmap for country {prefix[:-1]} "
@@ -349,7 +348,7 @@ def busmap_for_n_clusters(
                 n,
                 n_clusters_c[x.name],
                 buses_i=x.index,
-                feature=features.reindex(x.index, fill_value=0.0),
+                feature=features.reindex(x.index, fill_value=0.0),  # type: ignore[union-attr]
             )
         elif algorithm == "modularity":
             return prefix + busmap_by_greedy_modularity(
@@ -360,7 +359,7 @@ def busmap_for_n_clusters(
                 f"`algorithm` must be one of 'kmeans' or 'hac' or 'modularity'. Is {algorithm}."
             )
 
-    compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
+    compat_kws = {"include_groups": False} if PD_GE_2_2 else {}
 
     return sanitize_busmap(
         n.buses.groupby(["country", "sub_network"], group_keys=False)
@@ -376,7 +375,7 @@ def clustering_for_n_clusters(
     aggregation_strategies: dict | None = None,
 ) -> pypsa.clustering.spatial.Clustering:
     if aggregation_strategies is None:
-        aggregation_strategies = dict()
+        aggregation_strategies = {}
 
     line_strategies = dict(aggregation_strategies.get("lines", {}))
 
@@ -473,7 +472,8 @@ def cluster_regions(
 def busmap_for_admin_regions(
     n: pypsa.Network,
     admin_shapes: str,
-    params: dict,
+    countries: list[str],
+    admin_levels: dict,
 ) -> pd.Series:
     """
     Create a busmap based on administrative regions using the NUTS3 shapefile.
@@ -484,17 +484,17 @@ def busmap_for_admin_regions(
         The network to cluster.
     admin_shapes : str
         The path to the administrative regions.
-    params : dict
-        The parameters for clustering.
+    countries : list[str]
+        The countries of the network.
+    admin_levels : dict
+        The administrative clustering levels, globally and per country.
 
     Returns
     -------
         busmap (pd.Series): Busmap mapping each bus to an administrative region.
     """
-    countries = params.countries
     admin_regions = gpd.read_file(admin_shapes)
 
-    admin_levels = params.administrative
     level = admin_levels.get("level", 0)
     logger.info(f"Clustering at administrative level {level}.")
 
@@ -648,10 +648,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("cluster_network")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+    warnings.filterwarnings(action="ignore", category=UserWarning)
 
     params = snakemake.params
     mode = params.mode
-    solver_name = snakemake.config["solving"]["solver"]["name"]
+    solver_name = params.solver_name
 
     n = pypsa.Network(snakemake.input.network)
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
@@ -673,7 +674,8 @@ if __name__ == "__main__":
             busmap = busmap_for_admin_regions(
                 n,
                 snakemake.input.admin_shapes,
-                params,
+                params.countries,
+                params.administrative,
             )
             # Update x, y coordinates, ensuring that bus locations are inside the administrative region
             update_bus_coordinates(
@@ -759,7 +761,7 @@ if __name__ == "__main__":
     nc.buses["location"] = nc.buses.index
     nc.buses["unit"] = "MWh_el"
 
-    nc.meta = dict(snakemake.config)
+    nc.meta["snakemake_config"] = dict(snakemake.config)
     nc.export_to_netcdf(snakemake.output.network)
 
     logger.info(

@@ -25,6 +25,7 @@ steps are combined and the onshore and offshore regions dissolved accordingly.
 """
 
 import logging
+from collections.abc import Iterator
 from functools import reduce
 
 import geopandas as gpd
@@ -110,7 +111,7 @@ def simplify_links(
     # Determine connected link components, ignore all links but DC
     adjacency_matrix = n.adjacency_matrix(
         branch_components=["Link"],
-        weights=dict(Link=(n.links.carrier == "DC").astype(float)),
+        weights={"Link": (n.links.carrier == "DC").astype(float)},
         return_dataframe=False,
     )
 
@@ -120,10 +121,12 @@ def simplify_links(
     # Only span graph over the DC link components
     G = n.graph(branch_components=["Link"])
 
-    def split_links(nodes, added_supernodes):
+    def split_links(
+        nodes: pd.Index, added_supernodes: list[str]
+    ) -> Iterator[tuple[pd.Index, list[str], list[list[tuple[str, str]]]]]:
         nodes = frozenset(nodes)
 
-        seen = set()
+        seen: set[str] = set()
 
         # Supernodes are buses that are not simple chain nodes within the component.
         # A chain node has degree 2 inside the component; endpoints (degree 1),
@@ -194,24 +197,26 @@ def simplify_links(
 
             lengths = n.links.loc[all_links, "length"]
             name = lengths.idxmax() + f"+{len(links) - 1}"
-            params = dict(
-                carrier="DC",
-                bus0=b[0],
-                bus1=b[1],
-                length=sum(
-                    n.links.loc[[i for _, i in l], "length"].mean() for l in links
+            params = {
+                "carrier": "DC",
+                "bus0": b[0],
+                "bus1": b[1],
+                "length": sum(
+                    n.links.loc[[i for _, i in link], "length"].mean() for link in links
                 ),
-                p_nom=min(n.links.loc[[i for _, i in l], "p_nom"].sum() for l in links),
-                underwater_fraction=sum(
+                "p_nom": min(
+                    n.links.loc[[i for _, i in link], "p_nom"].sum() for link in links
+                ),
+                "underwater_fraction": sum(
                     lengths
                     / lengths.sum()
                     * n.links.loc[all_links, "underwater_fraction"]
                 ),
-                p_max_pu=p_max_pu,
-                p_min_pu=p_min_pu,
-                underground=False,
-                under_construction=False,
-            )
+                "p_max_pu": p_max_pu,
+                "p_min_pu": p_min_pu,
+                "underground": False,
+                "under_construction": False,
+            }
 
             logger.info(
                 "Joining the links {} connecting the buses {} to simple link {}".format(
@@ -250,13 +255,13 @@ def remove_stubs(
 
 
 def remove_stubs_within_admin(
-    n: pypsa.Network, simplify_network: dict, admin_shapes: str
+    n: pypsa.Network,
+    simplify_network: dict,
+    admin_shapes: str,
+    countries: list[str],
+    admin_levels: dict,
 ) -> tuple[pypsa.Network, pd.Series]:
-    busmap = busmap_for_admin_regions(
-        n,
-        admin_shapes,
-        params,
-    )
+    busmap = busmap_for_admin_regions(n, admin_shapes, countries, admin_levels)
     n.buses["admin"] = n.buses.index.map(busmap)
 
     logger.info("Removing stubs within administrative regions.")
@@ -280,7 +285,7 @@ def aggregate_to_substations(
     # can be used to aggregate a selection of buses to electrically closest neighbors
     logger.info("Aggregating buses to substations")
     if aggregation_strategies is None:
-        aggregation_strategies = dict()
+        aggregation_strategies = {}
 
     weight = pd.concat(
         {
@@ -309,9 +314,9 @@ def aggregate_to_substations(
     busmap = n.buses.index.to_series()
     busmap.loc[no_substation_i] = dist.where(country_mask, np.inf).idxmin(0)
 
-    line_strategies = aggregation_strategies.get("lines", dict())
+    line_strategies = aggregation_strategies.get("lines", {})
 
-    bus_strategies = aggregation_strategies.get("buses", dict())
+    bus_strategies = aggregation_strategies.get("buses", {})
     bus_strategies.setdefault("substation_lv", lambda x: bool(x.sum()))
     bus_strategies.setdefault("substation_off", lambda x: bool(x.sum()))
 
@@ -324,7 +329,9 @@ def aggregate_to_substations(
     return clustering.n, busmap
 
 
-def find_closest_bus(n, x, y, tol=2000):
+def find_closest_bus(
+    n: pypsa.Network, x: float, y: float, tol: float = 2000
+) -> str | None:
     """
     Find the index of the closest bus to the given coordinates within a specified tolerance.
 
@@ -398,7 +405,7 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
     )
 
     # Dictionary for remapping
-    dict_dc_to_ac = dict(zip(converters["dc_bus"], converters["ac_bus"]))
+    dict_dc_to_ac = dict(zip(converters["dc_bus"], converters["ac_bus"], strict=True))
     # Update converter map
     converter_map = converter_map.replace(dict_dc_to_ac)
 
@@ -427,7 +434,7 @@ if __name__ == "__main__":
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
 
     if params.simplify_network["to_380"]:
-        linetype_380 = snakemake.config["lines"]["types"][380]
+        linetype_380 = params.linetype_380
         n, trafo_map = simplify_network_to_380(n, linetype_380)
     else:
         trafo_map = n.buses.index.to_series()
@@ -449,7 +456,11 @@ if __name__ == "__main__":
     if params.simplify_network["remove_stubs"]:
         if params.mode == "administrative":
             n, stub_map = remove_stubs_within_admin(
-                n, params.simplify_network, snakemake.input.admin_shapes
+                n,
+                params.simplify_network,
+                snakemake.input.admin_shapes,
+                params.countries,
+                params.administrative,
             )
             busmaps.append(stub_map)
         else:
@@ -500,7 +511,9 @@ if __name__ == "__main__":
         clustered_regions.to_file(snakemake.output[which])
         # append_bus_shapes(n, clustered_regions, type=which.split("_")[1])
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta["snakemake_config"] = dict(
+        snakemake.config, wildcards=dict(snakemake.wildcards)
+    )
     n.export_to_netcdf(snakemake.output.network)
 
     logger.info(

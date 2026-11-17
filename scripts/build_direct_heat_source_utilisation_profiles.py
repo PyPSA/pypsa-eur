@@ -15,7 +15,7 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def get_source_temperature(heat_source_key: str):
+def get_source_temperature(heat_source_key: str, limited_heat_sources: dict) -> float:
     """
     Get the constant temperature of a heat source.
 
@@ -23,6 +23,8 @@ def get_source_temperature(heat_source_key: str):
     ----
     heat_source_key: str
         The key (name) of the heat source.
+    limited_heat_sources: dict
+        Settings of the temperature-limited heat sources, keyed by heat source.
 
     Returns:
     -------
@@ -32,23 +34,21 @@ def get_source_temperature(heat_source_key: str):
     Raises:
     ------
     ValueError
-        If the heat source is unknown (not in `config`).
+        If the heat source is not in `limited_heat_sources`.
     """
 
-    if heat_source_key in snakemake.params.limited_heat_sources.keys():
-        return snakemake.params.limited_heat_sources[heat_source_key][
-            "constant_temperature_celsius"
-        ]
+    if heat_source_key in limited_heat_sources:
+        return limited_heat_sources[heat_source_key]["constant_temperature_celsius"]
     else:
         raise ValueError(
             f"Unknown heat source {heat_source_key}. Must be one of "
-            f"{snakemake.params.heat_sources.keys()}."
+            f"{limited_heat_sources.keys()}."
         )
 
 
 def get_profile(
     source_temperature: float | xr.DataArray, forward_temperature: xr.DataArray
-) -> xr.DataArray | float:
+) -> xr.DataArray:
     """
     Get the direct heat source utilisation profile.
 
@@ -90,7 +90,9 @@ if __name__ == "__main__":
     xr.concat(
         [
             get_profile(
-                source_temperature=get_source_temperature(heat_source_key),
+                source_temperature=get_source_temperature(
+                    heat_source_key, snakemake.params.limited_heat_sources
+                ),
                 forward_temperature=central_heating_forward_temperature,
             ).assign_coords(heat_source=heat_source_key)
             for heat_source_key in direct_utilisation_heat_sources
