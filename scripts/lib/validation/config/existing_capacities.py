@@ -71,6 +71,10 @@ class ExistingCapacitiesConfig(ConfigModel):
         False,
         description="Add existing ammonia and methanol plants, and existing steel and cement plants for `sector: endogenous_sectors`, in the first horizon of myopic and perfect foresight runs.",
     )
+    blast_furnace_announced_retirement: bool = Field(
+        True,
+        description="Retire existing blast furnaces in their announced retirement year. Otherwise, they retire at the end of their technical lifetime.",
+    )
     grouping_years_industry: list[int] = Field(
         default_factory=lambda: [
             1995,

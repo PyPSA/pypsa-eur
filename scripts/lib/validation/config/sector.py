@@ -428,18 +428,6 @@ class _ImportsConfig(BaseModel):
     )
 
 
-class _SteelBOFConfig(BaseModel):
-    """Configuration for `sector.steel_bof` settings."""
-
-    pledge: bool = Field(
-        True,
-        description="Decommissions coal blast furnaces at their pledged phase out year.",
-    )
-    pledge_delay: int = Field(
-        0, description="Delays the decommission year by number of years."
-    )
-
-
 class _IndustryHeatConfig(BaseModel):
     """Configuration for `sector.industry_heat` settings."""
 
@@ -1060,7 +1048,4 @@ class SectorConfig(BaseModel):
     hbi_relocation: bool = Field(
         False,
         description="Allow the relocation of iron ore reduction step.",
-    )
-    steel_bof: _SteelBOFConfig = Field(
-        default_factory=_SteelBOFConfig, description="Steel BOF configuration."
     )

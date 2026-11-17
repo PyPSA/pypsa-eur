@@ -624,6 +624,7 @@ existing_capacities:
   - 2015
   - 2019
   industry_plants: false
+  blast_furnace_announced_retirement: true
   grouping_years_industry:
   - 1995
   - 2000
@@ -1108,9 +1109,6 @@ sector:
       oil: 125
   endogenous_sectors: []
   hbi_relocation: false
-  steel_bof:
-    pledge: true
-    pledge_delay: 0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#industry_cf
 industry:

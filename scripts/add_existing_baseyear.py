@@ -856,6 +856,7 @@ def add_existing_industry(
     grouping_years: list,
     baseyear: int,
     costs: pd.DataFrame,
+    announced_retirement: bool,
 ) -> None:
     """
     Add existing industry plants depending on the industry options.
@@ -878,6 +879,8 @@ def add_existing_industry(
         Base year for analysis
     costs : pd.DataFrame
         Technology costs
+    announced_retirement : bool
+        Retire blast furnaces in their announced retirement year
     """
     logger.info("Add existing industry plants.")
 
@@ -1042,10 +1045,8 @@ def add_existing_industry(
         # BF-BOF
         bof = plant_data[plant_data.carrier == "BOF"]
 
-        if options["steel_bof"]["pledge"]:
-            lifetime = (
-                bof["Out"] - bof["grouping_year"] + options["steel_bof"]["pledge_delay"]
-            )
+        if announced_retirement:
+            lifetime = bof["Out"] - bof["grouping_year"]
             lifetime[lifetime < 0] = costs.at[
                 "blast furnace-basic oxygen furnace", "lifetime"
             ]
@@ -1158,4 +1159,7 @@ def main(
             grouping_years=params.existing_capacities["grouping_years_industry"],
             baseyear=baseyear,
             costs=costs,
+            announced_retirement=params.existing_capacities[
+                "blast_furnace_announced_retirement"
+            ],
         )
