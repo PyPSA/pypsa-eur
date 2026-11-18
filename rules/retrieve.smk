@@ -957,13 +957,20 @@ if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
 ]:
 
     rule retrieve_gem_gspt:
-        """Retrieves the Global Energy Monitor Global Steel Plant Tracker."""
+        """Retrieves and unpacks the Global Energy Monitor Global Iron and Steel Tracker."""
         input:
-            xlsx=storage(GEM_GSPT_DATASET["url"]),
+            zip=storage(GEM_GSPT_DATASET["url"]),
         output:
+            zip=f"{GEM_GSPT_DATASET['folder']}/gem-download.zip",
             xlsx=f"{GEM_GSPT_DATASET['folder']}/Global-Steel-Plant-Tracker.xlsx",
+            iron_units=f"{GEM_GSPT_DATASET['folder']}/Global-Iron-and-Steel-Tracker-iron-units.xlsx",
         run:
-            copy2(input["xlsx"], output["xlsx"])
+            copy2(input["zip"], output["zip"])
+            unpack_archive(output["zip"], GEM_GSPT_DATASET["folder"])
+            # file names contain the release, rename for consistency across versions
+            folder = Path(GEM_GSPT_DATASET["folder"])
+            next(folder.glob("Plant-level data*.xlsx")).rename(output["xlsx"])
+            next(folder.glob("Iron unit data*.xlsx")).rename(output["iron_units"])
 
 
 if (GEM_GCCT_DATASET := dataset_version("gem_gcct"))["source"] in [
@@ -977,6 +984,20 @@ if (GEM_GCCT_DATASET := dataset_version("gem_gcct"))["source"] in [
             xlsx=storage(GEM_GCCT_DATASET["url"]),
         output:
             xlsx=f"{GEM_GCCT_DATASET['folder']}/Global-Cement-and-Concrete-Tracker.xlsx",
+        run:
+            copy2(input["xlsx"], output["xlsx"])
+
+
+if (GEM_GCT_DATASET := dataset_version("gem_gct"))["source"] in [
+    "archive",
+]:
+
+    rule retrieve_gem_gct:
+        """Retrieves the Global Energy Monitor Global Chemicals Tracker."""
+        input:
+            xlsx=storage(GEM_GCT_DATASET["url"]),
+        output:
+            xlsx=f"{GEM_GCT_DATASET['folder']}/Global-Chemicals-Tracker.xlsx",
         run:
             copy2(input["xlsx"], output["xlsx"])
 

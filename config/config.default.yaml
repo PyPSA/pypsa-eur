@@ -623,6 +623,16 @@ existing_capacities:
   - 2010
   - 2015
   - 2019
+  industry_plants: false
+  blast_furnace_announced_retirement: true
+  grouping_years_industry:
+  - 1995
+  - 2000
+  - 2005
+  - 2010
+  - 2015
+  - 2020
+  - 2025
   threshold_capacity: 10
   default_heating_lifetime: 20
   solar_rooftop_ratio: 0.5
@@ -1013,6 +1023,7 @@ sector:
       allam: false
     biomass_to_methanol: true
     biomass_to_methanol_cc: false
+    meoh_to_oa: false
   ammonia: true
   min_part_load_electrolysis: 0
   min_part_load_fischer_tropsch: 0.5
@@ -1141,6 +1152,8 @@ sector:
       methanol: 121
       gas: 122
       oil: 125
+  endogenous_sectors: []
+  hbi_relocation: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#industry_cf
 industry:
@@ -1226,6 +1239,7 @@ industry:
   methanol_production_today: 1.5
   MWh_elec_per_tMeOH: 0.167
   MWh_CH4_per_tMeOH: 10.25
+  MWh_naphtha_per_tHVC: 12.622
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
   reference_year: 2023
@@ -1492,6 +1506,9 @@ data:
     source: archive
     version: latest
   gem_gcct:
+    source: archive
+    version: latest
+  gem_gct:
     source: archive
     version: latest
   instrat_co2_prices:
