@@ -854,41 +854,32 @@ def attach_hydro(
             hydro_capacities, comment="#", na_values="-", index_col=0
         )
         e_target = hydro_stats["E_store[TWh]"].clip(lower=0.2) * 1e6
-        e_installed = hydro.eval("p_nom * max_hours").groupby(hydro.country).sum()
-        e_missing = e_target - e_installed
-        missing_mh_i = hydro.query("max_hours.isnull() or max_hours == 0").index
-        # some countries may have missing storage capacity but only one plant
-        # which needs to be scaled to the target storage capacity
-        missing_mh_single_i = hydro.index[
-            ~hydro.country.duplicated() & hydro.country.isin(e_missing.dropna().index)
-        ]
-        missing_mh_i = missing_mh_i.union(missing_mh_single_i)
+        listed_max_hours = hydro.max_hours.fillna(0)
 
         if hydro_max_hours == "energy_capacity_totals_by_country":
+            # spread the storage missing from the plant data over all units by p_nom,
+            # since plants with and without listed storage are aggregated per bus
             # watch out some p_nom values like IE's are totally underrepresented
-            max_hours_country = (
-                e_missing / hydro.loc[missing_mh_i].groupby("country").p_nom.sum()
-            )
+            e_listed = (hydro.p_nom * listed_max_hours).groupby(hydro.country).sum()
+            e_missing = (e_target - e_listed).clip(lower=0)
+            max_hours_country = e_missing / hydro.groupby("country").p_nom.sum()
+            hydro_max_hours = listed_max_hours + hydro.country.map(max_hours_country)
 
         elif hydro_max_hours == "estimate_by_large_installations":
-            max_hours_country = (
-                hydro_stats["E_store[TWh]"] * 1e3 / hydro_stats["p_nom_discharge[GW]"]
-            )
+            max_hours_country = e_target / (hydro_stats["p_nom_discharge[GW]"] * 1e3)
+            hydro_max_hours = hydro.country.map(max_hours_country)
         else:
             raise ValueError(f"Unknown hydro_max_hours method: {hydro_max_hours}")
-
-        max_hours_country.clip(0, inplace=True)
 
         missing_countries = pd.Index(hydro["country"].unique()).difference(
             max_hours_country.dropna().index
         )
         if not missing_countries.empty:
             logger.warning(
-                f"Assuming max_hours=6 for hydro reservoirs in the countries: {', '.join(missing_countries)}"
+                f"No hydro storage totals for {', '.join(missing_countries)}; keeping listed max_hours or assuming max_hours=6."
             )
-        hydro_max_hours = hydro.max_hours.where(
-            (hydro.max_hours > 0) & ~hydro.index.isin(missing_mh_single_i),
-            hydro.country.map(max_hours_country),
+        hydro_max_hours = hydro_max_hours.fillna(
+            listed_max_hours.where(listed_max_hours > 0)
         ).fillna(6)
 
         if params.get("flatten_dispatch", False):

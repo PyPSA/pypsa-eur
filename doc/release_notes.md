@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Hydro reservoir storage (`renewable: hydro: hydro_max_hours`) no longer depends on the first unit of each country, and the default now matches the country totals. This changes default results ([#2428](https://github.com/PyPSA/pypsa-eur/pull/2428)).
 * data: Upgrade techno-economic assumptions to `technology-data` v0.16.0. This changes default results. Affected are nuclear fuel cost, `central solid biomass CHP CC` cost and efficiency, `waste CHP CC` (`industry: waste_to_energy_cc`) and `biogas to gas CC` ([#2426](https://github.com/PyPSA/pypsa-eur/pull/2426)).
 * Feature: Add enhanced rock weathering, biochar, afforestation and perennial grass as land-based carbon dioxide removal options (`sector: rock_weathering`, `sector: biochar`, `sector: afforestation`, `sector: perennials`). Their potentials derive from CORINE land cover or, for perennial grass, from the cropland freed by the phase-out of unsustainable bioliquids. ([#2405](https://github.com/PyPSA/pypsa-eur/pull/2405)) We acknowledge funding to Alberto Alamia from [CORC](https://corc.au.dk/).
 * Feature: Add option `sector: unsustainable_biomass_upstream_emissions` to count the cultivation emissions of unsustainable bioliquids, including N2O in CO2 equivalents. ([#2405](https://github.com/PyPSA/pypsa-eur/pull/2405))

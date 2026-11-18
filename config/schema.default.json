@@ -4752,17 +4752,13 @@
               "type": "number"
             },
             "hydro_max_hours": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
-              ],
               "default": "energy_capacity_totals_by_country",
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)."
+              "description": "Method to set the storage capacity of hydro reservoirs from the country totals `E_store` in `data/hydro_capacities.csv`, at least 0.2 TWh. `energy_capacity_totals_by_country` spreads the storage missing from the power plant data over all reservoir units of a country by `p_nom`. `estimate_by_large_installations` gives all reservoir units of a country `E_store / p_nom_discharge` hours. In countries without totals, units keep their listed storage or get 6 hours.",
+              "enum": [
+                "energy_capacity_totals_by_country",
+                "estimate_by_large_installations"
+              ],
+              "type": "string"
             },
             "flatten_dispatch": {
               "default": false,
@@ -8557,17 +8553,13 @@
           "type": "number"
         },
         "hydro_max_hours": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ],
           "default": "energy_capacity_totals_by_country",
-          "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
-          "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)."
+          "description": "Method to set the storage capacity of hydro reservoirs from the country totals `E_store` in `data/hydro_capacities.csv`, at least 0.2 TWh. `energy_capacity_totals_by_country` spreads the storage missing from the power plant data over all reservoir units of a country by `p_nom`. `estimate_by_large_installations` gives all reservoir units of a country `E_store / p_nom_discharge` hours. In countries without totals, units keep their listed storage or get 6 hours.",
+          "enum": [
+            "energy_capacity_totals_by_country",
+            "estimate_by_large_installations"
+          ],
+          "type": "string"
         },
         "flatten_dispatch": {
           "default": false,
@@ -12241,17 +12233,13 @@
               "type": "number"
             },
             "hydro_max_hours": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                }
-              ],
               "default": "energy_capacity_totals_by_country",
-              "description": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
-              "markdownDescription": "Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. [PyPSA documentation ](https://docs.pypsa.org/latest/user-guide/components/storage-units/)."
+              "description": "Method to set the storage capacity of hydro reservoirs from the country totals `E_store` in `data/hydro_capacities.csv`, at least 0.2 TWh. `energy_capacity_totals_by_country` spreads the storage missing from the power plant data over all reservoir units of a country by `p_nom`. `estimate_by_large_installations` gives all reservoir units of a country `E_store / p_nom_discharge` hours. In countries without totals, units keep their listed storage or get 6 hours.",
+              "enum": [
+                "energy_capacity_totals_by_country",
+                "estimate_by_large_installations"
+              ],
+              "type": "string"
             },
             "flatten_dispatch": {
               "default": false,
