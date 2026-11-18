@@ -931,6 +931,7 @@ _TECH_COLORS: dict[str, str] = {
     "CCS": "#f29dae",
     "CO2 sequestration": "#f29dae",
     "DAC": "#ff5270",
+    "perennials": "#008ffc",
     "co2 stored": "#f2385a",
     "co2 sequestered": "#f2682f",
     "co2 dense": "#65334d",
@@ -981,6 +982,9 @@ _TECH_COLORS: dict[str, str] = {
     "import NH3": "#e2ed74",
     "import oil": "#93eda2",
     "import methanol": "#87d0e6",
+    "afforestation": "#22cc22",
+    "biochar": "#005000",
+    "rock weathering": "#ab6ae9",
 }
 
 
