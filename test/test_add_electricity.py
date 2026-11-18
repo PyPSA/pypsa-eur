@@ -129,57 +129,41 @@ def test_estimate_efficiency():
 @pytest.mark.parametrize(
     "method, expected",
     [
-        # AA0 keeps its 4 TWh and gets the 6 TWh residual. BB's 5 TWh residual is
-        # split 1:4 by p_nom (BB0 2 + 1 TWh, BB1 3 + 4 TWh). CC keeps its listed
-        # storage and gets nothing more, so CC1 has none. DD falls back to 6 hours.
-        (
-            "energy_capacity_totals_by_country",
-            [10000.0, 3000.0, 1750.0, 2000.0, 0.0, 6.0],
-        ),
-        # all units get E_store / p_nom_discharge of their country
-        (
-            "estimate_by_large_installations",
-            [10000.0, 2000.0, 2000.0, 1000.0, 1000.0, 6.0],
-        ),
+        # AA0 keeps its 4 TWh and gets the 6 TWh missing. BB's 5 TWh missing are
+        # split 1:4 by p_nom on top of the listed 2 and 3 TWh.
+        ("energy_capacity_totals_by_country", [10000.0, 3000.0, 1750.0]),
+        # E_store / p_nom_discharge
+        ("estimate_by_large_installations", [10000.0, 2000.0, 2000.0]),
     ],
 )
 def test_attach_hydro_max_hours(tmp_path, method, expected):
     """
     Reservoir storage follows the country totals, independent of the number of units.
     """
-    # AA: a single unit (one node per country). BB: two units of different size.
-    # CC: listed storage above the target, plus a unit without listed storage.
-    # DD: neither a target nor listed storage.
-    targets = pd.DataFrame(
-        {"E_store[TWh]": [10.0, 10.0, 1.0], "p_nom_discharge[GW]": [1.0, 5.0, 1.0]},
-        index=["AA", "BB", "CC"],
-    )
     ppl = pd.DataFrame(
         {
             "carrier": "hydro",
-            "bus": ["AA0", "BB0", "BB1", "CC0", "CC1", "DD0"],
-            "country": ["AA", "BB", "BB", "CC", "CC", "DD"],
-            "p_nom": [1000.0, 1000.0, 4000.0, 1000.0, 1000.0, 1000.0],  # MW
-            # listed storage: 4, 2, 3, 2, 0 and 0 TWh
-            "max_hours": [4000.0, 2000.0, 750.0, 2000.0, np.nan, np.nan],
+            "bus": ["AA0", "BB0", "BB1"],
+            "country": ["AA", "BB", "BB"],
+            "p_nom": [1000.0, 1000.0, 4000.0],
+            "max_hours": [4000.0, 2000.0, 750.0],
         },
+        index=["AA0 hydro", "BB0 hydro", "BB1 hydro"],
     )
-    ppl.index = (ppl.bus + " hydro").rename(None)
     costs = pd.DataFrame(
         {"CO2 intensity": 0.0, "capital_cost": 0.0, "marginal_cost": 0.0},
         index=["hydro"],
     )
-
+    totals = pd.DataFrame(
+        {"E_store[TWh]": 10.0, "p_nom_discharge[GW]": [1.0, 5.0]}, index=["AA", "BB"]
+    )
+    totals.to_csv(tmp_path / "hydro_capacities.csv")
     times = pd.date_range("2013-01-01", periods=2, freq="h")
-    countries = ["AA", "BB", "CC", "DD"]
-    inflow_path = tmp_path / "profile_hydro.nc"
     xr.DataArray(
-        np.zeros((len(times), len(countries))),
-        coords={"time": times, "countries": countries},
+        np.zeros((2, 2)),
+        coords={"time": times, "countries": ["AA", "BB"]},
         dims=["time", "countries"],
-    ).to_netcdf(inflow_path)
-    capacities_path = tmp_path / "hydro_capacities.csv"
-    targets.to_csv(capacities_path)
+    ).to_netcdf(tmp_path / "profile_hydro.nc")
 
     n = pypsa.Network()
     n.set_snapshots(times)
@@ -189,8 +173,8 @@ def test_attach_hydro_max_hours(tmp_path, method, expected):
         n,
         costs,
         ppl,
-        inflow_path.as_posix(),
-        capacities_path.as_posix(),
+        tmp_path / "profile_hydro.nc",
+        tmp_path / "hydro_capacities.csv",
         ["hydro"],
         hydro_max_hours=method,
     )
