@@ -58,6 +58,7 @@ file in the repository root, which is loaded automatically and ignored by git.
 - `retrieve_osm_data_raw` queries the [Overpass API](https://overpass-api.de) per country when `data: osm: source: build`. The endpoint, retries and user agent are set under [overpass_api](../configuration.md#overpass_api_cf).
 - `retrieve_wdpa` and `retrieve_wdpa_marine` resolve the monthly changing download URL of the [World Database on Protected Areas](https://www.protectedplanet.net/). The data may not be redistributed, so the `archive` source points to a web archive copy.
 - `retrieve_bidding_zones_entsoepy` and `retrieve_bidding_zones_electricitymaps` download bidding zone shapes via the [entsoe-py](https://github.com/EnergieID/entsoe-py) package and from [Electricity Maps](https://github.com/electricitymaps/electricitymaps-contrib). They are combined by [build_bidding_zones][].
+- `retrieve_co2_removal_data` downloads the [CO2-removal dataset](https://doi.org/10.5281/zenodo.23954311) and unpacks the afforestation rates and the upstream emission factors of unsustainable bioliquids. Only needed with `sector: afforestation` or `sector: unsustainable_biomass_upstream_emissions`.
 - `retrieve_costs` downloads techno-economic assumptions from the [technology-data repository](https://github.com/pypsa/technology-data) as `data/costs/{source}/{version}/costs_{horizon}.csv`. The cost year can be fixed with `costs: year:` (see [costs](../configuration.md#costs_cf)).
 
 ## Electricity demand data {#demand}

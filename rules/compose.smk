@@ -176,6 +176,21 @@ def get_compose_inputs(w):
                 if cfg["sector"]["enhanced_geothermal"]["enable"]
                 else []
             ),
+            carbon_dioxide_removal_land_rock_weathering=(
+                resources("carbon_dioxide_removal_land_rock_weathering.csv")
+                if cfg["sector"]["rock_weathering"]["enable"]
+                else []
+            ),
+            carbon_dioxide_removal_land_biochar=(
+                resources("carbon_dioxide_removal_land_biochar.csv")
+                if cfg["sector"]["biochar"]["enable"]
+                else []
+            ),
+            afforestation_potentials=(
+                resources("afforestation_potentials.csv")
+                if cfg["sector"]["afforestation"]["enable"]
+                else []
+            ),
             ates_potentials=(
                 resources("ates_potentials_{horizon}.csv")
                 if cfg["sector"]["district_heating"]["ates"]["enable"]
