@@ -102,7 +102,18 @@ if __name__ == "__main__":
     regions = regions.set_index("name").rename_axis("bus")
     if snakemake.wildcards.technology.startswith("offwind"):
         # for offshore regions, the shortest distance to the shoreline is used
-        offshore_regions = availability.coords["bus"].values
+        offshore_regions = availability.coords["bus"].to_index()
+        missing = offshore_regions.difference(regions.index)
+        if not missing.empty:
+            logger.info(
+                f"Using nearest onshore regions as shoreline for {len(missing)} buses without onshore region."
+            )
+            offshore = gpd.read_file(snakemake.input.resource_regions).set_index("name")
+            i, j = regions.to_crs(3035).sindex.nearest(
+                offshore.loc[missing].to_crs(3035).geometry
+            )
+            shore = regions.iloc[j][["geometry"]].set_axis(missing[i])
+            regions = pd.concat([regions, shore.dissolve(level=0)])
         regions = regions.loc[offshore_regions]
         regions = regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
             regions.crs
