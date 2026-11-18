@@ -18,8 +18,9 @@ copernicus_land_cover,v3.0.1,archive,latest supported,2026-01-20,"The primary is
 copernicus_land_cover,v2.0.2,archive,deprecated supported,2026-01-13,,https://data.pypsa.org/workflows/eur/copernicus_land_cover/v2.0.2/PROBAV_LC100_global_v3.0.1_2015-base_Discrete-Classification-map_EPSG-4326.tif
 corine,v18_5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/corine/v18_5/corine.zip
 corine,unknown,primary,latest supported,2025-12-02,Need to register with CLMS API and create an access token. The download URL is dynamic,
-costs,v0.15.0,primary,latest supported,2026-06-09,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.15.0/outputs
-costs,v0.15.0,archive,latest supported,2026-06-09,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.15.0
+costs,v0.16.0,primary,latest supported,2026-11-17,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.16.0/outputs
+costs,v0.15.0,primary,supported,2026-06-09,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.15.0/outputs
+costs,v0.15.0,archive,supported,2026-06-09,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.15.0
 costs,v0.14.0,primary,supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.14.0/outputs
 costs,v0.14.0,archive,supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.14.0
 costs,v0.13.4,primary,supported,2025-12-02,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.4/outputs
@@ -172,3 +173,4 @@ worldbank_commodity_prices,jan-2026,primary,latest supported,2026-02-03,,https:/
 worldbank_commodity_prices,jan-2026,archive,latest supported,2026-02-12,,https://data.pypsa.org/workflows/eur/worldbank_commodity_prices/jan-2026/CMO-Historical-Data-Monthly.xlsx
 worldbank_urban_population,unknown,primary,latest might-work,2025-12-02,"This is the original World Bank API link, which is sometimes updated; it is not guaranteed to work with the current codebase and data changes without notice.",https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv
 worldbank_urban_population,2025-08-14,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/worldbank_urban_population/2025-08-14/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_22447.zip
+costs,v0.16.0,archive,latest supported,2026-11-18,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.16.0
