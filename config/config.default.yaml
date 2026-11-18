@@ -1508,9 +1508,6 @@ data:
   gem_gcct:
     source: archive
     version: latest
-  gem_gist_iron_units:
-    source: archive
-    version: latest
   gem_gct:
     source: archive
     version: latest

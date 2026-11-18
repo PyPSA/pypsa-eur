@@ -1725,7 +1725,7 @@ rule build_industry_plants:
         regions_onshore=resources("onshore_regions.geojson"),
         gem_gct=rules.retrieve_gem_gct.output["xlsx"],
         gem_gspt=rules.retrieve_gem_gspt.output["xlsx"],
-        gem_iron_units=rules.retrieve_gem_gist_iron_units.output["xlsx"],
+        gem_iron_units=rules.retrieve_gem_gspt.output["iron_units"],
         gem_gcct=rules.retrieve_gem_gcct.output["xlsx"],
     output:
         industry_plants=resources("industry_plants.csv"),

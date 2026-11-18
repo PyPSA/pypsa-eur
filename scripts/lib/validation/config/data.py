@@ -197,10 +197,6 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="GEM Global Cement and Concrete Tracker data source configuration.",
     )
-    gem_gist_iron_units: _DataSourceConfig = Field(
-        default_factory=_DataSourceConfig,
-        description="GEM Global Iron and Steel Tracker iron unit data source configuration.",
-    )
     gem_gct: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="GEM Global Chemicals Tracker data source configuration.",
