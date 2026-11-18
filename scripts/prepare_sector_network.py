@@ -1190,6 +1190,254 @@ def add_dac(n: pypsa.Network, costs: pd.DataFrame, spatial: SimpleNamespace) -> 
     )
 
 
+def add_rock_weathering(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    land_file: str,
+) -> None:
+    """
+    Add enhanced rock weathering as carbon dioxide removal option.
+
+    One link per node removes CO2 from the atmosphere and consumes the
+    electricity for grinding and spreading the rock. The removal is permanent,
+    so no storage is tracked. The annual potential of the eligible cropland
+    limits the capacity of the link at a constant removal rate.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Costs and parameters with an "Enhanced Weathering" entry
+    spatial : SimpleNamespace
+        Spatial configuration containing the nodes
+    options : dict
+        Sector options with the ``rock_weathering`` settings
+    land_file : str
+        Path to the usable land per node (km2)
+    """
+    logger.info("Adding enhanced rock weathering.")
+
+    config = options["rock_weathering"]
+    land = pd.read_csv(land_file, index_col=0)["area"].reindex(spatial.nodes)
+    potential = land * config["co2_removal_per_sqkm"]
+
+    n.add("Carrier", "rock weathering")
+
+    n.add(
+        "Link",
+        spatial.nodes,
+        suffix=" rock weathering",
+        bus0="co2 atmosphere",
+        bus1=spatial.nodes,
+        carrier="rock weathering",
+        efficiency=-costs.at["Enhanced Weathering", "electricity-input"],
+        marginal_cost=costs.at["Enhanced Weathering", "VOM"],
+        p_nom_extendable=True,
+        p_nom_max=potential / 8760,
+    )
+
+
+def add_biochar(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    land_file: str,
+) -> None:
+    """
+    Add biochar from the pyrolysis of solid biomass as carbon dioxide removal option.
+
+    One link per node removes CO2 from the atmosphere, consumes solid biomass
+    and electricity, and can feed heat into district heating. Only the carbon
+    that stays in the biochar counts as removal, the rest of the biomass
+    carbon returns to the atmosphere. The removal is permanent, so no storage
+    is tracked. The biochar that the eligible cropland can take up per year
+    limits the capacity of the link at a constant removal rate.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Costs and parameters with a "biochar pyrolysis" entry
+    spatial : SimpleNamespace
+        Spatial configuration containing the nodes and the biomass buses
+    options : dict
+        Sector options with the ``biochar`` settings
+    land_file : str
+        Path to the usable land per node (km2)
+    """
+    logger.info("Adding biochar.")
+
+    config = options["biochar"]
+    land = pd.read_csv(land_file, index_col=0)["area"].reindex(spatial.nodes)
+
+    tech = "biochar pyrolysis"
+    co2_per_tonne_biochar = 1 / (
+        costs.at[tech, "biomass-input"] * costs.at[tech, "biochar-output"]
+    )
+    biochar_per_year = (
+        land * config["application_per_sqkm"] / config["application_years"]
+    )
+    potential = biochar_per_year * co2_per_tonne_biochar
+
+    urban_central = spatial.nodes + " urban central heat"
+    urban_central = urban_central.where(urban_central.isin(n.buses.index), "")
+
+    n.add("Carrier", "biochar")
+
+    n.add(
+        "Link",
+        spatial.nodes,
+        suffix=" biochar",
+        bus0="co2 atmosphere",
+        bus1=spatial.biomass.df.loc[spatial.nodes, "nodes"].values,
+        bus2=spatial.nodes,
+        bus3=urban_central,
+        carrier="biochar",
+        efficiency=-costs.at[tech, "biomass-input"],
+        efficiency2=-costs.at[tech, "electricity-input"],
+        efficiency3=costs.at[tech, "heat-output"] * config["use_waste_heat"],
+        capital_cost=costs.at[tech, "capital_cost"],
+        marginal_cost=costs.at[tech, "VOM"],
+        p_nom_extendable=True,
+        p_nom_max=potential / 8760,
+        lifetime=costs.at[tech, "lifetime"],
+    )
+
+
+def add_afforestation(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    potentials_file: str,
+    nyears: float = 1,
+) -> None:
+    """
+    Add afforestation as carbon dioxide removal option.
+
+    One generator per node removes CO2 from the atmosphere at the mean
+    sequestration rate of a new forest over its rotation. Only the share
+    credited under the EU Carbon Removals and Carbon Farming regulation counts
+    as removal. The investment per hectare is annualised over the rotation age,
+    which is also the lifetime. The seasonal cycle of the growth is ignored,
+    because only the annual sum enters the carbon budget. With myopic
+    foresight, a forest that reaches its rotation age frees its land again.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Costs and parameters with an "afforestation restorative" entry (investment per hectare)
+    spatial : SimpleNamespace
+        Spatial configuration containing the nodes
+    options : dict
+        Sector options with the ``afforestation`` settings
+    potentials_file : str
+        Path to the potential (tCO2/a), sequestration rate (tCO2/ha/a) and
+        rotation age (a) per node
+    nyears : float
+        Number of years modelled, to scale the annualised investment
+    """
+    logger.info("Adding afforestation.")
+
+    df = pd.read_csv(potentials_file, index_col=0).reindex(spatial.nodes)
+    credited = options["afforestation"]["credited_share"]
+
+    tech = "afforestation restorative"
+    annuity = calculate_annuity(df["rotation_age"], costs.at[tech, "discount rate"])
+    cost_per_hectare = (
+        costs.at[tech, "investment"] * (annuity + costs.at[tech, "FOM"] / 100) * nyears
+    )
+
+    n.add("Carrier", "afforestation")
+
+    n.add(
+        "Generator",
+        spatial.nodes,
+        suffix=" afforestation",
+        bus="co2 atmosphere",
+        carrier="afforestation",
+        sign=-1,
+        p_nom_extendable=True,
+        p_nom_max=df["potential"] * credited / 8760,
+        capital_cost=cost_per_hectare / (df["rate"] * credited) * 8760,
+        lifetime=df["rotation_age"],
+    )
+
+
+def add_perennials(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    biomass_potentials_file: str,
+) -> None:
+    """
+    Add perennial grass on freed cropland as carbon dioxide removal option.
+
+    The phase-out of unsustainable bioliquids frees the cropland of their
+    feedstock. Perennial grass on this land raises the soil carbon, which is
+    credited as removal. One link per node removes CO2 from the atmosphere,
+    consumes electricity and yields biogas from refining the harvested grass
+    in the harvest months. The removal is permanent, so no storage is tracked.
+    The freed cropland limits the capacity of the link.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Costs and parameters with a "perennials refining" entry (per tonne of dry matter)
+    spatial : SimpleNamespace
+        Spatial configuration containing the nodes and the biogas buses
+    options : dict
+        Sector options with the ``perennials`` settings
+    biomass_potentials_file : str
+        Path to the biomass potentials with the bioliquids phased out per node (MWh/a)
+    """
+    logger.info("Adding perennials.")
+
+    config = options["perennials"]
+    phased_out = pd.read_csv(biomass_potentials_file, index_col=0)[
+        "bioliquids phased out"
+    ].reindex(spatial.nodes)
+    cropland = phased_out * config["hectares_per_mwh"]
+    potential = cropland * config["co2_removal_per_hectare"]
+
+    names = spatial.nodes + " perennials"
+    harvest = n.snapshots.month.isin(config["harvest_months"])
+    p_max_pu = pd.DataFrame(1.0, n.snapshots, names).mul(harvest, axis=0)
+    harvest_hours = 8760 * len(config["harvest_months"]) / 12
+
+    tech = "perennials refining"
+    grass_per_co2 = config["yield_per_hectare"] / config["co2_removal_per_hectare"]
+
+    n.add("Carrier", "perennials")
+
+    n.add(
+        "Link",
+        names,
+        bus0="co2 atmosphere",
+        bus1=spatial.nodes,
+        bus2=spatial.gas.df.loc[spatial.nodes, "biogas"].values,
+        carrier="perennials",
+        efficiency=-costs.at[tech, "electricity-input"] * grass_per_co2,
+        efficiency2=costs.at[tech, "biogas-output"] * grass_per_co2,
+        capital_cost=costs.at[tech, "capital_cost"] * grass_per_co2,
+        marginal_cost=costs.at[tech, "VOM"] * grass_per_co2,
+        p_nom_extendable=True,
+        p_nom_max=potential.values / harvest_hours,
+        p_max_pu=p_max_pu,
+        lifetime=costs.at[tech, "lifetime"],
+    )
+
+
 def cycling_shift(
     df: pd.DataFrame | pd.Series, steps: int = 1
 ) -> pd.DataFrame | pd.Series:
@@ -3991,6 +4239,23 @@ def add_biomass(
             cf_industry=cf_industry,
         )
 
+        upstream_emissions = 0.0
+        if options["unsustainable_biomass_upstream_emissions"]:
+            emissions = biomass_potentials[
+                "unsustainable bioliquids upstream emissions"
+            ]
+            if options.get("biomass_spatial", options["biomass_transport"]):
+                emissions = emissions.rename(
+                    index=lambda x: x + " unsustainable bioliquids"
+                )
+            else:
+                emissions = emissions.sum()
+            upstream_emissions = (
+                emissions / unsustainable_liquid_biofuel_potentials_spatial
+            )
+            if isinstance(upstream_emissions, pd.Series):
+                upstream_emissions = upstream_emissions.fillna(0)
+
         n.add(
             "Link",
             spatial.biomass.bioliquids,
@@ -3999,7 +4264,7 @@ def add_biomass(
             bus2="co2 atmosphere",
             carrier="unsustainable bioliquids",
             efficiency=1,
-            efficiency2=-costs.at["oil", "CO2 intensity"],
+            efficiency2=-costs.at["oil", "CO2 intensity"] + upstream_emissions,
             p_nom=unsustainable_liquid_biofuel_potentials_spatial,
             marginal_cost=costs.at["BtL", "VOM"],
         )
@@ -6642,6 +6907,28 @@ def main(
 
     if options["dac"]:
         add_dac(n, costs, spatial)
+
+    if options["rock_weathering"]["enable"]:
+        add_rock_weathering(
+            n,
+            costs,
+            spatial,
+            options,
+            inputs.carbon_dioxide_removal_land_rock_weathering,
+        )
+
+    if options["biochar"]["enable"]:
+        add_biochar(
+            n, costs, spatial, options, inputs.carbon_dioxide_removal_land_biochar
+        )
+
+    if options["afforestation"]["enable"]:
+        add_afforestation(
+            n, costs, spatial, options, inputs.afforestation_potentials, nyears
+        )
+
+    if options["perennials"]["enable"]:
+        add_perennials(n, costs, spatial, options, inputs.biomass_potentials)
 
     if not options["electricity_transmission_grid"]:
         decentral(n)
