@@ -7,6 +7,7 @@
 import numpy as np
 import pandas as pd
 import pypsa
+import pytest
 import xarray as xr
 
 from scripts.add_electricity import (
@@ -125,17 +126,34 @@ def test_estimate_efficiency():
     np.testing.assert_allclose(eta, expected)
 
 
-def test_attach_hydro_energy_capacity_totals_by_country(tmp_path):
+@pytest.mark.parametrize(
+    "method, expected",
+    [
+        # AA0 keeps its 4 TWh and gets the 6 TWh residual. BB's 5 TWh residual is
+        # split 1:4 by p_nom (BB0 2 + 1 TWh, BB1 3 + 4 TWh). CC keeps its listed
+        # storage and gets nothing more, so CC1 has none. DD falls back to 6 hours.
+        (
+            "energy_capacity_totals_by_country",
+            [10000.0, 3000.0, 1750.0, 2000.0, 0.0, 6.0],
+        ),
+        # all units get E_store / p_nom_discharge of their country
+        (
+            "estimate_by_large_installations",
+            [10000.0, 2000.0, 2000.0, 1000.0, 1000.0, 6.0],
+        ),
+    ],
+)
+def test_attach_hydro_max_hours(tmp_path, method, expected):
     """
-    Reservoir storage adds up to the country target.
-
-    The storage missing from the plant data is spread over all units of a country
-    by p_nom. Nothing is added if the listed storage already meets the target.
+    Reservoir storage follows the country totals, independent of the number of units.
     """
     # AA: a single unit (one node per country). BB: two units of different size.
     # CC: listed storage above the target, plus a unit without listed storage.
     # DD: neither a target nor listed storage.
-    targets = pd.Series({"AA": 10.0, "BB": 10.0, "CC": 1.0}, name="E_store[TWh]")
+    targets = pd.DataFrame(
+        {"E_store[TWh]": [10.0, 10.0, 1.0], "p_nom_discharge[GW]": [1.0, 5.0, 1.0]},
+        index=["AA", "BB", "CC"],
+    )
     ppl = pd.DataFrame(
         {
             "carrier": "hydro",
@@ -145,22 +163,10 @@ def test_attach_hydro_energy_capacity_totals_by_country(tmp_path):
             # listed storage: 4, 2, 3, 2, 0 and 0 TWh
             "max_hours": [4000.0, 2000.0, 750.0, 2000.0, np.nan, np.nan],
         },
-        index=[
-            "AA0 hydro",
-            "BB0 hydro",
-            "BB1 hydro",
-            "CC0 hydro",
-            "CC1 hydro",
-            "DD0 hydro",
-        ],
     )
+    ppl.index = (ppl.bus + " hydro").rename(None)
     costs = pd.DataFrame(
-        {
-            "CO2 intensity": 0.0,
-            "capital_cost": 0.0,
-            "marginal_cost": 0.0,
-            "efficiency": 1.0,
-        },
+        {"CO2 intensity": 0.0, "capital_cost": 0.0, "marginal_cost": 0.0},
         index=["hydro"],
     )
 
@@ -186,16 +192,7 @@ def test_attach_hydro_energy_capacity_totals_by_country(tmp_path):
         inflow_path.as_posix(),
         capacities_path.as_posix(),
         ["hydro"],
-        hydro_max_hours="energy_capacity_totals_by_country",
+        hydro_max_hours=method,
     )
 
-    # AA0 keeps its 4 TWh and gets the 6 TWh residual. BB's 5 TWh residual is split
-    # 1:4 by p_nom (BB0 2 + 1 TWh, BB1 3 + 4 TWh). CC keeps its listed storage and
-    # gets nothing more, so CC1 has none. DD falls back to 6 hours.
-    max_hours = n.storage_units.max_hours
-    np.testing.assert_allclose(
-        max_hours[ppl.index], [10000.0, 3000.0, 1750.0, 2000.0, 0.0, 6.0]
-    )
-    # AA and BB reach their targets, CC keeps its listed 2 TWh
-    e_store = (n.storage_units.p_nom * max_hours).groupby(ppl.country).sum() / 1e6
-    np.testing.assert_allclose(e_store[["AA", "BB", "CC"]], [10.0, 10.0, 2.0])
+    np.testing.assert_allclose(n.storage_units.max_hours[ppl.index], expected)
