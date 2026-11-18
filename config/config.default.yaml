@@ -919,6 +919,50 @@ sector:
   coal_cc: false
   ccgt_cc: false
   dac: true
+  rock_weathering:
+    enable: false
+    corine:
+    - 12
+    - 13
+    - 14
+    natura: false
+    excluder_resolution: 250
+    max_land_usage: 0.2
+    min_mean_temp: 10
+    co2_removal_per_sqkm: 309
+  biochar:
+    enable: false
+    corine:
+    - 12
+    - 13
+    - 14
+    natura: false
+    excluder_resolution: 250
+    max_land_usage: 0.2
+    application_per_sqkm: 1500
+    application_years: 25
+    use_waste_heat: 0.25
+  afforestation:
+    enable: false
+    corine:
+    - 29
+    natura: false
+    excluder_resolution: 250
+    max_land_usage: 1.0
+    credited_share: 0.8
+  perennials:
+    enable: false
+    hectares_per_mwh: 0.06
+    co2_removal_per_hectare: 2
+    yield_per_hectare: 7.5
+    harvest_months:
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
   co2_vent: false
   heat_vent:
     urban central: true
@@ -1041,6 +1085,7 @@ sector:
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: true
   biomass_transport: false
+  unsustainable_biomass_upstream_emissions: false
   biogas_upgrading: true
   biogas_upgrading_cc: false
   conventional_generation:
@@ -1470,6 +1515,9 @@ data:
     source: archive
     version: latest
   instrat_co2_prices:
+    source: primary
+    version: latest
+  co2_removal_data:
     source: primary
     version: latest
   co2stop:

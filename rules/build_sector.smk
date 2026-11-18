@@ -895,6 +895,11 @@ rule build_biomass_potentials:
             else []
         ),
         country_shapes=resources("country_shapes.geojson"),
+        unsustainable_biomass_upstream=lambda w: (
+            rules.retrieve_co2_removal_data.output.unsustainable_biomass_upstream
+            if config_provider("sector", "unsustainable_biomass_upstream_emissions")(w)
+            else []
+        ),
     output:
         biomass_potentials_all=resources("biomass_potentials_all_{horizon}.csv"),
         biomass_potentials=resources("biomass_potentials_{horizon}.csv"),
@@ -911,6 +916,85 @@ rule build_biomass_potentials:
         foresight=config_provider("foresight"),
     script:
         scripts("build_biomass_potentials.py")
+
+
+rule determine_carbon_dioxide_removal_availability_matrix:
+    """Computes the share of each cutout grid cell available to a land-based carbon dioxide removal option."""
+    input:
+        corine=ancient(rules.retrieve_corine.output["tif_file"]),
+        natura=lambda w: (
+            f"{NATURA_DATASET['folder']}/natura.tiff"
+            if config_provider("sector", w.technology, "natura")(w)
+            else []
+        ),
+        regions=resources("onshore_regions.geojson"),
+        cutout=lambda w: input_cutout(w),
+    output:
+        nc=resources("carbon_dioxide_removal_availability_matrix_{technology}.nc"),
+        plot=branch(
+            config["atlite"]["plot_availability_matrix"],
+            then=resources(
+                "carbon_dioxide_removal_availability_matrix_{technology}.png"
+            ),
+        ),
+    log:
+        logs("determine_carbon_dioxide_removal_availability_matrix_{technology}.log"),
+    benchmark:
+        benchmarks("determine_carbon_dioxide_removal_availability_matrix_{technology}")
+    wildcard_constraints:
+        technology="rock_weathering|biochar|afforestation",
+    threads: atlite_threads
+    resources:
+        mem_mb=atlite_mem_mb(5000),
+    params:
+        technology=lambda w: config_provider("sector", w.technology)(w),
+        plot_availability_matrix=config_provider("atlite", "plot_availability_matrix"),
+        disable_progressbar=config_provider("run", "disable_progressbar"),
+        show_progress=config_provider("atlite", "show_progress"),
+    script:
+        scripts("determine_availability_matrix.py")
+
+
+rule build_carbon_dioxide_removal_land:
+    """Builds the land area usable for a land-based carbon dioxide removal option per region."""
+    input:
+        availability_matrix=resources(
+            "carbon_dioxide_removal_availability_matrix_{technology}.nc"
+        ),
+        cutout=lambda w: input_cutout(w),
+    output:
+        resources("carbon_dioxide_removal_land_{technology}.csv"),
+    log:
+        logs("build_carbon_dioxide_removal_land_{technology}.log"),
+    benchmark:
+        benchmarks("build_carbon_dioxide_removal_land_{technology}")
+    wildcard_constraints:
+        technology="rock_weathering|biochar|afforestation",
+    resources:
+        mem_mb=8000,
+    params:
+        technology=lambda w: config_provider("sector", w.technology)(w),
+    script:
+        scripts("build_carbon_dioxide_removal_land.py")
+
+
+rule build_afforestation_potentials:
+    """Builds the afforestation potential, sequestration rate and rotation age per region."""
+    input:
+        land=resources("carbon_dioxide_removal_land_afforestation.csv"),
+        rates=rules.retrieve_co2_removal_data.output.afforestation_rates,
+        nuts2=rules.retrieve_eu_nuts2013.output["shapes_level_2"],
+        regions=resources("onshore_regions.geojson"),
+    output:
+        resources("afforestation_potentials.csv"),
+    log:
+        logs("build_afforestation_potentials.log"),
+    benchmark:
+        benchmarks("build_afforestation_potentials")
+    resources:
+        mem_mb=5000,
+    script:
+        scripts("build_afforestation_potentials.py")
 
 
 rule build_biomass_transport_costs:

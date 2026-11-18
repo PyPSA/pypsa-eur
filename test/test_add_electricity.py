@@ -7,9 +7,11 @@
 import numpy as np
 import pandas as pd
 import pypsa
+import pytest
 import xarray as xr
 
 from scripts.add_electricity import (
+    attach_hydro,
     attach_load,
     attach_storageunits,
     attach_stores,
@@ -122,3 +124,59 @@ def test_estimate_efficiency():
         np.nan,
     ]
     np.testing.assert_allclose(eta, expected)
+
+
+@pytest.mark.parametrize(
+    "method, expected",
+    [
+        # AA0 keeps its 4 TWh and gets the 6 TWh missing. BB's 5 TWh missing are
+        # split 1:4 by p_nom on top of the listed 2 and 3 TWh.
+        ("energy_capacity_totals_by_country", [10000.0, 3000.0, 1750.0]),
+        # E_store / p_nom_discharge
+        ("estimate_by_large_installations", [10000.0, 2000.0, 2000.0]),
+    ],
+)
+def test_attach_hydro_max_hours(tmp_path, method, expected):
+    """
+    Reservoir storage follows the country totals, independent of the number of units.
+    """
+    ppl = pd.DataFrame(
+        {
+            "carrier": "hydro",
+            "bus": ["AA0", "BB0", "BB1"],
+            "country": ["AA", "BB", "BB"],
+            "p_nom": [1000.0, 1000.0, 4000.0],
+            "max_hours": [4000.0, 2000.0, 750.0],
+        },
+        index=["AA0 hydro", "BB0 hydro", "BB1 hydro"],
+    )
+    costs = pd.DataFrame(
+        {"CO2 intensity": 0.0, "capital_cost": 0.0, "marginal_cost": 0.0},
+        index=["hydro"],
+    )
+    totals = pd.DataFrame(
+        {"E_store[TWh]": 10.0, "p_nom_discharge[GW]": [1.0, 5.0]}, index=["AA", "BB"]
+    )
+    totals.to_csv(tmp_path / "hydro_capacities.csv")
+    times = pd.date_range("2013-01-01", periods=2, freq="h")
+    xr.DataArray(
+        np.zeros((2, 2)),
+        coords={"time": times, "countries": ["AA", "BB"]},
+        dims=["time", "countries"],
+    ).to_netcdf(tmp_path / "profile_hydro.nc")
+
+    n = pypsa.Network()
+    n.set_snapshots(times)
+    n.add("Bus", ppl.bus.values, country=ppl.country.values)
+
+    attach_hydro(
+        n,
+        costs,
+        ppl,
+        tmp_path / "profile_hydro.nc",
+        tmp_path / "hydro_capacities.csv",
+        ["hydro"],
+        hydro_max_hours=method,
+    )
+
+    np.testing.assert_allclose(n.storage_units.max_hours[ppl.index], expected)

@@ -428,6 +428,83 @@ class _ImportsConfig(BaseModel):
     )
 
 
+class _LandEligibilityConfig(BaseModel):
+    """Land eligibility settings shared by the land-based carbon dioxide removal options."""
+
+    enable: bool = Field(False, description="Add this carbon dioxide removal option.")
+    corine: list[int] = Field(
+        description="CORINE Land Cover codes of the eligible land.",
+    )
+    natura: bool = Field(False, description="Exclude Natura 2000 protection areas.")
+    excluder_resolution: float = Field(
+        250, description="Resolution in meters of the land eligibility analysis."
+    )
+    max_land_usage: float = Field(
+        1.0, ge=0, le=1, description="Maximum share of the eligible land that is used."
+    )
+
+
+class _RockWeatheringConfig(_LandEligibilityConfig):
+    """Configuration for `sector.rock_weathering` settings."""
+
+    corine: list[int] = Field(
+        default_factory=lambda: [12, 13, 14],
+        description="CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+    )
+    max_land_usage: float = Field(
+        0.2, ge=0, le=1, description="Maximum share of the eligible land that is used."
+    )
+    min_mean_temp: float = Field(
+        10,
+        description="Annual mean air temperature in degrees Celsius below which land is excluded, because weathering slows down in cold climates.",
+    )
+    co2_removal_per_sqkm: float = Field(
+        309,
+        description="CO2 removed per square kilometre of land and year (t/km2/a).",
+    )
+
+
+class _BiocharConfig(_LandEligibilityConfig):
+    """Configuration for `sector.biochar` settings."""
+
+    corine: list[int] = Field(
+        default_factory=lambda: [12, 13, 14],
+        description="CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+    )
+    max_land_usage: float = Field(
+        0.2, ge=0, le=1, description="Maximum share of the eligible land that is used."
+    )
+    application_per_sqkm: float = Field(
+        1500,
+        description="Biochar that a square kilometre of land can take up in total (t/km2).",
+    )
+    application_years: float = Field(
+        25,
+        description="Years over which the total biochar application is spread.",
+    )
+    use_waste_heat: float = Field(
+        0.25,
+        ge=0,
+        le=1,
+        description="Share of the pyrolysis heat output that is fed into district heating networks.",
+    )
+
+
+class _AfforestationConfig(_LandEligibilityConfig):
+    """Configuration for `sector.afforestation` settings."""
+
+    corine: list[int] = Field(
+        default_factory=lambda: [29],
+        description="CORINE Land Cover codes of the eligible land (transitional woodland-shrub).",
+    )
+    credited_share: float = Field(
+        0.8,
+        ge=0,
+        le=1,
+        description="Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012), after the uncertainty deduction and the buffer-pool contribution.",
+    )
+
+
 class _IndustryHeatConfig(BaseModel):
     """Configuration for `sector.industry_heat` settings."""
 
@@ -457,6 +534,29 @@ class _IndustryHeatConfig(BaseModel):
             "heat500+": ["gas", "hydrogen"],
         },
         description="Supply technologies per temperature band in °C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
+    )
+
+
+class _PerennialsConfig(BaseModel):
+    """Configuration for `sector.perennials` settings."""
+
+    enable: bool = Field(False, description="Add this carbon dioxide removal option.")
+    hectares_per_mwh: float = Field(
+        0.06,
+        ge=0,
+        description="Cropland freed per unit of unsustainable bioliquids phased out (ha/MWh/a).",
+    )
+    co2_removal_per_hectare: float = Field(
+        2,
+        description="CO2 removal credited for the soil carbon gain under perennial grass (t/ha/a).",
+    )
+    yield_per_hectare: float = Field(
+        7.5,
+        description="Dry matter yield of the perennial grass that is refined to biogas (t/ha/a).",
+    )
+    harvest_months: list[int] = Field(
+        default_factory=lambda: [4, 5, 6, 7, 8, 9, 10],
+        description="Months in which the grass is harvested and refined.",
     )
 
 
@@ -766,6 +866,22 @@ class SectorConfig(BaseModel):
         description="Add option for gas CCGTs with post-combustion carbon capture.",
     )
     dac: bool = Field(True, description="Add option for Direct Air Capture (DAC).")
+    rock_weathering: _RockWeatheringConfig = Field(
+        default_factory=_RockWeatheringConfig,
+        description="Enhanced rock weathering on cropland as carbon dioxide removal option.",
+    )
+    biochar: _BiocharConfig = Field(
+        default_factory=_BiocharConfig,
+        description="Biochar from the pyrolysis of solid biomass as carbon dioxide removal option.",
+    )
+    afforestation: _AfforestationConfig = Field(
+        default_factory=_AfforestationConfig,
+        description="Afforestation as carbon dioxide removal option.",
+    )
+    perennials: _PerennialsConfig = Field(
+        default_factory=_PerennialsConfig,
+        description="Perennial grass on cropland freed by the phase-out of unsustainable bioliquids as carbon dioxide removal option.",
+    )
     co2_vent: bool = Field(
         False,
         description="Add option for vent out CO2 from storages to the atmosphere.",
@@ -979,6 +1095,10 @@ class SectorConfig(BaseModel):
     )
     biomass_transport: bool = Field(
         False, description="Add option for transporting solid biomass between nodes."
+    )
+    unsustainable_biomass_upstream_emissions: bool = Field(
+        False,
+        description="Add the cultivation emissions of the unsustainable bioliquids to their use: field N2O and soil acidification, and the production of imported nitrogen fertiliser. The factors are in CO2 equivalents, although the emission limit otherwise counts CO2 only.",
     )
     biogas_upgrading: bool = Field(True, description="Biogas upgrading.")
     biogas_upgrading_cc: bool = Field(

@@ -931,6 +931,7 @@ _TECH_COLORS: dict[str, str] = {
     "CCS": "#f29dae",
     "CO2 sequestration": "#f29dae",
     "DAC": "#ff5270",
+    "perennials": "#008ffc",
     "co2 stored": "#f2385a",
     "co2 sequestered": "#f2682f",
     "co2 dense": "#65334d",
@@ -1000,6 +1001,9 @@ _TECH_COLORS: dict[str, str] = {
     "cement heat biomass": "#7a6d26",
     "cement heat gas": "#853403",
     "cement heat waste": "#e3d37d",
+    "afforestation": "#22cc22",
+    "biochar": "#005000",
+    "rock weathering": "#ab6ae9",
 }
 
 
