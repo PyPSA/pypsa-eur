@@ -6,16 +6,20 @@
 
 import difflib
 import tempfile
+from functools import reduce
 from pathlib import Path
 
 import pytest
 import yaml
 
+from scripts._helpers import get_snapshots
 from scripts.lib.validation.config import (
+    DEPRECATED_KEYS,
     find_invalid_entries,
     generate_config_defaults,
     generate_config_schema,
     generate_plotting_defaults,
+    migrate_deprecated_keys,
     normalize_config,
     validate_config,
     validate_scenarios,
@@ -171,6 +175,58 @@ class TestValidateScenarios:
             validate_scenarios(self.base, {"s1": override})
 
 
+@pytest.mark.parametrize(
+    "snapshots, match",
+    [
+        ({"inclusive": "left"}, "inclusive"),
+        ({"end": "2014-01-01"}, "needs a time"),
+        ({"end": "2013-03-08"}, "needs a time"),
+        ({"start": ["2013-01-01"], "end": ["2014-01-01"]}, "needs a time"),
+    ],
+)
+def test_snapshots_reject_legacy_settings(snapshots, match):
+    with pytest.raises(ValueError, match=match):
+        validate_config({"snapshots": snapshots})
+
+
+@pytest.mark.parametrize(
+    "start, end, length",
+    [
+        ("2013-01-01", "2013-12-31 23:00", 8760),
+        ("2013-03-01", "2013-03-07 23:00", 168),
+        ("2013-01-01", "2014-01-01 00:00", 8761),
+        ("2013-03-01 06:00", "2013-03-01 17:00", 12),
+        (["2013-01-01", "2013-07-01"], ["2013-01-01 23:00", "2013-07-01 23:00"], 48),
+    ],
+)
+def test_snapshots_include_first_and_last(start, end, length):
+    config = validate_config({"snapshots": {"start": start, "end": end}})
+    assert len(get_snapshots(config.snapshots)) == length
+
+
+@pytest.mark.parametrize("tes", [True, False])
+def test_migrate_deprecated_keys(tes):
+    cfg = {"sector": {"tes": tes}}
+    with pytest.warns(FutureWarning, match="sector.tes"):
+        migrate_deprecated_keys(cfg)
+    assert cfg == {
+        "sector": {"ttes": tes, "district_heating": {"ptes": {"enable": tes}}}
+    }
+
+
+def test_migrate_deprecated_keys_ignores_current_keys():
+    cfg = {"sector": {"ttes": False}, "countries": ["DE"]}
+    migrate_deprecated_keys(cfg)
+    assert cfg == {"sector": {"ttes": False}, "countries": ["DE"]}
+
+
+@pytest.mark.parametrize("old", DEPRECATED_KEYS)
+def test_deprecated_keys_not_in_default_config(old, config_file):
+    *parents, key = old.split(".")
+    defaults = yaml.safe_load(config_file.read_text())
+    assert key not in reduce(dict.get, parents, defaults)
+
+
 def _load_config(path: str) -> dict:
     return yaml.safe_load(Path(path).read_text()) or {}
 
@@ -183,7 +239,7 @@ class TestFindInvalidEntries:
         assert set(invalid) == {
             "country",
             "clustering.cluster_network.nclusters",
-            "snapshots.inclusive",
+            "snapshots",
             "clustering.temporal.averaging",
             "conventional.fuel_price_rolling_window",
         }
@@ -206,3 +262,29 @@ def test_config_file_is_valid(configfile):
     assert not invalid, f"Invalid config entries in {configfile}:\n" + "\n".join(
         f"  - {path}: {'; '.join(msgs)}" for path, msgs in invalid.items()
     )
+
+
+class TestLineTypes:
+    def test_default_defines_380kv(self):
+        config = validate_config({})
+        assert 380.0 in config.lines.types
+
+    def test_missing_380kv_is_rejected(self):
+        with pytest.raises(ValueError, match="380"):
+            validate_config(
+                {"lines": {"types": {220.0: "Al/St 240/40 2-bundle 220.0"}}}
+            )
+
+
+def test_removed_pypsa_eur_section_is_rejected():
+    with pytest.raises(ValueError, match="pypsa_eur"):
+        validate_config({"pypsa_eur": {"Generator": ["onwind"]}})
+
+
+def test_removed_oetc_section_is_rejected():
+    with pytest.raises(ValueError, match="oetc"):
+        validate_config({"solving": {"oetc": {"name": "pypsa-eur"}}})
+
+
+def test_empty_oetc_section_from_former_default_is_accepted():
+    validate_config({"solving": {"oetc": None}})

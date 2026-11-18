@@ -2,8 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Compute biogas and solid biomass potentials for each clustered model region
-using data from JRC ENSPRESO.
+Build biogas and solid biomass potentials per clustered model region from JRC ENSPRESO.
+
+ENSPRESO gives sustainable biomass potentials per commodity at NUTS2 level for a
+chosen scenario and year; years between the available decades are linearly
+interpolated. Commodities only reported at country level are disaggregated to
+NUTS2 by population. Potentials are mapped to model regions by area overlap and
+grouped into the configured biomass classes. Unsustainable potentials are
+estimated from the Eurostat primary production of solid biofuels, biogas and
+bioliquids, allocated to regions by their share of the sustainable potential,
+and scaled by year-dependent shares that phase them out. The potentials limit
+the biomass supply in the sector-coupled network.
+
+References
+----------
+- Ruiz et al. (2019), [ENSPRESO - an open, EU-28 wide, transparent and coherent database of wind, solar and biomass energy potentials](https://doi.org/10.1016/j.esr.2019.100379)
 """
 
 import logging
@@ -12,13 +25,18 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import area, configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
 
 
-def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_type):
+def _calc_unsustainable_potential(
+    df: pd.DataFrame,
+    df_unsustainable: pd.DataFrame,
+    share_unsus: float,
+    resource_type: str,
+) -> pd.Series:
     """
     Calculate the unsustainable biomass potential for a given resource type or
     regex.
@@ -45,7 +63,7 @@ def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_ty
     else:
         resource_potential = df_unsustainable[resource_type]
 
-    def _calculate_resource_allocation(c):
+    def _calculate_resource_allocation(c: pd.Series) -> float:
         country = c.name[:2]
         country_total = df.loc[df.index.str[:2] == country].sum().sum()
         if country_total == 0:
@@ -57,9 +75,14 @@ def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_ty
     )
 
 
-def build_nuts_population_data(year=2013):
+def build_nuts_population_data(
+    nuts3_population: str,
+    swiss_cantons: str | list,
+    swiss_population: str | list,
+    year: int = 2013,
+) -> pd.DataFrame:
     pop = pd.read_csv(
-        snakemake.input.nuts3_population,
+        nuts3_population,
         sep=r"\,| \t|\t",
         engine="python",
         na_values=[":"],
@@ -67,14 +90,14 @@ def build_nuts_population_data(year=2013):
     )[str(year)]
     pop = pop.str.split().str[0].astype(float)
 
-    if snakemake.input.swiss_cantons:
-        cantons = pd.read_csv(snakemake.input.swiss_cantons)
+    if swiss_cantons:
+        cantons = pd.read_csv(swiss_cantons)
         cantons = cantons.set_index(cantons.HASC.str[3:]).NUTS
         cantons = cantons.str.pad(5, side="right", fillchar="0")
 
-        swiss = pd.read_excel(
-            snakemake.input.swiss_population, skiprows=3, index_col=0
-        ).loc["Residents in 1000"]
+        swiss = pd.read_excel(swiss_population, skiprows=3, index_col=0).loc[
+            "Residents in 1000"
+        ]
         swiss = swiss.rename(cantons).filter(like="CH")
 
         swiss = [swiss.groupby(swiss.index.str[:i]).sum() for i in range(2, 6)]
@@ -94,12 +117,16 @@ def build_nuts_population_data(year=2013):
     return pop
 
 
-def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
+def enspreso_biomass_potentials(
+    enspreso_biomass: str, year: int = 2020, scenario: str = "ENS_Low"
+) -> pd.DataFrame:
     """
     Loads the JRC ENSPRESO biomass potentials.
 
     Parameters
     ----------
+    enspreso_biomass : str
+        Path to the JRC ENSPRESO biomass Excel file.
     year : int
         The year for which potentials are to be taken.
         Can be {2010, 2020, 2030, 2040, 2050}.
@@ -113,7 +140,7 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
         in TWh/a by commodity and NUTS2 region.
     """
     glossary = pd.read_excel(
-        str(snakemake.input.enspreso_biomass),
+        str(enspreso_biomass),
         sheet_name="Glossary",
         usecols="B:D",
         skiprows=1,
@@ -121,7 +148,7 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
     )
 
     df = pd.read_excel(
-        str(snakemake.input.enspreso_biomass),
+        str(enspreso_biomass),
         sheet_name="ENER - NUTS2 BioCom E",
         usecols="A:H",
     )
@@ -149,7 +176,7 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
     return bio
 
 
-def disaggregate_nuts0(bio):
+def disaggregate_nuts0(bio: pd.DataFrame, pop: pd.DataFrame) -> pd.DataFrame:
     """
     Some commodities are only given on NUTS0 level. These are disaggregated
     here using the NUTS2 population as distribution key.
@@ -158,12 +185,13 @@ def disaggregate_nuts0(bio):
     ----------
     bio : pd.DataFrame
         from enspreso_biomass_potentials()
+    pop : pd.DataFrame
+        from build_nuts_population_data()
 
     Returns
     -------
     pd.DataFrame
     """
-    pop = build_nuts_population_data()
 
     # get population in nuts2
     pop_nuts2 = pop.loc[pop.index.str.len() == 4].copy()
@@ -181,33 +209,26 @@ def disaggregate_nuts0(bio):
     return bio
 
 
-def build_nuts2_shapes():
+def build_nuts2_shapes(nuts2: str, country_shapes: str) -> gpd.GeoDataFrame:
     """
     - load NUTS2 geometries
     - add RS, AL, BA country shapes (not covered in NUTS 2013)
     - consistently name ME, MK
     """
-    nuts2 = gpd.GeoDataFrame(
-        gpd.read_file(snakemake.input.nuts2).set_index("NUTS_ID").geometry
-    )
+    shapes = gpd.GeoDataFrame(gpd.read_file(nuts2).set_index("NUTS_ID").geometry)
 
-    countries = gpd.read_file(snakemake.input.country_shapes).set_index("name")
+    countries = gpd.read_file(country_shapes).set_index("name")
     missing_iso2 = countries.index.intersection(["AL", "RS", "XK", "BA"])
     missing = countries.loc[missing_iso2]
 
-    nuts2.rename(index={"ME00": "ME", "MK00": "MK"}, inplace=True)
+    shapes.rename(index={"ME00": "ME", "MK00": "MK"}, inplace=True)
 
-    return pd.concat([nuts2, missing])
-
-
-def area(gdf):
-    """
-    Returns area of GeoDataFrame geometries in square kilometers.
-    """
-    return gdf.to_crs(epsg=3035).area.div(1e6)
+    return pd.concat([shapes, missing])
 
 
-def convert_nuts2_to_regions(bio_nuts2, regions):
+def convert_nuts2_to_regions(
+    bio_nuts2: gpd.GeoDataFrame, regions: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
     """
     Converts biomass potentials given in NUTS2 to PyPSA-Eur regions based on
     the overlay of both GeoDataFrames in proportion to the area.
@@ -243,7 +264,28 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     return bio_regions
 
 
-def add_unsustainable_potentials(df, input_eurostat):
+def upstream_emission_factors(fn: str, year: int) -> pd.DataFrame:
+    """
+    Upstream emission factors of bioethanol and biodiesel per country
+    (tCO2eq/MWh), linearly interpolated to the given year.
+    """
+    table = pd.read_csv(fn, index_col=0)
+    factors = {}
+    for fuel in ["bioethanol", "biodiesel"]:
+        df = table.filter(regex=rf"^{fuel}_\d{{4}}$")
+        years = df.columns.str[-4:].astype(int)
+        factors[fuel] = df.apply(lambda row: np.interp(year, years, row), axis=1)
+    return pd.DataFrame(factors)
+
+
+def add_unsustainable_potentials(
+    df: pd.DataFrame,
+    input_eurostat: str,
+    countries: list[str],
+    investment_year: int,
+    params: dict,
+    upstream_emissions: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     """
     Add unsustainable biomass potentials to the given dataframe. The difference
     between the data of JRC and Eurostat is assumed to be unsustainable
@@ -255,18 +297,24 @@ def add_unsustainable_potentials(df, input_eurostat):
         The dataframe with sustainable biomass potentials.
     input_eurostat : str
         Path to the file with Eurostat biomass data.
+    countries : list[str]
+        Modelled countries.
+    investment_year : int
+        Planning horizon.
+    params : dict
+        Biomass configuration.
 
     Returns
     -------
     pd.DataFrame
         The dataframe with added unsustainable biomass potentials.
     """
-    if "GB" in snakemake.config["countries"]:
+    if "GB" in countries:
         latest_year = 2019
     else:
         latest_year = 2021
     idees_rename = {"GR": "EL", "GB": "UK"}
-    year = max(min(latest_year, int(snakemake.wildcards.horizon)), 1990)  # noqa: F841
+    year = max(min(latest_year, investment_year), 1990)  # noqa: F841
     df_unsustainable = (
         pd.read_csv(input_eurostat)
         .query("year == @year and nrg_bal == 'PPRD'")  # Primary production
@@ -294,7 +342,7 @@ def add_unsustainable_potentials(df, input_eurostat):
     df_unsustainable = df_unsustainable[bio_carriers]
 
     # Phase out unsustainable biomass potentials linearly from 2020 to 2035 while phasing in sustainable potentials
-    share_unsus = params.get("share_unsustainable_use_retained").get(investment_year)
+    share_unsus = params["share_unsustainable_use_retained"][investment_year]
 
     df_wo_ch = df.drop(df.filter(regex=r"CH\d*", axis=0).index)
 
@@ -322,11 +370,32 @@ def add_unsustainable_potentials(df, input_eurostat):
         resource_type="R5210|R5220|R5230|R5290",  # gasoline, diesel, kerosene, liquids
     )
 
-    share_sus = params.get("share_sustainable_potential_available").get(investment_year)
+    df_wo_ch["bioliquids phased out"] = _calc_unsustainable_potential(
+        df_wo_ch,
+        df_unsustainable,
+        1 - share_unsus,
+        resource_type="R5210|R5220|R5230|R5290",
+    )
+
+    if upstream_emissions is not None:
+        # weight the factors with the country's shares of biogasoline and other bioliquids
+        bioliquids = df_unsustainable.filter(regex="R5210|R5220|R5230|R5290")
+        share_bioethanol = (
+            bioliquids.filter(regex="R5210").sum(axis=1).div(bioliquids.sum(axis=1))
+        )
+        factor = upstream_emissions["biodiesel"] + share_bioethanol.fillna(0) * (
+            upstream_emissions["bioethanol"] - upstream_emissions["biodiesel"]
+        )
+        df_wo_ch["unsustainable bioliquids upstream emissions"] = (
+            df_wo_ch["unsustainable bioliquids"]
+            * factor.reindex(df_wo_ch.index.str[:2]).values
+        )
+
+    share_sus = params["share_sustainable_potential_available"][investment_year]
     df.loc[df_wo_ch.index] *= share_sus
 
     df = (
-        df.join(df_wo_ch.filter(like="unsustainable"))
+        df.join(df_wo_ch.filter(regex="unsustainable|phased out"))
         .fillna(0)
         .infer_objects(copy=False)
     )
@@ -346,16 +415,17 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    overnight = snakemake.config["foresight"] == "overnight"
+    overnight = snakemake.params.foresight == "overnight"
     params = snakemake.params.biomass
     investment_year = int(snakemake.wildcards.horizon)
     year = params["year"] if overnight else investment_year
     scenario = params["scenario"]
+    enspreso_fn = snakemake.input.enspreso_biomass
 
     if year > 2050:
         logger.info("No biomass potentials for years after 2050, using 2050.")
         max_year = max(AVAILABLE_BIOMASS_YEARS)
-        enspreso = enspreso_biomass_potentials(max_year, scenario)
+        enspreso = enspreso_biomass_potentials(enspreso_fn, max_year, scenario)
 
     elif year not in AVAILABLE_BIOMASS_YEARS:
         before = int(np.floor(year / 10) * 10)
@@ -364,8 +434,8 @@ if __name__ == "__main__":
             f"No biomass potentials for {year}, interpolating linearly between {before} and {after}."
         )
 
-        enspreso_before = enspreso_biomass_potentials(before, scenario)
-        enspreso_after = enspreso_biomass_potentials(after, scenario)
+        enspreso_before = enspreso_biomass_potentials(enspreso_fn, before, scenario)
+        enspreso_after = enspreso_biomass_potentials(enspreso_fn, after, scenario)
 
         fraction = (year - before) / (after - before)
 
@@ -373,11 +443,16 @@ if __name__ == "__main__":
 
     else:
         logger.info(f"Using biomass potentials for {year}.")
-        enspreso = enspreso_biomass_potentials(year, scenario)
+        enspreso = enspreso_biomass_potentials(enspreso_fn, year, scenario)
 
-    enspreso = disaggregate_nuts0(enspreso)
+    pop = build_nuts_population_data(
+        snakemake.input.nuts3_population,
+        snakemake.input.swiss_cantons,
+        snakemake.input.swiss_population,
+    )
+    enspreso = disaggregate_nuts0(enspreso, pop)
 
-    nuts2 = build_nuts2_shapes()
+    nuts2 = build_nuts2_shapes(snakemake.input.nuts2, snakemake.input.country_shapes)
 
     df_nuts2 = gpd.GeoDataFrame(nuts2.geometry).join(enspreso)
 
@@ -391,7 +466,20 @@ if __name__ == "__main__":
     df = df.T.groupby(grouper).sum().T
 
     input_eurostat = snakemake.input.eurostat
-    df = add_unsustainable_potentials(df, input_eurostat)
+    upstream_emissions = None
+    if snakemake.input.unsustainable_biomass_upstream:
+        upstream_emissions = upstream_emission_factors(
+            snakemake.input.unsustainable_biomass_upstream, investment_year
+        )
+
+    df = add_unsustainable_potentials(
+        df,
+        input_eurostat,
+        snakemake.params.countries,
+        investment_year,
+        params,
+        upstream_emissions,
+    )
 
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"

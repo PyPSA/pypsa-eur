@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot balance time series.
+Plots stacked energy balance time series per bus carrier from a solved network.
+
+Reads the solved network and computes the time-resolved energy balance per
+technology carrier with the PyPSA statistics module. Balances are grouped by
+bus carrier or by configured carrier groups, supply is stacked above and
+consumption below the zero line, and technologies with negligible contribution
+are lumped into "other". One figure is drawn for the whole year at coarse
+resolution and one per month at finer resolution, processed in parallel across
+carrier groups.
 """
 
 import logging
@@ -23,9 +31,11 @@ logger = logging.getLogger(__name__)
 
 
 def plot_stacked_area_steplike(
-    ax: plt.Axes, df: pd.DataFrame, colors: dict | pd.Series = {}
-):
+    ax: plt.Axes, df: pd.DataFrame, colors: dict | pd.Series | None = None
+) -> None:
     """Plot stacked area chart with step-like transitions."""
+    if colors is None:
+        colors = {}
     if isinstance(colors, pd.Series):
         colors = colors.to_dict()
 
@@ -45,7 +55,7 @@ def plot_stacked_area_steplike(
         previous_series = df_cum[col].values
 
 
-def setup_time_axis(ax: plt.Axes, timespan: pd.Timedelta):
+def setup_time_axis(ax: plt.Axes, timespan: pd.Timedelta) -> None:
     """Configure time axis formatting based on timespan."""
     long_time_frame = timespan > pd.Timedelta(weeks=5)
 
@@ -68,15 +78,17 @@ def plot_energy_balance_timeseries(
     time: pd.DatetimeIndex | None = None,
     ylim: float | None = None,
     resample: str | None = None,
-    rename: dict = {},
-    preferred_order: pd.Index | list = [],
+    rename: dict | None = None,
+    preferred_order: pd.Index | None = None,
     ylabel: str = "",
-    colors: dict | pd.Series = {},
+    colors: dict | pd.Series | None = None,
     max_threshold: float = 0.0,
     mean_threshold: float = 0.0,
-    directory="",
-):
+    directory: str = "",
+) -> None:
     """Create energy balance time series plot with positive/negative stacked areas."""
+    rename = {} if rename is None else dict(rename)
+    colors = {} if colors is None else dict(colors)
     if time is not None:
         df = df.loc[time]
 
@@ -85,7 +97,7 @@ def plot_energy_balance_timeseries(
         (df.abs().max() < max_threshold) & (df.abs().mean() < mean_threshold)
     ].tolist()
     if techs_below_threshold:
-        rename.update({tech: "other" for tech in techs_below_threshold})
+        rename.update(dict.fromkeys(techs_below_threshold, "other"))
         colors["other"] = "grey"
 
     if rename:
@@ -97,7 +109,7 @@ def plot_energy_balance_timeseries(
 
     # Sort columns by variance
     order = (df / df.max()).var().sort_values().index
-    if preferred_order:
+    if preferred_order is not None and len(preferred_order):
         order = preferred_order.intersection(order).append(
             order.difference(preferred_order)
         )
@@ -147,7 +159,14 @@ def plot_energy_balance_timeseries(
     plt.close()
 
 
-def process_carrier(group_item, balance, months, colors, config, output_dir):
+def process_carrier(
+    group_item: tuple[str, str | list[str]],
+    balance: pd.DataFrame,
+    months: pd.Index,
+    colors: pd.Series,
+    config: dict,
+    output_dir: str,
+) -> None:
     """Process carrier data and create plots for specific carrier group."""
 
     group, carriers = group_item
@@ -164,13 +183,13 @@ def process_carrier(group_item, balance, months, colors, config, output_dir):
         )
         return
 
-    kwargs = dict(
-        ylabel=group,
-        colors=colors,
-        max_threshold=config["max_threshold"],
-        mean_threshold=config["mean_threshold"],
-        directory=output_dir,
-    )
+    kwargs = {
+        "ylabel": group,
+        "colors": colors,
+        "max_threshold": config["max_threshold"],
+        "mean_threshold": config["mean_threshold"],
+        "directory": output_dir,
+    }
 
     # daily resolution for each carrier
     if config["annual"]:
@@ -231,12 +250,12 @@ if __name__ == "__main__":
 
     # Process each carrier group in parallel
     threads = snakemake.threads
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" carrier",
-        total=len(groups),
-        desc="Plotting carrier balance time series",
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " carrier",
+        "total": len(groups),
+        "desc": "Plotting carrier balance time series",
+    }
     func = partial(
         process_carrier,
         balance=balance,

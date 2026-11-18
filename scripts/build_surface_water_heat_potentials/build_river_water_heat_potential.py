@@ -7,39 +7,11 @@ Calculate river water heat potential for district heating systems.
 This script computes the thermal potential of rivers as a heat source for district
 heating applications. It uses HERA river discharge and ambient temperature data to
 estimate available heating power and average water temperatures across regions
-intersected with district heating areas.
+intersected with district heating areas. The district heating areas are buffered by
+`dh_area_buffer` (in meters) to include nearby rivers.
 
 The approximation accounts for temporal and spatial variations in river flow and temperature,
 providing both spatial and temporal aggregates. Temporal aggregates are only used for plotting.
-
-Relevant Settings
------------------
-
-```yaml
-sector:
-    district_heating:
-        dh_area_buffer: # Buffer around DH areas in meters to include nearby rivers
-        heat_source_cooling: # Exploitable temperature delta
-snapshots:
-    start:
-    end:
-enable:
-    drop_leap_day:
-```
-
-Inputs
-------
-- `data/hera_{year}/river_discharge_{year}.nc`: River discharge data from HERA
-- `data/hera_{year}/ambient_temp_{year}.nc`: Ambient temperature data from HERA
-- `resources/{run}/onshore_regions.geojson`: Onshore regions
-- `resources/{run}/dh_areas.geojson`: District heating areas
-
-Outputs
--------
-- `resources/{run}/heat_source_power_river_water.csv`: River heating power potentials by region
-- `resources/{run}/temp_river_water.nc`: River water temperature profiles by region
-- `resources/{run}/temp_river_water_temporal_aggregate.nc`: Temporal aggregated temperature data
-- `resources/{run}/heat_source_energy_river_water_temporal_aggregate.nc`: Temporal aggregated energy data
 """
 
 import gc
@@ -337,7 +309,7 @@ def get_regional_result(
 def set_dask_chunk_size(
     n_threads: int,  # Number of threads per worker,
     memory_mb: int,  # Memory per worker in MB
-    memory_safety_factor=MEMORY_SAFETY_FACTOR,
+    memory_safety_factor: float = MEMORY_SAFETY_FACTOR,
     n_datasets: int = 2,  # ambient temperature and river discharge datasets
     operation_multiplier: int = 3,  # Multiplier for operation overhead
 ) -> None:
@@ -410,7 +382,7 @@ if __name__ == "__main__":
     power = pd.DataFrame(
         {
             region_name: res["spatial aggregate"]["total_power"].to_pandas()
-            for region_name, res in zip(onshore_regions.index, results)
+            for region_name, res in zip(onshore_regions.index, results, strict=True)
         }
     ).dropna()
 

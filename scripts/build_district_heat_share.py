@@ -2,22 +2,23 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build district heat shares at each node, depending on investment year.
+Build the district heating share of heat demand at each node for a planning horizon.
 
-Inputs:
--------
-- `resources/{run}/pop_layout.csv`: Population layout for each node: Total, urban and rural population.
-- `resources/{run}/district_heat_share.csv`: Historical district heat share at each country. Output of `scripts/build_energy_totals.py`.
+Today's country-level district heat share from [build_energy_totals][] is
+scaled to each node by the ratio of its share of the country's urban
+population to its share of the total population. The maximum share is the
+node's urban fraction times the potential set in
+`sector.district_heating.potential`, either a single value or one per
+country. The gap between today's share and this maximum is closed by the
+progress factor of the planning horizon from
+`sector.district_heating.progress`. Where today's share exceeds the urban
+fraction, the urban fraction is raised to match.
 
-Outputs:
---------
-- `resources/{run}/district_heat_share.csv`: District heat share at each node, potential for each investment year.
-
-Notes
------
-- The district heat share is calculated as the share of urban population at each node, multiplied by the share of district heating in the respective country.
-- The `sector.district_heating.potential` setting defines the max. district heating share.
-- The max. share of district heating is increased by a progress factor, depending on the investment year (See `sector.district_heating.progress` setting).
+| Column | Description |
+|---|---|
+| `original district heat share` | Today's share of the country |
+| `district fraction of node` | Share of the node's heat demand served by district heating |
+| `urban fraction` | Share of the node's population living in urban areas |
 """
 
 import logging
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     urban_fraction = pop_layout.urban / pop_layout[["rural", "urban"]].sum(axis=1)
 
     # maximum potential of urban demand covered by district heating
-    central_fraction = snakemake.config["sector"]["district_heating"]["potential"]
+    central_fraction = snakemake.params.district_heating_potential
     if isinstance(central_fraction, dict):
         # Check if individual district heating shares are given for all countries of the network
         other_countries = set(pop_layout.ct.unique()).difference(
@@ -84,7 +85,7 @@ if __name__ == "__main__":
             # Fill missing countries with default value from config
             central_fraction = {
                 **central_fraction,
-                **{ct: default_value for ct in other_countries},
+                **dict.fromkeys(other_countries, default_value),
             }
         # Map district heating potentials to bus regions
         central_fraction = pop_layout.ct.map(central_fraction)
@@ -100,9 +101,7 @@ if __name__ == "__main__":
 
     # difference of max potential and today's share of district heating
     diff = ((urban_fraction * central_fraction) - dist_fraction_node).clip(lower=0)
-    progress = get(
-        snakemake.config["sector"]["district_heating"]["progress"], investment_year
-    )
+    progress = get(snakemake.params.district_heating_progress, investment_year)
     dist_fraction_node += diff * progress
     logger.info(
         f"Increase district heating share by a progress factor of {progress:.2%} "

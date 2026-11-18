@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-FROM ghcr.io/prefix-dev/pixi:0.81.0
+FROM ghcr.io/prefix-dev/pixi:0.84.2
 
 LABEL org.opencontainers.image.source=https://github.com/PyPSA/pypsa-eur
 
@@ -11,15 +11,18 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates bash git && \
     rm -rf /var/lib/apt/lists/*
 
-# Install pixi env at /opt/pixi-env (allow for bind mounts)
-COPY pixi.toml pixi.lock /opt/pixi-env/
-RUN cd /opt/pixi-env && pixi install -e default && pixi clean cache --yes
-
 WORKDIR /workspace
+
+# Install the pixi env at its runtime path, since pixi envs are not relocatable,
+# then move it to /opt/pixi-env so that a bind-mounted /workspace can link it back
+COPY pixi.toml pixi.lock ./
+RUN pixi install -e default && pixi clean cache --yes && \
+    pixi shell-hook -e default > /tmp/shell-hook.sh && \
+    mkdir /opt/pixi-env && mv .pixi /opt/pixi-env/
 
 # Link pre-installed pixi env into workspace, activate environment and run command
 RUN echo '[ ! -e /workspace/.pixi ] && ln -s /opt/pixi-env/.pixi /workspace/.pixi' > /entrypoint.sh && \
-    pixi shell-hook -e default --manifest-path /opt/pixi-env/pixi.toml >> /entrypoint.sh && \
+    cat /tmp/shell-hook.sh >> /entrypoint.sh && rm /tmp/shell-hook.sh && \
     echo 'exec "$@"' >> /entrypoint.sh
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]

@@ -25,6 +25,7 @@ from typing import Literal
 from pydantic import Field
 from scripts.lib.validation.config._base import ConfigModel
 
+
 class LoggingConfig(ConfigModel):
     """Configuration for top level `logging` settings."""
 
@@ -133,6 +134,7 @@ is uppercase:
 from pydantic import Field, field_validator
 from scripts.lib.validation.config._base import ConfigModel
 
+
 class LoggingConfig(ConfigModel):
     """Configuration for top level `logging` settings."""
 
@@ -152,6 +154,7 @@ ensuring the file path is set when file logging is enabled:
 ```python
 from pydantic import Field, model_validator
 from scripts.lib.validation.config._base import ConfigModel
+
 
 class LoggingConfig(ConfigModel):
     """Configuration for top level `logging` settings."""
@@ -198,7 +201,7 @@ from scripts.lib.validation.config._schema import ConfigSchema
 
 class ClusteringConfigUpdater(ConfigUpdater):
     name: str = "update_clustering"
-    docs_url: str | None = None # no attempt will be made at updating the URL.
+    docs_url: str | None = None  # no attempt will be made at updating the URL.
 
     def update(self) -> type[ConfigSchema]:
         # To update and existing config item, we need it's most recent state, as defined in `self.base_config`
@@ -226,7 +229,9 @@ class MyNewConfigSection(BaseModel):
 
 class NewConfigItem(ConfigUpdater):
     name: str = "new_section"
-    docs_url: str | None = "https://my-own-docs.readthedocs.org/config.html#{field_name}"
+    docs_url: str | None = (
+        "https://my-own-docs.readthedocs.org/config.html#{field_name}"
+    )
 
     def update(self) -> type[ConfigSchema]:
         new_schema = self._apply_updates(

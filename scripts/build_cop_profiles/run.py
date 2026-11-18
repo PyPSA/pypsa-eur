@@ -2,40 +2,22 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Approximate heat pump coefficient-of-performance (COP) profiles for different
-heat sources and systems. Returns zero where source temperature higher than sink temperature.
+Build heat pump coefficient-of-performance (COP) time series per clustered region, heat source and heat system.
 
-For central heating, this is based on Jensen et al. (2018) (c.f. `CentralHeatingCopApproximator <CentralHeatingCopApproximator.py>`_) and for decentral heating, the approximation is based on Staffell et al. (2012) (c.f. `DecentralHeatingCopApproximator <DecentralHeatingCopApproximator.py>`_).
+For central heating, the COP follows the approximation of Jensen et al.
+(2018) with the district heating forward and return temperatures from
+[build_central_heating_temperature_profiles][] as sink temperatures. For
+decentral heating, a quadratic regression on the temperature difference
+between source and sink from Staffell et al. (2012) is used. Source
+temperatures come from the temperature profiles of the respective heat
+source or, where configured, from a constant source temperature. The COP is
+set to zero where the temperature lift is infeasible or the approximation
+falls below one.
 
-Relevant Settings
------------------
-
-```yaml
-sector:
-    heat_pump_sink_T_decentral_heating:
-    district_heating:
-        forward_temperature:
-        return_temperature:
-        heat_source_cooling:
-        heat_pump_cop_approximation:
-            refrigerant:
-            heat_exchanger_pinch_point_temperature_difference
-            isentropic_compressor_efficiency:
-            heat_loss:
-            min_delta_t_lift:
-        heat_pump_sources:
-            urban central:
-            urban decentral:
-            rural:
-```
-Inputs
-------
-- `resources/<run_name>/temp_soil_total`: Ground temperature
-- `resources/<run_name>/temp_air_total`: Air temperature
-
-Outputs
--------
-- `resources/<run_name>/cop_profiles.nc`: Heat pump coefficient-of-performance (COP) profiles
+References
+----------
+- Jensen et al. (2018), Heat pump COP, part 2: Generalized COP estimation of heat pump processes, 13th IIR Gustav Lorentzen Conference on Natural Refrigerants
+- Staffell et al. (2012), [A review of domestic heat pumps](https://doi.org/10.1039/C2EE22653G)
 """
 
 import pandas as pd
@@ -55,6 +37,9 @@ def get_cop(
     heat_system_type: str,
     heat_source: str,
     source_inlet_temperature_celsius: xr.DataArray,
+    heat_source_cooling_central_heating: float,
+    cop_approximation_central_heating: dict,
+    sink_T_decentral_heating: float,
     sink_outlet_temperature_celsius: xr.DataArray = None,
     sink_inlet_temperature_celsius: xr.DataArray = None,
 ) -> xr.DataArray:
@@ -69,6 +54,16 @@ def get_cop(
         The heat source used in the heating system.
     source_inlet_temperature_celsius : xr.DataArray
         The inlet temperature of the heat source in Celsius.
+    heat_source_cooling_central_heating : float
+        Temperature drop of the heat source in central heating.
+    cop_approximation_central_heating : dict
+        Parameters of the central heating COP approximation.
+    sink_T_decentral_heating : float
+        Sink outlet temperature of decentral heating.
+    sink_outlet_temperature_celsius : xr.DataArray, optional
+        The outlet temperature of the heat sink in Celsius.
+    sink_inlet_temperature_celsius : xr.DataArray, optional
+        The inlet temperature of the heat sink in Celsius.
 
     Returns
     -------
@@ -81,27 +76,21 @@ def get_cop(
             sink_inlet_temperature_celsius=sink_inlet_temperature_celsius,
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_outlet_temperature_celsius=source_inlet_temperature_celsius
-            - snakemake.params.heat_source_cooling_central_heating,
-            refrigerant=snakemake.params.heat_pump_cop_approximation_central_heating[
-                "refrigerant"
-            ],
-            delta_t_pinch_point=snakemake.params.heat_pump_cop_approximation_central_heating[
+            - heat_source_cooling_central_heating,
+            refrigerant=cop_approximation_central_heating["refrigerant"],
+            delta_t_pinch_point=cop_approximation_central_heating[
                 "heat_exchanger_pinch_point_temperature_difference"
             ],
-            isentropic_compressor_efficiency=snakemake.params.heat_pump_cop_approximation_central_heating[
+            isentropic_compressor_efficiency=cop_approximation_central_heating[
                 "isentropic_compressor_efficiency"
             ],
-            heat_loss=snakemake.params.heat_pump_cop_approximation_central_heating[
-                "heat_loss"
-            ],
-            min_delta_t_lift=snakemake.params.heat_pump_cop_approximation_central_heating[
-                "min_delta_t_lift"
-            ],
+            heat_loss=cop_approximation_central_heating["heat_loss"],
+            min_delta_t_lift=cop_approximation_central_heating["min_delta_t_lift"],
         ).cop
 
     else:
         return DecentralHeatingCopApproximator(
-            sink_outlet_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
+            sink_outlet_temperature_celsius=sink_T_decentral_heating,
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_type=heat_source,
         ).cop
@@ -142,7 +131,7 @@ if __name__ == "__main__":
                     ]
                 )
             else:
-                if f"temp_{heat_source}" not in snakemake.input.keys():
+                if f"temp_{heat_source}" not in snakemake.input.keys():  # noqa: SIM118
                     raise ValueError(
                         f"Missing input temperature for heat source {heat_source}."
                     )
@@ -154,6 +143,9 @@ if __name__ == "__main__":
                 heat_system_type=heat_system_type,
                 heat_source=heat_source,
                 source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+                heat_source_cooling_central_heating=snakemake.params.heat_source_cooling_central_heating,
+                cop_approximation_central_heating=snakemake.params.heat_pump_cop_approximation_central_heating,
+                sink_T_decentral_heating=snakemake.params.heat_pump_sink_T_decentral_heating,
                 sink_outlet_temperature_celsius=central_heating_forward_temperature,
                 sink_inlet_temperature_celsius=central_heating_return_temperature,
             )

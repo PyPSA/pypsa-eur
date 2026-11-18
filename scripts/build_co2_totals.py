@@ -13,15 +13,11 @@ form "industrial non-elec". Serbia's inventory includes Kosovo, which is split b
 population. Bosnia and Herzegovina and North Macedonia have no inventory and get
 the per-capita emissions of Albania, Montenegro, Serbia and Kosovo.
 
-Outputs
--------
-- ``resources/<run_name>/co2_totals.csv``: Emissions in Mt per country, year and sector.
-
 References
 ----------
-- `EEA national emissions reported to the UNFCCC <https://doi.org/10.2909/a1407927-71d3-49da-9895-29a5e4cbcaf1>`_
-- `EEA Energy Community greenhouse gas inventories <https://sdi.eea.europa.eu/catalogue/srv/api/records/b2f0b8a6-ae5f-44ff-ade4-7054a5cf5daa>`_
-- `DESNZ final UK greenhouse gas emissions <https://www.gov.uk/government/collections/final-uk-greenhouse-gas-emissions-national-statistics>`_
+- [EEA national emissions reported to the UNFCCC](https://doi.org/10.2909/a1407927-71d3-49da-9895-29a5e4cbcaf1)
+- [EEA Energy Community greenhouse gas inventories](https://sdi.eea.europa.eu/catalogue/srv/api/records/b2f0b8a6-ae5f-44ff-ade4-7054a5cf5daa)
+- [DESNZ final UK greenhouse gas emissions](https://www.gov.uk/government/collections/final-uk-greenhouse-gas-emissions-national-statistics)
 """
 
 import logging

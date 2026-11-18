@@ -11,6 +11,8 @@ tutorial: false
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#logging_cf
 logging:
   level: INFO
+  console_level: WARNING
+  file_level:
   format: "%(levelname)s:%(name)s:%(message)s"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#remote_cf
@@ -78,9 +80,8 @@ countries:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#snapshots_cf
 snapshots:
-  start: "2013-01-01"
-  end: "2014-01-01"
-  inclusive: left
+  start: "2013-01-01 00:00"
+  end: "2013-12-31 23:00"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#enable_cf
 enable:
@@ -144,6 +145,7 @@ electricity:
     Link: []
   powerplants_filter: "(DateOut > 2025 or DateOut != DateOut) and (DateIn < 2026 or DateIn != DateIn)"
   custom_powerplants: false
+  custom_powerplants_fn: data/custom_powerplants.csv
   everywhere_powerplants: []
   conventional_carriers:
   - nuclear
@@ -528,30 +530,11 @@ load:
   scaling_factor: 1.0
   fixed_year: false
   supplement_synthetic: true
+  prefer_synthetic: false
   substation_only: true
   distribution_key:
     gdp: 0.6
     population: 0.4
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#pypsa_eur_cf
-pypsa_eur:
-  Bus:
-  - AC
-  Link:
-  - DC
-  Generator:
-  - onwind
-  - "offwind-ac"
-  - "offwind-dc"
-  - "offwind-float"
-  - "solar-hsat"
-  - solar
-  - ror
-  - nuclear
-  StorageUnit:
-  - PHS
-  - hydro
-  Store: []
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#energy_cf
 energy:
@@ -743,6 +726,7 @@ sector:
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
     ptes:
+      enable: true
       dynamic_capacity: false
       supplemental_heating:
         enable: false
@@ -901,7 +885,7 @@ sector:
     annualise_cost: true
     tax_weighting: false
     construction_index: true
-  tes: true
+  ttes: true
   boilers: true
   resistive_heaters: true
   oil_boilers: false
@@ -914,12 +898,60 @@ sector:
     fuel:
     - solid biomass
     - gas
+    fuel_cc:
+    - solid biomass
+    - gas
     micro_chp: false
   solar_thermal: true
   solar_cf_correction: 0.788457
   methanation: true
   coal_cc: false
+  ccgt_cc: false
   dac: true
+  rock_weathering:
+    enable: false
+    corine:
+    - 12
+    - 13
+    - 14
+    natura: false
+    excluder_resolution: 250
+    max_land_usage: 0.2
+    min_mean_temp: 10
+    co2_removal_per_sqkm: 309
+  biochar:
+    enable: false
+    corine:
+    - 12
+    - 13
+    - 14
+    natura: false
+    excluder_resolution: 250
+    max_land_usage: 0.2
+    application_per_sqkm: 1500
+    application_years: 25
+    use_waste_heat: 0.25
+  afforestation:
+    enable: false
+    corine:
+    - 29
+    natura: false
+    excluder_resolution: 250
+    max_land_usage: 1.0
+    credited_share: 0.8
+  perennials:
+    enable: false
+    hectares_per_mwh: 0.06
+    co2_removal_per_hectare: 2
+    yield_per_hectare: 7.5
+    harvest_months:
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
   co2_vent: false
   heat_vent:
     urban central: true
@@ -929,6 +961,7 @@ sector:
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: true
+  electrolysis: true
   SMR: true
   SMR_cc: true
   regional_oil_demand: true
@@ -952,7 +985,6 @@ sector:
     2045: 250
     2050: 250
   co2_sequestration_cost: 30
-  co2_sequestration_lifetime: 50
   co2_spatial: true
   co2_network: true
   co2_network_cost_factor: 1
@@ -1023,6 +1055,16 @@ sector:
     CO2 pipeline:
       efficiency_per_1000km: 1
   H2_network: true
+  transport_corridors:
+    H2:
+      min_degree: 1
+      max_offshore_distance: .inf
+    CO2:
+      min_degree: 1
+      max_offshore_distance: .inf
+    biomass:
+      min_degree: 1
+      max_offshore_distance: .inf
   gas_network: true
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
@@ -1031,11 +1073,30 @@ sector:
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: true
   biomass_transport: false
+  unsustainable_biomass_upstream_emissions: false
   biogas_upgrading: true
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
     CCGT: gas
+  industry_heat:
+    enable: false
+    min_part_load: 0.8
+    exclude_sectors:
+    - Pulp production
+    technologies:
+      "heat100-200":
+      - solid biomass
+      - gas
+      - heat pump
+      - electric boiler
+      "heat200-500":
+      - solid biomass
+      - gas
+      - hydrogen
+      heat500+:
+      - gas
+      - hydrogen
   biomass_to_liquid: true
   biomass_to_liquid_cc: false
   electrobiofuels: true
@@ -1043,6 +1104,7 @@ sector:
   biosng_cc: false
   bioH2: false
   municipal_solid_waste: false
+  waste_spatial: false
   limit_max_growth:
     enable: false
     factor: 1.3
@@ -1142,6 +1204,9 @@ industry:
   HVC_environment_sequestration_fraction: 0.0
   waste_to_energy: false
   waste_to_energy_cc: false
+  solid_biomass_for_industry_cc: true
+  gas_for_industry_cc: true
+  process_emissions_cc: true
   sector_ratios_fraction_future:
     2020: 0.0
     2025: 0.05
@@ -1164,6 +1229,7 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2023
   oil_refining_emissions: 0.013
+  temporal_electricity_industry_load: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#costs_cf
 costs:
@@ -1259,7 +1325,10 @@ solving:
     track_iterations: false
     min_iterations: 2
     max_iterations: 3
-    transmission_losses: 2
+    transmission_losses:
+      mode: secants
+      atol: 15
+      rtol: 0.5
     linearized_unit_commitment: true
     horizon: 365
     overlap: 0
@@ -1381,6 +1450,13 @@ solving:
       baralg: 4
       barhggpu: 1
       barhgreltol: 1.0e-05
+    "mosek-default":
+      MSK_IPAR_NUM_THREADS: 8
+      MSK_IPAR_OPTIMIZER: MSK_OPTIMIZER_INTPNT
+      MSK_IPAR_INTPNT_BASIS: MSK_BI_NEVER
+      MSK_DPAR_INTPNT_TOL_REL_GAP: 1.0e-05
+      MSK_DPAR_INTPNT_TOL_PFEAS: 1.0e-06
+      MSK_DPAR_INTPNT_TOL_DFEAS: 1.0e-06
     "cbc-default": {}
     "glpk-default": {}
   check_objective:
@@ -1388,7 +1464,6 @@ solving:
     expected_value:
     atol: 10000
     rtol: 0.001
-  oetc:
   mem_mb: 128000
   memory_logging_frequency: 5
   runtime: 48h
@@ -1419,6 +1494,9 @@ data:
     source: archive
     version: latest
   instrat_co2_prices:
+    source: primary
+    version: latest
+  co2_removal_data:
     source: primary
     version: latest
   co2stop:
@@ -1581,6 +1659,9 @@ data:
     source: archive
     version: latest
   bidding_zones_entsoepy:
+    source: archive
+    version: latest
+  ffe_industry_load_profiles:
     source: archive
     version: latest
 

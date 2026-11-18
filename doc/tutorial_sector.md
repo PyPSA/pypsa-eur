@@ -15,7 +15,7 @@ requires processing of a few more raw data sources.
 
 The sector-coupling code can be run as an overnight / greenfield scenario or
 with multi-horizon investment with myopic or perfect foresight. See also the
-documentation on [Foresight](foresight.md).
+documentation on [Foresight](design/foresight.md).
 
 ## Overnight Scenarios
 
@@ -125,31 +125,31 @@ plot_hydrogen_network                                   1
 plot_power_network                                      1
 plot_summary                                            1
 process_cost_data                                       1
-retrieve_aquifer_data_bgr                               1
+retrieve_aquifer_data                               1
 retrieve_attributed_ports                               1
-retrieve_co2_prices                                     1
+retrieve_instrat_co2_prices                                     1
 retrieve_corine                                         1
-retrieve_cost_data                                      1
+retrieve_costs                                      1
 retrieve_country_hdd                                    1
 retrieve_cutout                                         1
 retrieve_desnz_electricity_consumption                  1
 retrieve_dh_areas                                       1
 retrieve_eez                                            1
 retrieve_desnz_ghg_emissions                            1
-retrieve_electricity_demand_energy_atlas                1
-retrieve_electricity_demand_entsoe                      1
-retrieve_electricity_demand_neso                        1
-retrieve_electricity_demand_opsd                        1
+retrieve_jrc_energy_atlas                1
+retrieve_entsoe_electricity_demand                      1
+retrieve_neso_electricity_demand                        1
+retrieve_opsd_electricity_demand                        1
 retrieve_enspreso_biomass                               1
-retrieve_eu_nuts_2013                                   1
-retrieve_eu_nuts_2021                                   1
+retrieve_eu_nuts2013                                   1
+retrieve_eu_nuts2021                                   1
 retrieve_eurostat_balances                              1
 retrieve_eurostat_household_balances                    1
-retrieve_gas_infrastructure_data                        1
+retrieve_scigrid_gas                        1
 retrieve_gdp_per_capita                                 1
-retrieve_gem_cement_concrete_tracker                    1
+retrieve_gem_gcct                    1
 retrieve_gem_europe_gas_tracker                         1
-retrieve_gem_steel_plant_tracker                        1
+retrieve_gem_gspt                        1
 retrieve_geothermal_heat_utilisation_potentials         1
 retrieve_ghg_emissions                                  1
 retrieve_ghg_emissions_energy_community                 1
@@ -306,31 +306,31 @@ plot_hydrogen_network                                   3
 plot_power_network                                      3
 plot_summary                                            1
 process_cost_data                                       3
-retrieve_aquifer_data_bgr                               1
+retrieve_aquifer_data                               1
 retrieve_attributed_ports                               1
-retrieve_co2_prices                                     1
+retrieve_instrat_co2_prices                                     1
 retrieve_corine                                         1
-retrieve_cost_data                                      3
+retrieve_costs                                      3
 retrieve_country_hdd                                    1
 retrieve_cutout                                         1
 retrieve_desnz_electricity_consumption                  1
 retrieve_dh_areas                                       1
 retrieve_eez                                            1
 retrieve_desnz_ghg_emissions                            1
-retrieve_electricity_demand_energy_atlas                1
-retrieve_electricity_demand_entsoe                      1
-retrieve_electricity_demand_neso                        1
-retrieve_electricity_demand_opsd                        1
+retrieve_jrc_energy_atlas                1
+retrieve_entsoe_electricity_demand                      1
+retrieve_neso_electricity_demand                        1
+retrieve_opsd_electricity_demand                        1
 retrieve_enspreso_biomass                               1
-retrieve_eu_nuts_2013                                   1
-retrieve_eu_nuts_2021                                   1
+retrieve_eu_nuts2013                                   1
+retrieve_eu_nuts2021                                   1
 retrieve_eurostat_balances                              1
 retrieve_eurostat_household_balances                    1
-retrieve_gas_infrastructure_data                        1
+retrieve_scigrid_gas                        1
 retrieve_gdp_per_capita                                 1
-retrieve_gem_cement_concrete_tracker                    1
+retrieve_gem_gcct                    1
 retrieve_gem_europe_gas_tracker                         1
-retrieve_gem_steel_plant_tracker                        1
+retrieve_gem_gspt                        1
 retrieve_geothermal_heat_utilisation_potentials         1
 retrieve_ghg_emissions                                  1
 retrieve_ghg_emissions_energy_community                 1

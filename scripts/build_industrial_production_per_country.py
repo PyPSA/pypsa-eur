@@ -2,43 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This rule builds the historical industrial production per country.
+Build today's industrial production per country and subsector in kt/a.
 
-Description
--------
+Physical production per subsector for the configured `industry: reference_year` is read from the JRC-IDEES industry sheets of each EU27 country. The subsectors follow JRC-IDEES: steel (electric arc, integrated steelworks), chemicals (basic, other, pharmaceutical), non-metallic minerals (cement, ceramics, glass), pulp, paper and printing, non-ferrous metals (alumina, primary and secondary aluminium, other), and the index-based sectors food, transport equipment, machinery, textiles, wood and other industry. For countries outside the EU27, the EU27 production is scaled by the ratio of the country's to the EU27's sectoral final energy consumption, taken from the Eurostat energy balances or, for Switzerland, from the [Swiss Federal Office of Energy](https://pubdb.bfe.admin.ch/de/publication/download/11817).
 
-The industrial production is taken from the `JRC-IDEES <https://joint-research-centre.ec.europa.eu/potencia-policy-oriented-tool-energy-and-climate-change-impact-assessment/jrc-idees_en)>`.
-This dataset provides detailed information about the consumption of energy for various processes.
-If the country is not part of the EU28, the energy consumption in the industrial sectors is taken from the `Eurostat <https://ec.europa.eu/eurostat/de/data/database>` dataset. The industrial production is calculated for the year specified in the `config["industry"]["reference_year"]`.
-
-The ammonia production is provided by the rule `build_ammonia_production <https://pypsa-eur.readthedocs.io/en/latest/sector/#rule-build_ammonia_production>`. Since Switzerland is not part of the EU28 nor reported by eurostat, the energy consumption in the industrial sectors is taken from the `BFE <https://pubdb.bfe.admin.ch/de/publication/download/11817> dataset.
-After the industrial production is calculated, the basic chemicals are separated into ammonia, chlorine, methanol and HVC. The production of these chemicals is assumed to be proportional to the production of basic chemicals without ammonia.
-
-The following subcategories [kton/a] are considered:
-- Electric arc
-- Integrated steelworks
-- Other chemicals
-- Pharmaceutical products etc.
-- Cement
-- Ceramics & other NMM
-- Glass production
-- Pulp production
-- Paper production
-- Printing and media reproduction
-- Food, beverages and tobacco
-- Alumina production
-- Aluminium - primary production
-- Aluminium - secondary production
-- Other non-ferrous metals
-- Transport equipment
-- Machinery equipment
-- Textiles and leather
-- Wood and wood products
-- Other industrial sectors
-- Ammonia
-- HVC
-- Chlorine
-- Methanol
+Basic chemicals are then split: the ammonia production from [build_ammonia_production][] is subtracted, and the remainder is distributed to high-value chemicals, chlorine and methanol in proportion to today's European totals given in the `industry` configuration.
 """
 
 import logging
@@ -164,19 +132,17 @@ ch_mapping = {
 }
 
 
-def find_physical_output(df):
+def find_physical_output(df: pd.DataFrame) -> slice:
     start = np.where(df.index.str.contains("Physical output", na=False))[0][0]
     empty_row = np.where(df.index.isnull())[0]
     end = empty_row[np.argmax(empty_row > start)]
     return slice(start, end)
 
 
-def get_energy_ratio(country, eurostat, jrc_dir, year, snakemake):
+def get_energy_ratio(country, eurostat, jrc_dir, year, ch_industrial_production):
     if country == "CH":
         # data ranges between 2014-2023
-        e_country = pd.read_csv(
-            snakemake.input.ch_industrial_production, index_col=0
-        ).dropna()
+        e_country = pd.read_csv(ch_industrial_production, index_col=0).dropna()
         e_country = e_country.rename(index=ch_mapping).groupby(level=0).sum()
         e_country = e_country[str(year)]
         e_country *= tj_to_ktoe
@@ -214,7 +180,9 @@ def get_energy_ratio(country, eurostat, jrc_dir, year, snakemake):
     return pd.Series({k: e_ratio[v] for k, v in sub2sect.items()})
 
 
-def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake):
+def industry_production_per_country(
+    country, year, eurostat, jrc_dir, ch_industrial_production
+):
     def get_sector_data(sector, country):
         jrc_country = jrc_names.get(country, country)
         root = Path(jrc_dir, jrc_country)
@@ -246,7 +214,7 @@ def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake)
             eurostat,
             jrc_dir,
             year,
-            snakemake,
+            ch_industrial_production,
         )
 
     demand.name = country
@@ -254,24 +222,29 @@ def industry_production_per_country(country, year, eurostat, jrc_dir, snakemake)
     return demand
 
 
-def industry_production(countries, year, eurostat, jrc_dir):
-    nprocesses = snakemake.threads
-    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
-
+def industry_production(
+    countries: list[str],
+    year: int,
+    eurostat: pd.DataFrame,
+    jrc_dir: str,
+    ch_industrial_production: str,
+    nprocesses: int,
+    disable_progress: bool,
+) -> pd.DataFrame:
     func = partial(
         industry_production_per_country,
         year=year,
         eurostat=eurostat,
         jrc_dir=jrc_dir,
-        snakemake=snakemake,
+        ch_industrial_production=ch_industrial_production,
     )
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" country",
-        total=len(countries),
-        desc="Build industry production",
-        disable=disable_progress,
-    )
+    tqdm_kwargs = {
+        "ascii": False,
+        "unit": " country",
+        "total": len(countries),
+        "desc": "Build industry production",
+        "disable": disable_progress,
+    }
     with mp.Pool(processes=nprocesses) as pool:
         demand_l = list(tqdm(pool.imap(func, countries), **tqdm_kwargs))
 
@@ -282,12 +255,14 @@ def industry_production(countries, year, eurostat, jrc_dir):
     return demand
 
 
-def separate_basic_chemicals(demand, year):
+def separate_basic_chemicals(
+    demand: pd.DataFrame, year: int, ammonia_production: str, params: dict
+) -> None:
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """
     # ammonia data from 2018-2022
-    ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
+    ammonia = pd.read_csv(ammonia_production, index_col=0)
 
     there = ammonia.index.intersection(demand.index)
     missing = demand.index.symmetric_difference(there)
@@ -340,9 +315,17 @@ if __name__ == "__main__":
 
     eurostat = pd.read_csv(snakemake.input.eurostat)
 
-    demand = industry_production(countries, year, eurostat, jrc_dir)
+    demand = industry_production(
+        countries,
+        year,
+        eurostat,
+        jrc_dir,
+        snakemake.input.ch_industrial_production,
+        snakemake.threads,
+        snakemake.params.disable_progressbar,
+    )
 
-    separate_basic_chemicals(demand, year)
+    separate_basic_chemicals(demand, year, snakemake.input.ammonia_production, params)
 
     demand.fillna(0.0, inplace=True)
 

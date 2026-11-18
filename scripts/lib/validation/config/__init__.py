@@ -14,6 +14,8 @@ to get IDE support without additional configuration.
 import copy
 import pathlib
 import re
+import warnings
+from functools import reduce
 
 from pydantic import ValidationError
 from ruamel.yaml import YAML
@@ -106,6 +108,38 @@ def _config_path(config: dict, loc: tuple) -> str:
             break
         path.append(str(key))
     return ".".join(path) or "<root>"
+
+
+#: Deprecated config keys and the keys that take over their value. Remove an
+#: entry one release after adding it.
+DEPRECATED_KEYS: dict[str, list[str]] = {
+    "sector.tes": ["sector.ttes", "sector.district_heating.ptes.enable"],
+}
+
+
+def migrate_deprecated_keys(config: dict) -> None:
+    """
+    Move values of deprecated keys in place to the keys that replace them.
+
+    Apply it to each raw config and scenario override, since scripts read the
+    raw config and not the validated model.
+
+    Parameters
+    ----------
+    config : dict
+        Config or scenario override.
+    """
+    for old, new in DEPRECATED_KEYS.items():
+        *parents, key = old.split(".")
+        section = reduce(lambda d, k: d.get(k, {}), parents, config)
+        if key not in section:
+            continue
+        value = section.pop(key)
+        msg = f"`{old}` is deprecated and will be removed in the next release. Its value is used for `{'`, `'.join(new)}` instead."
+        warnings.warn(msg, FutureWarning)
+        for path in new:
+            *parents, key = path.split(".")
+            reduce(lambda d, k: d.setdefault(k, {}), parents, config)[key] = value
 
 
 def normalize_config(config: dict, validated: ConfigSchema) -> None:
@@ -351,7 +385,9 @@ def generate_config_schema(path: str = "config/schema.{configname}.json") -> dic
 __all__ = [
     "ConfigSchema",
     "SPLIT_CONFIG_FILES",
+    "DEPRECATED_KEYS",
     "validate_config",
+    "migrate_deprecated_keys",
     "find_invalid_entries",
     "validate_scenarios",
     "normalize_config",
