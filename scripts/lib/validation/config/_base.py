@@ -75,7 +75,7 @@ class ConfigUpdater(ABC):
 
         You can use `{field_name}` as a formatting placeholder in the URL, which will be replaced with the actual field name for each key, e.g.:
 
-        `https://pypsa-eur.readthedocs.io/en/latest/configuration.html#{field_name}`
+        `https://pypsa-eur.readthedocs.io/en/latest/configuration/#{field_name}_cf`
         """
 
     @abstractmethod

@@ -1,0 +1,13 @@
+/*
+ * SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+:root > * {
+  --md-primary-fg-color:        #4b73d7;
+  --md-primary-fg-color--light: #749bfb;
+  --md-primary-fg-color--dark:  #3d5696;
+  --md-primary-bg-color:           white;
+  --md-accent-fg-color: rgb(75, 115, 215, 0.5);
+  --md-typeset-a-color:    #4b73d7;
+}

@@ -5,7 +5,7 @@
 """
 Renewable energy configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#renewable_cf
 """
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -270,11 +270,11 @@ class _HydroConfig(BaseModel):
     )
     PHS_max_hours: float = Field(
         6,
-        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
     )
     hydro_max_hours: str | float = Field(
         "energy_capacity_totals_by_country",
-        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
     )
     flatten_dispatch: bool = Field(
         False,

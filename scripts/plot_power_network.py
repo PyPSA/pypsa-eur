@@ -121,7 +121,8 @@ def plot_map(
         costs.drop(to_drop, level=0, inplace=True, axis=0, errors="ignore")
 
     # make sure they are removed from index
-    costs.index = pd.MultiIndex.from_tuples(costs.index.values)
+    if len(costs) > 0:
+        costs.index = pd.MultiIndex.from_tuples(costs.index.values)
 
     threshold = 100e6  # 100 mEUR/a
     carriers = costs.groupby(level=1).sum()
@@ -241,9 +242,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_power_network",
-            opts="",
-            clusters="37",
-            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)

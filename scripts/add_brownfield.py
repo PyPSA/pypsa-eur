@@ -13,13 +13,9 @@ import pypsa
 import xarray as xr
 
 from scripts._helpers import (
-    configure_logging,
     get_snapshots,
-    sanitize_custom_columns,
-    set_scenario_config,
-    update_config_from_wildcards,
 )
-from scripts.add_electricity import flatten, sanitize_carriers
+from scripts.add_electricity import flatten
 from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
@@ -235,7 +231,7 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
         pd.Series(dr, index=dr).where(lambda x: x.isin(n.snapshots), pd.NA).ffill()
     )
 
-    for carrier in params["carriers"]:
+    for carrier in params["renewable_carriers"]:
         if carrier == "hydro":
             continue
 
@@ -298,15 +294,17 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
     )
 
     # Change efficiency2 for heat pumps that use an explicitly modelled heat source
-    previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
-        n_p.links_t["efficiency2"].columns
-    )
-    current_iteration_columns = corresponding_idx_this_iteration.intersection(
-        n.links_t["efficiency2"].columns
-    )
-    n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
-        n.links_t["efficiency2"].loc[:, current_iteration_columns].values
-    )
+    # Only update if efficiency2 exists (sector-coupled networks only)
+    if "efficiency2" in n_p.links_t and "efficiency2" in n.links_t:
+        previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
+            n_p.links_t["efficiency2"].columns
+        )
+        current_iteration_columns = corresponding_idx_this_iteration.intersection(
+            n.links_t["efficiency2"].columns
+        )
+        n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
+            n.links_t["efficiency2"].loc[:, current_iteration_columns].values
+        )
 
 
 def update_dynamic_ptes_capacity(
@@ -329,6 +327,13 @@ def update_dynamic_ptes_capacity(
     None
         Updates capacity in-place.
     """
+    # Check if e_max_pu exists in current network
+    if n.stores_t.e_max_pu.empty:
+        logger.debug(
+            "No dynamic PTES e_max_pu profiles in current network, skipping update"
+        )
+        return
+
     # pit storages in previous iteration
     dynamic_ptes_idx_previous_iteration = n_p.stores.index[
         n_p.stores.index.str.contains("water pits")
@@ -343,53 +348,90 @@ def update_dynamic_ptes_capacity(
     ].values
 
 
-if __name__ == "__main__":
-    if "snakemake" not in globals():
-        from scripts._helpers import mock_snakemake
+def adjust_renewable_capacity_limits(
+    n: pypsa.Network, horizon: str, renewable_carriers: list[str]
+) -> None:
+    """
+    Adjust renewable capacity limits by subtracting existing capacities from previous horizons.
 
-        snakemake = mock_snakemake(
-            "add_brownfield",
-            clusters="39",
-            opts="",
-            sector_opts="",
-            planning_horizons=2050,
+    For each renewable carrier, this function sums the capacity of non-extendable
+    generators (representing existing capacities from previous planning horizons)
+    and subtracts that value from the p_nom_max of extendable generators in the
+    current horizon. This ensures that the technical potential is properly adjusted
+    for brownfield scenarios.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network containing renewable generators
+    horizon : str
+        The current planning horizon year as string
+    renewable_carriers : list[str]
+        Renewable carriers of the composed network (electricity-layer carriers
+        plus sector-layer carriers such as rooftop PV)
+
+    Notes
+    -----
+    Modifies n.generators["p_nom_max"] in-place.
+    Issues a warning if existing capacities exceed technical potential.
+    Clips p_nom_max to non-negative values.
+    """
+    for carrier in renewable_carriers:
+        ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
+        grouper = n.generators.loc[ext_i].index.str.replace(
+            f" {carrier}.*$", "", regex=True
         )
+        existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
+        existing.index += f" {carrier}-{horizon}"
+        n.generators.loc[existing.index, "p_nom_max"] -= existing
 
-    configure_logging(snakemake)  # pylint: disable=E0606
-    set_scenario_config(snakemake)
+    # Check if existing capacities are larger than technical potential
+    existing_large = n.generators[
+        n.generators["p_nom_min"] > n.generators["p_nom_max"]
+    ].index
+    if len(existing_large):
+        logger.warning(
+            f"Existing capacities larger than technical potential for {existing_large}, "
+            "adjust technical potential to existing capacities"
+        )
+        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
+            existing_large, "p_nom_min"
+        ]
 
-    update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
-    logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
 
-    year = int(snakemake.wildcards.planning_horizons)
+def main(
+    n: pypsa.Network,
+    n_previous: pypsa.Network,
+    inputs,
+    params,
+    current_horizon: int,
+    renewable_carriers: list[str],
+) -> None:
+    horizons = params.horizons
 
-    n = pypsa.Network(snakemake.input.network)
+    adjust_renewable_profiles(n, inputs, params, current_horizon)
 
-    adjust_renewable_profiles(n, snakemake.input, snakemake.params, year)
+    add_build_year_to_new_assets(n, current_horizon)
 
-    add_build_year_to_new_assets(n, year)
+    update_heat_pump_efficiency(n, n_previous, current_horizon)
 
-    n_p = pypsa.Network(snakemake.input.network_p)
+    if params.tes and params.dynamic_ptes_capacity:
+        update_dynamic_ptes_capacity(n, n_previous, current_horizon)
 
-    update_heat_pump_efficiency(n, n_p, year)
-
-    if snakemake.params.tes and snakemake.params.dynamic_ptes_capacity:
-        update_dynamic_ptes_capacity(n, n_p, year)
+    logger.info(
+        f"Applying brownfield constraints from horizon {horizons[horizons.index(current_horizon) - 1]}"
+    )
 
     add_brownfield(
         n,
-        n_p,
-        year,
-        h2_retrofit=snakemake.params.H2_retrofit,
-        h2_retrofit_capacity_per_ch4=snakemake.params.H2_retrofit_capacity_per_CH4,
-        capacity_threshold=snakemake.params.threshold_capacity,
+        n_previous,
+        current_horizon,
+        h2_retrofit=params["h2_retrofit"],
+        h2_retrofit_capacity_per_ch4=params["h2_retrofit_capacity_per_ch4"],
+        capacity_threshold=params["capacity_threshold"],
     )
-
     disable_grid_expansion_if_limit_hit(n)
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-
-    sanitize_custom_columns(n)
-    sanitize_carriers(n, snakemake.config)
-    n.export_to_netcdf(snakemake.output[0])
+    adjust_renewable_capacity_limits(n, str(current_horizon), renewable_carriers)

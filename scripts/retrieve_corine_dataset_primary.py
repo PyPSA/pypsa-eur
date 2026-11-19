@@ -67,7 +67,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("retrieve_corine_dataset_primary")
+        snakemake = mock_snakemake("retrieve_corine")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

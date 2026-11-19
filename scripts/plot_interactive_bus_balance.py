@@ -16,21 +16,21 @@ The scripts does not use `n.statistics.energy_balance` but calculates the balanc
 Relevant Settings
 -----------------
 
-.. code:: yaml
-
-    plotting:
-        tech_colors: # Color mapping for different technologies/carriers
-        balance_timeseries:
-            bus_name_pattern: # Pattern to filter buses (e.g., 'DE*' for German buses)
+```yaml
+plotting:
+    tech_colors: # Color mapping for different technologies/carriers
+    balance_timeseries:
+        bus_name_pattern: # Pattern to filter buses (e.g., 'DE*' for German buses)
+```
 
 Inputs
 ------
-- `resources/<run_name>/networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc`: Solved PyPSA network
+- `results/{run}/networks/solved_{horizon}.nc`: Solved PyPSA network
 - `config/plotting/rc.mplstyle`: Matplotlib style configuration
 
 Outputs
 -------
-- `results/<run_name>/plots/balance_timeseries/`: Directory containing HTML files with interactive plots
+- `results/{run}/plots/balance_timeseries/`: Directory containing HTML files with interactive plots
   - `ts-balance-{bus_name}-native-{time}.html`: Interactive time series plot for each bus
 
 Notes
@@ -493,11 +493,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_balance_timeseries",
-            simpl="",
-            clusters="10",
-            opts="",
-            sector_opts="",
-            planning_horizons=2050,
+            horizon=2050,
         )
 
     configure_logging(snakemake)
