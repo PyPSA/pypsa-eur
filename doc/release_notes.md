@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* **Breaking:** Historical emissions now come from the latest national inventories (1990-2024): EEA for EU, EEA and Energy Community countries (`ghg_emissions`, new `ghg_emissions_energy_community`) and DESNZ for Great Britain (new `desnz_ghg_emissions`). [build_co2_totals][] writes emissions per country, year and sector, which [compose_network][] and [plot_summary][] read. The baseline for relative targets still excludes international aviation and shipping; the new option `co2_budget: international_bunkers` includes them. `co2_budget: emissions_scope` accepts only `CO2` and `All greenhouse gases - (CO2 equivalent)`. `energy: base_emissions_year` is removed ([#2337](https://github.com/PyPSA/pypsa-eur/pull/2337)).
+
 * Fix: Gas pipelines ending in regions without an onshore region, e.g. offshore junctions at high resolution, now get gas and H2 buses instead of leaving the network inconsistent ([#2429](https://github.com/PyPSA/pypsa-eur/pull/2429)).
 * Fix: Offshore wind profiles no longer fail for clustered buses without an onshore region; the nearest onshore regions then serve as the shoreline ([#2425](https://github.com/PyPSA/pypsa-eur/pull/2425)).
 * Fix: Hydro reservoir storage (`renewable: hydro: hydro_max_hours`) no longer depends on the first unit of each country, and the default now matches the country totals. This changes default results ([#2428](https://github.com/PyPSA/pypsa-eur/pull/2428)).
