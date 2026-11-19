@@ -1573,13 +1573,13 @@ data:
     source: archive
     version: latest
   ghg_emissions:
-    source: primary
+    source: archive
     version: latest
   ghg_emissions_energy_community:
-    source: primary
+    source: archive
     version: latest
   desnz_ghg_emissions:
-    source: primary
+    source: archive
     version: latest
   gebco:
     source: archive
