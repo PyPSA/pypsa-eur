@@ -51,7 +51,7 @@ def _check_file_in_sync(existing_path: Path, generate_func, file_type: str):
     """Check if a file is in sync with the generated content."""
     assert existing_path.exists(), f"{existing_path} does not exist"
 
-    existing_content = existing_path.read_text()
+    existing_content = existing_path.read_text(encoding="utf-8")
 
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=f".{file_type}", delete=False
@@ -60,7 +60,7 @@ def _check_file_in_sync(existing_path: Path, generate_func, file_type: str):
 
     try:
         generate_func(temp_path)
-        generated_content = Path(temp_path).read_text()
+        generated_content = Path(temp_path).read_text(encoding="utf-8")
     finally:
         Path(temp_path).unlink(missing_ok=True)
 
@@ -223,12 +223,12 @@ def test_migrate_deprecated_keys_ignores_current_keys():
 @pytest.mark.parametrize("old", DEPRECATED_KEYS)
 def test_deprecated_keys_not_in_default_config(old, config_file):
     *parents, key = old.split(".")
-    defaults = yaml.safe_load(config_file.read_text())
+    defaults = yaml.safe_load(config_file.read_text(encoding="utf-8"))
     assert key not in reduce(dict.get, parents, defaults)
 
 
 def _load_config(path: str) -> dict:
-    return yaml.safe_load(Path(path).read_text()) or {}
+    return yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
 
 
 class TestFindInvalidEntries:
