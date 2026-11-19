@@ -5,7 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc`.
+* Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).
 * Fix: `pixi run generate-config` now runs on Windows: read and write files as UTF-8 and write paths with `/`.
 * Fix: `build_gas_network` no longer drops the capacity and length of gas pipelines that need no correction. This changes default results ([#2433](https://github.com/PyPSA/pypsa-eur/pull/2433)).
 * Fix: Gas pipelines ending in regions without an onshore region, e.g. offshore junctions at high resolution, now get gas and H2 buses instead of leaving the network inconsistent ([#2429](https://github.com/PyPSA/pypsa-eur/pull/2429)).
