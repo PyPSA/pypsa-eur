@@ -422,8 +422,7 @@ unconstrained to zero-emission.
 To restore the *old behaviour*, set: `co2_budget: {upper: null, lower: null}`. To migrate your previous `<x> t` values, divide your old values by `1e9`.
 
 **Relative budgets are always measured against 1990.**
-`energy.base_emissions_year` no longer influences the CO₂ baseline; it still controls
-`build_co2_totals`. For electricity-only runs the baseline still covers every sector
+`energy.base_emissions_year` is removed. For electricity-only runs the baseline still covers every sector
 that is flagged in `sector:`, which makes a relative budget almost non-binding.
 *Old behaviour:* nothing to do for sector runs with a 1990 baseline. Otherwise
 rescale `upper` by hand or use `relative: false`. For electricity-only runs, switch

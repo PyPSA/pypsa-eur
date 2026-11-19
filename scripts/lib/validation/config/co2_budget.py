@@ -22,6 +22,10 @@ class Co2BudgetConfig(ConfigModel):
         "CO2",
         description="Emissions scope of the national inventories used for the 1990 baseline: CO2 only or all greenhouse gases in CO2 equivalent.",
     )
+    international_bunkers: bool = Field(
+        False,
+        description="If true, the 1990 baseline includes the emissions of international aviation and shipping, which national inventory totals report only as memo items. The model covers their fuel demand and emissions either way.",
+    )
     relative: bool = Field(
         True,
         description="If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",

@@ -90,6 +90,7 @@ enable:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#co2_budget_cf
 co2_budget:
   emissions_scope: CO2
+  international_bunkers: false
   relative: true
   upper:
     2020: 0.72

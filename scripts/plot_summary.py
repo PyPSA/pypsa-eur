@@ -346,17 +346,19 @@ def plot_balances() -> None:
 
 
 def historical_emissions(
-    co2_totals: str, countries: list[str], options: dict
+    co2_totals: str, countries: list[str], options: dict, international_bunkers: bool
 ) -> pd.Series:
     """
     Read historical emissions in Gt of the modelled sectors since 1990.
     """
     co2 = pd.read_csv(co2_totals, index_col=[0, 1]).loc[countries]
-    sectors = determine_emission_sectors(options)
+    sectors = determine_emission_sectors(options, international_bunkers)
     return co2[sectors].sum(axis=1).groupby("year").sum().loc[1990:] / 1e3
 
 
-def plot_carbon_budget_distribution(co2_totals: str, options: dict) -> None:
+def plot_carbon_budget_distribution(
+    co2_totals: str, options: dict, international_bunkers: bool
+) -> None:
     """
     Plot historical carbon emissions in the EU and decarbonization path.
     """
@@ -371,7 +373,9 @@ def plot_carbon_budget_distribution(co2_totals: str, options: dict) -> None:
 
     # historic emissions
     countries = snakemake.params.countries
-    emissions = historical_emissions(co2_totals, countries, options)
+    emissions = historical_emissions(
+        co2_totals, countries, options, international_bunkers
+    )
     e_1990 = emissions[1990]
 
     if snakemake.params.foresight == "myopic":
@@ -488,4 +492,8 @@ if __name__ == "__main__":
 
     if snakemake.params["foresight"] == "perfect":
         options = snakemake.params.sector
-        plot_carbon_budget_distribution(snakemake.input.co2_totals, options)
+        plot_carbon_budget_distribution(
+            snakemake.input.co2_totals,
+            options,
+            snakemake.params.international_bunkers,
+        )

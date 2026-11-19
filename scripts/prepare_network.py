@@ -216,6 +216,7 @@ def apply_co2_budget_constraints(
                 countries=params.countries,
                 co2_totals=inputs["co2_totals"],
                 options=params.sector,
+                international_bunkers=co2_budget["international_bunkers"],
                 year=1990,
             )
 

@@ -238,6 +238,7 @@ rule plot_summary:
     params:
         countries=config_provider("countries"),
         planning_horizons=config_provider("planning_horizons"),
+        international_bunkers=config_provider("co2_budget", "international_bunkers"),
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),
         sector=config_provider("sector"),

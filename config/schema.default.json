@@ -696,6 +696,11 @@
           ],
           "type": "string"
         },
+        "international_bunkers": {
+          "default": false,
+          "description": "If true, the 1990 baseline includes the emissions of international aviation and shipping, which national inventory totals report only as memo items. The model covers their fuel demand and emissions either way.",
+          "type": "boolean"
+        },
         "relative": {
           "default": true,
           "description": "If true, budget values are fractions of 1990 baseline emissions. If false, values are absolute (Gt CO2/year).",
@@ -10719,6 +10724,11 @@
             "All greenhouse gases - (CO2 equivalent)"
           ],
           "type": "string"
+        },
+        "international_bunkers": {
+          "default": false,
+          "description": "If true, the 1990 baseline includes the emissions of international aviation and shipping, which national inventory totals report only as memo items. The model covers their fuel demand and emissions either way.",
+          "type": "boolean"
         },
         "relative": {
           "default": true,
