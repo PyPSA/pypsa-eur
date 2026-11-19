@@ -5,8 +5,10 @@
 """
 Renewable energy configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#renewable_cf
 """
+
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -279,11 +281,13 @@ class _HydroConfig(BaseModel):
     )
     PHS_max_hours: float = Field(
         6,
-        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom`. Cf. `PyPSA documentation <https://docs.pypsa.org/latest/user-guide/components/storage-units/>`_.",
     )
-    hydro_max_hours: str | float = Field(
+    hydro_max_hours: Literal[
+        "energy_capacity_totals_by_country", "estimate_by_large_installations"
+    ] = Field(
         "energy_capacity_totals_by_country",
-        description="Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity `p_nom` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.",
+        description="Method to set the storage capacity of hydro reservoirs from the country totals `E_store` in `data/hydro_capacities.csv`, at least 0.2 TWh. `energy_capacity_totals_by_country` spreads the storage missing from the power plant data over all reservoir units of a country by `p_nom`. `estimate_by_large_installations` gives all reservoir units of a country `E_store / p_nom_discharge` hours. In countries without totals, units keep their listed storage or get 6 hours.",
     )
     flatten_dispatch: bool = Field(
         False,

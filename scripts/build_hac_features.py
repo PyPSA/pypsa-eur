@@ -2,20 +2,25 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Aggregate all rastered cutout data to base regions Voronoi cells.
+Aggregates weather cutout time series to the regions of the simplified network as features for hierarchical agglomerative clustering (HAC).
+
+Selected cutout variables, such as wind speed and solar influx, are aggregated
+over each onshore region with the cutout's indicator matrix. The resulting
+per-region time series are the feature vectors compared when the network is
+clustered with the HAC algorithm.
 """
 
 import logging
 
 import geopandas as gpd
 from atlite.aggregate import aggregate_matrix
-from dask.distributed import Client
 
 from scripts._helpers import (
     configure_logging,
     get_snapshots,
     load_cutout,
     set_scenario_config,
+    setup_dask,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,10 +36,7 @@ if __name__ == "__main__":
     params = snakemake.params
     nprocesses = int(snakemake.threads)
 
-    if nprocesses > 1:
-        client = Client(n_workers=nprocesses, threads_per_worker=1)
-    else:
-        client = None
+    dask_kwargs = setup_dask(nprocesses)
 
     time = get_snapshots(params.snapshots, params.drop_leap_day)
 
@@ -47,6 +49,6 @@ if __name__ == "__main__":
         aggregate_matrix, matrix=I, index=regions.index
     )
 
-    ds = ds.load(scheduler=client)
+    ds = ds.load(**dask_kwargs)
 
     ds.to_netcdf(snakemake.output[0])

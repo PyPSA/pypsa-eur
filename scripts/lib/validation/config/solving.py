@@ -5,12 +5,12 @@
 """
 Solving configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#solving_cf
 """
 
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, PositiveFloat, field_validator, model_validator
 
 from scripts.lib.validation.config._base import ConfigModel
 
@@ -51,6 +51,68 @@ class _ModelKwargsConfig(BaseModel):
     )
 
 
+class _LoadSheddingConfig(ConfigModel):
+    """Configuration for `solving.options.load_shedding` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Enable load shedding by adding high-cost generators to avoid infeasibilities. Requires either all_carriers: true or at least one entry in carriers.",
+    )
+    default_cost: PositiveFloat = Field(
+        100000,
+        description="The default cost for load-shedding in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+    )
+    all_carriers: bool = Field(
+        True,
+        description="Switch to apply load shedding to all carriers. Otherwise, load shedding will be applied to listed carriers only.",
+    )
+    carriers: dict[str, PositiveFloat] = Field(
+        {},
+        description="Dictionary of carriers and their specific load shedding cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load shedding is enabled for all carriers, the default cost is assumed for non-listed carriers.",
+    )
+
+    @model_validator(mode="after")
+    def check_enabled_has_targets(self):
+        if self.enable and not self.carriers and not self.all_carriers:
+            raise ValueError(
+                "Load shedding is enabled but no carriers are specified and "
+                "'all_carriers' is False. Either specify carriers or "
+                "set 'all_carriers' to True."
+            )
+        return self
+
+
+class _LoadSinksConfig(ConfigModel):
+    """Configuration for `solving.options.load_sinks` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Add load sinks by adding negative-cost, energy consuming generators to avoid infeasibilities by absorbing excess energy. Requires either all_carriers: true or at least one entry in carriers.",
+    )
+    default_cost: PositiveFloat = Field(
+        100000,
+        description="The default cost for load sinks in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). Must be positive.",
+    )
+    all_carriers: bool = Field(
+        False,
+        description="Switch to add load sinks for all carriers. Otherwise, load sinks will be added for listed carriers only.",
+    )
+    carriers: dict[str, PositiveFloat] = Field(
+        {},
+        description="Dictionary of carriers and their specific load sink cost in the unit of the bus carrier (e.g. EUR/MWh for electricity, EUR/t_CO2 for CO2). If load sinks are added for all carriers, the default cost is assumed for non-listed carriers.",
+    )
+
+    @model_validator(mode="after")
+    def check_enabled_has_targets(self):
+        if self.enable and not self.carriers and not self.all_carriers:
+            raise ValueError(
+                "Load sinks are enabled but no carriers are specified and "
+                "'all_carriers' is False. Either specify carriers or "
+                "set 'all_carriers' to True."
+            )
+        return self
+
+
 class _SolvingOptionsConfig(BaseModel):
     """Configuration for `solving.options` settings."""
 
@@ -58,9 +120,13 @@ class _SolvingOptionsConfig(BaseModel):
         0.01,
         description="To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
     )
-    load_shedding: bool | float = Field(
-        False,
-        description="Add generators with very high marginal cost to simulate load shedding and avoid problem infeasibilities. If load shedding is a float, it denotes the marginal cost in EUR/kWh.",
+    load_shedding: _LoadSheddingConfig = Field(
+        default_factory=_LoadSheddingConfig,
+        description="Load shedding settings.",
+    )
+    load_sinks: _LoadSinksConfig = Field(
+        default_factory=_LoadSinksConfig,
+        description="Load sinks settings.",
     )
     curtailment_mode: bool = Field(
         False,
@@ -76,7 +142,7 @@ class _SolvingOptionsConfig(BaseModel):
     )
     rolling_horizon: bool = Field(
         False,
-        description="Switch for rule `solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
+        description="Switch for rule `solve_network` whether to optimize the network in a rolling horizon manner instead of capacity expansion, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks.",
     )
     seed: int = Field(
         123, description="Random seed for increased deterministic behaviour."
@@ -101,9 +167,9 @@ class _SolvingOptionsConfig(BaseModel):
         3,
         description="Maximum number of solving iterations in between which resistance and reactence (`x/r`) are updated for branches according to `s_nom_opt` of the previous run.",
     )
-    transmission_losses: int = Field(
-        2,
-        description="Add piecewise linear approximation of transmission losses based on n tangents. Defaults to 0, which means losses are ignored.",
+    transmission_losses: bool | int | dict[str, Any] = Field(
+        {"mode": "secants", "atol": 15, "rtol": 0.5},
+        description='Piecewise linear approximation of losses in AC lines. `false` disables losses, `true` uses the PyPSA default secant-based approximation (`atol=1` MW, `rtol=0.1`). A dict sets the approximation, e.g. `{"mode": "tangents", "segments": 2}` for the former tangent-based method. An integer is deprecated and sets the number of tangents. The default `atol` and `rtol` keep the number of extra constraints close to that of the former tangent-based method.',
     )
     linearized_unit_commitment: bool = Field(
         True,
@@ -137,6 +203,23 @@ class _SolvingOptionsConfig(BaseModel):
         if self.rolling_horizon and self.store_model:
             raise ValueError("store_model is not supported with rolling_horizon")
         return self
+
+
+class _OperationsConfig(BaseModel):
+    """Configuration for `solving.operations` settings (rule `solve_operations_network`)."""
+
+    rolling_horizon: bool = Field(
+        False,
+        description="Whether rule `solve_operations_network` re-dispatches the fixed-capacity network in a rolling horizon manner, splitting the snapshots into slices of size `horizon` which are solved consecutively. Independent from `solving.options.rolling_horizon`, which controls rule `solve_network`.",
+    )
+    horizon: int = Field(
+        365,
+        description="Number of snapshots per slice in rolling horizon operational dispatch.",
+    )
+    overlap: int = Field(
+        0,
+        description="Number of overlapping snapshots between consecutive slices in rolling horizon operational dispatch.",
+    )
 
 
 class _AggPNomLimitsConfig(BaseModel):
@@ -197,9 +280,12 @@ class _CheckObjectiveConfig(BaseModel):
     """Configuration for `solving.check_objective` settings."""
 
     enable: bool = Field(False, description="Enable objective value checking.")
-    expected_value: float | None = Field(None, description="Expected objective value.")
-    atol: float = Field(1_000_000, description="Absolute tolerance.")
-    rtol: float = Field(0.01, description="Relative tolerance.")
+    expected_value: float | dict[int, float] | None = Field(
+        None,
+        description="Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight.",
+    )
+    atol: float = Field(10_000, description="Absolute tolerance.")
+    rtol: float = Field(0.001, description="Relative tolerance.")
 
     @field_validator("expected_value", mode="before")
     @classmethod
@@ -209,40 +295,15 @@ class _CheckObjectiveConfig(BaseModel):
         return v
 
 
-class _OETCConfig(BaseModel):
-    """Configuration for `solving.oetc` settings (Open Energy Transition Computing cluster support)."""
-
-    name: str = Field(
-        "pypsa-eur",
-        description="Name identifier for the OETC job.",
-    )
-    authentication_server_url: str = Field(
-        "",
-        description="URL of the OETC authentication server for job submission.",
-    )
-    orchestrator_server_url: str = Field(
-        "",
-        description="URL of the OETC orchestrator server for job management.",
-    )
-    cpu_cores: int = Field(
-        8,
-        description="Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)",
-    )
-    disk_space_gb: int = Field(
-        50,
-        description="Amount of disk space in gigabytes to request for the OETC job.",
-    )
-    delete_worker_on_error: bool = Field(
-        True,
-        description="Whether to delete the worker instance when an error occurs during job execution.",
-    )
-
-
 class SolvingConfig(BaseModel):
     """Configuration for `solving` settings."""
 
     options: _SolvingOptionsConfig = Field(
         default_factory=_SolvingOptionsConfig, description="Solving options."
+    )
+    operations: _OperationsConfig = Field(
+        default_factory=_OperationsConfig,
+        description="Operational dispatch options for rule `solve_operations_network`.",
     )
     agg_p_nom_limits: _AggPNomLimitsConfig = Field(
         default_factory=_AggPNomLimitsConfig,
@@ -275,6 +336,14 @@ class SolvingConfig(BaseModel):
                 "dual_feasibility_tolerance": 1e-5,
                 "random_seed": 123,
             },
+            "highs-hipo": {
+                "solver": "hipo",
+                "parallel": "on",
+                "primal_feasibility_tolerance": 1e-5,
+                "dual_feasibility_tolerance": 1e-5,
+                "random_seed": 123,
+                "run_crossover": "off",
+            },
             "gurobi-default": {
                 "threads": 32,
                 "method": 2,
@@ -284,6 +353,7 @@ class SolvingConfig(BaseModel):
                 "AggFill": 0,
                 "PreDual": 0,
                 "GURO_PAR_BARDENSETHRESH": 200,
+                "IISMethod": 1,
             },
             "gurobi-numeric-focus": {
                 "NumericFocus": 3,
@@ -341,6 +411,15 @@ class SolvingConfig(BaseModel):
                 "barhggpu": 1,
                 "barhgreltol": 1e-5,
             },
+            # Mirrors "gurobi-default" method/crossover/gap: barrier without crossover, relaxed gap.
+            "mosek-default": {
+                "MSK_IPAR_NUM_THREADS": 8,
+                "MSK_IPAR_OPTIMIZER": "MSK_OPTIMIZER_INTPNT",
+                "MSK_IPAR_INTPNT_BASIS": "MSK_BI_NEVER",
+                "MSK_DPAR_INTPNT_TOL_REL_GAP": 1e-5,
+                "MSK_DPAR_INTPNT_TOL_PFEAS": 1e-6,
+                "MSK_DPAR_INTPNT_TOL_DFEAS": 1e-6,
+            },
             "cbc-default": {},
             "glpk-default": {},
         },
@@ -363,13 +442,21 @@ class SolvingConfig(BaseModel):
                     )
         return v
 
+    @model_validator(mode="before")
+    @classmethod
+    def check_no_oetc_section(cls, data: Any) -> Any:
+        """Reject the removed `oetc` section instead of silently solving locally."""
+        # A null `oetc:` was the former default and never enabled remote solving.
+        if isinstance(data, dict) and data.get("oetc") is not None:
+            raise ValueError(
+                "The 'solving: oetc:' section is no longer supported, as the OETC "
+                "service has been discontinued. Remove it from your config."
+            )
+        return data
+
     check_objective: _CheckObjectiveConfig = Field(
         default_factory=_CheckObjectiveConfig,
         description="Objective checking configuration.",
-    )
-    oetc: _OETCConfig | None = Field(
-        None,
-        description="Configuration options for Open Energy Transition Computing (OETC) cluster support.",
     )
     mem_mb: int = Field(
         128000,

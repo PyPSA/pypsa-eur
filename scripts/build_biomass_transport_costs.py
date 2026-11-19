@@ -2,16 +2,17 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Reads biomass transport costs for different countries of the JRC report.
+Build biomass transport costs per country in EUR per km and MWh.
 
-    "The JRC-EU-TIMES model.
-    Bioenergy potentials
-    for EU and neighbouring countries."
-    (2015)
+Transport costs per tonne-kilometre for two supply chains are read from tables
+extracted from the JRC-EU-TIMES bioenergy report and averaged. The average is
+converted from EUR/(km t) to EUR/(km MWh) using the energy content of wood
+pellets (4.8 MWh/t). Norway, which the report does not cover, takes the value
+of Sweden.
 
-converts them from units 'EUR per km/ton' -> 'EUR/ (km MWh)'
-
-assuming as an approximation energy content of wood pellets
+References
+----------
+- Ruiz et al. (2015), [The JRC-EU-TIMES model. Bioenergy potentials for EU and neighbouring countries](https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass%20potentials%20in%20europe_web%20rev.pdf)
 """
 
 import logging
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
 
-def get_cost_per_tkm(pdf, datapage, countrypage):
+def get_cost_per_tkm(pdf: str, datapage: int, countrypage: int) -> pd.DataFrame:
     """
     Extracts the cost tables from the JRC report PDF.
 
@@ -51,9 +52,12 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
     encoding = "cp1252" if system == "Windows" else "utf-8"
 
     # Obtain countries:
-    pandas_options_country = dict(
-        skiprows=range(6), header=None, index_col=0, encoding=encoding
-    )
+    pandas_options_country = {
+        "skiprows": range(6),
+        "header": None,
+        "index_col": 0,
+        "encoding": encoding,
+    }
 
     countries = tbl.read_pdf(
         pdf,
@@ -64,14 +68,14 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
     )[0].index
 
     # Obtain data tables
-    pandas_options_data = dict(
-        skiprows=range(6),
-        header=0,
-        sep=" |,",
-        engine="python",
-        index_col=False,
-        encoding=encoding,
-    )
+    pandas_options_data = {
+        "skiprows": range(6),
+        "header": 0,
+        "sep": " |,",
+        "engine": "python",
+        "index_col": False,
+        "encoding": encoding,
+    }
 
     sc = tbl.read_pdf(
         pdf,
@@ -86,7 +90,7 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
     return sc
 
 
-def build_biomass_transport_costs():
+def build_biomass_transport_costs(sc1_fn: str, sc2_fn: str, output_fn: str) -> None:
     # Optional build from JRC report pdf, requires tabula and java dependencies.
     # Update `pdf` path to the JRC report if needed.
     # sc1 = get_cost_per_tkm(pdf = "report.pdf", datapage=146, countrypage=145)
@@ -95,8 +99,8 @@ def build_biomass_transport_costs():
     # Use extracted csv from JRC report
     # https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass%20potentials%20in%20europe_web%20rev.pdf
     # Pages 146 (144) for supply chain 1 and 147 (145) for supply chain 2
-    sc1 = pd.read_csv(snakemake.input.sc1, index_col=0, skiprows=2)
-    sc2 = pd.read_csv(snakemake.input.sc2, index_col=0, skiprows=2)
+    sc1 = pd.read_csv(sc1_fn, index_col=0, skiprows=2)
+    sc2 = pd.read_csv(sc2_fn, index_col=0, skiprows=2)
 
     # take mean of both supply chains
     to_concat = [sc1["EUR/km/ton"], sc2["EUR/km/ton"]]
@@ -113,7 +117,7 @@ def build_biomass_transport_costs():
     # add missing Norway with data from Sweden
     transport_costs["NO"] = transport_costs["SE"]
 
-    transport_costs.to_csv(snakemake.output[0])
+    transport_costs.to_csv(output_fn)
 
 
 if __name__ == "__main__":
@@ -123,4 +127,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_biomass_transport_costs")
     configure_logging(snakemake)
 
-    build_biomass_transport_costs()
+    build_biomass_transport_costs(
+        snakemake.input.sc1, snakemake.input.sc2, snakemake.output[0]
+    )

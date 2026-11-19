@@ -5,7 +5,7 @@
 """
 Solar thermal configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#solar_thermal_cf
 """
 
 from typing import Literal

@@ -2,21 +2,33 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates plots from summary CSV files.
+Plots stacked bar charts of system costs, energy and balances across horizons.
+
+Reads the summary tables of the solved networks, groups technologies into
+coarser classes, drops entries below configurable thresholds and orders them
+consistently before stacking. One figure shows annual system cost, one the net
+energy supply and consumption per technology, and one per bus carrier its
+energy balance. Under perfect foresight, a further figure compares the
+modelled CO2 emission path with historical emissions and EU targets.
 """
 
 import logging
+import os
+from collections.abc import Iterable
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from scripts._helpers import configure_logging, rename_techs, set_scenario_config
+from scripts._helpers import (
+    configure_logging,
+    create_placeholder_plot,
+    rename_techs,
+    set_scenario_config,
+)
 from scripts.prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
-plt.style.use("bmh")
-
 
 # consolidate and rename
 
@@ -61,7 +73,18 @@ preferred_order = pd.Index(
 )
 
 
-def plot_costs():
+def check_tech_colors(tech_colors: dict[str, str], keys: Iterable[str]) -> None:
+    """
+    Check if all keys exist in tech_colors mapping, otherwise raise KeyError.
+    """
+    missing = [k for k in keys if k not in tech_colors]
+    if missing:
+        raise KeyError(
+            f"The following technology carrier(s) do not have a defined color in the plotting configuration: {missing}"
+        )
+
+
+def plot_costs() -> None:
     cost_df = pd.read_csv(
         snakemake.input.costs, index_col=list(range(3)), header=list(range(n_header))
     )
@@ -75,20 +98,35 @@ def plot_costs():
 
     to_drop = df.index[df.max(axis=1) < snakemake.params.plotting["costs_threshold"]]
 
-    logger.info(
+    logger.debug(
         f"Dropping technology with costs below {snakemake.params['plotting']['costs_threshold']} EUR billion per year"
     )
     logger.debug(df.loc[to_drop])
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total system cost of {round(df.sum().iloc[0])} EUR billion per year")
+    total_cost = df.sum().iloc[0]
+    logger.debug(f"Total system cost of {total_cost:.2f} EUR billion per year")
+
+    # Check if there's any data left to plot
+    if df.empty:
+        logger.warning(
+            "No cost data to plot after filtering. Creating placeholder plot."
+        )
+        create_placeholder_plot(
+            snakemake.output.costs,
+            "No cost data available\n(all costs below threshold)",
+            ylabel="System Cost [EUR billion per year]",
+        )
+        return  # Early return is OK here since other functions will still be called
 
     new_index = preferred_order.intersection(df.index).append(
         df.index.difference(preferred_order)
     )
 
     # new_columns = df.sum().sort_values().index
+
+    check_tech_colors(snakemake.params.plotting["tech_colors"], new_index)
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -104,7 +142,13 @@ def plot_costs():
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim([0, snakemake.params.plotting["costs_max"]])
+    # Handle auto-scaling if configured
+    costs_max = snakemake.params.plotting["costs_max"]
+    if costs_max == "auto":
+        costs_max = None
+        logger.debug("Auto-scaling y-axis (costs_max='auto')")
+
+    ax.set_ylim([0, costs_max])
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
@@ -120,7 +164,7 @@ def plot_costs():
     plt.close(fig)
 
 
-def plot_energy():
+def plot_energy() -> None:
     energy_df = pd.read_csv(
         snakemake.input.energy, index_col=list(range(2)), header=list(range(n_header))
     )
@@ -136,19 +180,25 @@ def plot_energy():
         df.abs().max(axis=1) < snakemake.params.plotting["energy_threshold"]
     ]
 
-    logger.info(
+    logger.debug(
         f"Dropping all technology with energy consumption or production below {snakemake.params['plotting']['energy_threshold']} TWh/a"
     )
     logger.debug(df.loc[to_drop])
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total energy of {round(df.sum().iloc[0])} TWh/a")
+    total_energy = df.sum().iloc[0]
+    logger.debug(f"Total energy of {total_energy:.2f} TWh/a")
 
     if df.empty:
-        fig, ax = plt.subplots(figsize=(12, 8))
-        fig.savefig(snakemake.output.energy, bbox_inches="tight")
-        plt.close(fig)
+        logger.warning(
+            "No energy data to plot after filtering. Creating placeholder plot."
+        )
+        create_placeholder_plot(
+            snakemake.output.energy,
+            "No energy data available\n(all values below threshold)",
+            ylabel="Energy [TWh/a]",
+        )
         return
 
     new_index = preferred_order.intersection(df.index).append(
@@ -156,6 +206,8 @@ def plot_energy():
     )
 
     # new_columns = df.columns.sort_values()
+
+    check_tech_colors(snakemake.params.plotting["tech_colors"], new_index)
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -173,12 +225,19 @@ def plot_energy():
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim(
-        [
-            snakemake.params.plotting["energy_min"],
-            snakemake.params.plotting["energy_max"],
-        ]
-    )
+    # Handle auto-scaling if configured
+    energy_min = snakemake.params.plotting["energy_min"]
+    energy_max = snakemake.params.plotting["energy_max"]
+
+    if energy_max == "auto":
+        energy_max = None
+        logger.debug("Auto-scaling y-axis max (energy_max='auto')")
+
+    if energy_min == "auto":
+        energy_min = None
+        logger.debug("Auto-scaling y-axis min (energy_min='auto')")
+
+    ax.set_ylim([energy_min, energy_max])
 
     ax.set_ylabel("Energy [TWh/a]")
 
@@ -194,14 +253,15 @@ def plot_energy():
     plt.close(fig)
 
 
-def plot_balances():
+def plot_balances() -> None:
     co2_carriers = ["co2", "co2 stored", "process emissions"]
 
     balances_df = pd.read_csv(
         snakemake.input.balances, index_col=list(range(3)), header=list(range(n_header))
     )
 
-    balances = {k: df for k, df in balances_df.groupby("bus_carrier")}
+    # dict() on a GroupBy calls its `.keys` attribute, so keep the comprehension
+    balances = {k: df for k, df in balances_df.groupby("bus_carrier")}  # noqa: C416
     balances["energy"] = balances_df.groupby(["component", "carrier"]).sum()
 
     for bus_carrier, df in balances.items():
@@ -236,6 +296,8 @@ def plot_balances():
         )
 
         new_columns = df.columns.sort_values()
+
+        check_tech_colors(snakemake.params.plotting["tech_colors"], new_index)
 
         fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -274,16 +336,23 @@ def plot_balances():
         )
         plt.close(fig)
 
+    if not os.path.exists(snakemake.output.balances):
+        logger.warning("No balance data was plotted. Creating placeholder file.")
+        create_placeholder_plot(
+            snakemake.output.balances,
+            "No balance data available\n(all values below threshold)",
+            ylabel="Energy [TWh/a]",
+        )
 
-def historical_emissions(countries):
+
+def historical_emissions(countries: list[str]) -> pd.Series:
     """
     Read historical emissions to add them to the carbon budget plot.
     """
     # https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
     # downloaded 201228 (modified by EEA last on 201221)
     df = pd.read_csv(snakemake.input.co2, encoding="latin-1", low_memory=False)
-    df.loc[df["Year"] == "1985-1987", "Year"] = 1986
-    df["Year"] = df["Year"].astype(int)
+    df["Year"] = df["Year"].replace("1985-1987", "1986").astype(int)
     df = df.set_index(
         ["Year", "Sector_name", "Country_code", "Pollutant_name"]
     ).sort_index()
@@ -328,7 +397,7 @@ def historical_emissions(countries):
         .rename(index=pd.Series(e.index, e.values))
     )
 
-    co2_totals = (1 / 1e6) * co2_totals.groupby(level=0, axis=0).sum()  # Gton CO2
+    co2_totals = (1 / 1e6) * co2_totals.groupby(level=0).sum()  # Gton CO2
 
     co2_totals.loc["industrial non-elec"] = (
         co2_totals.loc["total energy"]
@@ -368,7 +437,7 @@ def historical_emissions(countries):
     return emissions
 
 
-def plot_carbon_budget_distribution(input_eurostat, options):
+def plot_carbon_budget_distribution(input_eurostat: str, options: dict) -> None:
     """
     Plot historical carbon emissions in the EU and decarbonization path.
     """
@@ -401,7 +470,7 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     emissions.loc[2021] = 3.290418
     emissions.loc[2022] = 3.213025
 
-    if snakemake.config["foresight"] == "myopic":
+    if snakemake.params.foresight == "myopic":
         path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
         co2_cap = pd.read_csv(path_cb + "carbon_budget_distribution.csv", index_col=0)[
             ["cb"]
@@ -409,12 +478,20 @@ def plot_carbon_budget_distribution(input_eurostat, options):
         co2_cap *= e_1990
     else:
         supply_energy = pd.read_csv(
-            snakemake.input.balances, index_col=[0, 1, 2], header=[0, 1, 2, 3]
+            snakemake.input.balances, index_col=[0, 1, 2], header=list(range(n_header))
+        )
+        if "co2" not in supply_energy.index.get_level_values("bus_carrier"):
+            logger.warning(
+                "No CO2 balance in energy balances; skipping carbon budget plot."
+            )
+            return
+        co2_emissions = supply_energy.xs("co2", level="bus_carrier").droplevel(
+            "component"
         )
         co2_cap = (
-            supply_energy.loc["co2"].droplevel(0).drop("co2").sum().unstack().T / 1e9
+            co2_emissions.drop("co2").sum().div(1e9).to_frame(name="co2 emissions")
         )
-        co2_cap.rename(index=lambda x: int(x), inplace=True)
+        co2_cap.index = co2_cap.index.astype(int)
 
     plt.figure(figsize=(10, 7))
     gs1 = gridspec.GridSpec(1, 1)
@@ -495,8 +572,9 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+    plt.style.use("bmh")
 
-    n_header = 3
+    n_header = 1
 
     plot_costs()
 
@@ -504,9 +582,6 @@ if __name__ == "__main__":
 
     plot_balances()
 
-    co2_budget = snakemake.params["co2_budget"]
-    if (
-        isinstance(co2_budget, str) and co2_budget.startswith("cb")
-    ) or snakemake.params["foresight"] == "perfect":
+    if snakemake.params["foresight"] == "perfect":
         options = snakemake.params.sector
         plot_carbon_budget_distribution(snakemake.input.eurostat, options)

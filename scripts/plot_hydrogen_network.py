@@ -2,8 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates map of optimised hydrogen network, storage and selected other
-infrastructure.
+Plots the optimised hydrogen network, storage and conversion capacities on a map.
+
+Reads the solved network and draws electrolysis and fuel cell capacities as
+circles per electricity bus, hydrogen pipeline capacities as line widths and
+regional hydrogen storage capacity as shaded regions. New and repurposed
+pipelines are shown in separate layers; under myopic foresight, pipelines from
+different investment periods between the same buses are summed. Pipelines
+below a capacity threshold are omitted, and networks without hydrogen
+pipelines produce a placeholder figure.
 """
 
 import logging
@@ -12,16 +19,25 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
+from pypsa.plot.maps.static import (
+    add_legend_circles,
+    add_legend_lines,
+    add_legend_patches,
+)
 
-from scripts._helpers import configure_logging, retry, set_scenario_config
+from scripts._helpers import (
+    configure_logging,
+    create_placeholder_plot,
+    retry,
+    set_scenario_config,
+)
 from scripts.make_summary import assign_locations
 from scripts.plot_power_network import load_projection
 
 logger = logging.getLogger(__name__)
 
 
-def group_pipes(df, drop_direction=False):
+def group_pipes(df: pd.DataFrame, drop_direction: bool = False) -> pd.DataFrame:
     """
     Group pipes which connect same buses and return overall capacity.
     """
@@ -36,7 +52,9 @@ def group_pipes(df, drop_direction=False):
     # there are pipes for each investment period rename to AC buses name for plotting
     df["index_orig"] = df.index
     df.index = df.apply(
-        lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
+        lambda x: (
+            f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}"
+        ),
         axis=1,
     )
     return df.groupby(level=0).agg(
@@ -45,9 +63,16 @@ def group_pipes(df, drop_direction=False):
 
 
 @retry
-def plot_h2_map(n, regions):
-    # if "H2 pipeline" not in n.links.carrier.unique():
-    #     return
+def plot_h2_map(n: pypsa.Network, regions: gpd.GeoDataFrame) -> None:
+    # Check if H2 infrastructure exists in the network
+    if "H2 pipeline" not in n.links.carrier.unique():
+        logger.warning(
+            "No H2 pipeline carriers in network. Skipping hydrogen network plot."
+        )
+        create_placeholder_plot(
+            snakemake.output[0], "No H2 network\nin model", figsize=(1, 1)
+        )
+        return
 
     assign_locations(n)
 
@@ -108,7 +133,9 @@ def plot_h2_map(n, regions):
 
             h2_retro["index_orig"] = h2_retro.index
             h2_retro.index = h2_retro.apply(
-                lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
+                lambda x: (
+                    f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}"
+                ),
                 axis=1,
             )
 
@@ -193,24 +220,24 @@ def plot_h2_map(n, regions):
         },
     )
 
-    sizes = [50, 10]
+    sizes: list[float] = [50, 10]
     labels = [f"{s} GW" for s in sizes]
     sizes = [s / bus_size_factor * 1e3 for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1),
-        labelspacing=0.8,
-        handletextpad=0,
-        frameon=False,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1),
+        "labelspacing": 0.8,
+        "handletextpad": 0,
+        "frameon": False,
+    }
 
     add_legend_circles(
         ax,
         sizes,
         labels,
         srid=n.srid,
-        patch_kw=dict(facecolor="lightgrey"),
+        patch_kw={"facecolor": "lightgrey"},
         legend_kw=legend_kw,
     )
 
@@ -219,31 +246,31 @@ def plot_h2_map(n, regions):
     scale = 1e3 / linewidth_factor
     sizes = [s * scale for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0.23, 1),
-        frameon=False,
-        labelspacing=0.8,
-        handletextpad=1,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0.23, 1),
+        "frameon": False,
+        "labelspacing": 0.8,
+        "handletextpad": 1,
+    }
 
     add_legend_lines(
         ax,
         sizes,
         labels,
-        patch_kw=dict(color="lightgrey"),
+        patch_kw={"color": "lightgrey"},
         legend_kw=legend_kw,
     )
 
     colors = [bus_color[c] for c in carriers] + [color_h2_pipe, color_retrofit]
     labels = carriers + ["H2 pipeline (total)", "H2 pipeline (repurposed)"]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1.13),
-        ncol=2,
-        frameon=False,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1.13),
+        "ncol": 2,
+        "frameon": False,
+    }
 
     add_legend_patches(ax, colors, labels, legend_kw=legend_kw)
 
@@ -259,9 +286,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_hydrogen_network",
-            opts="",
-            clusters="37",
-            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)
