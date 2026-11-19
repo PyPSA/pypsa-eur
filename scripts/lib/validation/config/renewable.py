@@ -49,6 +49,11 @@ class _SolarResourceConfig(BaseModel):
         None,
         description="Tracking type (e.g., 'horizontal').",
     )
+    dc_ac_ratio: float = Field(
+        1.25,
+        description="Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+        ge=1,
+    )
 
 
 class _CorineConfig(BaseModel):
@@ -208,7 +213,7 @@ class _SolarConfig(BaseModel):
         1, description="Number of resource classes per clustered region."
     )
     capacity_per_sqkm: float = Field(
-        5.1, description="Allowable density of solar panel placement."
+        5.1, description="Allowable density of solar panel placement (MW AC per sqkm)."
     )
     correction_factor: float = Field(
         1.0,

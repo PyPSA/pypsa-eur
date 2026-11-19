@@ -1047,6 +1047,11 @@ class SectorConfig(BaseModel):
         True,
         description="Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
     )
+    solar_rooftop_dc_ac_ratio: float = Field(
+        1.075,
+        description="Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one.",
+        ge=1,
+    )
     electricity_grid_connection: bool = Field(
         True,
         description="Add the cost of electricity grid connection for onshore wind and solar.",

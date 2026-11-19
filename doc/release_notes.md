@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Solar PV costs from `technology-data` refer to AC capacity, but the availability time series referred to DC capacity, which made solar PV too expensive. New options `renewable: solar: resource: dc_ac_ratio` and `sector: solar_rooftop_dc_ac_ratio` give the availability per unit of AC capacity with inverter clipping in each weather grid cell. Capacities and potentials of solar PV now refer to AC capacity. This changes default results. Requires `atlite` with `dc_ac_ratio` support, see [atlite#550](https://github.com/PyPSA/atlite/pull/550) ([#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
 * Fix: Gas pipelines ending in regions without an onshore region, e.g. offshore junctions at high resolution, now get gas and H2 buses instead of leaving the network inconsistent ([#2429](https://github.com/PyPSA/pypsa-eur/pull/2429)).
 * Fix: Offshore wind profiles no longer fail for clustered buses without an onshore region; the nearest onshore regions then serve as the shoreline ([#2425](https://github.com/PyPSA/pypsa-eur/pull/2425)).
 * Fix: Hydro reservoir storage (`renewable: hydro: hydro_max_hours`) no longer depends on the first unit of each country, and the default now matches the country totals. This changes default results ([#2428](https://github.com/PyPSA/pypsa-eur/pull/2428)).
