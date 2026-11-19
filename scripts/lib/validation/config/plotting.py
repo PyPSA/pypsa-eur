@@ -664,6 +664,7 @@ _TECH_COLORS: dict[str, str] = {
     "gas for industry CC": "#692e0a",
     "gas pipeline": "#ebbca0",
     "gas pipeline new": "#a87c62",
+    "shipping LNG": "#a3471c",
     # oil
     "oil": "#c9c9c9",
     "oil primary": "#d2d2d2",

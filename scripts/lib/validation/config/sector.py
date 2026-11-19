@@ -725,35 +725,12 @@ class SectorConfig(BaseModel):
 
     shipping_hydrogen_liquefaction: bool = Field(
         False,
-        description="Whether to include liquefaction costs for hydrogen demand in shipping.",
+        description="Whether to include liquefaction costs and electricity demand for hydrogen in shipping.",
     )
-    shipping_endogenous: bool = Field(
-        False,
-        description="If true, shipping fuel choice is endogenous: enabled fuels (shipping_oil/methanol/lng/hydrogen) compete on a shared per-node demand bus and the optimiser picks the cost-minimal mix. If false (default), the fixed year-indexed shipping_*_share values are used.",
+    shipping_endogenous: list[Literal["hydrogen", "methanol", "oil", "lng"]] = Field(
+        default_factory=list,
+        description="Fuels with an optimised instead of an exogenous share. They compete for the shipping demand that the `shipping_*_share` settings of the other fuels leave uncovered, and each supplies a constant output over the year. Ship costs do not differ by fuel, so the cheapest fuel tends to supply all of this demand.",
     )
-    # Endogenous shipping: each enabled fuel below competes on a shared
-    # per-node demand bus (add_shipping in prepare_sector_network.py); the
-    # optimiser picks the cost-minimal mix rather than following a fixed
-    # exogenous share. At least one of the four must be true (resolved per
-    # investment_year when given as a year-indexed dict). Each can be a
-    # flat bool, or a year-indexed dict (e.g. {2030: false, 2035: true}) to
-    # unlock/retire a fuel at a given planning horizon under myopic
-    # foresight.
-    shipping_oil: bool | dict[int, bool] = Field(
-        True, description="Whether oil is an available fuel for shipping."
-    )
-    shipping_methanol: bool | dict[int, bool] = Field(
-        True, description="Whether methanol is an available fuel for shipping."
-    )
-    shipping_lng: bool | dict[int, bool] = Field(
-        True,
-        description="Whether LNG (drawn from the existing gas bus/network and liquefied) is an available fuel for shipping.",
-    )
-    shipping_hydrogen: bool | dict[int, bool] = Field(
-        False, description="Whether hydrogen is an available fuel for shipping."
-    )
-    # Exogenous shipping (shipping_endogenous: false): fixed shares per year,
-    # should sum to 1.
     shipping_hydrogen_share: dict[int, float] = Field(
         default_factory=lambda: {
             2020: 0,
@@ -764,7 +741,7 @@ class SectorConfig(BaseModel):
             2045: 0,
             2050: 0,
         },
-        description="The share of ships powered by hydrogen in a given year (exogenous mode only).",
+        description="The share of ships powered by hydrogen in a given year.",
     )
     shipping_methanol_share: dict[int, float] = Field(
         default_factory=lambda: {
@@ -776,7 +753,7 @@ class SectorConfig(BaseModel):
             2045: 0.8,
             2050: 1,
         },
-        description="The share of ships powered by methanol in a given year (exogenous mode only).",
+        description="The share of ships powered by methanol in a given year.",
     )
     shipping_oil_share: dict[int, float] = Field(
         default_factory=lambda: {
@@ -788,7 +765,7 @@ class SectorConfig(BaseModel):
             2045: 0.2,
             2050: 0,
         },
-        description="The share of ships powered by oil in a given year (exogenous mode only).",
+        description="The share of ships powered by oil in a given year.",
     )
     shipping_lng_share: dict[int, float] = Field(
         default_factory=lambda: {
@@ -800,27 +777,27 @@ class SectorConfig(BaseModel):
             2045: 0,
             2050: 0,
         },
-        description="The share of ships powered by LNG in a given year (exogenous mode only). Gas is drawn from the gas bus and liquefied via CH4 liquefaction, as in endogenous mode.",
+        description="The share of ships powered by LNG in a given year. The costs and electricity demand of gas liquefaction are included.",
     )
     shipping_methanol_efficiency: float = Field(
-        0.46,
-        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+        0.40,
+        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). Equal to oil-powered ships, as methanol engines and diesel engines consume similar amounts of fuel energy according to the `Fourth IMO GHG Study 2020 <https://www.imo.org/en/ourwork/environment/pages/fourth-imo-greenhouse-gas-study-2020.aspx>`_ (Table 19).",
     )
     shipping_oil_efficiency: float = Field(
         0.40,
         description="The efficiency of oil-powered ships in the conversion of oil to meet shipping needs (propulsion). Base value derived from 2011.",
     )
     shipping_lng_efficiency: float = Field(
-        0.45,
-        description="Placeholder efficiency of LNG (dual-fuel) ship engines per unit of fuel actually burnt; the methane-slip share (shipping_lng_methane_slip) is deducted on top, so the useful efficiency is shipping_lng_efficiency * (1 - shipping_lng_methane_slip). Adjust once a technology-data-sourced figure is available.",
+        0.40,
+        description="The efficiency of LNG-powered ships in the conversion of LNG to meet shipping needs (propulsion), including the fuel lost as methane slip. Equal to oil-powered ships for the same reason as `shipping_methanol_efficiency`.",
     )
     shipping_lng_methane_slip: float = Field(
         0.031,
-        description="Share of LNG fuel mass that leaves the ship engine unburnt as methane (methane slip). Default 3.1% is the FuelEU Maritime (Regulation (EU) 2023/1805, Annex II) default for LNG Otto dual-fuel medium-speed engines. Slipped methane delivers no propulsion work, is converted to CO2-equivalent with shipping_methane_gwp100 and counted against the CO2 limit.",
+        description="Share of LNG that leaves the ship engine unburnt as methane. It counts as CO2 equivalent towards the CO2 limit. Default for LNG Otto dual-fuel medium-speed engines from FuelEU Maritime (Regulation (EU) 2023/1805, Annex II).",
     )
     shipping_methane_gwp100: float = Field(
         25.0,
-        description="100-year global warming potential of methane used to convert LNG methane slip to CO2-equivalent. Default 25 (IPCC AR4), as used by FuelEU Maritime.",
+        description="100-year global warming potential of methane to convert the methane slip of LNG-powered ships to CO2 equivalent.",
     )
 
     aviation_demand_factor: float = Field(
