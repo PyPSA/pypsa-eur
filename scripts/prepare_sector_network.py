@@ -4659,6 +4659,7 @@ def add_industry_heat(
     demand: pd.DataFrame,
     costs: pd.DataFrame,
     options: dict,
+    cf_industry: dict,
     spatial: SimpleNamespace,
 ) -> None:
     """
@@ -4681,6 +4682,9 @@ def add_industry_heat(
         Technology cost assumptions
     options : dict
         Sector options with `industry_heat` and `cc_capital_cost_factor`
+    cf_industry : dict
+        Industry options with `solid_biomass_for_industry_cc` and
+        `gas_for_industry_cc`
     spatial : SimpleNamespace
         Spatial resolution of the carriers
     """
@@ -4699,6 +4703,10 @@ def add_industry_heat(
         "hydrogen": (nodes + " H2", "gas boiler steam", "direct firing gas"),
         "heat pump": (nodes, "industrial heat pump high temperature", None),
         "electric boiler": (nodes, "electric boiler steam", None),
+    }
+    with_cc = {
+        "solid biomass": cf_industry["solid_biomass_for_industry_cc"],
+        "gas": cf_industry["gas_for_industry_cc"],
     }
 
     for band, techs in cf["technologies"].items():
@@ -4737,7 +4745,7 @@ def add_industry_heat(
                 )
             n.add("Link", nodes, suffix=f" {name}", carrier=name, **link)
 
-            if tech not in ["solid biomass", "gas"]:
+            if not with_cc.get(tech, False):
                 continue
 
             co2 = costs.at[tech, "CO2 intensity"]
@@ -5090,7 +5098,9 @@ def add_industry(
         )
 
     if options["industry_heat"]["enable"]:
-        add_industry_heat(n, nodes, industrial_demand / nhours, costs, options, spatial)
+        add_industry_heat(
+            n, nodes, industrial_demand / nhours, costs, options, cf_industry, spatial
+        )
 
     n.add(
         "Bus",
