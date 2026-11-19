@@ -505,7 +505,32 @@ def attach_wind_and_solar(
             ds = ds.stack(bus_bin=["bus", "bin"])
 
             supcar = car.split("-", 2)[0]
-            if supcar == {"offwind", "wave", "offsolar"}:
+            # if supcar == {"offwind", "wave", "offsolar"}:
+            #     distance = ds["average_distance"].to_pandas()
+            #     distance.index = distance.index.map(flatten)
+            #     submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
+            #     underground_cost = costs.at[
+            #         car + "-connection-underground", "capital_cost"
+            #     ]
+            #     connection_cost = line_length_factor * (
+            #         distance * submarine_cost + landfall_length * underground_cost
+            #     )
+
+            #     # Take 'offwind-float' capital cost for 'float', and 'offwind' capital cost for the rest ('ac' and 'dc')
+            #     midcar = car.split("-", 2)[1]
+            #     if supcar == "offwind" and midcar != "float":
+            #         capital_cost = (
+            #             costs.at["offwind", "capital_cost"]
+            #             + costs.at[car + "-station", "capital_cost"]
+            #             + connection_cost
+            #         )
+            #     else:
+            #         capital_cost = (
+            #             costs.at[car, "capital_cost"]
+            #             + costs.at[car + "-station", "capital_cost"]
+            #             + connection_cost
+            #         )
+            if supcar == "offwind":
                 distance = ds["average_distance"].to_pandas()
                 distance.index = distance.index.map(flatten)
                 submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
@@ -518,15 +543,15 @@ def attach_wind_and_solar(
 
                 # Take 'offwind-float' capital cost for 'float', and 'offwind' capital cost for the rest ('ac' and 'dc')
                 midcar = car.split("-", 2)[1]
-                if supcar == "offwind" and midcar != "float":
+                if midcar == "float":
                     capital_cost = (
-                        costs.at["offwind", "capital_cost"]
+                        costs.at[car, "capital_cost"]
                         + costs.at[car + "-station", "capital_cost"]
                         + connection_cost
                     )
                 else:
                     capital_cost = (
-                        costs.at[car, "capital_cost"]
+                        costs.at["offwind", "capital_cost"]
                         + costs.at[car + "-station", "capital_cost"]
                         + connection_cost
                     )
