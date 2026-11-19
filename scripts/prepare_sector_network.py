@@ -1638,6 +1638,7 @@ def insert_electricity_distribution_grid(
     options: dict,
     pop_layout: pd.DataFrame,
     solar_rooftop_potentials_fn: str,
+    solar_dc_ac_ratio: float,
 ) -> None:
     """
     Insert electricity distribution grid components into the network.
@@ -1662,6 +1663,10 @@ def insert_electricity_distribution_grid(
         Population data per node with at least:
         - 'total' column containing population in thousands
         Index should match network nodes
+    solar_rooftop_potentials_fn : str
+        Path to the rooftop solar potentials; empty if there are none
+    solar_dc_ac_ratio : float
+        DC/AC ratio of the utility-scale solar availability time series
 
     Returns
     -------
@@ -1752,6 +1757,9 @@ def insert_electricity_distribution_grid(
         potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze(axis=1)
         potential.index = potential.index.map(flatten) + " solar"
 
+        dc_ac_scaling = options["solar_rooftop_dc_ac_ratio"] / solar_dc_ac_ratio
+        p_max_pu = dc_ac_scaling * n.generators_t.p_max_pu[solar]
+
         n.add(
             "Generator",
             solar,
@@ -1763,7 +1771,7 @@ def insert_electricity_distribution_grid(
             marginal_cost=n.generators.loc[solar, "marginal_cost"],
             capital_cost=costs.at["solar-rooftop", "capital_cost"],
             efficiency=n.generators.loc[solar, "efficiency"],
-            p_max_pu=n.generators_t.p_max_pu[solar],
+            p_max_pu=p_max_pu.clip(upper=1),
             lifetime=costs.at["solar-rooftop", "lifetime"],
         )
 
@@ -6962,7 +6970,12 @@ def main(
 
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(
-            n, costs, options, pop_layout, inputs.solar_rooftop_potentials
+            n,
+            costs,
+            options,
+            pop_layout,
+            inputs.solar_rooftop_potentials,
+            params.renewable["solar"]["resource"]["dc_ac_ratio"],
         )
 
     if options["enhanced_geothermal"].get("enable", False):

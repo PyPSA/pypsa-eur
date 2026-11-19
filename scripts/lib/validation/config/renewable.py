@@ -49,6 +49,11 @@ class _SolarResourceConfig(BaseModel):
         None,
         description="Tracking type (e.g., 'horizontal').",
     )
+    dc_ac_ratio: float = Field(
+        1.25,
+        description="Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+        ge=1,
+    )
 
 
 class _CorineConfig(BaseModel):
@@ -208,7 +213,7 @@ class _SolarConfig(BaseModel):
         1, description="Number of resource classes per clustered region."
     )
     capacity_per_sqkm: float = Field(
-        5.1, description="Allowable density of solar panel placement."
+        5.1, description="Allowable density of solar panel placement (MW AC per sqkm)."
     )
     correction_factor: float = Field(
         1.0,
@@ -257,15 +262,6 @@ class _SolarConfig(BaseModel):
     clip_p_max_pu: float = Field(
         0.01,
         description="To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
-    )
-    dc_ac_ratio: float = Field(
-        1.25,
-        description="DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
-        ge=1,
-    )
-    costs_given_for_ac: bool = Field(
-        True,
-        description="Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
     )
 
 

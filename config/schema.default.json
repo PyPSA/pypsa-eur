@@ -4531,6 +4531,12 @@
                   ],
                   "default": null,
                   "description": "Tracking type (e.g., 'horizontal')."
+                },
+                "dc_ac_ratio": {
+                  "default": 1.25,
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+                  "minimum": 1,
+                  "type": "number"
                 }
               }
             },
@@ -4541,7 +4547,7 @@
             },
             "capacity_per_sqkm": {
               "default": 5.1,
-              "description": "Allowable density of solar panel placement.",
+              "description": "Allowable density of solar panel placement (MW AC per sqkm).",
               "type": "number"
             },
             "correction_factor": {
@@ -4593,17 +4599,6 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
-            },
-            "dc_ac_ratio": {
-              "default": 1.25,
-              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
-              "minimum": 1,
-              "type": "number"
-            },
-            "costs_given_for_ac": {
-              "default": true,
-              "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
-              "type": "boolean"
             }
           }
         },
@@ -4666,6 +4661,12 @@
                   ],
                   "default": null,
                   "description": "Tracking type (e.g., 'horizontal')."
+                },
+                "dc_ac_ratio": {
+                  "default": 1.25,
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+                  "minimum": 1,
+                  "type": "number"
                 }
               }
             },
@@ -4676,7 +4677,7 @@
             },
             "capacity_per_sqkm": {
               "default": 5.1,
-              "description": "Allowable density of solar panel placement.",
+              "description": "Allowable density of solar panel placement (MW AC per sqkm).",
               "type": "number"
             },
             "correction_factor": {
@@ -4728,17 +4729,6 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
-            },
-            "dc_ac_ratio": {
-              "default": 1.25,
-              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
-              "minimum": 1,
-              "type": "number"
-            },
-            "costs_given_for_ac": {
-              "default": true,
-              "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
-              "type": "boolean"
             }
           }
         },
@@ -5865,6 +5855,12 @@
           "default": true,
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
+        },
+        "solar_rooftop_dc_ac_ratio": {
+          "default": 1.075,
+          "description": "Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one.",
+          "minimum": 1,
+          "type": "number"
         },
         "electricity_grid_connection": {
           "default": true,
@@ -9787,6 +9783,12 @@
               ],
               "default": null,
               "description": "Tracking type (e.g., 'horizontal')."
+            },
+            "dc_ac_ratio": {
+              "default": 1.25,
+              "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+              "minimum": 1,
+              "type": "number"
             }
           }
         },
@@ -9797,7 +9799,7 @@
         },
         "capacity_per_sqkm": {
           "default": 5.1,
-          "description": "Allowable density of solar panel placement.",
+          "description": "Allowable density of solar panel placement (MW AC per sqkm).",
           "type": "number"
         },
         "correction_factor": {
@@ -9849,17 +9851,6 @@
           "default": 0.01,
           "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
           "type": "number"
-        },
-        "dc_ac_ratio": {
-          "default": 1.25,
-          "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
-          "minimum": 1,
-          "type": "number"
-        },
-        "costs_given_for_ac": {
-          "default": true,
-          "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
-          "type": "boolean"
         }
       }
     },
@@ -9904,6 +9895,12 @@
           ],
           "default": null,
           "description": "Tracking type (e.g., 'horizontal')."
+        },
+        "dc_ac_ratio": {
+          "default": 1.25,
+          "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+          "minimum": 1,
+          "type": "number"
         }
       }
     },
@@ -12045,6 +12042,12 @@
                   ],
                   "default": null,
                   "description": "Tracking type (e.g., 'horizontal')."
+                },
+                "dc_ac_ratio": {
+                  "default": 1.25,
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+                  "minimum": 1,
+                  "type": "number"
                 }
               }
             },
@@ -12055,7 +12058,7 @@
             },
             "capacity_per_sqkm": {
               "default": 5.1,
-              "description": "Allowable density of solar panel placement.",
+              "description": "Allowable density of solar panel placement (MW AC per sqkm).",
               "type": "number"
             },
             "correction_factor": {
@@ -12107,17 +12110,6 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
-            },
-            "dc_ac_ratio": {
-              "default": 1.25,
-              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
-              "minimum": 1,
-              "type": "number"
-            },
-            "costs_given_for_ac": {
-              "default": true,
-              "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
-              "type": "boolean"
             }
           }
         },
@@ -12180,6 +12172,12 @@
                   ],
                   "default": null,
                   "description": "Tracking type (e.g., 'horizontal')."
+                },
+                "dc_ac_ratio": {
+                  "default": 1.25,
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+                  "minimum": 1,
+                  "type": "number"
                 }
               }
             },
@@ -12190,7 +12188,7 @@
             },
             "capacity_per_sqkm": {
               "default": 5.1,
-              "description": "Allowable density of solar panel placement.",
+              "description": "Allowable density of solar panel placement (MW AC per sqkm).",
               "type": "number"
             },
             "correction_factor": {
@@ -12242,17 +12240,6 @@
               "default": 0.01,
               "description": "To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.",
               "type": "number"
-            },
-            "dc_ac_ratio": {
-              "default": 1.25,
-              "description": "DC/AC ratio for solar PV. Capacity factors are clipped at 1/dc_ac_ratio and rescaled to express output as a fraction of AC capacity.",
-              "minimum": 1,
-              "type": "number"
-            },
-            "costs_given_for_ac": {
-              "default": true,
-              "description": "Switch to indicate that the capital_costs for solar are given for AC capacity. If `false`, costs are given for DC peak capacity.",
-              "type": "boolean"
             }
           }
         },
@@ -13873,6 +13860,12 @@
           "default": true,
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
+        },
+        "solar_rooftop_dc_ac_ratio": {
+          "default": 1.075,
+          "description": "Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one.",
+          "minimum": 1,
+          "type": "number"
         },
         "electricity_grid_connection": {
           "default": true,
