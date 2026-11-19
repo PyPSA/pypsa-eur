@@ -21,7 +21,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#run_cf
 run:
   prefix: ""
-  name: ""
+  name: "test-wave-era5"
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -41,50 +41,51 @@ planning_horizons:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#countries_cf
 countries:
-- AL
-- AT
-- BA
-- BE
-- BG
-- CH
-- CZ
-- DE
-- DK
-- EE
-- ES
-- FI
-- FR
-- GB
-- GR
-- HR
-- HU
-- IE
-- IT
-- LT
-- LU
-- LV
-- ME
-- MK
+# - AL
+# - AT
+# - BA
+# - BE
+# - BG
+# - CH
+# - CZ
+# - DE
+# - DK
+# - EE
+# - ES
+# - FI
+# - FR
+# - GB
+# - GR
+# - HR
+# - HU
+# - IE
+# - IT
+# - LT
+# - LU
+# - LV
+# - ME
+# - MK
 - NL
-- 'NO'
-- PL
-- PT
-- RO
-- RS
-- SE
-- SI
-- SK
-- XK
+# - 'NO'
+# - PL
+# - PT
+# - RO
+# - RS
+# - SE
+# - SI
+# - SK
+# - XK
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#snapshots_cf
 snapshots:
-  start: "2013-01-01"
-  end: "2014-01-01"
+  start: "2020-01-01"
+  end: "2020-01-31"
   inclusive: left
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#enable_cf
 enable:
   drop_leap_day: true
+  # build_cutout: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#co2_budget_cf
 co2_budget:
@@ -137,10 +138,18 @@ electricity:
     - "offwind-float"
     - OCGT
     - CCGT
-    StorageUnit: []
-    Store:
-    - battery
+    StorageUnit:
+    - battery 
     - H2
+    - li-ion
+    - vanadium
+    - lfp
+    - lair
+    - pair
+    - iron-air
+    Store: []
+    # - battery
+    # - H2
     Link: []
   powerplants_filter: "(DateOut > 2025 or DateOut != DateOut) and (DateIn < 2026 or DateIn != DateIn)"
   custom_powerplants: false
@@ -181,9 +190,9 @@ electricity:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#atlite_cf
 atlite:
-  default_cutout: "europe-2013-sarah3-era5"
+  default_cutout: "europe-2020-sarah3-era5"
   nprocesses: 1
-  show_progress: false
+  show_progress: true
   plot_availability_matrix: false
   cutouts:
     "europe-1940-2024-era5":
@@ -197,8 +206,8 @@ atlite:
       dx: 0.3
       dy: 0.3
       time:
-      - '2013'
-      - '2013'
+      - '2020'
+      - '2020'
       chunks:
         time: 500
       prepare_kwargs:
@@ -213,7 +222,7 @@ atlite:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#renewable_cf
 renewable:
   onwind:
-    cutout: default
+    cutout: era5_2020
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -257,7 +266,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 0.01
   "offwind-ac":
-    cutout: default
+    cutout: era5_2020
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
@@ -273,12 +282,12 @@ renewable:
     max_depth: 60.0
     min_depth:
     max_shore_distance: 30000.0
-    min_shore_distance:
+    min_shore_distance: 5000.0
     excluder_resolution: 200
     clip_p_max_pu: 0.01
     landfall_length: 20.0
   "offwind-dc":
-    cutout: default
+    cutout: era5_2020
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
@@ -292,14 +301,14 @@ renewable:
     natura: true
     ship_threshold: 400
     max_depth: 60.0
-    min_depth:
+    min_depth: 
     max_shore_distance:
     min_shore_distance: 30000.0
     excluder_resolution: 200
     clip_p_max_pu: 0.01
     landfall_length: 30.0
   "offwind-float":
-    cutout: default
+    cutout: era5_2020
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -314,13 +323,13 @@ renewable:
     ship_threshold: 400
     max_depth: 1000.0
     min_depth: 60.0
-    max_shore_distance:
-    min_shore_distance:
+    max_shore_distance: 100000.0
+    min_shore_distance: 30000.0
     excluder_resolution: 200
     clip_p_max_pu: 0.01
     landfall_length: 40.0
   solar:
-    cutout: default
+    cutout: era5_2020
     resource:
       method: pv
       panel: CSi
@@ -360,7 +369,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 0.01
   "solar-hsat":
-    cutout: default
+    cutout: era5_2020
     resource:
       method: pv
       panel: CSi
@@ -513,6 +522,8 @@ pypsa_eur:
   - ror
   - nuclear
   StorageUnit:
+  - battery
+  - H2
   - PHS
   - hydro
   Store: []
@@ -671,7 +682,7 @@ existing_capacities:
 sector:
   enabled: true
   transport: true
-  heating: true
+  heating: false
   biomass: true
   industry: true
   shipping: true
@@ -880,7 +891,7 @@ sector:
     - solid biomass
     - gas
     micro_chp: false
-  solar_thermal: true
+  solar_thermal: false
   solar_cf_correction: 0.788457
   methanation: true
   coal_cc: false
@@ -1144,7 +1155,7 @@ costs:
     CO2 intensity: 0
     discount rate: 0.07
     standing losses: 0
-  custom_cost_fn: data/custom_costs.csv
+  custom_cost_fn: data/custom_costsMREL.csv
   overwrites: {}
   capital_cost: {}
   marginal_cost: {}
@@ -1170,7 +1181,7 @@ clustering:
     remove_stubs: true
     remove_stubs_across_borders: false
   cluster_network:
-    n_clusters: 50
+    n_clusters: 25
     algorithm: kmeans
     allow_ac_dc_mixing_in_bus_clusters: false
     hac_features:
@@ -1185,7 +1196,7 @@ clustering:
       ramp_limit_down: max
     buses: {}
   temporal:
-    averaging: false
+    averaging: 3h
     segmentation: false
     representative: false
 
@@ -1204,7 +1215,7 @@ solving:
   options:
     clip_p_max_pu: 0.01
     load_shedding:
-      enable: false
+      enable: true
       default_cost: 100000
       all_carriers: true
       carriers: {}
