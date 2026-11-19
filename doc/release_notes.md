@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: `pixi run generate-config` now runs on Windows: read and write files as UTF-8 and write paths with `/`.
 * Fix: `build_gas_network` no longer drops the capacity and length of gas pipelines that need no correction. This changes default results ([#2433](https://github.com/PyPSA/pypsa-eur/pull/2433)).
 * Fix: Gas pipelines ending in regions without an onshore region, e.g. offshore junctions at high resolution, now get gas and H2 buses instead of leaving the network inconsistent ([#2429](https://github.com/PyPSA/pypsa-eur/pull/2429)).
 * Fix: Offshore wind profiles no longer fail for clustered buses without an onshore region; the nearest onshore regions then serve as the shoreline ([#2425](https://github.com/PyPSA/pypsa-eur/pull/2425)).
