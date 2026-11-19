@@ -723,10 +723,6 @@ class SectorConfig(BaseModel):
         description="The efficiency of oil-powered machinery in the conversion of oil to meet agricultural needs.",
     )
 
-    shipping_hydrogen_liquefaction: bool = Field(
-        False,
-        description="Whether to include liquefaction costs and electricity demand for hydrogen in shipping.",
-    )
     shipping_endogenous: list[Literal["hydrogen", "methanol", "oil", "lng"]] = Field(
         default_factory=list,
         description="Fuels with an optimised instead of an exogenous share. They compete for the shipping demand that the `shipping_*_share` settings of the other fuels leave uncovered, and each supplies a constant output over the year. Ship costs do not differ by fuel, so the cheapest fuel tends to supply all of this demand.",

@@ -5688,6 +5688,7 @@ def add_shipping(
 
     total_share = sum(share.values())
     if endogenous and total_share >= 1:
+        logger.info("Exogenous shipping shares leave no demand to optimise.")
         endogenous = []
     elif not endogenous and total_share != 1:
         logger.warning(
@@ -5712,13 +5713,11 @@ def add_shipping(
         "lng": oil_efficiency / options["shipping_lng_efficiency"],
     }
 
-    hydrogen_liquefaction = {}
-    if options["shipping_hydrogen_liquefaction"]:
-        hydrogen_liquefaction = dict(
-            bus2=nodes,
-            efficiency2=-costs.at["H2 liquefaction", "electricity-input"],
-            capital_cost=costs.at["H2 liquefaction", "capital_cost"],
-        )
+    hydrogen_liquefaction = dict(
+        bus2=nodes,
+        efficiency2=-costs.at["H2 liquefaction", "electricity-input"],
+        capital_cost=costs.at["H2 liquefaction", "capital_cost"],
+    )
 
     # unburnt methane with 50 MJ/kg counts as CO2 equivalent
     slip = options["shipping_lng_methane_slip"]
@@ -5784,35 +5783,30 @@ def add_shipping(
         )
 
     if share["hydrogen"]:
-        if hydrogen_liquefaction:
-            n.add(
-                "Bus",
-                nodes,
-                suffix=" H2 liquid",
-                carrier="H2 liquid",
-                location=nodes,
-                unit="MWh_LHV",
-            )
+        n.add(
+            "Bus",
+            nodes,
+            suffix=" H2 liquid",
+            carrier="H2 liquid",
+            location=nodes,
+            unit="MWh_LHV",
+        )
 
-            n.add(
-                "Link",
-                nodes + " H2 liquefaction",
-                bus0=nodes + " H2",
-                bus1=nodes + " H2 liquid",
-                carrier="H2 liquefaction",
-                p_nom_extendable=True,
-                **hydrogen_liquefaction,
-            )
-
-            shipping_bus = nodes + " H2 liquid"
-        else:
-            shipping_bus = nodes + " H2"
+        n.add(
+            "Link",
+            nodes + " H2 liquefaction",
+            bus0=nodes + " H2",
+            bus1=nodes + " H2 liquid",
+            carrier="H2 liquefaction",
+            p_nom_extendable=True,
+            **hydrogen_liquefaction,
+        )
 
         n.add(
             "Load",
             nodes,
             suffix=" H2 for shipping",
-            bus=shipping_bus,
+            bus=nodes + " H2 liquid",
             carrier="H2 for shipping",
             p_set=share["hydrogen"] * p_set * fuel_demand["hydrogen"],
         )

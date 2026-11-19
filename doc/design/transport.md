@@ -48,8 +48,8 @@ kerosene or synthetic fuels, and optionally by kerosene made from methanol.
 network that is liquefied with electricity, see [Methane](methane.md). LNG
 engines release a share of the fuel unburnt, and this methane slip counts
 towards the emission limit in CO~2~ equivalents. Methanol and LNG ships
-are assumed to be as efficient as oil ships [@imoFourthGHG2020]. The cost and electricity
-demand of liquefying hydrogen can be included where hydrogen is used.
+are assumed to be as efficient as oil ships [@imoFourthGHG2020]. Hydrogen is
+liquefied with electricity too.
 
 Optionally, the shares of selected fuels are optimised instead. These fuels
 compete for the demand that the prescribed shares of the other fuels leave
