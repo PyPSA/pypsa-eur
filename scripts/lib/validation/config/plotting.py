@@ -878,7 +878,7 @@ _TECH_COLORS: dict[str, str] = {
     "building retrofitting": "#8487e8",
     # hydrogen
     "H2 for industry": "#f073da",
-    "H2 for shipping": "#ebaee0",
+    "shipping hydrogen": "#ebaee0",
     "H2": "#bf13a0",
     "hydrogen": "#bf13a0",
     "retrofitted H2 boiler": "#e5a0d9",
