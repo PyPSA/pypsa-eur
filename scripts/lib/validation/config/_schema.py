@@ -27,7 +27,7 @@ from scripts.lib.validation.config.lines import LinesConfig
 from scripts.lib.validation.config.links import LinksConfig
 from scripts.lib.validation.config.load import LoadConfig
 from scripts.lib.validation.config.overpass_api import OverpassApiConfig
-from scripts.lib.validation.config.pypsa_eur import PypsaEurConfig
+from scripts.lib.validation.config.plotting import PlottingConfig
 from scripts.lib.validation.config.renewable import RenewableConfig
 from scripts.lib.validation.config.run import RunConfig
 from scripts.lib.validation.config.sector import SectorConfig
@@ -45,7 +45,15 @@ class LoggingConfig(ConfigModel):
 
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         "INFO",
-        description="Restrict console outputs to all infos, warning or errors only",
+        description="Root log level. Messages below this level are discarded before reaching any handler.",
+    )
+    console_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
+        "WARNING",
+        description="Minimum level emitted to the console (stderr). Defaults to ``WARNING`` so parallel rule output stays readable; the full log is kept in the rule's log file.",
+    )
+    file_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | None = Field(
+        None,
+        description="Minimum level written to the rule log file. Defaults to ``level`` when unset.",
     )
     format: str = Field(
         "%(levelname)s:%(name)s:%(message)s",
@@ -171,10 +179,6 @@ class ConfigSchema(BaseModel):
         default_factory=LoadConfig,
         description="Electrical load configuration.",
     )
-    pypsa_eur: PypsaEurConfig = Field(
-        default_factory=PypsaEurConfig,
-        description="PyPSA-Eur component filtering configuration.",
-    )
     energy: EnergyConfig = Field(
         default_factory=EnergyConfig,
         description="Energy totals configuration.",
@@ -223,6 +227,10 @@ class ConfigSchema(BaseModel):
         default_factory=OverpassApiConfig,
         description="Overpass API configuration for OSM data retrieval.",
     )
+    plotting: PlottingConfig = Field(
+        default_factory=PlottingConfig,
+        description="Plotting and summary settings.",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -233,5 +241,16 @@ class ConfigSchema(BaseModel):
                 "The 'secrets:' section is no longer supported in config to avoid "
                 "leaking credentials. Use environment variables instead (e.g., "
                 "CORINE_API_TOKEN). You can set these in a .env file in the project root."
+            )
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_no_pypsa_eur_section(cls, data):
+        """Reject the removed `pypsa_eur` section."""
+        if isinstance(data, dict) and "pypsa_eur" in data:
+            raise ValueError(
+                "The 'pypsa_eur:' section is removed. Select power plants with "
+                "'electricity: renewable_carriers' and 'electricity: conventional_carriers'."
             )
         return data

@@ -2,15 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build industrial energy demand per model region.
+Distribute today's industrial energy demand per country to model regions in TWh/a.
 
-Description
--------
-
-This rule maps the industrial energy demand per country `industrial_energy_demand_per_country_today.csv` to each bus region.
-The energy demand per country is multiplied by the mapping value from the file `industrial_distribution_key.csv` between 0 and 1 to get the industrial energy demand per bus.
-
-The unit of the energy demand is TWh/a.
+Each country's demand per subsector and carrier from [build_industrial_energy_demand_per_country_today][] is multiplied by the matching regional distribution key from [build_industrial_distribution_key][]. Subsectors are mapped to the key of a site database where one exists, for example the steel routes to the steel plant tracker, cement to the cement plant tracker, ammonia to ammonia plants and all chemicals to the Hotmaps chemical industry; other subsectors are distributed by population. The output sums over subsectors, giving one value per region and carrier.
 """
 
 import logging
@@ -45,12 +39,12 @@ sector_mapping = {
 }
 
 
-def build_nodal_industrial_energy_demand():
-    fn = snakemake.input.industrial_energy_demand_per_country_today
-    industrial_demand = pd.read_csv(fn, header=[0, 1], index_col=0)
+def build_nodal_industrial_energy_demand(
+    demand_fn: str, keys_fn: str, output_fn: str
+) -> None:
+    industrial_demand = pd.read_csv(demand_fn, header=[0, 1], index_col=0)
 
-    fn = snakemake.input.industrial_distribution_key
-    keys = pd.read_csv(fn, index_col=0)
+    keys = pd.read_csv(keys_fn, index_col=0)
     keys["country"] = keys.index.str[:2]
 
     nodal_demand = pd.DataFrame(
@@ -75,7 +69,7 @@ def build_nodal_industrial_energy_demand():
 
     nodal_demand.index.name = "TWh/a"
 
-    nodal_demand.to_csv(snakemake.output.industrial_energy_demand_per_node_today)
+    nodal_demand.to_csv(output_fn)
 
 
 if __name__ == "__main__":
@@ -86,4 +80,8 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    build_nodal_industrial_energy_demand()
+    build_nodal_industrial_energy_demand(
+        snakemake.input.industrial_energy_demand_per_country_today,
+        snakemake.input.industrial_distribution_key,
+        snakemake.output.industrial_energy_demand_per_node_today,
+    )

@@ -27,7 +27,7 @@ $ snakemake -call results/test-elec/networks/solved_2050.nc --configfile config/
 ```
 
 This configuration is set to download a reduced cutout via the rule `retrieve_cutout`.
-For more information on the data dependencies of PyPSA-Eur, continue reading [Retrieving Data](retrieve.md#data).
+For more information on the data dependencies of PyPSA-Eur, continue reading [Retrieving Data](rules/retrieve.md#data).
 
 ## How to configure runs?
 
@@ -88,7 +88,7 @@ documented at [Configuration](configuration.md).
 It's important to understand how certain configuration settings affect the directory structure in PyPSA-Eur:
 
 - ``run.name`` determines the subdirectory within the ``results`` folder (e.g., ``results/test-elec/networks/...``)
-- ``run.shared_resources.policy`` determines the subdirectory within the ``resources`` folder (e.g., ``resources/test/networks/...``)
+- ``run.shared_resources.policy`` determines the subdirectory within the ``resources`` folder (e.g., ``resources/test-elec/networks/...``)
 
 These settings work together to organize model runs:
 
@@ -99,8 +99,8 @@ These settings work together to organize model runs:
     - Not shared between runs: ``resources/[run.name]`` (if policy is ``false``)
     - Partially shared: If policy is ``"base"``, some common files are shared while others remain run-specific
 
-For this tutorial, with ``run.name: "test-elec"`` and ``run.shared_resources.policy: "test"``,
-intermediate resources are stored in ``resources/test/...`` while results are in ``results/test-elec/...``.
+For this tutorial, with ``run.name: "test-elec"`` and ``run.shared_resources.policy: false``,
+intermediate resources are stored in ``resources/test-elec/...`` and results in ``results/test-elec/...``.
 
 The implementation of this behavior can be found in ``scripts/_helpers.py``.
 
@@ -113,7 +113,7 @@ $ pixi shell
 ```
 
 Let's say based on the modifications above we would like to solve a very simplified model
-clustered down to 6 buses and every 24 hours aggregated to one snapshot. The command
+clustered down to 5 buses and every 24 hours aggregated to one snapshot. The command
 
 ```console
 $ snakemake -call results/test-elec/networks/solved_2050.nc --configfile config/test/config.electricity.yaml
@@ -127,6 +127,11 @@ rule solve_network:
         network=resources("networks/composed_{horizon}.nc"),
     output:
         network=RESULTS + "networks/solved_{horizon}.nc",
+        model=(
+            RESULTS + "models/solved_{horizon}.nc"
+            if config["solving"]["options"]["store_model"]
+            else []
+        ),
     log:
         solver=normpath(RESULTS + "logs/solve_network/solver_{horizon}.log"),
         memory=RESULTS + "logs/solve_network/memory_{horizon}.log",
@@ -187,17 +192,17 @@ cluster_network                                 1
 compose_network                                 1
 determine_availability_matrix                   6
 process_cost_data                               1
-retrieve_co2_prices                             1
+retrieve_instrat_co2_prices                             1
 retrieve_corine                                 1
-retrieve_cost_data                              1
+retrieve_costs                              1
 retrieve_cutout                                 1
 retrieve_desnz_electricity_consumption          1
 retrieve_eez                                    1
-retrieve_electricity_demand_energy_atlas        1
-retrieve_electricity_demand_entsoe              1
-retrieve_electricity_demand_neso                1
-retrieve_electricity_demand_opsd                1
-retrieve_eu_nuts_2021                           1
+retrieve_jrc_energy_atlas        1
+retrieve_entsoe_electricity_demand              1
+retrieve_neso_electricity_demand                1
+retrieve_opsd_electricity_demand                1
+retrieve_eu_nuts2021                           1
 retrieve_gdp_per_capita                         1
 retrieve_jrc_ardeco                             1
 retrieve_natura                                 1
@@ -222,7 +227,7 @@ A job (here ``build_powerplants``) will display its attributes and normally some
 
 ```console
 rule build_powerplants:
-    input: resources/test-elec/networks/clustered.nc, data/custom_powerplants.csv
+    input: resources/test-elec/networks/clustered.nc
     output: resources/test-elec/powerplants.csv
     log: logs/test-elec/build_powerplants.log
     jobid: 40
@@ -263,7 +268,7 @@ configuration file.
 
 ```console
 $ snakemake -call purge
-snakemake -call solve_networks
+$ snakemake -call solve_networks
 ```
 
 !!! note

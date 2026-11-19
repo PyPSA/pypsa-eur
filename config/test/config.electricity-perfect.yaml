@@ -17,8 +17,8 @@ countries:
 - BE
 
 snapshots:
-  start: "2013-03-01"
-  end: "2013-03-08"
+  start: "2013-03-01 00:00"
+  end: "2013-03-07 23:00"
 
 co2_budget:
   emissions_scope: CO2
@@ -83,7 +83,7 @@ costs:
   emission_prices:
     enable: false
     co2: 0.0
-    co2_monthly_prices: false
+    dynamic: false
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -156,7 +156,6 @@ sector:
       supplemental_heating:
         enable: false
         booster_heat_pump: false
-  limited_heat_sources: []
   time_dep_hp_cop: false
   electricity_distribution_grid: false
 
@@ -166,9 +165,9 @@ solving:
     options: highs-simplex
   check_objective:
     enable: false
-    expected_value: 2936658893.4
+    expected_value: 2950689081.09
   options:
-    transmission_losses: 0
+    transmission_losses: false
 
 conventional:
   dynamic_fuel_price: false

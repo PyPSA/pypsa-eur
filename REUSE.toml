@@ -21,6 +21,7 @@ path = [
     "envs/*.pin.txt",
     "envs/environment.yaml",
     "config/config.default.yaml",
+    "config/plotting.default.yaml",
     "config/schema.default.json"
 ]
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
@@ -127,3 +128,10 @@ path = [
 ]
 SPDX-FileCopyrightText = "Wikipedia contributors"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+[[annotations]]
+path = [
+    "data/industry_heat_temperature_shares.csv",
+]
+SPDX-FileCopyrightText = "Fleiter et al., Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>"
+SPDX-License-Identifier = "CC-BY-4.0"

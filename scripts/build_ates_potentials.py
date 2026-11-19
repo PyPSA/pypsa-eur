@@ -2,45 +2,23 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Calculate the Aquifer Thermal Energy Storage (ATES) potentials for each region based on suitable aquifers, district heating areas, and temperature profiles.
+Build aquifer thermal energy storage (ATES) potentials per onshore region.
 
-The script filters aquifers based on their geological suitability (currently only highly productive porous aquifers), intersects them with future district heating areas and onshore regions, and calculates the energy storage potential. The difference between average forward and return temperatures is used as temperature differentials to convert from volumetric to energetic storage potentials.
-
-The methodology is loosely based on Jackson, Regnier, Staffell (2024).
-Future district heating areas are sourced from Manz et al. (2024), based on Fallahnejad et al. (2024). Data on aquifers stems from the German Bundesanstalt für Geowissenschaften und Rohstoffe (BGR).
-
-
-Relevant Settings
------------------
-
-```yaml
-sector:
-    aquifer_thermal_energy_storage:
-        aquifer_volumetric_heat_capacity:
-        fraction_of_aquifer_area_available:
-        effective_screen_length:
-        suitable_aquifer_types:
-        dh_area_buffer:
-```
-
-Inputs
-------
-- `resources/<run_name>/onshore_regions.geojson`: Shapes of onshore regions
-- `resources/<run_name>/aquifer_shapes.shp`: Shapes of aquifers
-- `resources/<run_name>/dh_areas.geojson`: Shapes of district heating areas
-- `resources/<run_name>/central_heating_forward_temperature_profiles.nc`: Forward temperature profiles
-- `resources/<run_name>/central_heating_return_temperature_profiles.nc`: Return temperature profiles
-
-Outputs
--------
-- `resources/<run_name>/ates_potentials.csv`: ATES potentials per region in MWh
+Aquifer shapes from the BGR hydrogeological map of Europe are filtered to the
+configured suitable types, then intersected with onshore regions and with
+buffered district heating areas, since ATES only serves heat networks nearby.
+The usable area is converted to a storage potential in MWh from the aquifer's
+volumetric heat capacity, the effective screen length, the fraction of area
+available and the difference between the annual mean forward temperature and
+the return temperature of district heating, loosely following Jackson et al.
+(2024). Future district heating areas come from Manz et al. (2024).
 
 References
 ----------
-- Jackson, Regnier, Staffell 2024: "Aquifer Thermal Energy Storage for low carbon heating and cooling in the United Kingdom: Current status and future prospects", Applied Energy, vol. 376, no. 124096, https://doi.org/10.1016/j.apenergy.2024.124096
-- Manz et al. 2024: "Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe", Renewable Energy, vol. 224, no. 120111, https://doi.org/10.1016/j.renene.2024.120111
-- Fallahnejad et al. 2024: "District heating potential in the EU-27: Evaluating the impacts of heat demand reduction and market share growth", Applied Energy, vol. 353, no. 122154, https://doi.org/10.1016/j.apenergy.2023.122154
-- BGR: IHME1500 - Internationale Hydrogeologische Karte von Europa 1:1.500.000 (https://www.bgr.bund.de/DE/Themen/Wasser/Projekte/laufend/Beratung/Ihme1500/ihme1500_projektbeschr.html?nn=1546102)
+- Jackson, Regnier and Staffell (2024), [Aquifer Thermal Energy Storage for low carbon heating and cooling in the United Kingdom: Current status and future prospects](https://doi.org/10.1016/j.apenergy.2024.124096)
+- Manz et al. (2024), [Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe](https://doi.org/10.1016/j.renene.2024.120111)
+- Fallahnejad et al. (2024), [District heating potential in the EU-27: Evaluating the impacts of heat demand reduction and market share growth](https://doi.org/10.1016/j.apenergy.2023.122154)
+- BGR, [IHME1500 - International Hydrogeological Map of Europe 1:1,500,000](https://www.bgr.bund.de/DE/Themen/Wasser/Projekte/laufend/Beratung/Ihme1500/ihme1500_projektbeschr.html?nn=1546102)
 """
 
 import logging
@@ -97,18 +75,14 @@ def mwh_ates_per_m2(
     ----------
     - Jackson, Regnier, Staffell 2024 (https://doi.org/10.1016/j.apenergy.2024.124096): Aquifer Thermal Energy Storages for low carbon heating and cooling in the United Kingdom: CUrrent status and future prospects
     """
-    try:
-        return (
-            aquifer_volumetric_heat_capacity
-            * fraction_of_aquifer_area_available
-            * effective_screen_length
-            * (hot_well_temperature - cold_well_temperature)
-            * kwh_per_kj
-            * mwh_per_kwh
-        )
-    except Exception as e:
-        logger.error(f"Error calculating ATES potential per m2: {e}")
-        raise
+    return (
+        aquifer_volumetric_heat_capacity
+        * fraction_of_aquifer_area_available
+        * effective_screen_length
+        * (hot_well_temperature - cold_well_temperature)
+        * kwh_per_kj
+        * mwh_per_kwh
+    )
 
 
 def suitable_aquifers(
@@ -137,21 +111,15 @@ def suitable_aquifers(
     Exception
         If filtering process fails
     """
-    try:
-        if "AQUIF_NAME" not in aquifer_shapes.columns:
-            raise KeyError("Column 'AQUIF_NAME' not found in aquifer shapes dataframe")
+    if "AQUIF_NAME" not in aquifer_shapes.columns:
+        raise KeyError("Column 'AQUIF_NAME' not found in aquifer shapes dataframe")
 
-        filtered = aquifer_shapes[
-            aquifer_shapes["AQUIF_NAME"].isin(suitable_aquifer_types)
-        ]
+    filtered = aquifer_shapes[aquifer_shapes["AQUIF_NAME"].isin(suitable_aquifer_types)]
 
-        if filtered.empty:
-            logger.warning("No suitable aquifers found with the specified types")
+    if filtered.empty:
+        logger.warning("No suitable aquifers found with the specified types")
 
-        return filtered
-    except Exception as e:
-        logger.error(f"Error filtering suitable aquifers: {e}")
-        raise
+    return filtered
 
 
 def ates_potential_per_onshore_region(
@@ -192,62 +160,50 @@ def ates_potential_per_onshore_region(
     Exception
         If calculation process fails
     """
-    try:
-        if suitable_aquifers.empty or onshore_regions.empty or dh_areas.empty:
-            logger.warning("One or more input GeoDataFrames are empty")
+    if suitable_aquifers.empty or onshore_regions.empty or dh_areas.empty:
+        logger.warning("One or more input GeoDataFrames are empty")
 
-        ret_val = onshore_regions.copy()
+    ret_val = onshore_regions.copy()
 
-        if "name" not in ret_val.columns:
-            raise KeyError("Column 'name' not found in onshore_regions dataframe")
+    if "name" not in ret_val.columns:
+        raise KeyError("Column 'name' not found in onshore_regions dataframe")
 
-        ret_val.index = ret_val["name"]
-        ret_val.drop(columns=["name"], inplace=True)
+    ret_val.index = ret_val["name"]
+    ret_val.drop(columns=["name"], inplace=True)
 
-        suitable_aquifers_in_onshore_regions = gpd.overlay(
-            suitable_aquifers, onshore_regions, how="intersection"
-        )
+    suitable_aquifers_in_onshore_regions = gpd.overlay(
+        suitable_aquifers, onshore_regions, how="intersection"
+    )
 
-        if suitable_aquifers_in_onshore_regions.empty:
-            logger.warning("No suitable aquifers found in onshore regions")
-            ret_val["ates_potential"] = 0
-            return ret_val
-
-        dh_areas_buffered = dh_areas.copy()
-        dh_areas_buffered["geometry"] = dh_areas_buffered.geometry.buffer(
-            dh_area_buffer
-        )
-
-        try:
-            aquifers_in_dh_areas = (
-                gpd.overlay(
-                    dh_areas_buffered,
-                    suitable_aquifers_in_onshore_regions,
-                    how="intersection",
-                )
-                .groupby("name")["geometry"]
-                .apply(lambda x: x.area.sum())
-            )
-
-            # Handle regions without any ATES potential
-            missing_regions = set(ret_val.index) - set(aquifers_in_dh_areas.index)
-            if missing_regions:
-                logger.info(f"{len(missing_regions)} regions have no ATES potential")
-
-            ret_val["ates_potential"] = 0.0  # Default value
-            ret_val.loc[aquifers_in_dh_areas.index, "ates_potential"] = (
-                aquifers_in_dh_areas * mwh_per_m2
-            )
-
-        except Exception as e:
-            logger.error(f"Error in overlay calculation: {e}")
-            ret_val["ates_potential"] = 0
-
+    if suitable_aquifers_in_onshore_regions.empty:
+        logger.warning("No suitable aquifers found in onshore regions")
+        ret_val["ates_potential"] = 0
         return ret_val
 
-    except Exception as e:
-        logger.error(f"Error calculating ATES potential per onshore region: {e}")
-        raise
+    dh_areas_buffered = dh_areas.copy()
+    dh_areas_buffered["geometry"] = dh_areas_buffered.geometry.buffer(dh_area_buffer)
+
+    aquifers_in_dh_areas = (
+        gpd.overlay(
+            dh_areas_buffered,
+            suitable_aquifers_in_onshore_regions,
+            how="intersection",
+        )
+        .groupby("name")["geometry"]
+        .apply(lambda x: x.area.sum())
+    )
+
+    # Handle regions without any ATES potential
+    missing_regions = set(ret_val.index) - set(aquifers_in_dh_areas.index)
+    if missing_regions:
+        logger.info(f"{len(missing_regions)} regions have no ATES potential")
+
+    ret_val["ates_potential"] = 0.0  # Default value
+    ret_val.loc[aquifers_in_dh_areas.index, "ates_potential"] = (
+        aquifers_in_dh_areas * mwh_per_m2
+    )
+
+    return ret_val
 
 
 def check_dh_areas_coverage(dh_areas: gpd.GeoDataFrame, countries: list) -> None:

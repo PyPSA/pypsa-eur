@@ -11,24 +11,6 @@ threshold levels, forward temperatures are linearly interpolated.
 By default, `max_forward_temperature` from Euroheat DHC Market Outlook 2024 is used; `min_forward_temperature` and `return_temperature` for Germany is used from AGFW-Hauptbericht 2022.
 `min_forward_temperature` and `return_temperature` for other countries are extrapolated based on the ratio between `max_forward_temperature` and `min_forward_temperature` and `return_temperature` for those countries not missing (by default only Germany).
 
-Relevant Settings
------------------
-
-```yaml
-sector:
-    district_heating:
-        max_forward_temperature:
-        min_forward_temperature:
-        return_temperature:
-```
-Inputs
-------
-- `resources/<run_name>/temp_air_total`: Air temperature
-
-Outputs
--------
-- `resources/<run_name>/central_heating_temperature_profiles.nc`:
-
 References
 ----------
 - Pieper, et al. (2019): "Assessment of a combination of three heat sources for heat pumps to supply district heating" (https://doi.org/10.1016/j.energy.2019.03.165).
@@ -62,23 +44,23 @@ def extrapolate_missing_supply_temperatures_by_country(
         xr.DataArray: A DataArray containing the extrapolated supply temperatures.
     """
 
-    if not all([key in extrapolate_from.keys() for key in extrapolate_to.keys()]):
+    if not all(key in extrapolate_from for key in extrapolate_to):
         raise ValueError(
             "Not all countries in extrapolate_to are present in extrapolate_from."
         )
     # average ratio between extrapolate_from and extrapolate_to for those countries that are in both dictionaries
     extrapolation_ratio = np.mean(
-        [extrapolate_to[key] / extrapolate_from[key] for key in extrapolate_to.keys()]
+        [extrapolate_to[key] / extrapolate_from[key] for key in extrapolate_to]
     )
 
     # apply extrapolation ratio to all keys missing in extrapolate_to
     return {
         key: (
             extrapolate_to[key]
-            if key in extrapolate_to.keys()
+            if key in extrapolate_to
             else extrapolate_from[key] * extrapolation_ratio
         )
-        for key in extrapolate_from.keys()
+        for key in extrapolate_from
     }
 
 
@@ -123,7 +105,7 @@ def map_temperature_dict_to_onshore_regions(
             (
                 supply_temperature_by_country[get_country_from_node_name(node_name)]
                 if get_country_from_node_name(node_name)
-                in supply_temperature_by_country.keys()
+                in supply_temperature_by_country
                 else np.mean(list(supply_temperature_by_country.values()))
             )
             for node_name in onshore_regions.values
@@ -184,7 +166,7 @@ def scale_temperature_to_investment_year(
             (1 - relative_annual_temperature_reduction)
             ** (investment_year - current_year)
         )
-        for key in temperature_baseyear.keys()
+        for key in temperature_baseyear
     }
 
 

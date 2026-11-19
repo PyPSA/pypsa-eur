@@ -5,6 +5,7 @@
 if config["foresight"] != "perfect":
 
     rule plot_base_network:
+        """Plots the base transmission network topology with line and link capacities on a map."""
         input:
             network=resources("networks/base.nc"),
             onshore_regions=resources("onshore_regions_base.geojson"),
@@ -17,12 +18,11 @@ if config["foresight"] != "perfect":
             mem_mb=4000,
         params:
             plotting=config_provider("plotting"),
-        message:
-            "Plotting base power network"
         script:
             scripts("plot_base_network.py")
 
     rule plot_clustered_network:
+        """Plots the clustered transmission network with existing and planned HVDC links on a map."""
         input:
             network=resources("networks/clustered.nc"),
             regions=resources("onshore_regions.geojson"),
@@ -35,12 +35,11 @@ if config["foresight"] != "perfect":
             mem_mb=4000,
         params:
             plotting=config_provider("plotting"),
-        message:
-            "Plotting clustered network clusters"
         script:
             scripts("plot_power_network_clustered.py")
 
     rule plot_power_network:
+        """Plots the optimised power network with regional technology costs and grid expansion."""
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
@@ -56,12 +55,11 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
             transmission_limit=config_provider("electricity", "transmission_limit"),
-        message:
-            "Plotting power network for {wildcards.horizon} planning horizon"
         script:
             scripts("plot_power_network.py")
 
     rule plot_hydrogen_network:
+        """Plots the optimised hydrogen pipelines, storage, electrolysis and fuel cells on a map."""
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
@@ -77,12 +75,11 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
             foresight=config_provider("foresight"),
-        message:
-            "Plotting hydrogen network for {wildcards.horizon} planning horizon"
         script:
             scripts("plot_hydrogen_network.py")
 
     rule plot_gas_network:
+        """Plots the optimised methane pipeline network and regional gas sources on a map."""
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
@@ -97,12 +94,11 @@ if config["foresight"] != "perfect":
             mem_mb=10000,
         params:
             plotting=config_provider("plotting"),
-        message:
-            "Plotting methane network for {wildcards.horizon} planning horizon"
         script:
             scripts("plot_gas_network.py")
 
     rule plot_balance_map:
+        """Plots a static map of the nodal energy balance, flows and prices for one bus carrier."""
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
@@ -118,12 +114,11 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
             settings=lambda w: config_provider("plotting", "balance_map", w.carrier),
-        message:
-            "Plotting balance map for {wildcards.horizon} planning horizon and {wildcards.carrier} carrier"
         script:
             scripts("plot_balance_map.py")
 
     rule plot_balance_map_interactive:
+        """Plots an interactive map of the nodal energy balance, flows and prices for one bus carrier."""
         input:
             network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("onshore_regions.geojson"),
@@ -137,6 +132,8 @@ if config["foresight"] != "perfect":
         resources:
             mem_mb=8000,
         params:
+            nice_names=config_provider("plotting", "nice_names"),
+            tech_colors=config_provider("plotting", "tech_colors"),
             settings=lambda w: config_provider(
                 "plotting", "balance_map_interactive", w.carrier
             ),
@@ -144,6 +141,7 @@ if config["foresight"] != "perfect":
             scripts("plot_balance_map_interactive.py")
 
     rule plot_heat_source_map:
+        """Plots interactive maps of heat source temperatures and energy potentials by region."""
         input:
             regions=resources("onshore_regions.geojson"),
             heat_source_temperature=lambda w: (
@@ -168,18 +166,24 @@ if config["foresight"] != "perfect":
         threads: 1
         resources:
             mem_mb=150000,
+        params:
+            heat_source_map=config_provider("plotting", "heat_source_map"),
         script:
             scripts("plot_heat_source_map.py")
 
 
 rule make_summary:
+    """Computes summary tables of costs, capacities, energy balances, prices and metrics."""
     input:
         networks=lambda w: (
-            [RESULTS + f"networks/solved_{config['planning_horizons'][-1]}.nc"]
-            if config["foresight"] == "perfect"
+            [
+                RESULTS
+                + f"networks/solved_{config_provider('planning_horizons')(w)[-1]}.nc"
+            ]
+            if config_provider("foresight")(w) == "perfect"
             else [
                 RESULTS + f"networks/solved_{h}.nc"
-                for h in config["planning_horizons"]
+                for h in config_provider("planning_horizons")(w)
             ]
         ),
     output:
@@ -208,19 +212,21 @@ rule make_summary:
     params:
         foresight=config_provider("foresight"),
         planning_horizons=config_provider("planning_horizons"),
-    message:
-        "Creating optimization results summary statistics"
     script:
         scripts("make_summary.py")
 
 
 rule plot_summary:
+    """Plots stacked bar charts of system costs, energy and balances across planning horizons."""
     input:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/energy_balance.csv",
         eurostat=resources("eurostat_energy_balances.csv"),
-        co2=rules.retrieve_ghg_emissions.output["csv"],
+        co2=branch(
+            lambda w: config_provider("foresight")(w) == "perfect",
+            rules.retrieve_ghg_emissions.output["csv"],
+        ),
     output:
         costs=RESULTS + "graphs/costs.pdf",
         energy=RESULTS + "graphs/energy.pdf",
@@ -238,13 +244,12 @@ rule plot_summary:
         foresight=config_provider("foresight"),
         sector=config_provider("sector"),
         RDIR=RDIR,
-    message:
-        "Plotting summary statistics and results"
     script:
         scripts("plot_summary.py")
 
 
 rule plot_balance_timeseries:
+    """Plots stacked energy balance time series per carrier at annual and monthly resolution."""
     input:
         network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
@@ -261,13 +266,12 @@ rule plot_balance_timeseries:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-    message:
-        "Plotting energy balance time series for {wildcards.horizon} planning horizon"
     script:
         scripts("plot_balance_timeseries.py")
 
 
 rule plot_heatmap_timeseries:
+    """Plots hour-by-day heatmaps of utilisation rates, marginal prices and storage levels."""
     input:
         network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
@@ -284,8 +288,6 @@ rule plot_heatmap_timeseries:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-    message:
-        "Plotting heatmap time series visualization for {wildcards.horizon} planning horizon"
     script:
         scripts("plot_heatmap_timeseries.py")
 
@@ -304,6 +306,7 @@ STATISTICS_BARPLOTS = [
 
 
 rule plot_base_statistics:
+    """Plots bar charts of capacities, costs, curtailment, supply and market values per carrier."""
     input:
         network=RESULTS + "networks/solved_{horizon}.nc",
     output:
@@ -312,16 +315,12 @@ rule plot_base_statistics:
             for plot in STATISTICS_BARPLOTS
         },
         barplots_touch=RESULTS + "figures/.statistics_plots_{horizon}",
-    params:
-        plotting=config_provider("plotting"),
-        barplots=STATISTICS_BARPLOTS,
-    message:
-        "Plotting base scenario statistics"
     script:
         scripts("plot_statistics.py")
 
 
 rule build_ambient_air_temperature_yearly_average:
+    """Averages ambient air temperature over the year for each onshore grid cell."""
     input:
         cutout=lambda w: input_cutout(w),
         onshore_regions=resources("onshore_regions.geojson"),
@@ -341,6 +340,7 @@ rule build_ambient_air_temperature_yearly_average:
 
 
 rule plot_cop_profiles:
+    """Plots interactive heat pump coefficient of performance profiles per region."""
     input:
         cop_profiles=resources("cop_profiles_{horizon}.nc"),
     output:
@@ -356,6 +356,7 @@ rule plot_cop_profiles:
 
 
 rule plot_interactive_bus_balance:
+    """Plots interactive energy balance time series for each bus matching a name pattern."""
     input:
         network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",

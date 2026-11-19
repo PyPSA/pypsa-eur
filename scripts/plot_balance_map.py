@@ -2,7 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create static energy balance maps for the defined carriers using`n.plot()`.
+Plots a static map of the nodal energy balance of one bus carrier.
+
+Reads the solved network and computes the annual energy balance per bus and
+technology carrier with the PyPSA statistics module, split into supply and
+consumption. Bus sizes show the balance as split circles, branch widths and
+arrows show net transmission flows, and regions are shaded by the
+time-averaged marginal price of the carrier. Transmission losses are removed
+from the balance. For stored CO2, dense-phase buses are merged into the
+balance and the CO2 emission shadow price is subtracted from the regional
+price. Carriers absent from the network produce a placeholder figure.
 """
 
 import geopandas as gpd
@@ -43,7 +52,11 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-    sanitize_carriers(n, snakemake.config)
+    sanitize_carriers(
+        n,
+        snakemake.params.plotting["nice_names"],
+        snakemake.params.plotting["tech_colors"],
+    )
     pypsa.set_option("params.statistics.round", 8)
     pypsa.set_option("params.statistics.drop_zero", True)
     pypsa.set_option("params.statistics.nice_names", False)
@@ -116,7 +129,9 @@ if __name__ == "__main__":
             n, bus_carrier=carrier
         ).rename({"name": "carrier"})
 
-    components = transmission_carriers.unique("component")
+    components = transmission_carriers.unique("component").intersection(
+        eb.index.unique("component")
+    )
     carriers = transmission_carriers.unique("carrier")
 
     # only carriers that are also in the energy balance
@@ -262,7 +277,7 @@ if __name__ == "__main__":
     # Determine larger total absolute value for supply and consumption for a carrier if carrier exists as both supply and consumption
     common_carriers = pos_carriers.intersection(neg_carriers)
 
-    def get_total_abs(carrier, sign):
+    def get_total_abs(carrier: str, sign: int) -> float:
         values = bus_size.loc[:, carrier]
         return values[values * sign > 0].abs().sum()
 

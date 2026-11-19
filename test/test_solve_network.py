@@ -6,7 +6,11 @@ import pandas as pd
 import pypsa
 import pytest
 
-from scripts.solve_network import add_co2_atmosphere_constraint, emission_stores
+from scripts.solve_network import (
+    add_co2_atmosphere_constraint,
+    add_flexible_egs_constraint,
+    emission_stores,
+)
 
 
 @pytest.fixture(scope="function")
@@ -78,3 +82,42 @@ def test_emission_stores_selects_accumulating_stores(
     ]
     co2_network.stores.loc["co2 atmosphere", "e_cyclic"] = True
     assert emission_stores(co2_network, pd.Index(["co2"])).empty
+
+
+@pytest.fixture(scope="function")
+def egs_network() -> pypsa.Network:
+    n = pypsa.Network()
+    n.add("Carrier", "geothermal heat")
+    n.add("Bus", ["EU", "A", "B"], carrier="geothermal heat")
+    n.add(
+        "Link",
+        ["A well 0", "A well 1", "B well 0", "A well 0-2025"],
+        bus0="EU",
+        bus1=["A", "A", "B", "A"],
+        carrier="geothermal heat",
+        p_nom=[0.0, 0.0, 0.0, 100.0],
+        p_nom_extendable=[True, True, True, False],
+        p_nom_min=[10.0, 20.0, 5.0, 0.0],
+        p_nom_max=[10.0, 20.0, 5.0, 100.0],
+    )
+    n.add(
+        "StorageUnit",
+        ["A reservoir", "B reservoir"],
+        bus=["A", "B"],
+        carrier="geothermal heat",
+        p_nom_extendable=True,
+        capital_cost=-1.0,
+    )
+    return n
+
+
+def test_add_flexible_egs_constraint_bounds_reservoir_by_wells_at_its_bus(
+    egs_network: pypsa.Network,
+) -> None:
+    egs_network.optimize(
+        extra_functionality=lambda n, _: add_flexible_egs_constraint(n),
+        solver_name="highs",
+    )
+
+    p_nom_opt = egs_network.storage_units.p_nom_opt
+    assert p_nom_opt.to_dict() == {"A reservoir": 130.0, "B reservoir": 5.0}

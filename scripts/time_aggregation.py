@@ -4,8 +4,6 @@
 """
 Defines the time aggregation to be used for sector-coupled network.
 
-Description
------------
 Computes a time aggregation scheme for the given network, in the form of a CSV
 file with the snapshot weightings, indexed by the new subset of snapshots. This
 rule only computes said aggregation scheme; aggregation of time-varying network

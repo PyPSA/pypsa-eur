@@ -1,8 +1,20 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Builds a zonal transmission network from the ENTSO-E TYNDP reference grid with one bus per bidding zone.
+
+Bidding zone shapes are reduced to representative points that serve as
+coordinates for the electricity and hydrogen nodes of the TYNDP node table. The
+net transfer capacities (NTC) of the reference grid become unidirectional DC
+links, one per direction, drawn as straight lines between the zone points with an
+assumed voltage of 380 kV. Lines, converters and transformers are exported as
+empty placeholder tables so that the output has the same format as the OSM
+network and can be read by the base network rule.
+"""
 
 import logging
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -65,62 +77,9 @@ CONVERTERS_COLUMNS = [
 ]
 
 
-def format_bz_names(s: str):
+def format_bz_names(s: str) -> str:
     s = s.replace("FR-C", "FR15").replace("UK-N", "UKNI").replace("UK", "GB")
     return s
-
-
-def extract_shape_by_bbox(
-    gdf: gpd.GeoDataFrame,
-    country: str,
-    min_lon: float,
-    max_lon: float,
-    min_lat: float,
-    max_lat: float,
-    region_id: str,
-):
-    """
-    Extracts a shape from a country's GeoDataFrame based on latitude and longitude bounds.
-
-    Parameters
-    ----------
-    gdf : GeoDataFrame
-        GeoDataFrame containing country geometries.
-    country : str
-        The country code or name to filter.
-    min_lon : float
-        Minimum longitude bound for extraction.
-    max_lon : float
-        Maximum longitude bound for extraction.
-    min_lat : float
-        Minimum latitude bound for extraction.
-    max_lat : float
-        Maximum latitude bound for extraction.
-    region_id : str
-        String to assign an ID to the extracted region.
-
-    Returns
-    -------
-    GeoDataFrame
-        Updated GeoDataFrame with the extracted shape separated.
-    """
-    country_gdf = gdf.explode().query(f"country == '{country}'").reset_index(drop=True)
-
-    extracted_region = country_gdf.cx[min_lon:max_lon, min_lat:max_lat].assign(
-        id=region_id
-    )
-
-    remaining_country = (
-        country_gdf.drop(extracted_region.index).dissolve(by="country").reset_index()
-    )
-
-    return pd.concat(
-        [
-            gdf.query(f"country != '{country}'"),
-            remaining_country,
-            extracted_region.dissolve(by="country").reset_index(),
-        ]
-    ).reset_index(drop=True)
 
 
 def build_shapes(
@@ -128,7 +87,7 @@ def build_shapes(
     countries: list[str],
     geo_crs: str = GEO_CRS,
     distance_crs: str = DISTANCE_CRS,
-):
+) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
     Process bidding zones from the shape file and calculate representative point. Deduce the country shapes and their representative point.
 
@@ -200,7 +159,7 @@ def build_buses(
     bidding_shapes: gpd.GeoDataFrame,
     country_shapes: gpd.GeoDataFrame,
     geo_crs: str = GEO_CRS,
-):
+) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
     Extend the node list for both electricity and hydrogen with attributes, incl. country and coordinates.
 
@@ -302,7 +261,7 @@ def build_buses(
     return buses, buses_h2
 
 
-def format_grid_names(s: str):
+def format_grid_names(s: str) -> str:
     s = (
         s
         # Poland organizes its lines in three sections,
@@ -315,11 +274,11 @@ def format_grid_names(s: str):
 
 
 def build_links(
-    grid_fn,
+    grid_fn: str | Path,
     buses: gpd.GeoDataFrame,
     geo_crs: str = GEO_CRS,
     distance_crs: str = DISTANCE_CRS,
-):
+) -> gpd.GeoDataFrame:
     """
     Process reference grid information to produce link data. p_nom are NTC values.
 
@@ -394,7 +353,10 @@ def build_links(
     links = links.dropna()  # TODO Remove this when all nodes are known
 
     links["geometry"] = gpd.GeoSeries(
-        [LineString([p0, p1]) for p0, p1 in zip(links["geometry0"], links["geometry1"])]
+        [
+            LineString([p0, p1])
+            for p0, p1 in zip(links["geometry0"], links["geometry1"], strict=True)
+        ]
     )
     links = gpd.GeoDataFrame(links, geometry="geometry", crs=geo_crs)
 

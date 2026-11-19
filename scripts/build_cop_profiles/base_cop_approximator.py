@@ -36,7 +36,7 @@ class BaseCopApproximator(ABC):
         self,
         sink_outlet_temperature_celsius: xr.DataArray | np.ndarray,
         source_inlet_temperature_celsius: xr.DataArray | np.ndarray,
-    ):
+    ) -> None:
         """
         Initialize CopApproximator.
 

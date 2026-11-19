@@ -8,7 +8,7 @@ Sector configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#sector_cf
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -61,12 +61,13 @@ class _DistrictHeatingConfig(ConfigModel):
     )
     ptes: dict[str, Any] = Field(
         default_factory=lambda: {
+            "enable": True,
             "dynamic_capacity": False,
             "supplemental_heating": {"enable": False, "booster_heat_pump": False},
             "max_top_temperature": 90,
             "min_bottom_temperature": 35,
         },
-        description="Pit thermal energy storage settings.",
+        description="Pit thermal energy storage settings. `enable` adds pit thermal energy storage (water pits) to urban central heating, independently of `sector: ttes`. If disabled, all other `ptes` options are ignored.",
     )
     ates: dict[str, Any] = Field(
         default_factory=lambda: {
@@ -189,7 +190,11 @@ class _CHPConfig(BaseModel):
     )
     fuel: list[str] = Field(
         default_factory=lambda: ["solid biomass", "gas"],
-        description='Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are "gas", "oil", "methanol", "lignite", "coal" as well as "solid biomass". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added.',
+        description='Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are "gas", "oil", "methanol", "lignite", "coal" as well as "solid biomass". For all fuels except solid biomass, the techno-economic data from gas CHP is used.',
+    )
+    fuel_cc: list[str] = Field(
+        default_factory=lambda: ["solid biomass", "gas"],
+        description="Fuels for which CHP plants with carbon capture (CC) are added in addition to the CHP plants without carbon capture. Only fuels that are also listed in `fuel` are considered. Set to an empty list to disable CHP with carbon capture.",
     )
     micro_chp: bool = Field(
         False,
@@ -365,6 +370,38 @@ class _SolidBiomassImportConfig(BaseModel):
     )
 
 
+class _CorridorConfig(BaseModel):
+    """Configuration for the candidate corridors of one carrier."""
+
+    min_degree: int = Field(
+        1,
+        ge=0,
+        description="Minimum number of candidate corridors per region. The candidates start from the Gabriel graph and add the shortest Delaunay edges until each region reaches this degree. Set to 0 to use the full Delaunay graph.",
+    )
+    max_offshore_distance: float = Field(
+        float("inf"),
+        gt=0,
+        description="Maximum offshore length of a candidate corridor (km). Defaults to unlimited (`.inf`).",
+    )
+
+
+class _TransportCorridorsConfig(BaseModel):
+    """Configuration for `sector.transport_corridors` settings."""
+
+    H2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new hydrogen pipelines.",
+    )
+    CO2: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for new carbon dioxide pipelines.",
+    )
+    biomass: _CorridorConfig = Field(
+        default_factory=_CorridorConfig,
+        description="Candidate corridors for solid biomass and municipal solid waste transport.",
+    )
+
+
 class _ImportsConfig(BaseModel):
     """Configuration for `sector.imports` settings."""
 
@@ -384,6 +421,138 @@ class _ImportsConfig(BaseModel):
             "oil": 125,
         },
         description="Price for importing renewable energy of carrier.",
+    )
+
+
+class _LandEligibilityConfig(BaseModel):
+    """Land eligibility settings shared by the land-based carbon dioxide removal options."""
+
+    enable: bool = Field(False, description="Add this carbon dioxide removal option.")
+    corine: list[int] = Field(
+        description="CORINE Land Cover codes of the eligible land.",
+    )
+    natura: bool = Field(False, description="Exclude Natura 2000 protection areas.")
+    excluder_resolution: float = Field(
+        250, description="Resolution in meters of the land eligibility analysis."
+    )
+    max_land_usage: float = Field(
+        1.0, ge=0, le=1, description="Maximum share of the eligible land that is used."
+    )
+
+
+class _RockWeatheringConfig(_LandEligibilityConfig):
+    """Configuration for `sector.rock_weathering` settings."""
+
+    corine: list[int] = Field(
+        default_factory=lambda: [12, 13, 14],
+        description="CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+    )
+    max_land_usage: float = Field(
+        0.2, ge=0, le=1, description="Maximum share of the eligible land that is used."
+    )
+    min_mean_temp: float = Field(
+        10,
+        description="Annual mean air temperature in degrees Celsius below which land is excluded, because weathering slows down in cold climates.",
+    )
+    co2_removal_per_sqkm: float = Field(
+        309,
+        description="CO2 removed per square kilometre of land and year (t/km2/a).",
+    )
+
+
+class _BiocharConfig(_LandEligibilityConfig):
+    """Configuration for `sector.biochar` settings."""
+
+    corine: list[int] = Field(
+        default_factory=lambda: [12, 13, 14],
+        description="CORINE Land Cover codes of the eligible land (non-irrigated arable land, permanently irrigated land, rice fields).",
+    )
+    max_land_usage: float = Field(
+        0.2, ge=0, le=1, description="Maximum share of the eligible land that is used."
+    )
+    application_per_sqkm: float = Field(
+        1500,
+        description="Biochar that a square kilometre of land can take up in total (t/km2).",
+    )
+    application_years: float = Field(
+        25,
+        description="Years over which the total biochar application is spread.",
+    )
+    use_waste_heat: float = Field(
+        0.25,
+        ge=0,
+        le=1,
+        description="Share of the pyrolysis heat output that is fed into district heating networks.",
+    )
+
+
+class _AfforestationConfig(_LandEligibilityConfig):
+    """Configuration for `sector.afforestation` settings."""
+
+    corine: list[int] = Field(
+        default_factory=lambda: [29],
+        description="CORINE Land Cover codes of the eligible land (transitional woodland-shrub).",
+    )
+    credited_share: float = Field(
+        0.8,
+        ge=0,
+        le=1,
+        description="Share of the gross sequestration credited as net removal under the EU Carbon Removals and Carbon Farming regulation (EU 2024/3012), after the uncertainty deduction and the buffer-pool contribution.",
+    )
+
+
+class _IndustryHeatConfig(BaseModel):
+    """Configuration for `sector.industry_heat` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Optimise the supply of industry process heat above 100 °C per temperature band instead of using exogenous fuel shares. Does not cover the steel sector. Uses today's specific energy consumption and no existing plants, so that the first horizon of a myopic pathway can replace all of today's heat supply.",
+    )
+    min_part_load: float = Field(
+        0.8,
+        ge=0,
+        le=1,
+        description="Minimum part load of newly built industry process heat supply.",
+    )
+    exclude_sectors: list[str] = Field(
+        default_factory=lambda: ["Pulp production"],
+        description="Industry sectors in `data/industry_heat_temperature_shares.csv` that keep exogenous fuel shares. Pulp production is excluded by default because it burns its own by-products.",
+    )
+    technologies: dict[
+        Literal["heat100-200", "heat200-500", "heat500+"],
+        list[
+            Literal["solid biomass", "gas", "hydrogen", "heat pump", "electric boiler"]
+        ],
+    ] = Field(
+        default_factory=lambda: {
+            "heat100-200": ["solid biomass", "gas", "heat pump", "electric boiler"],
+            "heat200-500": ["solid biomass", "gas", "hydrogen"],
+            "heat500+": ["gas", "hydrogen"],
+        },
+        description="Supply technologies per temperature band in °C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
+    )
+
+
+class _PerennialsConfig(BaseModel):
+    """Configuration for `sector.perennials` settings."""
+
+    enable: bool = Field(False, description="Add this carbon dioxide removal option.")
+    hectares_per_mwh: float = Field(
+        0.06,
+        ge=0,
+        description="Cropland freed per unit of unsustainable bioliquids phased out (ha/MWh/a).",
+    )
+    co2_removal_per_hectare: float = Field(
+        2,
+        description="CO2 removal credited for the soil carbon gain under perennial grass (t/ha/a).",
+    )
+    yield_per_hectare: float = Field(
+        7.5,
+        description="Dry matter yield of the perennial grass that is refined to biogas (t/ha/a).",
+    )
+    harvest_months: list[int] = Field(
+        default_factory=lambda: [4, 5, 6, 7, 8, 9, 10],
+        description="Months in which the grass is harvested and refined.",
     )
 
 
@@ -693,9 +862,15 @@ class SectorConfig(BaseModel):
         default_factory=_RetrofittingConfig, description="Retrofitting configuration."
     )
 
-    tes: bool = Field(
+    ttes: bool = Field(
         True,
-        description="Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES).",
+        description="Add tank thermal energy storage (water tanks) in all heat systems. Pit and aquifer thermal energy storage are controlled separately by `district_heating: ptes: enable` and `district_heating: ates: enable`.",
+    )
+    tes: bool | None = Field(
+        None,
+        deprecated=True,
+        exclude=True,
+        description="Deprecated, use `ttes` and `district_heating: ptes: enable`.",
     )
     boilers: bool = Field(
         True, description="Add option for transforming gas into heat using gas boilers."
@@ -733,7 +908,27 @@ class SectorConfig(BaseModel):
     coal_cc: bool = Field(
         False, description="Add option for coal CHPs with carbon capture."
     )
+    ccgt_cc: bool = Field(
+        False,
+        description="Add option for gas CCGTs with post-combustion carbon capture.",
+    )
     dac: bool = Field(True, description="Add option for Direct Air Capture (DAC).")
+    rock_weathering: _RockWeatheringConfig = Field(
+        default_factory=_RockWeatheringConfig,
+        description="Enhanced rock weathering on cropland as carbon dioxide removal option.",
+    )
+    biochar: _BiocharConfig = Field(
+        default_factory=_BiocharConfig,
+        description="Biochar from the pyrolysis of solid biomass as carbon dioxide removal option.",
+    )
+    afforestation: _AfforestationConfig = Field(
+        default_factory=_AfforestationConfig,
+        description="Afforestation as carbon dioxide removal option.",
+    )
+    perennials: _PerennialsConfig = Field(
+        default_factory=_PerennialsConfig,
+        description="Perennial grass on cropland freed by the phase-out of unsustainable bioliquids as carbon dioxide removal option.",
+    )
     co2_vent: bool = Field(
         False,
         description="Add option for vent out CO2 from storages to the atmosphere.",
@@ -761,6 +956,10 @@ class SectorConfig(BaseModel):
     hydrogen_turbine: bool = Field(
         True,
         description="Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs.",
+    )
+    electrolysis: bool = Field(
+        True,
+        description="Add option to include hydrogen electrolysis for power-to-gas conversion.",
     )
     SMR: bool = Field(
         True,
@@ -806,9 +1005,6 @@ class SectorConfig(BaseModel):
     )
     co2_sequestration_cost: float = Field(
         30, description="The cost of sequestering a ton of CO2 (currency/tCO2)."
-    )
-    co2_sequestration_lifetime: int = Field(
-        50, description="The lifetime of a CO2 sequestration site (years)."
     )
     co2_spatial: bool = Field(
         True,
@@ -913,6 +1109,10 @@ class SectorConfig(BaseModel):
     )
 
     H2_network: bool = Field(True, description="Add option for new hydrogen pipelines.")
+    transport_corridors: _TransportCorridorsConfig = Field(
+        default_factory=_TransportCorridorsConfig,
+        description="Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport, derived from the Delaunay triangulation of the regions.",
+    )
     gas_network: bool = Field(
         True,
         description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
@@ -943,6 +1143,10 @@ class SectorConfig(BaseModel):
     biomass_transport: bool = Field(
         False, description="Add option for transporting solid biomass between nodes."
     )
+    unsustainable_biomass_upstream_emissions: bool = Field(
+        False,
+        description="Add the cultivation emissions of the unsustainable bioliquids to their use: field N2O and soil acidification, and the production of imported nitrogen fertiliser. The factors are in CO2 equivalents, although the emission limit otherwise counts CO2 only.",
+    )
     biogas_upgrading: bool = Field(True, description="Biogas upgrading.")
     biogas_upgrading_cc: bool = Field(
         False, description="Add option to capture CO2 from biomass upgrading."
@@ -951,6 +1155,11 @@ class SectorConfig(BaseModel):
     conventional_generation: dict[str, str] | list = Field(
         default_factory=lambda: {"OCGT": "gas", "CCGT": "gas"},
         description="Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.",
+    )
+
+    industry_heat: _IndustryHeatConfig = Field(
+        default_factory=_IndustryHeatConfig,
+        description="Endogenous supply of industry process heat.",
     )
 
     biomass_to_liquid: bool = Field(
@@ -975,7 +1184,12 @@ class SectorConfig(BaseModel):
         description="Add option for transforming solid biomass into hydrogen with carbon capture.",
     )
     municipal_solid_waste: bool = Field(
-        False, description="Add option for municipal solid waste."
+        False,
+        description="Add municipal solid waste as carbon-neutral fuel for waste-to-energy plants. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`.",
+    )
+    waste_spatial: bool = Field(
+        False,
+        description="Model plastic and municipal solid waste for each bus region instead of one European bus. Only used with `industry: waste_to_energy` or `industry: waste_to_energy_cc`. Waste can be transported between regions if `biomass_transport` is enabled.",
     )
 
     limit_max_growth: _LimitMaxGrowthConfig = Field(

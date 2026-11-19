@@ -7,9 +7,17 @@
 import numpy as np
 import pandas as pd
 import pypsa
+import pytest
 import xarray as xr
 
-from scripts.add_electricity import attach_load
+from scripts.add_electricity import (
+    attach_hydro,
+    attach_load,
+    attach_storageunits,
+    attach_stores,
+    estimate_efficiency,
+)
+from scripts.lib.validation.config.conventional import _EstimateEfficienciesConfig
 
 
 def test_attach_load(tmp_path):
@@ -37,3 +45,138 @@ def test_attach_load(tmp_path):
     assert sorted(n.loads.index) == buses
     assert sorted(n.loads_t.p_set.columns) == buses
     np.testing.assert_allclose(n.loads_t.p_set[buses].values, 2.0 * values)
+
+
+def test_attach_storageunits_energy_basis():
+    """A dispatched-basis `max_hours` sizes the store to sustain it, at no extra cost."""
+    costs = pd.DataFrame(
+        {
+            "capital_cost": {"iron-air": 157959.0, "battery": 60630.0},
+            "marginal_cost": {"iron-air": 0.0, "battery": 0.0},
+            "lifetime": {"iron-air": 17.5, "battery": 17.5},
+            "efficiency": {
+                "iron-air battery charge": 0.74,
+                "iron-air battery discharge": 0.63,
+                "battery inverter": 0.96,
+            },
+        }
+    )
+    max_hours = {"iron-air": 100, "battery": 6}
+
+    n = pypsa.Network()
+    n.add("Bus", ["bus_1", "bus_2"])
+    attach_storageunits(n, costs, n.buses.index, ["iron-air", "battery"], max_hours)
+
+    su = n.storage_units.set_index("carrier")
+
+    iron_air = su.loc["iron-air"]
+    np.testing.assert_allclose(iron_air.max_hours * iron_air.efficiency_dispatch, 100)
+    np.testing.assert_allclose(iron_air.capital_cost, 157959.0)
+
+    # Stored-basis carriers must be left alone, despite efficiency_dispatch < 1.
+    np.testing.assert_allclose(su.loc["battery"].max_hours, 6)
+
+
+def test_attach_stores_energy_basis():
+    """A dispatched-basis store cost is converted to cost per MWh stored."""
+    costs = pd.DataFrame(
+        {
+            "capital_cost": {
+                "iron-air battery": 1000.0,
+                "iron-air battery charge": 0.0,
+                "iron-air battery discharge": 0.0,
+            },
+            "marginal_cost": 0.0,
+            "lifetime": 17.5,
+            "efficiency": {
+                "iron-air battery": 1.0,
+                "iron-air battery charge": 0.74,
+                "iron-air battery discharge": 0.63,
+            },
+        }
+    )
+
+    n = pypsa.Network()
+    n.add("Bus", ["bus_1"])
+    attach_stores(n, costs, n.buses.index, ["iron-air"])
+
+    np.testing.assert_allclose(n.stores.capital_cost, 630.0)
+
+
+def test_estimate_efficiency():
+    """Efficiency rises with build year (retrofit first), is clipped and degrades with age."""
+    ppl = pd.DataFrame(
+        {
+            "carrier": ["CCGT", "coal", "coal", "biomass", "CCGT"],
+            "datein": [2000, 1950, 1970, 2000, np.nan],
+            "dateretrofit": [np.nan, np.nan, 2010, np.nan, np.nan],
+        }
+    )
+    config = _EstimateEfficienciesConfig().model_dump()
+
+    eta = estimate_efficiency(ppl, config)
+
+    expected = [
+        0.48 * (1 - 0.015),
+        0.28 * (1 - 0.065),
+        0.43 * (1 - 0.005),
+        np.nan,
+        np.nan,
+    ]
+    np.testing.assert_allclose(eta, expected)
+
+
+@pytest.mark.parametrize(
+    "method, expected",
+    [
+        # AA0 keeps its 4 TWh and gets the 6 TWh missing. BB's 5 TWh missing are
+        # split 1:4 by p_nom on top of the listed 2 and 3 TWh.
+        ("energy_capacity_totals_by_country", [10000.0, 3000.0, 1750.0]),
+        # E_store / p_nom_discharge
+        ("estimate_by_large_installations", [10000.0, 2000.0, 2000.0]),
+    ],
+)
+def test_attach_hydro_max_hours(tmp_path, method, expected):
+    """
+    Reservoir storage follows the country totals, independent of the number of units.
+    """
+    ppl = pd.DataFrame(
+        {
+            "carrier": "hydro",
+            "bus": ["AA0", "BB0", "BB1"],
+            "country": ["AA", "BB", "BB"],
+            "p_nom": [1000.0, 1000.0, 4000.0],
+            "max_hours": [4000.0, 2000.0, 750.0],
+        },
+        index=["AA0 hydro", "BB0 hydro", "BB1 hydro"],
+    )
+    costs = pd.DataFrame(
+        {"CO2 intensity": 0.0, "capital_cost": 0.0, "marginal_cost": 0.0},
+        index=["hydro"],
+    )
+    totals = pd.DataFrame(
+        {"E_store[TWh]": 10.0, "p_nom_discharge[GW]": [1.0, 5.0]}, index=["AA", "BB"]
+    )
+    totals.to_csv(tmp_path / "hydro_capacities.csv")
+    times = pd.date_range("2013-01-01", periods=2, freq="h")
+    xr.DataArray(
+        np.zeros((2, 2)),
+        coords={"time": times, "countries": ["AA", "BB"]},
+        dims=["time", "countries"],
+    ).to_netcdf(tmp_path / "profile_hydro.nc")
+
+    n = pypsa.Network()
+    n.set_snapshots(times)
+    n.add("Bus", ppl.bus.values, country=ppl.country.values)
+
+    attach_hydro(
+        n,
+        costs,
+        ppl,
+        tmp_path / "profile_hydro.nc",
+        tmp_path / "hydro_capacities.csv",
+        ["hydro"],
+        hydro_max_hours=method,
+    )
+
+    np.testing.assert_allclose(n.storage_units.max_hours[ppl.index], expected)

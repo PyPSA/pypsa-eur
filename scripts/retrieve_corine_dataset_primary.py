@@ -26,7 +26,7 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def load_access_token(apikey):
+def load_access_token(apikey: str) -> str:
     # Login using EU login at https://land.copernicus.eu/user/login and create an API key
     # Set CORINE_API_TOKEN environment variable or add to .env file
     try:

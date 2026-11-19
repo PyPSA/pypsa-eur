@@ -2,20 +2,20 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This script is used to clean OpenStreetMap (OSM) data for creating a PyPSA-Eur
-ready network.
+Cleans the raw OpenStreetMap power data into consistent tables of substations,
+lines, cables and links for building the base network.
 
-The script performs various cleaning operations on the OSM data, including:
-- Cleaning voltage, circuits, cables, wires, and frequency columns
-- Splitting semicolon-separated cells into new rows
-- Distributing values to circuits based on the number of splits
-- Adding line endings to substations based on line data
+The voltage, circuit, cable, wire and frequency tags are parsed and
+standardised, semicolon-separated values are split into separate rows with
+the circuits distributed among them, and line endings are attached to the
+substations they connect to.
 """
 
 import itertools
 import json
 import logging
 import os
+from collections.abc import Sequence
 
 import geopandas as gpd
 import numpy as np
@@ -24,7 +24,7 @@ from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import linemerge, unary_union
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, create_linestring, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -36,21 +36,7 @@ BUS_TOL = (
 )
 
 
-def _create_linestring(row):
-    """
-    Create a LineString object from the given row.
-
-    Args:
-        row (dict): A dictionary containing the row data.
-
-    Returns:
-        LineString: A LineString object representing the geometry.
-    """
-    coords = [(coord["lon"], coord["lat"]) for coord in row["geometry"]]
-    return LineString(coords)
-
-
-def _create_polygon(row):
+def _create_polygon(row: pd.Series) -> Polygon:
     """
     Create a Shapely Polygon from a list of coordinate dictionaries.
 
@@ -76,7 +62,7 @@ def _create_polygon(row):
     return polygon
 
 
-def _to_str(column):
+def _to_str(column: pd.Series) -> pd.Series:
     """
     Convert a raw OSM tag column to strings, with missing values as empty
     strings.
@@ -84,7 +70,7 @@ def _to_str(column):
     return column.fillna("").astype(str)
 
 
-def _clean_voltage(column):
+def _clean_voltage(column: pd.Series) -> pd.Series:
     """
     Function to clean the raw voltage column: manual fixing and drop nan values
 
@@ -132,7 +118,7 @@ def _clean_voltage(column):
     return column
 
 
-def _clean_circuits(column):
+def _clean_circuits(column: pd.Series) -> pd.Series:
     """
     Function to clean the raw circuits column: manual fixing and drop nan
     values
@@ -159,7 +145,7 @@ def _clean_circuits(column):
     return column
 
 
-def _clean_cables(column):
+def _clean_cables(column: pd.Series) -> pd.Series:
     """
     Function to clean the raw cables column: manual fixing and drop nan values
 
@@ -180,7 +166,7 @@ def _clean_cables(column):
     return column
 
 
-def _clean_wires(column):
+def _clean_wires(column: pd.Series) -> pd.Series:
     """
     Function to clean the raw wires column: manual fixing and drop nan values
 
@@ -214,7 +200,7 @@ def _clean_wires(column):
     return column
 
 
-def _check_voltage(voltage, list_voltages):
+def _check_voltage(voltage: str, list_voltages: np.ndarray | list[str]) -> bool:
     """
     Check if the given voltage is present in the list of allowed voltages.
 
@@ -235,7 +221,7 @@ def _check_voltage(voltage, list_voltages):
     return False
 
 
-def _clean_frequency(column):
+def _clean_frequency(column: pd.Series) -> pd.Series:
     """
     Function to clean the raw frequency column: manual fixing and drop nan
     values
@@ -263,7 +249,7 @@ def _clean_frequency(column):
     return column
 
 
-def _clean_rating(column):
+def _clean_rating(column: pd.Series) -> pd.Series:
     """
     Function to clean and sum the rating columns:
 
@@ -274,18 +260,22 @@ def _clean_rating(column):
     - column: pandas Series, the cleaned column
     """
     logger.info("Cleaning ratings.")
-    column = _to_str(column).str.replace("MW", "")
 
-    # Remove all remaining non-numeric characters except for semicolons
-    column = column.str.replace(r"[^0-9;]", "", regex=True)
+    def _to_mw(rating):
+        # Ratings in GW are converted to MW and may have decimals, e.g. "1.4 GW"
+        if "GW" in rating.upper():
+            value = "".join(c for c in rating if c.isdigit() or c == ".")
+            return round(float(value) * 1000) if value else 0
+        value = "".join(c for c in rating if c.isdigit())
+        return int(value) if value else 0
 
     # Sum up all ratings if there are multiple entries, skipping empty ones
-    column = column.str.split(";").apply(lambda x: sum(int(i) for i in x if i))
+    column = _to_str(column).str.split(";").apply(lambda x: sum(map(_to_mw, x)))
 
     return column.astype(str)
 
 
-def _clean_date(column):
+def _clean_date(column: pd.Series) -> pd.Series:
     """
     Function to clean the raw date column: manual fixing and drop nan values
     Args:
@@ -321,7 +311,7 @@ def _clean_date(column):
     return column
 
 
-def _split_cells(df, cols=["voltage"]):
+def _split_cells(df: pd.DataFrame, cols: Sequence[str] = ("voltage",)) -> pd.DataFrame:
     """
     Split semicolon separated cells i.e. [66000;220000] and create new
     identical rows.
@@ -363,7 +353,7 @@ def _split_cells(df, cols=["voltage"]):
 
     # Function to generate the new ID with suffix and update the number of
     # splits
-    def generate_new_id(row):
+    def generate_new_id(row: pd.Series) -> str:
         original_id = row["id"]
         if row["split_elements"] == 1:
             return original_id
@@ -377,7 +367,7 @@ def _split_cells(df, cols=["voltage"]):
     return x
 
 
-def _distribute_to_circuits(row):
+def _distribute_to_circuits(row: pd.Series) -> str:
     """
     Distributes the number of circuits or cables to individual circuits based
     on the given row data.
@@ -590,7 +580,7 @@ def _create_single_link(row):
     valid_roles = ["line", "cable", "section"]
     df = pd.json_normalize(row["members"])
     df = df[df["role"].isin(valid_roles)]
-    df["geometry"] = df.apply(_create_linestring, axis=1)
+    df["geometry"] = df.apply(create_linestring, axis=1)
     df["length"] = df["geometry"].apply(lambda x: x.length)
 
     list_endpoints = []
@@ -647,7 +637,7 @@ def _create_line(row):
     df["ways"] = "way/" + df["ref"]
     # Drop NAs
     df = df.dropna(subset=["geometry"])
-    df["geometry"] = df.apply(_create_linestring, axis=1)
+    df["geometry"] = df.apply(create_linestring, axis=1)
     # Drop closed geometries (substations)
     closed_geom = df["geometry"].apply(lambda x: x.is_closed)
 
@@ -657,7 +647,7 @@ def _create_line(row):
     return line, members
 
 
-def _drop_duplicate_lines(df_lines):
+def _drop_duplicate_lines(df_lines: pd.DataFrame) -> pd.DataFrame:
     """
     Drop duplicate lines from the given dataframe. Duplicates are usually lines
     cross-border lines or slightly outside the country border of focus.
@@ -704,7 +694,9 @@ def _drop_duplicate_lines(df_lines):
     return df_lines
 
 
-def _filter_by_voltage(df, min_voltage=220000):
+def _filter_by_voltage(
+    df: pd.DataFrame, min_voltage: float = 220000
+) -> tuple[pd.DataFrame, np.ndarray | list[str]]:
     """
     Filter rows in the DataFrame based on the voltage in V.
 
@@ -746,7 +738,9 @@ def _filter_by_voltage(df, min_voltage=220000):
     return df, list_voltages
 
 
-def _clean_substations(df_substations, list_voltages):
+def _clean_substations(
+    df_substations: pd.DataFrame, list_voltages: np.ndarray | list[str]
+) -> pd.DataFrame:
     """
     Clean the substation data by performing the following steps:
     - Split cells in the dataframe.
@@ -801,7 +795,9 @@ def _clean_substations(df_substations, list_voltages):
     return df_substations
 
 
-def _clean_lines(df_lines, list_voltages):
+def _clean_lines(
+    df_lines: pd.DataFrame, list_voltages: np.ndarray | list[str]
+) -> pd.DataFrame:
     """
     Cleans and processes the `df_lines` DataFrame heuristically based on the
     information available per respective line and cable. Further checks to
@@ -990,7 +986,7 @@ def _clean_lines(df_lines, list_voltages):
     return df_lines
 
 
-def _create_substations_geometry(df_substations):
+def _create_substations_geometry(df_substations: pd.DataFrame) -> pd.DataFrame:
     """
     Creates geometries.
 
@@ -1013,7 +1009,9 @@ def _create_substations_geometry(df_substations):
     return df_substations
 
 
-def _create_substations_poi(df_substations, tol=BUS_TOL / 2):
+def _create_substations_poi(
+    df_substations: pd.DataFrame, tol: float = BUS_TOL / 2
+) -> pd.DataFrame:
     """
     Creates Pole of Inaccessibility (PoI) from geometries and keeps the original polygons.
 
@@ -1081,7 +1079,7 @@ def _aggregate_substations(df_substations: pd.DataFrame) -> pd.DataFrame:
     return df_substations
 
 
-def _create_lines_geometry(df_lines):
+def _create_lines_geometry(df_lines: pd.DataFrame) -> pd.DataFrame:
     """
     Create line geometry for the given DataFrame of lines.
 
@@ -1097,13 +1095,13 @@ def _create_lines_geometry(df_lines):
     Notes
     -----
     - This function transforms 'geometry' column in the input DataFrame by
-      applying the '_create_linestring' function to each row.
+      applying the 'create_linestring' function to each row.
     - It then drops rows where the geometry has equal start and end points,
       as these are usually not lines but outlines of areas.
     """
     logger.info("Creating lines geometry.")
     df_lines = df_lines.copy()
-    df_lines["geometry"] = df_lines.apply(_create_linestring, axis=1)
+    df_lines["geometry"] = df_lines.apply(create_linestring, axis=1)
 
     bool_circle = df_lines["geometry"].apply(lambda x: x.coords[0] == x.coords[-1])
     df_lines = df_lines[~bool_circle]
@@ -1111,7 +1109,7 @@ def _create_lines_geometry(df_lines):
     return df_lines
 
 
-def _add_bus_poi_to_line(linestring, point):
+def _add_bus_poi_to_line(linestring: LineString, point: Point) -> LineString:
     """
     Adds the PoI of a substation to a linestring by extending the
     linestring with a new segment.
@@ -1141,7 +1139,7 @@ def _add_bus_poi_to_line(linestring, point):
     return merged
 
 
-def _finalise_substations(df_substations):
+def _finalise_substations(df_substations: pd.DataFrame) -> pd.DataFrame:
     """
     Finalises the substations column types.
 
@@ -1260,7 +1258,7 @@ def _aggregate_lines(df_lines: pd.DataFrame) -> pd.DataFrame:
     return df_lines
 
 
-def _finalise_lines(df_lines):
+def _finalise_lines(df_lines: pd.DataFrame) -> pd.DataFrame:
     """
     Finalises the lines column types.
 
@@ -1313,7 +1311,7 @@ def _finalise_lines(df_lines):
     return df_lines
 
 
-def _finalise_links(df_links):
+def _finalise_links(df_links: pd.DataFrame) -> pd.DataFrame:
     """
     Finalises the links column types.
 
@@ -1497,7 +1495,7 @@ def _import_substations(path_substations):
 
     df_substations_relation_members.reset_index(inplace=True)
     df_substations_relation_members["linestring"] = (
-        df_substations_relation_members.apply(_create_linestring, axis=1)
+        df_substations_relation_members.apply(create_linestring, axis=1)
     )
     df_substations_relation_members_grouped = (
         df_substations_relation_members.groupby("id")["linestring"]
@@ -1527,7 +1525,9 @@ def _import_substations(path_substations):
     return df_substations
 
 
-def _remove_lines_within_substations(gdf_lines, gdf_substations_polygon):
+def _remove_lines_within_substations(
+    gdf_lines: gpd.GeoDataFrame, gdf_substations_polygon: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
     """
     Removes lines that are within substation polygons from the given
     GeoDataFrame of lines. These are not needed to create network (e.g. bus
@@ -1560,7 +1560,7 @@ def _remove_lines_within_substations(gdf_lines, gdf_substations_polygon):
     return gdf_lines
 
 
-def _merge_touching_polygons(df):
+def _merge_touching_polygons(df, crs):
     """
     Merge touching polygons in a GeoDataFrame.
 
@@ -1568,6 +1568,8 @@ def _merge_touching_polygons(df):
     ----------
     - df: pandas.DataFrame or geopandas.GeoDataFrame
         The input DataFrame containing the polygons to be merged.
+    - crs: str
+        The coordinate reference system of the polygons.
 
     Returns
     -------
@@ -1587,9 +1589,7 @@ def _merge_touching_polygons(df):
 
     combined_polygons = unary_union(gdf.geometry)
     if combined_polygons.geom_type == "MultiPolygon":
-        gdf_combined = gpd.GeoDataFrame(
-            geometry=[poly for poly in combined_polygons.geoms], crs=crs
-        )
+        gdf_combined = gpd.GeoDataFrame(geometry=list(combined_polygons.geoms), crs=crs)
     else:
         gdf_combined = gpd.GeoDataFrame(geometry=[combined_polygons], crs=crs)
 
@@ -1605,7 +1605,9 @@ def _merge_touching_polygons(df):
     return gdf
 
 
-def _add_endpoints_to_line(linestring, polygon_dict, tol=BUS_TOL / 2):
+def _add_endpoints_to_line(
+    linestring: LineString, polygon_dict: dict[str, Polygon], tol: float = BUS_TOL / 2
+) -> LineString:
     """
     Adds endpoints to a line by removing any overlapping areas with polygons.
 
@@ -1639,7 +1641,9 @@ def _add_endpoints_to_line(linestring, polygon_dict, tol=BUS_TOL / 2):
     return linestring_new
 
 
-def _get_polygons_at_endpoints(linestring, polygon_dict):
+def _get_polygons_at_endpoints(
+    linestring: LineString, polygon_dict: dict[str, Polygon]
+) -> dict[str, Polygon]:
     """
     Get the polygons that contain the endpoints of a given linestring.
 
@@ -1666,7 +1670,11 @@ def _get_polygons_at_endpoints(linestring, polygon_dict):
     return bus_id_polygon_dict
 
 
-def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL / 2):
+def _extend_lines_to_substations(
+    gdf_lines: gpd.GeoDataFrame,
+    gdf_substations_polygon: gpd.GeoDataFrame,
+    tol: float = BUS_TOL / 2,
+) -> gpd.GeoDataFrame:
     """
     Extends the lines in the given GeoDataFrame `gdf_lines` to the Pole of Inaccessibility (PoI) of
     the nearest substations represented by the polygons in the
@@ -1737,7 +1745,7 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
 
 def _check_if_ways_in_multi(list, longer_list):
     # Check if any of the elements in list are in longer_list
-    return any([x in longer_list for x in list])
+    return any(x in longer_list for x in list)
 
 
 if __name__ == "__main__":
@@ -1794,7 +1802,7 @@ if __name__ == "__main__":
     df_substations = _create_substations_geometry(df_substations)
 
     # Merge touching polygons
-    df_substations = _merge_touching_polygons(df_substations)
+    df_substations = _merge_touching_polygons(df_substations, crs)
     df_substations = _create_substations_poi(df_substations)
 
     # Aggregate substations if needed
@@ -2056,6 +2064,10 @@ if __name__ == "__main__":
         lambda x: str(max(map(int, x.split(";"))))
     )
     df_links["frequency"] = _clean_frequency(df_links["frequency"])
+    # Drop relations explicitly tagged as AC (keep DC and untagged)
+    bool_ac = ~df_links["frequency"].isin(["0", ""])
+    logger.info(f"Dropping {bool_ac.sum()} elements with AC frequency.")
+    df_links = df_links[~bool_ac]
     df_links["rating"] = _clean_rating(df_links["rating"])
 
     df_links["geometry"] = df_links.apply(_create_single_link, axis=1)

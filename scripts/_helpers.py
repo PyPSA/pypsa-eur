@@ -2,13 +2,23 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Shared helper functions used across the workflow scripts.
+
+Covers Snakemake integration (logging setup, scenario configuration,
+`mock_snakemake` for running scripts outside the workflow, run-specific
+resource paths), loading of costs, cutouts and snapshot definitions, network
+utilities such as renaming components and aggregating capacities and costs,
+and small conveniences for downloading data and retrying flaky calls.
+"""
+
 import atexit
 import contextlib
 import logging
 import os
 import re
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from functools import lru_cache, partial, wraps
 from itertools import takewhile
 from operator import attrgetter
@@ -18,17 +28,18 @@ from typing import Any, Literal
 
 import atlite
 import fiona
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
 import pytz
-import requests
 import xarray as xr
 import yaml
 from dask.distributed import Client, LocalCluster
+from shapely.geometry import LineString, MultiPolygon, Polygon
 from snakemake.utils import update_config
-from tqdm import tqdm
 
+from scripts.lib.validation.config import migrate_deprecated_keys
 from scripts.lib.validation.config.data import VersionsSchema
 
 logger = logging.getLogger(__name__)
@@ -42,6 +53,56 @@ def strip_if_str(value: Any) -> Any:
     """Return stripped strings while leaving other values unchanged."""
 
     return value.strip() if isinstance(value, str) else value
+
+
+def area(gdf: gpd.GeoDataFrame) -> pd.Series:
+    """Return the area of GeoDataFrame geometries in square kilometres."""
+    return gdf.to_crs(epsg=3035).area.div(1e6)
+
+
+def concat_gdf(
+    gdf_list: list[gpd.GeoDataFrame], crs: str = "EPSG:4326"
+) -> gpd.GeoDataFrame:
+    """Concatenate GeoDataFrames sharing a common coordinate reference system."""
+    return gpd.GeoDataFrame(pd.concat(gdf_list), crs=crs)
+
+
+def load_bus_regions(onshore_path: str, offshore_path: str) -> gpd.GeoDataFrame:
+    """Load on- and offshore bus regions and dissolve them by bus name."""
+    offshore_bus_regions = gpd.read_file(offshore_path)
+    onshore_bus_regions = gpd.read_file(onshore_path)
+    bus_regions = concat_gdf([offshore_bus_regions, onshore_bus_regions])
+    return bus_regions.dissolve(by="name", aggfunc="sum")
+
+
+def create_linestring(row: dict) -> LineString:
+    """Create a LineString from a row with OSM-style lon/lat coordinate dicts."""
+    coords = [(coord["lon"], coord["lat"]) for coord in row["geometry"]]
+    return LineString(coords)
+
+
+def determine_cutout_xXyY(cutout_name: str) -> list[float]:
+    """
+    Determine the full extent of a cutout.
+
+    Since the coordinates of the cutout data are given as the
+    center of the grid cells, the extent of the cutout is
+    calculated by adding/subtracting half of the grid cell size.
+
+    Parameters
+    ----------
+    cutout_name : str
+        Path to the cutout.
+
+    Returns
+    -------
+    A list of extent coordinates in the order [x, X, y, Y].
+    """
+    cutout = load_cutout(cutout_name)
+    assert cutout.crs.to_epsg() == 4326
+    x, X, y, Y = cutout.extent
+    dx, dy = cutout.dx, cutout.dy
+    return [x - dx / 2.0, X + dx / 2.0, y - dy / 2.0, Y + dy / 2.0]
 
 
 def sanitize_busmap(busmap: pd.Series) -> pd.Series:
@@ -145,19 +206,21 @@ def get_temporal_resolution(temporal: dict) -> tuple[str, int | str] | None:
     return method, int(value)
 
 
-def get_scenarios(run):
+def get_scenarios(run: dict) -> dict:
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):
         fn = Path(scenario_config["file"])
         if fn.exists():
             scenarios = yaml.safe_load(fn.read_text())
+            for overrides in scenarios.values():
+                migrate_deprecated_keys(overrides)
             if run["name"] == "all":
                 run["name"] = list(scenarios.keys())
             return scenarios
     return {}
 
 
-def get_rdir(run):
+def get_rdir(run: dict) -> str:
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):
         RDIR = "{run}/"
@@ -173,7 +236,13 @@ def get_rdir(run):
     return RDIR
 
 
-def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
+def get_run_path(
+    fn: str,
+    dir: str,
+    rdir: str,
+    shared_resources: str | bool,
+    exclude_from_shared: list[str],
+) -> str:
     """
     Dynamically provide paths based on shared resources and filename.
 
@@ -248,7 +317,12 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
     return f"{dir}{rdir}{fn}"
 
 
-def path_provider(dir, rdir, shared_resources, exclude_from_shared):
+def path_provider(
+    dir: str,
+    rdir: str,
+    shared_resources: str | bool,
+    exclude_from_shared: list[str],
+) -> Callable[[str], str]:
     """
     Returns a partial function that dynamically provides paths based on shared
     resources and the filename.
@@ -289,7 +363,7 @@ def script_path_provider(project_dir: Path) -> Callable[[str], Path]:
     return _get_script_path
 
 
-def get_shadow(run):
+def get_shadow(run: dict) -> str | None:
     """
     Returns 'shallow' or None depending on the user setting.
     """
@@ -299,38 +373,9 @@ def get_shadow(run):
     return None
 
 
-def get_opt(opts, expr, flags=None):
-    """
-    Return the first option matching the regular expression.
-
-    The regular expression is case-insensitive by default.
-    """
-    if flags is None:
-        flags = re.IGNORECASE
-    for o in opts:
-        match = re.match(expr, o, flags=flags)
-        if match:
-            return match.group(0)
-    return None
-
-
-def find_opt(opts, expr):
-    """
-    Return if available the float after the expression.
-    """
-    for o in opts:
-        if expr in o:
-            m = re.findall(r"m?\d+(?:[\.p]\d+)?", o)
-            if len(m) > 0:
-                return True, float(m[-1].replace("p", ".").replace("m", "-"))
-            else:
-                return True, None
-    return False, None
-
-
 # Define a context manager to temporarily mute print statements
 @contextlib.contextmanager
-def mute_print():
+def mute_print() -> Iterator[None]:
     with open(os.devnull, "w") as devnull:
         with contextlib.redirect_stdout(devnull):
             yield
@@ -338,7 +383,7 @@ def mute_print():
 
 def set_scenario_config(snakemake):
     scenario = snakemake.config["run"].get("scenarios", {})
-    if scenario.get("enable") and "run" in snakemake.wildcards.keys():
+    if scenario.get("enable") and "run" in snakemake.wildcards.keys():  # noqa: SIM118
         try:
             with open(scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
@@ -348,7 +393,9 @@ def set_scenario_config(snakemake):
             root_dir = script_dir.parent
             with open(root_dir / scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
-        update_config(snakemake.config, scenario_config[snakemake.wildcards.run])
+        overrides = scenario_config[snakemake.wildcards.run]
+        migrate_deprecated_keys(overrides)
+        update_config(snakemake.config, overrides)
 
 
 def configure_logging(snakemake, skip_handlers=False):
@@ -372,8 +419,10 @@ def configure_logging(snakemake, skip_handlers=False):
     import logging
     import sys
 
-    kwargs = snakemake.config.get("logging", dict()).copy()
+    kwargs = snakemake.config.get("logging", {}).copy()
     kwargs.setdefault("level", "INFO")
+    console_level = kwargs.pop("console_level", "WARNING")
+    file_level = kwargs.pop("file_level", None) or kwargs["level"]
 
     if skip_handlers is False:
         fallback_path = Path(__file__).parent.joinpath(
@@ -382,16 +431,11 @@ def configure_logging(snakemake, skip_handlers=False):
         logfile = snakemake.log.get(
             "python", snakemake.log[0] if snakemake.log else fallback_path
         )
-        kwargs.update(
-            {
-                "handlers": [
-                    # Prefer the 'python' log, otherwise take the first log for each
-                    # Snakemake rule
-                    logging.FileHandler(logfile),
-                    logging.StreamHandler(),
-                ]
-            }
-        )
+        file_handler = logging.FileHandler(logfile)
+        file_handler.setLevel(file_level)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(console_level)
+        kwargs["handlers"] = [file_handler, stream_handler]
     logging.basicConfig(**kwargs)
 
     # Setup a function to handle uncaught exceptions and include them with their stacktrace into logfiles
@@ -405,7 +449,7 @@ def configure_logging(snakemake, skip_handlers=False):
     sys.excepthook = handle_exception
 
 
-def update_p_nom_max(n):
+def update_p_nom_max(n: pypsa.Network) -> None:
     # if extendable carriers (solar/onwind/...) have capacity >= 0,
     # e.g. existing assets from GEM are included to the network,
     # the installed capacity might exceed the expansion limit.
@@ -414,35 +458,13 @@ def update_p_nom_max(n):
     n.generators.p_nom_max = n.generators[["p_nom_min", "p_nom_max"]].max(1)
 
 
-def aggregate_p_nom(n):
-    return pd.concat(
-        [
-            n.generators.groupby("carrier").p_nom_opt.sum(),
-            n.storage_units.groupby("carrier").p_nom_opt.sum(),
-            n.links.groupby("carrier").p_nom_opt.sum(),
-            n.loads_t.p.groupby(n.loads.carrier, axis=1).sum().mean(),
-        ]
-    )
-
-
-def aggregate_p(n):
-    return pd.concat(
-        [
-            n.generators_t.p.sum().groupby(n.generators.carrier).sum(),
-            n.storage_units_t.p.sum().groupby(n.storage_units.carrier).sum(),
-            n.stores_t.p.sum().groupby(n.stores.carrier).sum(),
-            -n.loads_t.p.sum().groupby(n.loads.carrier).sum(),
-        ]
-    )
-
-
-def get(item, investment_year=None):
+def get(item: Any, investment_year: int | None = None) -> Any:
     """
     Check whether item depends on investment year.
     """
     if not isinstance(item, dict):
         return item
-    elif investment_year in item.keys():
+    elif investment_year in item:
         return item[investment_year]
     else:
         logger.warning(
@@ -466,108 +488,6 @@ def get(item, investment_year=None):
             return lower + (higher - lower) * (investment_year - lower_key) / (
                 higher_key - lower_key
             )
-
-
-def aggregate_e_nom(n):
-    return pd.concat(
-        [
-            (n.storage_units["p_nom_opt"] * n.storage_units["max_hours"])
-            .groupby(n.storage_units["carrier"])
-            .sum(),
-            n.stores["e_nom_opt"].groupby(n.stores.carrier).sum(),
-        ]
-    )
-
-
-def aggregate_p_curtailed(n):
-    return pd.concat(
-        [
-            (
-                (
-                    n.generators_t.p_max_pu.sum().multiply(n.generators.p_nom_opt)
-                    - n.generators_t.p.sum()
-                )
-                .groupby(n.generators.carrier)
-                .sum()
-            ),
-            (
-                (n.storage_units_t.inflow.sum() - n.storage_units_t.p.sum())
-                .groupby(n.storage_units.carrier)
-                .sum()
-            ),
-        ]
-    )
-
-
-def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
-    components = dict(
-        Link=("p_nom", "p0"),
-        Generator=("p_nom", "p"),
-        StorageUnit=("p_nom", "p"),
-        Store=("e_nom", "p"),
-        Line=("s_nom", None),
-        Transformer=("s_nom", None),
-    )
-
-    costs = {}
-    for c, (p_nom, p_attr) in zip(
-        n.components[list(components.keys())], components.values()
-    ):
-        if c.static.empty:
-            continue
-        if not existing_only:
-            p_nom += "_opt"
-        costs[(c.list_name, "capital")] = (
-            (c.static[p_nom] * c.static.capital_cost).groupby(c.static.carrier).sum()
-        )
-        if p_attr is not None:
-            p = c.dynamic[p_attr].sum()
-            if c.name == "StorageUnit":
-                p = p.loc[p > 0]
-            costs[(c.list_name, "marginal")] = (
-                (p * c.static.marginal_cost).groupby(c.static.carrier).sum()
-            )
-    costs = pd.concat(costs)
-
-    if flatten:
-        assert opts is not None
-        conv_techs = opts["conv_techs"]
-
-        costs = costs.reset_index(level=0, drop=True)
-        costs = costs["capital"].add(
-            costs["marginal"].rename({t: t + " marginal" for t in conv_techs}),
-            fill_value=0.0,
-        )
-
-    return costs
-
-
-def progress_retrieve(url, file, disable=False):
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-
-    Path(file).parent.mkdir(parents=True, exist_ok=True)
-
-    # Raise HTTPError for transient errors
-    # 429: Too Many Requests (rate limiting)
-    # 500, 502, 503, 504: Server errors
-    response = requests.get(url, headers=headers, stream=True)
-    if response.status_code in (429, 500, 502, 503, 504):
-        response.raise_for_status()
-    total_size = int(response.headers.get("content-length", 0))
-    chunk_size = 1024
-
-    with tqdm(
-        total=total_size,
-        unit="B",
-        unit_scale=True,
-        unit_divisor=1024,
-        desc=str(file),
-        disable=disable,
-    ) as t:
-        with open(file, "wb") as f:
-            for data in response.iter_content(chunk_size=chunk_size):
-                f.write(data)
-                t.update(len(data))
 
 
 def retry(func: Callable) -> Callable:
@@ -596,7 +516,7 @@ def retry(func: Callable) -> Callable:
     delay = 5
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         for attempt in range(retries):
             try:
                 return func(*args, **kwargs)
@@ -697,15 +617,15 @@ def mock_snakemake(
         storage_settings = StorageSettings()
         dag_settings = DAGSettings(rerun_triggers=[])
 
-        workflow_kwargs = dict(
-            config_settings=config_settings,
-            resource_settings=resource_settings,
-            workflow_settings=workflow_settings,
-            storage_settings=storage_settings,
-            dag_settings=dag_settings,
-            storage_provider_settings=dict(),
-            overwrite_workdir=workdir,
-        )
+        workflow_kwargs = {
+            "config_settings": config_settings,
+            "resource_settings": resource_settings,
+            "workflow_settings": workflow_settings,
+            "storage_settings": storage_settings,
+            "dag_settings": dag_settings,
+            "storage_provider_settings": {},
+            "overwrite_workdir": workdir,
+        }
 
         # Snakemake version-dependent logger handling
         if version.parse(sm_version) >= version.parse("9.14.6"):
@@ -757,7 +677,12 @@ def mock_snakemake(
     return snakemake
 
 
-def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
+def generate_periodic_profiles(
+    dt_index: pd.DatetimeIndex,
+    nodes: pd.Index,
+    weekly_profile: np.ndarray | list[float],
+    localize: str | None = None,
+) -> pd.DataFrame:
     """
     Give a 24*7 long list of weekly hourly profiles, generate this for each
     country for the period dt_index, taking account of time zones and summer
@@ -779,27 +704,6 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     return week_df
 
 
-def parse(infix):
-    """
-    Recursively parse a chained wildcard expression into a dictionary or a YAML
-    object.
-
-    Parameters
-    ----------
-    list_to_parse : list
-        The list to parse.
-
-    Returns
-    -------
-    dict or YAML object
-        The parsed list.
-    """
-    if len(infix) == 1:
-        return yaml.safe_load(infix[0])
-    else:
-        return {infix.pop(0): parse(infix)}
-
-
 def get_snapshots(
     snapshots: dict, drop_leap_day: bool = False, freq: str = "h", **kwargs
 ) -> pd.DatetimeIndex:
@@ -809,8 +713,8 @@ def get_snapshots(
     Parameters
     ----------
     snapshots : dict
-        Dictionary containing time range parameters. 'start' and 'end' can be
-        strings or lists of strings for multiple date ranges.
+        Dictionary with the first ('start') and last ('end') snapshot, both
+        included. Both can be strings or lists of strings for multiple date ranges.
     drop_leap_day : bool, default False
         If True, removes February 29th from the DateTimeIndex in leap years.
     freq : str, default "h"
@@ -834,10 +738,8 @@ def get_snapshots(
     )
 
     time_periods = []
-    for s, e in zip(start, end):
-        period = pd.date_range(
-            start=s, end=e, freq=freq, inclusive=snapshots["inclusive"], **kwargs
-        )
+    for s, e in zip(start, end, strict=True):
+        period = pd.date_range(start=s, end=e, freq=freq, **kwargs)
         time_periods.append(period)
 
     time = pd.DatetimeIndex([ts for period in time_periods for ts in period])
@@ -848,7 +750,7 @@ def get_snapshots(
     return time
 
 
-def sanitize_custom_columns(n: pypsa.Network):
+def sanitize_custom_columns(n: pypsa.Network) -> None:
     """
     Sanitize non-standard columns used throughout the workflow.
 
@@ -1049,7 +951,7 @@ def setup_dask(nprocesses: int) -> dict:
     else:
         client = None
 
-    return dict(scheduler=client)
+    return {"scheduler": client}
 
 
 def load_costs(cost_file: str) -> pd.DataFrame:
@@ -1071,10 +973,12 @@ def load_costs(cost_file: str) -> pd.DataFrame:
 
 
 def _simplify_polys(
-    polys, minarea=100 * 1e6, maxdistance=None, tolerance=None, filterremote=True
-):  # 100*1e6 = 100 km² if CRS is DISTANCE_CRS
-    from shapely.geometry import MultiPolygon
-
+    polys: Polygon | MultiPolygon | gpd.GeoSeries,
+    minarea: float = 100 * 1e6,
+    maxdistance: float | None = None,
+    tolerance: float | None = None,
+    filterremote: bool = True,
+) -> Polygon | MultiPolygon | gpd.GeoSeries:  # 100*1e6 = 100 km² if CRS is DISTANCE_CRS
     if isinstance(polys, MultiPolygon):
         polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
         mainpoly = polys[0]

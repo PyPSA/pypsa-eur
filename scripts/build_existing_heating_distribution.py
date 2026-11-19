@@ -2,26 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Builds table of existing heat generation capacities for initial planning
-horizon.
+Build existing heat generation capacities per node, sector and technology for the first planning horizon.
 
-Existing heat generation capacities are distributed to nodes based on population.
-Within the nodes, the capacities are distributed to sectors (residential and services) based on sectoral consumption and urban/rural based population distribution.
-
-Outputs:
---------
-- Existing heat generation capacities distributed to nodes: `resources/{run}/existing_heating_distribution_{horizon}.csv`
-
-
-Notes
------
-- Data for Albania, Montenegro and Macedonia is not included in input database and assumed 0.
-- Coal and oil boilers are assimilated to oil boilers.
-- All ground-source heat pumps are assumed in rural areas and all air-source heat pumps are assumed to be in urban areas.
+Country-level capacities of gas, oil, coal and biomass boilers, resistive
+heaters and air- and ground-source heat pumps in buildings in 2012, taken from
+a study for the European Commission, are distributed to nodes by population.
+Within a node, capacities are split between residential and services by
+their heat consumption and between urban and rural areas by the urban
+fraction from [build_district_heat_share][]. Coal boilers are merged into oil
+boilers; all ground-source heat pumps are assigned to rural areas and all
+air-source heat pumps to urban areas. Albania, Montenegro, North Macedonia,
+Cyprus and Malta are missing from the dataset and get zero capacity.
 
 References
 ----------
-- "Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)" (https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
+- European Commission (2016), [Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)](https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
 """
 
 import logging
@@ -37,7 +32,14 @@ logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 
-def build_existing_heating():
+def build_existing_heating(
+    existing_heating_fn: str,
+    pop_layout_fn: str,
+    district_heat_share_fn: str,
+    energy_layout_fn: str,
+    central_heat_pump_sources: list[str],
+    output_fn: str,
+) -> None:
     """
     Retrieve and clean existing heating capacities for the myopic code.
     Data comes from the study "Mapping and analyses of the current and
@@ -57,9 +59,7 @@ def build_existing_heating():
     """
     # TODO start from original file
 
-    existing_heating = pd.read_csv(
-        snakemake.input.existing_heating, index_col=0, header=0
-    )
+    existing_heating = pd.read_csv(existing_heating_fn, index_col=0, header=0)
 
     # data for Albania, Montenegro, Macedonia, Cyprus, Malta not included in database
     existing_heating.loc["Albania"] = np.nan
@@ -82,18 +82,16 @@ def build_existing_heating():
     existing_heating.drop(["coal boiler"], axis=1, inplace=True)
 
     # distribute technologies to nodes by population
-    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    pop_layout = pd.read_csv(pop_layout_fn, index_col=0)
 
     nodal_heating = existing_heating.loc[pop_layout.ct]
     nodal_heating.index = pop_layout.index
     nodal_heating = nodal_heating.multiply(pop_layout.fraction, axis=0)
 
-    district_heat_info = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
+    district_heat_info = pd.read_csv(district_heat_share_fn, index_col=0)
     urban_fraction = district_heat_info["urban fraction"]
 
-    energy_layout = pd.read_csv(
-        snakemake.input.clustered_pop_energy_layout, index_col=0
-    )
+    energy_layout = pd.read_csv(energy_layout_fn, index_col=0)
 
     uses = ["space", "water"]
     sectors = ["residential", "services"]
@@ -147,12 +145,10 @@ def build_existing_heating():
 
     # add large-scale heat pump sources as columns for district heating with 0 capacity
 
-    for heat_pump_source in snakemake.params.sector["heat_pump_sources"][
-        "urban central"
-    ]:
+    for heat_pump_source in central_heat_pump_sources:
         nodal_heat_name_tech[("urban central", f"{heat_pump_source} heat pump")] = 0.0
 
-    nodal_heat_name_tech.to_csv(snakemake.output.existing_heating_distribution)
+    nodal_heat_name_tech.to_csv(output_fn)
 
 
 if __name__ == "__main__":
@@ -166,4 +162,11 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    build_existing_heating()
+    build_existing_heating(
+        snakemake.input.existing_heating,
+        snakemake.input.clustered_pop_layout,
+        snakemake.input.district_heat_share,
+        snakemake.input.clustered_pop_energy_layout,
+        snakemake.params.heat_pump_sources["urban central"],
+        snakemake.output.existing_heating_distribution,
+    )

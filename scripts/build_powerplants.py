@@ -4,62 +4,28 @@
 
 
 """
-Retrieves conventional powerplant capacities and locations from
-[powerplantmatching](https://github.com/PyPSA/powerplantmatching), assigns
-these to buses and creates a `.csv` file. It is possible to amend the
-powerplant database with custom entries provided in
-`data/custom_powerplants.csv`.
-Lastly, for every substation, powerplants with zero-initial capacity can be added for certain fuel types automatically.
+Build a table of existing conventional power plants assigned to the buses of the clustered network.
 
-Outputs
--------
+Plant capacities and locations come from the
+[powerplantmatching](https://github.com/PyPSA/powerplantmatching) database,
+restricted to the modelled countries and filtered with the
+[pandas.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html)
+expression in `electricity.powerplants_filter`. Custom entries from a
+user-provided CSV or a list of CSVs (set in `electricity.custom_powerplants_fn`) can be added, filtered with `electricity.custom_powerplants`;
+for example `powerplants_filter: Country not in ['Germany']` together with
+`custom_powerplants: Country in ['Germany']` replaces the German fleet by custom
+data. Fuel types listed in `electricity.everywhere_powerplants` are added with
+zero capacity at every bus. Each plant is assigned to the bus whose onshore or
+offshore region contains it, or to the nearest region of the same country
+within 10 km; plants that cannot be assigned are dropped with a warning.
 
-- `resources/{run}/powerplants.csv`: A list of conventional power plants (i.e. neither wind nor solar) with fields for name, fuel type, technology, country, capacity in MW, duration, commissioning year, retrofit year, latitude, longitude, and dam information as documented in the [powerplantmatching README](https://github.com/PyPSA/powerplantmatching/blob/master/README.md); additionally it includes information on the closest substation/bus in `resources/{run}/networks/clustered.nc`.
+The table keeps the powerplantmatching fields (name, fuel type, technology,
+country, capacity in MW, commissioning and retrofit year, coordinates and dam
+information, see the
+[powerplantmatching README](https://github.com/PyPSA/powerplantmatching/blob/master/README.md))
+and adds the assigned bus.
 
-    ![](img/powerplantmatching.png)
-
-    **Source:** [powerplantmatching on GitHub](https://github.com/PyPSA/powerplantmatching)
-
-Description
------------
-
-The configuration options `electricity: powerplants_filter` and `electricity: custom_powerplants` can be used to control whether data should be retrieved from the original powerplants database or from custom amendments. These specify [pandas.query](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html) commands.
-In addition the configuration option `electricity: everywhere_powerplants` can be used to place powerplants with zero-initial capacity of certain fuel types at all substations.
-
-1. Adding all powerplants from custom:
-
-    ```yaml
-    powerplants_filter: false
-    custom_powerplants: true
-    ```
-
-2. Replacing powerplants in e.g. Germany by custom data:
-
-    ```yaml
-    powerplants_filter: Country not in ['Germany']
-    custom_powerplants: true
-    ```
-
-    or
-
-    ```yaml
-    powerplants_filter: Country not in ['Germany']
-    custom_powerplants: Country in ['Germany']
-    ```
-
-
-3. Adding additional built year constraints:
-
-    ```yaml
-    powerplants_filter: Country not in ['Germany'] and YearCommissioned <= 2015
-    custom_powerplants: YearCommissioned <= 2015
-    ```
-
-4. Adding powerplants at all substations for 4 conventional carrier types:
-
-    ```yaml
-    everywhere_powerplants: ['Natural Gas', 'Coal', 'nuclear', 'OCGT']
-    ```
+![](../img/powerplantmatching.png)
 """
 
 import itertools
@@ -77,10 +43,25 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
-def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
+def add_custom_powerplants(
+    ppl: pd.DataFrame,
+    custom_powerplants: str | list[str],
+    custom_ppl_query: str | bool = False,
+) -> pd.DataFrame:
+    """
+    Add power plants from one or several custom CSV files to `ppl`.
+
+    The files are combined and then filtered with `custom_ppl_query` if it is
+    a string; `True` adds all entries and `False` adds none.
+    """
     if not custom_ppl_query:
         return ppl
-    add_ppls = pd.read_csv(custom_powerplants, dtype={"bus": "str"})
+    if isinstance(custom_powerplants, str):
+        custom_powerplants = [custom_powerplants]
+    add_ppls = pd.concat(
+        [pd.read_csv(fn, dtype={"bus": "str"}) for fn in custom_powerplants],
+        ignore_index=True,
+    )
     if isinstance(custom_ppl_query, str):
         add_ppls.query(custom_ppl_query, inplace=True)
     return pd.concat(
@@ -88,7 +69,9 @@ def add_custom_powerplants(ppl, custom_powerplants, custom_ppl_query=False):
     )
 
 
-def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
+def add_everywhere_powerplants(
+    ppl: pd.DataFrame, substations: pd.DataFrame, everywhere_powerplants: list[str]
+) -> pd.DataFrame:
     # Create a dataframe with "everywhere_powerplants" of stated carriers at the location of all substations
     everywhere_ppl = (
         pd.DataFrame(
@@ -127,7 +110,7 @@ def add_everywhere_powerplants(ppl, substations, everywhere_powerplants):
     )
 
 
-def replace_natural_gas_technology(df):
+def replace_natural_gas_technology(df: pd.DataFrame) -> pd.Series:
     mapping = {
         "Steam Turbine": "CCGT",
         "Combustion Engine": "OCGT",
@@ -144,7 +127,7 @@ def replace_natural_gas_fueltype(df: pd.DataFrame) -> pd.Series:
 
 
 def fill_unoccupied_holes(gdf: gpd.GeoDataFrame) -> gpd.GeoSeries:
-    def _fill_poly(poly, idx):
+    def _fill_poly(poly: Polygon, idx: str) -> Polygon:
         if not poly.interiors:
             return poly
         kept = [h for h in poly.interiors if gdf.drop(idx).intersects(Polygon(h)).any()]
@@ -174,12 +157,13 @@ def map_to_country_bus(
     unmatched = []
 
     for country, plants in ppl.groupby("Country"):
-        country_regions = regions[regions.index.str[:2] == country]
-        joined = (
-            plants.sjoin(country_regions)
-            .rename(columns={"name": "bus"})
-            .reindex(plants.index)
+        country_regions = regions.query("country == @country")
+        joined = plants.sjoin(country_regions[["geometry"]]).rename(
+            columns={"name": "bus"}
         )
+        # Drop duplicate matches (plant in overlapping onshore/offshore regions)
+        joined = joined[~joined.index.duplicated(keep="first")]
+        joined = joined.reindex(plants.index)
         assigned.append(joined.dropna(subset=["bus"]))
         missing = joined[joined["bus"].isna()]
         if not missing.empty:
@@ -188,15 +172,17 @@ def map_to_country_bus(
     if unmatched:
         unmatched = pd.concat(unmatched)
         for country, plants in unmatched.groupby("Country"):
-            country_regions = regions[regions.index.str[:2] == country]
+            country_regions = regions.query("country == @country")
             nearest = (
                 plants.to_crs(3035)
-                .sjoin_nearest(country_regions.to_crs(3035), max_distance=max_distance)
+                .sjoin_nearest(
+                    country_regions[["geometry"]].to_crs(3035),
+                    max_distance=max_distance,
+                )
                 .rename(columns={"name": "bus"})
                 .to_crs(4326)
             )
             missing = plants.index.difference(nearest.index)
-            print(country, missing)
             nearest = pd.concat([nearest, plants.loc[missing]])
             assigned.append(nearest)
 
@@ -220,6 +206,7 @@ if __name__ == "__main__":
     regions = pd.concat([gpd.read_file(fn_onshore), gpd.read_file(fn_offshore)])
     regions = regions.dissolve("name")
     regions["geometry"] = fill_unoccupied_holes(regions)
+    regions["country"] = n.buses.country
 
     # Steps copied from PPM: Usually run by PPM when using pm.powerplants(...) from cache
     ppl = (
