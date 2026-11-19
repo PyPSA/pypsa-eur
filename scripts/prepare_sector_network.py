@@ -5706,8 +5706,10 @@ def add_shipping(
 
     # fuel demand per oil-equivalent demand
     oil_efficiency = options["shipping_oil_efficiency"]
+    # hydrogen input per liquefied hydrogen
+    h2_input = costs.at["H2 liquefaction", "hydrogen-input"]
     fuel_demand = {
-        "hydrogen": oil_efficiency / costs.at["fuel cell", "efficiency"],
+        "hydrogen": oil_efficiency * h2_input / costs.at["fuel cell", "efficiency"],
         "methanol": oil_efficiency / options["shipping_methanol_efficiency"],
         "oil": 1.0,
         "lng": oil_efficiency / options["shipping_lng_efficiency"],
@@ -5724,8 +5726,8 @@ def add_shipping(
             bus0=nodes + " H2",
             bus2=nodes,
             carrier="shipping hydrogen",
-            efficiency2=-costs.at["H2 liquefaction", "electricity-input"],
-            capital_cost=costs.at["H2 liquefaction", "capital_cost"],
+            efficiency2=-costs.at["H2 liquefaction", "electricity-input"] / h2_input,
+            capital_cost=costs.at["H2 liquefaction", "capital_cost"] / h2_input,
         ),
         "methanol": dict(
             bus0=spatial.methanol.nodes,
