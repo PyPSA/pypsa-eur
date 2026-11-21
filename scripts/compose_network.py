@@ -170,7 +170,9 @@ from scripts.prepare_sector_network import (
     lossy_bidirectional_links,
     read_transport_corridors,
     reduce_space_heat_demand,
+    remove_electric_heating_from_electricity_demand,
     remove_h2_network,
+    remove_industry_from_electricity_demand,
     remove_lines_without_circuits,
     set_temporal_aggregation,
 )
@@ -493,8 +495,7 @@ if __name__ == "__main__":
 
             enable_ptes = options["district_heating"]["ptes"]["enable"]
 
-            heat_demand = build_heat_demand(
-                n,
+            heat_demand, electric_heat_supply = build_heat_demand(
                 inputs.hourly_heat_demand_total,
                 pop_weighted_energy_totals,
                 heating_efficiencies,
@@ -845,9 +846,6 @@ if __name__ == "__main__":
                 spatial=spatial,
             )
 
-        if options["heating"]:
-            add_waste_heat(n, costs, options, cf_industry)
-
         if options["agriculture"]:
             add_agriculture(
                 n,
@@ -883,12 +881,6 @@ if __name__ == "__main__":
         if options["perennials"]["enable"]:
             add_perennials(n, costs, spatial, options, inputs.biomass_potentials)
 
-        if not options["electricity_transmission_grid"]:
-            decentral(n)
-
-        if not options["H2_network"]:
-            remove_h2_network(n)
-
         if options["co2_network"]:
             add_co2_network(
                 n,
@@ -900,11 +892,6 @@ if __name__ == "__main__":
 
         if options["allam_cycle_gas"]:
             add_allam_gas(n, costs, spatial=spatial)
-
-        if options["electricity_distribution_grid"]:
-            insert_electricity_distribution_grid(
-                n, costs, options, inputs.solar_rooftop_potentials
-            )
 
         if options["enhanced_geothermal"]["enable"]:
             logger.info("Adding Enhanced Geothermal Systems (EGS).")
@@ -921,6 +908,28 @@ if __name__ == "__main__":
 
         if options["imports"]["enable"]:
             add_import_options(n, costs, options, spatial, gas_input_nodes)
+
+        # The steps below modify components added above; their order matters.
+
+        if options["heating"]:
+            remove_electric_heating_from_electricity_demand(n, electric_heat_supply)
+
+        if options["industry"]:
+            remove_industry_from_electricity_demand(n, industrial_demand)
+
+        if options["heating"]:
+            add_waste_heat(n, costs, options, cf_industry)
+
+        if not options["electricity_transmission_grid"]:
+            decentral(n)
+
+        if not options["H2_network"]:
+            remove_h2_network(n)
+
+        if options["electricity_distribution_grid"]:
+            insert_electricity_distribution_grid(
+                n, costs, options, inputs.solar_rooftop_potentials
+            )
 
         if options["gas_distribution_grid"]:
             insert_gas_distribution_costs(n, costs, options=options)

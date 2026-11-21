@@ -2861,15 +2861,15 @@ def add_land_transport(
 
 
 def build_heat_demand(
-    n, hourly_heat_demand_file, pop_weighted_energy_totals, heating_efficiencies
-):
+    hourly_heat_demand_file: str,
+    pop_weighted_energy_totals: pd.DataFrame,
+    heating_efficiencies: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Build heat demand time series and adjust electricity demand to account for electric heating.
+    Build time series of heat demand and of today's electric heat supply.
 
     Parameters
     ----------
-    n : pypsa.Network
-        The PyPSA network container object
     hourly_heat_demand_file : str
         Path to netCDF file containing hourly heat demand data
     pop_weighted_energy_totals : pd.DataFrame
@@ -2880,16 +2880,10 @@ def build_heat_demand(
 
     Returns
     -------
-    pd.DataFrame
-        Heat demand time series with hierarchical columns for different sectors
-        and uses (residential/services, water/space)
-
-    Notes
-    -----
-    The function:
-    - Constructs heat demand profiles for different sectors and uses
-    - Adjusts the electricity demand profiles by subtracting electric heating
-    - Modifies the network object in-place by updating n.loads_t.p_set
+    tuple[pd.DataFrame, pd.DataFrame]
+        Heat demand and electricity used for heating today, both as time series
+        with hierarchical columns for different sectors and uses
+        (residential/services, water/space)
     """
     heat_demand_shape = (
         xr.open_dataset(hourly_heat_demand_file).to_dataframe().unstack(level=1)
@@ -2918,14 +2912,18 @@ def build_heat_demand(
     heat_demand = pd.concat(heat_demand, axis=1)
     electric_heat_supply = pd.concat(electric_heat_supply, axis=1)
 
-    # subtract from electricity demand since heat demand already in heat_demand
+    return heat_demand, electric_heat_supply
+
+
+def remove_electric_heating_from_electricity_demand(
+    n: pypsa.Network, electric_heat_supply: pd.DataFrame
+) -> None:
+    """Subtract today's electric heating from the electricity demand; the heat demand covers it."""
     electric_nodes = n.loads.index[n.loads.carrier == "electricity"]
     n.loads_t.p_set[electric_nodes] = (
         n.loads_t.p_set[electric_nodes]
         - electric_heat_supply.T.groupby(level=1).sum().T[electric_nodes]
     )
-
-    return heat_demand
 
 
 def heat_system_nodes(heat_system: HeatSystem, spatial: SimpleNamespace) -> pd.Index:
@@ -5326,17 +5324,10 @@ def add_industry_low_temperature_heat_demand(
     )
 
 
-def add_industry_electricity_demand(
-    n: pypsa.Network,
-    spatial: SimpleNamespace,
-    cf_industry: dict,
-    industrial_demand: pd.DataFrame,
-    nhours: float,
-    industrial_electricity_profiles_file: str,
+def remove_industry_from_electricity_demand(
+    n: pypsa.Network, industrial_demand: pd.DataFrame
 ) -> None:
-    """Replace today's industrial electricity demand in the total demand by a separate industry demand."""
-    nodes = spatial.nodes
-    # remove today's industrial electricity demand by scaling down total electricity demand
+    """Scale down the electricity demand by today's industrial electricity demand."""
     for ct in n.buses.country.dropna().unique():
         # TODO map onto n.bus.country
 
@@ -5352,6 +5343,17 @@ def add_industry_electricity_demand(
         )
         n.loads_t.p_set[loads_i] *= factor
 
+
+def add_industry_electricity_demand(
+    n: pypsa.Network,
+    spatial: SimpleNamespace,
+    cf_industry: dict,
+    industrial_demand: pd.DataFrame,
+    nhours: float,
+    industrial_electricity_profiles_file: str,
+) -> None:
+    """Add the electricity demand of industry."""
+    nodes = spatial.nodes
     if cf_industry["temporal_electricity_industry_load"]:
         p_set = pd.read_csv(
             industrial_electricity_profiles_file, index_col=0, parse_dates=True
