@@ -27,11 +27,9 @@ import pypsa
 import xarray as xr
 
 from scripts._helpers import (
-    get,
     get_snapshots,
 )
 from scripts.add_electricity import flatten
-from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
 
@@ -451,43 +449,3 @@ def adjust_renewable_capacity_limits(
     n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
     limited = n.links.carrier.isin(renewable_carriers)
     n.links.loc[limited, "p_nom_max"] = n.links.loc[limited, "p_nom_max"].clip(lower=0)
-
-
-def main(
-    n: pypsa.Network,
-    n_previous: pypsa.Network,
-    inputs,
-    params,
-    current_horizon: int,
-    renewable_carriers: list[str],
-) -> None:
-    horizons = params.horizons
-
-    adjust_renewable_profiles(n, inputs, params, current_horizon)
-
-    add_build_year_to_new_assets(n, current_horizon)
-
-    update_heat_pump_efficiency(n, n_previous, current_horizon)
-
-    ptes = params.sector["district_heating"]["ptes"]
-    if ptes["enable"] and ptes["dynamic_capacity"]:
-        update_dynamic_ptes_capacity(n, n_previous, current_horizon)
-
-    logger.info(
-        f"Applying brownfield constraints from horizon {horizons[horizons.index(current_horizon) - 1]}"
-    )
-
-    add_brownfield(
-        n,
-        n_previous,
-        current_horizon,
-        h2_retrofit=params.sector["H2_retrofit"],
-        h2_retrofit_capacity_per_ch4=params.sector["H2_retrofit_capacity_per_CH4"],
-        capacity_threshold=params.existing_capacities["threshold_capacity"],
-    )
-    update_transmission_limit(
-        n, get(params.electricity["transmission_limit"], current_horizon)
-    )
-    disable_grid_expansion_if_limit_hit(n)
-
-    adjust_renewable_capacity_limits(n, str(current_horizon), renewable_carriers)
