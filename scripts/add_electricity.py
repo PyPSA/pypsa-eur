@@ -275,6 +275,22 @@ def add_co2_emissions(
     ].values
 
 
+def drop_sector_carriers(
+    conventional_carriers: list[str], extendable_carriers: dict, foresight: str
+) -> tuple[list[str], dict]:
+    """Drop the carriers that the sector-coupled model adds itself."""
+    # with myopic or perfect foresight, add_existing_baseyear adds nuclear as links
+    sector_carriers = SECTOR_CARRIERS | (
+        {"nuclear"} if foresight != "overnight" else set()
+    )
+    conventional_carriers = sorted(set(conventional_carriers) - sector_carriers)
+    extendable_carriers = {
+        c: sorted(set(carriers) - sector_carriers)
+        for c, carriers in extendable_carriers.items()
+    }
+    return conventional_carriers, extendable_carriers
+
+
 def load_and_aggregate_powerplants(
     ppl_fn: str,
     costs: pd.DataFrame,
@@ -592,8 +608,8 @@ def attach_conventional_generators(
     renewable_carriers: set,
     conventional_params: dict,
     conventional_inputs: dict,
-    unit_commitment: pd.DataFrame | None = None,
-    fuel_price: pd.DataFrame | None = None,
+    unit_commitment_file: str | None = None,
+    fuel_price_file: str | None = None,
 ) -> None:
     """
     Attach conventional generators to the network.
@@ -616,11 +632,22 @@ def attach_conventional_generators(
         Dictionary of conventional generator parameters.
     conventional_inputs : dict
         Dictionary of conventional generator inputs.
-    unit_commitment : pd.DataFrame, optional
-        DataFrame containing unit commitment data, by default None.
-    fuel_price : pd.DataFrame, optional
-        DataFrame containing fuel price data, by default None.
+    unit_commitment_file : str, optional
+        Path to the unit commitment data, by default None.
+    fuel_price_file : str, optional
+        Path to the fuel price time series, by default None.
     """
+    unit_commitment = None
+    if unit_commitment_file:
+        unit_commitment = pd.read_csv(unit_commitment_file, index_col=0)
+
+    fuel_price = None
+    if fuel_price_file:
+        fuel_price = pd.read_csv(
+            fuel_price_file, index_col=0, header=0, parse_dates=True
+        )
+        fuel_price = fuel_price.reindex(n.snapshots).ffill()
+
     if ppl.empty:
         return
 
@@ -1265,32 +1292,14 @@ def main(
     extendable_carriers = params.electricity["extendable_carriers"]
     conventional_carriers = params.electricity["conventional_carriers"]
     if params.sector["enabled"]:
-        # with myopic or perfect foresight, add_existing_baseyear adds nuclear as links
-        sector_carriers = SECTOR_CARRIERS | (
-            {"nuclear"} if foresight != "overnight" else set()
+        conventional_carriers, extendable_carriers = drop_sector_carriers(
+            conventional_carriers, extendable_carriers, foresight
         )
-        conventional_carriers = sorted(set(conventional_carriers) - sector_carriers)
-        extendable_carriers = {
-            c: sorted(set(carriers) - sector_carriers)
-            for c, carriers in extendable_carriers.items()
-        }
     conventional_inputs = {
         k: v for k, v in inputs.items() if k.startswith("conventional_")
     }
 
-    if params.conventional["unit_commitment"]:
-        unit_commitment = pd.read_csv(inputs.unit_commitment, index_col=0)
-    else:
-        unit_commitment = None
-
-    if params.conventional["dynamic_fuel_price"]:
-        fuel_price = pd.read_csv(
-            inputs.fuel_price, index_col=0, header=0, parse_dates=True
-        )
-        fuel_price = fuel_price.reindex(n.snapshots).ffill()
-    else:
-        fuel_price = None
-
+    conventional = params.conventional
     attach_conventional_generators(
         n,
         costs,
@@ -1298,10 +1307,14 @@ def main(
         conventional_carriers,
         extendable_carriers,
         renewable_carriers,
-        conventional_params=params.conventional,
+        conventional_params=conventional,
         conventional_inputs=conventional_inputs,
-        unit_commitment=unit_commitment,
-        fuel_price=fuel_price,
+        unit_commitment_file=inputs.unit_commitment
+        if conventional["unit_commitment"]
+        else None,
+        fuel_price_file=inputs.fuel_price
+        if conventional["dynamic_fuel_price"]
+        else None,
     )
 
     attach_wind_and_solar(
@@ -1315,16 +1328,13 @@ def main(
     )
 
     if "hydro" in renewable_carriers:
-        p = params.renewable["hydro"].copy()
-        carriers = p.pop("carriers")
         attach_hydro(
             n,
             costs,
             ppl,
             inputs.profile_hydro,
             inputs.hydro_capacities,
-            carriers,
-            **p,
+            **params.renewable["hydro"],
         )
 
     estimate_renewable_caps = params.electricity["estimate_renewable_capacities"]

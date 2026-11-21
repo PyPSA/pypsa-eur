@@ -321,7 +321,17 @@ def add_dynamic_emission_prices(n: pypsa.Network, fn: str) -> None:
     n.generators.loc[affected, "marginal_cost"] = 0.0
 
 
-def set_transmission_limit(n: pypsa.Network, kind: str, factor: str | float) -> None:
+def set_transmission_limit(n: pypsa.Network, transmission_limit: str | list) -> None:
+    if isinstance(transmission_limit, str):
+        kind = transmission_limit[0]
+        factor = transmission_limit[1:] or "opt"
+    elif isinstance(transmission_limit, (list, tuple)) and len(transmission_limit) == 2:
+        kind, factor = transmission_limit
+    else:
+        raise ValueError(
+            "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
+        )
+
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
     _lines_s_nom = (
@@ -484,17 +494,7 @@ def main(
             "Per-horizon `transmission_limit` is not supported for perfect foresight."
         )
     transmission_limit = get(transmission_limit, current_horizon)
-    if isinstance(transmission_limit, str):
-        kind = transmission_limit[0]
-        factor = transmission_limit[1:] or "opt"
-    elif isinstance(transmission_limit, (list, tuple)) and len(transmission_limit) == 2:
-        kind, factor = transmission_limit
-    else:
-        raise ValueError(
-            "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
-        )
-
-    set_transmission_limit(n, kind, factor)
+    set_transmission_limit(n, transmission_limit)
 
     cap_transmission_capacity(
         n,

@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     n = apply_temporal_aggregation(n, inputs, params)
 
-    renewable_carriers = sorted(
+    capacity_limited_carriers = sorted(
         set(params.electricity["renewable_carriers"])
         | (
             SECTOR_RENEWABLE_CARRIERS
@@ -109,7 +109,7 @@ if __name__ == "__main__":
         add_existing_capacities(n, inputs, params, costs)
         if foresight == "myopic":
             adjust_renewable_capacity_limits(
-                n, str(current_horizon), renewable_carriers
+                n, str(current_horizon), capacity_limited_carriers
             )
 
     if sector_mode and params.sector["cluster_heat_buses"]:
@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
     if foresight == "myopic" and not is_first_horizon:
         apply_brownfield(
-            n, n_previous, inputs, params, current_horizon, renewable_carriers
+            n, n_previous, inputs, params, current_horizon, capacity_limited_carriers
         )
 
     if foresight == "perfect":

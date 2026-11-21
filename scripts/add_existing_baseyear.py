@@ -807,7 +807,6 @@ def main(
 ) -> None:
     logger.info("Adding existing capacities")
     baseyear = params.horizons[0]
-    renewable_carriers = set(params.electricity["renewable_carriers"])
 
     options = params.sector
 
@@ -825,7 +824,7 @@ def main(
         powerplants_file=inputs.powerplants,
         countries=params.countries,
         capacity_threshold=params.existing_capacities["threshold_capacity"],
-        renewable_carriers=renewable_carriers,
+        renewable_carriers=params.electricity["renewable_carriers"],
         spatial=spatial,
         solar_rooftop_ratio=params.existing_capacities["solar_rooftop_ratio"],
     )
