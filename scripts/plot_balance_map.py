@@ -30,9 +30,9 @@ from scripts._helpers import (
     PYPSA_V1,
     configure_logging,
     create_placeholder_plot,
+    sanitize_carriers,
     set_scenario_config,
 )
-from scripts.add_electricity import sanitize_carriers
 from scripts.co2_budget import co2_limit_name
 from scripts.plot_power_network import load_projection
 

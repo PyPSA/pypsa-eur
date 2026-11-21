@@ -31,6 +31,7 @@ from scripts._helpers import (
     configure_logging,
     get,
     load_costs,
+    sanitize_carriers,
     sanitize_custom_columns,
     set_scenario_config,
     update_p_nom_max,
@@ -56,7 +57,6 @@ from scripts.add_electricity import (
     drop_sector_carriers,
     estimate_renewable_capacities,
     load_and_aggregate_powerplants,
-    sanitize_carriers,
     sanitize_locations,
     set_transmission_costs,
 )

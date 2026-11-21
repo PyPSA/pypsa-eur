@@ -22,9 +22,9 @@ from pypsa.statistics import get_transmission_carriers
 
 from scripts._helpers import (
     configure_logging,
+    sanitize_carriers,
     set_scenario_config,
 )
-from scripts.add_electricity import sanitize_carriers
 from scripts.co2_budget import co2_limit_name
 
 VALID_MAP_STYLES = PydeckPlotter.VALID_MAP_STYLES

@@ -31,12 +31,12 @@ from scripts._helpers import (
     PYPSA_V1,
     get,
 )
+from scripts.build_co2_totals import co2_emissions_year
 from scripts.co2_budget import (
     bound_value_for_horizon,
     co2_budget_for_horizon,
     co2_limit_name,
 )
-from scripts.prepare_sector_network import co2_emissions_year
 
 # Allow for PyPSA versions <0.35
 if PYPSA_V1:

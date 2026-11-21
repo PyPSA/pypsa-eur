@@ -27,9 +27,9 @@ import pypsa
 import xarray as xr
 
 from scripts._helpers import (
+    flatten,
     get_snapshots,
 )
-from scripts.add_electricity import flatten
 
 logger = logging.getLogger(__name__)
 

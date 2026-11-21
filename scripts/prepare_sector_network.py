@@ -35,11 +35,11 @@ from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentati
 from pypsa.geo import haversine_pts
 
 from scripts._helpers import (
+    calculate_annuity,
+    flatten,
     get,
     get_temporal_resolution,
 )
-from scripts.add_electricity import calculate_annuity, flatten
-from scripts.build_co2_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from scripts.build_transport_demand import transport_degree_factor
 from scripts.definitions.heat_sector import HeatSector
 from scripts.definitions.heat_system import HeatSystem
@@ -222,57 +222,6 @@ def define_spatial(nodes: pd.Index, options: dict) -> SimpleNamespace:
     spatial.geothermal_heat.locations = ["EU"]
 
     return spatial
-
-
-def determine_emission_sectors(options: dict) -> list[str]:
-    sectors = ["electricity"]
-    if options["transport"]:
-        sectors += ["rail non-elec", "road non-elec"]
-    if options["heating"]:
-        sectors += ["residential non-elec", "services non-elec"]
-    if options["industry"]:
-        sectors += [
-            "industrial non-elec",
-            "industrial processes",
-            "domestic aviation",
-            "international aviation",
-            "domestic navigation",
-            "international navigation",
-        ]
-    if options["agriculture"]:
-        sectors += ["agriculture"]
-
-    return sectors
-
-
-def co2_emissions_year(
-    countries: list[str],
-    input_eurostat: str,
-    options: dict,
-    emissions_scope: str,
-    input_co2: str,
-    year: int,
-) -> float:
-    """
-    Calculate CO2 emissions in one specific year (e.g. 1990 or 2018).
-    """
-    eea_co2 = build_eea_co2(input_co2, year, emissions_scope)
-
-    eurostat = pd.read_csv(input_eurostat)
-
-    # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK, XK
-    eurostat_co2 = build_eurostat_co2(eurostat, year)
-
-    co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
-
-    sectors = determine_emission_sectors(options)
-
-    co2_emissions = co2_totals.loc[countries, sectors].sum().sum()
-
-    # convert MtCO2 to GtCO2
-    co2_emissions *= 0.001
-
-    return co2_emissions
 
 
 def haversine(p, n):

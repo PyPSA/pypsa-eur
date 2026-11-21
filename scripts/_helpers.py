@@ -18,7 +18,7 @@ import logging
 import os
 import re
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from functools import lru_cache, partial, wraps
 from itertools import takewhile
 from operator import attrgetter
@@ -1071,3 +1071,98 @@ def _load_data_version(file: str | Path, validate: bool = True) -> pd.DataFrame:
         data_versions = VersionsSchema.validate(data_versions)
 
     return data_versions
+
+
+def flatten(t: Iterable[Any]) -> str:
+    return " ".join(map(str, t))
+
+
+def calculate_annuity(n: float, r: float | pd.Series) -> float | pd.Series:
+    """
+    Calculate the annuity factor for an asset with lifetime n years and discount rate r.
+
+    The annuity factor is used to calculate the annual payment required to pay off a loan
+    over n years at interest rate r. For example, annuity(20, 0.05) * 20 = 1.6.
+
+    Parameters
+    ----------
+    n : float
+        Lifetime of the asset in years
+    r : float | pd.Series
+        Discount rate (interest rate). Can be a single float or a pandas Series of rates.
+
+    Returns
+    -------
+    float | pd.Series
+        Annuity factor. Returns a float if r is float, or pd.Series if r is pd.Series.
+
+    Examples
+    --------
+    >>> calculate_annuity(20, 0.05)
+    0.08024258718774728
+    """
+    if isinstance(r, pd.Series):
+        return pd.Series(1 / n, index=r.index).where(
+            r == 0, r / (1.0 - 1.0 / (1.0 + r) ** n)
+        )
+    elif r > 0:
+        return r / (1.0 - 1.0 / (1.0 + r) ** n)
+    else:
+        return 1 / n
+
+
+def add_missing_carriers(n: pypsa.Network, carriers: Iterable[str]) -> None:
+    """
+    Function to add missing carriers to the network without raising errors.
+    """
+    missing_carriers = set(carriers) - set(n.carriers.index)
+    if len(missing_carriers) > 0:
+        n.add("Carrier", missing_carriers)
+
+
+def sanitize_carriers(n: pypsa.Network, nice_names: dict, tech_colors: dict) -> None:
+    """
+    Sanitize the carrier information in a PyPSA Network object.
+
+    The function ensures that all unique carrier names are present in the network's
+    carriers attribute, and adds nice names and colors for each carrier according
+    to the provided configuration dictionary.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        A PyPSA Network object that represents an electrical power system.
+    nice_names : dict
+        Display names of carriers.
+    tech_colors : dict
+        Colors of carriers.
+
+    Returns
+    -------
+    None
+        The function modifies the 'n' PyPSA Network object in-place, updating the
+        carriers attribute with nice names and colors.
+
+    Warnings
+    --------
+    Raises a warning if any carrier's "tech_colors" are not defined in the config dictionary.
+    """
+
+    for c in n.components:
+        if "carrier" in c.static:
+            add_missing_carriers(n, c.static.carrier)
+
+    carrier_i = n.carriers.index
+    nice_names = pd.Series(nice_names).reindex(carrier_i).fillna(carrier_i.to_series())
+    n.carriers["nice_name"] = n.carriers.nice_name.where(
+        n.carriers.nice_name != "", nice_names
+    )
+
+    colors = pd.Series(tech_colors).reindex(carrier_i)
+    # try to fill missing colors with tech_colors after renaming
+    missing_colors_i = colors[colors.isna()].index
+    colors[missing_colors_i] = missing_colors_i.map(rename_techs).map(tech_colors)
+    if colors.isna().any():
+        missing_i = list(colors.index[colors.isna()])
+        logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
+    n.carriers["color"] = n.carriers.color.where(n.carriers.color != "", colors)

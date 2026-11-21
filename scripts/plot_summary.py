@@ -26,7 +26,7 @@ from scripts._helpers import (
     rename_techs,
     set_scenario_config,
 )
-from scripts.prepare_sector_network import co2_emissions_year
+from scripts.build_co2_totals import co2_emissions_year
 
 logger = logging.getLogger(__name__)
 
