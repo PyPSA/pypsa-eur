@@ -1632,7 +1632,7 @@ def insert_electricity_distribution_grid(
 
     Adds low voltage buses, distribution grid links, rooftop solar potential,
     and home battery storage systems to the network. Also adjusts the connection
-    points of various loads and distributed energy resources to the low voltage grid.
+    points of various demands and distributed energy resources to the low voltage grid.
 
     Parameters
     ----------
@@ -1660,7 +1660,7 @@ def insert_electricity_distribution_grid(
     - Rooftop solar potential based on population density
     - Home battery storage systems with separate charger/discharger links
 
-    The function also adjusts the connection points of loads like:
+    The function also adjusts the connection points of demands like:
     - Regular electricity demand
     - Electric vehicles (BEV chargers and V2G)
     - Heat pumps
@@ -1690,7 +1690,7 @@ def insert_electricity_distribution_grid(
         capital_cost=costs.at["electricity distribution grid", "capital_cost"],
     )
 
-    # deduct distribution losses from electricity demand as these are included in total load
+    # deduct distribution losses from electricity demand as these are included in total demand
     # https://nbviewer.org/github/Open-Power-System-Data/datapackage_timeseries/blob/2020-10-06/main.ipynb
     if (
         efficiency := options["transmission_efficiency"]
@@ -1704,7 +1704,7 @@ def insert_electricity_distribution_grid(
         )
         n.loads_t.p_set.loc[:, n.loads.carrier == "electricity"] *= efficiency
 
-    # this catches regular electricity load and "industry electricity" and
+    # this catches regular electricity demand and "industry electricity" and
     # "agriculture machinery electric" and "agriculture electricity"
     loads = n.loads.index[n.loads.carrier.str.contains("electric")]
     n.loads.loc[loads, "bus"] += " low voltage"
@@ -2541,7 +2541,7 @@ def add_EVs(
     -----
     Components added to the network:
     - EV battery buses for each node
-    - EV loads with temperature-corrected efficiency
+    - EV demands with temperature-corrected efficiency
     - BEV chargers with availability profiles
     - Optional EV battery storage if DSM is enabled
     - Optional V2G links if V2G is enabled
@@ -2577,10 +2577,10 @@ def add_EVs(
     cyclic_eff = p_set.div(p_shifted)
     efficiency *= cyclic_eff
 
-    # Calculate load profile
+    # Calculate demand profile
     profile = electric_share * p_set.div(efficiency)
 
-    # Add EV load
+    # Add EV demand
     n.add(
         "Load",
         spatial.nodes,
@@ -2651,7 +2651,7 @@ def add_fuel_cell_cars(
     spatial: SimpleNamespace,
 ) -> None:
     """
-    Add hydrogen fuel cell vehicles to the network as hydrogen loads.
+    Add hydrogen fuel cell vehicles to the network as hydrogen demands.
 
     Creates temperature-dependent hydrogen demand profiles for fuel cell vehicles
     based on transport energy demand, fuel cell share, and temperature-dependent
@@ -2687,7 +2687,7 @@ def add_fuel_cell_cars(
     Returns
     -------
     None
-        Modifies the network object in-place by adding fuel cell vehicle loads
+        Modifies the network object in-place by adding fuel cell vehicle demands
 
     Notes
     -----
@@ -2711,7 +2711,7 @@ def add_fuel_cell_cars(
     # Calculate hydrogen demand profile
     profile = fuel_cell_share * p_set.div(efficiency)
 
-    # Add hydrogen load for fuel cell vehicles
+    # Add hydrogen demand for fuel cell vehicles
     n.add(
         "Load",
         spatial.nodes,
@@ -2961,7 +2961,7 @@ def build_heat_demand(
     n, hourly_heat_demand_file, pop_weighted_energy_totals, heating_efficiencies
 ):
     """
-    Build heat demand time series and adjust electricity load to account for electric heating.
+    Build heat demand time series and adjust electricity demand to account for electric heating.
 
     Parameters
     ----------
@@ -2985,7 +2985,7 @@ def build_heat_demand(
     -----
     The function:
     - Constructs heat demand profiles for different sectors and uses
-    - Adjusts the electricity load profiles by subtracting electric heating
+    - Adjusts the electricity demand profiles by subtracting electric heating
     - Modifies the network object in-place by updating n.loads_t.p_set
     """
     heat_demand_shape = (
@@ -3015,7 +3015,7 @@ def build_heat_demand(
     heat_demand = pd.concat(heat_demand, axis=1)
     electric_heat_supply = pd.concat(electric_heat_supply, axis=1)
 
-    # subtract from electricity load since heat demand already in heat_demand
+    # subtract from electricity demand since heat demand already in heat_demand
     electric_nodes = n.loads.index[n.loads.carrier == "electricity"]
     n.loads_t.p_set[electric_nodes] = (
         n.loads_t.p_set[electric_nodes]
@@ -3043,7 +3043,7 @@ def add_heat_vent(
     )
 
 
-def add_heat_load(
+def add_heat_demand(
     n: pypsa.Network,
     nodes: pd.Index,
     heat_system: HeatSystem,
@@ -3053,12 +3053,12 @@ def add_heat_load(
     dist_fraction: pd.Series,
 ) -> None:
     """Add heat demand of one heat system."""
-    ## Add heat load
+    ## Add heat demand
     factor = heat_system.heat_demand_weighting(
         urban_fraction=urban_fraction[nodes], dist_fraction=dist_fraction[nodes]
     )
     if heat_system != HeatSystem.URBAN_CENTRAL:
-        heat_load = (
+        heat_system_demand = (
             heat_demand[
                 [
                     heat_system.sector.value + " water",
@@ -3072,7 +3072,7 @@ def add_heat_load(
         )
 
     else:
-        heat_load = (
+        heat_system_demand = (
             heat_demand.T.groupby(level=1)
             .sum()
             .T[nodes]
@@ -3087,7 +3087,7 @@ def add_heat_load(
         suffix=f" {heat_system} heat",
         bus=nodes + f" {heat_system} heat",
         carrier=f"{heat_system} heat",
-        p_set=heat_load.loc[n.snapshots],
+        p_set=heat_system_demand.loc[n.snapshots],
     )
 
 
@@ -4047,7 +4047,7 @@ def add_heat(
         if options["heat_vent"][heat_system.system_type.value]:
             add_heat_vent(n, nodes, heat_system, options)
 
-        add_heat_load(
+        add_heat_demand(
             n, nodes, heat_system, options, heat_demand, urban_fraction, dist_fraction
         )
 
@@ -4275,10 +4275,25 @@ def add_biomass_supply(
     n: pypsa.Network,
     costs: pd.DataFrame,
     spatial: SimpleNamespace,
-    biogas_potentials_spatial: pd.Series | float,
-    solid_biomass_potentials_spatial: pd.Series | float,
+    options: dict,
+    biomass_potentials: pd.DataFrame,
 ) -> None:
     """Add buses and potentials of biogas and solid biomass."""
+    # need to aggregate potentials if gas not nodally resolved
+    if options["gas_network"]:
+        biogas_potentials_spatial = biomass_potentials["biogas"].rename(
+            index=lambda x: x + " biogas"
+        )
+    else:
+        biogas_potentials_spatial = biomass_potentials["biogas"].sum()
+
+    if options["biomass_spatial"]:
+        solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].rename(
+            index=lambda x: x + " solid biomass"
+        )
+    else:
+        solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
+
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
 
@@ -4386,11 +4401,33 @@ def add_unsustainable_biomass(
     options: dict,
     cf_industry: dict,
     biomass_potentials: pd.DataFrame,
-    unsustainable_biogas_potentials_spatial: pd.Series | float,
-    unsustainable_solid_biomass_potentials_spatial: pd.Series | float,
-    unsustainable_liquid_biofuel_potentials_spatial: pd.Series | float,
 ) -> None:
     """Add unsustainable biogas, solid biomass and bioliquids as fixed supply."""
+    # need to aggregate potentials if gas not nodally resolved
+    if options["gas_network"]:
+        unsustainable_biogas_potentials_spatial = biomass_potentials[
+            "unsustainable biogas"
+        ].rename(index=lambda x: x + " biogas")
+    else:
+        unsustainable_biogas_potentials_spatial = biomass_potentials[
+            "unsustainable biogas"
+        ].sum()
+
+    if options["biomass_spatial"]:
+        unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
+            "unsustainable solid biomass"
+        ].rename(index=lambda x: x + " unsustainable solid biomass")
+        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
+            "unsustainable bioliquids"
+        ].rename(index=lambda x: x + " unsustainable bioliquids")
+    else:
+        unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
+            "unsustainable solid biomass"
+        ].sum()
+        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
+            "unsustainable bioliquids"
+        ].sum()
+
     n.add(
         "Generator",
         spatial.gas.biogas,
@@ -4945,58 +4982,14 @@ def add_biomass(
 
     biomass_potentials = pd.read_csv(biomass_potentials_file, index_col=0) * nyears
 
-    # need to aggregate potentials if gas not nodally resolved
-    if options["gas_network"]:
-        biogas_potentials_spatial = biomass_potentials["biogas"].rename(
-            index=lambda x: x + " biogas"
-        )
-        unsustainable_biogas_potentials_spatial = biomass_potentials[
-            "unsustainable biogas"
-        ].rename(index=lambda x: x + " biogas")
-    else:
-        biogas_potentials_spatial = biomass_potentials["biogas"].sum()
-        unsustainable_biogas_potentials_spatial = biomass_potentials[
-            "unsustainable biogas"
-        ].sum()
-
-    if options["biomass_spatial"]:
-        solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].rename(
-            index=lambda x: x + " solid biomass"
-        )
-        unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
-            "unsustainable solid biomass"
-        ].rename(index=lambda x: x + " unsustainable solid biomass")
-        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
-            "unsustainable bioliquids"
-        ].rename(index=lambda x: x + " unsustainable bioliquids")
-
-    else:
-        solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
-        unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
-            "unsustainable solid biomass"
-        ].sum()
-        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
-            "unsustainable bioliquids"
-        ].sum()
-
-    add_biomass_supply(
-        n, costs, spatial, biogas_potentials_spatial, solid_biomass_potentials_spatial
-    )
+    add_biomass_supply(n, costs, spatial, options, biomass_potentials)
 
     if options["solid_biomass_import"]["enable"]:
         add_solid_biomass_import(n, costs, spatial, options, nyears)
 
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
         add_unsustainable_biomass(
-            n,
-            costs,
-            spatial,
-            options,
-            cf_industry,
-            biomass_potentials,
-            unsustainable_biogas_potentials_spatial,
-            unsustainable_solid_biomass_potentials_spatial,
-            unsustainable_liquid_biofuel_potentials_spatial,
+            n, costs, spatial, options, cf_industry, biomass_potentials
         )
 
     if options["biogas_upgrading"]:
@@ -5063,7 +5056,7 @@ def add_industry_heat(
     """
     Add industry process heat demand above 100 °C and its supply options.
 
-    Each temperature band has one bus per node with a constant load. Steam
+    Each temperature band has one bus per node with a constant demand. Steam
     at 100-200 °C comes from boilers or heat pumps, higher temperatures from
     direct firing. Solid biomass and gas are also offered with carbon capture,
     which takes its heat from the plant and its electricity from the grid.
@@ -5735,7 +5728,7 @@ def add_industry_naphtha_demand(
             ),
         }
 
-    # link to supply the naphtha for industry load
+    # link to supply the naphtha for industry demand
     n.add(
         "Link",
         spatial.oil.naphtha,
@@ -5783,7 +5776,7 @@ def add_industry_electricity_demand(
     nhours: float,
     industrial_electricity_profiles_file: str,
 ) -> None:
-    """Replace today's industrial electricity demand in the total load by a separate industry load."""
+    """Replace today's industrial electricity demand in the total demand by a separate industry demand."""
     nodes = spatial.nodes
     # remove today's industrial electricity demand by scaling down total electricity demand
     for ct in n.buses.country.dropna().unique():
@@ -6509,9 +6502,9 @@ def add_agriculture(
     spatial: SimpleNamespace,
 ) -> None:
     """
-    Add agriculture, forestry and fishing sector loads to the network.
+    Add agriculture, forestry and fishing sector demands to the network.
 
-    Creates electrical loads, heat loads, and machinery-related components (both electric
+    Creates electrical demands, heat demands, and machinery-related components (both electric
     and oil-based) for the agricultural sector, distributed according to population weights.
 
     Parameters
@@ -6542,11 +6535,11 @@ def add_agriculture(
     Returns
     -------
     None
-        Modifies the network object in-place by adding loads and components
+        Modifies the network object in-place by adding demands and components
 
     Notes
     -----
-    The function adds three types of loads:
+    The function adds three types of demands:
     1. Agricultural electricity consumption
     2. Agricultural heat demand
     3. Agricultural machinery energy demand (split between electricity and oil)
