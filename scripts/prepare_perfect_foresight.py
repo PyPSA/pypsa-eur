@@ -22,8 +22,6 @@ import logging
 import pandas as pd
 import pypsa
 
-from scripts.add_existing_baseyear import add_build_year_to_new_assets
-
 logger = logging.getLogger(__name__)
 
 
@@ -395,43 +393,3 @@ def add_H2_boilers(n: pypsa.Network) -> None:
     df["p_nom_extendable"] = True
 
     n.add("Link", df.index, **df)
-
-
-def main(
-    n: pypsa.Network,
-    n_previous: pypsa.Network | None,
-    params,
-    current_horizon: int,
-) -> pypsa.Network:
-    logger.warning(
-        "Running perfect foresight is not properly tested and may not work as expected. "
-        "Use at your own risk!"
-    )
-    is_first_horizon = current_horizon == params.horizons[0]
-
-    add_build_year_to_new_assets(n, current_horizon)
-
-    add_H2_boilers(n)
-
-    adjust_stores_for_perfect_foresight(n)
-
-    logger.info(f"Converting horizon {current_horizon} to multi-period structure")
-    n.set_investment_periods([current_horizon])
-
-    if not is_first_horizon:
-        logger.info(
-            "Concatenating with previous composed network for perfect foresight"
-        )
-        n = concatenate_network_with_previous(
-            n_previous=n_previous,
-            n_current=n,
-            current_horizon=current_horizon,
-        )
-
-        social_discountrate = params.costs["social_discountrate"]
-        apply_investment_period_weightings(n, social_discountrate)
-        logger.info(
-            f"Investment period weightings applied for {len(n.investment_periods)} periods"
-        )
-
-    return n

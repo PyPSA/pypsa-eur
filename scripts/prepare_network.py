@@ -21,7 +21,6 @@ and potentials per planning horizon are applied as well.
 """
 
 import logging
-import os
 from collections.abc import Mapping
 
 import numpy as np
@@ -32,12 +31,12 @@ from scripts._helpers import (
     PYPSA_V1,
     get,
 )
+from scripts.build_co2_totals import co2_emissions_year
 from scripts.co2_budget import (
     bound_value_for_horizon,
     co2_budget_for_horizon,
     co2_limit_name,
 )
-from scripts.prepare_sector_network import co2_emissions_year, set_temporal_aggregation
 
 # Allow for PyPSA versions <0.35
 if PYPSA_V1:
@@ -321,7 +320,17 @@ def add_dynamic_emission_prices(n: pypsa.Network, fn: str) -> None:
     n.generators.loc[affected, "marginal_cost"] = 0.0
 
 
-def set_transmission_limit(n: pypsa.Network, kind: str, factor: str | float) -> None:
+def set_transmission_limit(n: pypsa.Network, transmission_limit: str | list) -> None:
+    if isinstance(transmission_limit, str):
+        kind = transmission_limit[0]
+        factor = transmission_limit[1:] or "opt"
+    elif isinstance(transmission_limit, (list, tuple)) and len(transmission_limit) == 2:
+        kind, factor = transmission_limit
+    else:
+        raise ValueError(
+            "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
+        )
+
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
     _lines_s_nom = (
@@ -433,75 +442,3 @@ def cap_transmission_capacity(
     # Apply absolute link capacity limit if specified
     if link_max is not None and np.isfinite(link_max):
         n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=link_max)
-
-
-def apply_temporal_aggregation(
-    n: pypsa.Network,
-    inputs,
-    params,
-) -> pypsa.Network:
-    logger.info("Applying temporal aggregation")
-    n = set_temporal_aggregation(
-        n, params.clustering["temporal"], inputs.snapshot_weightings
-    )
-    logger.info("Completed temporal aggregation")
-    return n
-
-
-def main(
-    n: pypsa.Network,
-    inputs,
-    params,
-    nyears: float,
-    current_horizon: int,
-) -> None:
-    logger.info("Preparing network for solving")
-
-    electricity_cfg = params.electricity
-
-    if electricity_cfg["gaslimit_enable"]:
-        gaslimit = electricity_cfg["gaslimit"]
-        add_gaslimit(n, gaslimit, nyears)
-
-    emission_prices = params.costs["emission_prices"]
-
-    if emission_prices["dynamic"]:
-        if not os.path.exists(inputs.co2_price):
-            raise ValueError("CO2 price file for monthly prices not found")
-        add_dynamic_emission_prices(n, inputs.co2_price)
-    elif emission_prices["enable"]:
-        if isinstance(emission_prices["co2"], dict):
-            logger.warning(
-                "Not setting emission prices specified per planning horizon. "
-                "Use dynamic emission prices instead."
-            )
-        else:
-            add_emission_prices(n, {"co2": emission_prices["co2"]}, exclude_co2=False)
-
-    transmission_limit = electricity_cfg["transmission_limit"]
-    if isinstance(transmission_limit, dict) and params.foresight == "perfect":
-        raise ValueError(
-            "Per-horizon `transmission_limit` is not supported for perfect foresight."
-        )
-    transmission_limit = get(transmission_limit, current_horizon)
-    if isinstance(transmission_limit, str):
-        kind = transmission_limit[0]
-        factor = transmission_limit[1:] or "opt"
-    elif isinstance(transmission_limit, (list, tuple)) and len(transmission_limit) == 2:
-        kind, factor = transmission_limit
-    else:
-        raise ValueError(
-            "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
-        )
-
-    set_transmission_limit(n, kind, factor)
-
-    cap_transmission_capacity(
-        n,
-        line_max=params.lines["s_nom_max"],
-        link_max=params.links["p_nom_max"],
-        line_max_extension=params.lines["s_nom_max_extension"],
-        link_max_extension=params.links["p_nom_max_extension"],
-        line_max_pu=params.lines["s_max_pu"],
-        link_max_pu=params.links["p_max_pu"],
-    )
