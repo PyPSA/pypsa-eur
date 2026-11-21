@@ -44,7 +44,6 @@ from scripts.build_transport_demand import transport_degree_factor
 from scripts.definitions.heat_sector import HeatSector
 from scripts.definitions.heat_system import HeatSystem
 
-spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
 
@@ -57,7 +56,7 @@ def define_spatial(nodes: pd.Index, options: dict) -> SimpleNamespace:
     nodes : list-like
     """
 
-    spatial.nodes = nodes
+    spatial = SimpleNamespace(nodes=nodes)
 
     # biomass
 
@@ -1636,7 +1635,6 @@ def insert_electricity_distribution_grid(
     n: pypsa.Network,
     costs: pd.DataFrame,
     options: dict,
-    pop_layout: pd.DataFrame,
     solar_rooftop_potentials_fn: str,
 ) -> None:
     """
@@ -1658,10 +1656,6 @@ def insert_electricity_distribution_grid(
         Configuration options containing at least:
         - transmission_efficiency: dict with distribution grid parameters
         - marginal_cost_storage: float for storage operation costs
-    pop_layout : pd.DataFrame
-        Population data per node with at least:
-        - 'total' column containing population in thousands
-        Index should match network nodes
 
     Returns
     -------
@@ -2773,7 +2767,7 @@ def add_land_transport(
     cf_industry: dict,
     options: dict,
     spatial: SimpleNamespace,
-    investment_year: int,
+    current_horizon: int,
     nodes: pd.Index,
 ) -> None:
     """
@@ -2802,7 +2796,7 @@ def add_land_transport(
         - land_transport_ice_share
     spatial : SimpleNamespace
         Configuration options containing at least spatial information on nodes, h2 and oil
-    investment_year : int
+    current_horizon : int
         Year for which to get the transport shares
     nodes : list-like
         List of spatial nodes to consider
@@ -2833,7 +2827,7 @@ def add_land_transport(
     shares = pd.Series()
     for engine in engine_types:
         share_key = f"land_transport_{engine}_share"
-        shares[engine] = get(options[share_key], investment_year)
+        shares[engine] = get(options[share_key], current_horizon)
         if logger:
             logger.info(f"{engine} share: {shares[engine] * 100}%")
 
@@ -2966,13 +2960,12 @@ def add_heat(
     floor_area_file: str,
     heat_source_profile_files: dict[str, str],
     heat_dsm_profile_file: str,
-    params: dict,
     pop_weighted_energy_totals: pd.DataFrame,
     heating_efficiencies: pd.DataFrame,
     pop_layout: pd.DataFrame,
     spatial: object,
     options: dict,
-    investment_year: int,
+    current_horizon: int,
 ) -> None:
     """
     Add heat sector to the network including heat demand, heat pumps, storage, and conversion technologies.
@@ -3015,11 +3008,6 @@ def add_heat(
         Dictionary mapping heat source names to their data file paths
     heat_dsm_profile_file : str
         Path to CSV file containing demand-side management profiles for heat
-    params : dict
-        Dictionary containing parameters including:
-        - heat_pump_sources
-        - heat_utilisation_potentials
-        - direct_utilisation_heat_sources
     pop_weighted_energy_totals : pd.DataFrame
         Population-weighted energy totals by region
     heating_efficiencies : pd.DataFrame
@@ -3030,7 +3018,7 @@ def add_heat(
         Object containing spatial data with attributes for different carriers (gas, co2, etc.)
     options : dict
         Dictionary containing configuration options for heat sector components
-    investment_year : int
+    current_horizon : int
         Year for which to get the heat sector components and costs
 
     Returns
@@ -3072,7 +3060,7 @@ def add_heat(
 
     # exogenously reduce space heat demand
     if options["reduce_space_heat_exogenously"]:
-        dE = get(options["reduce_space_heat_exogenously_factor"], investment_year)
+        dE = get(options["reduce_space_heat_exogenously_factor"], current_horizon)
         logger.info(f"Assumed space heat reduction of {dE:.2%}")
         for sector in sectors:
             heat_demand[sector + " space"] = (1 - dE) * heat_demand[sector + " space"]
@@ -3119,7 +3107,7 @@ def add_heat(
                 p_max_pu=0,
                 p_min_pu=-1,
                 unit="MWh_th",
-                marginal_cost=-params["sector"]["marginal_cost_heat_vent"],
+                marginal_cost=-options["marginal_cost_heat_vent"],
             )
 
         ## Add heat load
@@ -3185,7 +3173,7 @@ def add_heat(
 
             heat_dsm_restriction_value = options["residential_heat"]["dsm"][
                 "restriction_value"
-            ].get(investment_year)
+            ].get(current_horizon)
             heat_dsm_profile = heat_dsm_profile * heat_dsm_restriction_value
             e_nom = e_nom.max()
 
@@ -3432,7 +3420,7 @@ def add_heat(
             )
 
         ## Add heat pumps
-        for heat_source in params.heat_pump_sources[heat_system.system_type.value]:
+        for heat_source in options["heat_pump_sources"][heat_system.system_type.value]:
             costs_name_heat_pump = heat_system.heat_pump_costs_name(heat_source)
 
             cop_heat_pump = (
@@ -3449,7 +3437,7 @@ def add_heat(
                 )
             )
 
-            if heat_source in params.limited_heat_sources:
+            if heat_source in options["district_heating"]["limited_heat_sources"]:
                 # get potential
                 p_max_source = pd.read_csv(
                     heat_source_profile_files[heat_source],
@@ -3530,7 +3518,10 @@ def add_heat(
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
 
-                if heat_source in params.direct_utilisation_heat_sources:
+                if (
+                    heat_source
+                    in options["district_heating"]["direct_utilisation_heat_sources"]
+                ):
                     # 1 if source temperature exceeds forward temperature, 0 otherwise:
                     efficiency_direct_utilisation = (
                         direct_heat_profile.sel(
@@ -3566,7 +3557,8 @@ def add_heat(
 
             if (
                 enable_ptes
-                and heat_source in params.temperature_limited_stores
+                and heat_source
+                in options["district_heating"]["temperature_limited_stores"]
                 and options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
@@ -4775,7 +4767,7 @@ def plastic_waste_co2_per_naphtha(
     industrial_demand: pd.DataFrame,
     costs: pd.DataFrame,
     cf_industry: dict,
-    investment_year: int,
+    current_horizon: int,
 ) -> float:
     """
     Return the CO2 from plastic waste per naphtha for industry in tCO2/MWh.
@@ -4789,7 +4781,7 @@ def plastic_waste_co2_per_naphtha(
     )
     non_sequestered = 1 - get(
         cf_industry["HVC_environment_sequestration_fraction"],
-        investment_year,
+        current_horizon,
     )
     return non_sequestered * (
         costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
@@ -4803,7 +4795,7 @@ def add_waste(
     cf_industry: dict,
     spatial: SimpleNamespace,
     pop_layout: pd.DataFrame,
-    investment_year: int,
+    current_horizon: int,
     industrial_demand_file: str,
     biomass_potentials_file: str,
     biomass_transport_costs_file: str | None = None,
@@ -4837,7 +4829,7 @@ def add_waste(
         Object containing spatial information about different carriers
     pop_layout : pd.DataFrame
         DataFrame containing population layout information
-    investment_year : int
+    current_horizon : int
         Planning horizon
     industrial_demand_file : str
         Path to CSV file containing the industrial demand per node
@@ -4859,7 +4851,7 @@ def add_waste(
     industrial_demand = pd.read_csv(industrial_demand_file, index_col=0).loc[nodes]
     naphtha = options["HVC_demand_factor"] * industrial_demand["naphtha"].sum()
     co2_per_naphtha = plastic_waste_co2_per_naphtha(
-        industrial_demand, costs, cf_industry, investment_year
+        industrial_demand, costs, cf_industry, current_horizon
     )
 
     # potentials in MWh
@@ -4998,11 +4990,10 @@ def add_industry(
     industrial_demand_file: str,
     industrial_electricity_profiles_file: str,
     pop_layout: pd.DataFrame,
-    pop_weighted_energy_totals: pd.DataFrame,
     options: dict,
     spatial: SimpleNamespace,
     cf_industry: dict,
-    investment_year: int,
+    current_horizon: int,
 ) -> None:
     """
     Add industry and their corresponding carrier buses to the network.
@@ -5020,8 +5011,6 @@ def add_industry(
         Only used if `industry: temporal_electricity_industry_load` is enabled.
     pop_layout : pd.DataFrame
         Population layout data with index of nodes
-    pop_weighted_energy_totals : pd.DataFrame
-        Population-weighted energy totals including aviation and navigation data
     options : dict
         Dictionary of configuration options including:
         - biomass_spatial
@@ -5036,7 +5025,7 @@ def add_industry(
         (biomass, gas, oil, methanol, etc.)
     cf_industry : dict
         Industry-specific configuration parameters
-    investment_year : int
+    current_horizon : int
         Year for which investment costs should be considered
 
     Returns
@@ -5375,7 +5364,7 @@ def add_industry(
         waste_emissions = {
             "bus3": "co2 atmosphere",
             "efficiency3": plastic_waste_co2_per_naphtha(
-                industrial_demand.loc[nodes], costs, cf_industry, investment_year
+                industrial_demand.loc[nodes], costs, cf_industry, current_horizon
             ),
         }
 
@@ -5669,7 +5658,7 @@ def add_shipping(
     pop_weighted_energy_totals: pd.DataFrame,
     options: dict,
     spatial: SimpleNamespace,
-    investment_year: int,
+    current_horizon: int,
 ) -> None:
     logger.info("Add shipping")
 
@@ -5677,9 +5666,9 @@ def add_shipping(
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
 
-    shipping_hydrogen_share = get(options["shipping_hydrogen_share"], investment_year)
-    shipping_methanol_share = get(options["shipping_methanol_share"], investment_year)
-    shipping_oil_share = get(options["shipping_oil_share"], investment_year)
+    shipping_hydrogen_share = get(options["shipping_hydrogen_share"], current_horizon)
+    shipping_methanol_share = get(options["shipping_methanol_share"], current_horizon)
+    shipping_oil_share = get(options["shipping_oil_share"], current_horizon)
 
     total_share = shipping_hydrogen_share + shipping_methanol_share + shipping_oil_share
     if total_share != 1:
@@ -5702,7 +5691,7 @@ def add_shipping(
         )
         efficiency = oil_efficiency / costs.at["fuel cell", "efficiency"]
         shipping_hydrogen_share = get(
-            options["shipping_hydrogen_share"], investment_year
+            options["shipping_hydrogen_share"], current_horizon
         )
 
         if options["shipping_hydrogen_liquefaction"]:
@@ -5954,7 +5943,7 @@ def add_agriculture(
     costs: pd.DataFrame,
     pop_layout: pd.DataFrame,
     pop_weighted_energy_totals: pd.DataFrame,
-    investment_year: int,
+    current_horizon: int,
     options: dict,
     spatial: SimpleNamespace,
 ) -> None:
@@ -5976,7 +5965,7 @@ def add_agriculture(
         Energy totals weighted by population, must include columns:
         ['total agriculture electricity', 'total agriculture heat',
          'total agriculture machinery']
-    investment_year : int
+    current_horizon : int
         Year for which to get time-dependent parameters
     options : dict
         Configuration dictionary containing:
@@ -6035,9 +6024,9 @@ def add_agriculture(
     # machinery
 
     electric_share = get(
-        options["agriculture_machinery_electric_share"], investment_year
+        options["agriculture_machinery_electric_share"], current_horizon
     )
-    oil_share = get(options["agriculture_machinery_oil_share"], investment_year)
+    oil_share = get(options["agriculture_machinery_oil_share"], current_horizon)
 
     total_share = electric_share + oil_share
     if total_share != 1:
@@ -6706,8 +6695,6 @@ def main(
     options = params.sector
     cf_industry = params.industry
 
-    investment_year = current_horizon
-
     pop_layout = pd.read_csv(inputs.clustered_pop_layout, index_col=0)
 
     pop_weighted_energy_totals = (
@@ -6736,8 +6723,7 @@ def main(
     )
 
     if foresight in ["myopic", "perfect"]:
-        fuel_carriers = params.fuel_carriers
-        for carrier in fuel_carriers:
+        for carrier in params.existing_capacities["conventional_carriers"]:
             add_carrier_buses(
                 n=n,
                 carrier=carrier,
@@ -6749,9 +6735,9 @@ def main(
 
     add_eu_bus(n)
 
-    emission_prices = params["emission_prices"]
+    emission_prices = params.costs["emission_prices"]
     co2_price = (
-        get(emission_prices["co2"], investment_year)
+        get(emission_prices["co2"], current_horizon)
         if emission_prices["enable"]
         else 0.0
     )
@@ -6800,7 +6786,7 @@ def main(
             cf_industry=cf_industry,
             options=options,
             spatial=spatial,
-            investment_year=current_horizon,
+            current_horizon=current_horizon,
             nodes=spatial.nodes,
         )
 
@@ -6828,17 +6814,16 @@ def main(
             floor_area_file=inputs.floor_area,
             heat_source_profile_files={
                 source: inputs[source]
-                for source in params.limited_heat_sources
+                for source in options["district_heating"]["limited_heat_sources"]
                 if source in inputs.keys()  # noqa: SIM118
             },
             heat_dsm_profile_file=inputs.heat_dsm_profile,
-            params=params,
             pop_weighted_energy_totals=pop_weighted_energy_totals,
             heating_efficiencies=heating_efficiencies,
             pop_layout=pop_layout,
             spatial=spatial,
             options=options,
-            investment_year=current_horizon,
+            current_horizon=current_horizon,
         )
 
     if options["biomass"]:
@@ -6863,7 +6848,7 @@ def main(
             cf_industry=cf_industry,
             spatial=spatial,
             pop_layout=pop_layout,
-            investment_year=current_horizon,
+            current_horizon=current_horizon,
             industrial_demand_file=inputs.industrial_demand,
             biomass_potentials_file=inputs.biomass_potentials,
             biomass_transport_costs_file=inputs.biomass_transport_costs,
@@ -6884,11 +6869,10 @@ def main(
             industrial_demand_file=inputs.industrial_demand,
             industrial_electricity_profiles_file=inputs.industrial_electricity_profiles,
             pop_layout=pop_layout,
-            pop_weighted_energy_totals=pop_weighted_energy_totals,
             options=options,
             spatial=spatial,
             cf_industry=cf_industry,
-            investment_year=current_horizon,
+            current_horizon=current_horizon,
         )
 
     if options["shipping"]:
@@ -6900,7 +6884,7 @@ def main(
             pop_weighted_energy_totals=pop_weighted_energy_totals,
             options=options,
             spatial=spatial,
-            investment_year=current_horizon,
+            current_horizon=current_horizon,
         )
 
     if options["aviation"]:
@@ -6972,7 +6956,7 @@ def main(
 
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(
-            n, costs, options, pop_layout, inputs.solar_rooftop_potentials
+            n, costs, options, inputs.solar_rooftop_potentials
         )
 
     if options["enhanced_geothermal"].get("enable", False):
