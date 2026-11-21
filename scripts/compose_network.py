@@ -17,7 +17,10 @@ solved network are carried over as brownfield (`add_brownfield`). Under
 perfect foresight, the horizon is stacked onto the previous composed network
 to form a multi-period network (`prepare_perfect_foresight`). Finally, CO2
 budget constraints and configured adjustments to costs and potentials are
-applied and the network is exported for solving.
+applied and the network is exported for solving. The script itself only
+translates the configuration into calls of the building blocks. In the sector
+part, shared buses come first, then the blocks that add components, and last
+the steps that modify components added before.
 """
 
 import logging

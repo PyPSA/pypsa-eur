@@ -15,8 +15,8 @@ totals and the industrial demand per node; technology costs come from the cost
 assumptions of the planning horizon.
 
 !!! note "Called from compose_network"
-    This module has no Snakemake rule of its own. Its `main` function is
-    called by [compose_network][].
+    This module has no Snakemake rule of its own. Its functions are called by
+    [compose_network][].
 """
 
 import logging

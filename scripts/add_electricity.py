@@ -23,8 +23,8 @@ tracked by the sector model and hydrogen storage are skipped, because
 [prepare_sector_network][] adds them itself.
 
 !!! note "Called from compose_network"
-    This module has no Snakemake rule of its own. Its `main` function is
-    called by [compose_network][].
+    This module has no Snakemake rule of its own. Its functions are called by
+    [compose_network][].
 """
 
 import logging

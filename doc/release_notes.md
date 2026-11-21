@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Refactoring: `compose_network` now calls the building blocks of the network directly. The `main` functions of `add_electricity`, `prepare_sector_network`, `add_existing_baseyear`, `add_brownfield`, `prepare_network` and `prepare_perfect_foresight` are removed, and the sector blocks no longer depend on the order in which they are called. No functional change ([#2437](https://github.com/PyPSA/pypsa-eur/pull/2437)).
 * Refactoring: Tidy up the scripts called by `compose_network`. The large functions of `prepare_sector_network` (`add_heat`, `add_biomass`, `add_industry`, `add_h2_gas_infrastructure`) are split into smaller `add_*` functions. No functional change ([#2435](https://github.com/PyPSA/pypsa-eur/pull/2435)).
 * Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).
 * Fix: `pixi run generate-config` now runs on Windows: read and write files as UTF-8 and write paths with `/`.
