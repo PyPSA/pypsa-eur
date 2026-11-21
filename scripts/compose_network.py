@@ -355,7 +355,11 @@ if __name__ == "__main__":
         year = int(params["energy_totals_year"])
         heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
 
-        spatial = define_spatial(pop_layout.index, options)
+        spatial = define_spatial(
+            pop_layout.index,
+            options,
+            inputs.district_heat_share if options["heating"] else None,
+        )
 
         corridors = read_transport_corridors(
             inputs.transmission_candidates,
@@ -374,9 +378,7 @@ if __name__ == "__main__":
                     cf_industry=cf_industry,
                 )
 
-        add_sector_buses(
-            n, spatial, inputs.district_heat_share if options["heating"] else None
-        )
+        add_sector_buses(n, spatial, options)
 
         emission_prices = params.costs["emission_prices"]
         co2_price = (
@@ -513,7 +515,7 @@ if __name__ == "__main__":
                 overdim_factor = options["overdimension_heat_generators"][
                     heat_system.central_or_decentral
                 ]
-                heat_nodes = heat_system_nodes(heat_system, spatial, dist_fraction)
+                heat_nodes = heat_system_nodes(heat_system, spatial)
 
                 # if heat_system == HeatSystem.URBAN_CENTRAL and options["central_heat_vent"]:
                 if options["heat_vent"][heat_system.system_type.value]:

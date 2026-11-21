@@ -47,13 +47,19 @@ from scripts.definitions.heat_system import HeatSystem
 logger = logging.getLogger(__name__)
 
 
-def define_spatial(nodes: pd.Index, options: dict) -> SimpleNamespace:
+def define_spatial(
+    nodes: pd.Index, options: dict, district_heat_share_file: str | None = None
+) -> SimpleNamespace:
     """
     Namespace for spatial.
 
     Parameters
     ----------
     nodes : list-like
+    options : dict
+        Sector configuration.
+    district_heat_share_file : str, optional
+        Path to the district heat shares. Without it, no node has district heating.
     """
 
     spatial = SimpleNamespace(nodes=nodes)
@@ -220,6 +226,14 @@ def define_spatial(nodes: pd.Index, options: dict) -> SimpleNamespace:
     spatial.geothermal_heat = SimpleNamespace()
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
+
+    # district heating
+
+    spatial.district_heating = SimpleNamespace(nodes=nodes[:0])
+    if district_heat_share_file:
+        district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
+        dist_fraction = district_heat_info["district fraction of node"]
+        spatial.district_heating.nodes = dist_fraction.index[dist_fraction > 0]
 
     return spatial
 
@@ -497,24 +511,22 @@ def add_eu_bus(n: pypsa.Network, x: float = -5.5, y: float = 46) -> None:
 def add_sector_buses(
     n: pypsa.Network,
     spatial: SimpleNamespace,
-    district_heat_share_file: str | None,
+    options: dict,
 ) -> None:
     """
     Add the buses that several sector blocks share.
 
-    These are the EU reference bus, the hydrogen buses and, if the district
-    heat shares are given, the heat buses of every heat system.
+    These are the EU reference bus, the hydrogen buses and, with heating
+    enabled, the heat buses of every heat system.
     """
     add_eu_bus(n)
     add_buses(n, "H2", spatial.nodes + " H2", spatial.nodes, "MWh_LHV")
 
-    if district_heat_share_file is None:
+    if not options["heating"]:
         return
 
-    district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
-    dist_fraction = district_heat_info["district fraction of node"]
     for heat_system in HeatSystem:
-        heat_nodes = heat_system_nodes(heat_system, spatial, dist_fraction)
+        heat_nodes = heat_system_nodes(heat_system, spatial)
         add_buses(
             n,
             f"{heat_system} heat",
@@ -1282,7 +1294,9 @@ def add_biochar(
     potential = biochar_per_year * co2_per_tonne_biochar
 
     urban_central = spatial.nodes + " urban central heat"
-    urban_central = urban_central.where(urban_central.isin(n.buses.index), "")
+    urban_central = urban_central.where(
+        spatial.nodes.isin(spatial.district_heating.nodes), ""
+    )
 
     n.add("Carrier", "biochar")
 
@@ -2914,12 +2928,10 @@ def build_heat_demand(
     return heat_demand
 
 
-def heat_system_nodes(
-    heat_system: HeatSystem, spatial: SimpleNamespace, dist_fraction: pd.Series
-) -> pd.Index:
+def heat_system_nodes(heat_system: HeatSystem, spatial: SimpleNamespace) -> pd.Index:
     """Return the nodes of a heat system; district heating only where it has a share."""
     if heat_system == HeatSystem.URBAN_CENTRAL:
-        return dist_fraction.index[dist_fraction > 0]
+        return spatial.district_heating.nodes
     return spatial.nodes
 
 
@@ -4309,12 +4321,9 @@ def add_biomass_chp(
     options: dict,
 ) -> None:
     """Add solid biomass combined heat and power plants for district heating."""
-    # AC buses with district heating
-    urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
+    urban_central = spatial.district_heating.nodes
     if urban_central.empty:
         return
-
-    urban_central = urban_central.str[: -len(" urban central heat")]
 
     key = "central solid biomass CHP"
 
@@ -4876,7 +4885,9 @@ def add_waste(
         )
 
     urban_central = spatial.nodes + " urban central heat"
-    urban_central = urban_central.where(urban_central.isin(n.buses.index), "")
+    urban_central = urban_central.where(
+        spatial.nodes.isin(spatial.district_heating.nodes), ""
+    )
 
     if cf_industry["waste_to_energy"]:
         n.add(
@@ -5305,7 +5316,7 @@ def add_industry_low_temperature_heat_demand(
         bus=[
             (
                 node + " urban central heat"
-                if node + " urban central heat" in n.buses.index
+                if node in spatial.district_heating.nodes
                 else node + " services urban decentral heat"
             )
             for node in nodes
@@ -6426,7 +6437,7 @@ def add_enhanced_geothermal(
         efficiency = 1.0
 
     # if urban central heat exists, adds geothermal as CHP
-    as_chp = "urban central heat" in n.loads.carrier.unique()
+    as_chp = not spatial.district_heating.nodes.empty
 
     if as_chp:
         logger.info("Adding EGS as Combined Heat and Power.")
@@ -6500,7 +6511,7 @@ def add_enhanced_geothermal(
             lifetime=costs.at["organic rankine cycle", "lifetime"],
         )
 
-        if as_chp and bus + " urban central heat" in n.buses.index:
+        if bus in spatial.district_heating.nodes:
             n.add(
                 "Link",
                 bus + " geothermal heat district heat",
