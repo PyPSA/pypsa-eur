@@ -46,9 +46,8 @@ from scripts.prepare_network import (
 from scripts.prepare_network import main as prepare_network_for_solving
 from scripts.prepare_perfect_foresight import apply_phase_outs
 from scripts.prepare_perfect_foresight import main as prepare_perfect_foresight
-from scripts.prepare_sector_network import (
-    main as add_sector_components,
-)
+from scripts.prepare_sector_network import cluster_heat_buses
+from scripts.prepare_sector_network import main as add_sector_components
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +111,9 @@ if __name__ == "__main__":
             adjust_renewable_capacity_limits(
                 n, str(current_horizon), renewable_carriers
             )
+
+    if sector_mode and params.sector["cluster_heat_buses"]:
+        cluster_heat_buses(n)
 
     prepare_network_for_solving(n, inputs, params, nyears, current_horizon)
 
