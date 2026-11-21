@@ -102,7 +102,6 @@ from scripts.prepare_sector_network import (
     add_biomass_transport_costs,
     add_biosng,
     add_biosng_cc,
-    add_buses,
     add_carrier_buses,
     add_ccgt_cc,
     add_co2_network,
@@ -113,7 +112,6 @@ from scripts.prepare_sector_network import (
     add_electrobiofuels,
     add_electrolysis,
     add_enhanced_geothermal,
-    add_eu_bus,
     add_fischer_tropsch,
     add_gas_boilers,
     add_gas_network,
@@ -149,6 +147,7 @@ from scripts.prepare_sector_network import (
     add_resistive_heaters,
     add_retrofitting,
     add_rock_weathering,
+    add_sector_buses,
     add_shipping,
     add_smr,
     add_smr_cc,
@@ -375,7 +374,9 @@ if __name__ == "__main__":
                     cf_industry=cf_industry,
                 )
 
-        add_eu_bus(n)
+        add_sector_buses(
+            n, spatial, inputs.district_heat_share if options["heating"] else None
+        )
 
         emission_prices = params.costs["emission_prices"]
         co2_price = (
@@ -403,8 +404,6 @@ if __name__ == "__main__":
         )
 
         logger.info("Add hydrogen storage")
-        add_buses(n, "H2", spatial.nodes + " H2", spatial.nodes, "MWh_LHV")
-
         if options["electrolysis"]:
             add_electrolysis(n, costs, spatial, options)
 
@@ -515,14 +514,6 @@ if __name__ == "__main__":
                     heat_system.central_or_decentral
                 ]
                 heat_nodes = heat_system_nodes(heat_system, spatial, dist_fraction)
-
-                add_buses(
-                    n,
-                    f"{heat_system} heat",
-                    heat_nodes + f" {heat_system} heat",
-                    heat_nodes,
-                    "MWh_th",
-                )
 
                 # if heat_system == HeatSystem.URBAN_CENTRAL and options["central_heat_vent"]:
                 if options["heat_vent"][heat_system.system_type.value]:

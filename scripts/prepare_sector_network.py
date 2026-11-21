@@ -494,6 +494,36 @@ def add_eu_bus(n: pypsa.Network, x: float = -5.5, y: float = 46) -> None:
     n.add("Carrier", "none")
 
 
+def add_sector_buses(
+    n: pypsa.Network,
+    spatial: SimpleNamespace,
+    district_heat_share_file: str | None,
+) -> None:
+    """
+    Add the buses that several sector blocks share.
+
+    These are the EU reference bus, the hydrogen buses and, if the district
+    heat shares are given, the heat buses of every heat system.
+    """
+    add_eu_bus(n)
+    add_buses(n, "H2", spatial.nodes + " H2", spatial.nodes, "MWh_LHV")
+
+    if district_heat_share_file is None:
+        return
+
+    district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
+    dist_fraction = district_heat_info["district fraction of node"]
+    for heat_system in HeatSystem:
+        heat_nodes = heat_system_nodes(heat_system, spatial, dist_fraction)
+        add_buses(
+            n,
+            f"{heat_system} heat",
+            heat_nodes + f" {heat_system} heat",
+            heat_nodes,
+            "MWh_th",
+        )
+
+
 def add_co2_tracking(
     n: pypsa.Network,
     costs: pd.DataFrame,
