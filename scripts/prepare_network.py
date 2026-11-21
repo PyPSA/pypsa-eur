@@ -46,8 +46,6 @@ else:
     from pypsa.descriptors import expand_series
 
 
-idx = pd.IndexSlice
-
 logger = logging.getLogger(__name__)
 
 # Conversion constant for CO2 emissions
@@ -323,9 +321,7 @@ def add_dynamic_emission_prices(n: pypsa.Network, fn: str) -> None:
     n.generators.loc[affected, "marginal_cost"] = 0.0
 
 
-def set_transmission_limit(
-    n: pypsa.Network, kind: str, factor: str | float, Nyears: float = 1
-) -> None:
+def set_transmission_limit(n: pypsa.Network, kind: str, factor: str | float) -> None:
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
     _lines_s_nom = (
@@ -443,20 +439,19 @@ def apply_temporal_aggregation(
     n: pypsa.Network,
     inputs,
     params,
-) -> None:
+) -> pypsa.Network:
     logger.info("Applying temporal aggregation")
-    n_new = set_temporal_aggregation(
-        n, params.clustering_temporal, inputs.snapshot_weightings
+    n = set_temporal_aggregation(
+        n, params.clustering["temporal"], inputs.snapshot_weightings
     )
-    n.__dict__.update(n_new.__dict__)
     logger.info("Completed temporal aggregation")
+    return n
 
 
 def main(
     n: pypsa.Network,
     inputs,
     params,
-    costs: pd.DataFrame,
     nyears: float,
     current_horizon: int,
 ) -> None:
@@ -499,7 +494,7 @@ def main(
             "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
         )
 
-    set_transmission_limit(n, kind, factor, nyears)
+    set_transmission_limit(n, kind, factor)
 
     cap_transmission_capacity(
         n,

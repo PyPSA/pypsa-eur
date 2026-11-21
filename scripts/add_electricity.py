@@ -111,8 +111,6 @@ STORE_LOOKUP: dict[str, dict[str, str | float]] = {
     },
 }
 
-idx = pd.IndexSlice
-
 logger = logging.getLogger(__name__)
 
 
