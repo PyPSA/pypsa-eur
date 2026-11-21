@@ -31,7 +31,7 @@ import xarray as xr
 
 from scripts.build_energy_totals import cartesian
 from scripts.definitions.heat_system import HeatSystem
-from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
+from scripts.prepare_sector_network import define_spatial
 
 logger = logging.getLogger(__name__)
 
@@ -851,8 +851,3 @@ def main(
             use_electricity_distribution_grid=options["electricity_distribution_grid"],
             spatial=spatial,
         )
-
-    # Set defaults for missing missing values
-
-    if options.get("cluster_heat_buses", False):
-        cluster_heat_buses(n)
