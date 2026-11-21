@@ -442,7 +442,14 @@ if __name__ == "__main__":
             )
 
         if options["H2_network"]:
-            add_h2_network(n, costs, corridors["H2"])
+            add_h2_network(
+                n,
+                costs,
+                spatial,
+                options,
+                corridors["H2"],
+                inputs.clustered_gas_network,
+            )
 
         if options["methanation"]:
             add_methanation(n, costs, spatial, options)
@@ -624,6 +631,7 @@ if __name__ == "__main__":
                 add_retrofitting(
                     n,
                     pop_layout,
+                    spatial,
                     options,
                     heat_demand,
                     dist_fraction,

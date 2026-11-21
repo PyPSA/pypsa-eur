@@ -20,7 +20,6 @@ assumptions of the planning horizon.
 """
 
 import logging
-from collections.abc import Sequence
 from itertools import product
 from types import SimpleNamespace
 
@@ -245,47 +244,29 @@ def haversine(p, n):
 
 
 def create_network_topology(
-    n: pypsa.Network,
+    candidates: pd.DataFrame,
     prefix: str,
-    carriers: Sequence[str] = ("DC",),
     connector: str = " -> ",
     bidirectional: bool = True,
-    include_lines: bool = True,
 ) -> pd.DataFrame:
     """
-    Create a network topology from transmission lines and link carrier
-    selection.
+    Create a network topology with one connection per pair of locations.
 
     Parameters
     ----------
-    n : pypsa.Network
+    candidates : pd.DataFrame
+        Connections with columns bus0, bus1 and further numeric attributes,
+        which are averaged over parallel connections.
     prefix : str
-    carriers : list-like
     connector : str
     bidirectional : bool, default True
         True: one link for each connection
         False: one link for each connection and direction (back and forth)
-    include_lines : bool, default True
-        Include the AC lines in addition to the links of the selected carriers.
 
     Returns
     -------
-    pd.DataFrame with columns bus0, bus1, length, underwater_fraction
+    pd.DataFrame with columns bus0, bus1 and the attributes of `candidates`
     """
-
-    ln_attrs = ["bus0", "bus1", "length"]
-    lk_attrs = ["bus0", "bus1", "length", "underwater_fraction"]
-    lk_attrs = n.links.columns.intersection(lk_attrs)
-
-    lines = n.lines[ln_attrs] if include_lines else None
-    candidates = pd.concat(
-        [lines, n.links.loc[n.links.carrier.isin(carriers), lk_attrs]]
-    ).fillna(0)
-
-    # base network topology purely on location not carrier
-    candidates["bus0"] = candidates.bus0.map(n.buses.location)
-    candidates["bus1"] = candidates.bus1.map(n.buses.location)
-
     positive_order = candidates.bus0 < candidates.bus1
     candidates_p = candidates[positive_order]
     swap_buses = {"bus0": "bus1", "bus1": "bus0"}
@@ -2188,18 +2169,34 @@ def add_h2_pipeline_retrofit(
 
 
 def add_h2_network(
-    n: pypsa.Network, costs: pd.DataFrame, pipeline_candidates: pd.DataFrame
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    spatial: SimpleNamespace,
+    options: dict,
+    pipeline_candidates: pd.DataFrame,
+    clustered_gas_network_file: str,
 ) -> None:
-    """Add candidates for new hydrogen pipelines."""
+    """
+    Add candidates for new hydrogen pipelines.
+
+    With a gas network, its corridors are candidates as well. With pipeline
+    retrofitting, hydrogen pipelines can also end at the junctions of gas pipelines.
+    """
     logger.info("Add options for new hydrogen pipelines.")
 
-    gas_corridors = create_network_topology(
-        n, "", carriers=["gas pipeline"], include_lines=False
-    )
-    h2_pipes = pipeline_candidates.combine_first(gas_corridors)
+    h2_pipes = pipeline_candidates
+    h2_locations = spatial.nodes
+    if options["gas_network"] or options["H2_retrofit"]:
+        gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
+    if options["gas_network"]:
+        gas_corridors = create_network_topology(
+            gas_pipes[["bus0", "bus1", "length"]], ""
+        )
+        h2_pipes = h2_pipes.combine_first(gas_corridors)
+    if options["H2_retrofit"]:
+        h2_locations = h2_locations.union(gas_pipes[["bus0", "bus1"]].stack())
     h2_pipes = h2_pipes.add_prefix("H2 pipeline ", axis=0)
-    h2_buses_loc = n.buses.query("carrier == 'H2'").location  # noqa: F841
-    h2_pipes = h2_pipes.query("bus0 in @h2_buses_loc and bus1 in @h2_buses_loc")
+    h2_pipes = h2_pipes.query("bus0 in @h2_locations and bus1 in @h2_locations")
 
     # TODO Add efficiency losses
     n.add(
@@ -2971,12 +2968,34 @@ def add_heat_demand(
     dist_fraction: pd.Series,
 ) -> None:
     """Add heat demand of one heat system."""
-    ## Add heat demand
+    system_demand = heat_system_demand(
+        heat_system, nodes, options, heat_demand, urban_fraction, dist_fraction
+    )
+
+    n.add(
+        "Load",
+        nodes,
+        suffix=f" {heat_system} heat",
+        bus=nodes + f" {heat_system} heat",
+        carrier=f"{heat_system} heat",
+        p_set=system_demand.loc[n.snapshots],
+    )
+
+
+def heat_system_demand(
+    heat_system: HeatSystem,
+    nodes: pd.Index,
+    options: dict,
+    heat_demand: pd.DataFrame,
+    urban_fraction: pd.Series,
+    dist_fraction: pd.Series,
+) -> pd.DataFrame:
+    """Return the heat demand of one heat system per node."""
     factor = heat_system.heat_demand_weighting(
         urban_fraction=urban_fraction[nodes], dist_fraction=dist_fraction[nodes]
     )
     if heat_system != HeatSystem.URBAN_CENTRAL:
-        heat_system_demand = (
+        system_demand = (
             heat_demand[
                 [
                     heat_system.sector.value + " water",
@@ -2990,7 +3009,7 @@ def add_heat_demand(
         )
 
     else:
-        heat_system_demand = (
+        system_demand = (
             heat_demand.T.groupby(level=1)
             .sum()
             .T[nodes]
@@ -2999,14 +3018,7 @@ def add_heat_demand(
             )
         )
 
-    n.add(
-        "Load",
-        nodes,
-        suffix=f" {heat_system} heat",
-        bus=nodes + f" {heat_system} heat",
-        carrier=f"{heat_system} heat",
-        p_set=heat_system_demand.loc[n.snapshots],
-    )
+    return system_demand
 
 
 def add_heat_dsm(
@@ -3697,6 +3709,7 @@ def add_micro_chp(
 def add_retrofitting(
     n: pypsa.Network,
     pop_layout: pd.DataFrame,
+    spatial: SimpleNamespace,
     options: dict,
     heat_demand: pd.DataFrame,
     dist_fraction: pd.Series,
@@ -3733,10 +3746,16 @@ def add_retrofitting(
         heat_demand["services space"] + heat_demand["residential space"]
     ) / heat_demand.T.groupby(level=[1]).sum().T
 
-    for name in n.loads[
-        n.loads.carrier.isin([str(x) + " heat" for x in HeatSystem])
-    ].index:
-        node = n.buses.loc[name, "location"]
+    demands = {}
+    for heat_system in HeatSystem:
+        nodes = heat_system_nodes(heat_system, spatial)
+        system_demand = heat_system_demand(
+            heat_system, nodes, options, heat_demand, urban_fraction, dist_fraction
+        ).loc[n.snapshots]
+        for node in nodes:
+            demands[f"{node} {heat_system} heat"] = (node, system_demand[node])
+
+    for name, (node, demand) in demands.items():
         ct = pop_layout.loc[node, "ct"]
 
         # weighting 'f' depending on the size of the population at the node
@@ -3762,9 +3781,6 @@ def add_retrofitting(
         floor_area_node = (
             pop_layout.loc[node].fraction * floor_area_file.loc[ct, "value"] * 10**6
         ).loc[sec] * f
-        # total heat demand at node [MWh]
-        demand = n.loads_t.p_set[name]
-
         # space heat demand at node [MWh]
         space_heat_demand = demand * w_space[sec][node]
         # normed time profile of space heat demand 'space_pu' (values between 0-1),
@@ -4129,7 +4145,10 @@ def add_unsustainable_biomass(
         p_nom=unsustainable_solid_biomass_potentials_spatial,
         p_nom_extendable=False,
         marginal_cost=costs.at["fuelwood", "fuel"],
-        e_sum_min=unsustainable_solid_biomass_potentials_spatial,
+        # the transported generators of `add_biomass_transport_costs` can replace this supply
+        e_sum_min=0
+        if options["biomass_spatial"] and not options["biomass_transport"]
+        else unsustainable_solid_biomass_potentials_spatial,
         e_sum_max=unsustainable_solid_biomass_potentials_spatial,
     )
 
@@ -4296,11 +4315,8 @@ def add_biomass_transport_costs(
                 )
             )
             * average_distance,
+            e_sum_min=0,
         )
-        # Set e_sum_min to 0 to allow for the faux biomass transport
-        n.generators.loc[
-            n.generators.carrier == "unsustainable solid biomass", "e_sum_min"
-        ] = 0
 
         n.add(
             "GlobalConstraint",
