@@ -177,6 +177,7 @@ def test_attach_hydro_max_hours(tmp_path, method, expected):
         tmp_path / "hydro_capacities.csv",
         ["hydro"],
         hydro_max_hours=method,
+        flatten_dispatch=False,
     )
 
     np.testing.assert_allclose(n.storage_units.max_hours[ppl.index], expected)

@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Refactoring: Tidy up the scripts called by `compose_network`. The large functions of `prepare_sector_network` (`add_heat`, `add_biomass`, `add_industry`, `add_h2_gas_infrastructure`) are split into smaller `add_*` functions. No functional change ([#2435](https://github.com/PyPSA/pypsa-eur/pull/2435)).
 * Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).
 * Fix: `pixi run generate-config` now runs on Windows: read and write files as UTF-8 and write paths with `/`.
 * Fix: `build_gas_network` no longer drops the capacity and length of gas pipelines that need no correction. This changes default results ([#2433](https://github.com/PyPSA/pypsa-eur/pull/2433)).

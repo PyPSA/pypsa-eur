@@ -30,34 +30,6 @@ logger = logging.getLogger(__name__)
 # helper functions ---------------------------------------------------
 
 
-def extend_snapshot_multiindex(
-    existing_snapshots: pd.MultiIndex,
-    new_timesteps: pd.Index,
-    period: int,
-) -> pd.MultiIndex:
-    if not isinstance(existing_snapshots, pd.MultiIndex):
-        raise TypeError("existing_snapshots must be a MultiIndex")
-
-    if list(existing_snapshots.names) != ["period", "timestep"]:
-        raise ValueError(
-            f"existing_snapshots must have levels ['period', 'timestep'], "
-            f"but has {existing_snapshots.names}"
-        )
-
-    if isinstance(new_timesteps, pd.MultiIndex):
-        raise TypeError("new_timesteps must be a single-level Index, not a MultiIndex")
-
-    new_snapshots = pd.MultiIndex.from_product(
-        [[period], new_timesteps], names=["period", "timestep"]
-    )
-
-    combined = pd.MultiIndex.from_tuples(
-        list(existing_snapshots) + list(new_snapshots), names=["period", "timestep"]
-    )
-
-    return combined
-
-
 def concatenate_network_with_previous(
     n_previous: pypsa.Network,
     n_current: pypsa.Network,

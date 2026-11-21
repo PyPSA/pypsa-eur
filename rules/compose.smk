@@ -255,43 +255,20 @@ rule compose_network:
         electricity=config_provider("electricity"),
         sector=config_provider("sector"),
         clustering=config_provider("clustering"),
-        clustering_temporal=config_provider("clustering", "temporal"),
         existing_capacities=config_provider("existing_capacities"),
         renewable=config_provider("renewable"),
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),
-        emission_prices=config_provider("costs", "emission_prices"),
         load=config_provider("load"),
         lines=config_provider("lines"),
         links=config_provider("links"),
         transmission_losses=config_provider("solving", "options", "transmission_losses"),
         industry=config_provider("industry"),
-        limited_heat_sources=config_provider(
-            "sector", "district_heating", "limited_heat_sources"
-        ),
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
         horizons=config_provider("planning_horizons"),
-        renewable_carriers=config_provider("electricity", "renewable_carriers"),
-        fuel_carriers=config_provider("existing_capacities", "conventional_carriers"),
-        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        h2_retrofit=config_provider("sector", "H2_retrofit"),
-        h2_retrofit_capacity_per_ch4=config_provider(
-            "sector", "H2_retrofit_capacity_per_CH4"
-        ),
-        capacity_threshold=config_provider("existing_capacities", "threshold_capacity"),
-        temperature_limited_stores=config_provider(
-            "sector", "district_heating", "temperature_limited_stores"
-        ),
-        enable_ptes=config_provider("sector", "district_heating", "ptes", "enable"),
-        dynamic_ptes_capacity=config_provider(
-            "sector", "district_heating", "ptes", "dynamic_capacity"
-        ),
-        direct_utilisation_heat_sources=config_provider(
-            "sector", "district_heating", "direct_utilisation_heat_sources"
-        ),
         co2_budget=config_provider("co2_budget"),
         adjustments=config_provider("adjustments"),
         nice_names=config_provider("plotting", "nice_names"),

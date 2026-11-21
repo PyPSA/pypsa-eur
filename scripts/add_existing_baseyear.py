@@ -23,7 +23,6 @@ import logging
 import re
 from types import SimpleNamespace
 
-import country_converter as coco
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
@@ -32,11 +31,9 @@ import xarray as xr
 
 from scripts.build_energy_totals import cartesian
 from scripts.definitions.heat_system import HeatSystem
-from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
+from scripts.prepare_sector_network import define_spatial
 
 logger = logging.getLogger(__name__)
-cc = coco.CountryConverter()
-idx = pd.IndexSlice
 
 
 def add_build_year_to_new_assets(n: pypsa.Network, baseyear: int) -> None:
@@ -162,7 +159,6 @@ def add_power_capacities_installed_before_baseyear(
     powerplants_file: str,
     countries: list[str],
     capacity_threshold: float,
-    lifetime_values: dict[str, float],
     renewable_carriers: list[str],
     spatial: SimpleNamespace,
     solar_rooftop_ratio: float = 0.5,
@@ -186,8 +182,6 @@ def add_power_capacities_installed_before_baseyear(
         List of countries to consider
     capacity_threshold : float
         Minimum capacity threshold
-    lifetime_values : dict
-        Default values for missing data
     renewable_carriers: list
         List of renewable carriers in the network
     spatial: SimpleNamespace
@@ -813,7 +807,7 @@ def main(
 ) -> None:
     logger.info("Adding existing capacities")
     baseyear = params.horizons[0]
-    renewable_carriers = set(params.renewable_carriers)
+    renewable_carriers = set(params.electricity["renewable_carriers"])
 
     options = params.sector
 
@@ -831,7 +825,6 @@ def main(
         powerplants_file=inputs.powerplants,
         countries=params.countries,
         capacity_threshold=params.existing_capacities["threshold_capacity"],
-        lifetime_values=params.costs["fill_values"],
         renewable_carriers=renewable_carriers,
         spatial=spatial,
         solar_rooftop_ratio=params.existing_capacities["solar_rooftop_ratio"],
@@ -851,15 +844,10 @@ def main(
                 header=[0, 1],
                 index_col=0,
             ),
-            heat_pump_source_types=params.heat_pump_sources,
+            heat_pump_source_types=options["heat_pump_sources"],
             efficiency_file=inputs.heating_efficiencies,
             energy_totals_year=params["energy_totals_year"],
             capacity_threshold=params.existing_capacities["threshold_capacity"],
             use_electricity_distribution_grid=options["electricity_distribution_grid"],
             spatial=spatial,
         )
-
-    # Set defaults for missing missing values
-
-    if options.get("cluster_heat_buses", False):
-        cluster_heat_buses(n)
