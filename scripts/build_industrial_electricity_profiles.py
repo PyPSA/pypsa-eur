@@ -25,6 +25,7 @@ from scripts._helpers import (
     get_snapshots,
     set_scenario_config,
 )
+from scripts.build_industrial_energy_demand_per_node import ENDOGENOUS_SUBSECTORS
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +200,8 @@ if __name__ == "__main__":
     # electricity demand per industry and node (TWh/a)
     countries = production.columns.str[:2]
     demand = production * sector_ratios[countries].set_axis(production.columns, axis=1)
+    for sector in snakemake.params.endogenous_sectors:
+        demand.loc[ENDOGENOUS_SUBSECTORS[sector]] = 0.0
 
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day

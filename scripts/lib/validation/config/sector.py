@@ -227,6 +227,10 @@ class _MethanolConfig(BaseModel):
     biomass_to_methanol_cc: bool = Field(
         False, description="Add biomass to methanol with carbon capture."
     )
+    meoh_to_oa: bool = Field(
+        False,
+        description="Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
+    )
 
 
 class _TransmissionEfficiencyConfig(BaseModel):
@@ -1179,4 +1183,13 @@ class SectorConfig(BaseModel):
     )
     imports: _ImportsConfig = Field(
         default_factory=_ImportsConfig, description="Imports configuration."
+    )
+
+    endogenous_sectors: list[Literal["steel", "cement"]] = Field(
+        default_factory=list,
+        description="Energy-intensive industry subsectors that are modelled endogenously. Steel covers primary steel only. Cement is then not part of `industry_heat`.",
+    )
+    hbi_relocation: bool = Field(
+        False,
+        description="Allow the relocation of iron ore reduction step.",
     )

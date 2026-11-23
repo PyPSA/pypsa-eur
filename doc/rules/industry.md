@@ -19,4 +19,4 @@ section.
 
 ## Regional demand
 
-{{ rules("build_industrial_distribution_key", "build_industrial_production_per_node", "build_industrial_energy_demand_per_country_today", "build_industrial_energy_demand_per_node_today", "build_industrial_energy_demand_per_node", "build_industrial_electricity_profiles") }}
+{{ rules("build_industrial_distribution_key", "build_industry_plants", "build_industrial_production_per_node", "build_industrial_energy_demand_per_country_today", "build_industrial_energy_demand_per_node_today", "build_industrial_energy_demand_per_node", "build_industrial_electricity_profiles") }}

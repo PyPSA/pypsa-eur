@@ -1192,6 +1192,26 @@
             }
           }
         },
+        "gem_gct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "instrat_co2_prices": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -2673,6 +2693,23 @@
           },
           "type": "array"
         },
+        "industry_plants": {
+          "default": false,
+          "description": "Add existing ammonia and methanol plants, and existing steel and cement plants for `sector: endogenous_sectors`, in the first horizon of myopic and perfect foresight runs.",
+          "type": "boolean"
+        },
+        "blast_furnace_announced_retirement": {
+          "default": true,
+          "description": "Retire existing blast furnaces in their announced retirement year. Otherwise, they retire at the end of their technical lifetime.",
+          "type": "boolean"
+        },
+        "grouping_years_industry": {
+          "description": "Intervals to group existing capacities for industry plants.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
         "threshold_capacity": {
           "default": 10,
           "description": "Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
@@ -2866,7 +2903,7 @@
         },
         "process_emissions_cc": {
           "default": true,
-          "description": "Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
+          "description": "Add option for capturing industrial process emissions, including the emissions of endogenous steel and cement production. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
           "type": "boolean"
         },
         "sector_ratios_fraction_future": {
@@ -2933,6 +2970,11 @@
           "default": 10.25,
           "description": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
           "markdownDescription": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "type": "number"
+        },
+        "MWh_naphtha_per_tHVC": {
+          "default": 12.622,
+          "description": "The energy amount of naphtha that a ton of high-value chemicals from methanol-to-olefins/aromatics replaces. Only used with `sector: methanol: meoh_to_oa`.",
           "type": "number"
         },
         "MWh_MeOH_per_tMeOH": {
@@ -5836,6 +5878,11 @@
                   "default": false,
                   "description": "Add biomass to methanol with carbon capture.",
                   "type": "boolean"
+                },
+                "meoh_to_oa": {
+                  "default": false,
+                  "description": "Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
+                  "type": "boolean"
                 }
               }
             },
@@ -6321,6 +6368,22 @@
               "type": "object"
             }
           }
+        },
+        "endogenous_sectors": {
+          "description": "Energy-intensive industry subsectors that are modelled endogenously. Steel covers primary steel only. Cement is then not part of `industry_heat`.",
+          "items": {
+            "enum": [
+              "steel",
+              "cement"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "hbi_relocation": {
+          "default": false,
+          "description": "Allow the relocation of iron ore reduction step.",
+          "type": "boolean"
         }
       }
     },
@@ -8997,6 +9060,11 @@
         "biomass_to_methanol_cc": {
           "default": false,
           "description": "Add biomass to methanol with carbon capture.",
+          "type": "boolean"
+        },
+        "meoh_to_oa": {
+          "default": false,
+          "description": "Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
           "type": "boolean"
         }
       }
@@ -12895,6 +12963,23 @@
           },
           "type": "array"
         },
+        "industry_plants": {
+          "default": false,
+          "description": "Add existing ammonia and methanol plants, and existing steel and cement plants for `sector: endogenous_sectors`, in the first horizon of myopic and perfect foresight runs.",
+          "type": "boolean"
+        },
+        "blast_furnace_announced_retirement": {
+          "default": true,
+          "description": "Retire existing blast furnaces in their announced retirement year. Otherwise, they retire at the end of their technical lifetime.",
+          "type": "boolean"
+        },
+        "grouping_years_industry": {
+          "description": "Intervals to group existing capacities for industry plants.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
         "threshold_capacity": {
           "default": 10,
           "description": "Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
@@ -13844,6 +13929,11 @@
                   "default": false,
                   "description": "Add biomass to methanol with carbon capture.",
                   "type": "boolean"
+                },
+                "meoh_to_oa": {
+                  "default": false,
+                  "description": "Add methanol-to-olefins/aromatics as a way to meet naphtha demand in industry sector for high value chemicals.",
+                  "type": "boolean"
                 }
               }
             },
@@ -14329,6 +14419,22 @@
               "type": "object"
             }
           }
+        },
+        "endogenous_sectors": {
+          "description": "Energy-intensive industry subsectors that are modelled endogenously. Steel covers primary steel only. Cement is then not part of `industry_heat`.",
+          "items": {
+            "enum": [
+              "steel",
+              "cement"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "hbi_relocation": {
+          "default": false,
+          "description": "Allow the relocation of iron ore reduction step.",
+          "type": "boolean"
         }
       }
     },
@@ -14459,7 +14565,7 @@
         },
         "process_emissions_cc": {
           "default": true,
-          "description": "Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
+          "description": "Add option for capturing industrial process emissions, including the emissions of endogenous steel and cement production. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
           "type": "boolean"
         },
         "sector_ratios_fraction_future": {
@@ -14526,6 +14632,11 @@
           "default": 10.25,
           "description": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
           "markdownDescription": "The energy amount of methane needed to produce a ton of methanol from fossil gas. From [DECHEMA (2017) ](https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf), Table 14, page 65.",
+          "type": "number"
+        },
+        "MWh_naphtha_per_tHVC": {
+          "default": 12.622,
+          "description": "The energy amount of naphtha that a ton of high-value chemicals from methanol-to-olefins/aromatics replaces. Only used with `sector: methanol: meoh_to_oa`.",
           "type": "number"
         },
         "MWh_MeOH_per_tMeOH": {
@@ -15608,6 +15719,26 @@
           }
         },
         "gem_gcct": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "gem_gct": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
