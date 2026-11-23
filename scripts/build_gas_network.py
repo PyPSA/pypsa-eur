@@ -138,7 +138,8 @@ def prepare_dataset(
     df["p_nom"] = df.p_nom_diameter.where(
         (df.p_nom <= 500)
         | ((ratio > correction_threshold_p_nom) & not_nordstream)
-        | ((ratio < 1 / correction_threshold_p_nom) & not_nordstream)
+        | ((ratio < 1 / correction_threshold_p_nom) & not_nordstream),
+        df.p_nom,
     )
 
     # lines which have way too discrepant line lengths
@@ -154,7 +155,8 @@ def prepare_dataset(
     df["length"] = df.length_haversine.where(
         (df["length"] < 20)
         | (ratio > correction_threshold_length)
-        | (ratio < 1 / correction_threshold_length)
+        | (ratio < 1 / correction_threshold_length),
+        df["length"],
     )
 
     return df
