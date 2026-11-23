@@ -7,7 +7,6 @@ from enum import Enum
 import pandas as pd
 
 from scripts.definitions.heat_sector import HeatSector
-from scripts.definitions.heat_source import HeatSource
 from scripts.definitions.heat_system_type import HeatSystemType
 
 
@@ -209,7 +208,7 @@ class HeatSystem(Enum):
         else:
             raise RuntimeError(f"Invalid heat system: {self}")
 
-    def heat_pump_costs_name(self, heat_source: HeatSource | str) -> str:
+    def heat_pump_costs_name(self, heat_source: str) -> str:
         """
         Generates the name for the heat pump costs based on the heat source and
         system.
@@ -217,50 +216,36 @@ class HeatSystem(Enum):
 
         Parameters
         ----------
-        heat_source : HeatSource | str
-            The heat source (can be HeatSource enum or string).
+        heat_source : str
+            The heat source.
 
         Returns
         -------
         str
             The name for the heat pump costs.
         """
-        # Convert string to HeatSource enum if needed
-        if not isinstance(heat_source, HeatSource):
-            heat_source = HeatSource(heat_source)
-
-        # Check if this is an excess-heat-sourced heat pump
-        if heat_source in [
-            HeatSource.PTES,
-            HeatSource.GEOTHERMAL,
-            HeatSource.SEA_WATER,
-            HeatSource.RIVER_WATER,
-        ]:
-            return f"{self.central_or_decentral} excess-heat-sourced heat pump"
+        if heat_source in ["air", "ground"]:
+            return f"{self.central_or_decentral} {heat_source}-sourced heat pump"
         else:
-            return f"{self.central_or_decentral} {heat_source.value}-sourced heat pump"
+            return f"{self.central_or_decentral} excess-heat-sourced heat pump"
 
-    def heat_source_costs_name(self, heat_source: HeatSource | str) -> str:
+    def heat_source_costs_name(self, heat_source: str) -> str:
         """
-        Generates the name for the heat-source generator costs based on the heat
-        source and system.
+        Generates the name for direct source utilisation costs based on the heat source and
+        system.
         Used to retrieve data from `technology-data <https://github.com/PyPSA/technology-data>`.
 
         Parameters
         ----------
-        heat_source : HeatSource | str
-            The heat source (can be HeatSource enum or string).
+        heat_source : str
+            The heat source.
 
         Returns
         -------
         str
             The name for the technology-data costs.
         """
-        # Convert string to HeatSource enum if needed
-        if not isinstance(heat_source, HeatSource):
-            heat_source = HeatSource(heat_source)
-
-        return f"{self.central_or_decentral} {heat_source.value} heat source"
+        return f"{self.central_or_decentral} {heat_source} heat source"
 
     @property
     def resistive_heater_costs_name(self) -> str:

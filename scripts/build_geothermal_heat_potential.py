@@ -9,12 +9,11 @@ local administrative unit (LAU) for a 65C or 85C supply temperature scenario.
 They are matched to onshore regions by spatial join and summed. Dividing the
 annual utilisation potential by assumed full load hours (4000 h) yields the
 available heat source power in MW. Manz et al. (2024) assume that the source
-is cooled by 15 K. The power is therefore scaled by the temperature
-difference that the district heating network can use: the difference between
-source and return temperature if the source is warmer than the return flow,
-plus the cooling in the heat pump if the source is colder than the forward
-flow. Regions outside the EU-27 without data can be filled with zeros if
-configured; otherwise an error is raised.
+is cooled by 15 K. The power is scaled to the temperature drop that the
+district heating network can use: down to the return temperature by direct
+use or preheating, and by `heat_source_cooling` in a heat pump if the source
+is colder than the forward flow. Regions outside the EU-27 without
+data can be filled with zeros if configured; otherwise an error is raised.
 
 References
 ----------
@@ -37,105 +36,13 @@ ISI_TEMPERATURE_SCENARIOS = {
 }
 FULL_LOAD_HOURS = 4000
 # 3000 for petrothermal
+DESIGN_TEMPERATURE_DROP = 15  # K, assumed by Manz et al. (2024)
 
 PYPSA_EUR_UNIT = "MWh"
 
 GEOTHERMAL_SOURCE = (
     "Hydrothermal "  # trailing space for hydrothermal necessary to get correct column
 )
-
-DESIGN_TEMPERATURE_DIFFERENCE = (
-    15  # K - assumed temperature difference for geothermal sources in Manz et al. 2024
-)
-
-
-def scale_heat_source_power(
-    heat_source_power: pd.Series,
-    forward_temperature: xr.DataArray,
-    return_temperature: xr.DataArray,
-    source_temperature: float,
-    heat_source_cooling: float,
-) -> xr.DataArray:
-    """
-    Scale heat source power based on temperature differences.
-
-    Manz et al. 2024 assume a temperature difference of 15K for geothermal heat
-    sources. This function scales the heat source power based on the actual
-    temperature difference in the district heating system.
-
-    The scaling logic follows three cases:
-    a) If source_temperature > forward_temperature:
-       scale_factor = (source_temperature - return_temperature) / 15K
-    b) Elif source_temperature > return_temperature:
-       scale_factor = (source_temperature - return_temperature + heat_source_cooling) / 15K
-    c) Else:
-       scale_factor = heat_source_cooling / 15K
-
-    Parameters
-    ----------
-    heat_source_power : pd.Series
-        Base heat source power per region [MW]. Index: region names.
-    forward_temperature : xr.DataArray
-        Forward temperature profiles [°C]. Dims: (time, name).
-    return_temperature : xr.DataArray
-        Return temperature profiles [°C]. Dims: (name,).
-    source_temperature : float
-        Constant geothermal source temperature [°C].
-    heat_source_cooling : float
-        Temperature drop in heat source when extracting heat via heat pump [K].
-
-    Returns
-    -------
-    xr.DataArray
-        Scaled heat source power [MW]. Dims: (time, name).
-    """
-    # Ensure alignment of regions
-    regions = heat_source_power.index
-    forward_temp = forward_temperature.sel(name=regions)
-    return_temp = return_temperature.sel(name=regions)
-
-    # Broadcast return_temperature to match forward_temperature dimensions
-    return_temp_broadcast = return_temp.broadcast_like(forward_temp)
-
-    # Compute scale factors for each case
-    # Case a: source_temp > forward_temp (direct utilisation possible)
-    scale_a = (
-        source_temperature - return_temp_broadcast
-    ) / DESIGN_TEMPERATURE_DIFFERENCE
-
-    # Case b: forward_temp >= source_temp > return_temp (preheating mode)
-    scale_b = (
-        source_temperature - return_temp_broadcast + heat_source_cooling
-    ) / DESIGN_TEMPERATURE_DIFFERENCE
-
-    # Case c: source_temp <= return_temp (HP-only mode)
-    scale_c = heat_source_cooling / DESIGN_TEMPERATURE_DIFFERENCE
-
-    # Apply conditional logic
-    scale_factor = xr.where(
-        source_temperature > forward_temp,
-        scale_a,
-        xr.where(
-            source_temperature > return_temp_broadcast,
-            scale_b,
-            scale_c,
-        ),
-    )
-
-    # Convert heat_source_power to DataArray and broadcast
-    heat_source_power_da = xr.DataArray(
-        heat_source_power.squeeze().values,
-        dims=["name"],
-        coords={"name": regions},
-    )
-
-    # Scale the heat source power
-    scaled_power = heat_source_power_da * scale_factor
-
-    # Transpose to (time, name) for consistency with other profiles
-    scaled_power = scaled_power.transpose("time", "name")
-
-    return scaled_power
 
 
 def get_unit_conversion_factor(
@@ -291,7 +198,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_geothermal_heat_potential", horizon=2040)
+        snakemake = mock_snakemake("build_geothermal_heat_potential", horizon=2030)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -349,22 +256,20 @@ if __name__ == "__main__":
         ignore_missing_regions=snakemake.params.ignore_missing_regions,
     )
 
-    # Load temperature profiles for scaling
     forward_temperature = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles
-    )
+    ).to_pandas()[heat_source_power.index]
     return_temperature = xr.open_dataarray(
         snakemake.input.central_heating_return_temperature_profiles
-    )
+    ).to_pandas()[heat_source_power.index]
+    source_temperature = snakemake.params.constant_temperature_celsius
 
-    # Scale heat source power based on temperature differences
-    scaled_heat_source_power = scale_heat_source_power(
-        heat_source_power=heat_source_power,
-        forward_temperature=forward_temperature,
-        return_temperature=return_temperature,
-        source_temperature=snakemake.params.constant_temperature_celsius,
-        heat_source_cooling=snakemake.params.heat_source_cooling,
+    # usable temperature drop: to the return temperature (direct use or
+    # preheating) plus the cooling in a heat pump below the forward temperature
+    temperature_drop = (source_temperature - return_temperature).clip(lower=0) + (
+        snakemake.params.heat_source_cooling
+        * (source_temperature < forward_temperature)
     )
+    scaling = temperature_drop / DESIGN_TEMPERATURE_DROP
 
-    # Convert to DataFrame (time x regions) and save as CSV
-    scaled_heat_source_power.to_pandas().to_csv(snakemake.output.heat_source_power)
+    scaling.mul(heat_source_power.squeeze(), axis=1).to_csv(snakemake.output[0])

@@ -167,6 +167,6 @@ if __name__ == "__main__":
         snakemake.input.clustered_pop_layout,
         snakemake.input.district_heat_share,
         snakemake.input.clustered_pop_energy_layout,
-        snakemake.params.heat_sources["urban central"],
+        snakemake.params.heat_pump_sources["urban central"],
         snakemake.output.existing_heating_distribution,
     )

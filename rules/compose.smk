@@ -123,15 +123,11 @@ def get_compose_inputs(w):
             ),
             temp_air_total=resources("temp_air_total.nc"),
             cop_profiles=resources("cop_profiles_{horizon}.nc"),
-            heat_source_direct_utilisation_profiles=(
-                resources("heat_source_direct_utilisation_profiles_{horizon}.nc")
-                if sector["heat_sources"]["urban central"]
-                else []
+            direct_heat_source_utilisation_profiles=resources(
+                "direct_heat_source_utilisation_profiles_{horizon}.nc"
             ),
-            heat_source_preheater_utilisation_profiles=(
-                resources("heat_source_preheater_utilisation_profiles_{horizon}.nc")
-                if sector["heat_sources"]["urban central"]
-                else []
+            heat_source_preheating_profiles=resources(
+                "heat_source_preheating_profiles_{horizon}.nc"
             ),
             retro_cost=(
                 resources("retro_cost.csv")
@@ -157,16 +153,14 @@ def get_compose_inputs(w):
             ptes_e_max_pu_profiles=(
                 resources("ptes_e_max_pu_profiles_{horizon}.nc")
                 if enable_ptes
-                and cfg["sector"]["district_heating"]["ptes"][
-                    "temperature_dependent_capacity"
-                ]
+                and cfg["sector"]["district_heating"]["ptes"]["dynamic_capacity"]
                 else []
             ),
-            ptes_boost_per_discharge_profiles=(
-                resources("ptes_boost_per_discharge_profiles_{horizon}.nc")
+            ptes_direct_utilisation_profiles=(
+                resources("ptes_direct_utilisation_profiles_{horizon}.nc")
                 if enable_ptes
-                and cfg["sector"]["district_heating"]["ptes"][
-                    "discharge_resistive_boosting"
+                and cfg["sector"]["district_heating"]["ptes"]["supplemental_heating"][
+                    "enable"
                 ]
                 else []
             ),

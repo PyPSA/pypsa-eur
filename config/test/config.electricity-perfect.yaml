@@ -152,8 +152,10 @@ sector:
       marginal_cost_charger: 0.0
       recovery_factor: 0.0
     ptes:
-      temperature_dependent_capacity: false
-      discharge_resistive_boosting: false
+      dynamic_capacity: false
+      supplemental_heating:
+        enable: false
+        booster_heat_pump: false
   time_dep_hp_cop: false
   electricity_distribution_grid: false
 

@@ -81,7 +81,7 @@ electricity to heat. Large heat pumps, resistive heaters, boilers, fuel cells
 and enhanced geothermal systems complete the picture.
 
 Large heat pumps can draw on several sources. Besides ambient air, which is
-the default, the model can exploit geothermal heat, rivers and the sea, each
+the default, the model can exploit geothermal heat, rivers, lakes and the sea, each
 limited by a regional potential derived from geological and hydrological data
 within reach of the district heating areas. Their coefficient of performance
 is approximated from the source temperature and the network supply
@@ -89,15 +89,19 @@ temperature with a thermodynamic model. The supply temperature itself is
 approximated from ambient temperature following measured reference curves [@pieperAssessmentCombination2019]:
 it is highest on cold days and lowest on mild days, and it
 can decline over the planning years as networks modernise. Sources that are
-hotter than the forward flow feed the network directly without a heat pump.
-Sources between the return and the forward temperature first preheat the
-return flow in a heat exchanger; a heat pump then cools the source further
-and lifts the preheated flow to the forward temperature. Colder sources only
-supply the heat pump.
+hot enough can feed the network directly without a heat pump. Sources between
+the return and the forward temperature first preheat the return flow in a
+heat exchanger; a heat pump then cools the source further and lifts the
+temperature. The split between preheating and heat pump follows the
+temperature drops of the source, which understates the heat pump share for
+sources far below the forward temperature.
 
 Waste heat from conversion processes is a further source: electrolysis, fuel
 cells, Fischer-Tropsch synthesis, methanolisation and ammonia synthesis reject
 heat that can be fed into district heating where these plants are located.
+Each process has an assumed waste heat temperature and is treated like the
+other heat sources; waste heat of electrolysers and fuel cells (70 °C by
+default) usually needs preheating and a heat pump.
 
 In transition pathways the existing heating stock matters. Installed
 capacities of boilers, heat pumps and resistive heaters are taken from a
@@ -109,11 +113,8 @@ model replaces them over time, see [Foresight](foresight.md).
 **Water tanks** provide short-term storage for individual buildings, and
 large **pit storages** provide seasonal storage for district heating. Both are
 modelled as stores with standing losses; pit storage capacity can follow the
-network temperatures [@sorknaesSimulationMethod2018]. Pit storage discharges
-like any other district heating heat source: when the stored water is colder
-than the forward flow, it preheats the return flow and a heat pump or,
-optionally, a resistive heater provides the remaining temperature lift.
-**Aquifer storage** is
+network temperatures [@sorknaesSimulationMethod2018], and supplemental heating covers the
+times when the stored water is not hot enough. **Aquifer storage** is
 available where suitable aquifers underlie district heating areas
 [@jacksonAquiferThermal2024]. Water tanks are switched on by `ttes`, pit
 storage by `district_heating: ptes: enable` and aquifer storage by
@@ -133,4 +134,4 @@ can be vented so that heat supply never has to be curtailed.
   [build_ptes_operations][build_ptes_operations.run],
   [build_ates_potentials][], [build_retro_cost][], [build_solar_thermal_profiles][]
 - Configuration: [sector](../configuration.md#sector_cf), in particular
-  `district_heating`, `heat_sources`, `ttes` and `retrofitting`
+  `district_heating`, `heat_pump_sources`, `ttes` and `retrofitting`

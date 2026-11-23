@@ -14,7 +14,7 @@ modelled is described under [Heating](../design/heat.md) in the design section.
 
 ## Heat pumps and heat sources
 
-{{ rules("build_central_heating_temperature_profiles", "build_cop_profiles", "build_heat_source_utilisation_profiles", "build_geothermal_heat_potential", "build_river_heat_potential", "build_sea_heat_potential", "build_egs_potentials", "build_solar_thermal_profiles") }}
+{{ rules("build_central_heating_temperature_profiles", "build_cop_profiles", "build_direct_heat_source_utilisation_profiles", "build_geothermal_heat_potential", "build_surface_water_heat_potential", "build_sea_heat_potential", "build_egs_potentials", "build_solar_thermal_profiles") }}
 
 ## Thermal storage
 

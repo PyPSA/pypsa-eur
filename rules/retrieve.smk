@@ -1587,6 +1587,25 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
             )
 
 
+if (LAKE_DATA_DATASET := dataset_version("lake_data"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_lake_data:
+        """Retrieves the HydroLAKES lake polygons with lake volumes."""
+        input:
+            lake_data=storage(LAKE_DATA_DATASET["url"]),
+        output:
+            lake_data=f"{LAKE_DATA_DATASET['folder']}/HydroLAKES_polys_v10.gdb.zip",
+        log:
+            "logs/retrieve_lake_data.log",
+        retries: 2
+        threads: 1
+        run:
+            copy2(input["lake_data"], output["lake_data"])
+
+
 if (DH_AREAS_DATASET := dataset_version("dh_areas"))["source"] in [
     "primary",
     "archive",

@@ -345,16 +345,18 @@ def update_heat_pump_efficiency(
     )
 
     # Change efficiency2 for heat pumps that use an explicitly modelled heat source
-    # Only update if efficiency2 exists (sector-coupled networks only)
-    if "efficiency2" in n_p.links_t and "efficiency2" in n.links_t:
-        previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
-            n_p.links_t["efficiency2"].columns
-        )
-        current_iteration_columns = corresponding_idx_this_iteration.intersection(
-            n.links_t["efficiency2"].columns
-        )
-        n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
-            n.links_t["efficiency2"].loc[:, current_iteration_columns].values
+    # and efficiency3 for those that preheat the return flow
+    # Only update if they exist (sector-coupled networks only)
+    for attr in ["efficiency2", "efficiency3"]:
+        if attr not in n_p.links_t or attr not in n.links_t:
+            continue
+        in_both = heat_pump_idx_previous_iteration.isin(
+            n_p.links_t[attr].columns
+        ) & corresponding_idx_this_iteration.isin(n.links_t[attr].columns)
+        previous_iteration_columns = heat_pump_idx_previous_iteration[in_both]
+        current_iteration_columns = corresponding_idx_this_iteration[in_both]
+        n_p.links_t[attr].loc[:, previous_iteration_columns] = (
+            n.links_t[attr].loc[:, current_iteration_columns].values
         )
 
 
@@ -470,7 +472,7 @@ def main(
     update_heat_pump_efficiency(n, n_previous, current_horizon)
 
     ptes = params.sector["district_heating"]["ptes"]
-    if ptes["enable"] and ptes["temperature_dependent_capacity"]:
+    if ptes["enable"] and ptes["dynamic_capacity"]:
         update_dynamic_ptes_capacity(n, n_previous, current_horizon)
 
     logger.info(

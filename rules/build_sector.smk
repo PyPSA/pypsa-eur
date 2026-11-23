@@ -3,9 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 
-from scripts.definitions.heat_source import HeatSource
-
-
 rule build_population_layouts:
     """Maps population (total, urban, rural) onto weather cutout grid cells from NUTS3 shapes."""
     input:
@@ -309,13 +306,13 @@ rule build_geothermal_heat_potential:
             "isi_heat_potentials"
         ],
         onshore_regions=resources("onshore_regions.geojson"),
+        lau_regions=rules.retrieve_lau_regions.output["zip"],
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_{horizon}.nc"
         ),
         central_heating_return_temperature_profiles=resources(
             "central_heating_return_temperature_profiles_{horizon}.nc"
         ),
-        lau_regions=rules.retrieve_lau_regions.output["zip"],
     output:
         heat_source_power=resources("heat_source_power_geothermal_{horizon}.csv"),
     log:
@@ -328,6 +325,7 @@ rule build_geothermal_heat_potential:
         constant_temperature_celsius=config_provider(
             "sector",
             "district_heating",
+            "limited_heat_sources",
             "geothermal",
             "constant_temperature_celsius",
         ),
@@ -449,25 +447,34 @@ def input_hera_data(w) -> dict[str, str]:
         return result
 
 
-rule build_river_heat_potential:
-    """Computes river water heat potential and temperature profiles for district heating regions."""
+def input_lake_data(w) -> dict[str, str]:
+    if w.water == "lake":
+        return {"lake_data": rules.retrieve_lake_data.output["lake_data"]}
+    return {}
+
+
+rule build_surface_water_heat_potential:
+    """Computes river or lake water heat potential and temperature profiles for district heating regions."""
     input:
         unpack(input_hera_data),
+        unpack(input_lake_data),
         onshore_regions=resources("onshore_regions.geojson"),
         dh_areas=resources("dh_areas.geojson"),
     output:
-        heat_source_power=resources("heat_source_power_river_water.csv"),
-        heat_source_temperature=resources("temp_river_water.nc"),
+        heat_source_power=resources("heat_source_power_{water}_water.csv"),
+        heat_source_temperature=resources("temp_{water}_water.nc"),
         heat_source_temperature_temporal_aggregate=resources(
-            "temp_river_water_temporal_aggregate.nc"
+            "temp_{water}_water_temporal_aggregate.nc"
         ),
         heat_source_energy_temporal_aggregate=resources(
-            "heat_source_energy_river_water_temporal_aggregate.nc"
+            "heat_source_energy_{water}_water_temporal_aggregate.nc"
         ),
     log:
-        logs("build_river_water_heat_potential.log"),
+        logs("build_{water}_water_heat_potential.log"),
     benchmark:
-        benchmarks("build_river_water_heat_potential")
+        benchmarks("build_{water}_water_heat_potential")
+    wildcard_constraints:
+        water="river|lake",
     threads: 1
     resources:
         mem_mb=20000,
@@ -480,7 +487,7 @@ rule build_river_heat_potential:
         enable_heat_source_maps=config_provider("plotting", "enable_heat_source_maps"),
     script:
         scripts(
-            "build_surface_water_heat_potentials/build_river_water_heat_potential.py"
+            "build_surface_water_heat_potentials/build_surface_water_heat_potential.py"
         )
 
 
@@ -510,32 +517,46 @@ def input_heat_source_temperature(
         temperature sources).
     """
 
-    heat_sources = set(
-        config_provider("sector", "heat_sources", "urban central")(w)
+    heat_pump_sources = set(
+        config_provider("sector", "heat_pump_sources", "urban central")(w)
     ).union(
-        config_provider("sector", "heat_sources", "urban decentral")(w),
-        config_provider("sector", "heat_sources", "rural")(w),
+        config_provider("sector", "heat_pump_sources", "urban decentral")(w),
+        config_provider("sector", "heat_pump_sources", "rural")(w),
     )
 
-    district_heating_config = config_provider("sector", "district_heating")(w)
+    is_limited_heat_source = {
+        heat_source_name: heat_source_name
+        in config_provider("sector", "district_heating", "limited_heat_sources")(w)
+        for heat_source_name in heat_pump_sources
+    }
 
-    file_names = {}
-    for heat_source in heat_sources:
-        if (
-            district_heating_config
-            and heat_source in district_heating_config
-            and district_heating_config[heat_source].get(
-                "constant_temperature_celsius", False
-            )
-        ):
-            continue
-        file_names[f"temp_{heat_source}"] = resources(
+    has_constant_temperature = {
+        heat_source_name: (
+            False
+            if not is_limited_heat_source[heat_source_name]
+            else config_provider(
+                "sector",
+                "district_heating",
+                "limited_heat_sources",
+                heat_source_name,
+                "constant_temperature_celsius",
+            )(w)
+        )
+        for heat_source_name in heat_pump_sources
+    }
+
+    # replace names for soil and air temperature files
+    return {
+        f"temp_{heat_source_name}": resources(
             "temp_"
-            + replace_names.get(heat_source, heat_source)
-            + ("_{horizon}" if heat_source == "ptes" else "")
+            + replace_names.get(heat_source_name, heat_source_name)
+            + ("_{horizon}" if heat_source_name == "ptes" else "")
             + ".nc"
         )
-    return file_names
+        for heat_source_name in heat_pump_sources
+        # remove heat sources with constant temperature - i.e. no temperature profile file
+        if not has_constant_temperature[heat_source_name]
+    }
 
 
 def input_seawater_temperature(w) -> dict[str, str]:
@@ -629,15 +650,9 @@ rule build_cop_profiles:
         heat_pump_cop_approximation_central_heating=config_provider(
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
-        heat_sources=config_provider("sector", "heat_sources"),
-        heat_source_temperatures=config_provider(
-            "sector", "district_heating", "heat_source_temperatures"
-        ),
-        constant_temperature_geothermal=config_provider(
-            "sector",
-            "district_heating",
-            "geothermal",
-            "constant_temperature_celsius",
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
         ),
     script:
         scripts("build_cop_profiles/run.py")
@@ -654,11 +669,11 @@ rule build_ptes_operations:
         ),
         onshore_regions=resources("onshore_regions.geojson"),
     output:
+        ptes_direct_utilisation_profiles=resources(
+            "ptes_direct_utilisation_profiles_{horizon}.nc"
+        ),
         ptes_top_temperature_profiles=resources("temp_ptes_top_profiles_{horizon}.nc"),
         ptes_e_max_pu_profiles=resources("ptes_e_max_pu_profiles_{horizon}.nc"),
-        ptes_boost_per_discharge_profiles=resources(
-            "ptes_boost_per_discharge_profiles_{horizon}.nc"
-        ),
     log:
         logs("build_ptes_operations_{horizon}.log"),
     benchmark:
@@ -666,83 +681,54 @@ rule build_ptes_operations:
     resources:
         mem_mb=2000,
     params:
-        top_temperature=config_provider(
+        max_ptes_top_temperature=config_provider(
             "sector",
             "district_heating",
             "ptes",
-            "top_temperature",
+            "max_top_temperature",
         ),
-        bottom_temperature=config_provider(
+        min_ptes_bottom_temperature=config_provider(
             "sector",
             "district_heating",
             "ptes",
-            "bottom_temperature",
-        ),
-        charge_boosting_required=config_provider(
-            "sector", "district_heating", "ptes", "charge_boosting_required"
-        ),
-        discharge_resistive_boosting=config_provider(
-            "sector", "district_heating", "ptes", "discharge_resistive_boosting"
-        ),
-        temperature_dependent_capacity=config_provider(
-            "sector", "district_heating", "ptes", "temperature_dependent_capacity"
-        ),
-        design_top_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "design_top_temperature",
-        ),
-        design_bottom_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "design_bottom_temperature",
+            "min_bottom_temperature",
         ),
     script:
         scripts("build_ptes_operations/run.py")
 
 
-rule build_heat_source_utilisation_profiles:
-    """Builds direct-use and preheating profiles of district heating heat sources."""
+rule build_direct_heat_source_utilisation_profiles:
+    """Builds profiles for direct heat source use and for preheating of the return flow."""
     input:
-        unpack(input_heat_source_temperature),
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_{horizon}.nc"
         ),
         central_heating_return_temperature_profiles=resources(
             "central_heating_return_temperature_profiles_{horizon}.nc"
         ),
+        temp_ptes=resources("temp_ptes_top_profiles_{horizon}.nc"),
     output:
-        heat_source_direct_utilisation_profiles=resources(
-            "heat_source_direct_utilisation_profiles_{horizon}.nc"
+        direct_heat_source_utilisation_profiles=resources(
+            "direct_heat_source_utilisation_profiles_{horizon}.nc"
         ),
-        heat_source_preheater_utilisation_profiles=resources(
-            "heat_source_preheater_utilisation_profiles_{horizon}.nc"
+        heat_source_preheating_profiles=resources(
+            "heat_source_preheating_profiles_{horizon}.nc"
         ),
     log:
-        logs("build_heat_source_utilisation_profiles_{horizon}.log"),
+        logs("build_direct_heat_source_utilisation_profiles_{horizon}.log"),
     benchmark:
-        benchmarks("build_heat_source_utilisation_profiles_{horizon}")
+        benchmarks("build_direct_heat_source_utilisation_profiles_{horizon}")
     resources:
         mem_mb=20000,
     params:
-        heat_sources=config_provider("sector", "heat_sources", "urban central"),
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
+        ),
         heat_source_cooling=config_provider(
             "sector", "district_heating", "heat_source_cooling"
         ),
-        heat_source_temperatures=config_provider(
-            "sector", "district_heating", "heat_source_temperatures"
-        ),
-        ptes_enable=config_provider("sector", "district_heating", "ptes", "enable"),
-        constant_temperature_geothermal=config_provider(
-            "sector",
-            "district_heating",
-            "geothermal",
-            "constant_temperature_celsius",
-        ),
     script:
-        scripts("build_heat_source_utilisation_profiles.py")
+        scripts("build_direct_heat_source_utilisation_profiles.py")
 
 
 rule build_solar_thermal_profiles:
@@ -1654,7 +1640,7 @@ rule build_existing_heating_distribution:
     resources:
         mem_mb=2000,
     params:
-        heat_sources=config_provider("sector", "heat_sources"),
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
     script:
         scripts("build_existing_heating_distribution.py")
 
@@ -1745,14 +1731,20 @@ rule build_egs_potentials:
 def input_heat_source_power(w):
 
     return {
-        heat_source: resources(
+        heat_source_name: resources(
             "heat_source_power_"
-            + heat_source
-            + ("_{horizon}" if heat_source == "geothermal" else "")
+            + heat_source_name
+            + ("_{horizon}" if heat_source_name == "geothermal" else "")
             + ".csv"
         )
-        for heat_source in config_provider("sector", "heat_sources", "urban central")(w)
-        if HeatSource(heat_source).requires_generator
+        for heat_source_name in config_provider(
+            "sector", "heat_pump_sources", "urban central"
+        )(w)
+        if heat_source_name
+        in config_provider("sector", "district_heating", "limited_heat_sources")(
+            w
+        ).keys()
+        and not heat_source_name.endswith("_waste")
     }
 
 

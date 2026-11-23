@@ -65,7 +65,7 @@ build_co2_totals                                        1
 build_cop_profiles                                      1
 build_daily_heat_demand                                 1
 build_dh_areas                                          1
-build_heat_source_utilisation_profiles                  1
+build_direct_heat_source_utilisation_profiles           1
 build_district_heat_share                               1
 build_electricity_demand                                1
 build_electricity_demand_base                           1
@@ -94,7 +94,7 @@ build_population_weighted_energy_totals                 2
 build_powerplants                                       1
 build_ptes_operations                                   1
 build_renewable_profiles                                6
-build_river_heat_potential                              1
+build_surface_water_heat_potential                      1
 build_salt_cavern_potentials                            1
 build_sea_heat_potential                                1
 build_shapes                                            1
@@ -246,7 +246,7 @@ build_co2_totals                                        1
 build_cop_profiles                                      3
 build_daily_heat_demand                                 1
 build_dh_areas                                          1
-build_heat_source_utilisation_profiles                  3
+build_direct_heat_source_utilisation_profiles           3
 build_district_heat_share                               3
 build_electricity_demand                                1
 build_electricity_demand_base                           1
@@ -275,7 +275,7 @@ build_population_weighted_energy_totals                 2
 build_powerplants                                       1
 build_ptes_operations                                   3
 build_renewable_profiles                                6
-build_river_heat_potential                              1
+build_surface_water_heat_potential                      1
 build_salt_cavern_potentials                            1
 build_sea_heat_potential                                1
 build_shapes                                            1

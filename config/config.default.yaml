@@ -738,12 +738,12 @@ sector:
       relative_annual_temperature_reduction: 0.01
     ptes:
       enable: true
-      temperature_dependent_capacity: false
-      discharge_resistive_boosting: false
-      top_temperature: 90
-      bottom_temperature: 35
-      design_top_temperature: 90
-      design_bottom_temperature: 35
+      dynamic_capacity: false
+      supplemental_heating:
+        enable: false
+        booster_heat_pump: false
+      max_top_temperature: 90
+      min_bottom_temperature: 35
     ates:
       enable: false
       suitable_aquifer_types:
@@ -762,16 +762,42 @@ sector:
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
       min_delta_t_lift: 10
+    limited_heat_sources:
+      geothermal:
+        constant_temperature_celsius: 65
+        ignore_missing_regions: false
+      river_water:
+        constant_temperature_celsius: false
+      lake_water:
+        constant_temperature_celsius: false
+      electrolysis_waste:
+        constant_temperature_celsius: 70
+      fuel_cell_waste:
+        constant_temperature_celsius: 70
+      fischer_tropsch_waste:
+        constant_temperature_celsius: 200
+      haber_bosch_waste:
+        constant_temperature_celsius: 200
+      sabatier_waste:
+        constant_temperature_celsius: 200
+      methanolisation_waste:
+        constant_temperature_celsius: 200
+    direct_utilisation_heat_sources:
+    - geothermal
+    temperature_limited_stores:
+    - ptes
     dh_areas:
       buffer: 1000
       handle_missing_countries: fill
-    geothermal:
-      constant_temperature_celsius: 65
-  heat_sources:
+  heat_pump_sources:
     urban central:
     - air
-    - ptes
-    - geothermal
+    - electrolysis_waste
+    - fuel_cell_waste
+    - fischer_tropsch_waste
+    - haber_bosch_waste
+    - sabatier_waste
+    - methanolisation_waste
     urban decentral:
     - air
     rural:
@@ -1623,6 +1649,9 @@ data:
     version: latest
   aquifer_data:
     source: archive
+    version: latest
+  lake_data:
+    source: primary
     version: latest
   osm_boundaries:
     source: archive
