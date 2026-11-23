@@ -5,7 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Fix: Solar PV costs from `technology-data` refer to AC capacity, but the availability time series referred to DC capacity, which made solar PV too expensive. New options `renewable: solar: resource: dc_ac_ratio` and `sector: solar_rooftop_dc_ac_ratio` give the availability per unit of AC capacity with inverter clipping in each weather grid cell. Capacities and potentials of solar PV now refer to AC capacity. This changes default results. Requires `atlite` with `dc_ac_ratio` support, see [atlite#550](https://github.com/PyPSA/atlite/pull/550) ([#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
+* Fix: Solar PV availability, capacities and potentials now refer to AC capacity, like the costs. New options `renewable: solar: resource: dc_ac_ratio` and `ac_cost_share` (rooftop: `sector: solar_rooftop_*`) set the inverter sizing and scale the costs. This changes default results. Requires `atlite>=0.8` ([#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
 * Compatibility: PyPSA-Eur now requires PyPSA 1.1 or newer. The compatibility code for older PyPSA versions is removed, and annuities are computed with `pypsa.costs.annuity` ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436)).
 * Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).
 * Fix: `pixi run generate-config` now runs on Windows: read and write files as UTF-8 and write paths with `/`.

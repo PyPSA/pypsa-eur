@@ -1049,8 +1049,14 @@ class SectorConfig(BaseModel):
     )
     solar_rooftop_dc_ac_ratio: float = Field(
         1.075,
-        description="Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one.",
+        description="Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one. The investment cost is scaled from the ratio of 1.075 assumed in the cost data, see `solar_rooftop_ac_cost_share`.",
         ge=1,
+    )
+    solar_rooftop_ac_cost_share: float = Field(
+        0.23,
+        description="Share of the rooftop solar PV investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `solar_rooftop_dc_ac_ratio`.",
+        ge=0,
+        le=1,
     )
     electricity_grid_connection: bool = Field(
         True,

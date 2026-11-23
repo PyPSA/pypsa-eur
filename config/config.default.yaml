@@ -333,6 +333,7 @@ renewable:
       dc_ac_ratio: 1.25
     resource_classes: 1
     capacity_per_sqkm: 5.1
+    ac_cost_share: 0.18
     correction_factor: 1.0
     corine:
     - 1
@@ -374,6 +375,7 @@ renewable:
       dc_ac_ratio: 1.25
     resource_classes: 1
     capacity_per_sqkm: 4.43
+    ac_cost_share: 0.15
     correction_factor: 1.0
     corine:
     - 1
@@ -1029,6 +1031,7 @@ sector:
   electricity_transmission_grid: true
   electricity_distribution_grid: true
   solar_rooftop_dc_ac_ratio: 1.075
+  solar_rooftop_ac_cost_share: 0.23
   electricity_grid_connection: true
   transmission_efficiency:
     enable:

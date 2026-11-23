@@ -4534,7 +4534,7 @@
                 },
                 "dc_ac_ratio": {
                   "default": 1.25,
-                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
                   "minimum": 1,
                   "type": "number"
                 }
@@ -4548,6 +4548,13 @@
             "capacity_per_sqkm": {
               "default": 5.1,
               "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+              "type": "number"
+            },
+            "ac_cost_share": {
+              "default": 0.18,
+              "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+              "maximum": 1,
+              "minimum": 0,
               "type": "number"
             },
             "correction_factor": {
@@ -4664,7 +4671,7 @@
                 },
                 "dc_ac_ratio": {
                   "default": 1.25,
-                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
                   "minimum": 1,
                   "type": "number"
                 }
@@ -4678,6 +4685,13 @@
             "capacity_per_sqkm": {
               "default": 5.1,
               "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+              "type": "number"
+            },
+            "ac_cost_share": {
+              "default": 0.18,
+              "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+              "maximum": 1,
+              "minimum": 0,
               "type": "number"
             },
             "correction_factor": {
@@ -5858,8 +5872,15 @@
         },
         "solar_rooftop_dc_ac_ratio": {
           "default": 1.075,
-          "description": "Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one.",
+          "description": "Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one. The investment cost is scaled from the ratio of 1.075 assumed in the cost data, see `solar_rooftop_ac_cost_share`.",
           "minimum": 1,
+          "type": "number"
+        },
+        "solar_rooftop_ac_cost_share": {
+          "default": 0.23,
+          "description": "Share of the rooftop solar PV investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `solar_rooftop_dc_ac_ratio`.",
+          "maximum": 1,
+          "minimum": 0,
           "type": "number"
         },
         "electricity_grid_connection": {
@@ -9786,7 +9807,7 @@
             },
             "dc_ac_ratio": {
               "default": 1.25,
-              "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+              "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
               "minimum": 1,
               "type": "number"
             }
@@ -9800,6 +9821,13 @@
         "capacity_per_sqkm": {
           "default": 5.1,
           "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+          "type": "number"
+        },
+        "ac_cost_share": {
+          "default": 0.18,
+          "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+          "maximum": 1,
+          "minimum": 0,
           "type": "number"
         },
         "correction_factor": {
@@ -9898,7 +9926,7 @@
         },
         "dc_ac_ratio": {
           "default": 1.25,
-          "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+          "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
           "minimum": 1,
           "type": "number"
         }
@@ -12045,7 +12073,7 @@
                 },
                 "dc_ac_ratio": {
                   "default": 1.25,
-                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
                   "minimum": 1,
                   "type": "number"
                 }
@@ -12059,6 +12087,13 @@
             "capacity_per_sqkm": {
               "default": 5.1,
               "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+              "type": "number"
+            },
+            "ac_cost_share": {
+              "default": 0.18,
+              "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+              "maximum": 1,
+              "minimum": 0,
               "type": "number"
             },
             "correction_factor": {
@@ -12175,7 +12210,7 @@
                 },
                 "dc_ac_ratio": {
                   "default": 1.25,
-                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The ratio must match the one assumed in the cost data.",
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
                   "minimum": 1,
                   "type": "number"
                 }
@@ -12189,6 +12224,13 @@
             "capacity_per_sqkm": {
               "default": 5.1,
               "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+              "type": "number"
+            },
+            "ac_cost_share": {
+              "default": 0.18,
+              "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+              "maximum": 1,
+              "minimum": 0,
               "type": "number"
             },
             "correction_factor": {
@@ -13863,8 +13905,15 @@
         },
         "solar_rooftop_dc_ac_ratio": {
           "default": 1.075,
-          "description": "Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one.",
+          "description": "Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one. The investment cost is scaled from the ratio of 1.075 assumed in the cost data, see `solar_rooftop_ac_cost_share`.",
           "minimum": 1,
+          "type": "number"
+        },
+        "solar_rooftop_ac_cost_share": {
+          "default": 0.23,
+          "description": "Share of the rooftop solar PV investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `solar_rooftop_dc_ac_ratio`.",
+          "maximum": 1,
+          "minimum": 0,
           "type": "number"
         },
         "electricity_grid_connection": {
