@@ -40,13 +40,11 @@ import xarray as xr
 from pypsa.clustering.spatial import DEFAULT_ONE_PORT_STRATEGIES, normed_or_uniform
 
 from scripts._helpers import (
-    PYPSA_V1,
     rename_techs,
     update_p_nom_max,
 )
 
-if PYPSA_V1:
-    pypsa.options.params.add.return_names = True
+pypsa.options.params.add.return_names = True
 
 SECTOR_CARRIERS = {
     "OCGT",
@@ -133,40 +131,6 @@ def normed(s: pd.Series) -> pd.Series:
 
 def flatten(t: Iterable[Any]) -> str:
     return " ".join(map(str, t))
-
-
-def calculate_annuity(n: float, r: float | pd.Series) -> float | pd.Series:
-    """
-    Calculate the annuity factor for an asset with lifetime n years and discount rate r.
-
-    The annuity factor is used to calculate the annual payment required to pay off a loan
-    over n years at interest rate r. For example, annuity(20, 0.05) * 20 = 1.6.
-
-    Parameters
-    ----------
-    n : float
-        Lifetime of the asset in years
-    r : float | pd.Series
-        Discount rate (interest rate). Can be a single float or a pandas Series of rates.
-
-    Returns
-    -------
-    float | pd.Series
-        Annuity factor. Returns a float if r is float, or pd.Series if r is pd.Series.
-
-    Examples
-    --------
-    >>> calculate_annuity(20, 0.05)
-    0.08024258718774728
-    """
-    if isinstance(r, pd.Series):
-        return pd.Series(1 / n, index=r.index).where(
-            r == 0, r / (1.0 - 1.0 / (1.0 + r) ** n)
-        )
-    elif r > 0:
-        return r / (1.0 - 1.0 / (1.0 + r) ** n)
-    else:
-        return 1 / n
 
 
 def add_missing_carriers(n: pypsa.Network, carriers: Iterable[str]) -> None:

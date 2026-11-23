@@ -18,7 +18,6 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from packaging.version import Version, parse
 from pypsa.plot.maps.static import (
     add_legend_lines,
     add_legend_patches,
@@ -27,7 +26,6 @@ from pypsa.plot.maps.static import (
 from pypsa.statistics import get_transmission_carriers
 
 from scripts._helpers import (
-    PYPSA_V1,
     configure_logging,
     create_placeholder_plot,
     set_scenario_config,
@@ -35,8 +33,6 @@ from scripts._helpers import (
 from scripts.add_electricity import sanitize_carriers
 from scripts.co2_budget import co2_limit_name
 from scripts.plot_power_network import load_projection
-
-SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -179,8 +175,7 @@ if __name__ == "__main__":
     buses = n.buses.query("carrier in @carrier").index
     weights = n.snapshot_weightings.generators
     prices = weights @ n.buses_t.marginal_price[buses] / weights.sum()
-    level = "name" if PYPSA_V1 else "Bus"
-    price = prices.rename(n.buses.location).groupby(level=level).mean()
+    price = prices.rename(n.buses.location).groupby(level="name").mean()
 
     co2_limit = co2_limit_name("upper")
     if carrier == "co2 stored" and co2_limit in n.global_constraints.index:
@@ -322,10 +317,7 @@ if __name__ == "__main__":
     if legend_bus_size is not None:
         add_legend_semicircles(
             ax,
-            [
-                s * bus_size_factor * SEMICIRCLE_CORRECTION_FACTOR
-                for s in legend_bus_size
-            ],
+            [s * bus_size_factor for s in legend_bus_size],
             [f"{s} {carrier_unit}" for s in legend_bus_size],
             patch_kw={"color": "#666"},
             legend_kw={

@@ -27,9 +27,9 @@ from collections.abc import Mapping
 import numpy as np
 import pandas as pd
 import pypsa
+from pypsa.common import expand_series
 
 from scripts._helpers import (
-    PYPSA_V1,
     get,
 )
 from scripts.co2_budget import (
@@ -38,13 +38,6 @@ from scripts.co2_budget import (
     co2_limit_name,
 )
 from scripts.prepare_sector_network import co2_emissions_year, set_temporal_aggregation
-
-# Allow for PyPSA versions <0.35
-if PYPSA_V1:
-    from pypsa.common import expand_series
-else:
-    from pypsa.descriptors import expand_series
-
 
 logger = logging.getLogger(__name__)
 
