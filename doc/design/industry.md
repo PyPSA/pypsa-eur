@@ -28,8 +28,7 @@ The method has three steps.
    change is assumed, for example a switch from primary to secondary steel.
 3. **Location.** Country totals are distributed to regions using a database
    of georeferenced industrial sites [@manzGeoreferencedIndustrial2018],
-   supplemented by plant trackers for steel and cement and a list of ammonia
-   plants, so that a cement region gets cement demand and a steel region gets
+   supplemented by plant trackers for steel, cement and chemicals, so that a cement region gets cement demand and a steel region gets
    steel demand. Where a subsector has no sites in a country, population is
    used instead.
 
@@ -55,7 +54,8 @@ differ [@bazzanellaLowCarbon2017; @leviMappingGlobal2018]. Ammonia demand is
 met from an explicit ammonia carrier, see [Ammonia](ammonia.md). Methanol and
 chlorine follow fixed production statistics. High-value chemicals need a
 hydrocarbon feedstock, naphtha, whose origin, fossil, synthetic or biogenic,
-is optimised. Recycling and reuse of plastics reduce the primary feedstock
+is optimised. Optionally, olefins and aromatics from methanol can replace
+naphtha. Recycling and reuse of plastics reduce the primary feedstock
 and the associated process emissions [@circular_economy; @meysAchievingNetzero2021; @kullmannValueRecycling2022]; their shares are
 exogenous. The carbon in plastics that are neither recycled nor reused is
 either released, permanently landfilled, or burned in waste-to-energy plants
@@ -105,6 +105,22 @@ heat demand as today's fuel input.
 !!! warning "No existing heat supply plants"
     Existing plants are not represented. The first planning horizon of a
     myopic pathway can therefore replace all of today's heat supply at once.
+
+Optionally, the production of primary steel and cement is optimised instead
+of prescribed. The energy demand of these subsectors is then replaced by a
+demand for the material in tonnes. Cement keeps the specific fuel and
+electricity demand and the process emissions of the exogenous demand. Steel comes from blast furnaces with basic
+oxygen furnaces, or from electric arc furnaces fed with iron that is directly
+reduced with natural gas or hydrogen. Cement comes from kilns that burn
+clinker with heat from gas, solid biomass or waste. Waste is the plastic
+waste that is neither recycled nor landfilled. The
+CO~2~ of blast furnaces, gas-based direct reduction and cement kilns can be
+captured; the heat demand of the capture units is not modelled. Steel and
+cement are not transported between regions, so that production stays at
+today's sites. Optionally, the reduction of iron ore can relocate within
+Europe, with the reduced iron moved to the steel sites at no cost. In myopic and perfect foresight
+optimisation, existing steel, cement, ammonia and methanol plants can be
+added from the plant trackers of Global Energy Monitor.
 
 Process emissions are tracked separately from energy-related emissions. They
 can be captured at a given capture rate, which turns them into a captured

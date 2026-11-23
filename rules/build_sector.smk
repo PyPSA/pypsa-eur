@@ -766,10 +766,11 @@ rule build_swiss_energy_balances:
 
 
 rule build_co2_totals:
-    """Computes historical CO2 emissions per country and sector from EEA and Eurostat data."""
+    """Computes historical emissions per country, year and sector from national inventories."""
     input:
-        co2=rules.retrieve_ghg_emissions.output["csv"],
-        eurostat=resources("eurostat_energy_balances.csv"),
+        eea=rules.retrieve_ghg_emissions.output["csv"],
+        energy_community=rules.retrieve_ghg_emissions_energy_community.output["csv"],
+        uk=rules.retrieve_desnz_ghg_emissions.output["xlsx"],
     output:
         co2_totals=resources("co2_totals.csv"),
     log:
@@ -781,7 +782,6 @@ rule build_co2_totals:
         mem_mb=1000,
     params:
         countries=config_provider("countries"),
-        energy=config_provider("energy"),
         emissions_scope=config_provider("co2_budget", "emissions_scope"),
     script:
         scripts("build_co2_totals.py")
@@ -1272,7 +1272,7 @@ rule build_industrial_distribution_key:
         hotmaps=rules.retrieve_hotmaps_industrial_sites.output["csv"],
         gem_gspt=rules.retrieve_gem_gspt.output["xlsx"],
         gem_gcpt=rules.retrieve_gem_gcct.output["xlsx"],
-        ammonia="data/ammonia_plants.csv",
+        gem_gct=rules.retrieve_gem_gct.output["xlsx"],
         refineries_supplement="data/refineries-noneu.csv",
     output:
         industrial_distribution_key=resources("industrial_distribution_key.csv"),
@@ -1336,6 +1336,8 @@ rule build_industrial_energy_demand_per_node:
     threads: 1
     resources:
         mem_mb=1000,
+    params:
+        endogenous_sectors=config_provider("sector", "endogenous_sectors"),
     script:
         scripts("build_industrial_energy_demand_per_node.py")
 
@@ -1360,6 +1362,7 @@ rule build_industrial_electricity_profiles:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        endogenous_sectors=config_provider("sector", "endogenous_sectors"),
     script:
         scripts("build_industrial_electricity_profiles.py")
 
@@ -1714,3 +1717,26 @@ def input_heat_source_power(w):
             w
         ).keys()
     }
+
+
+rule build_industry_plants:
+    """Builds existing cement, steel, ammonia and methanol plant capacities per model region."""
+    input:
+        regions_onshore=resources("onshore_regions.geojson"),
+        gem_gct=rules.retrieve_gem_gct.output["xlsx"],
+        gem_gspt=rules.retrieve_gem_gspt.output["xlsx"],
+        gem_iron_units=rules.retrieve_gem_gspt.output["iron_units"],
+        gem_gcct=rules.retrieve_gem_gcct.output["xlsx"],
+    output:
+        industry_plants=resources("industry_plants.csv"),
+    log:
+        logs("build_industry_plants.log"),
+    benchmark:
+        benchmarks("build_industry_plants")
+    threads: 1
+    resources:
+        mem_mb=2000,
+    params:
+        countries=config_provider("countries"),
+    script:
+        scripts("build_industry_plants.py")
