@@ -5207,14 +5207,6 @@ def add_industry(
     # 1e6 to convert TWh to MWh
     industrial_demand = pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
 
-    if options["endogenous_sectors"]:
-        # material demand per node [Mt/a]
-        nodal_production = pd.read_csv(industrial_production_file, index_col=0) / 1e3
-        steel = nodal_production[["Integrated steelworks", "DRI + Electric arc"]].sum(
-            axis=1
-        )
-        cement = nodal_production["Cement"]
-
     if not options["biomass"]:
         raise ValueError(
             "Industry demand includes solid biomass, but `sector.biomass` is disabled. "
@@ -5709,6 +5701,10 @@ def add_industry(
         n.add("Carrier", "steel")
         n.add("Carrier", "hbi")
 
+        # material demand per node [Mt/a]
+        nodal_production = pd.read_csv(industrial_production_file, index_col=0) / 1e3
+        steel_carriers = ["Integrated steelworks", "DRI + Electric arc"]
+        steel = nodal_production[steel_carriers].sum(axis=1)
         steel.index = steel.index + " steel"
 
         n.add(
@@ -5945,6 +5941,9 @@ def add_industry(
         n.add("Carrier", "cement emission")
         n.add("Carrier", "cement heat")
 
+        # material demand per node [Mt/a]
+        nodal_production = pd.read_csv(industrial_production_file, index_col=0) / 1e3
+        cement = nodal_production["Cement"]
         cement.index = cement.index + " cement"
 
         n.add(
