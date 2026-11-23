@@ -345,7 +345,8 @@ if __name__ == "__main__":
         synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
         synthetic_load = synthetic_load.rename(columns={"KV": "XK"})
         # UA, MD, CY, MT do not appear in synthetic load data
-        synthetic_load = synthetic_load.reindex(index=snapshots, columns=countries)
+        columns = synthetic_load.columns.intersection(countries)
+        synthetic_load = synthetic_load.reindex(index=snapshots, columns=columns)
         if prefer_synthetic:
             logger.info("Prefer synthetic data and fill gaps with historical data.")
             load = synthetic_load.combine_first(load)

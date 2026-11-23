@@ -529,7 +529,7 @@ class _IndustryHeatConfig(BaseModel):
             "heat200-500": ["solid biomass", "gas", "hydrogen"],
             "heat500+": ["gas", "hydrogen"],
         },
-        description="Supply technologies per temperature band in °C. Solid biomass and gas are also added with carbon capture. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
+        description="Supply technologies per temperature band in °C. Solid biomass and gas are also added with carbon capture if `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` are enabled. Heat pumps and electric boilers only supply `heat100-200`. Heat pumps have a constant coefficient of performance that assumes excess heat as source.",
     )
 
 

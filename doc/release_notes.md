@@ -5,6 +5,9 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).
+* Fix: `pixi run generate-config` now runs on Windows: read and write files as UTF-8 and write paths with `/`.
+* Fix: `build_gas_network` no longer drops the capacity and length of gas pipelines that need no correction. This changes default results ([#2433](https://github.com/PyPSA/pypsa-eur/pull/2433)).
 * Feature: Add LNG as shipping fuel (`sector: shipping_lng_share`) and optionally optimise the shares of the fuels listed in `sector: shipping_endogenous`. Hydrogen for shipping is now always liquefied, including the electricity demand, `sector: shipping_hydrogen_liquefaction` is removed and the carrier `H2 for shipping` is renamed to `shipping hydrogen` ([#2317](https://github.com/PyPSA/pypsa-eur/pull/2317)).
 * Change: Methanol-powered ships are now as efficient as oil-powered ships (`sector: shipping_methanol_efficiency`), following the Fourth IMO GHG Study 2020. This changes default results ([#2317](https://github.com/PyPSA/pypsa-eur/pull/2317)).
 * Fix: Gas pipelines ending in regions without an onshore region, e.g. offshore junctions at high resolution, now get gas and H2 buses instead of leaving the network inconsistent ([#2429](https://github.com/PyPSA/pypsa-eur/pull/2429)).
