@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Change: Pass-through links and generators without investment cost in the sector-coupled network (e.g. fuel supply, fuel demand, process emissions, CO2 and heat venting) now have a fixed infinite capacity instead of an extendable one. This removes capacity variables without a cost from the optimisation. Their optimal capacity is reported as infinite.
 * Compatibility: PyPSA-Eur now requires PyPSA 1.1 or newer. The compatibility code for older PyPSA versions is removed, and annuities are computed with `pypsa.costs.annuity` ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436)).
 * Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).
 * Fix: `pixi run generate-config` now runs on Windows: read and write files as UTF-8 and write paths with `/`.
