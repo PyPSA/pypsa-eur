@@ -150,7 +150,7 @@ class IndustryConfig(ConfigModel):
     )
     process_emissions_cc: bool = Field(
         True,
-        description="Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
+        description="Add option for capturing industrial process emissions, including the emissions of endogenous steel and cement production. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
     )
     sector_ratios_fraction_future: dict[int, float] = Field(
         default_factory=lambda: {

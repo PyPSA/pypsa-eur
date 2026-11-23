@@ -5837,6 +5837,14 @@ def add_industry(
         )
 
         # BOF
+        add_carrier_buses(
+            n,
+            carrier="coal",
+            costs=costs,
+            spatial=spatial,
+            options=options,
+            cf_industry=cf_industry,
+        )
         coal_input = costs.at["blast furnace-basic oxygen furnace", "coal-input"]
         marginal_cost = (
             costs.at["iron ore DRI-ready", "commodity"]
@@ -5878,8 +5886,7 @@ def add_industry(
             bus0=spatial.nodes + " gas DRI emission",
             bus1="co2 atmosphere",
             efficiency=1,
-            p_nom=0,
-            p_nom_extendable=True,
+            p_nom=np.inf,
         )
         n.add(
             "Link",
@@ -5889,50 +5896,50 @@ def add_industry(
             bus0=spatial.nodes + " BOF emission",
             bus1="co2 atmosphere",
             efficiency=1,
-            p_nom=0,
-            p_nom_extendable=True,
+            p_nom=np.inf,
         )
 
-        # Assumption: enough waste heat to recover sorbent
-        capture_rate = costs.at["steel carbon capture retrofit", "capture_rate"]
-        electricity_input = costs.at[
-            "steel carbon capture retrofit", "electricity-input"
-        ]  # MWh/t_CO2
-        n.add("Carrier", "steel emission CC")
-        n.add(
-            "Link",
-            spatial.nodes,
-            suffix=" gas DRI emission CC",
-            carrier="steel emission CC",
-            capital_cost=costs.at["steel carbon capture retrofit", "capital_cost"],
-            bus0=spatial.nodes + " gas DRI emission",
-            bus1=spatial.co2.nodes,
-            bus2=spatial.nodes,
-            bus3="co2 atmosphere",
-            efficiency=capture_rate,
-            efficiency2=-electricity_input,
-            efficiency3=1 - capture_rate,
-            p_nom=0,
-            p_nom_extendable=True,
-            lifetime=costs.at["steel carbon capture retrofit", "lifetime"],
-        )
-        n.add(
-            "Link",
-            spatial.nodes,
-            suffix=" BOF emission CC",
-            carrier="steel emission CC",
-            capital_cost=costs.at["steel carbon capture retrofit", "capital_cost"],
-            bus0=spatial.nodes + " BOF emission",
-            bus1=spatial.co2.nodes,
-            bus2=spatial.nodes,
-            bus3="co2 atmosphere",
-            efficiency=capture_rate,
-            efficiency2=-electricity_input,
-            efficiency3=1 - capture_rate,
-            p_nom=0,
-            p_nom_extendable=True,
-            lifetime=costs.at["steel carbon capture retrofit", "lifetime"],
-        )
+        if cf_industry["process_emissions_cc"]:
+            # Assumption: enough waste heat to recover sorbent
+            capture_rate = costs.at["steel carbon capture retrofit", "capture_rate"]
+            electricity_input = costs.at[
+                "steel carbon capture retrofit", "electricity-input"
+            ]  # MWh/t_CO2
+            n.add("Carrier", "steel emission CC")
+            n.add(
+                "Link",
+                spatial.nodes,
+                suffix=" gas DRI emission CC",
+                carrier="steel emission CC",
+                capital_cost=costs.at["steel carbon capture retrofit", "capital_cost"],
+                bus0=spatial.nodes + " gas DRI emission",
+                bus1=spatial.co2.nodes,
+                bus2=spatial.nodes,
+                bus3="co2 atmosphere",
+                efficiency=capture_rate,
+                efficiency2=-electricity_input,
+                efficiency3=1 - capture_rate,
+                p_nom=0,
+                p_nom_extendable=True,
+                lifetime=costs.at["steel carbon capture retrofit", "lifetime"],
+            )
+            n.add(
+                "Link",
+                spatial.nodes,
+                suffix=" BOF emission CC",
+                carrier="steel emission CC",
+                capital_cost=costs.at["steel carbon capture retrofit", "capital_cost"],
+                bus0=spatial.nodes + " BOF emission",
+                bus1=spatial.co2.nodes,
+                bus2=spatial.nodes,
+                bus3="co2 atmosphere",
+                efficiency=capture_rate,
+                efficiency2=-electricity_input,
+                efficiency3=1 - capture_rate,
+                p_nom=0,
+                p_nom_extendable=True,
+                lifetime=costs.at["steel carbon capture retrofit", "lifetime"],
+            )
 
     if "cement" in options["endogenous_sectors"]:
         # add cement processes
@@ -6038,29 +6045,30 @@ def add_industry(
             **cement_kiln_parameters(costs, sector_ratios_file, nodes),
         )
 
-        capture_rate = costs.at["cement carbon capture retrofit", "capture_rate"]
-        electricity_input = costs.at[
-            "cement carbon capture retrofit", "electricity-input"
-        ]
+        if cf_industry["process_emissions_cc"]:
+            capture_rate = costs.at["cement carbon capture retrofit", "capture_rate"]
+            electricity_input = costs.at[
+                "cement carbon capture retrofit", "electricity-input"
+            ]
 
-        # add post combustion retrofit
-        n.add("Carrier", "cement emission CC")
-        n.add(
-            "Link",
-            spatial.cement.nodes,
-            suffix=" CC",
-            bus0=spatial.cement.nodes + " emission",
-            bus1=spatial.co2.nodes,
-            bus2=spatial.nodes,
-            bus3="co2 atmosphere",
-            carrier="cement emission CC",
-            p_nom_extendable=True,
-            capital_cost=costs.at["cement carbon capture retrofit", "capital_cost"],
-            efficiency=capture_rate,
-            efficiency2=-electricity_input,
-            efficiency3=1 - capture_rate,
-            lifetime=costs.at["cement carbon capture retrofit", "lifetime"],
-        )
+            # add post combustion retrofit
+            n.add("Carrier", "cement emission CC")
+            n.add(
+                "Link",
+                spatial.cement.nodes,
+                suffix=" CC",
+                bus0=spatial.cement.nodes + " emission",
+                bus1=spatial.co2.nodes,
+                bus2=spatial.nodes,
+                bus3="co2 atmosphere",
+                carrier="cement emission CC",
+                p_nom_extendable=True,
+                capital_cost=costs.at["cement carbon capture retrofit", "capital_cost"],
+                efficiency=capture_rate,
+                efficiency2=-electricity_input,
+                efficiency3=1 - capture_rate,
+                lifetime=costs.at["cement carbon capture retrofit", "lifetime"],
+            )
         n.add(
             "Link",
             spatial.cement.nodes,
@@ -6068,8 +6076,7 @@ def add_industry(
             bus0=spatial.cement.nodes + " emission",
             bus1="co2 atmosphere",
             carrier="cement emission",
-            p_nom_extendable=True,
-            capital_cost=0,
+            p_nom=np.inf,
             efficiency=1,
         )
 

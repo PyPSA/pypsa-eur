@@ -885,7 +885,7 @@ def add_existing_industry(
     logger.info("Add existing industry plants.")
 
     plant_data = pd.read_csv(plant_fn)
-    plant_data["Out"] = plant_data["Out"].fillna(0)
+    plant_data["Out"] = plant_data["Out"].fillna(0) if announced_retirement else 0
     lifetimes = {
         "cement": costs.at["cement dry clinker", "lifetime"],
         "Haber-Bosch": costs.at["Haber-Bosch", "lifetime"],
@@ -1045,17 +1045,10 @@ def add_existing_industry(
         # BF-BOF
         bof = plant_data[plant_data.carrier == "BOF"]
 
-        if announced_retirement:
-            lifetime = bof["Out"] - bof["grouping_year"]
-            lifetime[lifetime < 0] = costs.at[
-                "blast furnace-basic oxygen furnace", "lifetime"
-            ]
-        else:
-            lifetime = costs.at["blast furnace-basic oxygen furnace", "lifetime"]
-            # regroup
-            bof = bof.groupby(
-                ["bus", "country", "carrier", "grouping_year"], as_index=False
-            )["p_set"].sum()
+        lifetime = bof["Out"] - bof["grouping_year"]
+        lifetime[lifetime < 0] = costs.at[
+            "blast furnace-basic oxygen furnace", "lifetime"
+        ]
 
         index = [
             f"{bus} BOF-{year}-{out}"

@@ -4,11 +4,10 @@
 """
 Build the capacities of existing cement, steel, ammonia and methanol plants per model region in t/a.
 
-Operating cement plants come from the Global Cement and Concrete Tracker. Operating blast furnaces and direct reduction furnaces come from the Global Iron and Steel Tracker, with the most recent relining as build year and the announced retirement as phase-out year. Operating ammonia plants and methanol plants with fossil feedstock come from the Global Chemicals Tracker, with the start of the plant as build year. Neuwirth et al. (2024) provide a comparable site database for the EU27, Norway and the United Kingdom. Each plant is assigned to the nearest model region.
+Operating cement plants come from the Global Cement and Concrete Tracker. Operating blast furnaces and direct reduction furnaces come from the Global Iron and Steel Tracker, with the most recent relining as build year and the announced retirement as phase-out year. Operating ammonia plants and methanol plants with fossil feedstock come from the Global Chemicals Tracker, with the start of the plant as build year. Each plant is assigned to the nearest model region.
 
 References
 ----------
-- [Neuwirth et al. (2024): Modelling the market diffusion of hydrogen-based steel and basic chemical production in Europe. Energy Conversion and Management](https://doi.org/10.1016/j.enconman.2024.119117)
 - [Global Energy Monitor: Global Iron and Steel Tracker](https://globalenergymonitor.org/projects/global-iron-and-steel-tracker/)
 - [Global Energy Monitor: Global Chemicals Tracker](https://globalenergymonitor.org/projects/global-chemicals-tracker/)
 - [Global Energy Monitor: Global Cement and Concrete Tracker](https://globalenergymonitor.org/projects/global-cement-and-concrete-tracker/)

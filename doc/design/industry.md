@@ -120,7 +120,7 @@ cement are not transported between regions, so that production stays at
 today's sites. Optionally, the reduction of iron ore can relocate within
 Europe, with the reduced iron moved to the steel sites at no cost. In myopic and perfect foresight
 optimisation, existing steel, cement, ammonia and methanol plants can be
-added [@neuwirthModellingMarket2024].
+added from the plant trackers of Global Energy Monitor.
 
 Process emissions are tracked separately from energy-related emissions. They
 can be captured at a given capture rate, which turns them into a captured
