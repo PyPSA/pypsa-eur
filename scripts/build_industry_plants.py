@@ -4,7 +4,7 @@
 """
 Build the capacities of existing cement, steel, ammonia and methanol plants per model region in t/a.
 
-Operating cement plants come from the Global Cement and Concrete Tracker. Operating blast furnaces and direct reduction furnaces come from the Global Iron and Steel Tracker, with the most recent relining as build year and the announced retirement as phase-out year. Operating ammonia plants and methanol plants with fossil feedstock come from the Global Chemicals Tracker, with the start of the plant as build year. Each plant is assigned to the nearest model region.
+Operating integrated cement plants come from the Global Cement and Concrete Tracker. Operating blast furnaces and direct reduction furnaces come from the Global Iron and Steel Tracker, with the most recent relining as build year and the announced retirement as phase-out year. Operating ammonia plants and methanol plants with fossil feedstock come from the Global Chemicals Tracker, with the start of the plant as build year. Each plant is assigned to the nearest model region; plants further than 100 km away from any region are dropped. Plants with unknown capacity get the 20% quantile of the capacities of their carrier.
 
 References
 ----------
@@ -35,6 +35,17 @@ def country_to_code(name):
         return None
 
 
+def map_to_regions(
+    gdf: gpd.GeoDataFrame, regions: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
+    """Assign plants to the nearest model region and drop plants further than 100 km away."""
+    crs = "EPSG:3035"
+    gdf = gdf.to_crs(crs).sjoin_nearest(
+        regions.to_crs(crs), how="inner", max_distance=100e3
+    )
+    return gdf.rename(columns={"name": "bus"})
+
+
 def prepare_gem_database(regions):
     """
     Load GEM database of cement plants and map onto bus regions.
@@ -63,14 +74,13 @@ def prepare_gem_database(regions):
     geometry = gpd.points_from_xy(latlon["lon"], latlon["lat"])
     gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
 
-    gdf = gpd.sjoin_nearest(gdf, regions.to_crs("EPSG:4326"), how="left")
-
-    gdf.rename(columns={"name": "bus"}, inplace=True)
+    gdf = map_to_regions(gdf, regions)
     gdf["country"] = gdf.bus.str[:2]
 
-    # just get bus, country, grouping_year, plant_size, date_in, date_out,
-    # get plants that are still operating
-    gdf = gdf[gdf["Operating status"] == "operating"]
+    # operating plants with a kiln; grinding plants only process clinker
+    status = ["operating", "operating pre-retirement"]
+    gdf = gdf[gdf["Operating status"].isin(status)]
+    gdf = gdf[gdf["Plant type"] == "integrated"]
 
     gdf.rename(
         columns={
@@ -132,8 +142,7 @@ def prepare_gem_iron_units(
     )
     geometry = gpd.points_from_xy(latlon[1], latlon[0])
     gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
-    gdf = gpd.sjoin_nearest(gdf, regions.to_crs("EPSG:4326"), how="left")
-    gdf.rename(columns={"name": "bus"}, inplace=True)
+    gdf = map_to_regions(gdf, regions)
 
     def year(dates: pd.Series) -> pd.Series:
         return pd.to_numeric(dates.astype(str).str[:4], errors="coerce")
@@ -181,8 +190,7 @@ def prepare_gem_chemicals(regions: gpd.GeoDataFrame, chemicals: str) -> pd.DataF
     latlon = df["Coordinates"].str.split(", ", expand=True).astype(float)
     geometry = gpd.points_from_xy(latlon[1], latlon[0])
     gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
-    gdf = gpd.sjoin_nearest(gdf, regions.to_crs("EPSG:4326"), how="left")
-    gdf.rename(columns={"name": "bus"}, inplace=True)
+    gdf = map_to_regions(gdf, regions)
 
     gdf["build_year"] = gdf["Start Date | Year"]
     gdf["Out"] = np.nan
@@ -213,5 +221,9 @@ if __name__ == "__main__":
     chemicals = prepare_gem_chemicals(regions, snakemake.input.gem_gct)
 
     industry_plants = pd.concat([cement, steel, chemicals], ignore_index=True)
+
+    # conservative capacity for plants with unknown capacity
+    fill = industry_plants.groupby("carrier").p_set.transform("quantile", 0.2)
+    industry_plants["p_set"] = industry_plants.p_set.fillna(fill)
 
     industry_plants.to_csv(snakemake.output.industry_plants)
