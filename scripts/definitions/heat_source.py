@@ -2,8 +2,17 @@
 #
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import logging
 from enum import Enum
+from typing import TYPE_CHECKING
+
+import numpy as np
+import pandas as pd
+
+if TYPE_CHECKING:
+    from scripts.definitions.heat_system import HeatSystem
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +176,9 @@ class HeatSource(Enum):
         else:
             return True
 
-    def get_capital_cost(self, costs, overdim_factor: float, heat_system) -> float:
+    def get_capital_cost(
+        self, costs: pd.DataFrame, overdim_factor: float, heat_system: HeatSystem
+    ) -> float:
         """
         Returns the capital cost for the heat source generator.
 
@@ -202,7 +213,7 @@ class HeatSource(Enum):
         else:
             return 0.0
 
-    def get_lifetime(self, costs, heat_system) -> float:
+    def get_lifetime(self, costs: pd.DataFrame, heat_system: HeatSystem) -> float:
         """
         Returns the lifetime for the heat source generator.
 
@@ -229,7 +240,7 @@ class HeatSource(Enum):
         else:
             return float("inf")
 
-    def heat_carrier(self, heat_system) -> str:
+    def heat_carrier(self, heat_system: HeatSystem | str) -> str:
         """
         Get the carrier name for heat from this source.
 
@@ -246,7 +257,7 @@ class HeatSource(Enum):
         """
         return f"{heat_system} {self} heat"
 
-    def resource_bus(self, nodes, heat_system) -> str:
+    def resource_bus(self, nodes: pd.Index, heat_system: HeatSystem | str) -> pd.Index:
         """
         Get the primary resource bus for heat from this source, e.g. `DE0 0 urban central geothermal heat` or `DE0 0 urban central ptes heat`.
 
@@ -267,7 +278,7 @@ class HeatSource(Enum):
         """
         return nodes + f" {self.heat_carrier(heat_system)}"
 
-    def preheater_input_carrier(self, heat_system) -> str:
+    def preheater_input_carrier(self, heat_system: HeatSystem | str) -> str:
         """
         Get the carrier name for partially-cooled heat from this source.
 
@@ -286,7 +297,7 @@ class HeatSource(Enum):
         """
         return f"{self.heat_carrier(heat_system)} pre-heater input"
 
-    def heat_pump_input_carrier(self, heat_system) -> str:
+    def heat_pump_input_carrier(self, heat_system: HeatSystem | str) -> str:
         """
         Get the carrier name for fully-cooled heat from this source.
 
@@ -305,7 +316,9 @@ class HeatSource(Enum):
         """
         return f"{self.heat_carrier(heat_system)} heat-pump input"
 
-    def preheater_input_bus(self, nodes, heat_system) -> str:
+    def preheater_input_bus(
+        self, nodes: pd.Index, heat_system: HeatSystem | str
+    ) -> pd.Index:
         """
         Get bus name for partially-cooled heat at the given nodes.
 
@@ -323,7 +336,9 @@ class HeatSource(Enum):
         """
         return nodes + f" {self.preheater_input_carrier(heat_system)}"
 
-    def get_heat_pump_input_bus(self, nodes, heat_system: str) -> str:
+    def get_heat_pump_input_bus(
+        self, nodes: pd.Index, heat_system: HeatSystem | str
+    ) -> pd.Index | str:
         """
         Get the secondary input bus for the heat pump link.
 
@@ -351,7 +366,9 @@ class HeatSource(Enum):
         else:
             return ""
 
-    def get_heat_pump_efficiency2(self, cop_heat_pump) -> float:
+    def get_heat_pump_efficiency2(
+        self, cop_heat_pump: np.float64 | pd.Series | pd.DataFrame
+    ) -> np.float64 | pd.Series | pd.DataFrame | None:
         """
         Get the efficiency2 (heat source consumption) for the heat pump link.
 

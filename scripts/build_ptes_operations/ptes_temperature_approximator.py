@@ -43,7 +43,7 @@ class PtesTemperatureApproximator:
         temperature_dependent_capacity: bool,
         design_top_temperature: float,
         design_bottom_temperature: float,
-    ):
+    ) -> None:
         """
         Initialize PtesTemperatureApproximator.
 

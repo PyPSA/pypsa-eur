@@ -2,69 +2,23 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build geothermal heat source potentials for district heating networks.
+Build geothermal heat source power potentials per onshore region.
 
-This script maps and aggregates geothermal heat source potentials from LAU-level
-data to onshore regions. It converts supply potentials from Manz et al. (2024)
-to technical potentials (MW) and scales them based on the actual temperature
-differences in the district heating system.
+Hydrothermal utilisation potentials from Manz et al. (2024) are given per
+local administrative unit (LAU) for a 65C or 85C supply temperature scenario.
+They are matched to onshore regions by spatial join and summed. Dividing the
+annual utilisation potential by assumed full load hours (4000 h) yields the
+available heat source power in MW. Manz et al. (2024) assume that the source
+is cooled by 15 K. The power is therefore scaled by the temperature
+difference that the district heating network can use: the difference between
+source and return temperature if the source is warmer than the return flow,
+plus the cooling in the heat pump if the source is colder than the forward
+flow. Regions outside the EU-27 without data can be filled with zeros if
+configured; otherwise an error is raised.
 
-Temperature-Based Scaling
--------------------------
-Manz et al. (2024) assume a design temperature difference of 15 K when computing
-geothermal heat potentials. This script scales the potentials based on the actual
-temperature delta achievable in the district heating system:
-
-a) If source_temperature > forward_temperature (direct utilisation), potentials simply scale linearly in both directions, depending on the actual temperature difference (source_temperature - return_temperature):
-   scale_factor = (source_temperature - return_temperature) / 15 K
-
-b) If forward_temperature >= source_temperature > return_temperature (preheating), the actual temperature difference is increased by the additional cooling through the geothermal-sourced heat pump `heat_source_cooling`:
-   scale_factor = (source_temperature - return_temperature + heat_source_cooling) / 15 K
-
-c) If source_temperature <= return_temperature (heat pump only), the actual temperature difference is only the exploitation induced by the heat pump:
-   scale_factor = heat_source_cooling / 15 K
-
-This results in time-varying heat source power profiles that reflect the actual
-extractable heat capacity at each timestep.
-
-Relevant Settings
------------------
-.. code:: yaml
-
-    sector:
-        district_heating:
-            heat_source_cooling: 6  # K
-            geothermal:
-                constant_temperature_celsius: 65
-            limited_heat_sources:
-                geothermal:
-                    ignore_missing_regions: false
-
-Inputs
-------
-- ``data/isi_heat_utilisation_potentials.xlsx``: Heat potentials from Manz et al. (2024)
-- ``resources/<run_name>/regions_onshore_base_s_{clusters}.geojson``: Onshore regions
-- ``resources/<run_name>/central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``: Forward temperature profiles
-- ``resources/<run_name>/central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``: Return temperature profiles
-- ``data/lau_regions.zip``: LAU region geometries
-
-Outputs
--------
-- ``resources/<run_name>/heat_source_power_geothermal_base_s_{clusters}_{planning_horizons}.csv``:
-  Time-varying geothermal heat source power (MW) with time as index and regions as columns.
-
-Raises
-------
-ValueError
-    If LAU regions in ISI heat potentials are missing from the LAU Regions data.
-ValueError
-    If onshore regions outside EU-27 have no heat source power and ignore_missing_regions is False.
-
-Source
-------
-Manz et al. 2024: "Spatial analysis of renewable and excess heat potentials for
-climate-neutral district heating in Europe", Renewable Energy, vol. 224, no. 120111,
-https://doi.org/10.1016/j.renene.2024.120111
+References
+----------
+- Manz et al. (2024), [Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe](https://doi.org/10.1016/j.renene.2024.120111)
 """
 
 import logging
@@ -187,7 +141,7 @@ def scale_heat_source_power(
 def get_unit_conversion_factor(
     input_unit: str,
     output_unit: str,
-    unit_scaling: dict = {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12},
+    unit_scaling: dict | None = None,
 ) -> float:
     """
     Get the unit conversion factor between two units.
@@ -201,12 +155,14 @@ def get_unit_conversion_factor(
     unit_scaling : dict, optional
         Dictionary of unit scaling factors. Default: {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12}.
     """
+    if unit_scaling is None:
+        unit_scaling = {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12}
 
-    if input_unit not in unit_scaling.keys():
+    if input_unit not in unit_scaling:
         raise ValueError(
             f"Input unit {input_unit} not allowed. Must be one of {unit_scaling.keys()}"
         )
-    elif output_unit not in unit_scaling.keys():
+    elif output_unit not in unit_scaling:
         raise ValueError(
             f"Output unit {output_unit} not allowed. Must be one of {
                 unit_scaling.keys()
@@ -217,14 +173,14 @@ def get_unit_conversion_factor(
 
 
 def identify_non_covered_regions(
-    regions_onshore: gpd.GeoDataFrame, heat_source_power: pd.DataFrame
+    onshore_regions: gpd.GeoDataFrame, heat_source_power: pd.DataFrame
 ) -> pd.Index:
     """
     Identify regions without heat source power data.
 
     Parameters
     ----------
-    regions_onshore : gpd.GeoDataFrame
+    onshore_regions : gpd.GeoDataFrame
         GeoDataFrame of the onshore regions, indexed by region name.
     heat_source_power : pd.DataFrame
         Heat source power data, indexed by region name.
@@ -234,12 +190,13 @@ def identify_non_covered_regions(
     pd.Index
         Index of regions that have no heat source power data.
     """
-    return regions_onshore.index.difference(heat_source_power.index)
+    return onshore_regions.index.difference(heat_source_power.index)
 
 
 def get_heat_source_power(
-    regions_onshore: gpd.GeoDataFrame,
+    onshore_regions: gpd.GeoDataFrame,
     supply_potentials: gpd.GeoDataFrame,
+    lau_regions: gpd.GeoDataFrame,
     full_load_hours: float,
     input_unit: str,
     output_unit: str = "MWh",
@@ -254,10 +211,12 @@ def get_heat_source_power(
 
     Parameters
     ----------
-    regions_onshore : gpd.GeoDataFrame
+    onshore_regions : gpd.GeoDataFrame
         GeoDataFrame of the onshore regions.
     supply_potentials : gpd.GeoDataFrame
         GeoDataFrame of the heat source supply potentials.
+    lau_regions : gpd.GeoDataFrame
+        GeoDataFrame of the LAU regions indexed by GISCO_ID.
     full_load_hours : float
         Full load hours assumed in the supply potential computation. Used to scale the supply potentials to technical potentials.
     input_unit : str
@@ -283,7 +242,7 @@ def get_heat_source_power(
     )
 
     heat_potentials_in_onshore_regions = gpd.sjoin(
-        heat_potentials_in_lau, regions_onshore, how="inner", predicate="intersects"
+        heat_potentials_in_lau, onshore_regions, how="inner", predicate="intersects"
     )
     heat_potentials_in_onshore_regions_aggregated = (
         heat_potentials_in_onshore_regions.groupby("name").sum(numeric_only=True)
@@ -292,7 +251,7 @@ def get_heat_source_power(
     heat_source_power = heat_potentials_in_onshore_regions_aggregated * scaling_factor
 
     non_covered_regions = identify_non_covered_regions(
-        regions_onshore, heat_source_power
+        onshore_regions, heat_source_power
     )
 
     not_eu_27 = [
@@ -314,7 +273,7 @@ def get_heat_source_power(
                     f"The onshore regions outside EU 27 ({non_covered_regions.to_list()}) have no heat source power. Filling with zeros."
                 )
                 heat_source_power = heat_source_power.reindex(
-                    regions_onshore.index, fill_value=0
+                    onshore_regions.index, fill_value=0
                 )
             else:
                 raise ValueError(
@@ -332,19 +291,15 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_geothermal_heat_potential",
-            clusters=48,
-            planning_horizons=2040,
-        )
+        snakemake = mock_snakemake("build_geothermal_heat_potential", horizon=2040)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     # get onshore regions and index them by region name
-    regions_onshore = gpd.read_file(snakemake.input.regions_onshore).to_crs("EPSG:4326")
-    regions_onshore.index = regions_onshore.name
-    regions_onshore.drop(columns=["name"], inplace=True)
+    onshore_regions = gpd.read_file(snakemake.input.onshore_regions).to_crs("EPSG:4326")
+    onshore_regions.index = onshore_regions.name
+    onshore_regions.drop(columns=["name"], inplace=True)
 
     # get LAU regions and index them by LAU-ID
     lau_regions = gpd.read_file(
@@ -370,7 +325,7 @@ if __name__ == "__main__":
             "Unnamed: 2_level_0",
             "Unit",
         )
-    ][0]
+    ].iloc[0]
     geothermal_supply_potentials = isi_heat_potentials[
         (
             f"Supply_potentials_{this_temperature_scenario}",
@@ -386,8 +341,9 @@ if __name__ == "__main__":
 
     # get heat source power by mapping heat potentials to onshore regions and scaling to from supply potentials to technical potentials
     heat_source_power = get_heat_source_power(
-        regions_onshore=regions_onshore,
+        onshore_regions=onshore_regions,
         supply_potentials=geothermal_supply_potentials,
+        lau_regions=lau_regions,
         full_load_hours=FULL_LOAD_HOURS,
         input_unit=input_unit,
         ignore_missing_regions=snakemake.params.ignore_missing_regions,

@@ -5,12 +5,26 @@
 """
 Existing capacities configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#existing_capacities_cf
 """
 
 from pydantic import Field
 
 from scripts.lib.validation.config._base import ConfigModel
+
+
+class _PhaseOutConfig(ConfigModel):
+    """A single national policy phase-out for conventional assets."""
+
+    carriers: list[str] = Field(
+        description="Carriers (e.g. nuclear, coal, lignite) subject to the phase-out.",
+    )
+    countries: list[str] = Field(
+        description="Two-letter country codes to which the phase-out applies.",
+    )
+    year: int = Field(
+        description="Year by which the listed carriers are fully phased out.",
+    )
 
 
 class ExistingCapacitiesConfig(ConfigModel):
@@ -53,6 +67,26 @@ class ExistingCapacitiesConfig(ConfigModel):
         ],
         description="Intervals to group existing capacities for heat.",
     )
+    industry_plants: bool = Field(
+        False,
+        description="Add existing ammonia and methanol plants, and existing steel and cement plants for `sector: endogenous_sectors`, in the first horizon of myopic and perfect foresight runs.",
+    )
+    blast_furnace_announced_retirement: bool = Field(
+        True,
+        description="Retire existing blast furnaces in their announced retirement year. Otherwise, they retire at the end of their technical lifetime.",
+    )
+    grouping_years_industry: list[int] = Field(
+        default_factory=lambda: [
+            1995,
+            2000,
+            2005,
+            2010,
+            2015,
+            2020,
+            2025,
+        ],
+        description="Intervals to group existing capacities for industry plants.",
+    )
     threshold_capacity: float = Field(
         10,
         description="Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",
@@ -67,5 +101,22 @@ class ExistingCapacitiesConfig(ConfigModel):
     )
     conventional_carriers: list[str] = Field(
         default_factory=lambda: ["lignite", "coal", "oil", "uranium"],
-        description="List of conventional power plants to include in the sectoral network.",
+        description="Fuels for which buses are added to the sector-coupled network with myopic or perfect foresight, so that existing power plants can connect to them. Does not select which existing power plants are added.",
+    )
+    phase_outs: list[_PhaseOutConfig] = Field(
+        default_factory=lambda: [
+            _PhaseOutConfig(carriers=["nuclear"], countries=["DE"], year=2022),
+            _PhaseOutConfig(carriers=["nuclear"], countries=["BE"], year=2025),
+            _PhaseOutConfig(carriers=["nuclear"], countries=["ES"], year=2027),
+            _PhaseOutConfig(
+                carriers=["coal", "lignite"],
+                countries=["DE", "DK", "FI", "HU", "SK", "GR", "IE", "NL", "RS"],
+                year=2030,
+            ),
+            _PhaseOutConfig(carriers=["coal", "lignite"], countries=["ES"], year=2027),
+            _PhaseOutConfig(carriers=["coal", "lignite"], countries=["FR"], year=2022),
+            _PhaseOutConfig(carriers=["coal", "lignite"], countries=["GB"], year=2024),
+            _PhaseOutConfig(carriers=["coal", "lignite"], countries=["IT"], year=2025),
+        ],
+        description="National policy phase-outs capping conventional asset lifetimes by carrier and country (applied in perfect foresight).",
     )

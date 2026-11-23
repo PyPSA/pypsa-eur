@@ -2,14 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This rule downloads the load data from `Open Power System Data Time series
-<https://data.open-power-system-data.org/time_series/>`_. For all countries in
+This rule downloads the load data from [Open Power System Data Time series](https://data.open-power-system-data.org/time_series/). For all countries in
 the network, the per country load timeseries are extracted from the dataset.
 After filling small gaps linearly and large gaps by copying time-slice of a
-given period, the load data is exported to a ``.csv`` file.
+given period, the load data is exported to a `.csv` file.
 """
 
 import logging
+from collections.abc import Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,12 @@ logger = logging.getLogger(__name__)
 OPSD_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
-def load_timeseries(fn, years, countries, date_format=None):
+def load_timeseries(
+    fn: str,
+    years: slice | pd.DatetimeIndex,
+    countries: list[str],
+    date_format: str | None = None,
+) -> pd.DataFrame:
     """
     Read and pre-filter load data.
 
@@ -50,7 +55,7 @@ def load_timeseries(fn, years, countries, date_format=None):
     )
 
 
-def consecutive_nans(ds):
+def consecutive_nans(ds: pd.Series) -> pd.Series:
     return (
         ds.isnull()
         .astype(int)
@@ -60,7 +65,7 @@ def consecutive_nans(ds):
     )
 
 
-def fill_large_gaps(ds, shift):
+def fill_large_gaps(ds: pd.Series, shift: str) -> pd.Series:
     """
     Fill up large gaps with load data from the previous week.
 
@@ -76,8 +81,8 @@ def fill_large_gaps(ds, shift):
     return ds.where(ds.notnull(), time_shift.reindex_like(ds))
 
 
-def nan_statistics(df):
-    def max_consecutive_nans(ds):
+def nan_statistics(df: pd.DataFrame) -> pd.DataFrame:
+    def max_consecutive_nans(ds: pd.Series) -> int:
         return (
             ds.isnull()
             .astype(int)
@@ -96,7 +101,14 @@ def nan_statistics(df):
     )
 
 
-def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
+def copy_timeslice(
+    load: pd.DataFrame,
+    cntry: str,
+    start: str,
+    stop: str,
+    delta: pd.Timedelta,
+    fn_load: str | None = None,
+) -> None:
     start = pd.Timestamp(start)
     stop = pd.Timestamp(stop)
     if start in load.index and stop in load.index:
@@ -112,22 +124,26 @@ def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
             ].values
 
 
-def manual_adjustment(load, fn_load, countries):
+def manual_adjustment(
+    load: pd.DataFrame, fn_load: str, countries: list[str]
+) -> pd.DataFrame:
     """
     Adjust gaps manual for load data.
 
     Parameters
     ----------
-     load : pd.DataFrame
-         Load time-series with UTC timestamps x ISO-2 countries
-    load_fn: str
-         File name or url location (file format .csv)
+    load : pd.DataFrame
+        Load time-series with UTC timestamps x ISO-2 countries.
+    fn_load : str
+        File name or url location (file format .csv).
+    countries : list
+        List of country codes.
 
     Returns
     -------
-     load : pd.DataFrame
-         Manual adjusted and interpolated load time-series with UTC
-         timestamps x ISO-2 countries
+    load : pd.DataFrame
+        Manual adjusted and interpolated load time-series with UTC
+        timestamps x ISO-2 countries.
     """
 
     copy_timeslice(load, "UA", "2010-01-01 00:00", "2010-01-01 01:00", Delta(days=-1))
@@ -165,11 +181,13 @@ def manual_adjustment(load, fn_load, countries):
     # longer stretch
     copy_timeslice(load, "NL", "2014-12-01 00:00", "2014-12-19 23:00", Delta(weeks=-3))
 
-    def _safe_where(df, col, pred):
+    def _safe_where(
+        df: pd.DataFrame, col: str, pred: Callable[[pd.Series], pd.Series]
+    ) -> None:
         if col in df.columns:
             df[col] = df[col].where(pred(df[col]), np.nan)
 
-    def _safe_setna(df, idx, col):
+    def _safe_setna(df: pd.DataFrame, idx: str, col: str) -> None:
         if col in df.columns:
             df.loc[idx, col] = np.nan
 
@@ -212,11 +230,27 @@ def manual_adjustment(load, fn_load, countries):
     return load
 
 
-def repeat_years(s: pd.Series, years: list) -> pd.Series:
+def repeat_years(s: pd.Series, years: Iterable[int]) -> pd.Series:
     s = s[~((s.index.month == 2) & (s.index.day == 29))]  # drop leap day
     return pd.concat(
         [s.set_axis(s.index.map(lambda t: t.replace(year=y))) for y in years]
     )
+
+
+def reindex_to_snapshots(
+    load: pd.DataFrame, snapshots: pd.DatetimeIndex, fixed_year: int | bool = False
+) -> pd.DataFrame:
+    """Reindex load to snapshots, optionally taking the profile from `fixed_year`."""
+    if not fixed_year:
+        return load.reindex(snapshots)
+    has_leap_day = ((snapshots.month == 2) & (snapshots.day == 29)).any()
+    if has_leap_day and not pd.Timestamp(str(fixed_year)).is_leap_year:
+        raise ValueError(
+            f"Snapshots contain February 29 but load `fixed_year` {fixed_year} is "
+            "not a leap year. Set `enable: drop_leap_day: true` or use a leap year."
+        )
+    index = snapshots.map(lambda t: t.replace(year=fixed_year))
+    return load.reindex(index).set_axis(snapshots)
 
 
 if __name__ == "__main__":
@@ -305,32 +339,28 @@ if __name__ == "__main__":
         )
         load = load.apply(fill_large_gaps, shift=time_shift)
 
-    if snakemake.params.load["supplement_synthetic"]:
-        logger.info("Supplement missing data with synthetic data.")
+    prefer_synthetic = snakemake.params.load["prefer_synthetic"]
+    if snakemake.params.load["supplement_synthetic"] or prefer_synthetic:
         fn = snakemake.input.synthetic
         synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
-        # UA, MD, XK, CY, MT do not appear in synthetic load data
-        countries = list(set(countries) - set(["UA", "MD", "XK", "CY", "MT"]))
-        synthetic_load = synthetic_load.loc[snapshots, countries]
-        load = load.combine_first(synthetic_load)
+        synthetic_load = synthetic_load.rename(columns={"KV": "XK"})
+        # UA, MD, CY, MT do not appear in synthetic load data
+        columns = synthetic_load.columns.intersection(countries)
+        synthetic_load = synthetic_load.reindex(index=snapshots, columns=columns)
+        if prefer_synthetic:
+            logger.info("Prefer synthetic data and fill gaps with historical data.")
+            load = synthetic_load.combine_first(load)
+        else:
+            logger.info("Supplement missing data with synthetic data.")
+            load = load.combine_first(synthetic_load)
+
+    fixed_year = snakemake.params["load"].get("fixed_year", False)
+    load = reindex_to_snapshots(load, snapshots, fixed_year)
 
     assert not load.isna().any().any(), (
         "Load data contains nans. Adjust the parameters "
         "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
         "for implementing the needed load data modifications."
     )
-
-    fixed_year = snakemake.params["load"].get("fixed_year", False)
-    years = (
-        slice(str(fixed_year), str(fixed_year))
-        if fixed_year
-        else slice(snapshots[0], snapshots[-1])
-    )
-
-    load = load.loc[years].reindex(index=snapshots)
-
-    # need to reindex load time series to target year
-    if fixed_year:
-        load.index = load.index.map(lambda t: t.replace(year=snapshots.year[0]))
 
     load.to_csv(snakemake.output[0])

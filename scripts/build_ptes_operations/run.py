@@ -2,56 +2,20 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build PTES (Pit Thermal Energy Storage) operational profiles.
+Build operational profiles of pit thermal energy storage (PTES) in district heating networks.
 
-This script calculates temperature and capacity profiles for pit thermal energy
-storage systems integrated with district heating networks. It determines:
-
-1. **Top temperature profiles**: The operational top layer temperature, either
-   following the district heating forward temperature (clipped to design limits)
-   or a constant value.
-
-2. **Capacity profiles (e_max_pu)**: Normalized storage capacity based on the
-   temperature difference between top and bottom layers, relative to the design
-   temperature difference. This captures how storage capacity varies when
-   operating temperatures deviate from design conditions.
-
-The outputs are used by ``prepare_sector_network.py`` to configure PTES storage
-components and charger/discharger links.
-
-Relevant Settings
------------------
-.. code:: yaml
-
-    sector:
-        district_heating:
-            ptes:
-                enable: true
-                temperature_dependent_capacity: false # if true, e_max_pu varies with temperature difference (static but scaled if top/bottom are constant)
-                top_temperature: 90  # or "forward" for dynamic
-                bottom_temperature: 35  # or "return" for dynamic
-                design_top_temperature: 90 # used to compute design temperature difference for e_max_pu if temperature_dependent_capacity is true
-                design_bottom_temperature: 35 # used to compute design temperature difference for e_max_pu if temperature_dependent_capacity is true
-
-Inputs
-------
-- ``resources/<run_name>/central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``
-    Forward temperature profiles for district heating networks (°C).
-- ``resources/<run_name>/central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``
-    Return temperature profiles for district heating networks (°C).
-
-Outputs
--------
-- ``resources/<run_name>/temp_ptes_top_profiles_base_s_{clusters}_{planning_horizons}.nc``
-    PTES top layer temperature profile (°C), clipped to design_top_temperature.
-- ``resources/<run_name>/ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc``
-    Normalized PTES capacity profiles (0-1 p.u.).
+The PTES top temperature is either constant or follows the district heating
+forward temperature, clipped at the design top temperature. The bottom
+temperature is either constant or follows the return temperature. The usable
+capacity `e_max_pu` scales linearly with the difference between top and
+bottom temperature, following Sorknaes (2018), normalised by the design
+temperature difference. Where the forward temperature exceeds the top
+temperature, the boost-per-discharge profile gives the heat that a resistive
+heater must add per unit of discharged heat.
 
 References
 ----------
-Sorknæs, P. (2018). "Simulation method for a pit seasonal thermal energy storage
-system with a heat pump in a district heating system." Energy, Volume 152.
-https://doi.org/10.1016/j.energy.2018.03.152
+- Sorknaes (2018), [Simulation method for a pit seasonal thermal energy storage system with a heat pump in a district heating system](https://doi.org/10.1016/j.energy.2018.03.152)
 """
 
 import logging
@@ -71,8 +35,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_ptes_operations",
-            clusters=5,
-            planning_horizons="2030",
+            horizon="2030",
         )
 
     set_scenario_config(snakemake)

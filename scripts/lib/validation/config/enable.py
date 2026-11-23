@@ -5,7 +5,7 @@
 """
 Enable configuration.
 
-See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
+See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration/#enable_cf
 """
 
 from pydantic import Field

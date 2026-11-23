@@ -2,26 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build spatial distribution of industries from Hotmaps database.
+Build distribution keys that split each country's industrial activity across its bus regions.
 
-Description
--------
+Industrial sites from the [Hotmaps industrial database](https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database) are assigned to bus regions by location. Sites without coordinates are dropped or, if `industry: hotmaps_locate_missing` is enabled, geocoded from their city name. Within each country, a sector's key is the share of the sector's reported 2014 ETS or E-PRTR emissions located in each region, so the keys of one country sum to one. Missing site emissions are filled with the 20% quantile of the sector; if a country has no sites for a sector, the key falls back to the population share.
 
-This rule uses the `Hotmaps database <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`. After removing entries without valid locations, it assigns each industrial site to a bus region based on its location.
-Then, it calculates the nodal distribution key for each sector based on the emissions of the industrial sites in each region. This leads to a distribution key of 1 if there is only one bus per country and <1 if there are multiple buses per country. The sum over buses of one country is 1.
-
-The following subcategories of industry are considered:
-- Iron and steel
-- Cement
-- Refineries
-- Paper and printing
-- Chemical industry
-- Glass
-- Non-ferrous metals
-- Non-metallic mineral products
-- Other non-classified
-Furthermore, the population distribution is added
-- Population
+Dedicated keys use plant capacities instead of emissions: the steel routes (EAF, DRI + EAF, integrated steelworks) cement, ammonia, methanol and high-value chemicals from the Global Energy Monitor plant trackers, and refineries from a supplementary plant list for countries not covered by Hotmaps. Countries without such chemical plants keep the key of the chemical industry. The population key is written alongside for sectors without site data.
 """
 
 import logging
@@ -49,17 +34,17 @@ def locate_missing_industrial_sites(df: pd.DataFrame) -> pd.DataFrame:
     try:
         from geopy.extra.rate_limiter import RateLimiter
         from geopy.geocoders import Nominatim
-    except ImportError:
+    except ImportError as e:
         raise ModuleNotFoundError(
             "Optional dependency 'geopy' not found."
             "Install via 'pixi add geopy'"
             "or set 'industry: hotmaps_locate_missing: false'."
-        )
+        ) from e
 
     locator = Nominatim(user_agent=str(uuid.uuid4()))
     geocode = RateLimiter(locator.geocode, min_delay_seconds=2)
 
-    def locate_missing(s):
+    def locate_missing(s: pd.Series) -> str | None:
         if pd.isna(s.City) or s.City == "CONFIDENTIAL":
             return None
 
@@ -85,7 +70,9 @@ def locate_missing_industrial_sites(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def prepare_hotmaps_database(fn: str, regions: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+def prepare_hotmaps_database(
+    fn: str, regions: gpd.GeoDataFrame, locate_missing: bool
+) -> gpd.GeoDataFrame:
     """
     Load hotmaps database of industrial sites and map onto bus regions.
     """
@@ -93,7 +80,7 @@ def prepare_hotmaps_database(fn: str, regions: gpd.GeoDataFrame) -> gpd.GeoDataF
 
     df[["srid", "coordinates"]] = df.geom.str.split(";", expand=True)
 
-    if snakemake.params.hotmaps_locate_missing:
+    if locate_missing:
         df = locate_missing_industrial_sites(df)
 
     # remove those sites without valid locations
@@ -139,7 +126,7 @@ def prepare_gem_steel_database(fn: str, regions: gpd.GeoDataFrame) -> gpd.GeoDat
         na_values=["N/A", "unknown", ">0"],
     )
 
-    df = df1.merge(df2, on="Plant ID", suffixes=(None, " 2")).query(
+    df = df1.merge(df2, on="GEM plant ID", suffixes=(None, " 2")).query(
         "Region == 'Europe'"
     )
 
@@ -147,7 +134,7 @@ def prepare_gem_steel_database(fn: str, regions: gpd.GeoDataFrame) -> gpd.GeoDat
         df["Retired date"].combine_first(df["Idled date"]), errors="coerce"
     )
     df["Start date"] = pd.to_numeric(
-        df["Start date"].str.split("-").str[0], errors="coerce"
+        df["Start date"].astype(str).str[:4], errors="coerce"
     )
 
     latlon = (
@@ -173,11 +160,13 @@ def prepare_gem_cement_database(fn: str, regions: gpd.GeoDataFrame) -> gpd.GeoDa
 
     df = pd.read_excel(
         fn,
-        sheet_name="Plant Data",
+        sheet_name="Final data",
         na_values=["N/A", "n/a", "unknown", ">0"],
     )
 
-    df["Start date"] = pd.to_numeric(df["Start date"], errors="coerce")
+    df["Start date"] = pd.to_numeric(
+        df["Start date"].astype(str).str[:4], errors="coerce"
+    )
 
     df = df.loc[df.Coordinates.str.contains(", ") & df.Coordinates.notna()]
     latlon = (
@@ -196,13 +185,20 @@ def prepare_gem_cement_database(fn: str, regions: gpd.GeoDataFrame) -> gpd.GeoDa
     return gdf
 
 
-def prepare_ammonia_database(fn: str, regions: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+def prepare_gem_chemicals_database(
+    fn: str, regions: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
     """
-    Load ammonia database of plants and map onto bus regions.
+    Load GEM database of operating chemical plant capacities and map onto bus regions.
     """
-    df = pd.read_csv(fn, index_col=0)
+    plants = pd.read_excel(fn, sheet_name="Plant Data", index_col=0)
+    df = pd.read_excel(
+        fn, sheet_name="Chemical Capacities", na_values=["not found"]
+    ).join(plants["Coordinates"], on="GEM Plant ID")
+    df = df[df["Capacity Status"].isin(["operating", "operating pre-retirement"])]
 
-    geometry = gpd.points_from_xy(df.Longitude, df.Latitude)
+    latlon = df["Coordinates"].str.split(", ", expand=True).astype(float)
+    geometry = gpd.points_from_xy(latlon[1], latlon[0])
     gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
 
     gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
@@ -236,11 +232,12 @@ def prepare_refineries_supplement(
 def build_nodal_distribution_key(
     hotmaps: gpd.GeoDataFrame,
     steel: gpd.GeoDataFrame,
-    ammonia: gpd.GeoDataFrame,
+    chemicals: gpd.GeoDataFrame,
     cement: gpd.GeoDataFrame,
     refineries: gpd.GeoDataFrame,
     regions: gpd.GeoDataFrame,
     countries: list[str],
+    clustered_pop_layout: str,
 ) -> pd.DataFrame:
     """
     Build nodal distribution keys for each sector.
@@ -249,7 +246,7 @@ def build_nodal_distribution_key(
 
     keys = pd.DataFrame(index=regions.index, columns=sectors, dtype=float)
 
-    pop = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    pop = pd.read_csv(clustered_pop_layout, index_col=0)
     pop["country"] = pop.index.str[:2]
     ct_total = pop.total.groupby(pop["country"]).sum()
     keys["population"] = pop.total / pop.country.map(ct_total)
@@ -292,8 +289,8 @@ def build_nodal_distribution_key(
             "country == @country and `Operating status` in @status_list"
         )
 
-        clinker_col = "Clinker Capacity (millions metric tonnes per annum)"
-        cement_col = "Cement Capacity (millions metric tonnes per annum)"
+        clinker_col = "Clinker capacity (million metric tonnes per annum)"
+        cement_col = "Cement capacity (million metric tonnes per annum)"
         clinker_cement_ratio = 0.737  # https://lowcarboneconomy.cembureau.eu/5-parallel-routes/resource-efficiency/clinker-substitution
 
         # clinker capacity
@@ -367,7 +364,6 @@ def build_nodal_distribution_key(
             ]
             sel = [
                 "Nominal BOF steel capacity (ttpa)",
-                "Nominal OHF steel capacity (ttpa)",
                 "Nominal iron capacity (ttpa)",
             ]
             status_filter = facilities["Status"].isin(status_list)
@@ -389,10 +385,7 @@ def build_nodal_distribution_key(
                 "operating pre-retirement",
                 "retired",
             ]
-            sel = [
-                "Nominal BOF steel capacity (ttpa)",
-                "Nominal OHF steel capacity (ttpa)",
-            ]
+            sel = ["Nominal BOF steel capacity (ttpa)"]
             capacities = (
                 facilities.loc[
                     facilities["Status"].isin(status_list)
@@ -420,25 +413,32 @@ def build_nodal_distribution_key(
 
         keys.loc[regions_ct, process] = key
 
-    # add ammonia
-    for country in countries:
+    # add ammonia, methanol and high-value chemicals from GEM
+    groups = {
+        "Ammonia": ["ammonia"],
+        "Methanol": ["methanol"],
+        "HVC": ["olefins", "aromatics"],
+    }
+    for (sector, group), country in product(groups.items(), countries):
         regions_ct = regions.index[regions.index.str.contains(country)]
 
-        facilities = ammonia.query("country == @country")
+        facilities = chemicals.query(
+            "country == @country and `Product Group` in @group"
+        )
 
         if not facilities.empty:
-            production = facilities["Ammonia [kt/a]"]
-            if production.sum() == 0:
+            capacity = facilities["Capacity (ttpa)"]
+            if capacity.sum() == 0:
                 key = pd.Series(1 / len(facilities), facilities.index)
             else:
-                # assume 50% of the minimum production for missing values
-                production = production.fillna(0.5 * facilities["Ammonia [kt/a]"].min())
-                key = production / production.sum()
+                # assume 50% of the minimum capacity for missing values
+                capacity = capacity.fillna(0.5 * capacity.min())
+                key = capacity / capacity.sum()
             key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
         else:
-            key = 0.0
+            key = keys.loc[regions_ct, "Chemical industry"]
 
-        keys.loc[regions_ct, "Ammonia"] = key
+        keys.loc[regions_ct, sector] = key
 
     return keys
 
@@ -447,22 +447,21 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_industrial_distribution_key",
-            clusters=256,
-        )
+        snakemake = mock_snakemake("build_industrial_distribution_key")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
 
-    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
+    regions = gpd.read_file(snakemake.input.onshore_regions).set_index("name")
 
-    hotmaps = prepare_hotmaps_database(snakemake.input.hotmaps, regions)
+    hotmaps = prepare_hotmaps_database(
+        snakemake.input.hotmaps, regions, snakemake.params.hotmaps_locate_missing
+    )
 
     steel = prepare_gem_steel_database(snakemake.input.gem_gspt, regions)
 
-    ammonia = prepare_ammonia_database(snakemake.input.ammonia, regions)
+    chemicals = prepare_gem_chemicals_database(snakemake.input.gem_gct, regions)
 
     cement = prepare_gem_cement_database(snakemake.input.gem_gcpt, regions)
 
@@ -471,7 +470,14 @@ if __name__ == "__main__":
     )
 
     keys = build_nodal_distribution_key(
-        hotmaps, steel, ammonia, cement, refineries, regions, countries
+        hotmaps,
+        steel,
+        chemicals,
+        cement,
+        refineries,
+        regions,
+        countries,
+        snakemake.input.clustered_pop_layout,
     )
 
     keys.to_csv(snakemake.output.industrial_distribution_key)

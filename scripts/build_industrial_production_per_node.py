@@ -2,15 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build industrial production per model region.
+Distribute industrial production per country for a planning horizon to model regions in kt/a.
 
-Description
--------
-
-This rule maps the industrial production per country from a certain time horizon to each bus region.
-The mapping file provides a value between 0 and 1 for each bus and industry subcategory, indicating the share of the country's production of that sector in that bus.
-The industrial production per country is multiplied by the mapping value to get the industrial production per bus.
-The unit of the production is kt/a.
+Each country's production per subsector from [build_industrial_production_per_country_tomorrow][] is multiplied by the regional distribution key from [build_industrial_distribution_key][]. Subsectors are mapped to the key of a site database where one exists, for example the steel routes to the steel plant tracker, cement to the cement plant tracker, ammonia to ammonia plants and all chemicals to the Hotmaps chemical industry; other subsectors are distributed by population. Keys of one country sum to one, so national totals are preserved.
 """
 
 import logging
@@ -28,10 +22,10 @@ sector_mapping = {
     "Integrated steelworks": "Integrated steelworks",
     "DRI + Electric arc": "DRI + EAF",
     "Ammonia": "Ammonia",
-    "HVC": "Chemical industry",
+    "HVC": "HVC",
     "HVC (mechanical recycling)": "Chemical industry",
     "HVC (chemical recycling)": "Chemical industry",
-    "Methanol": "Chemical industry",
+    "Methanol": "Methanol",
     "Chlorine": "Chemical industry",
     "Other chemicals": "Chemical industry",
     "Pharmaceutical products etc.": "Chemical industry",
@@ -48,12 +42,12 @@ sector_mapping = {
 }
 
 
-def build_nodal_industrial_production():
-    fn = snakemake.input.industrial_production_per_country_tomorrow
-    industrial_production = pd.read_csv(fn, index_col=0)
+def build_nodal_industrial_production(
+    production_fn: str, keys_fn: str, output_fn: str
+) -> None:
+    industrial_production = pd.read_csv(production_fn, index_col=0)
 
-    fn = snakemake.input.industrial_distribution_key
-    keys = pd.read_csv(fn, index_col=0)
+    keys = pd.read_csv(keys_fn, index_col=0)
     keys["country"] = keys.index.str[:2]
 
     nodal_production = pd.DataFrame(
@@ -72,15 +66,19 @@ def build_nodal_industrial_production():
             industrial_production.at[country, sector] * key
         )
 
-    nodal_production.to_csv(snakemake.output.industrial_production_per_node)
+    nodal_production.to_csv(output_fn)
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_industrial_production_per_node", clusters=48)
+        snakemake = mock_snakemake("build_industrial_production_per_node", horizon=2030)
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    build_nodal_industrial_production()
+    build_nodal_industrial_production(
+        snakemake.input.industrial_production_per_country_tomorrow,
+        snakemake.input.industrial_distribution_key,
+        snakemake.output.industrial_production_per_node,
+    )

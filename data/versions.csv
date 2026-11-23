@@ -11,6 +11,8 @@ bidding_zones_electricitymaps,v1.238.0,primary,latest supported,2026-01-22,,http
 bidding_zones_electricitymaps,v1.238.0,archive,latest supported,2026-01-22,,https://data.pypsa.org/workflows/eur/bidding_zones_electricitymaps/v1.238.0/world.geojson
 bidding_zones_entsoepy,v0.6.18,primary,latest supported,2026-01-22,,https://raw.githubusercontent.com/EnergieID/entsoe-py/refs/tags/V0.6.18/entsoe/geo/geojson
 bidding_zones_entsoepy,v0.6.18,archive,latest supported,2026-01-22,,https://data.pypsa.org/workflows/eur/bidding_zones_entsoepy/v0.6.18
+co2_removal_data,v1.0.4,primary,latest supported,2026-11-04,"Input data for carbon dioxide removal options (afforestation) and the upstream emissions of unsustainable bioliquids, CO2-removal v1.0.4 on Zenodo (https://doi.org/10.5281/zenodo.23954311), accompanies Fernandes et al. (2026) (https://arxiv.org/abs/2603.25663)",https://zenodo.org/records/23954311/files/BertoGBG/CO2-removal-v1.0.4.zip
+co2_removal_data,v1.0.4,archive,latest supported,2026-11-17,"Input data for carbon dioxide removal options (afforestation) and the upstream emissions of unsustainable bioliquids, CO2-removal v1.0.4 on Zenodo (https://doi.org/10.5281/zenodo.23954311), accompanies Fernandes et al. (2026) (https://arxiv.org/abs/2603.25663)",https://data.pypsa.org/workflows/eur/co2_removal_data/v1.0.4/CO2-removal-v1.0.4.zip
 co2stop,26-august-2020,primary,latest supported,2025-12-02,,https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip
 co2stop,26-august-2020,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/co2stop/26-august-2020/co2jrc_openformats.zip
 copernicus_land_cover,v3.0.1,primary,latest supported,2025-12-02,"The primary is already from Zenodo, documentation in https://zenodo.org/records/4723921",https://zenodo.org/records/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif
@@ -18,8 +20,12 @@ copernicus_land_cover,v3.0.1,archive,latest supported,2026-01-20,"The primary is
 copernicus_land_cover,v2.0.2,archive,deprecated supported,2026-01-13,,https://data.pypsa.org/workflows/eur/copernicus_land_cover/v2.0.2/PROBAV_LC100_global_v3.0.1_2015-base_Discrete-Classification-map_EPSG-4326.tif
 corine,v18_5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/corine/v18_5/corine.zip
 corine,unknown,primary,latest supported,2025-12-02,Need to register with CLMS API and create an access token. The download URL is dynamic,
-costs,v0.14.0,primary,latest supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.14.0/outputs
-costs,v0.14.0,archive,latest supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.14.0
+costs,v0.16.0,primary,latest supported,2026-11-17,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.16.0/outputs
+costs,v0.16.0,archive,latest supported,2026-11-18,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.16.0
+costs,v0.15.0,primary,supported,2026-06-09,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.15.0/outputs
+costs,v0.15.0,archive,supported,2026-06-09,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.15.0
+costs,v0.14.0,primary,supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.14.0/outputs
+costs,v0.14.0,archive,supported,2026-02-13,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.14.0
 costs,v0.13.4,primary,supported,2025-12-02,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.4/outputs
 costs,v0.13.4,archive,supported,2026-01-21,Part of the `technologydata` repository and versioned on GitHub.,https://data.pypsa.org/workflows/eur/costs/v0.13.4
 costs,v0.13.3,primary,supported,2025-12-02,Part of the `technologydata` repository and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/technology-data/refs/tags/v0.13.3/outputs
@@ -36,6 +42,8 @@ cutout,v1.0,archive,latest supported,2026-01-13,Pre-build cutouts for PyPSA-Eur,
 cutout,unknown,build,latest supported,2025-12-02,Build latest cutouts using ERA5/SARAH3 data.,
 desnz_electricity_consumption,unknown,primary,latest supported,2026-02-02,,https://assets.publishing.service.gov.uk/media/6762951abe7b2c675de30705/Subnational_electricity_consumption_statistics_2005-2024.xlsx
 desnz_electricity_consumption,2026-02-16,archive,latest supported,2026-02-16,,https://data.pypsa.org/workflows/eur/desnz_electricity_consumption/2026-02-16/Subnational_electricity_consumption_statistics_2005-2024.xlsx
+desnz_ghg_emissions,1990-2024,primary,latest supported,2026-10-03,Final UK greenhouse gas emissions statistics published February 2026,https://assets.publishing.service.gov.uk/media/6982298de833d031a3158ff2/final-greenhouse-gas-emissions-2024-by-source-datasets.xlsx
+desnz_ghg_emissions,1990-2024,archive,latest supported,2026-11-19,Final UK greenhouse gas emissions statistics published February 2026,https://data.pypsa.org/workflows/eur/desnz_ghg_emissions/1990-2024/final-greenhouse-gas-emissions-2024-by-source-datasets.xlsx
 dh_areas,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg
 dh_areas,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/dh_areas/341.5/dh_areas.gpkg
 eez,v12_20231025,primary,latest supported,2025-12-02,API request used,https://www.marineregions.org/download_file.php
@@ -56,21 +64,28 @@ eurostat_balances,2023-04,primary,not-supported,2025-12-02,"The link is broken, 
 eurostat_balances,2023-04,archive,not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eurostat_balances/2023-04/balances.zip
 eurostat_household_balances,unknown,primary,latest supported,2025-12-02,"URL limits the period to 2013-2022, but the data is updated regularly.",https://ec.europa.eu/eurostat/databrowser-backend/api/extraction/1.0/LIVE/false/sdmx/csv/nrg_d_hhq__custom_11480365?startPeriod=2013&endPeriod=2022
 eurostat_household_balances,2025-07-09,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/eurostat_household_balances/2025-07-09/nrg_d_hhq.csv
+ffe_industry_load_profiles,unknown,primary,latest supported,2026-11-16,API endpoint provides latest data without versioning,https://api.opendata.ffe.de/opendata?id_opendata=59
+ffe_industry_load_profiles,2026-11-16,archive,latest supported,2026-11-16,,https://data.pypsa.org/workflows/eur/ffe_industry_load_profiles/2026-11-16/ffe_industry_load_profiles.json
 gdp_per_capita,2018-02-06,primary,latest supported,2025-12-02,"Primary link is a direct download, earlier part of zenodo bundle",https://zenodo.org/records/16556029/files/GDP_per_capita_PPP_1990_2015_v2.nc
 gdp_per_capita,2018-02-06,archive,latest supported,2026-01-13,"Primary link is a direct download, earlier part of zenodo bundle",https://data.pypsa.org/workflows/eur/gdp_per_capita/2018-02-06/GDP_per_capita_PPP_1990_2015_v2.nc
 gebco,2014,primary,latest supported,2025-12-02,The dataset will be cut for the required regions after download,https://www.bodc.ac.uk/data/open_download/gebco/GEBCO_30SEC/zip/
 gebco,2014,archive,latest supported,2026-01-13,Earlier part of databundle,https://data.pypsa.org/workflows/eur/gebco/2014/GEBCO_2014_2D.nc
 gem_europe_gas_tracker,may-2024,primary,latest supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
 gem_europe_gas_tracker,may-2024,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_europe_gas_tracker/may-2024/Europe-Gas-Tracker-2024-05.xlsx
-gem_gcct,july-2025,primary,latest supported,2026-02-02,,https://globalenergymonitor.org/wp-content/uploads/2025/07/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
-gem_gcct,july-2025,archive,latest supported,2026-02-02,,https://data.pypsa.org/workflows/eur/gem_gcct/july-2025/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
-gem_gspt,march-2025-v1.1,primary,latest supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
-gem_gspt,march-2025-v1.1,archive,latest supported,2026-02-02,,https://data.pypsa.org/workflows/eur/gem_gspt/march-2025-v1.1/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
+gem_gcct,july-2026-v1,archive,latest supported,2026-11-16,,https://data.pypsa.org/workflows/eur/gem_gcct/july-2026-v1/Plant-level-data-Global-Cement-and-Concrete-Tracker-July-2026-Standard-Copy-V1.xlsx
+gem_gcct,july-2025,primary,deprecated not-supported,2026-02-02,,https://globalenergymonitor.org/wp-content/uploads/2025/07/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
+gem_gcct,july-2025,archive,not-supported,2026-02-02,,https://data.pypsa.org/workflows/eur/gem_gcct/july-2025/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
+gem_gct,november-2026-v1,archive,latest supported,2026-11-16,,https://data.pypsa.org/workflows/eur/gem_gct/november-2026-v1/Plant-level-data-Global-Chemicals-Tracker-November-2026-V1.xlsx
+gem_gspt,september-2026-v1,archive,latest supported,2026-11-18,Zip file as provided by GEM after registration,https://data.pypsa.org/workflows/eur/gem_gspt/september-2026-v1/gem-download.zip
+gem_gspt,march-2025-v1.1,primary,deprecated not-supported,2025-12-02,,https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
+gem_gspt,march-2025-v1.1,archive,not-supported,2026-02-02,,https://data.pypsa.org/workflows/eur/gem_gspt/march-2025-v1.1/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
 gem_gspt,april-2024-v1,archive,not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/gem_gspt/april-2024-v1/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
 geothermal_heat_utilisation_potentials,341.5,primary,latest supported,2025-12-02,,https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx
 geothermal_heat_utilisation_potentials,341.5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/geothermal_heat_utilisation_potentials/341.5/Results_DH_Matching_Cluster.xlsx
-ghg_emissions,v23,primary,latest supported,2025-12-02,,https://web.archive.org/web/20200622130401if_/https%3A//www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16/national-greenhouse-gas-inventories-ipcc-common-reporting-format-sector-classification/ascii-delimited-zip-2/at_download/file
-ghg_emissions,v23,archive,latest supported,2026-01-13,earlier part of databundle,https://data.pypsa.org/workflows/eur/ghg_emissions/v23/UNFCCC_v23.csv
+ghg_emissions,v32,primary,latest supported,2026-10-03,EEA GovReg dataset 2026 v2.0,https://sdi.eea.europa.eu/datashare/s/sptXqwkQr5g7Bp5/download?path=%2Feea_t_national-emissions-reported_p_2026_v02_r00%2FCSV&files=UNFCCC_v32.csv
+ghg_emissions,v32,archive,latest supported,2026-11-19,EEA GovReg dataset 2026 v2.0,https://data.pypsa.org/workflows/eur/ghg_emissions/v32/download
+ghg_emissions_energy_community,v1,primary,latest supported,2026-10-03,EEA Energy Community dataset 2026,https://sdi.eea.europa.eu/datashare/s/WqKyeH8skz9QdRg/download?path=%2F&files=UNFCCC_v1.csv
+ghg_emissions_energy_community,v1,archive,latest supported,2026-11-19,EEA Energy Community dataset 2026,https://data.pypsa.org/workflows/eur/ghg_emissions_energy_community/v1/download
 h2_salt_caverns,16-10-2019,primary,latest supported,2025-12-02,,https://zenodo.org/records/16899309/files/h2_salt_caverns_GWh_per_sqkm.geojson
 h2_salt_caverns,16-10-2019,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/h2_salt_caverns/16-10-2019/h2_salt_caverns_GWh_per_sqkm.geojson
 hotmaps_industrial_sites,version-1.1,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/hotmaps_industrial_sites/version-1.1/Industrial_Database.csv
@@ -112,8 +127,10 @@ ons_lad,may-2024,archive,latest supported,2026-02-17,API request used,https://da
 opsd_electricity_demand,unknown,build,latest supported,2026-02-02,multiple versions concatenated,https://data.open-power-system-data.org/time_series/
 opsd_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,,https://data.pypsa.org/workflows/eur/opsd_electricity_demand/2026-02-02/electricity_demand_opsd_raw.csv
 osm,unknown,build,latest supported,2025-12-02,Latest dataset built using OSM data. No single URL available to access the data. See the related scripts and documentation for details.,
-osm,0.7,primary,latest supported,2026-02-12,,https://zenodo.org/records/18619025/files
-osm,0.7,archive,latest supported,2026-02-12,,https://data.pypsa.org/workflows/eur/osm/0.7
+osm,0.8,primary,latest supported,2026-11-02,,https://zenodo.org/records/23896564/files
+osm,0.8,archive,latest supported,2026-11-11,,https://data.pypsa.org/workflows/eur/osm/0.8
+osm,0.7,primary,supported,2026-02-12,,https://zenodo.org/records/18619025/files
+osm,0.7,archive,supported,2026-02-12,,https://data.pypsa.org/workflows/eur/osm/0.7
 osm,0.6,primary,supported,2026-01-13,,https://zenodo.org/records/14144752/files
 osm,0.6,archive,supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm/0.6
 osm,0.5,primary,supported,2026-01-13,,https://zenodo.org/records/13981528/files
@@ -130,8 +147,10 @@ osm_boundaries,unknown,primary,latest supported,2025-12-02,Overpass API is used 
 osm_boundaries,unknown,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/osm_boundaries/unknown/osm_boundaries.zip
 population_count,2018-11-01,primary,latest supported,2025-12-02,,https://data.worldpop.org/GIS/Population/Global_2000_2020/2019/0_Mosaicked/ppp_2019_1km_Aggregated.tif
 population_count,2018-11-01,archive,latest supported,2026-01-13,earlier part of zenodo bundle,https://data.pypsa.org/workflows/eur/population_count/2018-11-01/ppp_2019_1km_Aggregated.tif
-powerplants,0.8.1,primary,latest supported,2026-02-11,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.1/powerplants.csv
-powerplants,0.8.1,archive,latest supported,2026-02-12,Part of the `powerplantmatching` package and versioned on GitHub.,https://data.pypsa.org/workflows/eur/powerplants/0.8.1/powerplants.csv
+powerplants,0.9.1,primary,latest supported,2026-10-08,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.9.1/powerplants.csv
+powerplants,0.9.1,archive,latest supported,2026-11-11,Part of the `powerplantmatching` package and versioned on GitHub.,https://data.pypsa.org/workflows/eur/powerplants/0.9.1/powerplants.csv
+powerplants,0.8.1,primary,supported,2026-02-11,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.1/powerplants.csv
+powerplants,0.8.1,archive,supported,2026-02-12,Part of the `powerplantmatching` package and versioned on GitHub.,https://data.pypsa.org/workflows/eur/powerplants/0.8.1/powerplants.csv
 powerplants,0.8.0,primary,supported,2026-02-05,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.8.0/powerplants.csv
 powerplants,0.8.0,archive,supported,2026-02-09,Part of the `powerplantmatching` package and versioned on GitHub.,https://data.pypsa.org/workflows/eur/powerplants/0.8.0/powerplants.csv
 powerplants,0.7.1,primary,supported,2025-12-02,Part of the `powerplantmatching` package and versioned on GitHub.,https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv
@@ -146,11 +165,14 @@ seawater_temperature,v1.0,primary,latest supported,2026-01-21,Test cutout seawat
 seawater_temperature,v1.0,archive,latest supported,2026-01-21,Test cutout seawater temperature,https://data.pypsa.org/workflows/eur/seawater_temperature/v1.0/seawater_temperature.nc
 ship_raster,v5,primary,latest supported,2025-12-02,,https://datacatalogfiles.worldbank.org/ddh-published/0037580/5/DR0045406/shipdensity_global.zip
 ship_raster,v5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/ship_raster/v5/shipdensity_global.zip
-swiss_energy_balances,2025-10-01,primary,latest supported,2026-02-12,,https://pubdb.bfe.admin.ch/de/publication/download/12361
-swiss_energy_balances,2025-10-01,archive,latest supported,2026-02-16,,https://web.archive.org/web/20260216/https%3A//pubdb.bfe.admin.ch/de/publication/download/12361
+swiss_energy_balances,unknown,primary,latest supported,2026-10-30,,https://pubdb.bfe.admin.ch/de/publication/download/12361
+swiss_energy_balances,2026-10-01,archive,latest supported,2026-11-02,,https://web.archive.org/web/20261031090811/https%3A//pubdb.bfe.admin.ch/de/publication/download/12361
+swiss_energy_balances,2025-10-01,archive,deprecated not-supported,2026-02-16,,https://web.archive.org/web/20260216/https%3A//pubdb.bfe.admin.ch/de/publication/download/12361
 synthetic_electricity_demand,v2,primary,latest supported,2025-12-02,the primary is already from Zenodo published by original authors,https://zenodo.org/records/10820928/files/demand_hourly.csv
 synthetic_electricity_demand,v2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/v2/demand_hourly.csv
 synthetic_electricity_demand,0.1.0,archive,deprecated might-work,2026-01-13,,https://data.pypsa.org/workflows/eur/synthetic_electricity_demand/0.1.0/demand_hourly.csv
+tabula_calculator,unknown,primary,latest supported,2026-09-02,Derived from the Calc.Set.Building sheet of the TABULA calculator workbook,https://episcope.eu/fileadmin/tabula/public/calc/tabula-calculator.xlsx
+tabula_calculator,2026-09-07,archive,latest supported,2026-09-07,Derived from the Calc.Set.Building sheet of the TABULA calculator workbook,https://data.pypsa.org/workflows/eur/tabula_calculator/2026-09-07/tabula-calculator.xlsx
 tyndp,2024,primary,latest supported,2025-12-02,,https://2024-data.entsos-tyndp-scenarios.eu/files/scenarios-inputs
 tyndp,2024,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/tyndp/2024
 wdpa,unknown,primary,latest supported,2025-12-02,"WDPA changes its URL every month, the URL here is used as a template and {bYYYY} is replaced inside the retrieve.smk.",https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip

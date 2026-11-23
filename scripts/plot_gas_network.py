@@ -2,8 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates map of optimised gas network, storage and selected other
-infrastructure.
+Plots the optimised methane network and regional gas sources on a map.
+
+Reads the solved network and aggregates annual fossil gas extraction,
+methanation and biogas supply per electricity bus as circle sizes. Gas
+pipelines are drawn in three layers: capacity existing in 2020, total
+available capacity after expansion, and the maximum flow actually used.
+Pipelines below a capacity threshold are omitted. Networks without gas
+pipelines produce a placeholder figure.
 """
 
 import logging
@@ -12,9 +18,18 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
+from pypsa.plot.maps.static import (
+    add_legend_circles,
+    add_legend_lines,
+    add_legend_patches,
+)
 
-from scripts._helpers import configure_logging, retry, set_scenario_config
+from scripts._helpers import (
+    configure_logging,
+    create_placeholder_plot,
+    retry,
+    set_scenario_config,
+)
 from scripts.make_summary import assign_locations
 from scripts.plot_power_network import load_projection
 
@@ -22,9 +37,16 @@ logger = logging.getLogger(__name__)
 
 
 @retry
-def plot_ch4_map(n):
-    # if "gas pipeline" not in n.links.carrier.unique():
-    #     return
+def plot_ch4_map(n: pypsa.Network) -> None:
+    # Check if gas infrastructure exists in the network
+    if "gas pipeline" not in n.links.carrier.unique():
+        logger.warning(
+            "No gas pipeline carriers in network. Skipping gas network plot."
+        )
+        create_placeholder_plot(
+            snakemake.output[0], "No gas network\nin model", figsize=(1, 1)
+        )
+        return
 
     assign_locations(n)
 
@@ -159,25 +181,25 @@ def plot_ch4_map(n):
         boundaries=map_opts["boundaries"],
     )
 
-    sizes = [100, 10]
+    sizes: list[float] = [100, 10]
     labels = [f"{s} TWh" for s in sizes]
     sizes = [s / bus_size_factor * 1e6 for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1.03),
-        labelspacing=0.8,
-        frameon=False,
-        handletextpad=1,
-        title="gas sources",
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1.03),
+        "labelspacing": 0.8,
+        "frameon": False,
+        "handletextpad": 1,
+        "title": "gas sources",
+    }
 
     add_legend_circles(
         ax,
         sizes,
         labels,
         srid=n.srid,
-        patch_kw=dict(facecolor="lightgrey"),
+        patch_kw={"facecolor": "lightgrey"},
         legend_kw=legend_kw,
     )
 
@@ -186,20 +208,20 @@ def plot_ch4_map(n):
     scale = 1e3 / linewidth_factor
     sizes = [s * scale for s in sizes]
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0.25, 1.03),
-        frameon=False,
-        labelspacing=0.8,
-        handletextpad=1,
-        title="gas pipeline",
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0.25, 1.03),
+        "frameon": False,
+        "labelspacing": 0.8,
+        "handletextpad": 1,
+        "title": "gas pipeline",
+    }
 
     add_legend_lines(
         ax,
         sizes,
         labels,
-        patch_kw=dict(color="lightgrey"),
+        patch_kw={"color": "lightgrey"},
         legend_kw=legend_kw,
     )
 
@@ -212,12 +234,12 @@ def plot_ch4_map(n):
     #     frameon=False,
     # )
 
-    legend_kw = dict(
-        loc="upper left",
-        bbox_to_anchor=(0, 1.24),
-        ncol=2,
-        frameon=False,
-    )
+    legend_kw = {
+        "loc": "upper left",
+        "bbox_to_anchor": (0, 1.24),
+        "ncol": 2,
+        "frameon": False,
+    }
 
     add_legend_patches(
         ax,
@@ -236,9 +258,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_gas_network",
-            opts="",
-            clusters="37",
-            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)

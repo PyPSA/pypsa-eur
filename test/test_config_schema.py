@@ -6,14 +6,23 @@
 
 import difflib
 import tempfile
+from functools import reduce
 from pathlib import Path
 
 import pytest
+import yaml
 
+from scripts._helpers import get_snapshots
 from scripts.lib.validation.config import (
+    DEPRECATED_KEYS,
+    find_invalid_entries,
     generate_config_defaults,
     generate_config_schema,
+    generate_plotting_defaults,
+    migrate_deprecated_keys,
+    normalize_config,
     validate_config,
+    validate_scenarios,
 )
 
 
@@ -22,6 +31,13 @@ def config_file():
     config = validate_config({})
     config_filename = Path(f"config/config.{config._name}.yaml")
     return config_filename
+
+
+@pytest.fixture(scope="module")
+def plotting_file():
+    config = validate_config({})
+    plotting_filename = Path(f"config/plotting.{config._name}.yaml")
+    return plotting_filename
 
 
 @pytest.fixture(scope="module")
@@ -35,7 +51,7 @@ def _check_file_in_sync(existing_path: Path, generate_func, file_type: str):
     """Check if a file is in sync with the generated content."""
     assert existing_path.exists(), f"{existing_path} does not exist"
 
-    existing_content = existing_path.read_text()
+    existing_content = existing_path.read_text(encoding="utf-8")
 
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=f".{file_type}", delete=False
@@ -44,7 +60,7 @@ def _check_file_in_sync(existing_path: Path, generate_func, file_type: str):
 
     try:
         generate_func(temp_path)
-        generated_content = Path(temp_path).read_text()
+        generated_content = Path(temp_path).read_text(encoding="utf-8")
     finally:
         Path(temp_path).unlink(missing_ok=True)
 
@@ -63,13 +79,15 @@ def _check_file_in_sync(existing_path: Path, generate_func, file_type: str):
         print("=" * 80)
         pytest.fail(
             f"{existing_path} is out of sync with the Pydantic schema. "
-            "Run 'pixi run generate-config' to update. See diff above."
+            "Run `pixi run generate-config` to update. See diff above."
         )
 
 
-def test_config_default_yaml_in_sync(config_file):
+def test_config_default_yaml_in_sync(config_file, pytestconfig):
     """Test that config/config.default.yaml is in sync with Pydantic schema."""
-
+    fix = pytestconfig.getoption("fix")
+    if fix:
+        generate_config_defaults(config_file.as_posix())
     _check_file_in_sync(
         config_file,
         generate_config_defaults,
@@ -77,11 +95,196 @@ def test_config_default_yaml_in_sync(config_file):
     )
 
 
-def test_config_schema_json_in_sync(schema_file):
-    """Test that config/schema.default.json is in sync with Pydantic schema."""
+def test_plotting_default_yaml_in_sync(plotting_file, pytestconfig):
+    """Test that config/plotting.default.yaml is in sync with Pydantic schema."""
+    fix = pytestconfig.getoption("fix")
+    if fix:
+        generate_plotting_defaults(plotting_file.as_posix())
+    _check_file_in_sync(
+        plotting_file,
+        generate_plotting_defaults,
+        "yaml",
+    )
 
+
+def test_config_schema_json_in_sync(schema_file, pytestconfig):
+    """Test that config/schema.default.json is in sync with Pydantic schema."""
+    fix = pytestconfig.getoption("fix")
+    if fix:
+        generate_config_schema(schema_file.as_posix())
     _check_file_in_sync(
         schema_file,
         generate_config_schema,
         "json",
     )
+
+
+class TestPlanningHorizonsNormalization:
+    """Tests for planning_horizons validation and normalization."""
+
+    def test_validate_accepts_single_int(self):
+        cfg = {"planning_horizons": 2050}
+        validated = validate_config(cfg)
+        assert validated.planning_horizons == [2050]
+
+    def test_validate_accepts_single_str(self):
+        cfg = {"planning_horizons": "2030"}
+        validated = validate_config(cfg)
+        assert validated.planning_horizons == [2030]
+
+    def test_validate_accepts_list(self):
+        cfg = {"planning_horizons": [2030, 2040, 2050]}
+        validated = validate_config(cfg)
+        assert validated.planning_horizons == [2030, 2040, 2050]
+
+    def test_validate_does_not_modify_config(self):
+        cfg = {"planning_horizons": 2050}
+        validate_config(cfg)
+        assert cfg["planning_horizons"] == 2050
+
+    def test_normalize_updates_config_in_place(self):
+        cfg = {"planning_horizons": 2050}
+        validated = validate_config(cfg)
+        normalize_config(cfg, validated)
+        assert cfg["planning_horizons"] == [2050]
+
+    def test_normalize_with_list_unchanged(self):
+        cfg = {"planning_horizons": [2030, 2050]}
+        validated = validate_config(cfg)
+        normalize_config(cfg, validated)
+        assert cfg["planning_horizons"] == [2030, 2050]
+
+
+class TestValidateScenarios:
+    base = {"foresight": "overnight", "planning_horizons": [2050]}
+
+    def test_accepts_compatible_override(self):
+        validate_scenarios(self.base, {"s1": {"countries": ["DE"]}})
+
+    @pytest.mark.parametrize(
+        ("override", "match"),
+        [
+            ({"data": {}}, "overrides the 'data' block"),
+            ({"foresight": "perfect"}, "changes 'foresight'"),
+            ({"planning_horizons": [2030]}, "changes 'planning_horizons'"),
+            ({"countries": "not-a-list"}, "failed config validation"),
+        ],
+    )
+    def test_rejects_incompatible_override(self, override, match):
+        with pytest.raises(ValueError, match=match):
+            validate_scenarios(self.base, {"s1": override})
+
+
+@pytest.mark.parametrize(
+    "snapshots, match",
+    [
+        ({"inclusive": "left"}, "inclusive"),
+        ({"end": "2014-01-01"}, "needs a time"),
+        ({"end": "2013-03-08"}, "needs a time"),
+        ({"start": ["2013-01-01"], "end": ["2014-01-01"]}, "needs a time"),
+    ],
+)
+def test_snapshots_reject_legacy_settings(snapshots, match):
+    with pytest.raises(ValueError, match=match):
+        validate_config({"snapshots": snapshots})
+
+
+@pytest.mark.parametrize(
+    "start, end, length",
+    [
+        ("2013-01-01", "2013-12-31 23:00", 8760),
+        ("2013-03-01", "2013-03-07 23:00", 168),
+        ("2013-01-01", "2014-01-01 00:00", 8761),
+        ("2013-03-01 06:00", "2013-03-01 17:00", 12),
+        (["2013-01-01", "2013-07-01"], ["2013-01-01 23:00", "2013-07-01 23:00"], 48),
+    ],
+)
+def test_snapshots_include_first_and_last(start, end, length):
+    config = validate_config({"snapshots": {"start": start, "end": end}})
+    assert len(get_snapshots(config.snapshots)) == length
+
+
+@pytest.mark.parametrize("tes", [True, False])
+def test_migrate_deprecated_keys(tes):
+    cfg = {"sector": {"tes": tes}}
+    with pytest.warns(FutureWarning, match="sector.tes"):
+        migrate_deprecated_keys(cfg)
+    assert cfg == {
+        "sector": {"ttes": tes, "district_heating": {"ptes": {"enable": tes}}}
+    }
+
+
+def test_migrate_deprecated_keys_ignores_current_keys():
+    cfg = {"sector": {"ttes": False}, "countries": ["DE"]}
+    migrate_deprecated_keys(cfg)
+    assert cfg == {"sector": {"ttes": False}, "countries": ["DE"]}
+
+
+@pytest.mark.parametrize("old", DEPRECATED_KEYS)
+def test_deprecated_keys_not_in_default_config(old, config_file):
+    *parents, key = old.split(".")
+    defaults = yaml.safe_load(config_file.read_text(encoding="utf-8"))
+    assert key not in reduce(dict.get, parents, defaults)
+
+
+def _load_config(path: str) -> dict:
+    return yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+
+
+class TestFindInvalidEntries:
+    def test_reports_invalid_config(self):
+        invalid = find_invalid_entries(
+            _load_config("test/test_data/config.invalid.yaml")
+        )
+        assert set(invalid) == {
+            "country",
+            "clustering.cluster_network.nclusters",
+            "snapshots",
+            "clustering.temporal.averaging",
+            "conventional.fuel_price_rolling_window",
+        }
+
+    @pytest.mark.parametrize(
+        "test_config", sorted(Path("config/test").glob("config.*.yaml")), ids=str
+    )
+    def test_passes_valid_config(self, test_config):
+        assert not find_invalid_entries(_load_config(test_config))
+
+
+def pytest_generate_tests(metafunc):
+    if "configfile" in metafunc.fixturenames:
+        metafunc.parametrize("configfile", metafunc.config.getoption("validate_config"))
+
+
+def test_config_file_is_valid(configfile):
+    """Check config files given with `--validate-config` for unknown keys and invalid values."""
+    invalid = find_invalid_entries(_load_config(configfile))
+    assert not invalid, f"Invalid config entries in {configfile}:\n" + "\n".join(
+        f"  - {path}: {'; '.join(msgs)}" for path, msgs in invalid.items()
+    )
+
+
+class TestLineTypes:
+    def test_default_defines_380kv(self):
+        config = validate_config({})
+        assert 380.0 in config.lines.types
+
+    def test_missing_380kv_is_rejected(self):
+        with pytest.raises(ValueError, match="380"):
+            validate_config(
+                {"lines": {"types": {220.0: "Al/St 240/40 2-bundle 220.0"}}}
+            )
+
+
+def test_removed_pypsa_eur_section_is_rejected():
+    with pytest.raises(ValueError, match="pypsa_eur"):
+        validate_config({"pypsa_eur": {"Generator": ["onwind"]}})
+
+
+def test_removed_oetc_section_is_rejected():
+    with pytest.raises(ValueError, match="oetc"):
+        validate_config({"solving": {"oetc": {"name": "pypsa-eur"}}})
+
+
+def test_empty_oetc_section_from_former_default_is_accepted():
+    validate_config({"solving": {"oetc": None}})
