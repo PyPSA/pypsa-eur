@@ -46,8 +46,6 @@ logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
-PYPSA_V1 = bool(re.match(r"^1\.\d", pypsa.__version__))
-
 
 def strip_if_str(value: Any) -> Any:
     """Return stripped strings while leaving other values unchanged."""
