@@ -36,7 +36,6 @@ from pypsa.descriptors import get_activity_mask
 
 from scripts._benchmark import memory_logger
 from scripts._helpers import (
-    PYPSA_V1,
     configure_logging,
     get,
     set_scenario_config,
@@ -44,11 +43,7 @@ from scripts._helpers import (
 
 logger = logging.getLogger(__name__)
 
-# Allow for PyPSA versions <0.35
-if PYPSA_V1:
-    pypsa.network.power_flow.logger.setLevel(logging.WARNING)
-else:
-    pypsa.pf.logger.setLevel(logging.WARNING)
+pypsa.network.power_flow.logger.setLevel(logging.WARNING)
 
 
 class ObjectiveValueError(Exception):
@@ -126,8 +121,6 @@ def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> None:
         "solar-hsat": config["renewable"]["solar"]["capacity_per_sqkm"]
         / config["renewable"]["solar-hsat"]["capacity_per_sqkm"],
     }
-    rename = {} if PYPSA_V1 else {"Generator-ext": "Generator"}
-
     solar_carriers = ["solar", "solar-hsat"]
     solar = n.generators[
         n.generators.carrier.isin(solar_carriers) & n.generators.p_nom_extendable
@@ -160,7 +153,7 @@ def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> None:
     ).clip(lower=0)
 
     lhs = (
-        (n.model["Generator-p_nom"].rename(rename).loc[solar] * land_use.squeeze())
+        (n.model["Generator-p_nom"].loc[solar] * land_use.squeeze())
         .groupby(ggrouper)
         .sum()
     )
@@ -363,12 +356,8 @@ def add_retrofit_gas_boiler_constraint(
     dispatch = n.model["Link-p"]
     active = get_activity_mask(n, c, snapshots, gas_i)
     rhs = rhs[active]
-    if PYPSA_V1:
-        p_gas = dispatch.sel(name=gas_i)
-        p_h2 = dispatch.sel(name=h2_i)
-    else:
-        p_gas = dispatch.sel(Link=gas_i)
-        p_h2 = dispatch.sel(Link=h2_i)
+    p_gas = dispatch.sel(name=gas_i)
+    p_h2 = dispatch.sel(name=h2_i)
 
     lhs = p_gas + p_h2
 
@@ -614,9 +603,6 @@ def add_CCL_constraints(
 
     gens = n.generators.query("p_nom_extendable")
 
-    if not PYPSA_V1:
-        gens = gens.rename_axis(index="Generator-ext")
-
     if config["solving"]["agg_p_nom_limits"]["agg_offwind"]:
         rename_offwind = {
             "offwind-ac": "offwind-all",
@@ -769,8 +755,6 @@ def add_BAU_constraints(n: pypsa.Network, config: dict) -> None:
     p_nom = n.model["Generator-p_nom"]
     ext_i = n.generators.query("p_nom_extendable")
     ext_carrier_i = xr.DataArray(ext_i.carrier)
-    if not PYPSA_V1:
-        ext_carrier_i = ext_carrier_i.rename_axis("Generator-ext")
     lhs = p_nom.groupby(ext_carrier_i).sum()
     rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
@@ -849,8 +833,6 @@ def add_operational_reserve_margin(
         "ror" if c == "hydro" else c
         for c in config["electricity"]["renewable_carriers"]
     ]
-    generator_dim = "Generator" if not PYPSA_V1 else "name"
-
     gen_i = n.generators.query("carrier != 'load'").index  # exclude load shedding
     fix_i = n.generators.loc[gen_i].query("not p_nom_extendable").index
     ext_i = n.generators.loc[gen_i].query("p_nom_extendable").index
@@ -859,16 +841,14 @@ def add_operational_reserve_margin(
     # Reserve Variables
     n.model.add_variables(0, np.inf, coords=[sns, gen_i], name="Generator-r")
     reserve = n.model["Generator-r"]
-    lhs = reserve.sum(generator_dim)
+    lhs = reserve.sum("name")
 
     # Share of extendable renewable capacities
     if not ext_i.empty and not vres_i.empty:
         capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
         p_nom_vres = n.model["Generator-p_nom"].loc[vres_i.intersection(ext_i)]
-        if not PYPSA_V1:
-            p_nom_vres = p_nom_vres.rename({"Generator-ext": "Generator"})
         lhs += (p_nom_vres * (-EPSILON_VRES * xr.DataArray(capacity_factor))).sum(
-            generator_dim
+            "name"
         )
 
     # Total demand per t
@@ -894,8 +874,6 @@ def add_operational_reserve_margin(
 
     if not ext_i.empty:
         capacity_variable = n.model["Generator-p_nom"].sel(name=ext_i)
-        if not PYPSA_V1:
-            capacity_variable = capacity_variable.rename({"Generator-ext": "Generator"})
         lhs -= capacity_variable * xr.DataArray(p_max_pu[ext_i])
 
     capacity_fixed = n.generators.p_nom[fix_i]
@@ -961,9 +939,8 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
         linear_expr_list.append(linear_expr)
 
     # Merge the individual expressions
-    dim = "Store-ext, Link-ext" if PYPSA_V1 else "name"
     merged_expr = linopy.expressions.merge(
-        linear_expr_list, dim=dim, cls=type(linear_expr_list[0])
+        linear_expr_list, dim="Store-ext, Link-ext", cls=type(linear_expr_list[0])
     )
 
     n.model.add_constraints(merged_expr == 0, name="TES_energy_to_power_ratio")
@@ -1102,12 +1079,7 @@ def add_chp_constraints(n: pypsa.Network) -> None:
         )
         n.model.add_constraints(lhs == 0, name="chplink-fix_p_nom_ratio")
 
-        rename = {} if PYPSA_V1 else {"Link-ext": "Link"}
-        lhs = (
-            p.loc[:, electric_ext]
-            + p.loc[:, heat_ext]
-            - p_nom.rename(rename).loc[electric_ext]
-        )
+        lhs = p.loc[:, electric_ext] + p.loc[:, heat_ext] - p_nom.loc[electric_ext]
         n.model.add_constraints(lhs <= 0, name="chplink-top_iso_fuel_line_ext")
 
     # top_iso_fuel_line for fixed
@@ -1147,9 +1119,6 @@ def add_pipe_retrofit_constraint(n: pypsa.Network) -> None:
     CH4_per_H2 = 1 / config["sector"]["H2_retrofit_capacity_per_CH4"]
     lhs = p_nom.loc[gas_pipes_i] + CH4_per_H2 * p_nom.loc[h2_retrofitted_i]
     rhs = n.links.p_nom[gas_pipes_i]
-    if not PYPSA_V1:
-        rhs = rhs.rename_axis("Link-ext")
-
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
@@ -1162,10 +1131,6 @@ def add_flexible_egs_constraint(n: pypsa.Network) -> None:
     reservoirs = n.storage_units.query(
         "carrier == 'geothermal heat' and p_nom_extendable"
     )
-    if not PYPSA_V1:
-        new_wells = new_wells.rename_axis("Link-ext")
-        reservoirs = reservoirs.rename_axis("StorageUnit-ext")
-
     reservoir_p_nom = n.model["StorageUnit-p_nom"].loc[reservoirs.index]
     well_p_nom = n.model["Link-p_nom"].loc[new_wells.index]
     lhs = reservoir_p_nom.groupby(reservoirs.bus).sum()
