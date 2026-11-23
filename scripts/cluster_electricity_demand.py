@@ -15,7 +15,6 @@ import pandas as pd
 import xarray as xr
 
 from scripts._helpers import (
-    PYPSA_V1,
     configure_logging,
     sanitize_busmap,
     set_scenario_config,
@@ -35,8 +34,7 @@ if __name__ == "__main__":
     load = xr.open_dataarray(snakemake.input.load)
 
     busmap = pd.read_csv(snakemake.input.busmap, dtype=str)
-    index_col = "name" if PYPSA_V1 else "Bus"
-    busmap = sanitize_busmap(busmap.set_index(index_col).squeeze())
+    busmap = sanitize_busmap(busmap.set_index("name").squeeze())
 
     demand = load.to_dataframe().squeeze(axis=1).unstack(level="time")
     clustered = demand.groupby(busmap).sum().T

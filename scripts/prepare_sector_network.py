@@ -38,7 +38,7 @@ from scripts._helpers import (
     get,
     get_temporal_resolution,
 )
-from scripts.add_electricity import calculate_annuity, flatten
+from scripts.add_electricity import flatten
 from scripts.build_co2_totals import build_co2_totals, build_eea_co2, build_eurostat_co2
 from scripts.build_transport_demand import transport_degree_factor
 from scripts.definitions.heat_sector import HeatSector
@@ -1350,7 +1350,7 @@ def add_afforestation(
     credited = options["afforestation"]["credited_share"]
 
     tech = "afforestation restorative"
-    annuity = calculate_annuity(df["rotation_age"], costs.at[tech, "discount rate"])
+    annuity = pypsa.costs.annuity(costs.at[tech, "discount rate"], df["rotation_age"])
     cost_per_hectare = (
         costs.at[tech, "investment"] * (annuity + costs.at[tech, "FOM"] / 100) * nyears
     )
@@ -4667,6 +4667,7 @@ def add_industry_heat(
     demand: pd.DataFrame,
     costs: pd.DataFrame,
     options: dict,
+    cf_industry: dict,
     spatial: SimpleNamespace,
 ) -> None:
     """
@@ -4689,6 +4690,9 @@ def add_industry_heat(
         Technology cost assumptions
     options : dict
         Sector options with `industry_heat` and `cc_capital_cost_factor`
+    cf_industry : dict
+        Industry options with `solid_biomass_for_industry_cc` and
+        `gas_for_industry_cc`
     spatial : SimpleNamespace
         Spatial resolution of the carriers
     """
@@ -4707,6 +4711,10 @@ def add_industry_heat(
         "hydrogen": (nodes + " H2", "gas boiler steam", "direct firing gas"),
         "heat pump": (nodes, "industrial heat pump high temperature", None),
         "electric boiler": (nodes, "electric boiler steam", None),
+    }
+    with_cc = {
+        "solid biomass": cf_industry["solid_biomass_for_industry_cc"],
+        "gas": cf_industry["gas_for_industry_cc"],
     }
 
     for band, techs in cf["technologies"].items():
@@ -4745,7 +4753,7 @@ def add_industry_heat(
                 )
             n.add("Link", nodes, suffix=f" {name}", carrier=name, **link)
 
-            if tech not in ["solid biomass", "gas"]:
+            if not with_cc.get(tech, False):
                 continue
 
             co2 = costs.at[tech, "CO2 intensity"]
@@ -5098,7 +5106,9 @@ def add_industry(
         )
 
     if options["industry_heat"]["enable"]:
-        add_industry_heat(n, nodes, industrial_demand / nhours, costs, options, spatial)
+        add_industry_heat(
+            n, nodes, industrial_demand / nhours, costs, options, cf_industry, spatial
+        )
 
     n.add(
         "Bus",
@@ -6415,7 +6425,7 @@ def add_enhanced_geothermal(
     lt = costs.at["geothermal", "lifetime"]
     FOM = costs.at["geothermal", "FOM"] / 100
 
-    egs_annuity = calculate_annuity(lt, dr)
+    egs_annuity = pypsa.costs.annuity(dr, lt)
 
     # under egs optimism, the expected cost reductions also cover costs for ORC
     # hence, the ORC costs are no longer taken from technology-data
@@ -6435,7 +6445,7 @@ def add_enhanced_geothermal(
         "Error in EGS cost, negative values found."
     )
 
-    orc_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
+    orc_annuity = pypsa.costs.annuity(dr, costs.at["organic rankine cycle", "lifetime"])
     orc_capital_cost = (orc_annuity + FOM / (1 + FOM)) * orc_capex * Nyears
 
     efficiency_orc = costs.at["organic rankine cycle", "electricity-input"]

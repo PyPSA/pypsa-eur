@@ -201,7 +201,8 @@ def _write_defaults_yaml(path: str, config: ConfigSchema, defaults: dict) -> Non
     def str_representer(dumper, data):
         """Use block style for multiline, quotes for special chars, plain otherwise."""
         TAG = "tag:yaml.org,2002:str"
-        data = str(data)  # Ensure it's a plain string (not e.g. Path)
+        # Plain string; Paths with "/" on every OS
+        data = data.as_posix() if isinstance(data, pathlib.PurePath) else str(data)
         if "\n" in data:
             return dumper.represent_scalar(TAG, data, style="|")
         if data == "" or any(c in data for c in ":{}[]&*#?|-<>=!%@"):
@@ -227,7 +228,7 @@ def _write_defaults_yaml(path: str, config: ConfigSchema, defaults: dict) -> Non
         data.yaml_set_comment_before_after_key(key, before=f"\ndocs in {docs_url}")
 
     # Write to file
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         yaml_writer.dump(data, f)
 
 
@@ -376,7 +377,7 @@ def generate_config_schema(path: str = "config/schema.{configname}.json") -> dic
     schema = remove_nested_titles(schema)
     schema = remove_object_type(schema)
     schema = convert_rst_to_markdown(schema)
-    with open(path.format(configname=config._name), "w") as f:
+    with open(path.format(configname=config._name), "w", encoding="utf-8") as f:
         json.dump(schema, f, indent=2)
         f.write("\n")
     return schema
