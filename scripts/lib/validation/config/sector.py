@@ -727,9 +727,9 @@ class SectorConfig(BaseModel):
         description="The efficiency of oil-powered machinery in the conversion of oil to meet agricultural needs.",
     )
 
-    shipping_hydrogen_liquefaction: bool = Field(
-        False,
-        description="Whether to include liquefaction costs for hydrogen demand in shipping.",
+    shipping_endogenous: list[Literal["hydrogen", "methanol", "oil", "lng"]] = Field(
+        default_factory=list,
+        description="Fuels with an optimised instead of an exogenous share. They compete for the shipping demand that the `shipping_*_share` settings of the other fuels leave uncovered, and each supplies a constant output over the year. Ship costs do not differ by fuel, so the cheapest fuel tends to supply all of this demand.",
     )
     shipping_hydrogen_share: dict[int, float] = Field(
         default_factory=lambda: {
@@ -767,13 +767,37 @@ class SectorConfig(BaseModel):
         },
         description="The share of ships powered by oil in a given year.",
     )
+    shipping_lng_share: dict[int, float] = Field(
+        default_factory=lambda: {
+            2020: 0,
+            2025: 0,
+            2030: 0,
+            2035: 0,
+            2040: 0,
+            2045: 0,
+            2050: 0,
+        },
+        description="The share of ships powered by LNG in a given year. The costs and electricity demand of gas liquefaction are included.",
+    )
     shipping_methanol_efficiency: float = Field(
-        0.46,
-        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://web.archive.org/web/20220119063102/https://iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_.",
+        0.40,
+        description="The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). Equal to oil-powered ships, as methanol engines and diesel engines consume similar amounts of fuel energy according to the `Fourth IMO GHG Study 2020 <https://www.imo.org/en/ourwork/environment/pages/fourth-imo-greenhouse-gas-study-2020.aspx>`_ (Table 19).",
     )
     shipping_oil_efficiency: float = Field(
         0.40,
         description="The efficiency of oil-powered ships in the conversion of oil to meet shipping needs (propulsion). Base value derived from 2011.",
+    )
+    shipping_lng_efficiency: float = Field(
+        0.40,
+        description="The efficiency of LNG-powered ships in the conversion of LNG to meet shipping needs (propulsion), including the fuel lost as methane slip. Equal to oil-powered ships for the same reason as `shipping_methanol_efficiency`.",
+    )
+    shipping_lng_methane_slip: float = Field(
+        0.031,
+        description="Share of LNG that leaves the ship engine unburnt as methane. It counts as CO2 equivalent towards the CO2 limit. Default for LNG Otto dual-fuel medium-speed engines from FuelEU Maritime (Regulation (EU) 2023/1805, Annex II).",
+    )
+    shipping_methane_gwp100: float = Field(
+        25.0,
+        description="100-year global warming potential of methane to convert the methane slip of LNG-powered ships to CO2 equivalent.",
     )
 
     aviation_demand_factor: float = Field(
