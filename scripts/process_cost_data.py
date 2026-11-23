@@ -18,7 +18,7 @@ import logging
 import pandas as pd
 import pypsa
 
-from scripts.add_electricity import STORE_LOOKUP, calculate_annuity
+from scripts.add_electricity import STORE_LOOKUP
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +163,7 @@ def prepare_costs(
             )
             logger.info(f"Overwriting {attr} with:\n{overwrites}")
 
-    annuity_factor = calculate_annuity(costs["lifetime"], costs["discount rate"])
+    annuity_factor = pypsa.costs.annuity(costs["discount rate"], costs["lifetime"])
     annuity_factor_fom = annuity_factor + costs["FOM"] / 100.0
     costs["capital_cost"] = annuity_factor_fom * costs["investment"] * nyears
 
