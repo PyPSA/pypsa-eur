@@ -55,11 +55,7 @@ transmission_projects:
     manual: false
 
 sector:
-  transmission_efficiency:
-    enable:
-    - H2 pipeline
-    - gas pipeline
-    - electricity distribution grid
+  enabled: false
 
 clustering:
   mode: administrative
@@ -77,3 +73,6 @@ solving:
   solver:
     name: highs
     options: highs-simplex
+  options:
+    load_shedding:
+      enable: true
