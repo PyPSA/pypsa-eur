@@ -50,15 +50,8 @@ def get_compose_inputs(w):
             else []
         ),
         co2_price=resources("co2_price.csv"),
-        eurostat=(
-            resources("eurostat_energy_balances.csv")
-            if cfg["co2_budget"]["relative"]
-            else []
-        ),
-        co2=(
-            rules.retrieve_ghg_emissions.output["csv"]
-            if cfg["co2_budget"]["relative"]
-            else []
+        co2_totals=(
+            resources("co2_totals.csv") if cfg["co2_budget"]["relative"] else []
         ),
         load=resources("electricity_demand.nc"),
         snapshot_weightings=resources("snapshot_weightings.csv"),
@@ -111,6 +104,18 @@ def get_compose_inputs(w):
             ),
             hourly_heat_demand_total=resources("hourly_heat_demand_total.nc"),
             industrial_production=resources("industrial_production_{horizon}.csv"),
+            industry_sector_ratios=(
+                resources("industry_sector_ratios_{horizon}.csv")
+                if "cement" in sector["endogenous_sectors"]
+                else []
+            ),
+            industry_plants=(
+                resources("industry_plants.csv")
+                if cfg["existing_capacities"]["industry_plants"]
+                and foresight != "overnight"
+                and horizon == horizons[0]
+                else []
+            ),
             district_heat_share=resources("district_heat_share_{horizon}.csv"),
             heating_efficiencies=resources("heating_efficiencies.csv"),
             existing_heating_distribution=resources(

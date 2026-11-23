@@ -247,7 +247,8 @@ Configuration for `enable` settings.
 Carbon budgets share one schema for all foresight modes. The `relative` flag
 selects whether yearly entries inside `upper`/`lower` are interpreted as
 fractions of the 1990 baseline (`true`) or absolute GtCO₂/year
-(`false`). Enable `upper` and/or `lower` to enforce those caps only for
+(`false`). The baseline excludes international aviation and shipping unless
+`international_bunkers` is set. Enable `upper` and/or `lower` to enforce those caps only for
 the explicitly listed years or a total budget across all [planning_horizons](#planning_horizons_cf).
 
 Configuration for `co2_budget` settings.

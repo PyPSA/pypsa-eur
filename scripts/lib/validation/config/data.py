@@ -197,6 +197,10 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="GEM Global Cement and Concrete Tracker data source configuration.",
     )
+    gem_gct: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="GEM Global Chemicals Tracker data source configuration.",
+    )
     instrat_co2_prices: _DataSourceConfig = Field(
         default_factory=lambda: _DataSourceConfig(source="primary"),
         description="Instrat CO2 prices data source configuration.",
@@ -303,7 +307,15 @@ class DataConfig(BaseModel):
     )
     ghg_emissions: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
-        description="GHG emissions data source configuration.",
+        description="EEA GHG emissions data source configuration.",
+    )
+    ghg_emissions_energy_community: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="EEA GHG emissions of Energy Community Contracting Parties data source configuration.",
+    )
+    desnz_ghg_emissions: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="DESNZ UK GHG emissions data source configuration.",
     )
     gebco: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,

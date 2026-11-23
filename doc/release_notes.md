@@ -5,9 +5,25 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Compatibility: PyPSA-Eur now requires PyPSA 1.1 or newer. The compatibility code for older PyPSA versions is removed, and annuities are computed with `pypsa.costs.annuity` ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436)).
 * Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).
 * Fix: `pixi run generate-config` now runs on Windows: read and write files as UTF-8 and write paths with `/`.
 * Fix: `build_gas_network` no longer drops the capacity and length of gas pipelines that need no correction. This changes default results ([#2433](https://github.com/PyPSA/pypsa-eur/pull/2433)).
+* Feature: Add LNG as shipping fuel (`sector: shipping_lng_share`) and optionally optimise the shares of the fuels listed in `sector: shipping_endogenous`. Hydrogen for shipping is now always liquefied, including the electricity demand, `sector: shipping_hydrogen_liquefaction` is removed and the carrier `H2 for shipping` is renamed to `shipping hydrogen` ([#2317](https://github.com/PyPSA/pypsa-eur/pull/2317)).
+* Change: Methanol-powered ships are now as efficient as oil-powered ships (`sector: shipping_methanol_efficiency`), following the Fourth IMO GHG Study 2020. This changes default results ([#2317](https://github.com/PyPSA/pypsa-eur/pull/2317)).
+* **Breaking:** Historical emissions now come from the latest national inventories (1990-2024): EEA for EU, EEA and Energy Community countries (`ghg_emissions`, new `ghg_emissions_energy_community`) and DESNZ for Great Britain (new `desnz_ghg_emissions`). [build_co2_totals][] writes emissions per country, year and sector, which [compose_network][] and [plot_summary][] read. The baseline for relative targets still excludes international aviation and shipping; the new option `co2_budget: international_bunkers` includes them. `co2_budget: emissions_scope` accepts only `CO2` and `All greenhouse gases - (CO2 equivalent)`. `energy: base_emissions_year` is removed ([#2337](https://github.com/PyPSA/pypsa-eur/pull/2337)).
+* Feature: New option `sector: endogenous_sectors` to optimise primary steel and cement production instead of using exogenous energy demand. Steel comes from blast furnaces or from direct reduction with electric arc furnaces, cement from kilns. Both can be retrofitted with carbon capture ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Feature: New option `existing_capacities: industry_plants` to add existing steel, cement, ammonia and methanol plants in myopic and perfect foresight runs ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Feature: New option `sector: methanol: meoh_to_oa` to add methanol-to-olefins/aromatics as an alternative to naphtha for high-value chemicals ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Data: Update the Global Energy Monitor steel and cement trackers to the releases of September and July 2026, and add the iron unit data of the steel tracker and the Global Chemicals Tracker. The trackers are now only available from the archive ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Data: Ammonia, methanol and high-value chemicals production is now distributed by plant capacities from the Global Chemicals Tracker, which replaces `data/ammonia_plants.csv`. This changes the regional distribution of industrial production ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+* Fix: Ammonia production of countries without listed ammonia plants is no longer dropped. These countries now use the distribution key of the chemical industry ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
 * Fix: Gas pipelines ending in regions without an onshore region, e.g. offshore junctions at high resolution, now get gas and H2 buses instead of leaving the network inconsistent ([#2429](https://github.com/PyPSA/pypsa-eur/pull/2429)).
 * Fix: Offshore wind profiles no longer fail for clustered buses without an onshore region; the nearest onshore regions then serve as the shoreline ([#2425](https://github.com/PyPSA/pypsa-eur/pull/2425)).
 * Fix: Hydro reservoir storage (`renewable: hydro: hydro_max_hours`) no longer depends on the first unit of each country, and the default now matches the country totals. This changes default results ([#2428](https://github.com/PyPSA/pypsa-eur/pull/2428)).
@@ -16,6 +32,7 @@
 * Feature: Add option `sector: unsustainable_biomass_upstream_emissions` to count the cultivation emissions of unsustainable bioliquids, including N2O in CO2 equivalents. ([#2405](https://github.com/PyPSA/pypsa-eur/pull/2405))
 * Fix: Hydro reservoirs now dispatch with an efficiency of 1 instead of the hydro efficiency from technology-data (0.9). Their inflow is scaled to EIA generation, which is already net generation after accounting for turbine losses, so reservoir generation was about 10 % below EIA ([#2391](https://github.com/PyPSA/pypsa-eur/issues/2391)).
 * Feature: Industrial electricity demand follows hourly load profiles per industry branch from [FfE](https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/) instead of a flat profile. Enabled by default; disable with `industry: temporal_electricity_industry_load: false` ([#1875](https://github.com/PyPSA/pypsa-eur/pull/1875)).
+
 * Feature: New option `sector: industry_heat: enable` to optimise the supply of industry process heat above 100 °C in three temperature bands with boilers, direct firing, heat pumps and carbon capture, instead of using exogenous fuel shares. The steel sector is not covered ([#1943](https://github.com/PyPSA/pypsa-eur/pull/1943)).
 
 * Feature: New option `sector: waste_spatial` to model waste for waste-to-energy plants per bus region, with transport if `sector: biomass_transport` is enabled. By default, waste is now collected in one European bus ([#1654](https://github.com/PyPSA/pypsa-eur/pull/1654)).

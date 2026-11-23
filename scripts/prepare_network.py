@@ -27,9 +27,9 @@ from collections.abc import Mapping
 import numpy as np
 import pandas as pd
 import pypsa
+from pypsa.common import expand_series
 
 from scripts._helpers import (
-    PYPSA_V1,
     get,
 )
 from scripts.co2_budget import (
@@ -38,13 +38,6 @@ from scripts.co2_budget import (
     co2_limit_name,
 )
 from scripts.prepare_sector_network import co2_emissions_year, set_temporal_aggregation
-
-# Allow for PyPSA versions <0.35
-if PYPSA_V1:
-    from pypsa.common import expand_series
-else:
-    from pypsa.descriptors import expand_series
-
 
 idx = pd.IndexSlice
 
@@ -214,10 +207,9 @@ def apply_co2_budget_constraints(
         if upper_raw is not None or lower_raw is not None:
             baseline_1990 = co2_emissions_year(
                 countries=params.countries,
-                input_eurostat=inputs["eurostat"],
+                co2_totals=inputs["co2_totals"],
                 options=params.sector,
-                emissions_scope=co2_budget["emissions_scope"],
-                input_co2=inputs["co2"],
+                international_bunkers=co2_budget["international_bunkers"],
                 year=1990,
             )
 

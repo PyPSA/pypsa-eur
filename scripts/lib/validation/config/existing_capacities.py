@@ -67,6 +67,26 @@ class ExistingCapacitiesConfig(ConfigModel):
         ],
         description="Intervals to group existing capacities for heat.",
     )
+    industry_plants: bool = Field(
+        False,
+        description="Add existing ammonia and methanol plants, and existing steel and cement plants for `sector: endogenous_sectors`, in the first horizon of myopic and perfect foresight runs.",
+    )
+    blast_furnace_announced_retirement: bool = Field(
+        True,
+        description="Retire existing blast furnaces in their announced retirement year. Otherwise, they retire at the end of their technical lifetime.",
+    )
+    grouping_years_industry: list[int] = Field(
+        default_factory=lambda: [
+            1995,
+            2000,
+            2005,
+            2010,
+            2015,
+            2020,
+            2025,
+        ],
+        description="Intervals to group existing capacities for industry plants.",
+    )
     threshold_capacity: float = Field(
         10,
         description="Capacities (MW) of generators and links below threshold are removed during add_existing_capacities.",

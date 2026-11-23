@@ -8,7 +8,8 @@
 Transport comprises land transport, aviation and shipping. The fuel mix of
 transport is exogenous, because it follows vehicle fleets and policy rather
 than energy system cost, and it is given per planning year so that it can
-trace a transition path [@brownSynergiesSector2018a].
+trace a transition path [@brownSynergiesSector2018a]. Only for shipping can
+the fuel mix optionally be optimised.
 
 ## Demand
 
@@ -42,9 +43,22 @@ engines add an oil demand, see [Oil](oil.md).
 **Aviation** consumes kerosene. It is an oil demand that can be met by fossil
 kerosene or synthetic fuels, and optionally by kerosene made from methanol.
 
-**Shipping** can run on oil, methanol or hydrogen, with prescribed shares per
-planning year. The energy for liquefying hydrogen can be included where
-hydrogen is used.
+**Shipping** can run on oil, methanol, hydrogen or liquefied natural gas
+(LNG), with prescribed shares per planning year. LNG is gas from the gas
+network that is liquefied with electricity, see [Methane](methane.md). LNG
+engines release a share of the fuel unburnt, and this methane slip counts
+towards the emission limit in CO~2~ equivalents. Methanol and LNG ships
+are assumed to be as efficient as oil ships [@imoFourthGHG2020]. Hydrogen is
+liquefied with electricity too.
+
+Optionally, the shares of selected fuels are optimised instead. These fuels
+compete for the demand that the prescribed shares of the other fuels leave
+uncovered, and each supplies a constant output over the year.
+
+!!! warning "Optimised shipping fuels ignore the fleet"
+    Ship costs do not differ by fuel and the existing fleet is not tracked.
+    The cheapest fuel therefore tends to take all of the optimised demand,
+    and the mix can change abruptly between planning years.
 
 ## Storage
 
