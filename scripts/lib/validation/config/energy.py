@@ -20,7 +20,3 @@ class EnergyConfig(ConfigModel):
         2023,
         description="The year for the sector energy use. The year must be available in the Eurostat report.",
     )
-    base_emissions_year: int = Field(
-        1990,
-        description="The base year for the sector emissions. See `European Environment Agency (EEA) <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_.",
-    )
