@@ -34,7 +34,6 @@ from scripts.add_electricity import flatten
 from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
-idx = pd.IndexSlice
 
 
 def add_brownfield(
@@ -281,7 +280,7 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
         pd.Series(dr, index=dr).where(lambda x: x.isin(n.snapshots), pd.NA).ffill()
     )
 
-    for carrier in params["renewable_carriers"]:
+    for carrier in params.electricity["renewable_carriers"]:
         if carrier == "hydro":
             continue
 
@@ -470,7 +469,8 @@ def main(
 
     update_heat_pump_efficiency(n, n_previous, current_horizon)
 
-    if params.enable_ptes and params.dynamic_ptes_capacity:
+    ptes = params.sector["district_heating"]["ptes"]
+    if ptes["enable"] and ptes["dynamic_capacity"]:
         update_dynamic_ptes_capacity(n, n_previous, current_horizon)
 
     logger.info(
@@ -481,9 +481,9 @@ def main(
         n,
         n_previous,
         current_horizon,
-        h2_retrofit=params["h2_retrofit"],
-        h2_retrofit_capacity_per_ch4=params["h2_retrofit_capacity_per_ch4"],
-        capacity_threshold=params["capacity_threshold"],
+        h2_retrofit=params.sector["H2_retrofit"],
+        h2_retrofit_capacity_per_ch4=params.sector["H2_retrofit_capacity_per_CH4"],
+        capacity_threshold=params.existing_capacities["threshold_capacity"],
     )
     update_transmission_limit(
         n, get(params.electricity["transmission_limit"], current_horizon)
