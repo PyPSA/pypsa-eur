@@ -99,9 +99,10 @@ sources far below the forward temperature.
 Waste heat from conversion processes is a further source: electrolysis, fuel
 cells, Fischer-Tropsch synthesis, methanolisation and ammonia synthesis reject
 heat that can be fed into district heating where these plants are located.
-Each process has an assumed waste heat temperature and is treated like the
-other heat sources; waste heat of electrolysers and fuel cells (70 °C by
-default) usually needs preheating and a heat pump.
+Each process has an assumed waste heat temperature. Above the forward
+temperature all waste heat is usable. Between return and forward temperature,
+as usual for electrolysers and fuel cells (70 °C by default), only the
+preheating share is usable; no heat pump recovers the rest.
 
 In transition pathways the existing heating stock matters. Installed
 capacities of boilers, heat pumps and resistive heaters are taken from a

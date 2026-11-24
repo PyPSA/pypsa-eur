@@ -5110,7 +5110,7 @@
             },
             "limited_heat_sources": {
               "additionalProperties": true,
-              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile.",
+              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile. Waste heat needs no heat pump source entry; its temperature only sets the usable share (see `use_*_waste_heat`).",
               "type": "object"
             },
             "direct_utilisation_heat_sources": {
@@ -5141,7 +5141,7 @@
             },
             "type": "array"
           },
-          "description": "Heat sources by area. For `urban central`, besides the heat pump sources `air`, `geothermal`, `river_water`, `lake_water`, `sea_water` and `ptes`, the waste heat of Power-to-X processes must be listed to be used (see `use_*_waste_heat`).",
+          "description": "Heat pump sources by area.",
           "type": "object"
         },
         "residential_heat": {
@@ -8179,7 +8179,7 @@
         },
         "limited_heat_sources": {
           "additionalProperties": true,
-          "description": "Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile.",
+          "description": "Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile. Waste heat needs no heat pump source entry; its temperature only sets the usable share (see `use_*_waste_heat`).",
           "type": "object"
         },
         "direct_utilisation_heat_sources": {
@@ -13159,7 +13159,7 @@
             },
             "limited_heat_sources": {
               "additionalProperties": true,
-              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile.",
+              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile. Waste heat needs no heat pump source entry; its temperature only sets the usable share (see `use_*_waste_heat`).",
               "type": "object"
             },
             "direct_utilisation_heat_sources": {
@@ -13190,7 +13190,7 @@
             },
             "type": "array"
           },
-          "description": "Heat sources by area. For `urban central`, besides the heat pump sources `air`, `geothermal`, `river_water`, `lake_water`, `sea_water` and `ptes`, the waste heat of Power-to-X processes must be listed to be used (see `use_*_waste_heat`).",
+          "description": "Heat pump sources by area.",
           "type": "object"
         },
         "residential_heat": {

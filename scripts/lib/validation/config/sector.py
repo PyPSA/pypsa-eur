@@ -111,7 +111,7 @@ class _DistrictHeatingConfig(ConfigModel):
             "sabatier_waste": {"constant_temperature_celsius": 200},
             "methanolisation_waste": {"constant_temperature_celsius": 200},
         },
-        description="Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile.",
+        description="Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile. Waste heat needs no heat pump source entry; its temperature only sets the usable share (see `use_*_waste_heat`).",
     )
     direct_utilisation_heat_sources: list[str] = Field(
         default_factory=lambda: ["geothermal"],
@@ -587,19 +587,11 @@ class SectorConfig(BaseModel):
 
     heat_pump_sources: dict[str, list[str]] = Field(
         default_factory=lambda: {
-            "urban central": [
-                "air",
-                "electrolysis_waste",
-                "fuel_cell_waste",
-                "fischer_tropsch_waste",
-                "haber_bosch_waste",
-                "sabatier_waste",
-                "methanolisation_waste",
-            ],
+            "urban central": ["air"],
             "urban decentral": ["air"],
             "rural": ["air", "ground"],
         },
-        description="Heat sources by area. For `urban central`, besides the heat pump sources `air`, `geothermal`, `river_water`, `lake_water`, `sea_water` and `ptes`, the waste heat of Power-to-X processes must be listed to be used (see `use_*_waste_heat`).",
+        description="Heat pump sources by area.",
     )
 
     residential_heat: _ResidentialHeatConfig = Field(

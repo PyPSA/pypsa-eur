@@ -3488,12 +3488,6 @@ def add_heat(
             source_bus = None
 
             if heat_source in limited_heat_sources:
-                if heat_source in WASTE_HEAT_PROCESSES and bool(
-                    direct_heat_profile.sel(heat_source=heat_source, name=nodes).all()
-                ):
-                    # hot waste heat feeds district heating directly in add_waste_heat()
-                    continue
-
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
                 source_bus = nodes + f" {heat_carrier}"
@@ -3506,21 +3500,7 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-            if heat_source in WASTE_HEAT_PROCESSES:
-                # waste heat is a by-product that must not constrain the process
-                n.add(
-                    "Generator",
-                    source_bus + " vent",
-                    bus=source_bus,
-                    location=nodes,
-                    carrier=f"{heat_system} heat vent",
-                    p_nom_extendable=True,
-                    p_max_pu=0,
-                    p_min_pu=-1,
-                    unit="MWh_th",
-                )
-
-            elif heat_source in limited_heat_sources:
+            if heat_source in limited_heat_sources:
                 # get potential
                 p_max_source = pd.read_csv(
                     heat_source_profile_files[heat_source],
@@ -3576,7 +3556,6 @@ def add_heat(
                 source_bus is not None
                 and heat_source
                 in options["district_heating"]["direct_utilisation_heat_sources"]
-                + list(WASTE_HEAT_PROCESSES)
                 and bool(
                     direct_heat_profile.sel(heat_source=heat_source, name=nodes).any()
                 )
@@ -6329,42 +6308,17 @@ def add_waste_heat(
     n: pypsa.Network,
     costs: pd.DataFrame,
     options: dict,
+    direct_heat_source_utilisation_profile_file: str,
+    heat_source_preheating_profile_file: str,
 ) -> None:
     """
-    Add industrial waste heat utilization capabilities to district heating systems.
+    Add waste heat of Power-to-X processes to district heating.
 
-    Modifies the network by adding waste heat outputs from various industrial processes
-    to urban central heating systems. The amount of waste heat that can be utilized
-    is controlled by efficiency parameters and option flags. Waste heat feeds the
-    heat source bus created in `add_heat()` if its temperature requires preheating
-    or a heat pump, and the district heating bus otherwise.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        The PyPSA network container object
-    costs : pd.DataFrame
-        DataFrame containing technology cost and efficiency parameters
-    options : dict
-        Configuration dictionary containing the waste heat sources listed in
-        `heat_pump_sources` and the share of waste heat that can be used:
-        - use_fischer_tropsch_waste_heat
-        - use_methanation_waste_heat
-        - use_haber_bosch_waste_heat
-        - use_methanolisation_waste_heat
-        - use_electrolysis_waste_heat
-        - use_fuel_cell_waste_heat
-
-    Returns
-    -------
-    None
-        Modifies the network object in-place by adding waste heat connections
-
-    Notes
-    -----
-    - Waste heat is only added to buses with carrier "urban central heat"
-    - The modification adds additional output buses (bus2, bus3, or bus4) to
-      existing links representing industrial processes
+    The waste heat is an additional output of the process link at the district
+    heating bus. The usable heat is the waste heat of the process times the
+    `use_*_waste_heat` option times the share that the assumed waste heat
+    temperature allows: all of it above the forward temperature, the
+    preheating share between return and forward temperature, none below.
     """
     logger.info("Add possibility to use industrial waste heat in district heating")
 
@@ -6382,12 +6336,12 @@ def add_waste_heat(
         "electrolysis_waste": options["use_electrolysis_waste_heat"],
         "fuel_cell_waste": options["use_fuel_cell_waste_heat"],
     }
+    temperature_share = xr.open_dataarray(
+        direct_heat_source_utilisation_profile_file
+    ) + xr.open_dataarray(heat_source_preheating_profile_file)
     link_carriers = n.links.carrier.unique()
 
-    for heat_source in options["heat_pump_sources"]["urban central"]:
-        if heat_source not in WASTE_HEAT_PROCESSES:
-            continue
-        carrier, port = WASTE_HEAT_PROCESSES[heat_source]
+    for heat_source, (carrier, port) in WASTE_HEAT_PROCESSES.items():
         if not usable_share[heat_source] or carrier not in link_carriers:
             continue
         links = urban_central + " " + carrier
@@ -6403,13 +6357,19 @@ def add_waste_heat(
             "electrolysis_waste": costs.at["electrolysis", "efficiency-heat"],
             "fuel_cell_waste": 0.95 - n.links.loc[links, "efficiency"],
         }[heat_source]
+        efficiency = efficiency * usable_share[heat_source]
 
-        source_bus = urban_central + f" urban central {heat_source} heat"
-        if not source_bus.isin(n.buses.index).all():
-            source_bus = urban_central + " urban central heat"
-
-        n.links.loc[links, f"bus{port}"] = source_bus
-        n.links.loc[links, f"efficiency{port}"] = efficiency * usable_share[heat_source]
+        share = (
+            temperature_share.sel(heat_source=heat_source, name=urban_central)
+            .to_pandas()
+            .reindex(index=n.snapshots)
+            .set_axis(links, axis=1)
+        )
+        n.links.loc[links, f"bus{port}"] = urban_central + " urban central heat"
+        if (share == 1).all(axis=None):
+            n.links.loc[links, f"efficiency{port}"] = efficiency
+        else:
+            n.links_t[f"efficiency{port}"][links] = share * efficiency
 
 
 def add_agriculture(
@@ -7376,7 +7336,13 @@ def main(
         )
 
     if options["heating"]:
-        add_waste_heat(n, costs, options)
+        add_waste_heat(
+            n,
+            costs,
+            options,
+            direct_heat_source_utilisation_profile_file=inputs.direct_heat_source_utilisation_profiles,
+            heat_source_preheating_profile_file=inputs.heat_source_preheating_profiles,
+        )
 
     if options["agriculture"]:
         add_agriculture(

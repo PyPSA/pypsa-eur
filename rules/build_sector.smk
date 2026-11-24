@@ -1744,7 +1744,6 @@ def input_heat_source_power(w):
         in config_provider("sector", "district_heating", "limited_heat_sources")(
             w
         ).keys()
-        and not heat_source_name.endswith("_waste")
     }
 
 
