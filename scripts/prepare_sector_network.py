@@ -45,14 +45,14 @@ from scripts.definitions.heat_system import HeatSystem
 
 logger = logging.getLogger(__name__)
 
-# waste heat source: (carrier of the process link, port of the waste heat output)
+# waste heat source: (carrier of the process link, port of the waste heat, option)
 WASTE_HEAT_PROCESSES = {
-    "fischer_tropsch_waste": ("Fischer-Tropsch", 3),
-    "sabatier_waste": ("Sabatier", 3),
-    "haber_bosch_waste": ("Haber-Bosch", 3),
-    "methanolisation_waste": ("methanolisation", 4),
-    "electrolysis_waste": ("H2 Electrolysis", 2),
-    "fuel_cell_waste": ("H2 Fuel Cell", 2),
+    "fischer_tropsch_waste": ("Fischer-Tropsch", 3, "use_fischer_tropsch_waste_heat"),
+    "sabatier_waste": ("Sabatier", 3, "use_methanation_waste_heat"),
+    "haber_bosch_waste": ("Haber-Bosch", 3, "use_haber_bosch_waste_heat"),
+    "methanolisation_waste": ("methanolisation", 4, "use_methanolisation_waste_heat"),
+    "electrolysis_waste": ("H2 Electrolysis", 2, "use_electrolysis_waste_heat"),
+    "fuel_cell_waste": ("H2 Fuel Cell", 2, "use_fuel_cell_waste_heat"),
 }
 
 
@@ -3484,23 +3484,9 @@ def add_heat(
                 )
             )
 
-            limited_heat_sources = options["district_heating"]["limited_heat_sources"]
             source_bus = None
 
-            if heat_source in limited_heat_sources:
-                # add resource
-                heat_carrier = f"{heat_system} {heat_source} heat"
-                source_bus = nodes + f" {heat_carrier}"
-                n.add("Carrier", heat_carrier)
-                n.add(
-                    "Bus",
-                    nodes,
-                    location=nodes,
-                    suffix=f" {heat_carrier}",
-                    carrier=heat_carrier,
-                )
-
-            if heat_source in limited_heat_sources:
+            if heat_source in options["district_heating"]["limited_heat_sources"]:
                 # get potential
                 p_max_source = pd.read_csv(
                     heat_source_profile_files[heat_source],
@@ -3519,6 +3505,18 @@ def add_heat(
                         index=n.snapshots,
                         columns=nodes,
                     )
+
+                # add resource
+                heat_carrier = f"{heat_system} {heat_source} heat"
+                source_bus = nodes + f" {heat_carrier}"
+                n.add("Carrier", heat_carrier)
+                n.add(
+                    "Bus",
+                    nodes,
+                    location=nodes,
+                    suffix=f" {heat_carrier}",
+                    carrier=heat_carrier,
+                )
 
                 # TODO: implement better handling of zero-cost heat sources
                 try:
@@ -3552,34 +3550,31 @@ def add_heat(
                     p_max_pu=p_max_source / p_max_source.max(),
                 )
 
-            if (
-                source_bus is not None
-                and heat_source
-                in options["district_heating"]["direct_utilisation_heat_sources"]
-                and bool(
+                if heat_source in options["district_heating"][
+                    "direct_utilisation_heat_sources"
+                ] and bool(
                     direct_heat_profile.sel(heat_source=heat_source, name=nodes).any()
-                )
-            ):
-                # 1 if source temperature exceeds forward temperature, 0 otherwise:
-                efficiency_direct_utilisation = (
-                    direct_heat_profile.sel(
-                        heat_source=heat_source,
-                        name=nodes,
+                ):
+                    # 1 if source temperature exceeds forward temperature, 0 otherwise:
+                    efficiency_direct_utilisation = (
+                        direct_heat_profile.sel(
+                            heat_source=heat_source,
+                            name=nodes,
+                        )
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
                     )
-                    .to_pandas()
-                    .reindex(index=n.snapshots)
-                )
-                # add link for direct usage of heat source when source temperature exceeds forward temperature
-                n.add(
-                    "Link",
-                    nodes,
-                    suffix=f" {heat_system} {heat_source} heat direct utilisation",
-                    bus0=nodes + f" {heat_carrier}",
-                    bus1=nodes + f" {heat_system} heat",
-                    efficiency=efficiency_direct_utilisation,
-                    carrier=f"{heat_system} {heat_source} heat direct utilisation",
-                    p_nom_extendable=True,
-                )
+                    # add link for direct usage of heat source when source temperature exceeds forward temperature
+                    n.add(
+                        "Link",
+                        nodes,
+                        suffix=f" {heat_system} {heat_source} heat direct utilisation",
+                        bus0=nodes + f" {heat_carrier}",
+                        bus1=nodes + f" {heat_system} heat",
+                        efficiency=efficiency_direct_utilisation,
+                        carrier=f"{heat_system} {heat_source} heat direct utilisation",
+                        p_nom_extendable=True,
+                    )
 
             if (
                 not options["district_heating"]["ptes"]["supplemental_heating"][
@@ -3607,36 +3602,37 @@ def add_heat(
                 source_bus = nodes + f" {heat_system} water pits"
 
             cop_clipped = cop_heat_pump.clip(lower=0.001)
-            heat_pump = dict(
-                bus0=nodes + f" {heat_system} heat",
-                bus1=nodes,
-                efficiency=1 / cop_clipped,
-            )
-            if source_bus is not None:
-                heat_pump["bus2"] = source_bus
-                heat_pump["efficiency2"] = (1 - 1 / cop_clipped).clip(lower=0)
+            p_min_pu = -cop_heat_pump / cop_clipped
 
             if source_bus is not None and heat_source in preheating_profile.heat_source:
-                # share of the source heat that preheats the return flow
+                # The source preheats the return flow before the heat pump. The
+                # link output and its COP include this heat, so that p_nom
+                # remains the heat output of the heat pump alone.
                 preheating = (
                     preheating_profile.sel(heat_source=heat_source, name=nodes)
                     .to_pandas()
                     .reindex(index=n.snapshots)
                 )
-                heat_pump["bus3"] = nodes + f" {heat_system} heat"
-                heat_pump["efficiency3"] = (
-                    -heat_pump["efficiency2"] * preheating / (1 - preheating)
-                )
-                heat_pump["efficiency2"] = heat_pump["efficiency2"] / (1 - preheating)
+                source_heat = (1 - 1 / cop_clipped).clip(lower=0) / (1 - preheating)
+                output_with_preheating = 1 + source_heat * preheating
+                cop_clipped = cop_clipped * output_with_preheating
+                p_min_pu = p_min_pu * output_with_preheating
+
+            heat_pump = dict(efficiency=1 / cop_clipped)
+            if source_bus is not None:
+                heat_pump["bus2"] = source_bus
+                heat_pump["efficiency2"] = (1 - 1 / cop_clipped).clip(lower=0)
 
             n.add(
                 "Link",
                 nodes,
                 suffix=f" {heat_system} {heat_source} heat pump",
+                bus0=nodes + f" {heat_system} heat",
+                bus1=nodes,
                 carrier=f"{heat_system} {heat_source} heat pump",
                 capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                 * overdim_factor,
-                p_min_pu=-cop_heat_pump / cop_clipped,
+                p_min_pu=p_min_pu,
                 p_max_pu=0,
                 p_nom_extendable=True,
                 lifetime=costs.at[costs_name_heat_pump, "lifetime"],
@@ -6328,21 +6324,13 @@ def add_waste_heat(
         return
     urban_central = urban_central.str[: -len(" urban central heat")]
 
-    usable_share = {
-        "fischer_tropsch_waste": options["use_fischer_tropsch_waste_heat"],
-        "sabatier_waste": options["use_methanation_waste_heat"],
-        "haber_bosch_waste": options["use_haber_bosch_waste_heat"],
-        "methanolisation_waste": options["use_methanolisation_waste_heat"],
-        "electrolysis_waste": options["use_electrolysis_waste_heat"],
-        "fuel_cell_waste": options["use_fuel_cell_waste_heat"],
-    }
     temperature_share = xr.open_dataarray(
         direct_heat_source_utilisation_profile_file
     ) + xr.open_dataarray(heat_source_preheating_profile_file)
     link_carriers = n.links.carrier.unique()
 
-    for heat_source, (carrier, port) in WASTE_HEAT_PROCESSES.items():
-        if not usable_share[heat_source] or carrier not in link_carriers:
+    for heat_source, (carrier, port, option) in WASTE_HEAT_PROCESSES.items():
+        if not options[option] or carrier not in link_carriers:
             continue
         links = urban_central + " " + carrier
 
@@ -6356,8 +6344,7 @@ def add_waste_heat(
             / costs.at["methanolisation", "hydrogen-input"],
             "electrolysis_waste": costs.at["electrolysis", "efficiency-heat"],
             "fuel_cell_waste": 0.95 - n.links.loc[links, "efficiency"],
-        }[heat_source]
-        efficiency = efficiency * usable_share[heat_source]
+        }[heat_source] * options[option]
 
         share = (
             temperature_share.sel(heat_source=heat_source, name=urban_central)
