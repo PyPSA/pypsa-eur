@@ -4,7 +4,7 @@
 """
 Build today's industrial final energy demand per country, subsector and carrier in TWh/a.
 
-For EU27 countries, the JRC-IDEES energy balances for the configured `industry: reference_year` give the final energy consumption per subsector, which is grouped into the carriers electricity, gas, liquid, solid, heat, biomass, waste and other, plus hydrogen (zero today). Mining, construction and non-specified industry are merged into "Other industrial sectors", and non-energy feedstock is added to basic chemicals. Basic chemicals are then split into ammonia, chlorine, methanol and high-value chemicals (HVC) using the production volumes from [build_industrial_production_per_country][] and fixed specific consumptions; HVC receives the remainder, clipped at zero. If `industry: ammonia` is enabled, ammonia demand is kept as its own carrier instead of being expressed as hydrogen and electricity.
+For EU27 countries, the JRC-IDEES energy balances for the configured `industry: reference_year` give the final energy consumption per subsector, which is grouped into the carriers electricity, gas, liquid, solid, heat, biomass, waste and other, plus hydrogen (zero today). Mining, construction and non-specified industry are merged into "Other industrial sectors", and non-energy feedstock is added to basic chemicals. Basic chemicals are then split into ammonia, chlorine, methanol and high-value chemicals (HVC) using the production volumes from [build_industrial_production_per_country][] and fixed specific consumptions; HVC receives the remainder after also removing the natural gas of today's ammonia plants (`industry: MWh_CH4_per_tNH3_SMR`), clipped at zero. If `industry: ammonia` is enabled, ammonia demand is kept as its own carrier instead of being expressed as hydrogen and electricity.
 
 Countries outside the EU27 receive the EU27-average energy demand per tonne of production multiplied by their own production. Finally, 75% of the energy consumed in coke ovens, taken from the Eurostat transformation output, is attributed to integrated steelworks ([doi:10.1016/j.erss.2022.102565](https://doi.org/10.1016/j.erss.2022.102565)).
 
@@ -177,6 +177,12 @@ def separate_basic_chemicals(
 
     demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
     demand["HVC"] -= ammonia_exo.unstack().reindex(index=demand.index, fill_value=0.0)
+
+    # today's ammonia is made from natural gas, which is reported in basic chemicals
+    ammonia_gas = pd.DataFrame(
+        {"gas": production["Ammonia"] * params["MWh_CH4_per_tNH3_SMR"]}
+    ).T
+    demand["HVC"] -= ammonia_gas.unstack().reindex(index=demand.index, fill_value=0.0)
 
     demand.drop(columns="Basic chemicals", inplace=True)
 

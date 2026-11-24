@@ -19,18 +19,16 @@ def ratios():
     sectors = ["Cement", "HVC", "Electric arc"]
     columns = pd.MultiIndex.from_product([["BE"], sectors])
     demand = pd.DataFrame(2.0, index=FUELS + ["electricity"], columns=columns)
-    production = pd.DataFrame(1e3, index=["BE"], columns=sectors + ["Ammonia"])
+    production = pd.DataFrame(1e3, index=["BE"], columns=sectors)
     shares = pd.DataFrame(
         [[0.1, 0.2, 0.3, 0.4], [0.5, 0.5, 0.0, 0.0]],
         index=["Cement", "HVC"],
         columns=["heat<100", "heat100-200", "heat200-500", "heat500+"],
     )
-    return build_industry_sector_ratios_endogenous(demand, production, shares, 1.0)[
-        "BE"
-    ]
+    return build_industry_sector_ratios_endogenous(demand, production, shares)["BE"]
 
 
-@pytest.mark.parametrize("sector, heat", [("Cement", 14.0), ("HVC", 11.0)])
+@pytest.mark.parametrize("sector, heat", [("Cement", 14.0), ("HVC", 12.0)])
 def test_fuels_become_heat(ratios, sector, heat):
     assert list(ratios.columns) == ["Cement", "HVC"]
     assert ratios.loc[BANDS, sector].sum() == pytest.approx(heat)

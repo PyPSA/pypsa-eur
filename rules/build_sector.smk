@@ -1164,7 +1164,6 @@ rule build_industry_sector_ratios_endogenous:
         mem_mb=1000,
     params:
         exclude_sectors=config_provider("sector", "industry_heat", "exclude_sectors"),
-        gas_per_ammonia=config_provider("industry", "MWh_CH4_per_tNH3_SMR"),
     script:
         scripts("build_industry_sector_ratios_endogenous.py")
 
@@ -1393,6 +1392,7 @@ rule build_industrial_energy_demand_per_country_today:
             subset=[
                 "reference_year",
                 "MWh_NH3_per_tNH3",
+                "MWh_CH4_per_tNH3_SMR",
                 "MWh_H2_per_tNH3_electrolysis",
                 "MWh_elec_per_tNH3_electrolysis",
                 "MWh_elec_per_tCl",
