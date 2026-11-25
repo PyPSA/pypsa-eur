@@ -1164,7 +1164,6 @@ rule build_industry_sector_ratios_endogenous:
         mem_mb=1000,
     params:
         exclude_sectors=config_provider("sector", "industry_heat", "exclude_sectors"),
-        gas_per_ammonia=config_provider("industry", "MWh_CH4_per_tNH3_SMR"),
     script:
         scripts("build_industry_sector_ratios_endogenous.py")
 
@@ -1346,6 +1345,11 @@ rule build_industrial_electricity_profiles:
     """Builds hourly industrial electricity demand profiles per region from FfE load profiles."""
     input:
         industry_sector_ratios=resources("industry_sector_ratios_{horizon}.csv"),
+        industry_sector_ratios_endogenous=lambda w: (
+            resources("industry_sector_ratios_endogenous.csv")
+            if config_provider("sector", "industry_heat", "enable")(w)
+            else []
+        ),
         industrial_production_per_node=resources("industrial_production_{horizon}.csv"),
         ffe_profiles=rules.retrieve_ffe_industry_load_profiles.output["json"],
     output:
@@ -1395,6 +1399,8 @@ rule build_industrial_energy_demand_per_country_today:
                 "MWh_NH3_per_tNH3",
                 "MWh_H2_per_tNH3_electrolysis",
                 "MWh_elec_per_tNH3_electrolysis",
+                "MWh_CH4_per_tNH3_SMR",
+                "MWh_elec_per_tNH3_SMR",
                 "MWh_elec_per_tCl",
                 "MWh_H2_per_tCl",
                 "MWh_elec_per_tMeOH",
