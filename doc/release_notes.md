@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: `clustering: cluster_network: n_clusters: all` now runs with sector coupling. Unclustered bus names now start with the country code if they do not already, and heat source potentials handle regions without data ([#2192](https://github.com/PyPSA/pypsa-eur/issues/2192)).
 * Fix: `renewable: hydro: eia_approximate_missing` no longer fails with an `AttributeError` ([#2449](https://github.com/PyPSA/pypsa-eur/issues/2449)).
 * Fix: Myopic runs no longer fail in `add_brownfield` when a heat pump with an explicit heat source `efficiency2` (e.g. river water) exists with several build years ([#2444](https://github.com/PyPSA/pypsa-eur/pull/2444)).
 * Fix: Today's industry demand for high-value chemicals no longer includes the gas and electricity of today's ammonia plants, which the ammonia demand already covers. The split of basic chemicals now matches the future sector ratios for all values of `sector: ammonia`. This changes default results ([#2420](https://github.com/PyPSA/pypsa-eur/issues/2420)).
