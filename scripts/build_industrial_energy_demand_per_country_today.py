@@ -4,7 +4,7 @@
 """
 Build today's industrial final energy demand per country, subsector and carrier in TWh/a.
 
-For EU27 countries, the JRC-IDEES energy balances for the configured `industry: reference_year` give the final energy consumption per subsector, which is grouped into the carriers electricity, gas, liquid, solid, heat, biomass, waste and other, plus hydrogen (zero today). Mining, construction and non-specified industry are merged into "Other industrial sectors", and non-energy feedstock is added to basic chemicals. Basic chemicals are then split into ammonia, chlorine, methanol and high-value chemicals (HVC) using the production volumes from [build_industrial_production_per_country][] and fixed specific consumptions; HVC receives the remainder, clipped at zero. Today's ammonia is removed with the gas and electricity of steam methane reforming, as in [build_industry_sector_ratios][]. If `industry: ammonia` is enabled, ammonia demand is kept as its own carrier instead of being expressed as hydrogen and electricity.
+For EU27 countries, the JRC-IDEES energy balances for the configured `industry: reference_year` give the final energy consumption per subsector, which is grouped into the carriers electricity, gas, liquid, solid, heat, biomass, waste and other, plus hydrogen (zero today). Mining, construction and non-specified industry are merged into "Other industrial sectors", and non-energy feedstock is added to basic chemicals. Basic chemicals are then split into ammonia, chlorine, methanol and high-value chemicals (HVC) using the production volumes from [build_industrial_production_per_country][] and fixed specific consumptions; HVC receives the remainder, clipped at zero. Today's ammonia is removed from HVC with the gas and electricity of steam methane reforming, as in [build_industry_sector_ratios][]. If `industry: ammonia` is enabled, ammonia demand is kept as its own carrier instead of being expressed as hydrogen and electricity.
 
 Countries outside the EU27 receive the EU27-average energy demand per tonne of production multiplied by their own production. Finally, 75% of the energy consumed in coke ovens, taken from the Eurostat transformation output, is attributed to integrated steelworks ([doi:10.1016/j.erss.2022.102565](https://doi.org/10.1016/j.erss.2022.102565)).
 
@@ -160,29 +160,30 @@ def separate_basic_chemicals(
     demand["HVC"] = demand["Basic chemicals"] - demand["Methanol"] - demand["Chlorine"]
 
     # Deal with ammonia separately, depending on whether it is modelled endogenously.
+    ammonia_exo = pd.DataFrame(
+        {
+            "hydrogen": production["Ammonia"] * params["MWh_H2_per_tNH3_electrolysis"],
+            "electricity": production["Ammonia"]
+            * params["MWh_elec_per_tNH3_electrolysis"],
+        }
+    ).T
+
     if endogenous_ammonia:
         ammonia = pd.DataFrame(
             {"ammonia": production["Ammonia"] * params["MWh_NH3_per_tNH3"]}
         ).T
     else:
-        ammonia = pd.DataFrame(
-            {
-                "hydrogen": production["Ammonia"]
-                * params["MWh_H2_per_tNH3_electrolysis"],
-                "electricity": production["Ammonia"]
-                * params["MWh_elec_per_tNH3_electrolysis"],
-            }
-        ).T
+        ammonia = ammonia_exo
 
-    # today's ammonia plants use steam methane reforming
+    demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
+
+    # today's ammonia plants in basic chemicals use steam methane reforming
     ammonia_smr = pd.DataFrame(
         {
             "gas": production["Ammonia"] * params["MWh_CH4_per_tNH3_SMR"],
             "electricity": production["Ammonia"] * params["MWh_elec_per_tNH3_SMR"],
         }
     ).T
-
-    demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
     demand["HVC"] -= ammonia_smr.unstack().reindex(index=demand.index, fill_value=0.0)
 
     demand.drop(columns="Basic chemicals", inplace=True)
