@@ -5,7 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
-* Fix: Myopic runs no longer fail in `add_brownfield` when a heat pump with an explicit heat source `efficiency2` (e.g. river water) exists with several build years.
+* Fix: Myopic runs no longer fail in `add_brownfield` when a heat pump with an explicit heat source `efficiency2` (e.g. river water) exists with several build years ([#2444](https://github.com/PyPSA/pypsa-eur/pull/2444)).
 * Refactoring: Clean up the interfaces of the scripts called by `compose_network`. No functional change ([#2439](https://github.com/PyPSA/pypsa-eur/pull/2439)).
 * Compatibility: PyPSA-Eur now requires PyPSA 1.1 or newer. The compatibility code for older PyPSA versions is removed, and annuities are computed with `pypsa.costs.annuity` ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436)).
 * Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).
