@@ -1345,6 +1345,11 @@ rule build_industrial_electricity_profiles:
     """Builds hourly industrial electricity demand profiles per region from FfE load profiles."""
     input:
         industry_sector_ratios=resources("industry_sector_ratios_{horizon}.csv"),
+        industry_sector_ratios_endogenous=lambda w: (
+            resources("industry_sector_ratios_endogenous.csv")
+            if config_provider("sector", "industry_heat", "enable")(w)
+            else []
+        ),
         industrial_production_per_node=resources("industrial_production_{horizon}.csv"),
         ffe_profiles=rules.retrieve_ffe_industry_load_profiles.output["json"],
     output:
