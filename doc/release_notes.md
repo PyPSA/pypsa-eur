@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Myopic runs no longer fail in `add_brownfield` when a heat pump with an explicit heat source `efficiency2` (e.g. river water) exists with several build years ([#2444](https://github.com/PyPSA/pypsa-eur/pull/2444)).
 * Fix: Today's industry demand for high-value chemicals no longer includes the gas and electricity of today's ammonia plants, which the ammonia demand already covers. The split of basic chemicals now matches the future sector ratios for all values of `sector: ammonia`. This changes default results ([#2420](https://github.com/PyPSA/pypsa-eur/issues/2420)).
 * Fix: `electricity: gaslimit` now also works with sector coupling, where it limits the supply of fossil gas ([#1747](https://github.com/PyPSA/pypsa-eur/issues/1747)).
 * Fix: For flexible enhanced geothermal systems, `sector: enhanced_geothermal: max_boost` now limits the discharge of the reservoir instead of its charging ([#2417](https://github.com/PyPSA/pypsa-eur/issues/2417)).
