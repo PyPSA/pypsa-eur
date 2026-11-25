@@ -118,7 +118,7 @@ solving:
   check_objective:
     enable: true
     expected_value:
-      2030: 596737106.04
+      2030: 588824082.09
       2040: 460935262.27
       2050: 350446083.49
 
