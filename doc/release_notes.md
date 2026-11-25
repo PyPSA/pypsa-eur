@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Bugfix: [build_industrial_energy_demand_per_country_today][] now removes the natural gas of today's ammonia plants (`industry: MWh_CH4_per_tNH3_SMR`) from high-value chemicals, as for methanol, so it is no longer counted twice as `gas for industry` and as ammonia supply. This changes default results ([#2420](https://github.com/PyPSA/pypsa-eur/issues/2420)).
 * Refactoring: Clean up the interfaces of the scripts called by `compose_network`. No functional change ([#2439](https://github.com/PyPSA/pypsa-eur/pull/2439)).
 * Compatibility: PyPSA-Eur now requires PyPSA 1.1 or newer. The compatibility code for older PyPSA versions is removed, and annuities are computed with `pypsa.costs.annuity` ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436)).
 * Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).
