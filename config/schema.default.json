@@ -1932,6 +1932,26 @@
             }
           }
         },
+        "lake_data": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "osm_boundaries": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -5090,8 +5110,7 @@
             },
             "limited_heat_sources": {
               "additionalProperties": true,
-              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
-              "markdownDescription": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024 ](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
+              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile. Waste heat needs no heat pump source entry; its temperature only sets the usable share (see `use_*_waste_heat`).",
               "type": "object"
             },
             "direct_utilisation_heat_sources": {
@@ -8160,8 +8179,7 @@
         },
         "limited_heat_sources": {
           "additionalProperties": true,
-          "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
-          "markdownDescription": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024 ](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
+          "description": "Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile. Waste heat needs no heat pump source entry; its temperature only sets the usable share (see `use_*_waste_heat`).",
           "type": "object"
         },
         "direct_utilisation_heat_sources": {
@@ -13141,8 +13159,7 @@
             },
             "limited_heat_sources": {
               "additionalProperties": true,
-              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
-              "markdownDescription": "Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in [Manz et al. 2024 ](https://www.sciencedirect.com/science/article/pii/S0960148124001769).",
+              "description": "Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile. Waste heat needs no heat pump source entry; its temperature only sets the usable share (see `use_*_waste_heat`).",
               "type": "object"
             },
             "direct_utilisation_heat_sources": {
@@ -16459,6 +16476,26 @@
           }
         },
         "aquifer_data": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "lake_data": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

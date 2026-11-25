@@ -5,6 +5,9 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Feature: District heating heat sources between the return and the forward temperature (geothermal, pit storage with `booster_heat_pump`) now preheat the return flow before the heat pump. Listing `ptes` in `sector: heat_pump_sources` no longer fails ([#1893](https://github.com/PyPSA/pypsa-eur/pull/1893)).
+* Change: Usable waste heat of Power-to-X processes now depends on its temperature (`district_heating: limited_heat_sources`) and uses efficiencies from technology-data. This changes default results ([#1893](https://github.com/PyPSA/pypsa-eur/pull/1893)).
+* Feature: Add lake water as heat source for district heating (`lake_water` in `sector: heat_pump_sources`), based on [HydroLAKES](https://www.hydrosheds.org/products/hydrolakes) ([#1893](https://github.com/PyPSA/pypsa-eur/pull/1893)).
 * Refactoring: Clean up the interfaces of the scripts called by `compose_network`. No functional change ([#2439](https://github.com/PyPSA/pypsa-eur/pull/2439)).
 * Compatibility: PyPSA-Eur now requires PyPSA 1.1 or newer. The compatibility code for older PyPSA versions is removed, and annuities are computed with `pypsa.costs.annuity` ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436)).
 * Fix: With `sector: industry_heat: enable`, the carbon capture options for industry process heat now respect `industry: solid_biomass_for_industry_cc` and `industry: gas_for_industry_cc` ([#2431](https://github.com/PyPSA/pypsa-eur/pull/2431)).

@@ -10,7 +10,10 @@ For central heating, the COP follows the approximation of Jensen et al.
 decentral heating, a quadratic regression on the temperature difference
 between source and sink from Staffell et al. (2012) is used. Source
 temperatures come from the temperature profiles of the respective heat
-source or, where configured, from a constant source temperature. The COP is
+source or, where configured, from a constant source temperature. A central
+heating source that is warmer than the return flow first preheats the return
+flow in an ideal heat exchanger, so the heat pump draws heat at the return
+temperature and lifts the flow from the source temperature. The COP is
 set to zero where the temperature lift is infeasible or the approximation
 falls below one.
 
@@ -20,6 +23,7 @@ References
 - Staffell et al. (2012), [A review of domestic heat pumps](https://doi.org/10.1039/C2EE22653G)
 """
 
+import numpy as np
 import pandas as pd
 import xarray as xr
 
@@ -139,6 +143,19 @@ if __name__ == "__main__":
                     snakemake.input[f"temp_{heat_source}"]
                 )
 
+            sink_inlet_temperature_celsius = central_heating_return_temperature
+            if HeatSystemType(heat_system_type).is_central:
+                # sources warmer than the return flow preheat it before the heat pump
+                sink_inlet_temperature_celsius = np.minimum(
+                    np.maximum(
+                        source_inlet_temperature_celsius, sink_inlet_temperature_celsius
+                    ),
+                    central_heating_forward_temperature,
+                )
+                source_inlet_temperature_celsius = np.minimum(
+                    source_inlet_temperature_celsius, central_heating_return_temperature
+                )
+
             cop_da = get_cop(
                 heat_system_type=heat_system_type,
                 heat_source=heat_source,
@@ -147,7 +164,7 @@ if __name__ == "__main__":
                 cop_approximation_central_heating=snakemake.params.heat_pump_cop_approximation_central_heating,
                 sink_T_decentral_heating=snakemake.params.heat_pump_sink_T_decentral_heating,
                 sink_outlet_temperature_celsius=central_heating_forward_temperature,
-                sink_inlet_temperature_celsius=central_heating_return_temperature,
+                sink_inlet_temperature_celsius=sink_inlet_temperature_celsius,
             )
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(

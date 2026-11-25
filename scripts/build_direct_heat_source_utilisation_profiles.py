@@ -4,6 +4,12 @@
 """
 Build availability profiles for direct heat source utilisation (1 in regions and time steps where heat source can be utilised, 0 otherwise).
 When direct utilisation is possible, heat pump COPs are set to zero (c.f. `build_cop_profiles`).
+
+A source between the return and the forward temperature cannot be used
+directly. It first preheats the return flow in an ideal heat exchanger, which
+cools it to the return temperature, and a heat pump then cools it further by
+`heat_source_cooling`. The preheating profile is the share of the extracted
+heat that the heat exchanger transfers.
 """
 
 import logging
@@ -13,37 +19,6 @@ import xarray as xr
 from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
-
-
-def get_source_temperature(heat_source_key: str, limited_heat_sources: dict) -> float:
-    """
-    Get the constant temperature of a heat source.
-
-    Args:
-    ----
-    heat_source_key: str
-        The key (name) of the heat source.
-    limited_heat_sources: dict
-        Settings of the temperature-limited heat sources, keyed by heat source.
-
-    Returns:
-    -------
-    float
-        The constant temperature of the heat source in degrees Celsius.
-
-    Raises:
-    ------
-    ValueError
-        If the heat source is not in `limited_heat_sources`.
-    """
-
-    if heat_source_key in limited_heat_sources:
-        return limited_heat_sources[heat_source_key]["constant_temperature_celsius"]
-    else:
-        raise ValueError(
-            f"Unknown heat source {heat_source_key}. Must be one of "
-            f"{limited_heat_sources.keys()}."
-        )
 
 
 def get_profile(
@@ -68,6 +43,21 @@ def get_profile(
     return xr.where(source_temperature >= forward_temperature, 1.0, 0.0)
 
 
+def get_preheating_profile(
+    source_temperature: float | xr.DataArray,
+    forward_temperature: xr.DataArray,
+    return_temperature: xr.DataArray,
+    heat_source_cooling: float,
+) -> xr.DataArray:
+    """Get the share of source heat that preheats the return flow before the heat pump."""
+    preheating = source_temperature - return_temperature
+    return xr.where(
+        (source_temperature < forward_temperature) & (preheating > 0),
+        preheating / (preheating + heat_source_cooling),
+        0.0,
+    )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -79,23 +69,40 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    direct_utilisation_heat_sources: list[str] = (
-        snakemake.params.direct_utilisation_heat_sources
-    )
+    source_temperatures: dict[str, float | xr.DataArray] = {
+        heat_source: settings["constant_temperature_celsius"]
+        for heat_source, settings in snakemake.params.limited_heat_sources.items()
+        if settings["constant_temperature_celsius"] is not False
+    }
+    source_temperatures["ptes"] = xr.open_dataarray(snakemake.input.temp_ptes)
 
-    central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
+    forward_temperature: xr.DataArray = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles
+    )
+    return_temperature: xr.DataArray = xr.open_dataarray(
+        snakemake.input.central_heating_return_temperature_profiles
     )
 
     xr.concat(
         [
             get_profile(
-                source_temperature=get_source_temperature(
-                    heat_source_key, snakemake.params.limited_heat_sources
-                ),
-                forward_temperature=central_heating_forward_temperature,
-            ).assign_coords(heat_source=heat_source_key)
-            for heat_source_key in direct_utilisation_heat_sources
+                source_temperature=source_temperature,
+                forward_temperature=forward_temperature,
+            ).assign_coords(heat_source=heat_source)
+            for heat_source, source_temperature in source_temperatures.items()
         ],
         dim="heat_source",
     ).to_netcdf(snakemake.output.direct_heat_source_utilisation_profiles)
+
+    xr.concat(
+        [
+            get_preheating_profile(
+                source_temperature=source_temperature,
+                forward_temperature=forward_temperature,
+                return_temperature=return_temperature,
+                heat_source_cooling=snakemake.params.heat_source_cooling,
+            ).assign_coords(heat_source=heat_source)
+            for heat_source, source_temperature in source_temperatures.items()
+        ],
+        dim="heat_source",
+    ).to_netcdf(snakemake.output.heat_source_preheating_profiles)

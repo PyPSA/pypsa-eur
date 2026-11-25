@@ -2,13 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Calculate river water heat potential for district heating systems.
+Calculate river or lake water heat potential for district heating systems.
 
-This script computes the thermal potential of rivers as a heat source for district
+This script computes the thermal potential of rivers or lakes as a heat source for district
 heating applications. It uses HERA river discharge and ambient temperature data to
 estimate available heating power and average water temperatures across regions
 intersected with district heating areas. The district heating areas are buffered by
-`dh_area_buffer` (in meters) to include nearby rivers.
+`dh_area_buffer` (in meters) to include nearby rivers and lakes. For lakes, the volume
+from HydroLAKES inside these areas is cooled by at most 1 K per year.
 
 The approximation accounts for temporal and spatial variations in river flow and temperature,
 providing both spatial and temporal aggregates. Temporal aggregates are only used for plotting.
@@ -27,6 +28,7 @@ from _helpers import (
     get_snapshots,
     set_scenario_config,
 )
+from approximators.lake_water_heat_approximator import LakeWaterHeatApproximator
 from approximators.river_water_heat_approximator import RiverWaterHeatApproximator
 
 logger = logging.getLogger(__name__)
@@ -187,9 +189,10 @@ def get_regional_result(
     dh_areas: gpd.GeoDataFrame,
     snapshots: pd.DatetimeIndex,
     enable_heat_source_maps: bool = False,
+    lake_shapes: gpd.GeoDataFrame | None = None,
 ) -> dict[str, xr.Dataset]:
     """
-    Calculate river water heat potential for a given region and district heating areas.
+    Calculate river or lake water heat potential for a given region and district heating areas.
 
     Parameters
     ----------
@@ -203,6 +206,8 @@ def get_regional_result(
         Time snapshots, used for loading data and for regions without dh_areas
     enable_heat_source_maps : bool, default False
         Whether to enable heat source mapping.
+    lake_shapes : geopandas.GeoDataFrame, optional
+        Lake polygons in EPSG:3035. If given, the potential of lakes is computed instead of rivers.
 
     Returns
     -------
@@ -264,11 +269,21 @@ def get_regional_result(
     # Reproject region to match data CRS for spatial calculations
     region = region.to_crs("EPSG:3035")
 
-    river_water_heat_approximator = RiverWaterHeatApproximator(
-        volume_flow=river_discharge,  # River discharge (volume flow)
-        ambient_temperature=ambient_temperature,  # Air temperature
-        region=region,  # Geographic region of interest
+    river_water_heat_approximator: (
+        RiverWaterHeatApproximator | LakeWaterHeatApproximator
     )
+    if lake_shapes is None:
+        river_water_heat_approximator = RiverWaterHeatApproximator(
+            volume_flow=river_discharge,  # River discharge (volume flow)
+            ambient_temperature=ambient_temperature,  # Air temperature
+            region=region,  # Geographic region of interest
+        )
+    else:
+        river_water_heat_approximator = LakeWaterHeatApproximator(
+            ambient_temperature=ambient_temperature,
+            region=region,
+            lake_shapes=lake_shapes,
+        )
 
     # Calculate spatial aggregate (time series data for the entire region)
     # Contains total_power [MW] and average_temperature [°C] over time
@@ -328,7 +343,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_river_heat_potential")
+        snakemake = mock_snakemake("build_surface_water_heat_potential", water="river")
 
     # Configure logging and scenario
     configure_logging(snakemake)
@@ -348,6 +363,14 @@ if __name__ == "__main__":
     # Buffer district heating areas by specified amount
     dh_areas["geometry"] = dh_areas.geometry.buffer(snakemake.params.dh_area_buffer)
     dh_areas = dh_areas.to_crs("EPSG:4326")
+
+    lake_shapes = None
+    enable_heat_source_maps = snakemake.params.enable_heat_source_maps
+    if snakemake.wildcards.water == "lake":
+        lake_shapes = gpd.read_file(
+            snakemake.input.lake_data, bbox=tuple(onshore_regions.total_bounds)
+        ).to_crs("EPSG:3035")
+        enable_heat_source_maps = False
 
     # Configure Dask for multi-threading within operations (no distributed cluster)
     dask.config.set(scheduler="threads")  # Use threaded scheduler
@@ -369,7 +392,8 @@ if __name__ == "__main__":
             region=region,
             dh_areas=dh_areas,
             snapshots=snapshots,
-            enable_heat_source_maps=snakemake.params.enable_heat_source_maps,
+            enable_heat_source_maps=enable_heat_source_maps,
+            lake_shapes=lake_shapes,
         )
         results.append(result)
 
@@ -413,7 +437,7 @@ if __name__ == "__main__":
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
 
     # Save temporal aggregate results for analysis and visualization (if enabled)
-    if snakemake.params.enable_heat_source_maps:
+    if enable_heat_source_maps:
         # Energy temporal aggregate: spatial distribution of available energy
         # Units: MWh (megawatt-hours) - total energy potential per location
         xr.concat(

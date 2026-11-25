@@ -345,6 +345,10 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="Aquifer data source configuration.",
     )
+    lake_data: _DataSourceConfig = Field(
+        default_factory=lambda: _DataSourceConfig(source="primary"),
+        description="Lake data source configuration.",
+    )
     osm_boundaries: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="OSM boundaries data source configuration.",

@@ -7,8 +7,12 @@ Build geothermal heat source power potentials per onshore region.
 Hydrothermal utilisation potentials from Manz et al. (2024) are given per
 local administrative unit (LAU) for a 65C or 85C supply temperature scenario.
 They are matched to onshore regions by spatial join and summed. Dividing the
-annual utilisation potential by assumed full load hours (4000 h) yields a
-constant available heat source power in MW. Regions outside the EU-27 without
+annual utilisation potential by assumed full load hours (4000 h) yields the
+available heat source power in MW. Manz et al. (2024) assume that the source
+is cooled by 15 K. The power is scaled to the temperature drop that the
+district heating network can use: down to the return temperature by direct
+use or preheating, and by `heat_source_cooling` in a heat pump if the source
+is colder than the forward flow. Regions outside the EU-27 without
 data can be filled with zeros if configured; otherwise an error is raised.
 
 References
@@ -20,6 +24,7 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
+import xarray as xr
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -31,6 +36,7 @@ ISI_TEMPERATURE_SCENARIOS = {
 }
 FULL_LOAD_HOURS = 4000
 # 3000 for petrothermal
+DESIGN_TEMPERATURE_DROP = 15  # K, assumed by Manz et al. (2024)
 
 PYPSA_EUR_UNIT = "MWh"
 
@@ -192,7 +198,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_geothermal_heat_potential")
+        snakemake = mock_snakemake("build_geothermal_heat_potential", horizon=2030)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -250,4 +256,20 @@ if __name__ == "__main__":
         ignore_missing_regions=snakemake.params.ignore_missing_regions,
     )
 
-    heat_source_power.to_csv(snakemake.output[0])
+    forward_temperature = xr.open_dataarray(
+        snakemake.input.central_heating_forward_temperature_profiles
+    ).to_pandas()[heat_source_power.index]
+    return_temperature = xr.open_dataarray(
+        snakemake.input.central_heating_return_temperature_profiles
+    ).to_pandas()[heat_source_power.index]
+    source_temperature = snakemake.params.constant_temperature_celsius
+
+    # usable temperature drop: to the return temperature (direct use or
+    # preheating) plus the cooling in a heat pump below the forward temperature
+    temperature_drop = (source_temperature - return_temperature).clip(lower=0) + (
+        snakemake.params.heat_source_cooling
+        * (source_temperature < forward_temperature)
+    )
+    scaling = temperature_drop / DESIGN_TEMPERATURE_DROP
+
+    scaling.mul(heat_source_power.squeeze(), axis=1).to_csv(snakemake.output[0])

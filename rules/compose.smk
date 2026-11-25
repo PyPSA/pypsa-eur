@@ -126,6 +126,9 @@ def get_compose_inputs(w):
             direct_heat_source_utilisation_profiles=resources(
                 "direct_heat_source_utilisation_profiles_{horizon}.nc"
             ),
+            heat_source_preheating_profiles=resources(
+                "heat_source_preheating_profiles_{horizon}.nc"
+            ),
             retro_cost=(
                 resources("retro_cost.csv")
                 if cfg["sector"]["retrofitting"]["retro_endogen"]

@@ -81,7 +81,7 @@ electricity to heat. Large heat pumps, resistive heaters, boilers, fuel cells
 and enhanced geothermal systems complete the picture.
 
 Large heat pumps can draw on several sources. Besides ambient air, which is
-the default, the model can exploit geothermal heat, rivers and the sea, each
+the default, the model can exploit geothermal heat, rivers, lakes and the sea, each
 limited by a regional potential derived from geological and hydrological data
 within reach of the district heating areas. Their coefficient of performance
 is approximated from the source temperature and the network supply
@@ -89,11 +89,18 @@ temperature with a thermodynamic model. The supply temperature itself is
 approximated from ambient temperature following measured reference curves [@pieperAssessmentCombination2019]:
 it is highest on cold days and lowest on mild days, and it
 can decline over the planning years as networks modernise. Sources that are
-hot enough can feed the network directly without a heat pump.
+hot enough can feed the network directly without a heat pump. Sources between
+the return and the forward temperature first preheat the return flow in a
+heat exchanger; a heat pump then cools the source further and lifts the
+temperature.
 
 Waste heat from conversion processes is a further source: electrolysis, fuel
 cells, Fischer-Tropsch synthesis, methanolisation and ammonia synthesis reject
 heat that can be fed into district heating where these plants are located.
+Each process has an assumed waste heat temperature. Above the forward
+temperature all waste heat is usable. Between return and forward temperature,
+as usual for electrolysers and fuel cells (70 °C by default), only the
+preheating share is usable.
 
 In transition pathways the existing heating stock matters. Installed
 capacities of boilers, heat pumps and resistive heaters are taken from a

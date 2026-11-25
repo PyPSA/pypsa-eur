@@ -345,16 +345,16 @@ def update_heat_pump_efficiency(
     )
 
     # Change efficiency2 for heat pumps that use an explicitly modelled heat source
-    # Only update if efficiency2 exists (sector-coupled networks only)
-    if "efficiency2" in n_p.links_t and "efficiency2" in n.links_t:
-        previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
-            n_p.links_t["efficiency2"].columns
-        )
-        current_iteration_columns = corresponding_idx_this_iteration.intersection(
-            n.links_t["efficiency2"].columns
-        )
-        n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
-            n.links_t["efficiency2"].loc[:, current_iteration_columns].values
+    # and the availability, which includes the preheating of the return flow
+    # Only update if they exist (sector-coupled networks only)
+    for attr in ["efficiency2", "p_min_pu"]:
+        if attr not in n_p.links_t or attr not in n.links_t:
+            continue
+        in_both = heat_pump_idx_previous_iteration.isin(
+            n_p.links_t[attr].columns
+        ) & corresponding_idx_this_iteration.isin(n.links_t[attr].columns)
+        n_p.links_t[attr].loc[:, heat_pump_idx_previous_iteration[in_both]] = (
+            n.links_t[attr].loc[:, corresponding_idx_this_iteration[in_both]].values
         )
 
 

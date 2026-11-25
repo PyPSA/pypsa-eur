@@ -94,7 +94,7 @@ build_population_weighted_energy_totals                 2
 build_powerplants                                       1
 build_ptes_operations                                   1
 build_renewable_profiles                                6
-build_river_heat_potential                              1
+build_surface_water_heat_potential                      1
 build_salt_cavern_potentials                            1
 build_sea_heat_potential                                1
 build_shapes                                            1
@@ -275,7 +275,7 @@ build_population_weighted_energy_totals                 2
 build_powerplants                                       1
 build_ptes_operations                                   3
 build_renewable_profiles                                6
-build_river_heat_potential                              1
+build_surface_water_heat_potential                      1
 build_salt_cavern_potentials                            1
 build_sea_heat_potential                                1
 build_shapes                                            1

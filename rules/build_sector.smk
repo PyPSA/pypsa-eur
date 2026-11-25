@@ -307,12 +307,18 @@ rule build_geothermal_heat_potential:
         ],
         onshore_regions=resources("onshore_regions.geojson"),
         lau_regions=rules.retrieve_lau_regions.output["zip"],
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_{horizon}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_{horizon}.nc"
+        ),
     output:
-        heat_source_power=resources("heat_source_power_geothermal.csv"),
+        heat_source_power=resources("heat_source_power_geothermal_{horizon}.csv"),
     log:
-        logs("build_heat_source_potentials_geothermal.log"),
+        logs("build_heat_source_potentials_geothermal_{horizon}.log"),
     benchmark:
-        benchmarks("build_heat_source_potentials/geothermal")
+        benchmarks("build_heat_source_potentials/geothermal_{horizon}")
     resources:
         mem_mb=2000,
     params:
@@ -329,6 +335,9 @@ rule build_geothermal_heat_potential:
             "limited_heat_sources",
             "geothermal",
             "ignore_missing_regions",
+        ),
+        heat_source_cooling=config_provider(
+            "sector", "district_heating", "heat_source_cooling"
         ),
     script:
         scripts("build_geothermal_heat_potential.py")
@@ -438,25 +447,30 @@ def input_hera_data(w) -> dict[str, str]:
         return result
 
 
-rule build_river_heat_potential:
-    """Computes river water heat potential and temperature profiles for district heating regions."""
+rule build_surface_water_heat_potential:
+    """Computes river or lake water heat potential and temperature profiles for district heating regions."""
     input:
         unpack(input_hera_data),
         onshore_regions=resources("onshore_regions.geojson"),
         dh_areas=resources("dh_areas.geojson"),
+        lake_data=lambda w: (
+            rules.retrieve_lake_data.output["lake_data"] if w.water == "lake" else []
+        ),
     output:
-        heat_source_power=resources("heat_source_power_river_water.csv"),
-        heat_source_temperature=resources("temp_river_water.nc"),
+        heat_source_power=resources("heat_source_power_{water}_water.csv"),
+        heat_source_temperature=resources("temp_{water}_water.nc"),
         heat_source_temperature_temporal_aggregate=resources(
-            "temp_river_water_temporal_aggregate.nc"
+            "temp_{water}_water_temporal_aggregate.nc"
         ),
         heat_source_energy_temporal_aggregate=resources(
-            "heat_source_energy_river_water_temporal_aggregate.nc"
+            "heat_source_energy_{water}_water_temporal_aggregate.nc"
         ),
     log:
-        logs("build_river_water_heat_potential.log"),
+        logs("build_{water}_water_heat_potential.log"),
     benchmark:
-        benchmarks("build_river_water_heat_potential")
+        benchmarks("build_{water}_water_heat_potential")
+    wildcard_constraints:
+        water="river|lake",
     threads: 1
     resources:
         mem_mb=20000,
@@ -469,7 +483,7 @@ rule build_river_heat_potential:
         enable_heat_source_maps=config_provider("plotting", "enable_heat_source_maps"),
     script:
         scripts(
-            "build_surface_water_heat_potentials/build_river_water_heat_potential.py"
+            "build_surface_water_heat_potentials/build_surface_water_heat_potential.py"
         )
 
 
@@ -612,7 +626,7 @@ rule build_cop_profiles:
         ),
         temp_soil_total=resources("temp_soil_total.nc"),
         temp_air_total=resources("temp_air_total.nc"),
-        temp_ptes_total=resources("ptes_top_temperature_profiles_{horizon}.nc"),
+        temp_ptes_total=resources("temp_ptes_top_profiles_{horizon}.nc"),
         onshore_regions=resources("onshore_regions.geojson"),
     output:
         cop_profiles=resources("cop_profiles_{horizon}.nc"),
@@ -654,9 +668,7 @@ rule build_ptes_operations:
         ptes_direct_utilisation_profiles=resources(
             "ptes_direct_utilisation_profiles_{horizon}.nc"
         ),
-        ptes_top_temperature_profiles=resources(
-            "ptes_top_temperature_profiles_{horizon}.nc"
-        ),
+        ptes_top_temperature_profiles=resources("temp_ptes_top_profiles_{horizon}.nc"),
         ptes_e_max_pu_profiles=resources("ptes_e_max_pu_profiles_{horizon}.nc"),
     log:
         logs("build_ptes_operations_{horizon}.log"),
@@ -682,14 +694,21 @@ rule build_ptes_operations:
 
 
 rule build_direct_heat_source_utilisation_profiles:
-    """Builds availability profiles for direct heat source use from forward temperature profiles."""
+    """Builds profiles for direct heat source use and for preheating of the return flow."""
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_{horizon}.nc"
         ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_{horizon}.nc"
+        ),
+        temp_ptes=resources("temp_ptes_top_profiles_{horizon}.nc"),
     output:
         direct_heat_source_utilisation_profiles=resources(
             "direct_heat_source_utilisation_profiles_{horizon}.nc"
+        ),
+        heat_source_preheating_profiles=resources(
+            "heat_source_preheating_profiles_{horizon}.nc"
         ),
     log:
         logs("build_direct_heat_source_utilisation_profiles_{horizon}.log"),
@@ -698,11 +717,11 @@ rule build_direct_heat_source_utilisation_profiles:
     resources:
         mem_mb=20000,
     params:
-        direct_utilisation_heat_sources=config_provider(
-            "sector", "district_heating", "direct_utilisation_heat_sources"
-        ),
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
+        ),
+        heat_source_cooling=config_provider(
+            "sector", "district_heating", "heat_source_cooling"
         ),
     script:
         scripts("build_direct_heat_source_utilisation_profiles.py")
@@ -1708,7 +1727,12 @@ rule build_egs_potentials:
 def input_heat_source_power(w):
 
     return {
-        heat_source_name: resources("heat_source_power_" + heat_source_name + ".csv")
+        heat_source_name: resources(
+            "heat_source_power_"
+            + heat_source_name
+            + ("_{horizon}" if heat_source_name == "geothermal" else "")
+            + ".csv"
+        )
         for heat_source_name in config_provider(
             "sector", "heat_pump_sources", "urban central"
         )(w)

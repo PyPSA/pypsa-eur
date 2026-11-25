@@ -768,6 +768,20 @@ sector:
         ignore_missing_regions: false
       river_water:
         constant_temperature_celsius: false
+      lake_water:
+        constant_temperature_celsius: false
+      electrolysis_waste:
+        constant_temperature_celsius: 70
+      fuel_cell_waste:
+        constant_temperature_celsius: 70
+      fischer_tropsch_waste:
+        constant_temperature_celsius: 200
+      haber_bosch_waste:
+        constant_temperature_celsius: 200
+      sabatier_waste:
+        constant_temperature_celsius: 200
+      methanolisation_waste:
+        constant_temperature_celsius: 200
     direct_utilisation_heat_sources:
     - geothermal
     temperature_limited_stores:
@@ -1629,6 +1643,9 @@ data:
     version: latest
   aquifer_data:
     source: archive
+    version: latest
+  lake_data:
+    source: primary
     version: latest
   osm_boundaries:
     source: archive

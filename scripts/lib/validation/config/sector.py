@@ -103,8 +103,15 @@ class _DistrictHeatingConfig(ConfigModel):
                 "ignore_missing_regions": False,
             },
             "river_water": {"constant_temperature_celsius": False},
+            "lake_water": {"constant_temperature_celsius": False},
+            "electrolysis_waste": {"constant_temperature_celsius": 70},
+            "fuel_cell_waste": {"constant_temperature_celsius": 70},
+            "fischer_tropsch_waste": {"constant_temperature_celsius": 200},
+            "haber_bosch_waste": {"constant_temperature_celsius": 200},
+            "sabatier_waste": {"constant_temperature_celsius": 200},
+            "methanolisation_waste": {"constant_temperature_celsius": 200},
         },
-        description="Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`_.",
+        description="Dictionary with names of limited heat sources (not air). Must be `river_water`, `lake_water`, `geothermal` or the waste heat of a Power-to-X process (e.g. `electrolysis_waste`). `constant_temperature_celsius` sets the source temperature, which decides whether the source feeds district heating directly, preheats the return flow or only supplies a heat pump; `false` uses a temperature profile. Waste heat needs no heat pump source entry; its temperature only sets the usable share (see `use_*_waste_heat`).",
     )
     direct_utilisation_heat_sources: list[str] = Field(
         default_factory=lambda: ["geothermal"],
