@@ -9,9 +9,7 @@ A source between the return and the forward temperature cannot be used
 directly. It first preheats the return flow in an ideal heat exchanger, which
 cools it to the return temperature, and a heat pump then cools it further by
 `heat_source_cooling`. The preheating profile is the share of the extracted
-heat that the heat exchanger transfers. This split follows the temperature
-drops on the source side; it does not check that the heat pump supplies the
-full remaining lift to the forward temperature.
+heat that the heat exchanger transfers.
 """
 
 import logging

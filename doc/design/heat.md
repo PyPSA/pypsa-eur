@@ -92,9 +92,7 @@ can decline over the planning years as networks modernise. Sources that are
 hot enough can feed the network directly without a heat pump. Sources between
 the return and the forward temperature first preheat the return flow in a
 heat exchanger; a heat pump then cools the source further and lifts the
-temperature. The split between preheating and heat pump follows the
-temperature drops of the source, which understates the heat pump share for
-sources far below the forward temperature.
+temperature.
 
 Waste heat from conversion processes is a further source: electrolysis, fuel
 cells, Fischer-Tropsch synthesis, methanolisation and ammonia synthesis reject
@@ -102,7 +100,7 @@ heat that can be fed into district heating where these plants are located.
 Each process has an assumed waste heat temperature. Above the forward
 temperature all waste heat is usable. Between return and forward temperature,
 as usual for electrolysers and fuel cells (70 °C by default), only the
-preheating share is usable; no heat pump recovers the rest.
+preheating share is usable.
 
 In transition pathways the existing heating stock matters. Installed
 capacities of boilers, heat pumps and resistive heaters are taken from a

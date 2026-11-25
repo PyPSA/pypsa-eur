@@ -447,19 +447,15 @@ def input_hera_data(w) -> dict[str, str]:
         return result
 
 
-def input_lake_data(w) -> dict[str, str]:
-    if w.water == "lake":
-        return {"lake_data": rules.retrieve_lake_data.output["lake_data"]}
-    return {}
-
-
 rule build_surface_water_heat_potential:
     """Computes river or lake water heat potential and temperature profiles for district heating regions."""
     input:
         unpack(input_hera_data),
-        unpack(input_lake_data),
         onshore_regions=resources("onshore_regions.geojson"),
         dh_areas=resources("dh_areas.geojson"),
+        lake_data=lambda w: (
+            rules.retrieve_lake_data.output["lake_data"] if w.water == "lake" else []
+        ),
     output:
         heat_source_power=resources("heat_source_power_{water}_water.csv"),
         heat_source_temperature=resources("temp_{water}_water.nc"),
