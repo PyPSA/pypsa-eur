@@ -181,7 +181,7 @@ class ElectricityConfig(BaseModel):
     )
     gaslimit: float | bool = Field(
         False,
-        description="Global gas usage limit.",
+        description="Limit on the fossil gas supply in MWh per year. Without sector coupling, this is the fuel of gas power plants; with sector coupling, the gas from fossil gas generators. Biogas and synthetic gas do not count.",
     )
     operational_reserve: _OperationalReserveConfig = Field(
         default_factory=_OperationalReserveConfig,
