@@ -29,6 +29,7 @@ import powerplantmatching as pm
 import pypsa
 import xarray as xr
 
+from scripts.add_electricity import chp_min_load_per_plant, load_space_heat_profile
 from scripts.build_energy_totals import cartesian
 from scripts.definitions.heat_system import HeatSystem
 from scripts.prepare_sector_network import cement_kiln_parameters, define_spatial
@@ -162,6 +163,8 @@ def add_power_capacities_installed_before_baseyear(
     renewable_carriers: list[str],
     spatial: SimpleNamespace,
     solar_rooftop_ratio: float = 0.5,
+    chp_min_load: float | dict[str, float] = 0.0,
+    heat_profile: pd.DataFrame | None = None,
 ) -> None:
     """
     Add power generation capacities installed before base year.
@@ -188,6 +191,10 @@ def add_power_capacities_installed_before_baseyear(
         Container of spatial data
     solar_rooftop_ratio: float
         Ratio of solar capacity to assign to rooftop vs utility-scale (between 0 and 1)
+    chp_min_load : float | dict[str, float]
+        Minimum load share of plants flagged as CHP at peak space heat demand
+    heat_profile : pd.DataFrame, optional
+        Normalised space heat demand per bus, which the minimum load follows
     """
     logger.debug(f"Adding power capacities installed before {baseyear}")
 
@@ -238,6 +245,27 @@ def add_power_capacities_installed_before_baseyear(
         df_agg.DateIn + df_agg.Fueltype.map(costs.lifetime).fillna(30)
     )
 
+    # plants flagged as CHP supply district heating where it exists
+    chp_fuel = {
+        "OCGT": "gas",
+        "CCGT": "gas",
+        "coal": "coal",
+        "lignite": "lignite",
+        "oil": "oil",
+    }
+    df_agg["chp_min_load"] = chp_min_load_per_plant(
+        df_agg.Set,
+        df_agg.Fueltype.replace("urban central solid biomass CHP", "biomass"),
+        chp_min_load,
+    )
+    central_heat = n.buses.query("carrier == 'urban central heat'").location
+    to_chp = df_agg.query(
+        "Set == 'CHP' and bus in @central_heat and Fueltype in @chp_fuel"
+    ).index
+    df_agg.loc[to_chp, "Fueltype"] = (
+        "urban central " + df_agg.loc[to_chp, "Fueltype"].map(chp_fuel) + " CHP"
+    )
+
     # include renewables in df_agg
     add_existing_renewables(
         df_agg=df_agg,
@@ -280,6 +308,14 @@ def add_power_capacities_installed_before_baseyear(
         aggfunc="sum",
     )
 
+    min_load = df_agg.assign(chp_min_load=df_agg.chp_min_load * df_agg.Capacity)
+    min_load = min_load.pivot_table(
+        index=["grouping_year", "Fueltype", "resource_class"],
+        columns="bus",
+        values="chp_min_load",
+        aggfunc="sum",
+    ).div(df)
+
     has_solar_rooftop = (n.generators.carrier == "solar rooftop").any()
     if solar_rooftop_ratio != 0 and has_solar_rooftop:
         mask = df.index.get_level_values("Fueltype") == "solar"
@@ -307,13 +343,10 @@ def add_power_capacities_installed_before_baseyear(
     )
 
     carrier = {
-        "OCGT": "gas",
-        "CCGT": "gas",
-        "coal": "coal",
-        "oil": "oil",
-        "lignite": "lignite",
+        **chp_fuel,
         "nuclear": "uranium",
         "urban central solid biomass CHP": "biomass",
+        **{f"urban central {fuel} CHP": fuel for fuel in chp_fuel.values()},
     }
 
     cost_key_dict = {
@@ -411,7 +444,12 @@ def add_power_capacities_installed_before_baseyear(
             if not new_build.empty:
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
-                if generator != "urban central solid biomass CHP":
+                p_min_pu = 0.0
+                if heat_profile is not None:
+                    p_min_pu = min_load.loc[grouping_year, generator, resource_class]
+                    p_min_pu = heat_profile.mul(p_min_pu)[new_capacity.index]
+
+                if "CHP" not in generator:
                     n.add(
                         "Link",
                         new_capacity.index,
@@ -431,6 +469,31 @@ def add_power_capacities_installed_before_baseyear(
                         efficiency2=costs.at[carrier[generator], "CO2 intensity"],
                         build_year=grouping_year,
                         lifetime=lifetime_assets.loc[new_capacity.index],
+                        p_min_pu=p_min_pu,
+                    )
+                elif generator != "urban central solid biomass CHP":
+                    # as new CHP plants in prepare_sector_network
+                    key = "central gas CHP"
+                    n.add(
+                        "Link",
+                        new_capacity.index,
+                        suffix=name_suffix,
+                        bus0=bus0,
+                        bus1=new_capacity.index,
+                        bus2=new_capacity.index + " urban central heat",
+                        bus3="co2 atmosphere",
+                        carrier=generator,
+                        p_nom=new_capacity / costs.at[key, "efficiency"],
+                        capital_cost=costs.at[key, "capital_cost"]
+                        * costs.at[key, "efficiency"],
+                        marginal_cost=costs.at[key, "efficiency"]
+                        * costs.at[key, "VOM"],  # NB: VOM is per MWel
+                        efficiency=costs.at[key, "efficiency"],
+                        efficiency2=costs.at[key, "efficiency"] / costs.at[key, "c_b"],
+                        efficiency3=costs.at[carrier[generator], "CO2 intensity"],
+                        build_year=grouping_year,
+                        lifetime=lifetime_assets.loc[new_capacity.index],
+                        p_min_pu=p_min_pu,
                     )
                 else:
                     key = "central solid biomass CHP"
@@ -458,6 +521,7 @@ def add_power_capacities_installed_before_baseyear(
                         build_year=grouping_year,
                         efficiency2=costs.at[key, "efficiency-heat"],
                         lifetime=lifetime_assets.loc[new_capacity.index],
+                        p_min_pu=p_min_pu,
                     )
         # check if existing capacities are larger than technical potential
         existing_large = n.generators[
@@ -1091,6 +1155,12 @@ def main(
 
     grouping_years_power = params.existing_capacities["grouping_years_power"]
     grouping_years_heat = params.existing_capacities["grouping_years_heat"]
+    chp_min_load = params.conventional["chp_min_load"]
+    heat_profile = None
+    if chp_min_load:
+        heat_profile = load_space_heat_profile(
+            inputs.hourly_heat_demand_total, n.snapshots
+        )
     add_power_capacities_installed_before_baseyear(
         n=n,
         costs=costs,
@@ -1102,6 +1172,8 @@ def main(
         renewable_carriers=renewable_carriers,
         spatial=spatial,
         solar_rooftop_ratio=params.existing_capacities["solar_rooftop_ratio"],
+        chp_min_load=chp_min_load,
+        heat_profile=heat_profile,
     )
 
     if options["heating"]:

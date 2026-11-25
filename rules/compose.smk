@@ -54,6 +54,11 @@ def get_compose_inputs(w):
             resources("co2_totals.csv") if cfg["co2_budget"]["relative"] else []
         ),
         load=resources("electricity_demand.nc"),
+        hourly_heat_demand_total=(
+            resources("hourly_heat_demand_total.nc")
+            if sector_enabled or cfg["conventional"]["chp_min_load"]
+            else []
+        ),
         snapshot_weightings=resources("snapshot_weightings.csv"),
         network=resources("networks/clustered.nc"),
         solar_rooftop_potentials=(
@@ -102,7 +107,6 @@ def get_compose_inputs(w):
                 if cfg["industry"]["temporal_electricity_industry_load"]
                 else []
             ),
-            hourly_heat_demand_total=resources("hourly_heat_demand_total.nc"),
             industrial_production=resources("industrial_production_{horizon}.csv"),
             industry_sector_ratios=(
                 resources("industry_sector_ratios_{horizon}.csv")

@@ -79,6 +79,10 @@ class ConventionalConfig(ConfigModel):
         description="Monthly rolling mean window for fossil fuel prices smoothing.",
         ge=1,
     )
+    chp_min_load: float | dict[str, float] = Field(
+        0.0,
+        description="Minimum output of existing power plants flagged as CHP in the power plant data, as share of their capacity. It follows the hourly space heat demand of their region and reaches this share at peak demand. One value or a value per carrier, e.g. `{CCGT: 0.4, coal: 0.5}`. Applies to generators in electricity-only and to links in sector-coupled models.",
+    )
     nuclear: dict[str, str | float] = Field(
         default_factory=lambda: {"p_max_pu": "data/nuclear_p_max_pu.csv"},
         description="For any carrier/technology overwrite attributes as listed below.",

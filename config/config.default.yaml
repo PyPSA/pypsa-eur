@@ -458,6 +458,7 @@ conventional:
   unit_commitment: false
   dynamic_fuel_price: false
   fuel_price_rolling_window: 6
+  chp_min_load: 0.0
   nuclear:
     p_max_pu: data/nuclear_p_max_pu.csv
 

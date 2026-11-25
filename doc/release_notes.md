@@ -5,6 +5,8 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Feature: New option `conventional: chp_min_load` lets existing CHP plants follow the heat demand with a minimum output ([#2450](https://github.com/PyPSA/pypsa-eur/issues/2450)).
+* Change: Existing fossil plants flagged as CHP now supply district heating in myopic and perfect foresight runs. This changes results ([#2450](https://github.com/PyPSA/pypsa-eur/issues/2450)).
 * Fix: Myopic runs no longer fail in `add_brownfield` when a heat pump with an explicit heat source `efficiency2` (e.g. river water) exists with several build years ([#2444](https://github.com/PyPSA/pypsa-eur/pull/2444)).
 * Fix: Today's industry demand for high-value chemicals no longer includes the gas and electricity of today's ammonia plants, which the ammonia demand already covers. The split of basic chemicals now matches the future sector ratios for all values of `sector: ammonia`. This changes default results ([#2420](https://github.com/PyPSA/pypsa-eur/issues/2420)).
 * Fix: `electricity: gaslimit` now also works with sector coupling, where it limits the supply of fossil gas ([#1747](https://github.com/PyPSA/pypsa-eur/issues/1747)).

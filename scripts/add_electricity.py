@@ -239,6 +239,23 @@ def add_co2_emissions(
     ].values
 
 
+def chp_min_load_per_plant(
+    chp_set: pd.Series, carrier: pd.Series, chp_min_load: float | dict[str, float]
+) -> pd.Series:
+    """Return the minimum load share of each plant, zero unless flagged as CHP."""
+    if isinstance(chp_min_load, dict):
+        chp_min_load = carrier.map(chp_min_load).fillna(0.0)
+    return (chp_set == "CHP") * chp_min_load
+
+
+def load_space_heat_profile(fn: str, snapshots: pd.Index) -> pd.DataFrame:
+    """Load the hourly space heat demand per region, normalised to its peak."""
+    with xr.open_dataset(fn) as ds:
+        profile = (ds["residential space"] + ds["services space"]).to_pandas()
+    profile = profile.reindex(snapshots)
+    return profile / profile.max()
+
+
 def load_and_aggregate_powerplants(
     ppl_fn: str,
     costs: pd.DataFrame,
@@ -246,6 +263,7 @@ def load_and_aggregate_powerplants(
     aggregation_strategies: dict = None,
     exclude_carriers: list = None,
     estimate_efficiencies: dict | None = None,
+    chp_min_load: float | dict[str, float] = 0.0,
 ) -> pd.DataFrame:
     if not aggregation_strategies:
         aggregation_strategies = {}
@@ -301,9 +319,13 @@ def load_and_aggregate_powerplants(
         ppl.carrier.map(costs.VOM) + ppl.carrier.map(costs.fuel) / ppl.efficiency
     )
 
+    ppl["chp_min_load"] = chp_min_load_per_plant(
+        ppl.component, ppl.carrier, chp_min_load
+    )
+
     strategies = {
         **DEFAULT_ONE_PORT_STRATEGIES,
-        **{"country": "first"},
+        **{"country": "first", "chp_min_load": "capacity_weighted_average"},
         **aggregation_strategies.get("generators", {}),
     }
     strategies = {k: v for k, v in strategies.items() if k in ppl.columns}
@@ -558,6 +580,7 @@ def attach_conventional_generators(
     conventional_inputs: dict,
     unit_commitment: pd.DataFrame | None = None,
     fuel_price: pd.DataFrame | None = None,
+    heat_profile: pd.DataFrame | None = None,
 ) -> None:
     """
     Attach conventional generators to the network.
@@ -584,6 +607,9 @@ def attach_conventional_generators(
         DataFrame containing unit commitment data, by default None.
     fuel_price : pd.DataFrame, optional
         DataFrame containing fuel price data, by default None.
+    heat_profile : pd.DataFrame, optional
+        Normalised space heat demand per bus, which the minimum output of
+        power plants with a ``chp_min_load`` follows, by default None.
     """
     if ppl.empty:
         return
@@ -644,6 +670,11 @@ def attach_conventional_generators(
         lifetime=ppl.lifetime,
         **committable_attrs,
     )
+
+    if heat_profile is not None:
+        chp = ppl.query("chp_min_load > 0")
+        p_min_pu = heat_profile[chp.bus].set_axis(chp.index, axis=1) * chp.chp_min_load
+        n.generators_t.p_min_pu[chp.index] = p_min_pu
 
     for carrier in set(conventional_params) & set(carriers):
         # Generators with technology affected
@@ -1208,6 +1239,7 @@ def main(
             aggregation_strategies=params.clustering["aggregation_strategies"],
             exclude_carriers=params.clustering["exclude_carriers"],
             estimate_efficiencies=params.conventional["estimate_efficiencies"],
+            chp_min_load=params.conventional["chp_min_load"],
         )
     else:
         ppl = pd.DataFrame()
@@ -1255,6 +1287,12 @@ def main(
     else:
         fuel_price = None
 
+    heat_profile = None
+    if params.conventional["chp_min_load"]:
+        heat_profile = load_space_heat_profile(
+            inputs.hourly_heat_demand_total, n.snapshots
+        )
+
     attach_conventional_generators(
         n,
         costs,
@@ -1266,6 +1304,7 @@ def main(
         conventional_inputs=conventional_inputs,
         unit_commitment=unit_commitment,
         fuel_price=fuel_price,
+        heat_profile=heat_profile,
     )
 
     attach_wind_and_solar(

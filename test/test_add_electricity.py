@@ -15,6 +15,7 @@ from scripts.add_electricity import (
     attach_load,
     attach_storageunits,
     attach_stores,
+    chp_min_load_per_plant,
     estimate_efficiency,
 )
 from scripts.lib.validation.config.conventional import _EstimateEfficienciesConfig
@@ -181,3 +182,14 @@ def test_attach_hydro_max_hours(tmp_path, method, expected):
     )
 
     np.testing.assert_allclose(n.storage_units.max_hours[ppl.index], expected)
+
+
+@pytest.mark.parametrize(
+    "chp_min_load, expected",
+    [(0.4, [0.4, 0.0, 0.4]), ({"CCGT": 0.3}, [0.3, 0.0, 0.0])],
+)
+def test_chp_min_load_per_plant(chp_min_load, expected):
+    chp_set = pd.Series(["CHP", "PP", "CHP"])
+    carrier = pd.Series(["CCGT", "CCGT", "coal"])
+    result = chp_min_load_per_plant(chp_set, carrier, chp_min_load)
+    assert result.tolist() == expected
