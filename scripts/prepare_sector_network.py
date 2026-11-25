@@ -7047,7 +7047,7 @@ def add_enhanced_geothermal(
                 bus=f"{bus} geothermal heat surface",
                 carrier="geothermal heat",
                 p_nom_extendable=True,
-                p_min_pu=-boost,
+                p_max_pu=boost,
                 max_hours=max_hours,
                 cyclic_state_of_charge=True,
             )

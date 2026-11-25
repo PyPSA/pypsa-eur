@@ -261,7 +261,8 @@ def apply_co2_budget_constraints(
 
 
 def add_gaslimit(n, gaslimit, Nyears=1.0):
-    sel = n.carriers.index.intersection(["OCGT", "CCGT", "CHP"])
+    """Limit the fossil gas supply, i.e. the fuel of gas power plants or the gas generators."""
+    sel = n.carriers.index.intersection(["OCGT", "CCGT", "CHP", "gas"])
     n.carriers.loc[sel, "gas_usage"] = 1.0
 
     n.add(
