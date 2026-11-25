@@ -20,45 +20,6 @@ ENDOGENOUS_SUBSECTORS = {
     "cement": ["Cement"],
 }
 
-
-def load_sector_ratios(
-    fn: str, fn_endogenous: str | list, endogenous_sectors: list[str]
-) -> pd.DataFrame:
-    """
-    Load the sector ratios of a horizon with endogenous heat and sectors applied.
-
-    Parameters
-    ----------
-    fn : str
-        Sector ratios of the horizon (MWh/t).
-    fn_endogenous : str | list
-        Ratios of the subsectors with endogenous heat supply (MWh/t), or an
-        empty list if `sector: industry_heat: enable` is not set.
-    endogenous_sectors : list[str]
-        Sectors from `sector: endogenous_sectors`, whose ratios are set to zero.
-
-    Returns
-    -------
-    pd.DataFrame
-        Ratios (MWh/t) with carriers as index and country and subsector as
-        columns.
-    """
-    sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0)
-
-    # replace fuels of subsectors with endogenous heat supply by heat demand
-    if fn_endogenous:
-        endogenous = pd.read_csv(fn_endogenous, header=[0, 1], index_col=0)
-        carriers = sector_ratios.index.union(endogenous.index, sort=False)
-        sector_ratios = sector_ratios.reindex(carriers, fill_value=0.0)
-        sector_ratios.update(endogenous)
-
-    for sector in endogenous_sectors:
-        subsectors = ENDOGENOUS_SUBSECTORS[sector]
-        sector_ratios.loc[:, pd.IndexSlice[:, subsectors]] = 0.0
-
-    return sector_ratios
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -70,11 +31,20 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    sector_ratios = load_sector_ratios(
-        snakemake.input.industry_sector_ratios,
-        snakemake.input.industry_sector_ratios_endogenous,
-        snakemake.params.endogenous_sectors,
-    )
+    # import ratios
+    fn = snakemake.input.industry_sector_ratios
+    sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0)
+
+    # replace fuels of subsectors with endogenous heat supply by heat demand
+    if fn := snakemake.input.industry_sector_ratios_endogenous:
+        endogenous = pd.read_csv(fn, header=[0, 1], index_col=0)
+        carriers = sector_ratios.index.union(endogenous.index, sort=False)
+        sector_ratios = sector_ratios.reindex(carriers, fill_value=0.0)
+        sector_ratios.update(endogenous)
+
+    for sector in snakemake.params.endogenous_sectors:
+        subsectors = ENDOGENOUS_SUBSECTORS[sector]
+        sector_ratios.loc[:, pd.IndexSlice[:, subsectors]] = 0.0
 
     # material demand per node and industry (Mton/a)
     fn = snakemake.input.industrial_production_per_node

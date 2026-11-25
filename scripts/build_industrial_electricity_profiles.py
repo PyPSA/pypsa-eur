@@ -4,7 +4,7 @@
 """
 Build hourly industrial electricity demand profiles per model region for a planning horizon in MW.
 
-The electricity demand per subsector and region is the specific electricity consumption from [build_industry_sector_ratios_intermediate][] (MWh/t) multiplied by the regional production from [build_industrial_production_per_node][]. As in [build_industrial_energy_demand_per_node][], the ratios from [build_industry_sector_ratios_endogenous][] replace those of the covered subsectors if `sector: industry_heat: enable` is set, and subsectors of sectors in `sector: endogenous_sectors` get no demand, since their electricity use is modelled by the endogenous process links. The hourly electricity profile of a region is the sum of normalised profiles per industry branch, weighted by the region's electricity demand per subsector. The profiles are synthetic profiles for Germany in 2017 from FfE and are applied to all countries. They are rotated to match the weekdays of the modelled year, follow the public holidays and the local time of each country, and keep the annual mean load of a flat profile. FfE provides no profiles for chemicals and non-ferrous metals. These subsectors use the almost flat profiles of paper and steel, because their processes mostly run continuously at full load.
+The electricity demand per subsector and region is the specific electricity consumption from [build_industry_sector_ratios_intermediate][] (MWh/t) multiplied by the regional production from [build_industrial_production_per_node][]. With endogenous industry heat, the ratios from [build_industry_sector_ratios_endogenous][] replace those of the covered subsectors, so that electricity for process heat is not counted twice. The hourly electricity profile of a region is the sum of normalised profiles per industry branch, weighted by the region's electricity demand per subsector. The profiles are synthetic profiles for Germany in 2017 from FfE and are applied to all countries. They are rotated to match the weekdays of the modelled year, follow the public holidays and the local time of each country, and keep the annual mean load of a flat profile. FfE provides no profiles for chemicals and non-ferrous metals. These subsectors use the almost flat profiles of paper and steel, because their processes mostly run continuously at full load.
 
 References
 ----------
@@ -25,7 +25,7 @@ from scripts._helpers import (
     get_snapshots,
     set_scenario_config,
 )
-from scripts.build_industrial_energy_demand_per_node import load_sector_ratios
+from scripts.build_industrial_energy_demand_per_node import ENDOGENOUS_SUBSECTORS
 
 logger = logging.getLogger(__name__)
 
@@ -190,12 +190,11 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    sector_ratios = load_sector_ratios(
-        snakemake.input.industry_sector_ratios,
-        snakemake.input.industry_sector_ratios_endogenous,
-        snakemake.params.endogenous_sectors,
-    )
-    sector_ratios = sector_ratios.loc["elec"].unstack(0)
+    fn = snakemake.input.industry_sector_ratios
+    sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0).loc["elec"].unstack(0)
+    if fn := snakemake.input.industry_sector_ratios_endogenous:
+        endogenous = pd.read_csv(fn, header=[0, 1], index_col=0)
+        sector_ratios.update(endogenous.loc["elec"].unstack(0))
 
     # material demand per industry and node (Mt/a)
     fn = snakemake.input.industrial_production_per_node
@@ -204,6 +203,8 @@ if __name__ == "__main__":
     # electricity demand per industry and node (TWh/a)
     countries = production.columns.str[:2]
     demand = production * sector_ratios[countries].set_axis(production.columns, axis=1)
+    for sector in snakemake.params.endogenous_sectors:
+        demand.loc[ENDOGENOUS_SUBSECTORS[sector]] = 0.0
 
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day
