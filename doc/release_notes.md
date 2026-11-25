@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: `electricity: gaslimit` now also works with sector coupling, where it limits the supply of fossil gas ([#1747](https://github.com/PyPSA/pypsa-eur/issues/1747)).
 * Fix: For flexible enhanced geothermal systems, `sector: enhanced_geothermal: max_boost` now limits the discharge of the reservoir instead of its charging ([#2417](https://github.com/PyPSA/pypsa-eur/issues/2417)).
 * Refactoring: Clean up the interfaces of the scripts called by `compose_network`. No functional change ([#2439](https://github.com/PyPSA/pypsa-eur/pull/2439)).
 * Compatibility: PyPSA-Eur now requires PyPSA 1.1 or newer. The compatibility code for older PyPSA versions is removed, and annuities are computed with `pypsa.costs.annuity` ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436)).
