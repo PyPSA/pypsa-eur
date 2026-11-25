@@ -4,7 +4,7 @@
 """
 Build specific energy consumption per industrial subsector and country with process heat split into temperature bands in MWh/t.
 
-Today's ratios are derived per country by dividing the energy demand from [build_industrial_energy_demand_per_country_today][] by the production from [build_industrial_production_per_country][]. For each subsector listed in `data/industry_heat_temperature_shares.csv`, all fuels and purchased heat are summed and split into the bands below 100 °C (`heat`), 100-200 °C, 200-500 °C and above 500 °C, while electricity keeps today's ratio. Feedstocks are not heat demand: liquid fuels of HVC keep their exogenous ratio, and the natural gas for ammonia, which the statistics report with basic chemicals, is removed. The heat demand is given as fuel input, which overestimates useful heat by the losses of today's boilers and furnaces. The steel sector is not covered.
+Today's ratios are derived per country by dividing the energy demand from [build_industrial_energy_demand_per_country_today][] by the production from [build_industrial_production_per_country][]. For each subsector listed in `data/industry_heat_temperature_shares.csv`, all fuels and purchased heat are summed and split into the bands below 100 °C (`heat`), 100-200 °C, 200-500 °C and above 500 °C, while electricity keeps today's ratio. Feedstocks are not heat demand: liquid fuels of HVC keep their exogenous ratio, and the natural gas for ammonia is already removed from HVC in [build_industrial_energy_demand_per_country_today][]. The heat demand is given as fuel input, which overestimates useful heat by the losses of today's boilers and furnaces. The steel sector is not covered.
 
 References
 ----------
@@ -28,7 +28,6 @@ def build_industry_sector_ratios_endogenous(
     demand: pd.DataFrame,
     production: pd.DataFrame,
     shares: pd.DataFrame,
-    gas_per_ammonia: float,
 ) -> pd.DataFrame:
     """
     Split today's fuel use per tonne of product into temperature bands.
@@ -43,8 +42,6 @@ def build_industry_sector_ratios_endogenous(
         columns.
     shares : pd.DataFrame
         Share of heat demand per temperature band with subsectors as index.
-    gas_per_ammonia : float
-        Natural gas demand of ammonia production (MWh/t).
 
     Returns
     -------
@@ -52,12 +49,6 @@ def build_industry_sector_ratios_endogenous(
         Ratios (MWh/t) for the subsectors in `shares`. Carriers replaced by
         heat are zero. Missing values keep the exogenous ratio.
     """
-    demand = demand.copy()
-    hvc_gas = demand.loc["gas"].xs("HVC", level=1)
-    ammonia_gas = production["Ammonia"] * gas_per_ammonia / 1e3
-    hvc_gas = hvc_gas.sub(ammonia_gas.reindex(hvc_gas.index), fill_value=0).clip(0)
-    demand.loc["gas", (hvc_gas.index, "HVC")] = hvc_gas.values
-
     production = (production / 1e3).stack()
     production.index.names = [None, None]
 
@@ -105,7 +96,5 @@ if __name__ == "__main__":
     shares = pd.read_csv(snakemake.input.temperature_shares, index_col=0)
     shares = shares.drop(columns="source").drop(snakemake.params.exclude_sectors)
 
-    endogenous = build_industry_sector_ratios_endogenous(
-        demand, production, shares, snakemake.params.gas_per_ammonia
-    )
+    endogenous = build_industry_sector_ratios_endogenous(demand, production, shares)
     endogenous.to_csv(snakemake.output.industry_sector_ratios_endogenous)

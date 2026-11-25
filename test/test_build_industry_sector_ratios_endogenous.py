@@ -25,12 +25,10 @@ def ratios():
         index=["Cement", "HVC"],
         columns=["heat<100", "heat100-200", "heat200-500", "heat500+"],
     )
-    return build_industry_sector_ratios_endogenous(demand, production, shares, 1.0)[
-        "BE"
-    ]
+    return build_industry_sector_ratios_endogenous(demand, production, shares)["BE"]
 
 
-@pytest.mark.parametrize("sector, heat", [("Cement", 14.0), ("HVC", 11.0)])
+@pytest.mark.parametrize("sector, heat", [("Cement", 14.0), ("HVC", 12.0)])
 def test_fuels_become_heat(ratios, sector, heat):
     assert list(ratios.columns) == ["Cement", "HVC"]
     assert ratios.loc[BANDS, sector].sum() == pytest.approx(heat)
