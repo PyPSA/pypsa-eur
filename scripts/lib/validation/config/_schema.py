@@ -92,7 +92,7 @@ class ConfigSchema(BaseModel):
 
     # Top-level fields (from TopLevelConfig)
     version: str = Field(
-        "v2026.09.0", description="Version of PyPSA-Eur. Descriptive only."
+        "v2026.11.0", description="Version of PyPSA-Eur. Descriptive only."
     )
     tutorial: bool = Field(
         False,
