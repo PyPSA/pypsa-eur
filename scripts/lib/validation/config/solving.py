@@ -279,10 +279,10 @@ class _SolverConfig(BaseModel):
 class _CheckObjectiveConfig(BaseModel):
     """Configuration for `solving.check_objective` settings."""
 
-    enable: bool = Field(False, description="Enable objective value checking.")
+    enable: bool = Field(False, description="Enable total system cost checking.")
     expected_value: float | dict[int, float] | None = Field(
         None,
-        description="Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight.",
+        description="Expected total system cost, i.e. the sum of capital and operational expenditure from `n.statistics`. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight.",
     )
     atol: float = Field(10_000, description="Absolute tolerance.")
     rtol: float = Field(0.001, description="Relative tolerance.")

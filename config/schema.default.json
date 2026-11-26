@@ -6831,7 +6831,7 @@
           "properties": {
             "enable": {
               "default": false,
-              "description": "Enable objective value checking.",
+              "description": "Enable total system cost checking.",
               "type": "boolean"
             },
             "expected_value": {
@@ -6850,7 +6850,7 @@
                 }
               ],
               "default": null,
-              "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
+              "description": "Expected total system cost, i.e. the sum of capital and operational expenditure from `n.statistics`. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
             },
             "atol": {
               "default": 10000,
@@ -7752,7 +7752,7 @@
       "properties": {
         "enable": {
           "default": false,
-          "description": "Enable objective value checking.",
+          "description": "Enable total system cost checking.",
           "type": "boolean"
         },
         "expected_value": {
@@ -7771,7 +7771,7 @@
             }
           ],
           "default": null,
-          "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
+          "description": "Expected total system cost, i.e. the sum of capital and operational expenditure from `n.statistics`. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
         },
         "atol": {
           "default": 10000,
@@ -15634,7 +15634,7 @@
           "properties": {
             "enable": {
               "default": false,
-              "description": "Enable objective value checking.",
+              "description": "Enable total system cost checking.",
               "type": "boolean"
             },
             "expected_value": {
@@ -15653,7 +15653,7 @@
                 }
               ],
               "default": null,
-              "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
+              "description": "Expected total system cost, i.e. the sum of capital and operational expenditure from `n.statistics`. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
             },
             "atol": {
               "default": 10000,
