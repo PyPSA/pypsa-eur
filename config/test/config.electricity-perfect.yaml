@@ -165,7 +165,6 @@ solving:
     options: highs-simplex
   check_objective:
     enable: false
-    expected_value: 2950689081.09
   options:
     transmission_losses: false
 
