@@ -1686,11 +1686,7 @@ rule build_egs_potentials:
     input:
         egs_cost="data/egs_costs.json",
         regions=resources("onshore_regions.geojson"),
-        air_temperature=(
-            resources("temp_air_total.nc")
-            if config_provider("sector", "enhanced_geothermal", "var_cf")
-            else []
-        ),
+        air_temperature=resources("temp_air_total.nc"),
     output:
         egs_potentials=resources("egs_potentials.csv"),
         egs_overlap=resources("egs_overlap.csv"),
