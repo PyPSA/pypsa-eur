@@ -1318,9 +1318,8 @@ def check_objective_value(n: pypsa.Network, solving: dict, horizon: str) -> None
     expected_value = check_objective["expected_value"]
     if isinstance(expected_value, dict):
         expected_value = expected_value[int(horizon)]
-    logger.warning(f"CI-BASELINE horizon={horizon} objective={n.objective:.2f}")
     if not np.isclose(n.objective, expected_value, atol=atol, rtol=rtol):
-        logger.warning(
+        raise ObjectiveValueError(
             f"Objective value {n.objective} differs from expected value "
             f"{expected_value} by more than {atol}."
         )
