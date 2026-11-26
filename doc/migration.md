@@ -28,6 +28,7 @@ Also check these settings:
 - `sector: chp: fuel_cc` must list all fuels that should keep CHP plants with carbon capture.
 - `electricity: transmission_limit` refers to the previous planning horizon with myopic foresight.
 - `electricity: max_hours: iron-air` counts hours at rated output.
+- `renewable: solar: capacity_per_sqkm` and all solar PV capacities refer to AC capacity (`resource: dc_ac_ratio`).
 - `solving: check_objective: expected_value` is compared with the total system cost and must be updated.
 - `logging: console_level: INFO` restores the previous console output.
 

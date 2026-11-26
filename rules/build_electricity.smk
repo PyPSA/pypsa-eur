@@ -691,6 +691,20 @@ rule process_cost_data:
         costs=config_provider("costs"),
         max_hours=config_provider("electricity", "max_hours"),
         cost_year=cost_year,
+        solar_dc_ac_ratio=config_provider(
+            "renewable", "solar", "resource", "dc_ac_ratio"
+        ),
+        solar_ac_cost_share=config_provider("renewable", "solar", "ac_cost_share"),
+        solar_hsat_dc_ac_ratio=config_provider(
+            "renewable", "solar-hsat", "resource", "dc_ac_ratio"
+        ),
+        solar_hsat_ac_cost_share=config_provider(
+            "renewable", "solar-hsat", "ac_cost_share"
+        ),
+        solar_rooftop_dc_ac_ratio=config_provider("sector", "solar_rooftop_dc_ac_ratio"),
+        solar_rooftop_ac_cost_share=config_provider(
+            "sector", "solar_rooftop_ac_cost_share"
+        ),
     script:
         scripts("process_cost_data.py")
 

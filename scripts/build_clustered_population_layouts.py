@@ -5,7 +5,9 @@
 Aggregate gridded population layouts to clustered model regions.
 
 The total, urban and rural population layouts on the cutout grid are summed
-over each onshore region using the cutout indicator matrix. The output table
+over each onshore region using the cutout indicator matrix. Each grid cell's
+population is split among the regions it overlaps, so that the population of
+coastal cells is not lost to the sea. The output table
 also holds each region's country and its share of the national population,
 which later rules use to distribute national demands and capacities to
 regions.
@@ -16,6 +18,7 @@ import logging
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
+from sklearn.preprocessing import normalize
 
 from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
@@ -37,6 +40,7 @@ if __name__ == "__main__":
     )
 
     I = cutout.indicatormatrix(clustered_regions)  # noqa: E741
+    I = normalize(I, norm="l1", axis=0)  # noqa: E741
 
     pop = {}
     for item in ["total", "urban", "rural"]:

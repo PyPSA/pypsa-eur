@@ -168,6 +168,12 @@ configuration.
   demand, process emissions, CO2 and heat venting) now have a fixed infinite capacity instead of an extendable
   one. Their optimal capacity is reported as infinite ([#2440](https://github.com/PyPSA/pypsa-eur/pull/2440)).
 
+* Solar PV availability, capacities and potentials now refer to AC capacity, like the costs. Previously, they
+  referred to DC capacity. The new options `renewable: solar: resource: dc_ac_ratio` and `renewable: solar:
+  ac_cost_share` set the inverter sizing and scale the costs (rooftop: `sector: solar_rooftop_dc_ac_ratio`,
+  `sector: solar_rooftop_ac_cost_share`). This changes default results
+  ([#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
+
 * Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport now come from a
   Delaunay triangulation of the regions instead of the electricity grid, with settings per carrier under
   `sector: transport_corridors`. This changes default results
@@ -192,6 +198,11 @@ configuration.
       replaces `data/ammonia_plants.csv` and now distributes ammonia, methanol and high-value chemicals
       production by plant capacities. This changes the regional distribution of industrial production
       ([#1719](https://github.com/PyPSA/pypsa-eur/pull/1719)).
+
+    - The HERA river discharge and air temperature data (new `data: hera`, `data: hera_test_cutout`) and the
+      seawater temperature data are now versioned and mirrored for the year 2013. Seawater temperature no
+      longer needs Copernicus Marine credentials by default; other years need `source: primary`
+      ([#2461](https://github.com/PyPSA/pypsa-eur/pull/2461)).
 
 * **Workflow and code:**
 
@@ -233,8 +244,9 @@ configuration.
 
 **Bugfixes and Compatibility**
 
-* PyPSA-Eur now requires PyPSA 1.1 or newer. The compatibility code for older PyPSA versions was removed
-  ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436)).
+* PyPSA-Eur now requires PyPSA 1.1 and atlite 0.8 or newer. The compatibility code for older PyPSA versions
+  was removed ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436),
+  [#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
 
 * Fixed the capital costs of lines and DC links, which did not include `lines: length_factor` and `links:
   length_factor` since [#1511](https://github.com/PyPSA/pypsa-eur/pull/1511). This increases transmission
@@ -242,6 +254,10 @@ configuration.
 
 * Fixed the electricity demand distribution keys of Great Britain, which were not renormalised after adding
   Northern Ireland and overstated the national load ([#2456](https://github.com/PyPSA/pypsa-eur/pull/2456)).
+
+* Fixed the clustered population layouts and solar rooftop potentials, which lost the population of coastal
+  grid cells in proportion to their sea area. This changes default results
+  ([#2459](https://github.com/PyPSA/pypsa-eur/pull/2459)).
 
 * Fixed hydro reservoirs: storage capacity (`renewable: hydro: hydro_max_hours`) no longer depends on the
   first unit of each country, and reservoirs dispatch with an efficiency of 1, because their inflow is scaled
