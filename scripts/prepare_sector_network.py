@@ -514,7 +514,7 @@ def add_carrier_buses(
             "Generator",
             nodes + suffix,
             bus=nodes + suffix,
-            p_nom_extendable=True,
+            p_nom=np.inf,
             carrier=carrier + suffix,
             marginal_cost=costs.at[carrier, "fuel"],
         )
@@ -743,7 +743,7 @@ def add_co2_tracking(
             bus1="co2 atmosphere",
             carrier="co2 vent",
             efficiency=1.0,
-            p_nom_extendable=True,
+            p_nom=np.inf,
         )
 
 
@@ -2785,7 +2785,7 @@ def add_ice_cars(
         bus2="co2 atmosphere",
         carrier="land transport oil",
         efficiency2=costs.at["oil", "CO2 intensity"],
-        p_nom_extendable=True,
+        p_nom=np.inf,
     )
 
 
@@ -3136,7 +3136,7 @@ def add_heat(
                 bus=nodes + f" {heat_system} heat",
                 location=nodes,
                 carrier=f"{heat_system} heat vent",
-                p_nom_extendable=True,
+                p_nom=np.inf,
                 p_max_pu=0,
                 p_min_pu=-1,
                 unit="MWh_th",
@@ -3573,7 +3573,7 @@ def add_heat(
                         bus1=nodes + f" {heat_system} heat",
                         efficiency=efficiency_direct_utilisation,
                         carrier=f"{heat_system} {heat_source} heat direct utilisation",
-                        p_nom_extendable=True,
+                        p_nom=np.inf,
                     )
 
             if (
@@ -4217,7 +4217,7 @@ def add_biomass(
             efficiency=1.0,
             efficiency2=biomass_import_upstream_emissions
             * costs.at["solid biomass", "CO2 intensity"],
-            p_nom_extendable=True,
+            p_nom=np.inf,
         )
 
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
@@ -4923,7 +4923,7 @@ def add_waste(
         bus0=spatial.waste.nodes,
         bus1="co2 atmosphere",
         carrier="HVC to air",
-        p_nom_extendable=True,
+        p_nom=np.inf,
         efficiency=co2_intensity,
     )
 
@@ -4956,7 +4956,7 @@ def add_waste(
             bus1=spatial.waste.nodes,
             bus2="co2 atmosphere",
             carrier="municipal solid waste",
-            p_nom_extendable=True,
+            p_nom=np.inf,
             efficiency=1.0,
             efficiency2=-co2_intensity,
         )
@@ -5204,7 +5204,7 @@ def add_industry(
         bus0=spatial.biomass.nodes,
         bus1=spatial.biomass.industry,
         carrier="solid biomass for industry",
-        p_nom_extendable=True,
+        p_nom=np.inf,
         efficiency=1.0,
     )
 
@@ -5263,7 +5263,7 @@ def add_industry(
         bus1=spatial.gas.industry,
         bus2="co2 atmosphere",
         carrier="gas for industry",
-        p_nom_extendable=True,
+        p_nom=np.inf,
         efficiency=1.0,
         efficiency2=costs.at["gas", "CO2 intensity"],
     )
@@ -5337,7 +5337,7 @@ def add_industry(
         bus1=spatial.methanol.industry,
         bus2="co2 atmosphere",
         carrier="industry methanol",
-        p_nom_extendable=True,
+        p_nom=np.inf,
         efficiency2=costs.at["methanolisation", "carbondioxide-input"],
     )
 
@@ -5465,7 +5465,7 @@ def add_industry(
         bus1=spatial.oil.naphtha,
         bus2=spatial.co2.process_emissions,
         carrier="naphtha for industry",
-        p_nom_extendable=True,
+        p_nom=np.inf,
         efficiency2=process_co2_per_naphtha,
         **waste_emissions,
     )
@@ -5551,7 +5551,7 @@ def add_industry(
         bus0=spatial.co2.process_emissions,
         bus1="co2 atmosphere",
         carrier="process emissions",
-        p_nom_extendable=True,
+        p_nom=np.inf,
         efficiency=1.0,
     )
 
@@ -5648,7 +5648,7 @@ def add_industry(
             bus1=spatial.coal.industry,
             bus2="co2 atmosphere",
             carrier="coal for industry",
-            p_nom_extendable=True,
+            p_nom=np.inf,
             efficiency2=costs.at["coal", "CO2 intensity"],
         )
 
@@ -5708,8 +5708,7 @@ def add_industry(
             spatial.nodes,
             suffix=" H2 DRI reduction",
             carrier="H2 DRI",
-            p_nom=0,
-            p_nom_extendable=True,
+            p_nom=np.inf,
             bus0=spatial.h2.nodes,
             bus1=spatial.nodes + " DRI reduction",
             efficiency=1 / hydrogen_input,
@@ -5732,8 +5731,7 @@ def add_industry(
             spatial.nodes,
             suffix=" gas DRI reduction",
             carrier="gas DRI",
-            p_nom=0,
-            p_nom_extendable=True,
+            p_nom=np.inf,
             bus0=spatial.gas.nodes,
             bus1=spatial.nodes + " DRI reduction",
             bus2=spatial.nodes + " gas DRI emission",
@@ -5957,7 +5955,7 @@ def add_industry(
             bus2=spatial.cement.nodes + " emission",
             bus3="co2 atmosphere",
             carrier="cement heat biomass",
-            p_nom_extendable=True,
+            p_nom=np.inf,
             efficiency=1,
             efficiency2=costs.at["solid biomass", "CO2 intensity"],
             efficiency3=-costs.at["solid biomass", "CO2 intensity"],
@@ -5970,7 +5968,7 @@ def add_industry(
             bus1=spatial.cement.heat,
             bus2=spatial.cement.nodes + " emission",
             carrier="cement heat waste",
-            p_nom_extendable=True,
+            p_nom=np.inf,
             efficiency=1,
             efficiency2=costs.at["oil", "CO2 intensity"],
         )
@@ -5982,7 +5980,7 @@ def add_industry(
             bus1=spatial.cement.heat,
             bus2=spatial.cement.nodes + " emission",
             carrier="cement heat gas",
-            p_nom_extendable=True,
+            p_nom=np.inf,
             efficiency=1,
             efficiency2=costs.at["gas", "CO2 intensity"],
         )
@@ -6091,7 +6089,7 @@ def add_aviation(
         bus1=spatial.oil.kerosene,
         bus2="co2 atmosphere",
         carrier="kerosene for aviation",
-        p_nom_extendable=True,
+        p_nom=np.inf,
         efficiency2=costs.at["oil", "CO2 intensity"],
     )
 
@@ -6286,11 +6284,16 @@ def add_shipping(
                 p_set=p_set_fuel,
             )
 
+            if "capital_cost" in link:
+                capacity = dict(p_nom_extendable=True)
+            else:
+                capacity = dict(p_nom=np.inf)
+
             n.add(
                 "Link",
                 buses,
                 bus1=buses,
-                p_nom_extendable=True,
+                **capacity,
                 **link,
             )
 
@@ -6569,7 +6572,7 @@ def add_agriculture(
             bus1=spatial.oil.agriculture_machinery,
             bus2="co2 atmosphere",
             carrier="agriculture machinery oil",
-            p_nom_extendable=True,
+            p_nom=np.inf,
             efficiency2=costs.at["oil", "CO2 intensity"],
         )
 
@@ -6933,7 +6936,7 @@ def add_enhanced_geothermal(
         spatial.geothermal_heat.nodes,
         bus=spatial.geothermal_heat.nodes,
         carrier="geothermal heat",
-        p_nom_extendable=True,
+        p_nom=np.inf,
     )
 
     if egs_config["var_cf"]:

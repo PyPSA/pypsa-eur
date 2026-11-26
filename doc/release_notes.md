@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Change: Pass-through links and generators without investment cost in the sector-coupled network (e.g. fuel supply, fuel demand, process emissions, CO2 and heat venting) now have a fixed infinite capacity instead of an extendable one. This removes capacity variables without a cost from the optimisation. Their optimal capacity is reported as infinite ([#2440](https://github.com/PyPSA/pypsa-eur/pull/2440)).
 * Fix: `clustering: cluster_network: n_clusters: all` now runs with sector coupling. Unclustered bus names now start with the country code if they do not already, and heat source potentials handle regions without data ([#2192](https://github.com/PyPSA/pypsa-eur/issues/2192)).
 * Fix: `renewable: hydro: eia_approximate_missing` no longer fails with an `AttributeError` ([#2449](https://github.com/PyPSA/pypsa-eur/issues/2449)).
 * Fix: Myopic runs no longer fail in `add_brownfield` when a heat pump with an explicit heat source `efficiency2` (e.g. river water) exists with several build years ([#2444](https://github.com/PyPSA/pypsa-eur/pull/2444)).
