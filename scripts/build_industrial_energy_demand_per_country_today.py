@@ -4,9 +4,9 @@
 """
 Build today's industrial final energy demand per country, subsector and carrier in TWh/a.
 
-For EU27 countries, the JRC-IDEES energy balances for the configured `industry: reference_year` give the final energy consumption per subsector, which is grouped into the carriers electricity, gas, liquid, solid, heat, biomass, waste and other, plus hydrogen (zero today). Mining, construction and non-specified industry are merged into "Other industrial sectors", and non-energy feedstock is added to basic chemicals. Basic chemicals are then split into ammonia, chlorine, methanol and high-value chemicals (HVC) using the production volumes from [build_industrial_production_per_country][] and fixed specific consumptions; HVC receives the remainder, clipped at zero. If `industry: ammonia` is enabled, ammonia demand is kept as its own carrier instead of being expressed as hydrogen and electricity.
+For EU27 countries, the JRC-IDEES energy balances for the configured `industry: reference_year` give the final energy consumption per subsector, which is grouped into the carriers electricity, gas, liquid, solid, heat, biomass, waste and other, plus hydrogen (zero today). Mining, construction and non-specified industry are merged into "Other industrial sectors", and non-energy feedstock is added to basic chemicals. Basic chemicals are then split into ammonia, chlorine, methanol and high-value chemicals (HVC) using the production volumes from [build_industrial_production_per_country][] and fixed specific consumptions; HVC receives the remainder, clipped at zero. Today's ammonia is removed from HVC with the gas and electricity of steam methane reforming, as in [build_industry_sector_ratios][]. If `industry: ammonia` is enabled, ammonia demand is kept as its own carrier instead of being expressed as hydrogen and electricity.
 
-Countries outside the EU27 receive the EU27-average energy demand per tonne of production multiplied by their own production. Finally, 75% of the energy consumed in coke ovens, taken from the Eurostat transformation output, is attributed to integrated steelworks ([doi:10.1016/j.erss.2022.102565](https://doi.org/10.1016/j.erss.2022.102565)).
+Countries outside the EU27 receive the average energy demand per tonne of production of the EU27 countries in the run (all EU27 countries if the run has none), multiplied by their own production. Finally, 75% of the energy consumed in coke ovens, taken from the Eurostat transformation output, is attributed to integrated steelworks ([doi:10.1016/j.erss.2022.102565](https://doi.org/10.1016/j.erss.2022.102565)).
 
 The output has one row per carrier and one column per country and subsector.
 """
@@ -176,7 +176,15 @@ def separate_basic_chemicals(
         ammonia = ammonia_exo
 
     demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
-    demand["HVC"] -= ammonia_exo.unstack().reindex(index=demand.index, fill_value=0.0)
+
+    # today's ammonia plants in basic chemicals use steam methane reforming
+    ammonia_smr = pd.DataFrame(
+        {
+            "gas": production["Ammonia"] * params["MWh_CH4_per_tNH3_SMR"],
+            "electricity": production["Ammonia"] * params["MWh_elec_per_tNH3_SMR"],
+        }
+    ).T
+    demand["HVC"] -= ammonia_smr.unstack().reindex(index=demand.index, fill_value=0.0)
 
     demand.drop(columns="Basic chemicals", inplace=True)
 
@@ -186,21 +194,24 @@ def separate_basic_chemicals(
 
 
 def add_non_eu27_industrial_energy_demand(
-    countries: pd.Index, demand: pd.DataFrame, production: pd.DataFrame
+    countries: pd.Index,
+    demand: pd.DataFrame,
+    production: pd.DataFrame,
+    reference: pd.DataFrame,
 ) -> pd.DataFrame:
+    """Scale non-EU27 production with the energy per tonne of the reference countries."""
+    demand_eu27 = demand.loc[countries.intersection(eu27)]
     non_eu27 = countries.difference(eu27)
     if non_eu27.empty:
-        return demand
+        return demand_eu27
 
-    eu27_production = production.loc[countries.intersection(eu27)].sum()
-    eu27_energy = demand.groupby(level=1).sum()
-    eu27_averages = eu27_energy / eu27_production
+    eu27_averages = demand.groupby(level=1).sum() / reference.sum()
 
     demand_non_eu27 = pd.concat(
         {k: v * eu27_averages for k, v in production.loc[non_eu27].iterrows()}
     )
 
-    return pd.concat([demand, demand_non_eu27])
+    return pd.concat([demand_eu27, demand_non_eu27])
 
 
 def industrial_energy_demand(
@@ -294,8 +305,17 @@ if __name__ == "__main__":
     year = params.get("reference_year", 2019)
     countries = pd.Index(snakemake.params.countries)
 
+    # output in MtMaterial/a
+    production = (
+        pd.read_csv(snakemake.input.industrial_production_per_country, index_col=0)
+        / 1e3
+    )
+    reference = (
+        pd.read_csv(snakemake.input.industrial_production_reference, index_col=0) / 1e3
+    )
+
     demand = industrial_energy_demand(
-        countries.intersection(eu27),
+        reference.index.rename(None),
         year,
         snakemake.input.jrc,
         endogenous_ammonia,
@@ -303,15 +323,11 @@ if __name__ == "__main__":
         snakemake.params.disable_progressbar,
     )
 
-    # output in MtMaterial/a
-    production = (
-        pd.read_csv(snakemake.input.industrial_production_per_country, index_col=0)
-        / 1e3
+    demand = separate_basic_chemicals(demand, reference, params, endogenous_ammonia)
+
+    demand = add_non_eu27_industrial_energy_demand(
+        countries, demand, production, reference
     )
-
-    demand = separate_basic_chemicals(demand, production, params, endogenous_ammonia)
-
-    demand = add_non_eu27_industrial_energy_demand(countries, demand, production)
 
     # for format compatibility
     demand = demand.stack(future_stack=True).unstack(level=[0, 2])

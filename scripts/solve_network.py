@@ -1293,12 +1293,15 @@ def extra_functionality(
 
 def check_objective_value(n: pypsa.Network, solving: dict, horizon: str) -> None:
     """
-    Check if objective value matches expected value within tolerance.
+    Check if total system cost matches expected value within tolerance.
+
+    The total system cost is the sum of capital and operational expenditure
+    from `n.statistics`.
 
     Parameters
     ----------
     n : pypsa.Network
-        Network with solved objective
+        Solved network
     solving : Dict
         Dictionary containing objective checking parameters
     horizon : str
@@ -1308,7 +1311,7 @@ def check_objective_value(n: pypsa.Network, solving: dict, horizon: str) -> None
     Raises
     ------
     ObjectiveValueError
-        If objective value differs from expected value beyond tolerance
+        If total system cost differs from expected value beyond tolerance
     """
     check_objective = solving["check_objective"]
     if not check_objective["enable"]:
@@ -1318,9 +1321,10 @@ def check_objective_value(n: pypsa.Network, solving: dict, horizon: str) -> None
     expected_value = check_objective["expected_value"]
     if isinstance(expected_value, dict):
         expected_value = expected_value[int(horizon)]
-    if not np.isclose(n.objective, expected_value, atol=atol, rtol=rtol):
+    system_cost = np.nansum(n.statistics.capex()) + np.nansum(n.statistics.opex())
+    if not np.isclose(system_cost, expected_value, atol=atol, rtol=rtol):
         raise ObjectiveValueError(
-            f"Objective value {n.objective} differs from expected value "
+            f"Total system cost {system_cost} differs from expected value "
             f"{expected_value} by more than {atol}."
         )
 
@@ -1370,6 +1374,7 @@ def collect_kwargs(
     model_kwargs["linearized_unit_commitment"] = cf_solving.get(
         "linearized_unit_commitment", False
     )
+    model_kwargs["include_objective_constant"] = False
 
     # Solve kwargs
     solver_name = solving["solver"]["name"]

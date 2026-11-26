@@ -8,9 +8,14 @@ Units are aligned to MW and MWh, missing values are filled with defaults, the
 annualised `capital_cost` (investment annuity plus fixed operation and
 maintenance) and the `marginal_cost` (fuel plus variable operation and
 maintenance) are computed, and combined storage costs for batteries and
-hydrogen are derived. Custom cost modifications from the configuration can
-target single technologies and horizons or all of them with the `all`
-identifier.
+hydrogen are derived. Solar PV investment is scaled from the DC/AC ratio
+assumed in the cost data to the configured one. Custom cost modifications
+from the configuration can target single technologies and horizons or all of
+them with the `all` identifier.
+
+References
+----------
+[Rahdan et al. (2025)](https://doi.org/10.1038/s41467-025-61492-9)
 """
 
 import logging
@@ -21,6 +26,38 @@ import pypsa
 from scripts.add_electricity import STORE_LOOKUP
 
 logger = logging.getLogger(__name__)
+
+# DC/AC ratios behind the solar PV costs in technology-data v0.16.0 (Danish
+# Energy Agency, all years from 2020); check them when updating the cost data
+SOLAR_DC_AC_RATIO = {
+    "solar-utility": 1.25,
+    "solar-utility single-axis tracking": 1.25,
+    "solar-rooftop": 1.075,
+}
+
+
+def scale_solar_cost(
+    costs: pd.DataFrame, tech: str, dc_ac_ratio: float, ac_cost_share: float
+) -> pd.DataFrame:
+    """
+    Scale the DC share of a solar PV investment per unit of AC capacity.
+
+    Parameters
+    ----------
+    costs : pd.DataFrame
+        Raw cost data indexed by technology and parameter.
+    tech : str
+        Solar PV technology in the cost data.
+    dc_ac_ratio : float
+        Ratio of module (DC) capacity to inverter (AC) capacity.
+    ac_cost_share : float
+        Share of the investment that scales with AC capacity.
+    """
+    dc_scaling = dc_ac_ratio / SOLAR_DC_AC_RATIO[tech]
+    factor = ac_cost_share + (1 - ac_cost_share) * dc_scaling
+    costs = costs.copy()
+    costs.loc[(tech, "investment"), "value"] *= factor
+    return costs
 
 
 def overwrite_costs(costs: pd.DataFrame, custom_costs: pd.DataFrame) -> pd.DataFrame:
@@ -263,6 +300,23 @@ if __name__ == "__main__":
 
     # Retrieve costs assumptions
     costs = pd.read_csv(snakemake.input.costs, index_col=["technology", "parameter"])
+
+    params = snakemake.params
+    costs = scale_solar_cost(
+        costs, "solar-utility", params.solar_dc_ac_ratio, params.solar_ac_cost_share
+    )
+    costs = scale_solar_cost(
+        costs,
+        "solar-utility single-axis tracking",
+        params.solar_hsat_dc_ac_ratio,
+        params.solar_hsat_ac_cost_share,
+    )
+    costs = scale_solar_cost(
+        costs,
+        "solar-rooftop",
+        params.solar_rooftop_dc_ac_ratio,
+        params.solar_rooftop_ac_cost_share,
+    )
 
     # Prepare costs
     costs_processed = prepare_costs(

@@ -34,7 +34,6 @@ from scripts.add_electricity import flatten
 from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
-idx = pd.IndexSlice
 
 
 def add_brownfield(
@@ -281,7 +280,7 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
         pd.Series(dr, index=dr).where(lambda x: x.isin(n.snapshots), pd.NA).ffill()
     )
 
-    for carrier in params["renewable_carriers"]:
+    for carrier in params.electricity["renewable_carriers"]:
         if carrier == "hydro":
             continue
 
@@ -348,14 +347,14 @@ def update_heat_pump_efficiency(
     # Change efficiency2 for heat pumps that use an explicitly modelled heat source
     # Only update if efficiency2 exists (sector-coupled networks only)
     if "efficiency2" in n_p.links_t and "efficiency2" in n.links_t:
-        previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
-            n_p.links_t["efficiency2"].columns
-        )
-        current_iteration_columns = corresponding_idx_this_iteration.intersection(
+        previous = heat_pump_idx_previous_iteration
+        current = corresponding_idx_this_iteration
+        # select pairs jointly, as several vintages map to the same current heat pump
+        has_both = previous.isin(n_p.links_t["efficiency2"].columns) & current.isin(
             n.links_t["efficiency2"].columns
         )
-        n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
-            n.links_t["efficiency2"].loc[:, current_iteration_columns].values
+        n_p.links_t["efficiency2"].loc[:, previous[has_both]] = (
+            n.links_t["efficiency2"].loc[:, current[has_both]].values
         )
 
 
@@ -470,7 +469,8 @@ def main(
 
     update_heat_pump_efficiency(n, n_previous, current_horizon)
 
-    if params.enable_ptes and params.dynamic_ptes_capacity:
+    ptes = params.sector["district_heating"]["ptes"]
+    if ptes["enable"] and ptes["dynamic_capacity"]:
         update_dynamic_ptes_capacity(n, n_previous, current_horizon)
 
     logger.info(
@@ -481,9 +481,9 @@ def main(
         n,
         n_previous,
         current_horizon,
-        h2_retrofit=params["h2_retrofit"],
-        h2_retrofit_capacity_per_ch4=params["h2_retrofit_capacity_per_ch4"],
-        capacity_threshold=params["capacity_threshold"],
+        h2_retrofit=params.sector["H2_retrofit"],
+        h2_retrofit_capacity_per_ch4=params.sector["H2_retrofit_capacity_per_CH4"],
+        capacity_threshold=params.existing_capacities["threshold_capacity"],
     )
     update_transmission_limit(
         n, get(params.electricity["transmission_limit"], current_horizon)

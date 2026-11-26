@@ -8,6 +8,7 @@ from functools import partial, lru_cache
 import os, sys, glob
 import requests
 
+import country_converter as coco
 import pandas as pd
 import json
 import yaml
@@ -231,6 +232,14 @@ def solver_threads(w):
         or 4
     )
     return threads
+
+
+EU27 = set(coco.CountryConverter().EU27as("ISO2").ISO2)
+
+
+def without_eu27(w) -> bool:
+    """Whether the run has no EU27 country, so that all EU27 countries serve as reference."""
+    return not set(config_provider("countries")(w)) & EU27
 
 
 def input_custom_extra_functionality(w):

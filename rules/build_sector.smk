@@ -412,10 +412,10 @@ def input_hera_data(w) -> dict[str, str]:
         "hera_ambient_temperature_{year}" to NetCDF file paths.
     """
     if config_provider("atlite", "default_cutout")(w) == "be-03-2013-era5":
-        hera_data_key = "be_2013-03-01_to_2013-03-08"
+        test_data = rules.retrieve_hera_data_test_cutout.output
         return {
-            "hera_river_discharge_2013": f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
-            "hera_ambient_temperature_2013": f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
+            "hera_river_discharge_2013": test_data["river_discharge"],
+            "hera_ambient_temperature_2013": test_data["ambient_temperature"],
         }
     else:
         from scripts._helpers import get_snapshots
@@ -429,10 +429,10 @@ def input_hera_data(w) -> dict[str, str]:
         result = {}
         for year in unique_years:
             result[f"hera_river_discharge_{year}"] = (
-                f"data/hera_{year}/river_discharge_{year}.nc"
+                f"{HERA_DATASET['folder']}/river_discharge_{year}.nc"
             )
             result[f"hera_ambient_temperature_{year}"] = (
-                f"data/hera_{year}/ambient_temp_{year}.nc"
+                f"{HERA_DATASET['folder']}/ambient_temp_{year}.nc"
             )
 
         return result
@@ -566,7 +566,7 @@ def input_seawater_temperature(w) -> dict[str, str]:
 
     # Create dictionary with year-specific keys
     return {
-        f"seawater_temperature_{year}": f"data/seawater_temperature_{year}.nc"
+        f"seawater_temperature_{year}": f"{SEAWATER_TEMPERATURE_DATASET['folder']}/seawater_temperature_{year}.nc"
         for year in unique_years
     }
 
@@ -808,6 +808,9 @@ rule build_energy_totals:
     """Builds annual energy demand totals per country and sector from JRC IDEES and Eurostat data."""
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
+        population=lambda w: (
+            rules.retrieve_jrc_ardeco.output["ardeco_pop"] if without_eu27(w) else []
+        ),
         swiss=resources("switzerland_energy_balances.csv"),
         swiss_transport=lambda w: (
             f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv"
@@ -1164,7 +1167,6 @@ rule build_industry_sector_ratios_endogenous:
         mem_mb=1000,
     params:
         exclude_sectors=config_provider("sector", "industry_heat", "exclude_sectors"),
-        gas_per_ammonia=config_provider("industry", "MWh_CH4_per_tNH3_SMR"),
     script:
         scripts("build_industry_sector_ratios_endogenous.py")
 
@@ -1207,6 +1209,7 @@ rule build_industrial_production_per_country:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
         ),
+        industrial_production_reference=resources("industrial_production_reference.csv"),
     log:
         logs("build_industrial_production_per_country.log"),
     benchmark:
@@ -1346,6 +1349,11 @@ rule build_industrial_electricity_profiles:
     """Builds hourly industrial electricity demand profiles per region from FfE load profiles."""
     input:
         industry_sector_ratios=resources("industry_sector_ratios_{horizon}.csv"),
+        industry_sector_ratios_endogenous=lambda w: (
+            resources("industry_sector_ratios_endogenous.csv")
+            if config_provider("sector", "industry_heat", "enable")(w)
+            else []
+        ),
         industrial_production_per_node=resources("industrial_production_{horizon}.csv"),
         ffe_profiles=rules.retrieve_ffe_industry_load_profiles.output["json"],
     output:
@@ -1375,6 +1383,7 @@ rule build_industrial_energy_demand_per_country_today:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
         ),
+        industrial_production_reference=resources("industrial_production_reference.csv"),
     output:
         industrial_energy_demand_per_country_today=resources(
             "industrial_energy_demand_per_country_today.csv"
@@ -1395,6 +1404,8 @@ rule build_industrial_energy_demand_per_country_today:
                 "MWh_NH3_per_tNH3",
                 "MWh_H2_per_tNH3_electrolysis",
                 "MWh_elec_per_tNH3_electrolysis",
+                "MWh_CH4_per_tNH3_SMR",
+                "MWh_elec_per_tNH3_SMR",
                 "MWh_elec_per_tCl",
                 "MWh_H2_per_tCl",
                 "MWh_elec_per_tMeOH",
@@ -1680,11 +1691,7 @@ rule build_egs_potentials:
     input:
         egs_cost="data/egs_costs.json",
         regions=resources("onshore_regions.geojson"),
-        air_temperature=(
-            resources("temp_air_total.nc")
-            if config_provider("sector", "enhanced_geothermal", "var_cf")
-            else []
-        ),
+        air_temperature=resources("temp_air_total.nc"),
     output:
         egs_potentials=resources("egs_potentials.csv"),
         egs_overlap=resources("egs_overlap.csv"),

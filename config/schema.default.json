@@ -1472,6 +1472,46 @@
             }
           }
         },
+        "hera": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "hera_test_cutout": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "seawater_temperature": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -2389,7 +2429,7 @@
             }
           ],
           "default": false,
-          "description": "Global gas usage limit."
+          "description": "Limit on the fossil gas supply in MWh per year. Without sector coupling, this is the fuel of gas power plants; with sector coupling, the gas from fossil gas generators. Biogas and synthetic gas do not count."
         },
         "operational_reserve": {
           "description": "Configuration for `electricity.operational_reserve` settings.",
@@ -4616,6 +4656,12 @@
                   ],
                   "default": null,
                   "description": "Tracking type (e.g., 'horizontal')."
+                },
+                "dc_ac_ratio": {
+                  "default": 1.25,
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
+                  "minimum": 1,
+                  "type": "number"
                 }
               }
             },
@@ -4626,7 +4672,14 @@
             },
             "capacity_per_sqkm": {
               "default": 5.1,
-              "description": "Allowable density of solar panel placement.",
+              "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+              "type": "number"
+            },
+            "ac_cost_share": {
+              "default": 0.18,
+              "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+              "maximum": 1,
+              "minimum": 0,
               "type": "number"
             },
             "correction_factor": {
@@ -4740,6 +4793,12 @@
                   ],
                   "default": null,
                   "description": "Tracking type (e.g., 'horizontal')."
+                },
+                "dc_ac_ratio": {
+                  "default": 1.25,
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
+                  "minimum": 1,
+                  "type": "number"
                 }
               }
             },
@@ -4750,7 +4809,14 @@
             },
             "capacity_per_sqkm": {
               "default": 5.1,
-              "description": "Allowable density of solar panel placement.",
+              "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+              "type": "number"
+            },
+            "ac_cost_share": {
+              "default": 0.18,
+              "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+              "maximum": 1,
+              "minimum": 0,
               "type": "number"
             },
             "correction_factor": {
@@ -5964,6 +6030,19 @@
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
         },
+        "solar_rooftop_dc_ac_ratio": {
+          "default": 1.075,
+          "description": "Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one. The investment cost is scaled from the ratio of 1.075 assumed in the cost data, see `solar_rooftop_ac_cost_share`.",
+          "minimum": 1,
+          "type": "number"
+        },
+        "solar_rooftop_ac_cost_share": {
+          "default": 0.23,
+          "description": "Share of the rooftop solar PV investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `solar_rooftop_dc_ac_ratio`.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
         "electricity_grid_connection": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
@@ -6792,7 +6871,7 @@
           "properties": {
             "enable": {
               "default": false,
-              "description": "Enable objective value checking.",
+              "description": "Enable total system cost checking.",
               "type": "boolean"
             },
             "expected_value": {
@@ -6811,7 +6890,7 @@
                 }
               ],
               "default": null,
-              "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
+              "description": "Expected total system cost, i.e. the sum of capital and operational expenditure from `n.statistics`. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
             },
             "atol": {
               "default": 10000,
@@ -7713,7 +7792,7 @@
       "properties": {
         "enable": {
           "default": false,
-          "description": "Enable objective value checking.",
+          "description": "Enable total system cost checking.",
           "type": "boolean"
         },
         "expected_value": {
@@ -7732,7 +7811,7 @@
             }
           ],
           "default": null,
-          "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
+          "description": "Expected total system cost, i.e. the sum of capital and operational expenditure from `n.statistics`. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
         },
         "atol": {
           "default": 10000,
@@ -9906,6 +9985,12 @@
               ],
               "default": null,
               "description": "Tracking type (e.g., 'horizontal')."
+            },
+            "dc_ac_ratio": {
+              "default": 1.25,
+              "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
+              "minimum": 1,
+              "type": "number"
             }
           }
         },
@@ -9916,7 +10001,14 @@
         },
         "capacity_per_sqkm": {
           "default": 5.1,
-          "description": "Allowable density of solar panel placement.",
+          "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+          "type": "number"
+        },
+        "ac_cost_share": {
+          "default": 0.18,
+          "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+          "maximum": 1,
+          "minimum": 0,
           "type": "number"
         },
         "correction_factor": {
@@ -10012,6 +10104,12 @@
           ],
           "default": null,
           "description": "Tracking type (e.g., 'horizontal')."
+        },
+        "dc_ac_ratio": {
+          "default": 1.25,
+          "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
+          "minimum": 1,
+          "type": "number"
         }
       }
     },
@@ -10919,7 +11017,7 @@
             }
           ],
           "default": false,
-          "description": "Global gas usage limit."
+          "description": "Limit on the fossil gas supply in MWh per year. Without sector coupling, this is the fuel of gas power plants; with sector coupling, the gas from fossil gas generators. Biogas and synthetic gas do not count."
         },
         "operational_reserve": {
           "description": "Configuration for `electricity.operational_reserve` settings.",
@@ -12162,6 +12260,12 @@
                   ],
                   "default": null,
                   "description": "Tracking type (e.g., 'horizontal')."
+                },
+                "dc_ac_ratio": {
+                  "default": 1.25,
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
+                  "minimum": 1,
+                  "type": "number"
                 }
               }
             },
@@ -12172,7 +12276,14 @@
             },
             "capacity_per_sqkm": {
               "default": 5.1,
-              "description": "Allowable density of solar panel placement.",
+              "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+              "type": "number"
+            },
+            "ac_cost_share": {
+              "default": 0.18,
+              "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+              "maximum": 1,
+              "minimum": 0,
               "type": "number"
             },
             "correction_factor": {
@@ -12286,6 +12397,12 @@
                   ],
                   "default": null,
                   "description": "Tracking type (e.g., 'horizontal')."
+                },
+                "dc_ac_ratio": {
+                  "default": 1.25,
+                  "description": "Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
+                  "minimum": 1,
+                  "type": "number"
                 }
               }
             },
@@ -12296,7 +12413,14 @@
             },
             "capacity_per_sqkm": {
               "default": 5.1,
-              "description": "Allowable density of solar panel placement.",
+              "description": "Allowable density of solar panel placement (MW AC per sqkm).",
+              "type": "number"
+            },
+            "ac_cost_share": {
+              "default": 0.18,
+              "description": "Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+              "maximum": 1,
+              "minimum": 0,
               "type": "number"
             },
             "correction_factor": {
@@ -14015,6 +14139,19 @@
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
           "type": "boolean"
         },
+        "solar_rooftop_dc_ac_ratio": {
+          "default": 1.075,
+          "description": "Ratio of module (DC) capacity to inverter (AC) capacity of rooftop solar PV. The availability time series of utility-scale solar PV is rescaled from its own ratio to this one. The investment cost is scaled from the ratio of 1.075 assumed in the cost data, see `solar_rooftop_ac_cost_share`.",
+          "minimum": 1,
+          "type": "number"
+        },
+        "solar_rooftop_ac_cost_share": {
+          "default": 0.23,
+          "description": "Share of the rooftop solar PV investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `solar_rooftop_dc_ac_ratio`.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
         "electricity_grid_connection": {
           "default": true,
           "description": "Add the cost of electricity grid connection for onshore wind and solar.",
@@ -15537,7 +15674,7 @@
           "properties": {
             "enable": {
               "default": false,
-              "description": "Enable objective value checking.",
+              "description": "Enable total system cost checking.",
               "type": "boolean"
             },
             "expected_value": {
@@ -15556,7 +15693,7 @@
                 }
               ],
               "default": null,
-              "description": "Expected objective value. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
+              "description": "Expected total system cost, i.e. the sum of capital and operational expenditure from `n.statistics`. A single value for single-solve modes, or a mapping of planning horizon to value for myopic foresight."
             },
             "atol": {
               "default": 10000,
@@ -15999,6 +16136,46 @@
           }
         },
         "scigrid_gas": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "hera": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "hera_test_cutout": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {
