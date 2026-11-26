@@ -71,7 +71,9 @@ def _calc_unsustainable_potential(
         return c.sum() / country_total * resource_potential.loc[country]
 
     return (
-        df.apply(_calculate_resource_allocation, axis=1).mul(share_unsus).clip(lower=0)
+        df.apply(_calculate_resource_allocation, axis=1, result_type="reduce")
+        .mul(share_unsus)
+        .clip(lower=0)
     )
 
 

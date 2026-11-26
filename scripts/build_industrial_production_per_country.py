@@ -4,7 +4,7 @@
 """
 Build today's industrial production per country and subsector in kt/a.
 
-Physical production per subsector for the configured `industry: reference_year` is read from the JRC-IDEES industry sheets of each EU27 country. The subsectors follow JRC-IDEES: steel (electric arc, integrated steelworks), chemicals (basic, other, pharmaceutical), non-metallic minerals (cement, ceramics, glass), pulp, paper and printing, non-ferrous metals (alumina, primary and secondary aluminium, other), and the index-based sectors food, transport equipment, machinery, textiles, wood and other industry. For countries outside the EU27, the EU27 production is scaled by the ratio of the country's to the EU27's sectoral final energy consumption, taken from the Eurostat energy balances or, for Switzerland, from the [Swiss Federal Office of Energy](https://pubdb.bfe.admin.ch/de/publication/download/11817).
+Physical production per subsector for the configured `industry: reference_year` is read from the JRC-IDEES industry sheets of each EU27 country. The subsectors follow JRC-IDEES: steel (electric arc, integrated steelworks), chemicals (basic, other, pharmaceutical), non-metallic minerals (cement, ceramics, glass), pulp, paper and printing, non-ferrous metals (alumina, primary and secondary aluminium, other), and the index-based sectors food, transport equipment, machinery, textiles, wood and other industry. For countries outside the EU27, the EU27 production is scaled by the ratio of the country's to the EU27's sectoral final energy consumption, taken from the Eurostat energy balances or, for Switzerland, from the [Swiss Federal Office of Energy](https://pubdb.bfe.admin.ch/de/publication/download/11817). The production of the EU27 countries in the run, or of all EU27 countries if the run has none, is also written as a reference for [build_industrial_energy_demand_per_country_today][].
 
 Basic chemicals are then split: the ammonia production from [build_ammonia_production][] is subtracted, and the remainder is distributed to high-value chemicals, chlorine and methanol in proportion to today's European totals given in the `industry` configuration.
 """
@@ -306,6 +306,8 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
+    # EU27 countries in the run, or all EU27 countries if the run has none
+    reference = [c for c in countries if c in eu27] or list(eu27)
 
     year = snakemake.params.industry["reference_year"]
 
@@ -316,7 +318,7 @@ if __name__ == "__main__":
     eurostat = pd.read_csv(snakemake.input.eurostat)
 
     demand = industry_production(
-        countries,
+        list(dict.fromkeys(countries + reference)),
         year,
         eurostat,
         jrc_dir,
@@ -330,4 +332,6 @@ if __name__ == "__main__":
     demand.fillna(0.0, inplace=True)
 
     fn = snakemake.output.industrial_production_per_country
-    demand.to_csv(fn, float_format="%.2f")
+    demand.loc[countries].to_csv(fn, float_format="%.2f")
+    fn = snakemake.output.industrial_production_reference
+    demand.loc[reference].to_csv(fn, float_format="%.2f")

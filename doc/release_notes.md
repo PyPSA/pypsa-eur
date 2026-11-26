@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Runs without EU27 countries (e.g. only GB, CH, NO or Balkan countries) and sector-coupled runs without seaports (e.g. AT and CH) now work. Without EU27 countries in the run, countries without JRC-IDEES data take averages of all EU27 countries ([#1746](https://github.com/PyPSA/pypsa-eur/issues/1746)).
 * Change: The capital cost of existing capacity of extendable assets is no longer subtracted from the objective as a constant (`include_objective_constant=False`), which removes a large bound from the optimisation problem. `solving: check_objective` now compares the total system cost from `n.statistics` (capital plus operational expenditure) instead of `n.objective`, so `expected_value` must be updated ([#2455](https://github.com/PyPSA/pypsa-eur/pull/2455)).
 * Change: Pass-through links and generators without investment cost in the sector-coupled network (e.g. fuel supply, fuel demand, process emissions, CO2 and heat venting) now have a fixed infinite capacity instead of an extendable one. This removes capacity variables without a cost from the optimisation. Their optimal capacity is reported as infinite ([#2440](https://github.com/PyPSA/pypsa-eur/pull/2440)).
 * Fix: `clustering: cluster_network: n_clusters: all` now runs with sector coupling. Unclustered bus names now start with the country code if they do not already, and heat source potentials handle regions without data ([#2192](https://github.com/PyPSA/pypsa-eur/issues/2192)).
