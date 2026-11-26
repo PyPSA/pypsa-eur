@@ -15,7 +15,7 @@ if config["foresight"] != "perfect":
             benchmarks("plot_base_network")
         threads: 1
         resources:
-            mem_mb=4000,
+            mem_mb=8000,
         params:
             plotting=config_provider("plotting"),
         script:

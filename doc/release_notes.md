@@ -248,6 +248,9 @@ guide](migration.md#v2026-11) for the steps to update an existing configuration.
   was removed ([#2436](https://github.com/PyPSA/pypsa-eur/pull/2436),
   [#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
 
+* Removed the upper version limit of linopy and raised the memory requests of rules that ran out of memory in
+  a run with all countries on a cluster ([#2458](https://github.com/PyPSA/pypsa-eur/pull/2458)).
+
 * Fixed the capital costs of lines and DC links, which did not include `lines: length_factor` and `links:
   length_factor` since [#1511](https://github.com/PyPSA/pypsa-eur/pull/1511). This increases transmission
   costs in all runs ([#2344](https://github.com/PyPSA/pypsa-eur/pull/2344)).

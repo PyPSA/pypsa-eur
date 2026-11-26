@@ -98,7 +98,7 @@ rule base_network:
         benchmarks("base_network")
     threads: 4
     resources:
-        mem_mb=2000,
+        mem_mb=4000,
     params:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
@@ -172,7 +172,7 @@ rule build_offshore_shapes:
         benchmarks("build_offshore_shapes")
     threads: 1
     resources:
-        mem_mb=1500,
+        mem_mb=4000,
     params:
         countries=config_provider("countries"),
     script:
@@ -205,7 +205,7 @@ rule build_nuts3_shapes:
         benchmarks("build_nuts3_shapes")
     threads: 1
     resources:
-        mem_mb=1500,
+        mem_mb=4000,
     params:
         countries=config_provider("countries"),
     script:
@@ -422,7 +422,7 @@ rule build_renewable_profiles:
         technology="(?!hydro).*",  # Any technology other than hydro
     threads: atlite_threads
     resources:
-        mem_mb=atlite_mem_mb(5000),
+        mem_mb=atlite_mem_mb(10000),
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -569,7 +569,7 @@ rule build_transmission_projects:
         benchmarks("build_transmission_projects")
     threads: 1
     resources:
-        mem_mb=4000,
+        mem_mb=8000,
     params:
         transmission_projects=config_provider("transmission_projects"),
         line_factor=config_provider("lines", "length_factor"),
@@ -606,7 +606,7 @@ rule add_transmission_projects_and_dlr:
         benchmarks("add_transmission_projects_and_dlr")
     threads: 1
     resources:
-        mem_mb=4000,
+        mem_mb=8000,
     params:
         transmission_projects=config_provider("transmission_projects"),
         dlr=config_provider("lines", "dynamic_line_rating"),
@@ -841,7 +841,7 @@ rule cluster_electricity_demand:
     benchmark:
         benchmarks("cluster_electricity_demand")
     resources:
-        mem_mb=3000,
+        mem_mb=8000,
     script:
         scripts("cluster_electricity_demand.py")
 
