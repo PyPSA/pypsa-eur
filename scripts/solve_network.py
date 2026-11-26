@@ -1322,9 +1322,8 @@ def check_objective_value(n: pypsa.Network, solving: dict, horizon: str) -> None
     if isinstance(expected_value, dict):
         expected_value = expected_value[int(horizon)]
     system_cost = np.nansum(n.statistics.capex()) + np.nansum(n.statistics.opex())
-    logger.warning(f"CI-BASELINE horizon={horizon} system_cost={system_cost:.2f}")
     if not np.isclose(system_cost, expected_value, atol=atol, rtol=rtol):
-        logger.warning(
+        raise ObjectiveValueError(
             f"Total system cost {system_cost} differs from expected value "
             f"{expected_value} by more than {atol}."
         )
