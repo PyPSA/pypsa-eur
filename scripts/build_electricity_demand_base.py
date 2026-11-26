@@ -91,16 +91,15 @@ def energy_atlas_distribution_keys(
     raster = rio.open(raster_fn)
     band = raster.read(1)
 
-    distribution_keys = []
+    distribution_keys = pd.Series(np.nan, index=regions.index)
     for country, group in regions.groupby("country"):
         if country not in cc.EU27as("ISO2").ISO2.to_list():
             continue
         weights = zonal_stats(
             group, band, affine=raster.transform, nodata=-1, stats="sum"
         )
-        group["weights"] = [w["sum"] for w in weights]
-        distribution_keys.append(group["weights"] / group["weights"].sum())
-    distribution_keys = pd.concat(distribution_keys).reindex(regions.index)
+        weights = pd.Series([w["sum"] for w in weights], index=group.index)
+        distribution_keys[group.index] = weights / weights.sum()
     return distribution_keys
 
 

@@ -4,7 +4,7 @@
 """
 Build annual energy demand totals per country, sector and end use from JRC-IDEES and Eurostat data.
 
-For EU27 countries, final energy per sector and end use (residential and services space, water and cooking heat, transport modes, agriculture) is read from the JRC-IDEES balances. Other countries are filled from the Eurostat balances of [build_eurostat_balances][] and the Swiss energy balances, with end-use splits taken from the EU average; Norway's heating fractions use national statistics. Residential totals are then updated with Eurostat's disaggregated household balances.
+For EU27 countries, final energy per sector and end use (residential and services space, water and cooking heat, transport modes, agriculture) is read from the JRC-IDEES balances. Other countries are filled from the Eurostat balances of [build_eurostat_balances][] and the Swiss energy balances, with end-use splits averaged over the EU27 countries in the run, or over all EU27 countries if the run has none; Norway's heating fractions use national statistics. Residential totals are then updated with Eurostat's disaggregated household balances.
 
 Three further outputs are derived: the district heating share per country, with a fallback file for countries without IDEES data; transport data with the number of passenger cars and average fuel efficiency, using the BFS vehicle stock for Switzerland and averages for missing countries; and space and water heating efficiencies per carrier.
 """
@@ -1054,7 +1054,16 @@ if __name__ == "__main__":
     population = nuts3["pop"].groupby(nuts3.country).sum()
 
     countries = snakemake.params.countries
-    idees_countries = pd.Index(countries).intersection(eu27)
+    # countries without IDEES data take averages of the EU27 countries in the run,
+    # or of all EU27 countries if the run has none
+    reference = list(countries)
+    if not set(countries) & set(eu27):
+        reference += eu27
+        pop = pd.read_csv(snakemake.input.population, index_col=0)
+        pop = pop.query("LEVEL_ID == 0").rename(index={"EL": "GR"})["2019"]
+        population = population.combine_first(pop.reindex(eu27) / 1e3)
+        population.index.name = "country"
+    idees_countries = pd.Index(reference).intersection(eu27)
 
     eurostat = pd.read_csv(snakemake.input.eurostat)
     swiss = pd.read_csv(snakemake.input.swiss, index_col=[0, 1])
@@ -1065,19 +1074,19 @@ if __name__ == "__main__":
         idees_countries, snakemake.input.idees, nprocesses, disable_progress
     )
 
-    energy = build_energy_totals(countries, eurostat, swiss, idees)
+    energy = build_energy_totals(reference, eurostat, swiss, idees)
     update_residential_from_eurostat(energy, snakemake.input.eurostat_households)
-    energy.to_csv(snakemake.output.energy_name)
+    energy.loc[countries].to_csv(snakemake.output.energy_name)
 
     district_heat_share = build_district_heat_share(
-        countries, energy.loc[idees_countries], snakemake.input.district_heat_share
+        reference, energy.loc[idees_countries], snakemake.input.district_heat_share
     )
-    district_heat_share.to_csv(snakemake.output.district_heat_share)
+    district_heat_share.loc[countries].to_csv(snakemake.output.district_heat_share)
 
     transport = build_transport_data(
-        countries, population, idees, snakemake.input.swiss_transport
+        reference, population, idees, snakemake.input.swiss_transport
     )
-    transport.to_csv(snakemake.output.transport_name)
+    transport.loc[countries].to_csv(snakemake.output.transport_name)
 
-    heating_efficiencies = build_heating_efficiencies(countries, idees)
-    heating_efficiencies.to_csv(snakemake.output.heating_efficiencies)
+    heating_efficiencies = build_heating_efficiencies(reference, idees)
+    heating_efficiencies.loc[countries].to_csv(snakemake.output.heating_efficiencies)

@@ -808,6 +808,9 @@ rule build_energy_totals:
     """Builds annual energy demand totals per country and sector from JRC IDEES and Eurostat data."""
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
+        population=lambda w: (
+            rules.retrieve_jrc_ardeco.output["ardeco_pop"] if without_eu27(w) else []
+        ),
         swiss=resources("switzerland_energy_balances.csv"),
         swiss_transport=lambda w: (
             f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv"
@@ -1206,6 +1209,7 @@ rule build_industrial_production_per_country:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
         ),
+        industrial_production_reference=resources("industrial_production_reference.csv"),
     log:
         logs("build_industrial_production_per_country.log"),
     benchmark:
@@ -1379,6 +1383,7 @@ rule build_industrial_energy_demand_per_country_today:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
         ),
+        industrial_production_reference=resources("industrial_production_reference.csv"),
     output:
         industrial_energy_demand_per_country_today=resources(
             "industrial_energy_demand_per_country_today.csv"

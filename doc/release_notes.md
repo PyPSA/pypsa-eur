@@ -9,9 +9,9 @@
 ## PyPSA-Eur v2026.11.0 (26th November 2026)
 
 This release adds endogenous steel, cement and industry process heat, land-based carbon dioxide removal and
-LNG as shipping fuel. Historical emissions now come from the latest national inventories. Some configuration
-keys changed. See the [migration guide](migration.md#v2026-11) for the steps to update an existing
-configuration.
+LNG as shipping fuel. Historical emissions now come from the latest national inventories. Solar PV now has a
+DC/AC ratio and refers to AC capacity. Some configuration keys changed. See the [migration
+guide](migration.md#v2026-11) for the steps to update an existing configuration.
 
 **Features**
 
@@ -41,6 +41,12 @@ configuration.
     - Added switches to disable the carbon capture options for solid biomass for industry, gas for industry
       and process emissions (`industry: solid_biomass_for_industry_cc`, `industry: gas_for_industry_cc`,
       `industry: process_emissions_cc`) ([#2357](https://github.com/PyPSA/pypsa-eur/pull/2357)).
+
+* Added a DC/AC ratio for solar PV. Availability, capacities and potentials now refer to AC capacity, like the
+  costs, and the availability is clipped at the inverter limit. Previously, they referred to DC capacity. Set
+  the inverter sizing with `renewable: solar: resource: dc_ac_ratio` and its effect on costs with `renewable:
+  solar: ac_cost_share` (rooftop: `sector: solar_rooftop_dc_ac_ratio`, `sector: solar_rooftop_ac_cost_share`).
+  This changes default results ([#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
 
 * **Carbon management:**
 
@@ -167,12 +173,6 @@ configuration.
 * Pass-through links and generators without investment cost in sector-coupled networks (e.g. fuel supply, fuel
   demand, process emissions, CO2 and heat venting) now have a fixed infinite capacity instead of an extendable
   one. Their optimal capacity is reported as infinite ([#2440](https://github.com/PyPSA/pypsa-eur/pull/2440)).
-
-* Solar PV availability, capacities and potentials now refer to AC capacity, like the costs. Previously, they
-  referred to DC capacity. The new options `renewable: solar: resource: dc_ac_ratio` and `renewable: solar:
-  ac_cost_share` set the inverter sizing and scale the costs (rooftop: `sector: solar_rooftop_dc_ac_ratio`,
-  `sector: solar_rooftop_ac_cost_share`). This changes default results
-  ([#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
 
 * Candidate corridors for new hydrogen and carbon dioxide pipelines and for biomass transport now come from a
   Delaunay triangulation of the regions instead of the electricity grid, with settings per carrier under
@@ -341,6 +341,10 @@ configuration.
 
     - Sector-coupled networks with a single bus work again
       ([#2351](https://github.com/PyPSA/pypsa-eur/pull/2351)).
+
+    - Runs without EU27 countries (e.g. only GB, CH, NO or Balkan countries) and sector-coupled runs without
+      seaports (e.g. AT and CH) now work. Without EU27 countries in the run, countries without JRC-IDEES data
+      take averages of all EU27 countries ([#2457](https://github.com/PyPSA/pypsa-eur/pull/2457)).
 
     - Runs with only landlocked countries and offshore technologies disabled work again
       ([#2378](https://github.com/PyPSA/pypsa-eur/pull/2378)).
