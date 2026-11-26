@@ -4,7 +4,7 @@
 """
 Build the industrial energy demand per model region for a planning horizon in TWh/a.
 
-The specific energy consumption per subsector and country for the horizon from [build_industry_sector_ratios_intermediate][] (MWh/t) is multiplied by the regional production from [build_industrial_production_per_node][] and summed over subsectors. This gives, per region, the demand for electricity, coal, coke, solid biomass, methane, hydrogen, low-temperature heat, naphtha, methanol and ammonia (non-zero only if `industry: ammonia` is enabled), as well as process emissions and process emissions from feedstock in MtCO2/a. If `sector: industry_heat: enable` is set, the ratios from [build_industry_sector_ratios_endogenous][] replace the fuels of the covered subsectors by heat demand in three temperature bands above 100 °C. Today's regional electricity demand from [build_industrial_energy_demand_per_node_today][] is appended as `current electricity` so that [prepare_sector_network][] can separate the new industrial electricity load from the existing one.
+The specific energy consumption per subsector and country for the horizon from [build_industry_sector_ratios_intermediate][] (MWh/t) is multiplied by the regional production from [build_industrial_production_per_node][] and summed over subsectors. This gives, per region, the demand for electricity, coal, coke, solid biomass, methane, hydrogen, low-temperature heat, naphtha, methanol and ammonia (non-zero only if `industry: ammonia` is enabled), as well as process emissions and process emissions from feedstock in MtCO2/a. If `sector: industry_heat: enable` is set, the ratios from [build_industry_sector_ratios_endogenous][] replace the fuels of the covered subsectors by heat demand in three temperature bands above 100 °C. Subsectors listed in `sector: endogenous_sectors` get no energy demand here, because [prepare_sector_network][] adds their production processes. Today's regional electricity demand from [build_industrial_energy_demand_per_node_today][] is appended as `current electricity` so that [prepare_sector_network][] can separate the new industrial electricity load from the existing one.
 """
 
 import logging
@@ -14,6 +14,11 @@ import pandas as pd
 from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
+
+ENDOGENOUS_SUBSECTORS = {
+    "steel": ["Integrated steelworks", "DRI + Electric arc"],
+    "cement": ["Cement"],
+}
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -36,6 +41,10 @@ if __name__ == "__main__":
         carriers = sector_ratios.index.union(endogenous.index, sort=False)
         sector_ratios = sector_ratios.reindex(carriers, fill_value=0.0)
         sector_ratios.update(endogenous)
+
+    for sector in snakemake.params.endogenous_sectors:
+        subsectors = ENDOGENOUS_SUBSECTORS[sector]
+        sector_ratios.loc[:, pd.IndexSlice[:, subsectors]] = 0.0
 
     # material demand per node and industry (Mton/a)
     fn = snakemake.input.industrial_production_per_node

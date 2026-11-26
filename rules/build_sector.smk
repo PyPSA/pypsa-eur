@@ -1164,7 +1164,6 @@ rule build_industry_sector_ratios_endogenous:
         mem_mb=1000,
     params:
         exclude_sectors=config_provider("sector", "industry_heat", "exclude_sectors"),
-        gas_per_ammonia=config_provider("industry", "MWh_CH4_per_tNH3_SMR"),
     script:
         scripts("build_industry_sector_ratios_endogenous.py")
 
@@ -1272,7 +1271,7 @@ rule build_industrial_distribution_key:
         hotmaps=rules.retrieve_hotmaps_industrial_sites.output["csv"],
         gem_gspt=rules.retrieve_gem_gspt.output["xlsx"],
         gem_gcpt=rules.retrieve_gem_gcct.output["xlsx"],
-        ammonia="data/ammonia_plants.csv",
+        gem_gct=rules.retrieve_gem_gct.output["xlsx"],
         refineries_supplement="data/refineries-noneu.csv",
     output:
         industrial_distribution_key=resources("industrial_distribution_key.csv"),
@@ -1336,6 +1335,8 @@ rule build_industrial_energy_demand_per_node:
     threads: 1
     resources:
         mem_mb=1000,
+    params:
+        endogenous_sectors=config_provider("sector", "endogenous_sectors"),
     script:
         scripts("build_industrial_energy_demand_per_node.py")
 
@@ -1344,6 +1345,11 @@ rule build_industrial_electricity_profiles:
     """Builds hourly industrial electricity demand profiles per region from FfE load profiles."""
     input:
         industry_sector_ratios=resources("industry_sector_ratios_{horizon}.csv"),
+        industry_sector_ratios_endogenous=lambda w: (
+            resources("industry_sector_ratios_endogenous.csv")
+            if config_provider("sector", "industry_heat", "enable")(w)
+            else []
+        ),
         industrial_production_per_node=resources("industrial_production_{horizon}.csv"),
         ffe_profiles=rules.retrieve_ffe_industry_load_profiles.output["json"],
     output:
@@ -1360,6 +1366,7 @@ rule build_industrial_electricity_profiles:
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        endogenous_sectors=config_provider("sector", "endogenous_sectors"),
     script:
         scripts("build_industrial_electricity_profiles.py")
 
@@ -1392,6 +1399,8 @@ rule build_industrial_energy_demand_per_country_today:
                 "MWh_NH3_per_tNH3",
                 "MWh_H2_per_tNH3_electrolysis",
                 "MWh_elec_per_tNH3_electrolysis",
+                "MWh_CH4_per_tNH3_SMR",
+                "MWh_elec_per_tNH3_SMR",
                 "MWh_elec_per_tCl",
                 "MWh_H2_per_tCl",
                 "MWh_elec_per_tMeOH",
@@ -1714,3 +1723,26 @@ def input_heat_source_power(w):
             w
         ).keys()
     }
+
+
+rule build_industry_plants:
+    """Builds existing cement, steel, ammonia and methanol plant capacities per model region."""
+    input:
+        regions_onshore=resources("onshore_regions.geojson"),
+        gem_gct=rules.retrieve_gem_gct.output["xlsx"],
+        gem_gspt=rules.retrieve_gem_gspt.output["xlsx"],
+        gem_iron_units=rules.retrieve_gem_gspt.output["iron_units"],
+        gem_gcct=rules.retrieve_gem_gcct.output["xlsx"],
+    output:
+        industry_plants=resources("industry_plants.csv"),
+    log:
+        logs("build_industry_plants.log"),
+    benchmark:
+        benchmarks("build_industry_plants")
+    threads: 1
+    resources:
+        mem_mb=2000,
+    params:
+        countries=config_provider("countries"),
+    script:
+        scripts("build_industry_plants.py")

@@ -117,7 +117,7 @@ def approximate_missing_eia_stats(
     eia_stats: pd.DataFrame, runoff_fn: str, countries: list[str]
 ) -> pd.DataFrame:
     runoff = pd.read_csv(runoff_fn, index_col=0, parse_dates=True)[countries]
-    runoff = runoff.groupby(runoff.index.year).sum().index
+    runoff = runoff.groupby(runoff.index.year).sum()
 
     # fix outliers; exceptional floods in 1977-1979 in ES & PT
     if "ES" in runoff:

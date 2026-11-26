@@ -159,7 +159,7 @@ def get_regional_result(
         )["thetao"]
         .mean(dim="depth")
         .rio.write_crs("EPSG:4326")
-        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.clip_box(minx, miny, maxx, maxy, auto_expand=True)
         .rio.reproject("EPSG:3035")
     )
 
@@ -253,6 +253,7 @@ if __name__ == "__main__":
         xr.concat(
             [res["spatial aggregate"]["average_temperature"] for res in results],
             dim="name",
+            coords="minimal",
         )
         .assign_coords(name=onshore_regions.index)
         .dropna(dim="time")
@@ -274,4 +275,5 @@ if __name__ == "__main__":
     xr.concat(
         [res["temporal aggregate"]["average_temperature"] for res in results],
         dim=onshore_regions.index,
+        coords="minimal",
     ).to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)
