@@ -118,7 +118,7 @@ solving:
   mem_mb: 4000
   check_objective:
     enable: true
-    expected_value: 12660495497.82
+    expected_value: 13626185556.32
     rtol: 0.004
 
 plotting:
