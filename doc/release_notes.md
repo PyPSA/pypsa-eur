@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: The clustered population layouts and solar rooftop potentials no longer lose the population of coastal grid cells in proportion to their sea area. This changes default results ([#2404](https://github.com/PyPSA/pypsa-eur/issues/2404)).
 * Fix: The electricity demand distribution keys of Great Britain are now renormalised after adding Northern Ireland, so the national load is no longer overstated. This changes results with GB ([#2456](https://github.com/PyPSA/pypsa-eur/pull/2456)).
 * Change: The capital cost of existing capacity of extendable assets is no longer subtracted from the objective as a constant (`include_objective_constant=False`), which removes a large bound from the optimisation problem. `solving: check_objective` now compares the total system cost from `n.statistics` (capital plus operational expenditure) instead of `n.objective`, so `expected_value` must be updated ([#2455](https://github.com/PyPSA/pypsa-eur/pull/2455)).
 * Change: Pass-through links and generators without investment cost in the sector-coupled network (e.g. fuel supply, fuel demand, process emissions, CO2 and heat venting) now have a fixed infinite capacity instead of an extendable one. This removes capacity variables without a cost from the optimisation. Their optimal capacity is reported as infinite ([#2440](https://github.com/PyPSA/pypsa-eur/pull/2440)).

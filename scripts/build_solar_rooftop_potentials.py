@@ -13,6 +13,7 @@ result in MW caps the solar rooftop capacity expansion in the network.
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
+from sklearn.preprocessing import normalize
 
 from scripts._helpers import load_cutout, set_scenario_config
 
@@ -34,6 +35,7 @@ if __name__ == "__main__":
     )
 
     I = cutout.indicatormatrix(class_regions)  # noqa: E741
+    I = normalize(I, norm="l1", axis=0)  # noqa: E741
 
     with xr.open_dataarray(snakemake.input.pop_layout) as pop_layout:
         pop = I.dot(pop_layout.stack(spatial=("y", "x")))
