@@ -28,7 +28,7 @@ file in the repository root, which is loaded automatically and ignored by git.
 | [build_cutout][] | A [Copernicus Climate Data Store](https://cds.climate.copernicus.eu) account with the `cdsapi` key set up as described [on their website](https://cds.climate.copernicus.eu/how-to-api). Only needed when `data: cutout: source: build`. |
 | `retrieve_entsoe_electricity_demand` | An [ENTSO-E Transparency Platform](https://transparency.entsoe.eu) API token in `ENTSOE_API_TOKEN`. Only needed when `data: entsoe_electricity_demand: source: build`. |
 | `retrieve_corine` | A [Copernicus Land Monitoring Service](https://land.copernicus.eu/user/login) API key in `CORINE_API_TOKEN`. Only needed when `data: corine: source: primary`. |
-| `retrieve_seawater_temperature` | [Copernicus Marine Service](https://marine.copernicus.eu/) credentials configured for the `copernicusmarine` package. Only needed when heat pumps use the `sea_water` heat source with a non-test cutout. |
+| `retrieve_seawater_temperature` | [Copernicus Marine Service](https://marine.copernicus.eu/) credentials configured for the `copernicusmarine` package. Only needed when `data: seawater_temperature: source: primary`. |
 
 ??? example "Example `.env` file"
 
@@ -57,6 +57,7 @@ file in the repository root, which is loaded automatically and ignored by git.
 - `retrieve_cutout` downloads pre-built weather cutouts; see [cutouts](../configuration.md#atlite_cf).
 - `retrieve_osm_data_raw` queries the [Overpass API](https://overpass-api.de) per country when `data: osm: source: build`. The endpoint, retries and user agent are set under [overpass_api](../configuration.md#overpass_api_cf).
 - `retrieve_wdpa` and `retrieve_wdpa_marine` resolve the monthly changing download URL of the [World Database on Protected Areas](https://www.protectedplanet.net/). The data may not be redistributed, so the `archive` source points to a web archive copy.
+- `retrieve_seawater_temperature` and `retrieve_hera_data` download one file per snapshot year. The `archive` source only holds the year 2013. For other years, set the `primary` source.
 - `retrieve_bidding_zones_entsoepy` and `retrieve_bidding_zones_electricitymaps` download bidding zone shapes via the [entsoe-py](https://github.com/EnergieID/entsoe-py) package and from [Electricity Maps](https://github.com/electricitymaps/electricitymaps-contrib). They are combined by [build_bidding_zones][].
 - `retrieve_co2_removal_data` downloads the [CO2-removal dataset](https://doi.org/10.5281/zenodo.23954311) and unpacks the afforestation rates and the upstream emission factors of unsustainable bioliquids. Only needed with `sector: afforestation` or `sector: unsustainable_biomass_upstream_emissions`.
 - `retrieve_costs` downloads techno-economic assumptions from the [technology-data repository](https://github.com/pypsa/technology-data) as `data/costs/{source}/{version}/costs_{horizon}.csv`. The cost year can be fixed with `costs: year:` (see [costs](../configuration.md#costs_cf)).

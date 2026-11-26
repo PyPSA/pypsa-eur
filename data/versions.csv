@@ -88,6 +88,10 @@ ghg_emissions_energy_community,v1,primary,latest supported,2026-10-03,EEA Energy
 ghg_emissions_energy_community,v1,archive,latest supported,2026-11-19,EEA Energy Community dataset 2026,https://data.pypsa.org/workflows/eur/ghg_emissions_energy_community/v1/download
 h2_salt_caverns,16-10-2019,primary,latest supported,2025-12-02,,https://zenodo.org/records/16899309/files/h2_salt_caverns_GWh_per_sqkm.geojson
 h2_salt_caverns,16-10-2019,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/h2_salt_caverns/16-10-2019/h2_salt_caverns_GWh_per_sqkm.geojson
+hera,v1.0,primary,latest supported,2026-11-26,The URL is a folder; the files per year are selected in retrieve.smk.,https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF
+hera,v1.0,archive,latest supported,2026-11-26,"One file per variable and year, mirrored for 2013. Other years need the primary source.",https://data.pypsa.org/workflows/eur/hera/v1.0
+hera_test_cutout,v1.0,primary,latest supported,2026-11-26,Subset of HERA for Belgium and one week for the test cutout.,https://zenodo.org/records/15828866/files/hera_be_2013-03-01_to_2013-03-08.zip
+hera_test_cutout,v1.0,archive,latest supported,2026-11-26,Subset of HERA for Belgium and one week for the test cutout.,https://data.pypsa.org/workflows/eur/hera_test_cutout/v1.0/hera_be_2013-03-01_to_2013-03-08.zip
 hotmaps_industrial_sites,version-1.1,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/hotmaps_industrial_sites/version-1.1/Industrial_Database.csv
 hotmaps_industrial_sites,version-1.0,primary,not-supported,2025-12-02,Required renaming of country names to work with PyPSA-Eur. This was fixed in the latest version.,https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/1.0/data/Industrial_Database.csv
 hotmaps_industrial_sites,unknown,primary,latest supported,2025-12-02,,https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv
@@ -161,8 +165,10 @@ scigrid_gas,1.1.2,primary,latest supported,2025-12-02,the primary is already fro
 scigrid_gas,1.1.2,archive,latest supported,2026-01-20,the primary is already from Zenodo published by original authors,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.2/IGGIELGN.zip
 scigrid_gas,1.1.1,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.1/IGGIELGN.zip
 scigrid_gas,1.1.0,archive,deprecated not-supported,2026-01-13,,https://data.pypsa.org/workflows/eur/scigrid_gas/1.1.0/IGGIELGN.zip
-seawater_temperature,v1.0,primary,latest supported,2026-01-21,Test cutout seawater temperature,https://zenodo.org/records/15828866/files/seawater_temperature.nc
-seawater_temperature,v1.0,archive,latest supported,2026-01-21,Test cutout seawater temperature,https://data.pypsa.org/workflows/eur/seawater_temperature/v1.0/seawater_temperature.nc
+seawater_temperature,v1.0,primary,deprecated not-supported,2026-01-21,Test cutout seawater temperature,https://zenodo.org/records/15828866/files/seawater_temperature.nc
+seawater_temperature,v1.0,archive,deprecated not-supported,2026-01-21,Test cutout seawater temperature,https://data.pypsa.org/workflows/eur/seawater_temperature/v1.0/seawater_temperature.nc
+seawater_temperature,unknown,primary,latest supported,2026-11-26,"Retrieved per year with the Copernicus Marine API, which requires credentials.",https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030
+seawater_temperature,2026-11-26,archive,latest supported,2026-11-26,"One file per year, mirrored for 2013. Other years need the primary source.",https://data.pypsa.org/workflows/eur/seawater_temperature/2026-11-26
 ship_raster,v5,primary,latest supported,2025-12-02,,https://datacatalogfiles.worldbank.org/ddh-published/0037580/5/DR0045406/shipdensity_global.zip
 ship_raster,v5,archive,latest supported,2026-01-13,,https://data.pypsa.org/workflows/eur/ship_raster/v5/shipdensity_global.zip
 swiss_energy_balances,unknown,primary,latest supported,2026-10-30,,https://pubdb.bfe.admin.ch/de/publication/download/12361
