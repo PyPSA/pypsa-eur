@@ -1561,6 +1561,12 @@ data:
   scigrid_gas:
     source: primary
     version: latest
+  hera:
+    source: archive
+    version: latest
+  hera_test_cutout:
+    source: archive
+    version: latest
   seawater_temperature:
     source: archive
     version: latest

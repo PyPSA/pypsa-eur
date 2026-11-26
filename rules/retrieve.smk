@@ -1460,58 +1460,87 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
         run:
             copy2(input["lau_regions"], output["zip"])
 
+
+if (SEAWATER_TEMPERATURE_DATASET := dataset_version("seawater_temperature"))[
+    "source"
+] in ["archive"]:
+
+    rule retrieve_seawater_temperature:
+        """Retrieves daily seawater temperature for one year from the PyPSA data archive."""
+        input:
+            storage(
+                SEAWATER_TEMPERATURE_DATASET["url"] + "/seawater_temperature_{year}.nc"
+            ),
+        output:
+            seawater_temperature=f"{SEAWATER_TEMPERATURE_DATASET['folder']}/seawater_temperature_{{year}}.nc",
+        log:
+            "logs/retrieve_seawater_temperature_{year}.log",
+        retries: 2
+        run:
+            copy2(input[0], output[0])
+
+elif SEAWATER_TEMPERATURE_DATASET["source"] in ["primary"]:
+
     rule retrieve_seawater_temperature:
         """Downloads daily seawater temperature for one year from the Copernicus Marine Service."""
         output:
-            seawater_temperature="data/seawater_temperature_{year}.nc",
+            seawater_temperature=f"{SEAWATER_TEMPERATURE_DATASET['folder']}/seawater_temperature_{{year}}.nc",
         log:
             "logs/retrieve_seawater_temperature_{year}.log",
         resources:
             mem_mb=10000,
-        params:
-            default_cutout=config_provider("atlite", "default_cutout"),
-            test_data_url=dataset_version("seawater_temperature")["url"],
         script:
             scripts("retrieve_seawater_temperature.py")
 
+
+if (HERA_TEST_CUTOUT_DATASET := dataset_version("hera_test_cutout"))["source"] in [
+    "primary",
+    "archive",
+]:
+
     rule retrieve_hera_data_test_cutout:
-        """Retrieves and unpacks a small HERA test dataset for Belgium from Zenodo."""
+        """Retrieves and unpacks a small HERA test dataset for Belgium."""
         input:
-            hera_data_url=storage(
-                f"https://zenodo.org/records/15828866/files/hera_be_2013-03-01_to_2013-03-08.zip"
-            ),
+            zip=storage(HERA_TEST_CUTOUT_DATASET["url"]),
         output:
-            river_discharge=f"data/hera_be_2013-03-01_to_2013-03-08/river_discharge_be_2013-03-01_to_2013-03-08.nc",
-            ambient_temperature=f"data/hera_be_2013-03-01_to_2013-03-08/ambient_temp_be_2013-03-01_to_2013-03-08.nc",
+            river_discharge=f"{HERA_TEST_CUTOUT_DATASET['folder']}/hera_be_2013-03-01_to_2013-03-08/river_discharge_be_2013-03-01_to_2013-03-08.nc",
+            ambient_temperature=f"{HERA_TEST_CUTOUT_DATASET['folder']}/hera_be_2013-03-01_to_2013-03-08/ambient_temp_be_2013-03-01_to_2013-03-08.nc",
         log:
             "logs/retrieve_hera_data_test_cutout.log",
         retries: 2
         resources:
             mem_mb=10000,
         params:
-            folder="data",
+            folder=HERA_TEST_CUTOUT_DATASET["folder"],
         run:
-            unpack_archive(input[0], params.folder)
+            unpack_archive(input["zip"], params.folder)
+
+
+if (HERA_DATASET := dataset_version("hera"))["source"] in ["primary", "archive"]:
+    # the archive holds the files of the primary source in a single folder
+    HERA_PRIMARY = HERA_DATASET["source"] == "primary"
 
     rule retrieve_hera_data:
-        """Downloads HERA river discharge and air temperature for one year from the JRC."""
+        """Retrieves HERA river discharge and air temperature for one year."""
         input:
             river_discharge=storage(
-                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA{year}.nc"
+                HERA_DATASET["url"]
+                + ("/river_discharge" if HERA_PRIMARY else "")
+                + "/dis.HERA{year}.nc"
             ),
             ambient_temperature=storage(
-                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_{year}.nc"
+                HERA_DATASET["url"]
+                + ("/climate_inputs/ta6" if HERA_PRIMARY else "")
+                + "/ta6_{year}.nc"
             ),
         output:
-            river_discharge="data/hera_{year}/river_discharge_{year}.nc",
-            ambient_temperature="data/hera_{year}/ambient_temp_{year}.nc",
+            river_discharge=f"{HERA_DATASET['folder']}/river_discharge_{{year}}.nc",
+            ambient_temperature=f"{HERA_DATASET['folder']}/ambient_temp_{{year}}.nc",
         log:
             "logs/retrieve_hera_data_{year}.log",
         retries: 2
         resources:
             mem_mb=10000,
-        params:
-            snapshot_year="{year}",
         run:
             move(input.river_discharge, output.river_discharge)
             move(input.ambient_temperature, output.ambient_temperature)
