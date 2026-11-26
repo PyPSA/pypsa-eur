@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Runs without EU27 countries (e.g. only GB, CH, NO or Balkan countries) and sector-coupled runs without seaports (e.g. AT and CH) now work. Without EU27 countries in the run, countries without JRC-IDEES data take averages of all EU27 countries ([#2457](https://github.com/PyPSA/pypsa-eur/pull/2457)).
 * Fix: Solar PV availability, capacities and potentials now refer to AC capacity, like the costs. New options `renewable: solar: resource: dc_ac_ratio` and `ac_cost_share` (rooftop: `sector: solar_rooftop_*`) set the inverter sizing and scale the costs. This changes default results. Requires `atlite>=0.8` ([#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
 * Data: The HERA river discharge and air temperature data (new `data: hera` and `data: hera_test_cutout`) and the seawater temperature data are now versioned and mirrored for the year 2013. Seawater temperature no longer needs Copernicus Marine credentials by default; other years need `source: primary` ([#1930](https://github.com/PyPSA/pypsa-eur/issues/1930)).
 * Fix: The clustered population layouts and solar rooftop potentials no longer lose the population of coastal grid cells in proportion to their sea area. This changes default results ([#2404](https://github.com/PyPSA/pypsa-eur/issues/2404)).

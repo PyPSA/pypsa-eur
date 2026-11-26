@@ -56,8 +56,7 @@ if __name__ == "__main__":
 
     # calculate fraction of each country's port outflows
     countries = outflows.index.str[:2]
-    outflows_per_country = outflows.groupby(countries).sum()
-    fraction = outflows / countries.map(outflows_per_country)
+    fraction = outflows / outflows.groupby(countries).transform("sum")
 
     # distribute per-country demands to nodes based on these fractions
     nodal_demand = demand.loc[countries].fillna(0.0)

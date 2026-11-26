@@ -77,6 +77,8 @@ def prepare_hotmaps_database(
     Load hotmaps database of industrial sites and map onto bus regions.
     """
     df = pd.read_csv(fn, sep=";", index_col=0)
+    # keep all subsectors, also those without sites in the modelled regions
+    df["Subsector"] = pd.Categorical(df.Subsector, categories=df.Subsector.unique())
 
     df[["srid", "coordinates"]] = df.geom.str.split(";", expand=True)
 
@@ -242,7 +244,7 @@ def build_nodal_distribution_key(
     """
     Build nodal distribution keys for each sector.
     """
-    sectors = hotmaps.Subsector.unique()
+    sectors = hotmaps.Subsector.cat.categories
 
     keys = pd.DataFrame(index=regions.index, columns=sectors, dtype=float)
 
