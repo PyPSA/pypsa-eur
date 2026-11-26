@@ -28,7 +28,9 @@ a fixed price, see [Model overview](overview.md#overview-imports).
 Optionally, methanol can be reformed to hydrogen, burned in power plants for
 electricity, or converted to kerosene for aviation. These routes matter when
 methanol is imported: they turn an easily shipped liquid into the carriers
-that are needed inland.
+that are needed inland. Methanol can also be converted to olefins and
+aromatics, which then replace naphtha as the feedstock of high-value
+chemicals, see [Industry](industry.md).
 
 ## Storage
 

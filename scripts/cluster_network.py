@@ -665,8 +665,12 @@ if __name__ == "__main__":
     )
 
     if params.n_clusters == "all":
-        # Fast-path if no clustering is necessary
-        busmap = sanitize_busmap(n.buses.index.to_series())
+        # Fast-path if no clustering is necessary; downstream scripts expect
+        # bus names to start with the country code
+        names = n.buses.index.to_series()
+        prefixed = names.str.match(r"[A-Z]{2}")
+        busmap = sanitize_busmap(names.where(prefixed, n.buses.country + " " + names))
+        n.rename_component_names("Bus", **busmap)
         linemap = n.lines.index.to_series()
         clustering = pypsa.clustering.spatial.Clustering(n, busmap, linemap)
     else:

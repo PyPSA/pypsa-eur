@@ -46,6 +46,8 @@ starts from the existing stock of power plants, heating systems and renewable
 capacities. Power plants carry their commissioning year and a technology
 lifetime and retire when the sum is reached; heating systems, for which no
 plant-level ages exist, are retired in equal shares over an assumed lifetime.
+Optionally, existing steel, cement, ammonia and methanol plants are added in
+the same way, see [Industry](industry.md).
 In each horizon the model adds capacity to meet that year's demand and
 emission limit, knowing only the present. Assets built in one horizon stay in
 the network until their lifetime expires, so the next horizon inherits them.

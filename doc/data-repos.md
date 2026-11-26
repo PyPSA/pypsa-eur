@@ -89,13 +89,6 @@ New data should generally not be added to the data, but externally retrieved in 
 - **License:** unknown
 - **Description:** Contains transmission projects in Europe from ENTSO-E Ten Year Network Development Plan (TYNDP).
 
-`data/ammonia_plants.csv`
-
-- **Source:** manually collected, mostly from ICIS
-- **Link:** https://www.icis.com/explore/resources/news/2023/01/18/10846094/insight-poor-demand-high-costs-stifle-europe-industry-despite-falling-gas-prices/
-- **License:** CC-BY 4.0 (for compiled dataset)
-- **Description:** Locations and production capacities of ammonia plants in Europe.
-
 `data/ch_cantons.csv`
 
 - **Source:** Wikipedia

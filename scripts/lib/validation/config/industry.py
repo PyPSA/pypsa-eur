@@ -150,7 +150,7 @@ class IndustryConfig(ConfigModel):
     )
     process_emissions_cc: bool = Field(
         True,
-        description="Add option for capturing industrial process emissions. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
+        description="Add option for capturing industrial process emissions, including the emissions of endogenous steel and cement production. If disabled, process emissions are always released to the atmosphere and can only be offset by negative emission technologies (e.g. direct air capture), which may make tight CO2 targets infeasible.",
     )
     sector_ratios_fraction_future: dict[int, float] = Field(
         default_factory=lambda: {
@@ -203,6 +203,10 @@ class IndustryConfig(ConfigModel):
     MWh_CH4_per_tMeOH: float = Field(
         10.25,
         description="The energy amount of methane needed to produce a ton of methanol from fossil gas. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, Table 14, page 65.",
+    )
+    MWh_naphtha_per_tHVC: float = Field(
+        12.622,
+        description="The energy amount of naphtha that a ton of high-value chemicals from methanol-to-olefins/aromatics replaces. Only used with `sector: methanol: meoh_to_oa`.",
     )
     MWh_MeOH_per_tMeOH: float = Field(
         5.528,

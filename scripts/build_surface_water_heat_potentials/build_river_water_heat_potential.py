@@ -92,7 +92,7 @@ def load_hera_data(
     river_discharge = (
         river_discharge.rename({"lat": "latitude", "lon": "longitude"})
         .rio.write_crs("EPSG:4326")
-        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.clip_box(minx, miny, maxx, maxy, auto_expand=True)
         .rio.reproject("EPSG:3035")
     )
     result["river_discharge"] = river_discharge
@@ -112,7 +112,7 @@ def load_hera_data(
     ambient_temperature = (
         ambient_temperature.rename({"lat": "latitude", "lon": "longitude"})
         .rio.write_crs("EPSG:4326")
-        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.clip_box(minx, miny, maxx, maxy, auto_expand=True)
         .rio.reproject("EPSG:3035")
     )
     result["ambient_temperature"] = ambient_temperature
@@ -398,6 +398,7 @@ if __name__ == "__main__":
         xr.concat(
             [res["spatial aggregate"]["average_temperature"] for res in results],
             dim="name",
+            coords="minimal",
         )
         .assign_coords(name=onshore_regions.index)
         .dropna(dim="time")
@@ -419,6 +420,7 @@ if __name__ == "__main__":
         xr.concat(
             [res["temporal aggregate"]["total_energy"] for res in results],
             dim=onshore_regions.index,
+            coords="minimal",
         ).to_netcdf(snakemake.output.heat_source_energy_temporal_aggregate)
 
         # Temperature temporal aggregate: spatial distribution of temperatures
@@ -426,6 +428,7 @@ if __name__ == "__main__":
         xr.concat(
             [res["temporal aggregate"]["average_temperature"] for res in results],
             dim=onshore_regions.index,
+            coords="minimal",
         ).to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)
 
     else:

@@ -151,6 +151,15 @@ def get_heat_source_power(
 
     heat_source_power = heat_potentials_in_onshore_regions_aggregated * scaling_factor
 
+    # regions without any LAU with potential in countries with data have zero potential
+    countries_with_data = heat_source_power.index.str[:2].unique()
+    regions_with_data = onshore_regions.index[
+        onshore_regions.index.str[:2].isin(countries_with_data)
+    ]
+    heat_source_power = heat_source_power.reindex(
+        regions_with_data, fill_value=0
+    ).sort_index()
+
     non_covered_regions = identify_non_covered_regions(
         onshore_regions, heat_source_power
     )

@@ -50,15 +50,8 @@ def get_compose_inputs(w):
             else []
         ),
         co2_price=resources("co2_price.csv"),
-        eurostat=(
-            resources("eurostat_energy_balances.csv")
-            if cfg["co2_budget"]["relative"]
-            else []
-        ),
-        co2=(
-            rules.retrieve_ghg_emissions.output["csv"]
-            if cfg["co2_budget"]["relative"]
-            else []
+        co2_totals=(
+            resources("co2_totals.csv") if cfg["co2_budget"]["relative"] else []
         ),
         load=resources("electricity_demand.nc"),
         snapshot_weightings=resources("snapshot_weightings.csv"),
@@ -111,6 +104,18 @@ def get_compose_inputs(w):
             ),
             hourly_heat_demand_total=resources("hourly_heat_demand_total.nc"),
             industrial_production=resources("industrial_production_{horizon}.csv"),
+            industry_sector_ratios=(
+                resources("industry_sector_ratios_{horizon}.csv")
+                if "cement" in sector["endogenous_sectors"]
+                else []
+            ),
+            industry_plants=(
+                resources("industry_plants.csv")
+                if cfg["existing_capacities"]["industry_plants"]
+                and foresight != "overnight"
+                and horizon == horizons[0]
+                else []
+            ),
             district_heat_share=resources("district_heat_share_{horizon}.csv"),
             heating_efficiencies=resources("heating_efficiencies.csv"),
             existing_heating_distribution=resources(
@@ -255,43 +260,20 @@ rule compose_network:
         electricity=config_provider("electricity"),
         sector=config_provider("sector"),
         clustering=config_provider("clustering"),
-        clustering_temporal=config_provider("clustering", "temporal"),
         existing_capacities=config_provider("existing_capacities"),
         renewable=config_provider("renewable"),
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),
-        emission_prices=config_provider("costs", "emission_prices"),
         load=config_provider("load"),
         lines=config_provider("lines"),
         links=config_provider("links"),
         transmission_losses=config_provider("solving", "options", "transmission_losses"),
         industry=config_provider("industry"),
-        limited_heat_sources=config_provider(
-            "sector", "district_heating", "limited_heat_sources"
-        ),
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
         horizons=config_provider("planning_horizons"),
-        renewable_carriers=config_provider("electricity", "renewable_carriers"),
-        fuel_carriers=config_provider("existing_capacities", "conventional_carriers"),
-        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        h2_retrofit=config_provider("sector", "H2_retrofit"),
-        h2_retrofit_capacity_per_ch4=config_provider(
-            "sector", "H2_retrofit_capacity_per_CH4"
-        ),
-        capacity_threshold=config_provider("existing_capacities", "threshold_capacity"),
-        temperature_limited_stores=config_provider(
-            "sector", "district_heating", "temperature_limited_stores"
-        ),
-        enable_ptes=config_provider("sector", "district_heating", "ptes", "enable"),
-        dynamic_ptes_capacity=config_provider(
-            "sector", "district_heating", "ptes", "dynamic_capacity"
-        ),
-        direct_utilisation_heat_sources=config_provider(
-            "sector", "district_heating", "direct_utilisation_heat_sources"
-        ),
         co2_budget=config_provider("co2_budget"),
         adjustments=config_provider("adjustments"),
         nice_names=config_provider("plotting", "nice_names"),
