@@ -412,10 +412,10 @@ def input_hera_data(w) -> dict[str, str]:
         "hera_ambient_temperature_{year}" to NetCDF file paths.
     """
     if config_provider("atlite", "default_cutout")(w) == "be-03-2013-era5":
-        hera_data_key = "be_2013-03-01_to_2013-03-08"
+        test_data = rules.retrieve_hera_data_test_cutout.output
         return {
-            "hera_river_discharge_2013": f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
-            "hera_ambient_temperature_2013": f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
+            "hera_river_discharge_2013": test_data["river_discharge"],
+            "hera_ambient_temperature_2013": test_data["ambient_temperature"],
         }
     else:
         from scripts._helpers import get_snapshots
@@ -429,10 +429,10 @@ def input_hera_data(w) -> dict[str, str]:
         result = {}
         for year in unique_years:
             result[f"hera_river_discharge_{year}"] = (
-                f"data/hera_{year}/river_discharge_{year}.nc"
+                f"{HERA_DATASET['folder']}/river_discharge_{year}.nc"
             )
             result[f"hera_ambient_temperature_{year}"] = (
-                f"data/hera_{year}/ambient_temp_{year}.nc"
+                f"{HERA_DATASET['folder']}/ambient_temp_{year}.nc"
             )
 
         return result
@@ -566,7 +566,7 @@ def input_seawater_temperature(w) -> dict[str, str]:
 
     # Create dictionary with year-specific keys
     return {
-        f"seawater_temperature_{year}": f"data/seawater_temperature_{year}.nc"
+        f"seawater_temperature_{year}": f"{SEAWATER_TEMPERATURE_DATASET['folder']}/seawater_temperature_{year}.nc"
         for year in unique_years
     }
 
@@ -1686,11 +1686,7 @@ rule build_egs_potentials:
     input:
         egs_cost="data/egs_costs.json",
         regions=resources("onshore_regions.geojson"),
-        air_temperature=(
-            resources("temp_air_total.nc")
-            if config_provider("sector", "enhanced_geothermal", "var_cf")
-            else []
-        ),
+        air_temperature=resources("temp_air_total.nc"),
     output:
         egs_potentials=resources("egs_potentials.csv"),
         egs_overlap=resources("egs_overlap.csv"),

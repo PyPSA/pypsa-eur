@@ -206,7 +206,7 @@ def upsample_load(
 
     # sanitize: need to renormalize since `gb_keys` only cover Great Britain
     # and Northern Ireland is taken from `nuts3_keys`
-    if "GB" in regions.country:
+    if (regions.country == "GB").any():
         uk_regions_i = regions.query("country == 'GB'").index
         uk_weights = factors.loc[uk_regions_i].sum()
         factors.loc[uk_regions_i] /= uk_weights

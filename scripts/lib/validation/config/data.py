@@ -253,6 +253,14 @@ class DataConfig(BaseModel):
         default_factory=lambda: _DataSourceConfig(source="primary"),
         description="SciGRID Gas data source configuration.",
     )
+    hera: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="HERA river discharge and air temperature data source configuration.",
+    )
+    hera_test_cutout: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="HERA test cutout data source configuration.",
+    )
     seawater_temperature: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="Seawater temperature data source configuration.",
