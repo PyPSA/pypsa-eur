@@ -49,6 +49,11 @@ class _SolarResourceConfig(BaseModel):
         None,
         description="Tracking type (e.g., 'horizontal').",
     )
+    dc_ac_ratio: float = Field(
+        1.25,
+        description="Ratio of module (DC) capacity to inverter (AC) capacity. The availability time series is given per unit of AC capacity and clipped at the inverter limit in each weather grid cell. Capacities, potentials and costs of solar PV refer to AC capacity. The investment cost is scaled from the ratio of 1.25 assumed in the cost data, see `ac_cost_share`.",
+        ge=1,
+    )
 
 
 class _CorineConfig(BaseModel):
@@ -208,7 +213,13 @@ class _SolarConfig(BaseModel):
         1, description="Number of resource classes per clustered region."
     )
     capacity_per_sqkm: float = Field(
-        5.1, description="Allowable density of solar panel placement."
+        5.1, description="Allowable density of solar panel placement (MW AC per sqkm)."
+    )
+    ac_cost_share: float = Field(
+        0.18,
+        description="Share of the investment that scales with inverter (AC) capacity, e.g. inverter and grid connection, at the DC/AC ratio assumed in the cost data. The rest scales with module (DC) capacity. Used to adjust the investment to `resource: dc_ac_ratio`.",
+        ge=0,
+        le=1,
     )
     correction_factor: float = Field(
         1.0,
@@ -349,6 +360,7 @@ class RenewableConfig(BaseModel):
         default_factory=lambda: _SolarConfig(
             resource=_SolarResourceConfig(tracking="horizontal"),
             capacity_per_sqkm=4.43,
+            ac_cost_share=0.15,
         ),
         alias="solar-hsat",
         description="Solar PV with horizontal single-axis tracking configuration.",

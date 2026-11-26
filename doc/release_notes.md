@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: Solar PV availability, capacities and potentials now refer to AC capacity, like the costs. New options `renewable: solar: resource: dc_ac_ratio` and `ac_cost_share` (rooftop: `sector: solar_rooftop_*`) set the inverter sizing and scale the costs. This changes default results. Requires `atlite>=0.8` ([#2078](https://github.com/PyPSA/pypsa-eur/pull/2078)).
 * Data: The HERA river discharge and air temperature data (new `data: hera` and `data: hera_test_cutout`) and the seawater temperature data are now versioned and mirrored for the year 2013. Seawater temperature no longer needs Copernicus Marine credentials by default; other years need `source: primary` ([#1930](https://github.com/PyPSA/pypsa-eur/issues/1930)).
 * Fix: The clustered population layouts and solar rooftop potentials no longer lose the population of coastal grid cells in proportion to their sea area. This changes default results ([#2404](https://github.com/PyPSA/pypsa-eur/issues/2404)).
 * Fix: The electricity demand distribution keys of Great Britain are now renormalised after adding Northern Ireland, so the national load is no longer overstated. This changes results with GB ([#2456](https://github.com/PyPSA/pypsa-eur/pull/2456)).
