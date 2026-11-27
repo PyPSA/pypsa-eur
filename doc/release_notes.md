@@ -6,6 +6,17 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+## PyPSA-Eur v2026.11.1 (27th November 2026)
+
+**Bugfixes and Compatibility**
+
+* Countries that stopped reporting to the Eurostat energy balances (e.g. GB after 2019) now keep the values of
+  their last reported year. Before, the industrial production and energy demand of GB were zero, except for
+  ammonia. This changes results with GB ([#2462](https://github.com/PyPSA/pypsa-eur/pull/2462)).
+
+* Sector-coupled runs with an unsorted `countries` list no longer fail in `build_heat_totals`
+  ([#2462](https://github.com/PyPSA/pypsa-eur/pull/2462)).
+
 ## PyPSA-Eur v2026.11.0 (27th November 2026)
 
 This release adds endogenous steel, cement and industry process heat, land-based carbon dioxide removal and

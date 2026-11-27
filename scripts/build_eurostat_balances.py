@@ -5,7 +5,8 @@
 Build long-format Eurostat energy balances per country and year in TWh/a.
 
 The compressed Eurostat energy balance table is read, melted to long format
-and restricted to entries reported in GWh. Missing totals for domestic
+and restricted to entries reported in GWh. Countries that stopped reporting keep
+the values of their last reported year. Missing totals for domestic
 aviation are filled from the nearest reported year, country codes are
 harmonised with the JRC-IDEES convention (UK to GB, EL to GR), and values are
 converted from GWh to TWh. The result feeds the country-level energy totals
@@ -14,6 +15,7 @@ from which sectoral demands are derived.
 
 import logging
 
+import numpy as np
 import pandas as pd
 
 from scripts._helpers import configure_logging, set_scenario_config
@@ -46,8 +48,16 @@ def build_eurostat(
         na_values=[":", ": m", 0.0],
     ).rename(columns={"geo\\TIME_PERIOD": "country"})
 
+    id_vars = ["freq", "nrg_bal", "siec", "unit", "country"]
+
+    # countries that stopped reporting (e.g. GB, UA) keep their last reported year
+    years = raw.columns.drop(id_vars)
+    reported = raw[years].notna().groupby(raw["country"]).transform("any")
+    last_reported = raw[years].fillna(0.0).where(reported).ffill(axis=1)
+    raw[years] = raw[years].where(reported, last_reported.replace(0.0, np.nan))
+
     df = raw.melt(
-        id_vars=["freq", "nrg_bal", "siec", "unit", "country"],
+        id_vars=id_vars,
         var_name="year",
         value_name="value",
     ).query("unit == 'GWH'")

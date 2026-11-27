@@ -1053,7 +1053,7 @@ if __name__ == "__main__":
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
     population = nuts3["pop"].groupby(nuts3.country).sum()
 
-    countries = snakemake.params.countries
+    countries = sorted(snakemake.params.countries)
     # countries without IDEES data take averages of the EU27 countries in the run,
     # or of all EU27 countries if the run has none
     reference = list(countries)
