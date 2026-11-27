@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  name: "ukraine-moldova"
+
+foresight: overnight
+planning_horizons: 2050
+
+countries: ["PL", "SK", "HU", "RO", "UA", "MD"]
+
+clustering:
+  temporal:
+    averaging: 365h
+  cluster_network:
+    n_clusters: 12
+
+sector:
+  enabled: true
+  # the selected countries have no offshore sequestration sites
+  regional_co2_sequestration_potential:
+    include_onshore: true

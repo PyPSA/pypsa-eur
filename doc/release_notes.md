@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Feature: Sector-coupled runs can now include Ukraine and Moldova. Biomass commodities that ENSPRESO lacks for these countries take the potential per area of Romania, and their district heating shares are derived from the Eurostat balances. `config/examples/config.ukraine-moldova.yaml` gives an Eastern European example.
 
 ## PyPSA-Eur v2026.11.1 (27th November 2026)
 

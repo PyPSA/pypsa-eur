@@ -7,7 +7,8 @@ Build biogas and solid biomass potentials per clustered model region from JRC EN
 ENSPRESO gives sustainable biomass potentials per commodity at NUTS2 level for a
 chosen scenario and year; years between the available decades are linearly
 interpolated. Commodities only reported at country level are disaggregated to
-NUTS2 by population. Potentials are mapped to model regions by area overlap and
+NUTS2 by population. Commodities missing for Moldova and Ukraine take the
+potential per area of Romania. Potentials are mapped to model regions by area overlap and
 grouped into the configured biomass classes. Unsustainable potentials are
 estimated from the Eurostat primary production of solid biofuels, biogas and
 bioliquids, allocated to regions by their share of the sustainable potential,
@@ -173,6 +174,9 @@ def enspreso_biomass_potentials(
 
     dff = df.query("Year == @year and Scenario == @scenario")
 
+    # UA is reported in two parts
+    dff = dff.replace({"NUTS2": {"UA07": "UA"}})
+
     bio = dff.groupby(["NUTS2", "commodity"]).potential.sum().unstack()
 
     return bio
@@ -214,18 +218,39 @@ def disaggregate_nuts0(bio: pd.DataFrame, pop: pd.DataFrame) -> pd.DataFrame:
 def build_nuts2_shapes(nuts2: str, country_shapes: str) -> gpd.GeoDataFrame:
     """
     - load NUTS2 geometries
-    - add RS, AL, BA country shapes (not covered in NUTS 2013)
+    - add RS, AL, BA, XK, MD, UA country shapes (not covered in NUTS 2013)
     - consistently name ME, MK
     """
     shapes = gpd.GeoDataFrame(gpd.read_file(nuts2).set_index("NUTS_ID").geometry)
 
     countries = gpd.read_file(country_shapes).set_index("name")
-    missing_iso2 = countries.index.intersection(["AL", "RS", "XK", "BA"])
+    missing_iso2 = countries.index.intersection(["AL", "RS", "XK", "BA", "MD", "UA"])
     missing = countries.loc[missing_iso2]
 
     shapes.rename(index={"ME00": "ME", "MK00": "MK"}, inplace=True)
 
     return pd.concat([shapes, missing])
+
+
+def fill_missing_commodities(
+    bio_nuts2: gpd.GeoDataFrame, reference: str = "RO"
+) -> gpd.GeoDataFrame:
+    """
+    Fill commodities that ENSPRESO lacks for MD and UA with the potential per
+    area of the reference country.
+    """
+    commodities = bio_nuts2.columns.drop("geometry")
+    area_km2 = area(bio_nuts2)
+    is_reference = bio_nuts2.index.str.startswith(reference)
+    density = (
+        bio_nuts2.loc[is_reference, commodities].sum() / area_km2[is_reference].sum()
+    )
+    for country in bio_nuts2.index.intersection(["MD", "UA"]):
+        fill_values = density * area_km2[country]
+        bio_nuts2.loc[country, commodities] = bio_nuts2.loc[
+            country, commodities
+        ].fillna(fill_values)
+    return bio_nuts2
 
 
 def convert_nuts2_to_regions(
@@ -457,6 +482,7 @@ if __name__ == "__main__":
     nuts2 = build_nuts2_shapes(snakemake.input.nuts2, snakemake.input.country_shapes)
 
     df_nuts2 = gpd.GeoDataFrame(nuts2.geometry).join(enspreso)
+    df_nuts2 = fill_missing_commodities(df_nuts2)
 
     regions = gpd.read_file(snakemake.input.onshore_regions)
 
