@@ -19,7 +19,7 @@ check out the latest [release](https://github.com/PyPSA/pypsa-eur/releases), for
 
 ```console
 $ cd pypsa-eur
-$ git checkout v2026.09.0
+$ git checkout v2026.11.0
 ```
 
 ## Install Python Dependencies {#deps}

@@ -202,7 +202,7 @@ rule build_temperature_profiles:
         benchmarks("build_temperature_profiles/total")
     threads: 8
     resources:
-        mem_mb=20000,
+        mem_mb=40000,
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -720,9 +720,9 @@ rule build_solar_thermal_profiles:
         logs("build_solar_thermal_profiles_total.log"),
     benchmark:
         benchmarks("build_solar_thermal_profiles/total")
-    threads: 16
+    threads: 8
     resources:
-        mem_mb=20000,
+        mem_mb=40000,
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -743,7 +743,7 @@ rule build_eurostat_balances:
         benchmarks("build_eurostat_balances")
     threads: 1
     resources:
-        mem_mb=4000,
+        mem_mb=8000,
     script:
         scripts("build_eurostat_balances.py")
 
@@ -779,7 +779,7 @@ rule build_co2_totals:
         benchmarks("build_co2_totals")
     threads: 1
     resources:
-        mem_mb=1000,
+        mem_mb=3000,
     params:
         countries=config_provider("countries"),
         emissions_scope=config_provider("co2_budget", "emissions_scope"),
@@ -799,7 +799,7 @@ rule build_transformation_output_coke:
         benchmarks("build_transformation_output_coke")
     threads: 1
     resources:
-        mem_mb=1000,
+        mem_mb=3000,
     script:
         scripts("build_transformation_output_coke.py")
 
@@ -912,7 +912,7 @@ rule build_biomass_potentials:
         benchmarks("build_biomass_potentials_{horizon}")
     threads: 8
     resources:
-        mem_mb=2000,
+        mem_mb=8000,
     params:
         biomass=config_provider("biomass"),
         countries=config_provider("countries"),
@@ -1216,7 +1216,7 @@ rule build_industrial_production_per_country:
         benchmarks("build_industrial_production_per_country")
     threads: 8
     resources:
-        mem_mb=2000,
+        mem_mb=16000,
     params:
         industry=config_provider(
             "industry",
@@ -1394,7 +1394,7 @@ rule build_industrial_energy_demand_per_country_today:
         benchmarks("build_industrial_energy_demand_per_country_today")
     threads: 8
     resources:
-        mem_mb=2000,
+        mem_mb=4000,
     params:
         countries=config_provider("countries"),
         industry=config_provider(

@@ -3,11 +3,42 @@
 
 # Migration Guide {#migration}
 
+This guide lists per release what you must change in an existing PyPSA-Eur setup.
+All other changes are in the [release notes](release_notes.md).
+
+## v2026.11.0 {#v2026-11}
+
+Removed keys that raise no error are ignored. Find them with
+`pixi run validate-config config/config.yaml`.
+
+| Old | New |
+|-----|-----|
+| `snapshots: end: "2014-01-01"`<br>`snapshots: inclusive: left` | `snapshots: end: "2013-12-31 23:00"`; `end` is the last snapshot and needs the hour, `inclusive` is removed (error) |
+| `pypsa_eur:` | removed (error); select technologies with `electricity: conventional_carriers` and `electricity: renewable_carriers` |
+| `solving: oetc:` | removed (error) |
+| `sector: tes` | `sector: ttes` and `sector: district_heating: ptes: enable`; the old key works until the next release |
+| `solving: options: transmission_losses: 2` | `{mode: tangents, segments: 2}` for the old behaviour |
+| `sector: shipping_hydrogen_liquefaction`<br>`sector: co2_sequestration_lifetime`<br>`energy: base_emissions_year` | removed |
+| `plotting: tech_colors: <carrier>: red` | hex colours only, e.g. `"#ff0000"` |
+| `n.meta` | `n.meta["snakemake_config"]` |
+| carrier `H2 for shipping` | `shipping hydrogen` |
+
+Also check these settings:
+
+- `sector: chp: fuel_cc` must list all fuels that should keep CHP plants with carbon capture.
+- `electricity: transmission_limit` refers to the previous planning horizon with myopic foresight.
+- `electricity: max_hours: iron-air` counts hours at rated output.
+- `renewable: solar: capacity_per_sqkm` and all solar PV capacities refer to AC capacity (`resource: dc_ac_ratio`).
+- `solving: check_objective: expected_value` is compared with the total system cost and must be updated.
+- `logging: console_level: INFO` restores the previous console output.
+
+## v2026.09.0: Streamlined Workflow {#v2026-09}
+
 This guide helps you move an existing PyPSA-Eur setup to the streamlined
 workflow ([#1838](https://github.com/PyPSA/pypsa-eur/pull/1838)). Other changes
 that were released at the same time are listed in the
 [release notes](release_notes.md).
-## Why the change
+### Why the change
 
 Over the years the project has grown dynamically and we have accumulated quite a variety of options and ways to use these options. With this, the complexity for running, maintaining and managing the model and project has also grown. Specially the merge of the electricity-only model PyPSA-Eur with its' sector-coupled sibling PyPSA-Eur-Sec introduced a lot of duplicate logic.
 
@@ -16,7 +47,7 @@ We have learned from many projects what works and what works not, and have used 
 The new structure moves nearly all options from wildcards into the config files, makes these options more consistent and more transparent, and also restructured the model building and solving logic to make it easier to maintain and extend.
 
 The changes might seem quite substantial, but we have prepared this migration guide to make it easier to move from the previous structure to the new structure. The migration guide is for users of the default PyPSA-Eur model, as well as for people maintaining forks of the model with their own modifications.
-## What changed
+### What changed
 
 Scenario information used to live in filenames, such as
 `elec_s_37_lv1.25_3H_2030.nc`. It now lives in the configuration file. The
@@ -40,7 +71,7 @@ loop over the horizons:
 
 See [foresight](design/foresight.md) for the details.
 
-## How to use this guide
+### How to use this guide
 
 Everyone upgrading should read [Before you start](#before-you-start) and
 [Rewrite your config](#rewrite-your-config). If you maintain a fork or soft-fork,
@@ -62,7 +93,7 @@ restructured, so you will get merge conflicts.
     instead of waiting for an error message. There will not be one. If your results
     look odd afterwards, check [Symptoms and causes](#symptoms).
 
-## Before you start {#before-you-start}
+### Before you start {#before-you-start}
 
 **Migrate on a clean branch and keep a backup.** The config edits and script changes
 are extensive, so start from a clean git state on a new branch and commit as you go.
@@ -114,9 +145,9 @@ you compare results or run your analysis scripts.
     in the repository, and `config/test/config.myopic.yaml` shows the multi-horizon
     sector-coupled form.
 
-## Rewrite your config {#rewrite-your-config}
+### Rewrite your config {#rewrite-your-config}
 
-### Declare your model type {#model-type}
+#### Declare your model type {#model-type}
 
 Whether you build an electricity-only or a sector-coupled model used to depend on
 the target you typed: `solve_elec_networks` or `solve_sector_networks`. It is now a
@@ -134,7 +165,7 @@ default target.
       enabled: false
     ```
 
-### The `scenario` block is gone {#scenario-block}
+#### The `scenario` block is gone {#scenario-block}
 
 The `scenario:` section used to list the values of the `{clusters}`, `{opts}`,
 `{sector_opts}` and `{planning_horizons}` wildcards. All four wildcards were
@@ -173,7 +204,7 @@ former `clusters: [adm]`.
     rules read through `config_provider` may vary per scenario, including
     `clustering.cluster_network.n_clusters`, `co2_budget`, `sector` and `solving`.
 
-### Translating `opts` and `sector_opts` {#opts-translation}
+#### Translating `opts` and `sector_opts` {#opts-translation}
 
 Every option token which was formerly given as a wildcard now has a config equivalent. The translation layer
 (`_helpers.update_config_from_wildcards`) was deleted, so leftover option strings
@@ -227,7 +258,7 @@ Three tokens did a unit conversion for you that you now have to do yourself:
 - `CH4L<x>` was given in TWh and multiplied by `1e6`, so `CH4L200` becomes `gaslimit: 200000000` (MWh).
 - `sdr<x>` was a percentage divided by `100`, so `sdr2` becomes `social_discountrate: 0.02` in per unit.
 
-### CO₂ constraints {#co2-budget}
+#### CO₂ constraints {#co2-budget}
 
 CO₂ is now handled entirely through `co2_budget`. Three separate mechanisms feed
 into it:
@@ -287,7 +318,7 @@ in each mode.
     entry of `planning_horizons` also appears in `upper` (and in `lower`, if you use
     it).
 
-### Temporal resolution {#temporal}
+#### Temporal resolution {#temporal}
 
 `clustering.temporal.resolution_elec` and `resolution_sector` are replaced by three
 options under `clustering.temporal`, of which you may set only one:
@@ -316,7 +347,7 @@ may be set`.
     time series of the fully prepared network, so segment boundaries and weights
     differ.
 
-### Other renamed keys {#other-keys}
+#### Other renamed keys {#other-keys}
 
 | Old | New |
 |--------|-----|
@@ -345,7 +376,7 @@ or a `{<horizon>: value}` mapping, so every `solved_{horizon}.nc` of a multi-hor
 run is checked against its own benchmark. The default tolerances were tightened
 (`atol` from `1e6` to `1e4` and `rtol` from `1e-2` to `1e-3`).
 
-### Complete example {#example}
+#### Complete example {#example}
 
 **Before:**
 
@@ -400,7 +431,7 @@ sector:
   enabled: true
 ```
 
-## Behaviour changes {#behaviour-changes}
+### Behaviour changes {#behaviour-changes}
 
 The changes below are not renames. Even with an equivalent config the model itself
 changes, so do not expect to reproduce old numbers unless you act on them. Each item
@@ -451,7 +482,7 @@ electricity-only runs also pick up `adjustments.sector`, and Line/Link
 capacity accumulating across horizons.
 *Old behaviour:* Only `foresight: overnight` was used and only a single period was solved, even with different `foresight:` options specified.
 
-### If you use perfect foresight {#perfect}
+#### If you use perfect foresight {#perfect}
 
 Sector-coupled perfect foresight works again; earlier releases stopped with `PyPSA
 versions >=1.0 are not supported for perfect foresight`. The assembly was rewritten
@@ -471,7 +502,7 @@ results rather than comparable ones. Three points in particular:
 - **The summary CSVs changed**, both in content and in which files exist. See
   [Summary outputs](#summaries).
 
-## Summary outputs and your analysis scripts {#summaries}
+### Summary outputs and your analysis scripts {#summaries}
 
 This is the change that is most likely to break your own post-processing.
 
@@ -516,7 +547,7 @@ One per-solve output is no longer written: the config dumps
 solved network as `n.meta`. `solving.options.store_model` still writes the linopy
 model, now to `results/models/solved_{horizon}.nc`.
 
-### Reusing solved networks from an old run {#reusing-solved-networks}
+#### Reusing solved networks from an old run {#reusing-solved-networks}
 
 Since the filenames changed, Snakemake finds no solved network and would solve
 everything again. If you only want the new summaries, rename your old solved networks
@@ -532,7 +563,7 @@ not created. Note that `make_summary` reads every horizon of `planning_horizons`
 one job — only the last one under perfect foresight — so all of them have to be
 there.
 
-## Files and directories {#files}
+### Files and directories {#files}
 
 The paths below leave out the run directory. It is inserted as `resources/<run>/…`,
 `results/<run>/…`, `logs/<run>/…` and `benchmarks/<run>/…` when `run.name` is set:
@@ -541,7 +572,7 @@ true. A non-empty `run.prefix` adds one more level in front. With the shipped
 defaults, where `run.prefix` and `run.name` are empty, the paths are exactly as
 shown.
 
-### Network stages
+#### Network stages
 
 | Old | New |
 |--------|-----|
@@ -554,7 +585,7 @@ shown.
 | `results/networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc` | `results/networks/solved_{horizon}.nc` (sector-coupled) |
 | `results/networks/base_s_{clusters}_elec_{opts}_op.nc` | `results/networks/operations_{horizon}.nc` (opt-in dispatch re-solve) |
 
-### Regions, busmaps and other resources
+#### Regions, busmaps and other resources
 
 | Old | New |
 |--------|-----|
@@ -588,7 +619,7 @@ dropped and `{planning_horizons}` becomes `{horizon}`. For example
 `cop_profiles_base_s_{clusters}_{planning_horizons}.nc` becomes
 `cop_profiles_{horizon}.nc`.
 
-### Maps and graphs
+#### Maps and graphs
 
 | Old | New |
 |--------|-----|
@@ -603,7 +634,7 @@ dropped and `{planning_horizons}` becomes `{horizon}`. For example
 | `results/graphics/heatmap_timeseries/s_{clusters}_…_{planning_horizons}/` | `results/graphs/heatmap_timeseries_{horizon}/` |
 | `results/graphics/interactive_bus_balance/s_{clusters}_…_{planning_horizons}/` | `results/graphics/interactive_bus_balance/{horizon}/` |
 
-## Snakemake targets {#targets}
+### Snakemake targets {#targets}
 
 Every foresight mode and both model types support the default target, so you can
 always run the whole workflow with:
@@ -638,7 +669,7 @@ If you target files directly:
 The `**config["scenario"]` expansion pattern is gone. Collection rules take the
 `{horizon}` wildcard from `config["planning_horizons"]`.
 
-## Troubleshooting: Symptoms and causes {#symptoms}
+### Troubleshooting: Symptoms and causes {#symptoms}
 
 | Symptom | Likely cause |
 |---------|--------------|
@@ -657,7 +688,7 @@ The `**config["scenario"]` expansion pattern is gone. Collection rules take the
 | Analysis script reads garbage from `csvs/*.csv` | the header is a single row now, not a three-level MultiIndex; see [summary outputs](#summaries) |
 | `FileNotFoundError` or `MissingInputException` on a `csvs/individual/…` path | that stage no longer exists; slice the horizon column instead |
 
-## Migrating a fork {#fork-migration}
+### Migrating a fork {#fork-migration}
 
 This section is for maintainers of forks and soft-forks. The preparation stage was
 consolidated from six rules into one, so the conflicts concentrate in the
@@ -684,7 +715,7 @@ Work in an order that gets you to a workflow that parses as early as possible:
    call order ([Scripts](#fork-scripts)).
 7. Run the test matrix ([Verifying the merge](#fork-tests)).
 
-### Rule files {#fork-rules}
+#### Rule files {#fork-rules}
 
 **Deleted, together with all their rules:**
 
@@ -730,7 +761,7 @@ disambiguation is not needed any more, because both are branches inside one rule
     overrides `foresight` or `planning_horizons` does not change which rules exist or
     what the collect rules ask for.
 
-### Scripts {#fork-scripts}
+#### Scripts {#fork-scripts}
 
 **Deleted:** `make_summary_perfect.py`, `make_global_summary.py` and
 `make_cumulative_costs.py`, all folded into `make_summary.py`, where cumulative costs
@@ -804,7 +835,7 @@ maybe_adjust_costs_and_potentials(n, adjustments["sector"], horizon)
     `prepare_network.py` that assumed an electricity-only network will now see a full
     sector network with existing vintages.
 
-### Porting code into the new `main()` functions {#fork-porting}
+#### Porting code into the new `main()` functions {#fork-porting}
 
 Inside the new `main()` functions the `snakemake` object is no longer available. Use the `inputs` and `params` arguments of the functions instead:
 
@@ -831,7 +862,7 @@ returns the whole input dictionary for the rule. Since `compose_network` declare
 `input: unpack(get_compose_inputs)` and nothing else, there is no second place to
 look.
 
-### Fixing file references {#fork-paths}
+#### Fixing file references {#fork-paths}
 
 Remove the scenario wildcards `{clusters}`, `{opts}` and `{sector_opts}` from your
 paths, and rename `{planning_horizons}` to `{horizon}`. All other wildcards are
@@ -863,7 +894,7 @@ See [Files and directories](#files) for the full mapping, and
 
     and expect no hits outside docstrings and schema field descriptions.
 
-### Configuration access {#fork-config}
+#### Configuration access {#fork-config}
 
 Rules get their parameters through `config_provider(...)`, and input functions through
 `get_config(w)`. Both resolve the fully merged, scenario-aware config and are cached
@@ -883,7 +914,7 @@ deleted along with the option wildcards. The generic `_helpers.parse` helper sur
 but it is no longer used for option strings, so a fork that added its own option
 tokens has to expose them as config keys instead.
 
-### Verifying the merge {#fork-tests}
+#### Verifying the merge {#fork-tests}
 
 ```console
 $ pixi run unit-tests
