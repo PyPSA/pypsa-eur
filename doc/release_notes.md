@@ -6,7 +6,7 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
-## PyPSA-Eur v2026.11.0 (26th November 2026)
+## PyPSA-Eur v2026.11.0 (27th November 2026)
 
 This release adds endogenous steel, cement and industry process heat, land-based carbon dioxide removal and
 LNG as shipping fuel. Historical emissions now come from the latest national inventories. Solar PV now has a
