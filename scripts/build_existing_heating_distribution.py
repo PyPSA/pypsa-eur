@@ -84,7 +84,8 @@ def build_existing_heating(
     # distribute technologies to nodes by population
     pop_layout = pd.read_csv(pop_layout_fn, index_col=0)
 
-    nodal_heating = existing_heating.loc[pop_layout.ct]
+    # further countries not included in database have no existing heating
+    nodal_heating = existing_heating.reindex(pop_layout.ct, fill_value=0.0)
     nodal_heating.index = pop_layout.index
     nodal_heating = nodal_heating.multiply(pop_layout.fraction, axis=0)
 
