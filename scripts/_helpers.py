@@ -766,6 +766,14 @@ def sanitize_custom_columns(n: pypsa.Network) -> None:
         n.links.reversed = n.links.reversed.astype(bool)
 
 
+def register_composite(n: pypsa.Network, name: str) -> None:
+    """
+    Register the composite type defined in `scripts/composites/<name>.yaml`.
+    """
+    path = Path(__file__).parent / "composites" / f"{name}.yaml"
+    n.composites.register(path, overwrite=True)
+
+
 def rename_techs(label: str) -> str:
     """
     Rename technology labels for better readability.

@@ -40,6 +40,7 @@ import xarray as xr
 from pypsa.clustering.spatial import DEFAULT_ONE_PORT_STRATEGIES, normed_or_uniform
 
 from scripts._helpers import (
+    register_composite,
     rename_techs,
     update_p_nom_max,
 )
@@ -57,16 +58,18 @@ SECTOR_CARRIERS = {
     "H2",
 }
 
-STORE_LOOKUP: dict[str, dict[str, str | float]] = {
+STORE_LOOKUP: dict[str, dict[str, str | float | bool]] = {
     "battery": {
         "store": "battery storage",
         "bicharger": "battery inverter",
         "roundtrip_correction": 0.5,
+        "shared_inverter": True,
     },
     "home battery": {
         "store": "home battery storage",
         "bicharger": "home battery inverter",
         "roundtrip_correction": 0.5,
+        "shared_inverter": True,
     },
     "li-ion": {
         "store": "battery storage",
@@ -1148,6 +1151,25 @@ def attach_stores(
         )
 
         n.add("Carrier", [f"{carrier} {charge_name}", f"{carrier} {discharge_name}"])
+
+        if lookup.get("shared_inverter"):
+            register_composite(n, "battery_inverter")
+            efficiency = costs.at[lookup_charge, "efficiency"] ** roundtrip_correction
+            n.add(
+                "battery_inverter",
+                bus_names,
+                bus=buses_i,
+                store_bus=bus_names,
+                charger_carrier=f"{carrier} {charge_name}",
+                discharger_carrier=f"{carrier} {discharge_name}",
+                efficiency=efficiency,
+                charger_ratio=efficiency,
+                capital_cost=costs.at[lookup_charge, "capital_cost"],
+                charger_marginal_cost=costs.at[lookup_charge, "marginal_cost"],
+                discharger_marginal_cost=costs.at[lookup_discharge, "marginal_cost"],
+                lifetime=costs.at[lookup_charge, "lifetime"],
+            )
+            continue
 
         n.add(
             "Link",

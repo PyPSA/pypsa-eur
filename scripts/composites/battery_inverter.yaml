@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+name: battery_inverter
+description: the charger and the discharger of a battery, which share one bidirectional inverter
+parameters:
+  bus: null
+  store_bus: null
+  charger_carrier: null
+  discharger_carrier: null
+  efficiency: null
+  capital_cost: 0.0
+  charger_marginal_cost: 0.0
+  discharger_marginal_cost: 0.0
+  lifetime: null
+  charger_ratio: 1.0
+components:
+  Link:
+    charger:
+      bus0: $bus
+      bus1: $store_bus
+      carrier: $charger_carrier
+      efficiency: $efficiency
+      capital_cost: $capital_cost
+      marginal_cost: $charger_marginal_cost
+      p_nom_extendable: true
+      lifetime: $lifetime
+    discharger:
+      bus0: $store_bus
+      bus1: $bus
+      carrier: $discharger_carrier
+      efficiency: $efficiency
+      marginal_cost: $discharger_marginal_cost
+      p_nom_extendable: true
+      lifetime: $lifetime
+math:
+  constraints:
+    battery_inverter_rating:
+      description: an extendable charger is rated at `charger_ratio` times its extendable discharger
+      dims: [scenario, battery_inverter]
+      where: >-
+        at(Link_p_nom_extendable, by=battery_inverter_members[charger])
+        AND at(Link_p_nom_extendable, by=battery_inverter_members[discharger])
+      expression: >-
+        at(Link_p_nom_effective, by=battery_inverter_members[charger])
+        == battery_inverter_charger_ratio * at(Link_p_nom_effective, by=battery_inverter_members[discharger])

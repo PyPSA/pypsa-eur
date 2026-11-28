@@ -55,6 +55,9 @@ def add_build_year_to_new_assets(n: pypsa.Network, baseyear: int) -> None:
             (c.static.lifetime != np.inf) & (c.static.build_year == 0)
         ]
         c.static.loc[assets, "build_year"] = baseyear
+        if "composite" in c.static:
+            members = assets[c.static.loc[assets, "composite"].fillna("").ne("")]
+            c.static.loc[members, "composite"] += f"-{baseyear}"
 
         # add -baseyear to name
         rename = pd.Series(c.static.index, c.static.index)
