@@ -5,6 +5,7 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Fix: With `conventional: dynamic_fuel_price: true`, snapshots that do not start on the first of a month now get the fuel price of their month. Before, gas, coal and oil plants had no marginal cost until the next month started ([#2466](https://github.com/PyPSA/pypsa-eur/pull/2466)).
 
 ## PyPSA-Eur v2026.11.1 (27th November 2026)
 
