@@ -2032,6 +2032,26 @@
             }
           }
         },
+        "tyndp_projects": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
         "powerplants": {
           "description": "Configuration for a single data source.",
           "properties": {
@@ -6952,9 +6972,9 @@
         "include": {
           "description": "Configuration for `transmission_projects.include` settings.",
           "properties": {
-            "tyndp2020": {
+            "tyndp2026": {
               "default": true,
-              "description": "Whether to integrate the TYNDP 2020 dataset.",
+              "description": "Whether to integrate the TYNDP 2026 dataset.",
               "type": "boolean"
             },
             "nep": {
@@ -6994,11 +7014,11 @@
               "type": "object"
             }
           ],
-          "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`."
+          "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`, `completed`."
         },
         "new_link_capacity": {
           "default": "zero",
-          "description": "Whether to set the new link capacity to the provided capacity or set it to zero.",
+          "description": "Whether to set the new link capacity to the provided capacity or set it to zero. Upgraded links take the provided capacity with `keep` and the capacity of the existing link with `zero`.",
           "enum": [
             "zero",
             "keep"
@@ -8845,9 +8865,9 @@
     "_IncludeConfig": {
       "description": "Configuration for `transmission_projects.include` settings.",
       "properties": {
-        "tyndp2020": {
+        "tyndp2026": {
           "default": true,
-          "description": "Whether to integrate the TYNDP 2020 dataset.",
+          "description": "Whether to integrate the TYNDP 2026 dataset.",
           "type": "boolean"
         },
         "nep": {
@@ -12802,9 +12822,9 @@
         "include": {
           "description": "Configuration for `transmission_projects.include` settings.",
           "properties": {
-            "tyndp2020": {
+            "tyndp2026": {
               "default": true,
-              "description": "Whether to integrate the TYNDP 2020 dataset.",
+              "description": "Whether to integrate the TYNDP 2026 dataset.",
               "type": "boolean"
             },
             "nep": {
@@ -12844,11 +12864,11 @@
               "type": "object"
             }
           ],
-          "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`."
+          "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`, `completed`."
         },
         "new_link_capacity": {
           "default": "zero",
-          "description": "Whether to set the new link capacity to the provided capacity or set it to zero.",
+          "description": "Whether to set the new link capacity to the provided capacity or set it to zero. Upgraded links take the provided capacity with `keep` and the capacity of the existing link with `zero`.",
           "enum": [
             "zero",
             "keep"
@@ -16696,6 +16716,26 @@
           }
         },
         "tyndp": {
+          "description": "Configuration for a single data source.",
+          "properties": {
+            "source": {
+              "default": "archive",
+              "description": "Source of the data. 'archive' retrieves pre-built data, 'primary' retrieves from primary source.",
+              "enum": [
+                "archive",
+                "primary",
+                "build"
+              ],
+              "type": "string"
+            },
+            "version": {
+              "default": "latest",
+              "description": "Version of the data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.",
+              "type": "string"
+            }
+          }
+        },
+        "tyndp_projects": {
           "description": "Configuration for a single data source.",
           "properties": {
             "source": {

@@ -8,13 +8,12 @@ Gets the transmission projects defined in the config file, concatenates and
 deduplicates them. Projects are later included in [add_electricity][].
 
 Each project is read from a subfolder of `data/transmission_projects/` named
-after the project. The offshore shapes are used to determine if a new bus
-should be added for a new line or link, and the shape of Europe to determine if
-a project is within the considered countries. New and upgraded lines and links
+after the project. Where the ends of several projects meet far from any bus,
+e.g. on an island, a new bus is added. The shape of Europe determines if a
+project is within the considered countries. New and upgraded lines and links
 are written to separate files. For lines and links which are upgraded, the
 decommissioning year of the existing line or link is adjusted to the build year
-of the upgraded one. For some links, new buses have to be added (e.g. North Sea
-Wind Power Hub).
+of the upgraded one.
 """
 
 import logging
@@ -27,6 +26,7 @@ import pypsa
 import shapely
 from pypsa.descriptors import nominal_attrs
 from scipy import spatial
+from scipy.cluster.hierarchy import fcluster, linkage
 from shapely.geometry import LineString, Point
 
 from scripts._helpers import configure_logging, set_scenario_config
@@ -36,62 +36,82 @@ logger = logging.getLogger(__name__)
 pypsa.options.params.add.return_names = True
 
 
-def add_new_buses(
-    n: pypsa.Network, new_ports: pd.DataFrame
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    # Add new buses for the ports which do not have an existing bus close by. If there are multiple ports at the same location, only one bus is added.
-    duplicated = new_ports.duplicated(subset=["x", "y"], keep="first")
-    to_add = new_ports[~duplicated]
-    added_buses = n.add(
+def add_hub_buses(
+    n: pypsa.Network,
+    lines: pd.DataFrame,
+    shapes: gpd.GeoSeries,
+    offshore_shapes: gpd.GeoDataFrame,
+    distance: float,
+    carrier: str = "AC",
+    max_lines: float = np.inf,
+) -> pd.DataFrame:
+    """
+    Add a bus where the ends of several lines meet farther than distance from
+    any existing bus, e.g. on an island.
+
+    Lines with another end offshore and far from any bus are not counted. Then,
+    hubs of more than max_lines lines are dropped. The bus is placed at the mean of the ends and takes
+    the country of the closest shape.
+    """
+    buses = n.buses.query("carrier in ['AC', @carrier]")
+    coords = np.vstack([np.asarray(line.coords)[[0, -1]] for line in lines.geometry])
+    ends = pd.DataFrame(coords, columns=["x", "y"], index=lines.index.repeat(2))
+    ends["name"] = ends.index + " bus" + np.tile(["0", "1"], len(lines))
+    distances = spatial.KDTree(buses[["x", "y"]]).query(ends[["x", "y"]])[0]
+    ends = ends[distances > distance]
+    offshore = offshore_shapes.union_all()
+    ends["offshore"] = shapely.contains_xy(offshore, ends.x, ends.y)
+    while len(ends) > 1:
+        hub = fcluster(linkage(ends[["x", "y"]]), distance, "distance")
+        n_lines = ends.index.to_series().groupby(hub).transform("nunique").values
+        to_drop = (n_lines == 1) & ends.offshore.values
+        if not to_drop.any():
+            to_drop = n_lines > max_lines
+        if not to_drop.any():
+            break
+        ends = ends.drop(ends.index[to_drop])
+    if len(ends) < 2 or (n_lines == 1).all():
+        return pd.DataFrame()
+    ends, hub = ends[n_lines > 1], hub[n_lines > 1]
+    hubs = ends.groupby(hub).agg(
+        x=("x", "mean"), y=("y", "mean"), name=("name", "first")
+    )
+    hubs = hubs.set_index("name")
+    country = [shapes.distance(Point(xy)).idxmin() for xy in hubs.values]
+    n.add(
         "Bus",
-        name=to_add.index,
-        suffix=" bus",
-        x=to_add.x,
-        y=to_add.y,
+        hubs.index,
+        x=hubs.x,
+        y=hubs.y,
         v_nom=380,
         under_construction=True,
         symbol="substation",
         substation_off=True,
         substation_lv=False,
-        carrier="AC",
-        return_names=True,
+        carrier=carrier,
+        country=country,
     )
-    new_buses = n.buses.loc[added_buses].copy().dropna(axis=1, how="all")
-    new_ports.loc[to_add.index, "neighbor"] = added_buses
-    new_ports["neighbor"] = new_ports.groupby(["x", "y"])["neighbor"].transform("first")
-    return new_ports, new_buses
-
-
-def find_country_for_bus(bus: pd.Series, shapes: gpd.GeoDataFrame) -> str:
-    """
-    Find the country of a bus based on its coordinates and the provided
-    shapefile.
-
-    Shapefile must contain a column "country" with the country names.
-    """
-    point = Point(bus.x, bus.y)
-    country = shapes.loc[shapes.contains(point), "country"]
-    return country.values[0]
+    return n.buses.loc[hubs.index].dropna(axis=1, how="all")
 
 
 def connect_new_lines(
     lines: pd.DataFrame,
     n: pypsa.Network,
-    new_buses_df: pd.DataFrame,
-    offshore_shapes: gpd.GeoDataFrame | None = None,
+    offshore_shapes: gpd.GeoDataFrame,
     distance_upper_bound: float = np.inf,
     bus_carrier: str | list[str] = "AC",
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> pd.DataFrame:
     """
     Find the closest existing bus to the port of each line.
 
-    If closest bus is further away than distance_upper_bound and is
-    inside an offshore region, a new bus is created. and the line is
-    connected to it.
+    Lines are ignored if a port is offshore and further away than
+    distance_upper_bound from the closest bus, or if both ports connect to the
+    same bus.
     """
     bus_carrier = np.atleast_1d(bus_carrier)
     buses = n.buses.query("carrier in @bus_carrier").copy()
     bus_tree = spatial.KDTree(buses[["x", "y"]])
+    offshore = offshore_shapes.union_all()
 
     for port in [0, 1]:
         lines_port = lines["geometry"].apply(
@@ -102,27 +122,8 @@ def connect_new_lines(
         distances, indices = bus_tree.query(lines_port)
         # Series of lines with closest bus in the existing network and whether they match the distance criterion
         lines_port["neighbor"] = buses.iloc[indices].index
-        lines_port["match_distance"] = distances < distance_upper_bound
-        # For buses which are not close to any existing bus, only add a new bus if the line is going offshore (e.g. North Sea Wind Power Hub)
-        if (
-            not lines_port.match_distance.all()
-            and offshore_shapes is not None
-            and offshore_shapes.union_all()
-        ):
-            offshore_geom = offshore_shapes.union_all()
-            potential_new_buses = lines_port[~lines_port.match_distance]
-            is_offshore = potential_new_buses.apply(
-                lambda x: offshore_geom.contains(Point(x.x, x.y)), axis=1
-            )
-            new_buses = potential_new_buses[is_offshore]
-            if not new_buses.empty:
-                new_port, new_buses = add_new_buses(n, new_buses)
-                new_buses["country"] = new_buses.apply(
-                    lambda bus: find_country_for_bus(bus, offshore_shapes), axis=1
-                )
-                lines_port.loc[new_port.index, "match_distance"] = True
-                lines_port.loc[new_port.index, "neighbor"] = new_port.neighbor
-                new_buses_df = pd.concat([new_buses_df, new_buses])
+        is_offshore = shapely.contains_xy(offshore, lines_port.x, lines_port.y)
+        lines_port["match_distance"] = (distances < distance_upper_bound) | ~is_offshore
 
         if not lines_port.match_distance.all():
             logger.warning(
@@ -135,9 +136,14 @@ def connect_new_lines(
 
         lines.loc[lines_port.index, f"bus{port}"] = lines_port["neighbor"]
 
-    lines = lines.assign(under_construction=True)
-
-    return lines, new_buses_df
+    is_loop = lines.bus0 == lines.bus1
+    if is_loop.any():
+        logger.warning(
+            "Both ports of the following lines connect to the same bus:\n"
+            + str(lines.index[is_loop].to_list())
+            + "\n Lines will be ignored."
+        )
+    return lines[~is_loop].assign(under_construction=True)
 
 
 def get_branch_coords_from_geometry(
@@ -267,7 +273,16 @@ def find_closest_lines(
                 duplicated.map(lines[attr]),
                 percentage=10,
             )
-            line_map = line_map[to_keep]
+            # Lines in operation can only duplicate projects that are being built
+            # or completed. Completed projects must exist, so they match more loosely.
+            status = new_lines.loc[duplicated.index, "project_status"]
+            is_planned = duplicated.map(lines["under_construction"])
+            is_started = status == "under_construction"
+            is_close = line_map["D"] < 0.1
+            is_duplicate = (status == "completed") | is_close & (
+                is_planned | is_started
+            )
+            line_map = line_map[to_keep & is_duplicate]
             if not line_map.empty:
                 logger.warning(
                     "Found new lines similar to existing lines:\n"
@@ -311,10 +326,14 @@ def get_upgraded_lines(
     n: pypsa.Network,
     upgraded_lines: pd.DataFrame,
     line_map: pd.Series,
+    keep_capacity: bool = False,
 ) -> pd.DataFrame:
     """
     Get upgraded lines by merging information of existing line and upgraded
     line.
+
+    The upgraded line has the capacity of the existing line, unless
+    keep_capacity is set and the upgraded line provides a capacity.
     """
     # get first the information of the existing lines which will be upgraded
     lines_to_add = n.df(branch_component).loc[line_map].copy()
@@ -330,10 +349,10 @@ def get_upgraded_lines(
     lines_to_add = pd.concat([lines_to_add, upgraded_lines[new_columns]], axis=1)
     # only consider columns of original upgraded lines and bus0 and bus1
     lines_to_add = lines_to_add.loc[:, ["bus0", "bus1", *upgraded_lines.columns]]
-    # set capacity of upgraded lines to capacity of existing lines
-    lines_to_add[nominal_attrs[branch_component]] = n.df(branch_component).loc[
-        line_map, nominal_attrs[branch_component]
-    ]
+    if not keep_capacity:
+        lines_to_add[nominal_attrs[branch_component]] = n.df(branch_component).loc[
+            line_map, nominal_attrs[branch_component]
+        ]
     # change index of new lines to avoid duplicates
     lines_to_add.index = lines_to_add.index.astype(str) + "_upgraded"
     return lines_to_add
@@ -346,7 +365,7 @@ def get_project_files(
     lines: dict[str, pd.DataFrame] = {}
     files = [
         p
-        for p in path.iterdir()
+        for p in sorted(path.iterdir())
         if p.is_file()
         and p.suffix == ".csv"
         and not any(substring in p.name for substring in skip)
@@ -417,6 +436,7 @@ def add_projects(
     new_buses_df: pd.DataFrame,
     europe_shape: shapely.Geometry,
     offshore_shapes: gpd.GeoDataFrame,
+    shapes: gpd.GeoSeries,
     path: str | Path,
     plan: str,
     status: tuple[str, ...] | list[str] | dict[str, list[str]] = (
@@ -424,6 +444,7 @@ def add_projects(
         "under construction",
     ),
     skip: tuple[str, ...] | list[str] = (),
+    keep_link_capacity: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     lines_dict = get_project_files(path, skip=skip)
     for key, lines in lines_dict.items():
@@ -435,27 +456,27 @@ def add_projects(
         if lines.empty:
             continue
         if key == "new_lines":
-            new_lines, new_buses_df = connect_new_lines(
-                lines, n, new_buses_df, bus_carrier="AC"
-            )
+            hubs = add_hub_buses(n, lines, shapes, offshore_shapes, 0.4)
+            new_buses_df = pd.concat([new_buses_df, hubs])
+            new_lines = connect_new_lines(lines, n, offshore_shapes, 0.4)
             duplicate_lines = find_closest_lines(
-                n.lines, new_lines, n.buses, distance_upper_bound=0.10, type="new"
+                n.lines, new_lines, n.buses, distance_upper_bound=0.30, type="new"
             )
             new_lines = new_lines.drop(duplicate_lines.index, errors="ignore")
             new_lines_df = pd.concat([new_lines_df, new_lines])
             # add new lines to network to be able to find added duplicates
             n.add("Line", new_lines.index, **new_lines)
         elif key == "new_links":
-            new_links, new_buses_df = connect_new_lines(
-                lines,
-                n,
-                new_buses_df,
-                offshore_shapes=offshore_shapes,
-                distance_upper_bound=0.4,
-                bus_carrier=["AC", "DC"],
+            # DC hubs of two links are folded into one link in simplify_network
+            hubs = add_hub_buses(
+                n, lines, shapes, offshore_shapes, 0.4, carrier="DC", max_lines=2
+            )
+            new_buses_df = pd.concat([new_buses_df, hubs])
+            new_links = connect_new_lines(
+                lines, n, offshore_shapes, 0.4, bus_carrier=["AC", "DC"]
             )
             duplicate_links = find_closest_lines(
-                n.links, new_links, n.buses, distance_upper_bound=0.10, type="new"
+                n.links, new_links, n.buses, distance_upper_bound=0.30, type="new"
             )
             new_links = new_links.drop(duplicate_links.index, errors="ignore")
             set_underwater_fraction(new_links, offshore_shapes)
@@ -482,7 +503,9 @@ def add_projects(
             upgraded_links = lines.loc[line_map.index]
             links_to_adjust = adjust_decommissioning(upgraded_links, line_map)
             adjust_links_df = pd.concat([adjust_links_df, links_to_adjust])
-            upgraded_links = get_upgraded_lines("Link", n, upgraded_links, line_map)
+            upgraded_links = get_upgraded_lines(
+                "Link", n, upgraded_links, line_map, keep_link_capacity
+            )
             new_links_df = pd.concat([new_links_df, upgraded_links])
             set_underwater_fraction(new_links_df, offshore_shapes)
         else:
@@ -519,9 +542,9 @@ if __name__ == "__main__":
     new_buses_df = pd.DataFrame()
 
     europe_shape = gpd.read_file(snakemake.input.europe_shape).loc[0, "geometry"]
-    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes).rename(
-        {"name": "country"}, axis=1
-    )
+    offshore_shapes = gpd.read_file(snakemake.input.offshore_shapes)
+    country_shapes = gpd.read_file(snakemake.input.country_shapes)
+    shapes = pd.concat([country_shapes, offshore_shapes]).set_index("name").geometry
 
     transmission_projects = snakemake.params.transmission_projects
     projects = [
@@ -542,10 +565,12 @@ if __name__ == "__main__":
                 new_buses_df,
                 europe_shape,
                 offshore_shapes,
+                shapes,
                 path=path,
                 plan=project,
                 status=transmission_projects["status"],
                 skip=transmission_projects["skip"],
+                keep_link_capacity=transmission_projects["new_link_capacity"] == "keep",
             )
         )
     if not new_lines_df.empty:

@@ -133,3 +133,28 @@ rule osm_release:
         resources("osm/comparison/map_incumbent.html"),
         resources("osm/comparison/lengths.pdf"),
         resources("osm/comparison/links.csv"),
+
+
+rule extract_tyndp_projects:
+    """Extracts planned transmission lines and links from the TYNDP 2026 project platform."""
+    input:
+        portfolio=f"{TYNDP_PROJECTS_DATASET['folder']}/tyndp2026_transmission.xlsx",
+        technical=f"{TYNDP_PROJECTS_DATASET['folder']}/tyndp2024_transmission.xlsx",
+        routes=f"{TYNDP_PROJECTS_DATASET['folder']}/tyndp2026_map.geojson",
+        nep_lines="data/transmission_projects/nep/new_lines.csv",
+        nep_links="data/transmission_projects/nep/new_links.csv",
+    output:
+        new_lines="data/transmission_projects/tyndp2026/new_lines.csv",
+        new_links="data/transmission_projects/tyndp2026/new_links.csv",
+        upgraded_lines="data/transmission_projects/tyndp2026/upgraded_lines.csv",
+        upgraded_links="data/transmission_projects/tyndp2026/upgraded_links.csv",
+    log:
+        logs("extract_tyndp_projects.log"),
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        voltages=config_provider("electricity", "voltages"),
+        line_types=config_provider("lines", "types"),
+    script:
+        scripts("extract_tyndp_projects.py")

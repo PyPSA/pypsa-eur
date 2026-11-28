@@ -112,6 +112,8 @@ def add_existing_renewables(
             irena[irena.Technology.str.contains(tech)]
             .drop(columns=["Technology"])
             .set_index("Country")
+            # hotfix: countries without IRENA entries
+            .reindex(countries, fill_value=0.0)
         )
         df.columns = df.columns.astype(int)
 

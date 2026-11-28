@@ -50,7 +50,7 @@ links:
 
 transmission_projects:
   include:
-    tyndp2020: false
+    tyndp2026: false
     nep: false
     manual: false
 

@@ -365,6 +365,10 @@ class DataConfig(BaseModel):
         default_factory=_DataSourceConfig,
         description="TYNDP data source configuration.",
     )
+    tyndp_projects: _DataSourceConfig = Field(
+        default_factory=_DataSourceConfig,
+        description="TYNDP transmission project portfolio data source configuration.",
+    )
     powerplants: _DataSourceConfig = Field(
         default_factory=_DataSourceConfig,
         description="Powerplants data source configuration.",

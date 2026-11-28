@@ -507,13 +507,14 @@ links:
 transmission_projects:
   enable: true
   include:
-    tyndp2020: true
+    tyndp2026: true
     nep: true
     manual: true
   skip:
   - upgraded_lines
   - upgraded_links
   status:
+  - completed
   - under_construction
   - in_permitting
   - confirmed
@@ -1649,6 +1650,9 @@ data:
     source: archive
     version: latest
   tyndp:
+    source: archive
+    version: latest
+  tyndp_projects:
     source: archive
     version: latest
   powerplants:

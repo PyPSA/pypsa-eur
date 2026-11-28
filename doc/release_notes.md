@@ -5,6 +5,9 @@
 
 <!-- Upcoming Release -->
 <!-- ================= -->
+* Data: Transmission projects now come from the TYNDP 2026 instead of the TYNDP 2020 (`transmission_projects: include: tyndp2026`), extracted by the new rule `extract_tyndp_projects`. Completed projects are now included by default. This changes default results ([#2171](https://github.com/PyPSA/pypsa-eur/issues/2171)).
+* Fix: `build_transmission_projects` adds a shared bus where several projects meet far from any bus, and upgraded links keep the project capacity with `new_link_capacity: keep`.
+* Fix: Myopic runs no longer fail in `add_existing_baseyear` for countries without IRENA statistics.
 * Fix: With `conventional: dynamic_fuel_price: true`, snapshots that do not start on the first of a month now get the fuel price of their month. Before, gas, coal and oil plants had no marginal cost until the next month started ([#2466](https://github.com/PyPSA/pypsa-eur/pull/2466)).
 
 ## PyPSA-Eur v2026.11.1 (27th November 2026)
