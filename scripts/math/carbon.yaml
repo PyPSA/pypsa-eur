@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+parameters:
+  Store_emission_store:
+    description: whether the store accumulates the emissions the CO2 limits bound, from zero
+    dims: [Store]
+    dtype: bool
+    missing: false
+
+expressions:
+  carbon_period_end:
+    description: one at the last snapshot a row counts, zero elsewhere
+    dims: [scenario, global_constraint, snapshot]
+    cases:
+      end:
+        when: GlobalConstraint_counts_snapshot AND NOT shift(GlobalConstraint_counts_snapshot, along=snapshot, offset=-1)
+        expression: 1
+    otherwise: 0
+  carbon_period_start:
+    description: one at the snapshot before the first a row counts, zero elsewhere
+    dims: [scenario, global_constraint, snapshot]
+    cases:
+      start:
+        when: NOT GlobalConstraint_counts_snapshot AND shift(GlobalConstraint_counts_snapshot, along=snapshot, offset=-1)
+        expression: 1
+    otherwise: 0
+  Store_emissions:
+    description: the emissions an emission store holds at the end of a snapshot
+    dims: [scenario, snapshot, Store]
+    cases:
+      emissions:
+        when: Store_emission_store
+        expression: Store_e
+    otherwise: 0
+  GlobalConstraint_total:
+    cases:
+      co2_atmosphere:
+        when: GlobalConstraint_type == 'co2_atmosphere'
+        expression: >-
+          sum(sum(Store_emissions * (carbon_period_end - carbon_period_start), over=snapshot), over=Store)
+      Co2Budget:
+        when: GlobalConstraint_type == 'Co2Budget'
+        expression: >-
+          sum(sum(Store_emissions * carbon_period_end * at(period_weighting_years, by=snapshot_period[period]),
+          over=snapshot), over=Store)

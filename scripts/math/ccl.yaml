@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+relations:
+  Generator_CCL_min:
+    description: the row of the least capacity of the generator's country and carrier
+    key: Generator
+    values: global_constraint
+    missing: absent
+  Generator_CCL_max:
+    description: the row of the most capacity of the generator's country and carrier
+    key: Generator
+    values: global_constraint
+    missing: absent
+
+expressions:
+  GlobalConstraint_total:
+    cases:
+      CCL:
+        when: GlobalConstraint_type == 'CCL'
+        expression: >-
+          sum(Generator_p_nom_ext, over=Generator, by=Generator_CCL_min[global_constraint])
+          + sum(Generator_p_nom_ext, over=Generator, by=Generator_CCL_max[global_constraint])

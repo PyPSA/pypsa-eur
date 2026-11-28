@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+parameters:
+  Generator_solar_land_use:
+    description: >-
+      the land one unit of capacity takes, relative to fixed-tilt solar. No
+      value for a generator outside the solar potential
+    dims: [Generator]
+    missing: absent
+  Generator_solar_potential:
+    description: whether the generator's `p_nom_max` is the solar potential of its bus
+    dims: [Generator]
+    dtype: bool
+    missing: false
+
+expressions:
+  Generator_solar_area:
+    description: >-
+      the land a generator adds to its bus: the potential where it holds it,
+      less the land its given capacity takes otherwise
+    dims: [scenario, Generator]
+    cases:
+      potential:
+        when: Generator_solar_potential
+        expression: Generator_p_nom_max
+    otherwise: -Generator_solar_land_use * Generator_p_nom
+  Bus_solar_area:
+    description: the land left for new solar capacity at a bus, and zero where existing capacity takes more than the potential
+    dims: [scenario, bus]
+    cases:
+      left:
+        when: sum(Generator_solar_area, over=Generator, by=Generator_bus[bus]) > 0
+        expression: sum(Generator_solar_area, over=Generator, by=Generator_bus[bus])
+    otherwise: 0
+
+constraints:
+  Bus_solar_potential:
+    description: the new solar capacity at a bus, weighted by its land use, fits on the land left
+    dims: [scenario, bus]
+    where: sum(Generator_solar_land_use, over=Generator, by=Generator_bus[bus]) > 0
+    expression: >-
+      sum(Generator_solar_land_use * Generator_p_nom_ext, over=Generator, by=Generator_bus[bus])
+      <= Bus_solar_area

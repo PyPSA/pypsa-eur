@@ -73,7 +73,6 @@ holidays = ">=0.87"
 ipython = ">=9.7.0"
 jpype1 = ">=1.6.0"
 libgdal-netcdf = ">=3.10.3"
-linopy = ">=0.8"
 lxml = ">=6.0.2"
 matplotlib = ">=3.10.7"
 memory_profiler = ">=0.61.0"
@@ -88,7 +87,6 @@ pydantic = ">=2.12"
 python-dotenv = ">=1.0"
 proj = ">=9.6.2"
 pydeck = ">0.6"  # pypsa fails to import with pydeck <0.6, lower bound was only added from pypsa 1.0.6
-pypsa = ">=1.1"
 pyscipopt = ">=5.6.0"
 scip = "<10.1"  # pyscipopt 6.2.1 builds on conda-forge link against libscip.so.10.0
 pytables = ">=3.10.2"
@@ -117,6 +115,11 @@ natsort = ">=8.4.0"
 snakemake-logger-plugin-pypsa = ">=0.1.0"
 pydeflate = ">=2.3.4"
 snakemake-logger-plugin-snkmt = "==0.1.6" # For better pypsa-app integration
+
+[pypi-dependencies]
+pypsa = { git = "https://github.com/PyPSA/PyPSA.git", rev = "3d51a211dd96d9d3fbc509300d93ec61dcb38999" }
+linopy = { git = "https://github.com/PyPSA/linopy.git", rev = "4e78d4ea58858b2ecd9e8fb0afe7bc439e4c79c1" }
+mathspec = { git = "https://github.com/energy-models/mathspec.git", rev = "cc531151128e63af592628b697dd44ab93a1795a" }
 
 [target.unix.dependencies]
 snakemake-executor-plugin-slurm = ">=1.9.2"
@@ -154,7 +157,6 @@ mkdocs-table-reader-plugin = ">=3.1"
 snakemake-minimal = ">=9"
 powerplantmatching = ">=0.5.15"
 pydot = ">=4.0.1"
-pypsa = ">=1.1"
 pytables = ">=3.10.2"
 python = ">=3.10"
 pyyaml = ">=6.0.3"
@@ -164,6 +166,11 @@ seaborn = ">=0.13.2"
 tabula-py = ">=2.7.0"
 tenacity = ">=9.1.2"
 tsam = ">=3"
+
+[feature.doc.pypi-dependencies]
+pypsa = { git = "https://github.com/PyPSA/PyPSA.git", rev = "3d51a211dd96d9d3fbc509300d93ec61dcb38999" }
+linopy = { git = "https://github.com/PyPSA/linopy.git", rev = "4e78d4ea58858b2ecd9e8fb0afe7bc439e4c79c1" }
+mathspec = { git = "https://github.com/energy-models/mathspec.git", rev = "cc531151128e63af592628b697dd44ab93a1795a" }
 
 [feature.test.tasks]
 

@@ -1,0 +1,54 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+dimensions:
+  equity_region:
+    description: the nodes or countries that must each produce a share of their demand themselves
+
+parameters:
+  Load_equity_level:
+    description: the share of the load's demand that its region must produce itself
+    dims: [Load]
+    missing: absent
+
+relations:
+  Generator_equity_region:
+    description: the region a generator produces for
+    key: Generator
+    values: equity_region
+    missing: absent
+  StorageUnit_equity_region:
+    description: the region a storage unit with inflow produces for
+    key: StorageUnit
+    values: equity_region
+    missing: absent
+  Load_equity_region:
+    description: the region a load belongs to
+    key: Load
+    values: equity_region
+    missing: absent
+
+expressions:
+  equity_production:
+    description: >-
+      the energy a region produces over the horizon: what its generators
+      produce, plus the inflow its storage units do not spill
+    dims: [scenario, equity_region]
+    expression: >-
+      sum(sum(Generator_p * snapshot_weighting_generators, over=snapshot),
+      over=Generator, by=Generator_equity_region[equity_region])
+      + sum(sum((StorageUnit_inflow - StorageUnit_spill) * StorageUnit_efficiency_dispatch * snapshot_weighting_stores, over=snapshot),
+      over=StorageUnit, by=StorageUnit_equity_region[equity_region])
+  equity_demand:
+    description: the energy a region must produce itself over the horizon, its demand times the equity level
+    dims: [scenario, equity_region]
+    expression: >-
+      sum(sum(Load_equity_level * Load_p_set * snapshot_weighting_generators, over=snapshot),
+      over=Load, by=Load_equity_region[equity_region])
+
+constraints:
+  equity_min:
+    description: a region produces at least its share of its demand itself
+    dims: [scenario, equity_region]
+    expression: equity_production >= equity_demand

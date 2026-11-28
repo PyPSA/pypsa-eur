@@ -40,6 +40,7 @@ import xarray as xr
 from pypsa.clustering.spatial import DEFAULT_ONE_PORT_STRATEGIES, normed_or_uniform
 
 from scripts._helpers import (
+    add_battery_inverter,
     rename_techs,
     update_p_nom_max,
 )
@@ -57,16 +58,18 @@ SECTOR_CARRIERS = {
     "H2",
 }
 
-STORE_LOOKUP: dict[str, dict[str, str | float]] = {
+STORE_LOOKUP: dict[str, dict[str, str | float | bool]] = {
     "battery": {
         "store": "battery storage",
         "bicharger": "battery inverter",
         "roundtrip_correction": 0.5,
+        "shared_inverter": True,
     },
     "home battery": {
         "store": "home battery storage",
         "bicharger": "home battery inverter",
         "roundtrip_correction": 0.5,
+        "shared_inverter": True,
     },
     "li-ion": {
         "store": "battery storage",
@@ -1149,33 +1152,49 @@ def attach_stores(
 
         n.add("Carrier", [f"{carrier} {charge_name}", f"{carrier} {discharge_name}"])
 
-        n.add(
-            "Link",
-            bus_names,
-            suffix=f" {charge_name}",
-            bus0=buses_i,
-            bus1=bus_names,
-            carrier=f"{carrier} {charge_name}",
-            efficiency=costs.at[lookup_charge, "efficiency"] ** roundtrip_correction,
-            capital_cost=costs.at[lookup_charge, "capital_cost"],
-            p_nom_extendable=True,
-            marginal_cost=costs.at[lookup_charge, "marginal_cost"],
-            lifetime=costs.at[lookup_charge, "lifetime"],
-        )
+        if lookup.get("shared_inverter"):
+            add_battery_inverter(
+                n,
+                bus_names,
+                carrier,
+                costs.at[lookup_charge, "efficiency"],
+                roundtrip_correction,
+                bus=buses_i,
+                charger_capital_cost=costs.at[lookup_charge, "capital_cost"],
+                charger_marginal_cost=costs.at[lookup_charge, "marginal_cost"],
+                discharger_marginal_cost=costs.at[lookup_discharge, "marginal_cost"],
+                lifetime=costs.at[lookup_charge, "lifetime"],
+            )
+        else:
+            n.add(
+                "Link",
+                bus_names,
+                suffix=f" {charge_name}",
+                bus0=buses_i,
+                bus1=bus_names,
+                carrier=f"{carrier} {charge_name}",
+                efficiency=costs.at[lookup_charge, "efficiency"]
+                ** roundtrip_correction,
+                capital_cost=costs.at[lookup_charge, "capital_cost"],
+                p_nom_extendable=True,
+                marginal_cost=costs.at[lookup_charge, "marginal_cost"],
+                lifetime=costs.at[lookup_charge, "lifetime"],
+            )
 
-        n.add(
-            "Link",
-            bus_names,
-            suffix=f" {discharge_name}",
-            bus0=bus_names,
-            bus1=buses_i,
-            carrier=f"{carrier} {discharge_name}",
-            efficiency=costs.at[lookup_discharge, "efficiency"] ** roundtrip_correction,
-            capital_cost=discharge_capital_cost,
-            p_nom_extendable=True,
-            marginal_cost=costs.at[lookup_discharge, "marginal_cost"],
-            lifetime=costs.at[lookup_discharge, "lifetime"],
-        )
+            n.add(
+                "Link",
+                bus_names,
+                suffix=f" {discharge_name}",
+                bus0=bus_names,
+                bus1=buses_i,
+                carrier=f"{carrier} {discharge_name}",
+                efficiency=costs.at[lookup_discharge, "efficiency"]
+                ** roundtrip_correction,
+                capital_cost=discharge_capital_cost,
+                p_nom_extendable=True,
+                marginal_cost=costs.at[lookup_discharge, "marginal_cost"],
+                lifetime=costs.at[lookup_discharge, "lifetime"],
+            )
 
     logger.info(
         "Add the following storage technologies as stores and links:\n - "

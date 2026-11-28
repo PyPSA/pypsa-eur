@@ -25,6 +25,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
+from pypsa.composites import TAGS
 
 from scripts._helpers import (
     get,
@@ -132,7 +133,7 @@ def add_brownfield(
             industry_heat = c.static.carrier.str.fullmatch("heat.+ industry .+")
             c.static.loc[industry_heat, "p_min_pu"] = 0.0
 
-        n.add(c.name, c.static.index, **c.static)
+        n.add(c.name, c.static.index, **c.static.drop(columns=TAGS, errors="ignore"))
 
         # copy time-dependent
         selection = n.component_attrs[c.name].type.str.contains(

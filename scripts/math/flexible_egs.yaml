@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+relations:
+  StorageUnit_geothermal_reservoir:
+    description: the surface bus of an extendable geothermal reservoir
+    key: StorageUnit
+    values: bus
+    missing: absent
+  Link_geothermal_well:
+    description: the surface bus a geothermal well delivers its heat to
+    key: Link
+    values: bus
+    missing: absent
+
+constraints:
+  Bus_geothermal_reservoir_capacity:
+    description: the reservoirs at a surface bus have at most the capacity of the wells that reach it
+    dims: [scenario, bus]
+    expression: >-
+      sum(StorageUnit_p_nom_ext, over=StorageUnit, by=StorageUnit_geothermal_reservoir[bus])
+      <= sum(Link_p_nom_effective, over=Link, by=Link_geothermal_well[bus])

@@ -1,0 +1,75 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+name: tes
+description: a thermal energy storage with its charger and discharger
+parameters:
+  bus:
+  store_bus:
+  store_carrier:
+  charger_carrier:
+  discharger_carrier:
+  charger_efficiency: 1.0
+  discharger_efficiency: 1.0
+  charger_marginal_cost: 0.0
+  charger_capital_cost: 0.0
+  discharger_capital_cost: 0.0
+  store_capital_cost: 0.0
+  lifetime:
+  standing_loss: 0.0
+  e_max_pu: 1.0
+  e_nom_max: .inf
+  energy_to_power_ratio: 0.0
+  charger_ratio: 1.0
+components:
+  Link:
+    charger:
+      bus0: $bus
+      bus1: $store_bus
+      carrier: $charger_carrier
+      efficiency: $charger_efficiency
+      marginal_cost: $charger_marginal_cost
+      capital_cost: $charger_capital_cost
+      p_nom_extendable: true
+      lifetime: $lifetime
+    discharger:
+      bus0: $store_bus
+      bus1: $bus
+      carrier: $discharger_carrier
+      efficiency: $discharger_efficiency
+      capital_cost: $discharger_capital_cost
+      p_nom_extendable: true
+      lifetime: $lifetime
+  Store:
+    store:
+      bus: $store_bus
+      carrier: $store_carrier
+      e_cyclic: true
+      e_nom_extendable: true
+      e_nom_max: $e_nom_max
+      e_max_pu: $e_max_pu
+      standing_loss: $standing_loss
+      capital_cost: $store_capital_cost
+      lifetime: $lifetime
+math:
+  constraints:
+    tes_charger_rating:
+      description: an extendable charger is rated at `charger_ratio` times its extendable discharger
+      dims: [scenario, tes]
+      where: >-
+        at(Link_p_nom_extendable, by=tes_members[charger])
+        AND at(Link_p_nom_extendable, by=tes_members[discharger])
+      expression: >-
+        at(Link_p_nom_effective, by=tes_members[charger])
+        == tes_charger_ratio * at(Link_p_nom_effective, by=tes_members[discharger])
+    tes_energy_rating:
+      description: where `energy_to_power_ratio` is positive, an extendable store holds that many hours of its extendable charger
+      dims: [scenario, tes]
+      where: >-
+        tes_energy_to_power_ratio > 0
+        AND at(Link_p_nom_extendable, by=tes_members[charger])
+        AND at(Store_e_nom_extendable, by=tes_members[store])
+      expression: >-
+        at(Store_e_nom_effective, by=tes_members[store])
+        == tes_energy_to_power_ratio * at(Link_p_nom_effective, by=tes_members[charger])
