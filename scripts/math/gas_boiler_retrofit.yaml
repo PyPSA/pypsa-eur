@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+parameters:
+  Link_heat_demand_pu:
+    description: the heat demand at the boiler's heat bus, per unit of its peak
+    dims: [scenario, snapshot, Link]
+    missing: absent
+
+relations:
+  Link_H2_boiler_retrofit:
+    description: the hydrogen boiler an existing gas boiler can be retrofitted to
+    key: Link
+    values: {retrofit: Link}
+    missing: absent
+
+constraints:
+  Link_gas_boiler_retrofit:
+    description: >-
+      an existing gas boiler and its hydrogen retrofit together follow the
+      heat demand, at the gas boiler's capacity at peak demand
+    dims: [scenario, snapshot, Link]
+    where: Link_heat_demand_pu AND Link_activity_mask
+    expression: >-
+      Link_p + at(Link_p, by=Link_H2_boiler_retrofit[retrofit])
+      == Link_heat_demand_pu * Link_p_nom

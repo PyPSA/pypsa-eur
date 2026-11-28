@@ -7,7 +7,7 @@ import pypsa
 import pytest
 
 from scripts.solve_network import (
-    add_co2_atmosphere_constraint,
+    add_carbon_constraints,
     add_flexible_egs_constraint,
     emission_stores,
 )
@@ -27,7 +27,7 @@ def co2_network() -> pypsa.Network:
 
 
 @pytest.mark.parametrize("sense", ["<=", ">=", "=="])
-def test_add_co2_atmosphere_constraint_honours_sense(
+def test_add_carbon_constraints_honours_sense(
     co2_network: pypsa.Network, sense: str
 ) -> None:
     co2_network.add(
@@ -38,8 +38,8 @@ def test_add_co2_atmosphere_constraint_honours_sense(
         sense=sense,
         constant=100.0,
     )
+    co2_network.optimize.overrides.register(add_carbon_constraints(co2_network))
     co2_network.optimize.create_model()
-    add_co2_atmosphere_constraint(co2_network, co2_network.snapshots)
 
     constraint = co2_network.model.constraints["GlobalConstraint-CO2Bound"]
     expected = {"<=": "<=", ">=": ">=", "==": "="}[sense]
@@ -47,20 +47,19 @@ def test_add_co2_atmosphere_constraint_honours_sense(
     assert (constraint.rhs == 100.0).all()
 
 
-def test_add_co2_atmosphere_constraint_rejects_unknown_sense(
+def test_add_carbon_constraints_rejects_several_carrier_attributes(
     co2_network: pypsa.Network,
 ) -> None:
     co2_network.add(
         "GlobalConstraint",
-        "CO2Bound",
+        ["CO2Bound", "CH4Bound"],
         type="co2_atmosphere",
-        carrier_attribute="co2_emissions",
-        sense="<",
+        carrier_attribute=["co2_emissions", "ch4_emissions"],
+        sense="<=",
         constant=100.0,
     )
-    co2_network.optimize.create_model()
-    with pytest.raises(ValueError, match="Unsupported sense"):
-        add_co2_atmosphere_constraint(co2_network, co2_network.snapshots)
+    with pytest.raises(ValueError, match="several carrier attributes"):
+        add_carbon_constraints(co2_network)
 
 
 @pytest.mark.parametrize(
@@ -114,10 +113,8 @@ def egs_network() -> pypsa.Network:
 def test_add_flexible_egs_constraint_bounds_reservoir_by_wells_at_its_bus(
     egs_network: pypsa.Network,
 ) -> None:
-    egs_network.optimize(
-        extra_functionality=lambda n, _: add_flexible_egs_constraint(n),
-        solver_name="highs",
-    )
+    egs_network.optimize.overrides.register(add_flexible_egs_constraint(egs_network))
+    egs_network.optimize(solver_name="highs")
 
     p_nom_opt = egs_network.storage_units.p_nom_opt
     assert p_nom_opt.to_dict() == {"A reservoir": 130.0, "B reservoir": 5.0}

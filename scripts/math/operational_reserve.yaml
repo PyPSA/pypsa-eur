@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+parameters:
+  Generator_operational_reserve:
+    description: whether the generator can hold operational reserve
+    dims: [Generator]
+    dtype: bool
+    missing: false
+  Generator_operational_reserve_share:
+    description: the share of the generator's available power that must be held in reserve
+    dims: [Generator]
+    missing: absent
+  Load_operational_reserve_share:
+    description: the share of the load's demand that must be held in reserve
+    dims: [Load]
+    missing: absent
+
+variables:
+  Generator_r:
+    description: the operational reserve a generator holds
+    dims: [scenario, snapshot, Generator]
+    where: Generator_operational_reserve AND Generator_activity_mask
+    bounds:
+      lower: 0
+
+constraints:
+  operational_reserve_margin:
+    description: >-
+      the reserve held covers a share of the demand and of the available
+      variable renewable power, plus the contingency, the row's constant
+    dims: [scenario, snapshot, global_constraint]
+    where: GlobalConstraint_type == 'operational_reserve'
+    expression: >-
+      sum(Generator_r, over=Generator)
+      - sum(Generator_operational_reserve_share * Generator_p_max_pu * Generator_p_nom_effective, over=Generator)
+      - sum(Load_operational_reserve_share * Load_p_set, over=Load)
+      >= GlobalConstraint_constant
+  Generator_p_reserve_upper:
+    description: a generator's power and reserve fit within its available power
+    dims: [scenario, snapshot, Generator]
+    where: Generator_operational_reserve AND Generator_activity_mask
+    expression: Generator_p + Generator_r <= Generator_p_max_pu * Generator_p_nom_effective

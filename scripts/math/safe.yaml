@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+parameters:
+  Generator_SAFE:
+    description: whether the generator's capacity counts as firm capacity
+    dims: [Generator]
+    dtype: bool
+    missing: false
+
+expressions:
+  Generator_SAFE_capacity:
+    description: the capacity of a generator that counts as firm capacity, zero for the others
+    dims: [scenario, Generator]
+    cases:
+      firm:
+        when: Generator_SAFE
+        expression: Generator_p_nom_effective
+    otherwise: 0
+  GlobalConstraint_total:
+    cases:
+      SAFE:
+        when: GlobalConstraint_type == 'SAFE'
+        expression: sum(Generator_SAFE_capacity, over=Generator)

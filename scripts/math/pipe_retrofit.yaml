@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+parameters:
+  Link_H2_retrofit_capacity_per_CH4:
+    description: the hydrogen capacity one unit of a gas pipeline's capacity gives when it is retrofitted
+    dims: [Link]
+    missing: absent
+
+relations:
+  Link_H2_pipe_retrofit:
+    description: the hydrogen pipeline a gas pipeline can be retrofitted to
+    key: Link
+    values: {retrofit: Link}
+    missing: absent
+
+constraints:
+  Link_pipe_retrofit:
+    description: >-
+      the gas pipeline keeps the capacity that is not retrofitted to hydrogen:
+      its capacity plus the gas capacity its hydrogen retrofit takes equals
+      its existing capacity
+    dims: [scenario, Link]
+    expression: >-
+      Link_p_nom_ext
+      + at(Link_p_nom_ext, by=Link_H2_pipe_retrofit[retrofit]) / Link_H2_retrofit_capacity_per_CH4
+      == Link_p_nom

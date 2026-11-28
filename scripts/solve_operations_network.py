@@ -86,7 +86,6 @@ if __name__ == "__main__":
             n.params = snakemake.params
             all_kwargs["extra_functionality"] = partial(
                 extra_functionality,
-                planning_horizons=planning_horizons,
                 snakemake=snakemake,
             )
             n.optimize.optimize_with_rolling_horizon(**all_kwargs)
@@ -105,7 +104,6 @@ if __name__ == "__main__":
                 params=snakemake.params,
                 model_kwargs=model_kwargs,
                 solve_kwargs=solve_kwargs,
-                planning_horizons=planning_horizons,
                 snakemake=snakemake,
             )
             n.optimize.solve_model(**solve_kwargs)

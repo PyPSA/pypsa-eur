@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+relations:
+  Link_reversal_of:
+    description: the forward link a reversed link of a lossy bidirectional connection runs against
+    key: Link
+    values: {forward: Link}
+    missing: absent
+
+constraints:
+  Link_bidirectional_sync:
+    description: the reversed link of a lossy bidirectional connection has the capacity of its forward link
+    dims: [Link]
+    expression: Link_p_nom_ext == at(Link_p_nom_ext, by=Link_reversal_of[forward])

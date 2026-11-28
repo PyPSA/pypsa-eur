@@ -6,6 +6,15 @@
 <!-- Upcoming Release -->
 <!-- ================= -->
 
+## Upcoming Release
+
+**Features**
+
+* The custom constraints of `solve_network` are now YAML math files in `scripts/math/`, which solved networks
+  store as PyPSA overrides. Group bounds are rows of `n.global_constraints`: the CO2 limits, `CCL`, `SAFE`, the
+  import limit and the reserve contingency. `BAU` minimum capacities are now global constraints of type
+  `tech_capacity_expansion_limit` and count all components of a carrier, not only generators.
+
 ## PyPSA-Eur v2026.11.1 (27th November 2026)
 
 **Bugfixes and Compatibility**
