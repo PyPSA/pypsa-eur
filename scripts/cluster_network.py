@@ -294,13 +294,16 @@ def distribute_n_clusters_to_countries(
         f"Country weights L must sum up to 1.0 when distributing clusters. Is {L.sum()}."
     )
 
+    flat = pd.RangeIndex(len(L), name="cluster")
     m = linopy.Model()
     clusters = m.add_variables(
-        lower=1, upper=N, coords=[L.index], name="n", integer=True
+        lower=1, upper=N.set_axis(flat), coords=[flat], name="n", integer=True
     )
     m.add_constraints(clusters.sum() == n_clusters, name="tot")
     # leave out constant in objective (L * n_clusters) ** 2
-    m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
+    m.objective = (
+        clusters * clusters - 2 * clusters * L.set_axis(flat) * n_clusters
+    ).sum()
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").propagate = False
     elif solver_name not in ["scip", "cplex", "xpress", "copt", "mosek"]:
@@ -309,7 +312,7 @@ def distribute_n_clusters_to_countries(
         )
         solver_name = "scip"
     m.solve(solver_name=solver_name)
-    return m.solution["n"].to_series().astype(int)
+    return m.solution["n"].to_series().astype(int).set_axis(L.index)
 
 
 def busmap_for_n_clusters(
