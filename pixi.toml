@@ -167,6 +167,11 @@ tabula-py = ">=2.7.0"
 tenacity = ">=9.1.2"
 tsam = ">=3"
 
+[feature.doc.pypi-dependencies]
+pypsa = { git = "https://github.com/PyPSA/PyPSA.git", rev = "3d51a211dd96d9d3fbc509300d93ec61dcb38999" }
+linopy = { git = "https://github.com/PyPSA/linopy.git", rev = "4e78d4ea58858b2ecd9e8fb0afe7bc439e4c79c1" }
+mathspec = { git = "https://github.com/energy-models/mathspec.git", rev = "cc531151128e63af592628b697dd44ab93a1795a" }
+
 [feature.test.tasks]
 
 integration-tests = """
