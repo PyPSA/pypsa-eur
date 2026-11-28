@@ -2,24 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
-parameters:
+relations:
   Generator_SAFE:
-    description: whether the generator's capacity counts as firm capacity
-    dims: [Generator]
-    dtype: bool
-    missing: false
+    description: the reserve margin a conventional generator's capacity counts towards
+    key: Generator
+    values: global_constraint
+    missing: absent
 
 expressions:
-  Generator_SAFE_capacity:
-    description: the capacity of a generator that counts as firm capacity, zero for the others
-    dims: [scenario, Generator]
-    cases:
-      firm:
-        when: Generator_SAFE
-        expression: Generator_p_nom_effective
-    otherwise: 0
   GlobalConstraint_total:
     cases:
       SAFE:
         when: GlobalConstraint_type == 'SAFE'
-        expression: sum(Generator_SAFE_capacity, over=Generator)
+        expression: sum(Generator_p_nom_effective, over=Generator, by=Generator_SAFE[global_constraint])

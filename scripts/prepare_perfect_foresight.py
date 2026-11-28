@@ -375,8 +375,8 @@ def add_H2_boilers(n: pypsa.Network) -> None:
 
     For every existing (non-extendable) gas boiler an extendable link with the
     same heat output bus is added, fed from the H2 bus at the same location.
-    The retrofitted capacity is tied to the gas boiler fleet by the
-    `gas_retrofit` constraint in `solve_network.py`.
+    The retrofitted capacity is tied to the gas boiler fleet by the math in
+    `scripts/math/gas_boiler_retrofit.yaml`.
     """
     existing_gas_boilers = n.links.index[
         n.links.carrier.str.contains("gas boiler") & ~n.links.p_nom_extendable

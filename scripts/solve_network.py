@@ -23,6 +23,7 @@ import logging
 import os
 import re
 import sys
+from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -107,26 +108,51 @@ def add_land_use_constraint(n: pypsa.Network) -> None:
         n.buses.loc[bus, name] = df_carrier.p_nom_max.values
 
 
-def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> Path:
+def solar_potential(
+    n: pypsa.Network, config: dict, planning_horizons: str | None
+) -> bool:
     """
     Share the solar potential of a bus among fixed-tilt and tracking solar.
 
     Extendable fixed-tilt solar holds the potential in its `p_nom_max`.
     Tracking solar takes more land per unit of capacity, by the ratio of the
-    `capacity_per_sqkm` of both technologies.
+    `capacity_per_sqkm` of both technologies. The land existing tracking
+    solar takes is not available for new capacity. Each bus gets a row that
+    bounds the land its new solar capacity takes by the land left.
     """
+    solar = {"solar", "solar-hsat"}
+    electricity = config["electricity"]
+    if not (
+        solar.issubset(electricity["renewable_carriers"])
+        and solar.issubset(electricity["extendable_carriers"]["Generator"])
+    ):
+        return False
+    renewable = config["renewable"]
     land_use = (
-        config["renewable"]["solar"]["capacity_per_sqkm"]
-        / config["renewable"]["solar-hsat"]["capacity_per_sqkm"]
+        renewable["solar"]["capacity_per_sqkm"]
+        / renewable["solar-hsat"]["capacity_per_sqkm"]
     )
     gens = n.generators
     potential = gens.carrier.eq("solar") & gens.p_nom_extendable
     hsat = gens.carrier.eq("solar-hsat")
-    n.generators["solar_potential"] = potential
+    available = gens.p_nom_max[potential].groupby(gens.bus).sum()
+    taken = gens.p_nom[hsat].groupby(gens.bus).sum() * land_use
+    area = available.sub(taken, fill_value=0).clip(lower=0)
+    n.add(
+        "GlobalConstraint",
+        "solar potential " + area.index,
+        type="solar_potential",
+        sense="<=",
+        constant=area.values,
+        overwrite=True,
+    )
     n.generators["solar_land_use"] = np.where(
         potential, 1.0, np.where(hsat, land_use, np.nan)
     )
-    return MATH / "solar_potential.yaml"
+    n.generators["solar_potential"] = ("solar potential " + gens.bus).where(
+        potential | hsat
+    )
+    return True
 
 
 def add_co2_sequestration_limit(
@@ -186,7 +212,7 @@ def emission_stores(n: pypsa.Network, emissions: pd.Index) -> pd.DataFrame:
     return stores
 
 
-def add_carbon_constraints(n: pypsa.Network) -> Path | None:
+def carbon(n: pypsa.Network, config: dict, planning_horizons: str | None) -> bool:
     """
     Bound the emissions accumulated in the emission stores.
 
@@ -197,7 +223,7 @@ def add_carbon_constraints(n: pypsa.Network) -> Path | None:
     """
     glcs = n.global_constraints.query("type in ['co2_atmosphere', 'Co2Budget']")
     if glcs.empty:
-        return None
+        return False
     attributes = glcs.carrier_attribute.unique()
     if len(attributes) > 1:
         raise ValueError(
@@ -207,9 +233,9 @@ def add_carbon_constraints(n: pypsa.Network) -> Path | None:
     emissions = n.carriers.index[n.carriers[attributes[0]] != 0]
     stores = emission_stores(n, emissions)
     if stores.empty:
-        return None
+        return False
     n.stores["emission_store"] = n.stores.index.isin(stores.index)
-    return MATH / "carbon.yaml"
+    return True
 
 
 def add_max_growth(n: pypsa.Network, opts: dict) -> None:
@@ -234,22 +260,27 @@ def add_max_growth(n: pypsa.Network, opts: dict) -> None:
         n.carriers.loc[carrier, "max_relative_growth"] = max_r_per_period
 
 
-def add_retrofit_gas_boiler_constraint(n: pypsa.Network) -> Path | None:
+def gas_boiler_retrofit(
+    n: pypsa.Network, config: dict, planning_horizons: str | None
+) -> bool:
     """
     Let existing gas boilers be retrofitted to H2 boilers that follow the heat demand.
 
     Each existing gas boiler and its retrofitted H2 boiler together follow
     the heat demand at the boiler's heat bus, scaled to the gas boiler's
-    capacity at peak demand.
+    capacity at peak demand. Only with investment periods.
     """
+    if n.investment_periods.empty:
+        return False
     links = n.links
     gas_i = links.index[
         links.carrier.str.contains("gas boiler") & ~links.p_nom_extendable
     ]
     h2_i = gas_i.str.replace("gas boiler", "retrofitted H2 boiler")
-    paired = h2_i.isin(n.c.links.active_assets) & gas_i.isin(n.c.links.active_assets)
+    active = n.c.links.active_assets
+    paired = h2_i.isin(active) & gas_i.isin(active)
     if not paired.any():
-        return None
+        return False
 
     logger.info("Add constraint for retrofitting gas boilers to H2 boilers.")
     gas_i, h2_i = gas_i[paired], h2_i[paired]
@@ -262,8 +293,8 @@ def add_retrofit_gas_boiler_constraint(n: pypsa.Network) -> Path | None:
     profile = p_set[heat].div(p_set[heat].groupby(level=0).max(), level=0).fillna(0)
     profile = profile.rename(columns=n.loads.bus).reindex(columns=links.bus1[gas_i])
     n.links_t["heat_demand_pu"] = profile.set_axis(gas_i, axis=1)
-    n.links["H2_boiler_retrofit"] = pd.Series(h2_i, index=gas_i).reindex(links.index)
-    return MATH / "gas_boiler_retrofit.yaml"
+    n.links["H2_boiler_retrofit"] = links.index.map(dict(zip(gas_i, h2_i)))
+    return True
 
 
 def enforce_autarky(n: pypsa.Network, only_crossborder: bool = False) -> None:
@@ -452,6 +483,9 @@ def prepare_network(
             n, limit_dict=limit_dict, planning_horizons=planning_horizons
         )
 
+    if config["solving"]["constraints"]["BAU"] and n.generators.p_nom_extendable.any():
+        add_BAU_constraints(n, config)
+
     # Apply autarky constraint if configured
     autarky_cfg = config["electricity"]["autarky"]
     if autarky_cfg["enable"]:
@@ -468,35 +502,26 @@ def prepare_network(
     register_math(n, config, planning_horizons)
 
 
-def add_CCL_constraints(
-    n: pypsa.Network, config: dict, planning_horizons: str | None
-) -> Path | None:
+def ccl(n: pypsa.Network, config: dict, planning_horizons: str | None) -> bool:
     """
-    Add CCL (country & carrier limit) constraint to the network.
+    Bound the generator capacity per country and carrier (CCL).
 
     Add minimum and maximum levels of generator nominal capacity per carrier
     for individual countries. Opts and path for agg_p_nom_minmax.csv must be defined
     in config.yaml. Default file is available at data/agg_p_nom_minmax.csv.
 
-    Parameters
-    ----------
-    n : pypsa.Network
-        The PyPSA network instance
-    config : dict
-        Configuration dictionary
-    planning_horizons : str, optional
-        The current planning horizon year or None in perfect foresight
-
-    Example
-    -------
+    Examples
+    --------
     scenario:
         opts: [Co2L-CCL-24h]
     electricity:
         agg_p_nom_limits: data/agg_p_nom_minmax.csv
     """
-
+    gens = n.generators
+    if not (config["solving"]["constraints"]["CCL"] and gens.p_nom_extendable.any()):
+        return False
     assert planning_horizons is not None, (
-        "add_CCL_constraints are not implemented for perfect foresight, yet"
+        "The CCL constraints are not implemented for perfect foresight, yet"
     )
 
     options = config["solving"]["agg_p_nom_limits"]
@@ -509,7 +534,6 @@ def add_CCL_constraints(
         rename |= dict.fromkeys(offwind, "offwind-all")
     if options["agg_solar"]:
         rename |= dict.fromkeys(["solar", "solar-hsat", "solar rooftop"], "solar-all")
-    gens = n.generators
     group = gens.bus.map(n.buses.country) + " " + gens.carrier.replace(rename)
 
     if options["include_existing"]:
@@ -525,7 +549,7 @@ def add_CCL_constraints(
     )
     limits = limits[limits.index.isin(group[extendable])]
     if limits.empty:
-        return None
+        return False
 
     logger.info("Adding generation capacity constraints per carrier and country")
     for bound, sense in [("min", ">="), ("max", "<=")]:
@@ -541,32 +565,26 @@ def add_CCL_constraints(
         )
         row = pd.Series(names, index=rhs.index)
         n.generators[f"CCL_{bound}"] = group.map(row).where(gens.index.isin(extendable))
-    return MATH / "ccl.yaml"
+    return True
 
 
-def add_EQ_constraints(n: pypsa.Network, o: str) -> Path:
+def equity(n: pypsa.Network, config: dict, planning_horizons: str | None) -> bool:
     """
-    Add equity constraints to the network.
+    Require each country or node to produce a share of its demand itself.
 
-    Currently this is only implemented for the electricity sector only.
+    Currently this is only implemented for the electricity sector.
 
-    Opts must be specified in the config.yaml.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-    o : str
-
-    Example
-    -------
+    Examples
+    --------
     scenario:
         opts: [Co2L-EQ0.7-24h]
 
-    Require each country or node to on average produce a minimal share
-    of its total electricity consumption itself. Example: EQ0.7c demands each country
-    to produce on average at least 70% of its consumption; EQ0.7 demands
-    each node to produce on average at least 70% of its consumption.
+    EQ0.7c demands each country to produce on average at least 70% of its
+    consumption; EQ0.7 demands each node to produce on average at least 70%
+    of its consumption.
     """
+    if not (o := config["solving"]["constraints"]["EQ"]):
+        return False
     level = float(re.findall(r"[0-9]*\.?[0-9]+", o)[0])
 
     def region(bus: pd.Series) -> pd.Series:
@@ -577,7 +595,7 @@ def add_EQ_constraints(n: pypsa.Network, o: str) -> Path:
     n.storage_units["equity_region"] = region(n.storage_units.bus).where(inflow)
     n.loads["equity_region"] = region(n.loads.bus)
     n.loads["equity_level"] = level
-    return MATH / "equity.yaml"
+    return True
 
 
 def add_BAU_constraints(n: pypsa.Network, config: dict) -> None:
@@ -606,31 +624,27 @@ def add_BAU_constraints(n: pypsa.Network, config: dict) -> None:
 
 
 # TODO: think about removing or make per country
-def add_SAFE_constraints(n: pypsa.Network, config: dict) -> Path:
+def safe(n: pypsa.Network, config: dict, planning_horizons: str | None) -> bool:
     """
     Add a capacity reserve margin of a certain fraction above the peak demand.
-    Renewable generators and storage do not contribute. Ignores network.
 
-    Parameters
-    ----------
-    n : pypsa.Network
-        The PyPSA network instance.
-    config : dict
-        Configuration dictionary.
+    Only conventional generators count. Renewable generators and storage do
+    not contribute. Ignores the network.
 
-    Example
-    -------
-    config.yaml requires to specify opts:
-
+    Examples
+    --------
     scenario:
         opts: [Co2L-SAFE-24h]
     electricity:
         SAFE_reservemargin: 0.1
     Which sets a reserve margin of 10% above the peak demand.
     """
+    gens = n.generators
+    if not (config["solving"]["constraints"]["SAFE"] and gens.p_nom_extendable.any()):
+        return False
     peak = n.loads_t.p_set.sum(axis=1).max()
     margin = 1.0 + config["electricity"]["SAFE_reservemargin"]
-    conventional = config["electricity"]["conventional_carriers"]
+    conventional = gens.carrier.isin(config["electricity"]["conventional_carriers"])
     n.add(
         "GlobalConstraint",
         "SAFE",
@@ -639,32 +653,34 @@ def add_SAFE_constraints(n: pypsa.Network, config: dict) -> Path:
         constant=peak * margin,
         overwrite=True,
     )
-    n.generators["SAFE"] = n.generators.carrier.isin(conventional)
-    return MATH / "safe.yaml"
+    n.generators["SAFE"] = pd.Series("SAFE", gens.index).where(conventional)
+    return True
 
 
-def add_operational_reserve_margin(n: pypsa.Network, config: dict) -> Path:
+def operational_reserve(
+    n: pypsa.Network, config: dict, planning_horizons: str | None
+) -> bool:
     """
     Build reserve margin constraints based on the formulation given in
     https://genxproject.github.io/GenX.jl/stable/Model_Reference/core/#Operational-Reserves.
 
-    Parameters
-    ----------
-    n : pypsa.Network
-        The PyPSA network instance.
-    config : dict
-        Configuration dictionary.
-
-    Example
-    -------
-    config.yaml requires to specify operational_reserve:
-    operational_reserve:
-        activate: true
-        epsilon_load: 0.02 # percentage of load at each snapshot
-        epsilon_vres: 0.02 # percentage of VRES at each snapshot
-        contingency: 4000 # MW
+    Examples
+    --------
+    electricity:
+        operational_reserve:
+            activate: true
+            epsilon_load: 0.02 # percentage of load at each snapshot
+            epsilon_vres: 0.02 # percentage of VRES at each snapshot
+            contingency: 4000 # MW
     """
-    reserve = config["electricity"]["operational_reserve"]
+    reserve = config["electricity"].get("operational_reserve", {})
+    if not reserve.get("activate"):
+        return False
+    if config["sector"]["enabled"]:
+        logger.warning(
+            "Operational reserve margin only considers electricity generators "
+            "and ignores sector-coupling components."
+        )
     vres = [
         "ror" if c == "hydro" else c
         for c in config["electricity"]["renewable_carriers"]
@@ -683,74 +699,87 @@ def add_operational_reserve_margin(n: pypsa.Network, config: dict) -> Path:
         carrier.isin(vres), reserve["epsilon_vres"], np.nan
     )
     n.loads["operational_reserve_share"] = reserve["epsilon_load"]
-    return MATH / "operational_reserve.yaml"
+    return True
 
 
-def add_lossy_bidirectional_link_constraints(n: pypsa.Network) -> Path | None:
+def reversed_links(n: pypsa.Network) -> pd.Series:
+    """Return whether each link is the reversed link of a lossy bidirectional connection."""
+    return n.links.get("reversed", pd.Series(False, n.links.index)).astype(bool)
+
+
+def lossy_bidirectional_links(
+    n: pypsa.Network, config: dict, planning_horizons: str | None
+) -> bool:
     """
     Tie the capacity of each extendable reversed link to its forward link.
     """
     links = n.links
-    if not links.get("reversed", pd.Series(False, links.index)).any():
-        return None
     extendable = links.index[links.p_nom_extendable].intersection(
         n.c.links.active_assets
     )
-    backwards = extendable[links.reversed[extendable].astype(bool)]
+    backwards = extendable[reversed_links(n)[extendable]]
     forwards = backwards.str.replace("-reversed", "")
     paired = forwards.isin(extendable)
-    n.links["reversal_of"] = pd.Series(
-        forwards[paired], index=backwards[paired]
-    ).reindex(links.index)
-    return MATH / "lossy_bidirectional_links.yaml"
+    if not paired.any():
+        return False
+    n.links["reversal_of"] = links.index.map(
+        dict(zip(backwards[paired], forwards[paired]))
+    )
+    return True
 
 
-def add_pipe_retrofit_constraint(n: pypsa.Network, config: dict) -> Path | None:
+def pipe_retrofit(
+    n: pypsa.Network, config: dict, planning_horizons: str | None
+) -> bool:
     """
-    Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.
+    Let extendable gas pipelines be retrofitted to hydrogen pipelines.
     """
     links = n.links
-    forward = ~links.get("reversed", pd.Series(False, links.index)).astype(bool)
-    candidates = links.index[links.p_nom_extendable & forward].intersection(
-        n.c.links.active_assets
-    )
+    candidates = links.index[links.p_nom_extendable & ~reversed_links(n)]
+    candidates = candidates.intersection(n.c.links.active_assets)
     carrier = links.carrier[candidates]
     gas_i = candidates[carrier.eq("gas pipeline")]
     h2_i = gas_i.str.replace("gas pipeline", "H2 pipeline retrofitted")
     paired = h2_i.isin(candidates[carrier.eq("H2 pipeline retrofitted")])
     if not paired.any():
-        return None
+        return False
+    retrofit = links.index.map(dict(zip(gas_i[paired], h2_i[paired])))
+    n.links["H2_pipe_retrofit"] = retrofit
+    capacity_per_CH4 = config["sector"]["H2_retrofit_capacity_per_CH4"]
+    n.links["H2_retrofit_capacity_per_CH4"] = np.where(
+        retrofit.notna(), capacity_per_CH4, np.nan
+    )
+    return True
 
-    gas_i, h2_i = gas_i[paired], h2_i[paired]
-    n.links["H2_pipe_retrofit"] = pd.Series(h2_i, index=gas_i).reindex(links.index)
-    n.links["H2_retrofit_capacity_per_CH4"] = pd.Series(
-        config["sector"]["H2_retrofit_capacity_per_CH4"], index=gas_i
-    ).reindex(links.index)
-    return MATH / "pipe_retrofit.yaml"
 
-
-def add_flexible_egs_constraint(n: pypsa.Network) -> Path:
+def flexible_egs(n: pypsa.Network, config: dict, planning_horizons: str | None) -> bool:
     """
     Limit each geothermal reservoir to the capacity of the wells at its surface bus.
     """
+    egs = config["sector"]["enhanced_geothermal"]
+    if not (egs["enable"] and egs["flexible"]):
+        return False
     wells = n.links.carrier.eq("geothermal heat")
     reservoirs = n.storage_units.carrier.eq("geothermal heat")
     reservoirs &= n.storage_units.p_nom_extendable
     n.links["geothermal_well"] = n.links.bus1.where(wells)
     n.storage_units["geothermal_reservoir"] = n.storage_units.bus.where(reservoirs)
-    return MATH / "flexible_egs.yaml"
+    return True
 
 
-def add_import_limit_constraint(n: pypsa.Network, config: dict) -> Path | None:
+def import_limit(n: pypsa.Network, config: dict, planning_horizons: str | None) -> bool:
     """
-    Add constraint for limiting green energy imports (synthetic and biomass).
+    Limit green energy imports (synthetic and biomass).
+
     Does not include fossil fuel imports. Links count with the fuel they deliver.
     """
     imports = config["sector"]["imports"]
+    if not imports["enable"]:
+        return False
     gens = n.generators.carrier.str.contains("import")
     links = n.links.carrier.str.contains("import")
     if not (gens.any() or links.any()) or not np.isfinite(imports["limit"]):
-        return None
+        return False
 
     nyears = n.snapshot_weightings.generators.sum() / 8760
     n.add(
@@ -761,10 +790,27 @@ def add_import_limit_constraint(n: pypsa.Network, config: dict) -> Path | None:
         constant=imports["limit"] * 1e6 * nyears,
         overwrite=True,
     )
-    n.generators["import_limit"] = np.where(gens, "import_limit", "")
-    n.links["import_limit"] = np.where(links, "import_limit", "")
+    n.generators["import_limit"] = pd.Series("import_limit", gens.index).where(gens)
+    n.links["import_limit"] = pd.Series("import_limit", links.index).where(links)
     n.links["import_efficiency"] = n.links.efficiency.where(links)
-    return MATH / "import_limit.yaml"
+    return True
+
+
+MathWriter = Callable[[pypsa.Network, dict, str | None], bool]
+
+MATH_WRITERS: tuple[MathWriter, ...] = (
+    lossy_bidirectional_links,
+    pipe_retrofit,
+    carbon,
+    safe,
+    ccl,
+    equity,
+    solar_potential,
+    operational_reserve,
+    gas_boiler_retrofit,
+    flexible_egs,
+    import_limit,
+)
 
 
 def register_math(
@@ -773,54 +819,20 @@ def register_math(
     """
     Store the custom math of the active constraints on the network.
 
-    Each constraint writes the data its math reads onto the network and
-    returns its file in `scripts/math`, or None where it has nothing to
-    constrain. The network stores the math as overrides, so every build
+    Each writer in `MATH_WRITERS` checks its switch, writes the data its math
+    in `scripts/math/<writer>.yaml` reads onto the network and returns whether
+    the math applies. The network stores the math as overrides, so every build
     applies it, also in iterative and rolling-horizon solves and after a
     reload.
     """
-    for path in MATH.glob("*.yaml"):
-        if path.stem in n.optimize.overrides:
-            n.optimize.overrides.unregister(path.stem)
-
-    constraints = config["solving"]["constraints"]
-    extendable = n.generators.p_nom_extendable.any()
-    solar = {"solar-hsat", "solar"}
-    egs = config["sector"]["enhanced_geothermal"]
-    paths = [
-        add_lossy_bidirectional_link_constraints(n),
-        add_pipe_retrofit_constraint(n, config),
-        add_carbon_constraints(n),
-    ]
-    if constraints["BAU"] and extendable:
-        add_BAU_constraints(n, config)
-    if constraints["SAFE"] and extendable:
-        paths.append(add_SAFE_constraints(n, config))
-    if constraints["CCL"] and extendable:
-        paths.append(add_CCL_constraints(n, config, planning_horizons))
-    if EQ_o := constraints["EQ"]:
-        paths.append(add_EQ_constraints(n, EQ_o.replace("EQ", "")))
-    if solar.issubset(config["electricity"]["renewable_carriers"]) and solar.issubset(
-        config["electricity"]["extendable_carriers"]["Generator"]
-    ):
-        paths.append(add_solar_potential_constraints(n, config))
-    if config["electricity"].get("operational_reserve", {}).get("activate"):
-        if config["sector"]["enabled"]:
-            logger.warning(
-                "Operational reserve margin only considers electricity generators "
-                "and ignores sector-coupling components."
-            )
-        paths.append(add_operational_reserve_margin(n, config))
-    if not n.investment_periods.empty:
-        paths.append(add_retrofit_gas_boiler_constraint(n))
-    if egs["enable"] and egs["flexible"]:
-        paths.append(add_flexible_egs_constraint(n))
-    if config["sector"]["imports"]["enable"]:
-        paths.append(add_import_limit_constraint(n, config))
-
-    for path in filter(None, paths):
-        logger.info(f"Adding custom math {path.stem}.")
-        n.optimize.overrides.register(path)
+    overrides = n.optimize.overrides
+    for writer in MATH_WRITERS:
+        name = writer.__name__
+        if name in overrides:
+            overrides.unregister(name)
+        if writer(n, config, planning_horizons):
+            logger.info(f"Adding custom math {name}.")
+            overrides.register(MATH / f"{name}.yaml")
 
 
 def extra_functionality(n: pypsa.Network, snapshots: pd.Index, snakemake=None) -> None:
