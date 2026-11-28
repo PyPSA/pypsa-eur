@@ -9,8 +9,9 @@ parameters:
   store_bus:
   charger_carrier:
   discharger_carrier:
-  efficiency:
-  capital_cost: 0.0
+  charger_efficiency:
+  discharger_efficiency:
+  charger_capital_cost: 0.0
   charger_marginal_cost: 0.0
   discharger_marginal_cost: 0.0
   lifetime:
@@ -21,8 +22,8 @@ components:
       bus0: $bus
       bus1: $store_bus
       carrier: $charger_carrier
-      efficiency: $efficiency
-      capital_cost: $capital_cost
+      efficiency: $charger_efficiency
+      capital_cost: $charger_capital_cost
       marginal_cost: $charger_marginal_cost
       p_nom_extendable: true
       lifetime: $lifetime
@@ -30,7 +31,7 @@ components:
       bus0: $store_bus
       bus1: $bus
       carrier: $discharger_carrier
-      efficiency: $efficiency
+      efficiency: $discharger_efficiency
       marginal_cost: $discharger_marginal_cost
       p_nom_extendable: true
       lifetime: $lifetime

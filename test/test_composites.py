@@ -47,15 +47,14 @@ def test_battery_charger_is_rated_by_its_discharger(n):
 
 
 def test_tes_ties_its_store_and_links(n):
-    n.add("Bus", "north water tanks")
     add_tes(
         n,
         pd.Index(["north"]),
-        " water tanks",
+        "water tanks",
         bus="north heat",
         discharger_efficiency=0.8,
         charger_ratio=0.8,
-        energy_capital_cost=1.0,
+        store_capital_cost=1.0,
         lifetime=20.0,
         energy_to_power_ratio=6.0,
     )
@@ -74,5 +73,5 @@ def test_fixed_members_are_not_tied(n):
     attach_stores(n, COSTS, pd.Index(["north"]), ["battery"])
     members = n.composites["battery_inverter"].members.loc["north battery"]
     n.c.links.static.loc[members, ["p_nom", "p_nom_extendable"]] = [5.0, False]
-    status, _ = n.optimize(solver_name="highs")
-    assert status == "ok"
+    n.optimize(solver_name="highs")
+    assert (n.c.links.static.p_nom_opt[members] == 5.0).all()

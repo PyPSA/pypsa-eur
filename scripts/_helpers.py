@@ -774,6 +774,37 @@ def register_composite(n: pypsa.Network, name: str) -> None:
     n.composites.register(path, overwrite=True)
 
 
+def add_battery_inverter(
+    n: pypsa.Network,
+    store_buses: pd.Index,
+    carrier: str,
+    efficiency: float,
+    roundtrip_correction: float = 0.5,
+    **kwargs: Any,
+) -> None:
+    """
+    Add a `battery_inverter` composite per store bus, named after it.
+
+    The charger and the discharger each take `efficiency` to the power of
+    `roundtrip_correction`, and the charger is rated at that share of the
+    discharger. Their carriers are `<carrier> charger` and
+    `<carrier> discharger`.
+    """
+    register_composite(n, "battery_inverter")
+    efficiency **= roundtrip_correction
+    n.add(
+        "battery_inverter",
+        store_buses,
+        store_bus=store_buses,
+        charger_carrier=f"{carrier} charger",
+        discharger_carrier=f"{carrier} discharger",
+        charger_efficiency=efficiency,
+        discharger_efficiency=efficiency,
+        charger_ratio=efficiency,
+        **kwargs,
+    )
+
+
 def rename_techs(label: str) -> str:
     """
     Rename technology labels for better readability.
