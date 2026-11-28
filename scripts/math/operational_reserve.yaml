@@ -31,7 +31,7 @@ constraints:
       the reserve held covers a share of the demand and of the available
       variable renewable power, plus the contingency, the row's constant
     dims: [scenario, snapshot, global_constraint]
-    where: GlobalConstraint_type == 'operational_reserve' AND GlobalConstraint_sense == '>='
+    where: GlobalConstraint_type == 'operational_reserve'
     expression: >-
       sum(Generator_r, over=Generator)
       - sum(Generator_operational_reserve_share * Generator_p_max_pu * Generator_p_nom_effective, over=Generator)
