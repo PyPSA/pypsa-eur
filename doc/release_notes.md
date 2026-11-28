@@ -12,8 +12,21 @@
 
 * The custom constraints of `solve_network` are now YAML math files in `scripts/math/`, which solved networks
   store as PyPSA overrides. Group bounds are rows of `n.global_constraints`: the CO2 limits, `CCL`, `SAFE`, the
-  import limit and the reserve contingency. `BAU` minimum capacities are now global constraints of type
-  `tech_capacity_expansion_limit` and count all components of a carrier, not only generators.
+  import limit, the solar potential per bus and the reserve contingency. `BAU` minimum capacities are now global
+  constraints of type `tech_capacity_expansion_limit` and count all components of a carrier, not only
+  generators. `EQ` now also counts loads with a static demand
+  ([#2467](https://github.com/PyPSA/pypsa-eur/pull/2467)).
+
+* Battery inverters, home battery inverters and thermal energy storage (water tanks, water pits and aquifers)
+  are now PyPSA composites in `scripts/composites/`. Their math ties the rating of the charger to the
+  discharger and the energy of the store to the charger. Their components carry the new columns `composite`,
+  `composite_type` and `composite_member` ([#2467](https://github.com/PyPSA/pypsa-eur/pull/2467)).
+
+**Bugfixes and Compatibility**
+
+* The perfect foresight test objective rises by 2%: the capital cost of gas boiler retrofits was under-reported
+  before, and PyPSA now weights `e_sum` by the years of each investment period
+  ([#2467](https://github.com/PyPSA/pypsa-eur/pull/2467)).
 
 ## PyPSA-Eur v2026.11.1 (27th November 2026)
 
