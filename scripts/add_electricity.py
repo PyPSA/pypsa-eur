@@ -1251,7 +1251,7 @@ def main(
         fuel_price = pd.read_csv(
             inputs.fuel_price, index_col=0, header=0, parse_dates=True
         )
-        fuel_price = fuel_price.reindex(n.snapshots).ffill()
+        fuel_price = fuel_price.reindex(n.snapshots, method="ffill")
     else:
         fuel_price = None
 
