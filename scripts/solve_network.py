@@ -116,9 +116,7 @@ def solar_potential(
 
     Extendable fixed-tilt solar holds the potential in its `p_nom_max`.
     Tracking solar takes more land per unit of capacity, by the ratio of the
-    `capacity_per_sqkm` of both technologies. The land existing tracking
-    solar takes is not available for new capacity. Each bus gets a row that
-    bounds the land its new solar capacity takes by the land left.
+    `capacity_per_sqkm` of both technologies.
     """
     solar = {"solar", "solar-hsat"}
     electricity = config["electricity"]
@@ -135,22 +133,9 @@ def solar_potential(
     gens = n.generators
     potential = gens.carrier.eq("solar") & gens.p_nom_extendable
     hsat = gens.carrier.eq("solar-hsat")
-    available = gens.p_nom_max[potential].groupby(gens.bus).sum()
-    taken = gens.p_nom[hsat].groupby(gens.bus).sum() * land_use
-    area = available.sub(taken, fill_value=0).clip(lower=0)
-    n.add(
-        "GlobalConstraint",
-        "solar potential " + area.index,
-        type="solar_potential",
-        sense="<=",
-        constant=area.values,
-        overwrite=True,
-    )
+    n.generators["solar_potential"] = potential
     n.generators["solar_land_use"] = np.where(
         potential, 1.0, np.where(hsat, land_use, np.nan)
-    )
-    n.generators["solar_potential"] = ("solar potential " + gens.bus).where(
-        potential | hsat
     )
     return True
 

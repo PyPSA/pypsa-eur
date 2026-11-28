@@ -25,7 +25,7 @@ CONSTRAINTS = {
     "safe": "GlobalConstraint-SAFE",
     "ccl": "GlobalConstraint-CCL min DE solar",
     "equity": "equity_min",
-    "solar_potential": "GlobalConstraint-solar potential DE0",
+    "solar_potential": "Bus_solar_potential",
     "operational_reserve": "operational_reserve_margin",
     "gas_boiler_retrofit": "Link_gas_boiler_retrofit",
     "flexible_egs": "Bus_geothermal_reservoir_capacity",
