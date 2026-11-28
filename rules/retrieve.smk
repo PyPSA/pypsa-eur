@@ -1700,3 +1700,41 @@ if (CO2_REMOVAL_DATASET := dataset_version("co2_removal_data"))["source"] in [
                     )
                     with z.open(member) as src, open(path, "wb") as dst:
                         dst.write(src.read())
+
+
+if (TYNDP_PROJECTS_DATASET := dataset_version("tyndp_projects"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_tyndp_projects:
+        """Downloads a transmission project portfolio or map of a TYNDP project platform."""
+        output:
+            f"{TYNDP_PROJECTS_DATASET['folder']}/tyndp{{edition}}_{{file}}",
+        log:
+            "logs/retrieve_tyndp_projects_{edition}_{file}.log",
+        wildcard_constraints:
+            edition=r"\d{4}",
+            file="transmission.xlsx|map.geojson",
+        retries: 2
+        resources:
+            mem_mb=1000,
+        run:
+            url = TYNDP_PROJECTS_DATASET["url"]
+            api = url.format(edition=wildcards.edition)
+            # The project platforms have no documented API. Their pages load the
+            # project map, the project list and the workbook of the "Export"
+            # button from these addresses.
+            if TYNDP_PROJECTS_DATASET["source"] == "archive":
+                url = f"{url}/{Path(output[0]).name}"
+            elif wildcards.file == "map.geojson":
+                url = f"{api}/maps/all"
+            else:
+                projects = requests.get(f"{api}/Public/Projects/Transmission")
+                projects.raise_for_status()
+                ids = ",".join(str(project["id"]) for project in projects.json())
+                url = f"{api}/export/transmission/xls/?projectIds={ids}"
+            response = requests.get(url)
+            response.raise_for_status()
+            with open(output[0], "wb") as f:
+                f.write(response.content)

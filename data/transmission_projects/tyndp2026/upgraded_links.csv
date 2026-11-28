@@ -1,0 +1,5 @@
+,project_status,length,build_year,underground,tags,p_nom,x0,y0,x1,y1
+TYNDP2026_1241,under_consideration,250.0,2038,True,"""url""=>""https://tyndp2026.entsoe.eu/projects-map/Transmission/239"", ""name""=>""Fenno-Skan 3"", ""tyndp_project""=>""239"", ""tyndp_investment""=>""1241""",800.0,17.866,60.471,21.5814,61.1914
+TYNDP2026_1765,planned_not_yet_permitted,160.0,2036,True,"""url""=>""https://tyndp2026.entsoe.eu/projects-map/Transmission/1097"", ""name""=>""Konti-Skan Connect"", ""tyndp_project""=>""1097"", ""tyndp_investment""=>""1765""",700.0,12.0163,57.5571,10.2475,57.1343
+TYNDP2026_1940,planned_not_yet_permitted,249.0,2039,True,"""url""=>""https://tyndp2026.entsoe.eu/projects-map/Transmission/1201"", ""name""=>""Interconnector Norway-Denmark"", ""tyndp_project""=>""1201"", ""tyndp_investment""=>""1940""",700.0,7.9614,58.2671,9.4849,56.7005
+TYNDP2026_2094,under_consideration,,2040,True,"""url""=>""https://tyndp2026.entsoe.eu/projects-map/Transmission/1269"", ""name""=>""New SwePol Link"", ""tyndp_project""=>""1269"", ""tyndp_investment""=>""2094""",600.0,14.8453,56.1731,16.8887,54.5067

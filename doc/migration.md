@@ -6,6 +6,17 @@
 This guide lists per release what you must change in an existing PyPSA-Eur setup.
 All other changes are in the [release notes](release_notes.md).
 
+## Upcoming release
+
+| Old | New |
+|-----|-----|
+| `transmission_projects: include: tyndp2020` | `transmission_projects: include: tyndp2026` |
+| `transmission_projects: status: [planned_not_yet_permitting]` | `planned_not_yet_permitted` |
+
+Also check these settings:
+
+- `transmission_projects: status` now includes `completed` by default.
+
 ## v2026.11.0 {#v2026-11}
 
 Removed keys that raise no error are ignored. Find them with

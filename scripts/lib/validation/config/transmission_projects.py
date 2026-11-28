@@ -18,9 +18,9 @@ from scripts.lib.validation.config._base import ConfigModel
 class _IncludeConfig(ConfigModel):
     """Configuration for `transmission_projects.include` settings."""
 
-    tyndp2020: bool = Field(
+    tyndp2026: bool = Field(
         True,
-        description="Whether to integrate the TYNDP 2020 dataset.",
+        description="Whether to integrate the TYNDP 2026 dataset.",
     )
     nep: bool = Field(
         True,
@@ -48,10 +48,15 @@ class TransmissionProjectsConfig(BaseModel):
         description="Type of lines to skip from all transmission projects. Possible values are: `upgraded_lines`, `upgraded_links`, `new_lines`, `new_links`.",
     )
     status: list[str] | dict[str, list[str]] = Field(
-        default_factory=lambda: ["under_construction", "in_permitting", "confirmed"],
-        description="Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`.",
+        default_factory=lambda: [
+            "completed",
+            "under_construction",
+            "in_permitting",
+            "confirmed",
+        ],
+        description="Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`, `completed`.",
     )
     new_link_capacity: Literal["zero", "keep"] = Field(
         "zero",
-        description="Whether to set the new link capacity to the provided capacity or set it to zero.",
+        description="Whether to set the new link capacity to the provided capacity or set it to zero. Upgraded links take the provided capacity with `keep` and the capacity of the existing link with `zero`.",
     )

@@ -548,6 +548,7 @@ rule build_transmission_projects:
     """Collects, deduplicates and maps transmission projects onto base network buses."""
     input:
         base_network=resources("networks/base.nc"),
+        country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
         transmission_projects=lambda w: [

@@ -82,12 +82,12 @@ New data should generally not be added to the data, but externally retrieved in 
 - **License:** unknown
 - **Description:** Contains transmission projects in Europe from German network development plan (Netzentwicklungsplan).
 
-`data/transmission_projects/tyndp2020`
+`data/transmission_projects/tyndp2026`
 
 - **Source:** ENTSO-E
-- **Link:** https://tyndp2020-project-platform.azurewebsites.net/projectsheets
+- **Link:** https://tyndp2026.entsoe.eu/projects-map/transmission
 - **License:** unknown
-- **Description:** Contains transmission projects in Europe from ENTSO-E Ten Year Network Development Plan (TYNDP).
+- **Description:** Contains transmission projects in Europe from ENTSO-E Ten Year Network Development Plan (TYNDP) 2026. The tables are created with the rule `extract_tyndp_projects`, which maintainers run to update them. Its inputs are the dataset `tyndp_projects`: the workbooks and the map shapes from the undocumented API of the project platforms (`https://tyndp2026.entsoe.eu/api`, no key needed; the addresses are listed in the rule `retrieve_tyndp_projects`). Technical data that the TYNDP 2026 does not publish is taken from the TYNDP 2024.
 
 `data/ch_cantons.csv`
 
