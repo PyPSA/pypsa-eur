@@ -5,15 +5,15 @@
 name: battery_inverter
 description: the charger and the discharger of a battery, which share one bidirectional inverter
 parameters:
-  bus: null
-  store_bus: null
-  charger_carrier: null
-  discharger_carrier: null
-  efficiency: null
+  bus:
+  store_bus:
+  charger_carrier:
+  discharger_carrier:
+  efficiency:
   capital_cost: 0.0
   charger_marginal_cost: 0.0
   discharger_marginal_cost: 0.0
-  lifetime: null
+  lifetime:
   charger_ratio: 1.0
 components:
   Link:
